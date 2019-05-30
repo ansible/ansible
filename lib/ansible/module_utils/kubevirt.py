@@ -7,9 +7,11 @@
 from collections import defaultdict
 from distutils.version import Version
 
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
 
+import copy
 import re
 
 MAX_SUPPORTED_API_VERSION = 'v1alpha3'
@@ -126,21 +128,25 @@ class KubeVirtRawModule(KubernetesRawModule):
         super(KubeVirtRawModule, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def merge_dicts(x, y):
+    def merge_dicts(base_dict, merging_dicts):
+        """This function merges a base dictionary with one or more other dictionaries.
+        The base dictionary takes precedence when there is a key collision.
+        merging_dicts can be a dict or a list or tuple of dicts.  In the latter case, the
+        dictionaries at the front of the list have higher precedence over the ones at the end.
         """
-        This function merge two dictionaries, where the first dict has
-        higher priority in merging two same keys.
-        """
-        for k in set(x.keys()).union(y.keys()):
-            if k in x and k in y:
-                if isinstance(x[k], dict) and isinstance(y[k], dict):
-                    yield (k, dict(KubeVirtRawModule.merge_dicts(x[k], y[k])))
-                else:
-                    yield (k, y[k])
-            elif k in x:
-                yield (k, x[k])
-            else:
-                yield (k, y[k])
+        if not merging_dicts:
+            merging_dicts = ({},)
+
+        if not isinstance(merging_dicts, Sequence):
+            merging_dicts = (merging_dicts,)
+
+        new_dict = {}
+        for d in reversed(merging_dicts):
+            new_dict.update(d)
+
+        new_dict.update(base_dict)
+
+        return new_dict
 
     def get_resource(self, resource):
         try:
@@ -215,16 +221,23 @@ class KubeVirtRawModule(KubernetesRawModule):
                 'disk': {'bus': 'virtio'},
             })
 
-    def _define_interfaces(self, interfaces, template_spec):
+    def _define_interfaces(self, interfaces, template_spec, defaults):
         """
         Takes interfaces parameter of Ansible and create kubevirt API interfaces
         and networks strucutre out from it.
         """
+        if not interfaces and defaults and 'interfaces' in defaults:
+            interfaces = copy.deepcopy(defaults['interfaces'])
+            for d in interfaces:
+                d['network'] = defaults['networks'][0]
+
         if interfaces:
             # Extract interfaces k8s specification from interfaces list passed to Ansible:
             spec_interfaces = []
             for i in interfaces:
-                spec_interfaces.append(dict((k, v) for k, v in i.items() if k != 'network'))
+                spec_interfaces.append(
+                    self.merge_dicts(dict((k, v) for k, v in i.items() if k != 'network'), defaults['interfaces'])
+                )
             if 'interfaces' not in template_spec['domain']['devices']:
                 template_spec['domain']['devices']['interfaces'] = []
             template_spec['domain']['devices']['interfaces'].extend(spec_interfaces)
@@ -234,21 +247,28 @@ class KubeVirtRawModule(KubernetesRawModule):
             for i in interfaces:
                 net = i['network']
                 net['name'] = i['name']
-                spec_networks.append(net)
+                spec_networks.append(self.merge_dicts(net, defaults['networks']))
             if 'networks' not in template_spec:
                 template_spec['networks'] = []
             template_spec['networks'].extend(spec_networks)
 
-    def _define_disks(self, disks, template_spec):
+    def _define_disks(self, disks, template_spec, defaults):
         """
         Takes disks parameter of Ansible and create kubevirt API disks and
         volumes strucutre out from it.
         """
+        if not disks and defaults and 'disks' in defaults:
+            disks = copy.deepcopy(defaults['disks'])
+            for d in disks:
+                d['volume'] = defaults['volumes'][0]
+
         if disks:
             # Extract k8s specification from disks list passed to Ansible:
             spec_disks = []
             for d in disks:
-                spec_disks.append(dict((k, v) for k, v in d.items() if k != 'volume'))
+                spec_disks.append(
+                    self.merge_dicts(dict((k, v) for k, v in d.items() if k != 'volume'), defaults['disks'])
+                )
             if 'disks' not in template_spec['domain']['devices']:
                 template_spec['domain']['devices']['disks'] = []
             template_spec['domain']['devices']['disks'].extend(spec_disks)
@@ -258,7 +278,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             for d in disks:
                 volume = d['volume']
                 volume['name'] = d['name']
-                spec_volumes.append(volume)
+                spec_volumes.append(self.merge_dicts(volume, defaults['volumes']))
             if 'volumes' not in template_spec:
                 template_spec['volumes'] = []
             template_spec['volumes'].extend(spec_volumes)
@@ -274,7 +294,7 @@ class KubeVirtRawModule(KubernetesRawModule):
         self.fail("API versions {0} are too recent. Max supported is {1}/{2}.".format(
             str([r.api_version for r in sr]), API_GROUP, MAX_SUPPORTED_API_VERSION))
 
-    def _construct_vm_definition(self, kind, definition, template, params):
+    def _construct_vm_definition(self, kind, definition, template, params, defaults=None):
         self.client = self.get_api_client()
 
         disks = params.get('disks', [])
@@ -328,7 +348,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             template_spec['domain']['cpu']['model'] = cpu_model
 
         if labels:
-            template['metadata']['labels'] = dict(self.merge_dicts(labels, template['metadata']['labels']))
+            template['metadata']['labels'] = self.merge_dicts(labels, template['metadata']['labels'])
 
         if machine_type:
             template_spec['domain']['machine']['type'] = machine_type
@@ -343,7 +363,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             template_spec['domain']['devices']['autoattachGraphicsDevice'] = not headless
 
         # Define disks
-        self._define_disks(disks, template_spec)
+        self._define_disks(disks, template_spec, defaults)
 
         # Define cloud init disk if defined:
         # Note, that this must be called after _define_disks, so the cloud_init
@@ -351,18 +371,15 @@ class KubeVirtRawModule(KubernetesRawModule):
         self._define_cloud_init(cloud_init_nocloud, template_spec)
 
         # Define interfaces:
-        self._define_interfaces(interfaces, template_spec)
+        self._define_interfaces(interfaces, template_spec, defaults)
 
         # Define datavolumes:
         self._define_datavolumes(datavolumes, definition['spec'])
 
-        # Perform create/absent action:
-        definition = dict(self.merge_dicts(self.resource_definitions[0], definition))
-        resource = self.find_supported_resource(kind)
-        return dict(self.merge_dicts(self.resource_definitions[0], definition))
+        return self.merge_dicts(definition, self.resource_definitions[0])
 
-    def construct_vm_definition(self, kind, definition, template):
-        definition = self._construct_vm_definition(kind, definition, template, self.params)
+    def construct_vm_definition(self, kind, definition, template, defaults=None):
+        definition = self._construct_vm_definition(kind, definition, template, self.params, defaults)
         resource = self.find_supported_resource(kind)
         definition = self.set_defaults(resource, definition)
         return resource, definition
