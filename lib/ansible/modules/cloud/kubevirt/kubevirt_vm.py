@@ -380,7 +380,7 @@ class KubeVirtVM(KubeVirtRawModule):
         template['metadata']['labels']['vm.cnv.io/name'] = self.params.get('name')
         dummy, definition = self.construct_vm_definition(kind, definition, template, defaults)
 
-        return dict(self.merge_dicts(definition, processedtemplate))
+        return self.merge_dicts(definition, processedtemplate)
 
     def execute_module(self):
         # Parse parameters specific to this module:
