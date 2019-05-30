@@ -18,7 +18,7 @@ module: azure_rm_dnsrecordset
 
 version_added: "2.4"
 
-short_description: Create, delete and update DNS record sets and records.
+short_description: Create, delete and update DNS record sets and records
 
 description:
     - Creates, deletes, and updates DNS records sets and records within an existing Azure DNS Zone.
@@ -26,19 +26,19 @@ description:
 options:
     resource_group:
         description:
-            - name of resource group
+            - Name of resource group.
         required: true
     zone_name:
         description:
-            - name of the existing DNS zone in which to manage the record set
+            - Name of the existing DNS zone in which to manage the record set.
         required: true
     relative_name:
         description:
-            - relative name of the record set
+            - Relative name of the record set.
         required: true
     record_type:
         description:
-            - the type of record set to create or delete
+            - The type of record set to create or delete.
         choices:
             - A
             - AAAA
@@ -53,50 +53,49 @@ options:
         required: true
     record_mode:
         description:
-            - whether existing record values not sent to the module should be purged
+            - Whether existing record values not sent to the module should be purged.
         default: purge
         choices:
             - append
             - purge
     state:
         description:
-            - Assert the state of the record set. Use C(present) to create or update and
-              C(absent) to delete.
+            - Assert the state of the record set. Use C(present) to create or update and C(absent) to delete.
         default: present
         choices:
             - absent
             - present
     time_to_live:
         description:
-            - time to live of the record set in seconds
+            - Time to live of the record set in seconds.
         default: 3600
     records:
         description:
-            - list of records to be created depending on the type of record (set)
+            - List of records to be created depending on the type of record (set).
         suboptions:
             preference:
                 description:
-                    - used for creating an MX record set/records
+                    - Used for creating an C(MX) record set/records.
             priority:
                 description:
-                   - used for creating an SRV record set/records
+                   - Used for creating an C(SRV) record set/records.
             weight:
                 description:
-                    - used for creating an SRV record set/records
+                    - Used for creating an C(SRV) record set/records.
             port:
                 description:
-                    - used for creating an SRV record set/records
+                    - Used for creating an C(SRV) record set/records.
             entry:
                 description:
-                    - primary data value for all record types.
+                    - Primary data value for all record types.
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Obezimnaka Boms (@ozboms)"
-    - "Matt Davis (@nitzmahone)"
+    - Obezimnaka Boms (@ozboms)
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = '''
@@ -167,6 +166,76 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+state:
+    description:
+        - Current state of the DNS record set.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - The DNS record set ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxx......xxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/dnszones/b57dc95985712e4523282.com/A/www"
+        name:
+            description:
+                - Relate name of the record set.
+            returned: always
+            type: str
+            sample: 'www'
+        fqdn:
+            description:
+                - Fully qualified domain name of the record set.
+            return: always
+            type: str
+            sample: www.b57dc95985712e4523282.com
+        etag:
+            description:
+                - The etag of the record set.
+            return: always
+            type: str
+            sample: 692c3e92-a618-46fc-aecd-8f888807cd6c
+        provisioning_state:
+            description:
+                - The DNS record set state.
+            return: always
+            type: str
+            sample: Succeeded
+        target_resource:
+            description:
+                - The target resource of the record set.
+            return: always
+            type: dict
+            sample: {}
+        ttl:
+            description:
+                - The TTL(time-to-live) of the records in the records set.
+            return: always
+            type: int
+            sample: 3600
+        type:
+            description:
+                - The type of DNS record in this record set.
+            return: always
+            type: str
+            sample: A
+        arecords:
+            description:
+                - A list of records in the record set.
+            return: always
+            type: list
+            sample: [
+            {
+                "ipv4_address": "192.0.2.2"
+            },
+            {
+                "ipv4_address": "192.0.2.4"
+            },
+            {
+                "ipv4_address": "192.0.2.8"
+            }
+        ]
 '''
 
 import inspect
