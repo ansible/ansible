@@ -673,8 +673,11 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
 
 def ipmath(value, amount):
     try:
-        ip = netaddr.IPAddress(value)
-    except netaddr.AddrFormatError:
+        if '/' in value:
+            ip = netaddr.IPNetwork(value).ip
+        else:
+            ip = netaddr.IPAddress(value)
+    except (netaddr.AddrFormatError, ValueError):
         msg = 'You must pass a valid IP address; {0} is invalid'.format(value)
         raise errors.AnsibleFilterError(msg)
 
