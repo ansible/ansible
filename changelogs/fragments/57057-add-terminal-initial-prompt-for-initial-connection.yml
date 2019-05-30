@@ -1,0 +1,2 @@
+bugfixes:
+- add terminal initial prompt for initial connection(https://github.com/ansible/ansible/pull/57057).
