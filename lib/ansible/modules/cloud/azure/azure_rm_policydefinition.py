@@ -39,7 +39,7 @@ options:
         description:
             - The policy definition mode.
             - Possible values are C(Indexed) and C(All).
-            - "I(mode=all) determines all resource types will be evaluated for a policy 
+            - "I(mode=all) determines all resource types will be evaluated for a policy.
               and I(mode=indexed) means the policy only evaluate resource types that support tags and location."
             - Refer U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure#mode) for more details.
         choices:
@@ -55,12 +55,13 @@ options:
         description:
             - The policy rule.
             - Policy rules in JSON format string or a dict follows the policy rule
+            - This link U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure#policy-rule) can be helpful.
             - Refer U(https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/2018-05-01/policydefinitions) for more details.
-            - This link U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure) can be helpful.
     parameters:
         description:
             - Required if a parameter is used in policy rule.
             - JSON formatted string or a dict contains parameter definitions.
+            - This link U(https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure#parameter-properties) can be helpful.
             - Refer U(https://docs.microsoft.com/en-us/azure/templates/microsoft.authorization/2018-05-01/policydefinitions) for more details.
     metadata:
         description:
