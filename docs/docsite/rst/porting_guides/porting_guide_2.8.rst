@@ -177,7 +177,7 @@ Deprecated
         command: sleep 5
         async: 10
         vars:
-          ansible_aync_dir: /tmp/.ansible_async
+          ansible_async_dir: /tmp/.ansible_async
 
 * Plugin writers who need a ``FactCache`` object should be aware of two deprecations:
 
