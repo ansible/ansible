@@ -37,6 +37,10 @@
   - debug:
       var: create_one_one_check
 
+  - assert:
+      that:
+        - create_one_one_check is changed
+
   - name: Create 1:1 rule
     meraki_nat:
       auth_key: '{{auth_key}}'
@@ -59,6 +63,10 @@
 
   - debug:
       var: create_one_one
+
+  - assert:
+      that:
+        - create_one_one is changed
 
   - name: Create 1:1 rule with idempotency
     meraki_nat:
@@ -111,6 +119,10 @@
   - debug:
       var: create_one_many_check
 
+  - assert:
+      that:
+        - create_one_many_check is changed
+
   - name: Create 1:many rule
     meraki_nat:
       auth_key: '{{auth_key}}'
@@ -133,6 +145,10 @@
 
   - debug:
       var: create_one_many
+
+  - assert:
+      that:
+        - create_one_many is changed
 
   - name: Create 1:many rule with idempotency
     meraki_nat:
@@ -157,6 +173,10 @@
   - debug:
       var: create_one_many_idempotent
 
+  - assert:
+      that:
+        - create_one_many_idempotent is not changed
+
   - name: Create port forwarding rule with check mode
     meraki_nat:
       auth_key: '{{auth_key}}'
@@ -178,6 +198,10 @@
 
   - debug:
       var: create_pf_check
+
+  - assert:
+      that:
+        - create_pf_check is changed
 
   - name: Create port forwarding rule
     meraki_nat:
@@ -230,7 +254,7 @@
         - create_pf_idempotent is not changed
         - create_pf_idempotent.data.port_forwarding is defined
 
-  - name: Create create multiple rules
+  - name: Create multiple rules
     meraki_nat:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
@@ -261,6 +285,12 @@
 
   - debug:
       var: create_multiple
+
+  - assert:
+      that:
+        - create_multiple is changed
+        - create_multiple.data.one_to_many is defined
+        - create_multiple.data.port_forwarding is defined
 
   - assert:
       that:
