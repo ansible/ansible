@@ -159,6 +159,8 @@ options:
             - The IDs used in the expression must exactly match the ones
               defined in the filter conditions. No condition can remain unused or omitted.
             - Required for custom expression filters.
+            - Use sequential IDs that start at "A". If non-sequential IDs are used, Zabbix re-indexes them.
+              This makes each module run notice the difference in IDs and update the action.
     default_message:
         description:
             - Problem message default text.
