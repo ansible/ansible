@@ -49,10 +49,10 @@ options:
         suboptions:
             name:
                 description:
-                    - Name of container. eg. "imagename:tag".
+                    - Name of container. For example "imagename:tag".
             registry_server_url:
                 description:
-                    - Container registry server url. eg. C(mydockerregistry.io).
+                    - Container registry server url. For example C(mydockerregistry.io).
             registry_server_user:
                 description:
                     - The container registry server user name.
