@@ -1448,6 +1448,9 @@ files:
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
   test/units/modules/storage/hpe3par: *hpe3par
+  test/units/modules/storage/netapp:
+    maintainers: $team_netapp
+    support: community
   test/utils/shippable/:
     notified: mattclay
   hacking/report.py:
