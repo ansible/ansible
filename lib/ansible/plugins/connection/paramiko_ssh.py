@@ -134,6 +134,7 @@ import os
 import socket
 import tempfile
 import traceback
+import threading
 import fcntl
 import sys
 import re
@@ -233,6 +234,15 @@ class Connection(ConnectionBase):
 
     transport = 'paramiko'
     _log_channel = None
+
+    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
+
+        super(Connection, self).__init__(play_context, new_stdin, shell, *args, **kwargs)
+
+        self._flags = dict(
+            become_prompt=False, become_success=False,
+            become_error=False, become_nopasswd_error=False
+        )
 
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
@@ -399,53 +409,108 @@ class Connection(ConnectionBase):
 
         cmd = to_bytes(cmd, errors='surrogate_or_strict')
 
-        no_prompt_out = b''
-        no_prompt_err = b''
-        become_output = b''
+        event = threading.Event()
+        chan.in_buffer.set_event(event)
+        chan.in_stderr_buffer.set_event(event)
 
-        try:
-            chan.exec_command(cmd)
-            if self.become and self.become.expect_prompt():
-                passprompt = False
-                become_sucess = False
-                while not (become_sucess or passprompt):
-                    display.debug('Waiting for Privilege Escalation input')
+        b_stdout = b_stderr = b''
+        b_tmp_stdout = b_tmp_stderr = b''
 
+        chan.exec_command(cmd)
+        if self.become and self.become.expect_prompt():
+            while not (self._flags['become_success'] or chan.exit_status_ready()):
+                event.wait()
+
+                if chan.recv_ready():
                     chunk = chan.recv(bufsize)
-                    display.debug("chunk is: %s" % chunk)
-                    if not chunk:
-                        if b'unknown user' in become_output:
-                            raise AnsibleError('user %s does not exist' % self._play_context.become_user)
-                        else:
-                            break
-                            # raise AnsibleError('ssh connection closed waiting for password prompt')
-                    become_output += chunk
+                    display.debug("stdout chunk is: %s" % chunk)
+                    b_tmp_stdout += chunk
 
-                    # need to check every line because we might get lectured
-                    # and we might get the middle of a line in a chunk
-                    for l in become_output.splitlines(True):
-                        if self.become.check_success(l):
-                            become_sucess = True
-                            break
-                        elif self.become.check_password_prompt(l):
-                            passprompt = True
-                            break
+                    b_output, b_unprocessed = self._examine_output('stdout', b_tmp_stdout, sudoable)
+                    b_stdout += b_output
+                    b_tmp_stdout = b_unprocessed
 
-                if passprompt:
+                if chan.recv_stderr_ready():
+                    chunk = chan.recv_stderr(bufsize)
+                    display.debug("stderr chunk is: %s" % chunk)
+                    b_tmp_stderr += chunk
+
+                    b_output, b_unprocessed = self._examine_output('stderr', b_tmp_stderr, sudoable)
+                    b_stderr += b_output
+                    b_tmp_stderr = b_unprocessed
+
+                if self._flags['become_prompt']:
+                    display.debug('Sending become_password in response to prompt')
+                    self._flags['become_prompt'] = False
                     if self._play_context.become and self._play_context.become_pass:
                         chan.sendall(to_bytes(self._play_context.become_pass) + b'\n')
                     else:
                         raise AnsibleError("A password is required but none was supplied")
-                else:
-                    no_prompt_out += become_output
-                    no_prompt_err += become_output
-        except socket.timeout:
-            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
+                elif self._flags['become_success']:
+                    display.vvv('Escalation succeeded')
+                    self._flags['become_success'] = False
+                    b_stdout += b_tmp_stdout
+                    b_stderr += b_tmp_stderr
+                    break
+                elif self._flags['become_error']:
+                    display.vvv('Escalation failed')
+                    self._flags['become_error'] = False
+                    raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
+                elif self._flags['become_nopasswd_error']:
+                    display.vvv('Escalation requires password')
+                    self._flags['become_nopasswd_error'] = False
+                    raise AnsibleError('Missing %s password' % self._play_context.become_method)
 
         stdout = b''.join(chan.makefile('rb', bufsize))
         stderr = b''.join(chan.makefile_stderr('rb', bufsize))
 
-        return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
+        return (chan.recv_exit_status(), b_stdout + stdout, b_stderr + stderr)
+
+    def _examine_output(self, source, b_chunk, sudoable):
+        '''
+        Takes a string, extracts complete lines from it, tests to see if they
+        are a prompt, error message, etc., and sets appropriate flags in self.
+        Prompt and success lines are removed.
+
+        Returns the processed (i.e. possibly-edited) output and the unprocessed
+        remainder (to be processed with the next chunk) as strings.
+        '''
+
+        output = []
+        for b_line in b_chunk.splitlines(True):
+            display_line = to_text(b_line).rstrip('\r\n')
+            suppress_output = False
+
+            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
+            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
+                display.debug("become_prompt: (source=%s): '%s'" % (source, display_line))
+                self._flags['become_prompt'] = True
+                suppress_output = True
+            elif self.become.success and self.become.check_success(b_line):
+                display.debug("become_success: (source=%s): '%s'" % (source, display_line))
+                self._flags['become_success'] = True
+                suppress_output = True
+            elif sudoable and self.become.check_incorrect_password(b_line):
+                display.debug("become_error: (source=%s): '%s'" % (source, display_line))
+                self._flags['become_error'] = True
+            elif sudoable and self.become.check_missing_password(b_line):
+                display.debug("become_nopasswd_error: (source=%s): '%s'" % (source, display_line))
+                self._flags['become_nopasswd_error'] = True
+
+            if not suppress_output:
+                output.append(b_line)
+
+        # The chunk we read was most likely a series of complete lines, but just
+        # in case the last line was incomplete (and not a prompt, which we would
+        # have removed from the output), we retain it to be processed with the
+        # next chunk.
+
+        remainder = b''
+        if output and not output[-1].endswith(b'\n'):
+            remainder = output[-1]
+            output = output[:-1]
+
+        return b''.join(output), remainder
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
