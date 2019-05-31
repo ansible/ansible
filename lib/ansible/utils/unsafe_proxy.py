@@ -111,7 +111,7 @@ def wrap_var(v):
     return v
 
 
-def is_unsafe(val, recurse=True):
+def is_unsafe(val, recurse=False):
     '''
     Our helper function, which will also recursively check dict and
     list entries due to the fact that they may be repr'd and contain
@@ -124,11 +124,11 @@ def is_unsafe(val, recurse=True):
     elif recurse:
         if isinstance(val, Mapping):
             for key in val.keys():
-                if is_unsafe(val[key]):
+                if is_unsafe(val[key], True):
                     return True
         elif isinstance(val, Sequence) and not isinstance(val, string_types):
             for item in val:
-                if is_unsafe(item):
+                if is_unsafe(item, True):
                     return True
 
     return False

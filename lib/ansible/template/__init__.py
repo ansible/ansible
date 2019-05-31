@@ -257,7 +257,7 @@ class AnsibleContext(Context):
         self.unsafe = False
 
     def _update_unsafe(self, val):
-        if val is not None and not self.unsafe and is_unsafe(val):
+        if val is not None and not self.unsafe and is_unsafe(val, recurse=True):
             self.unsafe = True
 
     def resolve(self, key):
@@ -527,7 +527,7 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
-                            elif is_unsafe(resolved_val, recurse=False):
+                            elif is_unsafe(resolved_val):
                                 return wrap_var(resolved_val)
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
@@ -558,7 +558,7 @@ class Templar:
                         )
 
                         if not USE_JINJA2_NATIVE:
-                            unsafe = is_unsafe(result)
+                            unsafe = is_unsafe(result, recurse=True)
                             if convert_data and not self._no_type_regex.match(variable):
                                 # if this looks like a dictionary or list, convert it to such using the safe_eval method
                                 if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \

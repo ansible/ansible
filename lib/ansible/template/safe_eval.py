@@ -22,11 +22,9 @@ import ast
 import sys
 
 from ansible import constants as C
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import filter_loader, test_loader
-from ansible.utils.unsafe_proxy import is_unsafe
 
 
 def safe_eval(expr, locals=None, include_exceptions=False):
