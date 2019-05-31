@@ -1,0 +1,2 @@
+minor_changes:
+- "syslog_json - Allow configuration of the syslog_json plugin via an Ansible configuration file."
