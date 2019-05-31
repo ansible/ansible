@@ -14,9 +14,9 @@ DOCUMENTATION = '''
     version_added: "1.9"
     description:
       - This plugin logs ansible-playbook and ansible runs to a syslog server in JSON format
-      - Before 2.4 only environment variables were available for configuration
+      - Before 2.9 only environment variables were available for configuration
     options:
-      server:
+      syslog_server:
         description: syslog server that will receive the event
         env:
         - name: SYSLOG_SERVER
@@ -24,7 +24,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_syslog_json
             key: syslog_server
-      port:
+      syslog_port:
         description: port on which the syslog server is listening
         env:
           - name: SYSLOG_PORT
@@ -32,7 +32,7 @@ DOCUMENTATION = '''
         ini:
           - section: callback_syslog_json
             key: syslog_port
-      facility:
+      syslog_facility:
         description: syslog facility to log as
         env:
           - name: SYSLOG_FACILITY
@@ -67,12 +67,18 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
+        self.set_options()
+
+        syslog_host = self.get_option("syslog_server")
+        syslog_port = int(self.get_option("syslog_port"))
+        syslog_facility = self.get_option("syslog_facility")
+
         self.logger = logging.getLogger('ansible logger')
         self.logger.setLevel(logging.DEBUG)
 
         self.handler = logging.handlers.SysLogHandler(
-            address=(os.getenv('SYSLOG_SERVER', 'localhost'), int(os.getenv('SYSLOG_PORT', 514))),
-            facility=os.getenv('SYSLOG_FACILITY', logging.handlers.SysLogHandler.LOG_USER)
+            address=(syslog_host, syslog_port),
+            facility=syslog_facility
         )
         self.logger.addHandler(self.handler)
         self.hostname = socket.gethostname()
