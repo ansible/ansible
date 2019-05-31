@@ -1,4 +1,3 @@
-# --- VM1 --- #
 - name: Create virtual machine with a single NIC and no boot diagnostics
   register: output
   azure_rm_virtualmachine:
@@ -168,7 +167,7 @@
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name1 }}"
-      allocated: no
+      allocated: no 
       vm_size: Standard_A0
   register: output
 
@@ -262,11 +261,6 @@
 
 - assert:
       that: azure_publicipaddresses | length == 0
-
-
-
-
-# --- VM2 --- #
 
 - name: Create virtual machine without public ip address and with boot diagnostics enabled
   azure_rm_virtualmachine:
@@ -379,7 +373,7 @@
 
 - name: Assert that facts module returned the second vm
   assert:
-    that:
+    that: 
       - results.vms | length == 1
       - results.vms[0].name == "{{ vm_name2 }}"
       - results.vms[0].location
@@ -395,7 +389,7 @@
 
 - name: Assert that facts module returned the second vm
   assert:
-    that:
+    that: 
       - results.vms | length >= 1
 
 - name: Should be idempotent with a dual NICs
@@ -447,10 +441,6 @@
   async: 5000
   poll: 0
 
-
-
-# --- VM 3 --- #
-
 # TODO: Until we have a module to create/delete images this is the best tests
 # I can do
 - name: assert error thrown with invalid image dict
@@ -500,7 +490,7 @@
       #name: hardened-ubuntu-14-04
       #product: ubuntu-14-04-lts
       #publisher: cognosys
-
+      
 #- name: Create virtual machine with image and plan which requires acceptance of terms
   #azure_rm_virtualmachine:
       #resource_group: "{{ resource_group }}"
@@ -568,7 +558,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name3 }}01"
   register: output_nic
-
+      
 - name: Query NSG
   azure_rm_securitygroup_facts:
     resource_group: "{{ resource_group }}"
@@ -583,7 +573,7 @@
 
 - name: Assert that autocreated resources were deleted
   assert:
-    that:
+    that: 
       # what about the default storage group?
       - output_nic.ansible_facts.azure_networkinterfaces | length == 0
       - output_nsg.ansible_facts.azure_securitygroups | length == 0

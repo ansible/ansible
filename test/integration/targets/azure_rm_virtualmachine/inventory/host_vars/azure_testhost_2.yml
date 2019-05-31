@@ -1,0 +1,1 @@
+vm_name: "{{ ('vm2' ~ resource_group) | hash('md5') | truncate(8, True, '') }}"

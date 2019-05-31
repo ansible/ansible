@@ -1,0 +1,21 @@
+- name: Setup for Azure VM tests
+  hosts: azure_testhost_1
+  gather_facts: no
+  tasks:
+    - import_tasks: tasks/setup.yml
+
+
+- name: Run Azurue VM tests in parallel
+  hosts: all
+  gather_facts: no
+  strategy: free
+  tasks:
+    - name: Include tasks based on inventory hostname
+      include_tasks: tasks/{{ inventory_hostname }}.yml
+
+
+- name: Teardown after Azure VM tests
+  hosts: azure_testhost_1
+  gather_facts: no
+  tasks:
+    - import_tasks: tasks/teardown.yml

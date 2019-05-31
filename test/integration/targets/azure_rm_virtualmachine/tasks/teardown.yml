@@ -1,62 +1,48 @@
-- name: Destroy NIC for single nic VM
+- name: TEARDOWN | Destroy NIC
   azure_rm_networkinterface:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
 
-- name: Destroy 2nd security group
+- name: TEARDOWN | Destroy security groups
   azure_rm_securitygroup:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name2 }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ hostvars['azure_testhost_2']['vm_name'] }}"
+    - "{{ vm_name }}"
 
-- name: Destroy security group
-  azure_rm_securitygroup:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      state: absent
-
-- name: Destroy subnet
+- name: TEARDOWN | Destroy subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
-      virtual_network: "{{ vm_name1 }}"
-      name: "{{ vm_name1 }}"
+      virtual_network: "{{ vm_name }}"
+      name: "{{ vm_name }}"
       state: absent
 
-- name: Destroy virtual network
+- name: TEARDOWN | Destroy virtual network
   azure_rm_virtualnetwork:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
 
-- name: Destroy public ip
+- name: TEARDOWN | Destroy public ip
   azure_rm_publicipaddress:
-      resource_group: "{{ resource_group }}"
-      name: "{{ vm_name1 }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
 
-- name: Destroy 2nd availability set
+- name: TEARDOWN | Destroy availability sets
   azure_rm_availabilityset:
-      resource_group: "{{ resource_group }}"
-      name: "{{ abs_name2 }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ abs_names | reverse | list }}"
 
-- name: Destroy an availability set
-  azure_rm_availabilityset:
-      resource_group: "{{ resource_group }}"
-      name: "{{ abs_name1 }}"
-      state: absent
-
-- name: Destroy 2nd storage account
+- name: TEARDOWN | Destroy storage accounts
   azure_rm_storageaccount:
-      resource_group: "{{ resource_group }}"
-      name: "{{ storage_account2 }}"
-      force_delete_nonempty: true
-      state: absent
-
-- name: Destroy storage account
-  azure_rm_storageaccount:
-      resource_group: "{{ resource_group }}"
-      name: "{{ storage_account }}"
-      force_delete_nonempty: true
-      state: absent
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+    force_delete_nonempty: true
+    state: absent
+  loop: "{{ storage_accounts | reverse | list }}"

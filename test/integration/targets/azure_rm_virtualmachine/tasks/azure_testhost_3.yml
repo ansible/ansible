@@ -1,0 +1,137 @@
+# TODO: Until we have a module to create/delete images this is the best tests
+# I can do
+- name: assert error thrown with invalid image dict
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image:
+        offer: UbuntuServer
+  register: fail_invalid_image_dict
+  failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]"'
+
+- name: assert error thrown with invalid image type
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image:
+      - testing
+  register: fail_invalid_image_type
+  failed_when: 'fail_invalid_image_type.msg != "parameter error: expecting image to be a string or dict not list"'
+
+- name: assert error finding missing custom image
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image: invalid-image
+  register: fail_missing_custom_image
+  failed_when: fail_missing_custom_image.msg != "Error could not find image with name invalid-image"
+
+- name: assert error finding missing custom image (dict style)
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvm002
+      image:
+        name: invalid-image
+  register: fail_missing_custom_image_dict
+  failed_when: fail_missing_custom_image_dict.msg != "Error could not find image with name invalid-image"
+
+## Tests possible when CI user acccount setup with required authority
+#- name: Set test facts
+  #set_fact:
+    #image_paid:
+      #publisher: cognosys
+      #offer: ubuntu-14-04-lts
+      #sku: hardened-ubuntu-14-04
+      #version: latest
+    #plan_paid:
+      #name: hardened-ubuntu-14-04
+      #product: ubuntu-14-04-lts
+      #publisher: cognosys
+
+#- name: Create virtual machine with image and plan which requires acceptance of terms
+  #azure_rm_virtualmachine:
+      #resource_group: "{{ resource_group }}"
+      #name: testvm009
+      #vm_size: Standard_A0
+      #storage_account: "{{ storage_account[0] }}"
+      #storage_container: testvm001
+      #storage_blob: testvm003.vhd
+      #admin_username: adminuser
+      #admin_password: Password123!
+      #short_hostname: testvm
+      #os_type: Linux
+      #availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      #image: "{{ image_paid }}"
+      #plan_paid: "{{ plan_paid }}"
+  #register: output
+
+#- assert:
+    #that:
+      #- output.changed
+      #- output.ansible_facts.azure_vm.properties.storageProfile.imageReference.publisher == image_paid.publisher
+
+#- name: Should be idempotent with image and plan which requires acceptance of terms
+  #azure_rm_virtualmachine:
+      #resource_group: "{{ resource_group }}"
+      #name: testvm009
+      #vm_size: Standard_A0
+      #storage_account: "{{ storage_account[0] }}"
+      #storage_container: testvm001
+      #storage_blob: testvm003.vhd
+      #admin_username: adminuser
+      #admin_password: Password123!
+      #short_hostname: testvm
+      #os_type: Linux
+      #availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      #image: "{{ image_paid }}"
+      #plan_paid: "{{ plan_paid }}"
+
+#- assert:
+    #that: not output.changed
+
+- name: Create minimal VM with defaults
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    admin_username: "testuser"
+    admin_password: "Pass123$$$abx!"
+    vm_size: Standard_B1ms
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: vm_output
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    remove_on_absent: all_autocreated
+    state: absent
+
+- name: Query NIC
+  azure_rm_networkinterface_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}01"
+  register: output_nic
+
+- name: Query NSG
+  azure_rm_securitygroup_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}01"
+  register: output_nsg
+
+- name: Query PIP
+  azure_rm_publicipaddress_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}01"
+  register: output_pip
+
+- name: Assert that autocreated resources were deleted
+  assert:
+    that:
+      # what about the default storage group?
+      - output_nic.ansible_facts.azure_networkinterfaces | length == 0
+      - output_nsg.ansible_facts.azure_securitygroups | length == 0
+      - output_pip.ansible_facts.azure_publicipaddresses | length == 0
