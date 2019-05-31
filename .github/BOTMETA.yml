@@ -147,7 +147,8 @@ files:
   $modules/cloud/huawei/: &huawei
     keywords: [ cloud, huawei, hwc ]
     labels: [ cloud, huawei ]
-    maintainers: $team_huawei
+    maintainers: $team_ansible
+    ignored: $team_ansible
   $modules/cloud/kubevirt/: &kubevirt
     keywords: [ kubevirt ]
     labels: [ cloud, kubevirt ]
@@ -301,7 +302,9 @@ files:
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
-  $modules/network/cloudengine/: QijunPan xuxiaowei0512
+  $modules/network/cloudengine/:
+    maintainers: $team_ansible
+    ignored: $team_huawei
   $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
@@ -696,6 +699,8 @@ files:
   $module_utils/gitlab.py: *gitlab
   $module_utils/hwc_utils.py: &huawei_hwc
     <<: *huawei
+    maintainers: $team_ansible
+    ignored: $team_huawei
     support: community
     labels:
       - networking
@@ -740,7 +745,8 @@ files:
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
   $module_utils/network/cloudengine:
-    maintainers: QijunPan
+    maintainers: $team_ansible
+    ignored: $team_huawei
   $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
   $module_utils/network/common:
@@ -1117,7 +1123,9 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
-  $plugins/doc_fragments/hwc.py: *huawei
+  $plugins/doc_fragments/hwc.py:
+    maintainers: $team_ansible
+    ignored: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
@@ -1394,7 +1402,9 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
-  test/integration/targets/hwc_: *huawei
+  test/integration/targets/hwc_:
+    maintainers: $team_ansible
+    ignored: $team_huawei
   test/integration/targets/inventory_docker: *docker
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
@@ -1430,7 +1440,9 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/module_utils/hwc: *huawei_hwc
+  test/units/module_utils/hwc:
+    maintainers: $team_ansible
+    ignored: $team_huawei
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
@@ -1483,7 +1495,7 @@ macros:
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
-  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
   team_ios: rcarrillocruz
