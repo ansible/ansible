@@ -103,7 +103,7 @@
   assert:
     that:
       - result.failed == true
-      - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
+      - "'Failed to validate the SSL certificate' in result.msg or 'Hostname mismatch' in result.msg or (result.msg is match('hostname .* doesn.t match .*'))"
       - stat_result.stat.exists == false
       - result.status is defined
       - result.status == -1
