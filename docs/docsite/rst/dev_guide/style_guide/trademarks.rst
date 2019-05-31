@@ -12,7 +12,7 @@ General Rules:
 
 Trademarks should be used on 1st references on a page or within a section.
 
-Use Ansible Tower® or Ansible®, on first reference when referring to products.
+Use Red Hat® Ansible Tower® or Ansible®, on first reference when referring to products.
  
 Use "Ansible" alone as the company name, as in "Ansible announced quarterly results," which is not marked.
 
@@ -20,13 +20,13 @@ Also add the trademark disclaimer.
 * When using Ansible trademarks in the body of written text, you should use the following credit line in a prominent place, usually a footnote.
 
     For Registered Trademarks:
-    - [Name of Trademark] is a registered trademark of Ansible, Inc. in the United States and other countries.
+    - [Name of Trademark] is a registered trademark of Red Hat, Inc. in the United States and other countries.
     
     For Unregistered Trademarks (TMs/SMs):
-    - [Name of Trademark] is a trademark of Ansible, Inc. in the United States and other countries.
+    - [Name of Trademark] is a trademark of Red Hat, Inc. in the United States and other countries.
 
     For registered and unregistered trademarks:
-    - [Name of Trademark] is a registered trademark and [Name of Trademark] is a trademark of Ansible, Inc. in the United States and other countries.
+    - [Name of Trademark] is a registered trademark and [Name of Trademark] is a trademark of Red Hat, Inc. in the United States and other countries.
 
 Guidelines for the proper use of trademarks:
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -38,7 +38,7 @@ Always use proper trademark form and spelling.
 Never use a trademark as a noun. Always use a trademark as an adjective modifying the noun.
 
     Correct:
-    Ansible Tower® system performance is incredible.
+    Red Hat® Ansible Tower® system performance is incredible.
 
     Incorrect:
     Ansible's performance is incredible.
@@ -46,7 +46,7 @@ Never use a trademark as a noun. Always use a trademark as an adjective modifyin
 Never use a trademark as a verb. Trademarks are products or services, never actions.
 
     Correct:
-    "Orchestrate your entire network using Ansible Tower®."
+    "Orchestrate your entire network using Red Hat® Ansible Tower®."
     
     Incorrect:
     "Ansible your entire network."
@@ -54,7 +54,7 @@ Never use a trademark as a verb. Trademarks are products or services, never acti
 Never modify a trademark to a plural form. Instead, change the generic word from the singular to the plural.
 
     Correct:
-    "Corporate demand for Ansible Tower® configuration software is surging."
+    "Corporate demand for Red Hata® Ansible Tower® configuration software is surging."
 
     Incorrect:
     "Corporate demand for Ansible is surging."
