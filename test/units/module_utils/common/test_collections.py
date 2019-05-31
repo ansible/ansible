@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c), Sviatoslav Sydorenko <ssydoren@redhat.com> 2018
+# Copyright (c) 2018–2019, Sviatoslav Sydorenko <webknjaz@redhat.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 """Test low-level utility functions from ``module_utils.common.collections``."""
 
@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import pytest
 
+from ansible.module_utils.six import Iterator
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
@@ -24,7 +25,7 @@ class SeqStub:
 Sequence.register(SeqStub)
 
 
-class IteratorStub:
+class IteratorStub(Iterator):
     def __next__(self):
         raise StopIteration
 
@@ -126,13 +127,13 @@ class TestImmutableDict:
     def test_immutable(self):
         imdict = ImmutableDict({1: 2})
 
-        with pytest.raises(TypeError) as exc_info:
-            imdict[1] = 3
-        assert exc_info.value.args[0] == "'ImmutableDict' object does not support item assignment"
+        expected_reason = r"^'ImmutableDict' object does not support item assignment$"
 
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError, match=expected_reason):
+            imdict[1] = 3
+
+        with pytest.raises(TypeError, match=expected_reason):
             imdict[5] = 3
-        assert exc_info.value.args[0] == "'ImmutableDict' object does not support item assignment"
 
     def test_hashable(self):
         # ImmutableDict is hashable when all of its values are hashable
@@ -143,14 +144,19 @@ class TestImmutableDict:
         # ImmutableDict is unhashable when one of its values is unhashable
         imdict = ImmutableDict({u'café': u'くらとみ', 1: [1, 2]})
 
-        with pytest.raises(TypeError) as exc_info:
+        expected_reason = r"^unhashable type: 'list'$"
+
+        with pytest.raises(TypeError, match=expected_reason):
             hash(imdict)
-        assert exc_info.value.args[0] == "unhashable type: 'list'"
 
     def test_len(self):
         imdict = ImmutableDict({1: 2, 'a': 'b'})
         assert len(imdict) == 2
 
     def test_repr(self):
-        imdict = ImmutableDict({1: 2, 'a': 'b'})
-        assert repr(imdict) == "ImmutableDict({1: 2, 'a': 'b'})"
+        initial_data = {1: 2, 'a': 'b'}
+        initial_data_repr = repr(initial_data)
+        imdict = ImmutableDict(initial_data)
+        actual_repr = repr(imdict)
+        expected_repr = "ImmutableDict({0})".format(initial_data_repr)
+        assert actual_repr == expected_repr
