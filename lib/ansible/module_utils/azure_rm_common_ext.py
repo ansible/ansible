@@ -145,7 +145,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 result['compare'].append('changed [' + path + '] old dict is null')
                 comparison_result = False
             else:
-                for k in list(set(new.keys() + old.keys())):
+                for k in set(new.keys()) | set(old.keys()):
                     new_item = new.get(k, None)
                     old_item = old.get(k, None)
                     if new_item is None:
