@@ -283,7 +283,7 @@ class PgCopyData(object):
         self.src = self.module.params['src']
         self.dst = self.module.params['copy_to']
 
-        if 'SELECT' in self.src.upper():
+        if 'SELECT ' in self.src.upper():
             # If src is SQL SELECT statement:
             query_fragments = ['COPY (%s)' % self.src]
         else:
@@ -334,7 +334,7 @@ class PgCopyData(object):
                 instead of the table name.
         """
 
-        if 'SELECT' in table.upper():
+        if 'SELECT ' in table.upper():
             # In this case table is actually SQL SELECT statement.
             # If SQL fails, it's handled by exec_sql():
             exec_sql(self, table, add_to_executed=False)
