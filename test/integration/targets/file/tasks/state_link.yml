@@ -339,7 +339,7 @@
     - name: Clean up
       file:
         path: "{{ item }}"
-        state: touch
+        state: absent
       loop:
         - "{{ output_dir }}/test_follow1"
         - "{{ output_dir }}/test_follow1_link"
