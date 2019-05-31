@@ -1504,7 +1504,7 @@ macros:
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull gtema
+  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me cloudnull gtema
   team_openswitch: Qalthos gdpak
   team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
