@@ -4,7 +4,7 @@
     cname: "{{ cname_prefix ~ '-comparisons' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname]"
+    cnames: "{{ cnames + [cname] }}"
 
 ####################################################################
 ## value ###########################################################

@@ -4,7 +4,7 @@
     vname: "{{ name_prefix ~ '-basic' }}"
 - name: Registering container name
   set_fact:
-    vnames: "{{ vnames }} + [vname]"
+    vnames: "{{ vnames + [vname] }}"
 
 ####################################################################
 ## basic ###########################################################

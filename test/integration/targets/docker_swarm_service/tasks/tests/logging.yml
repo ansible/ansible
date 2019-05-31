@@ -6,7 +6,7 @@
 
 - name: Registering service name
   set_fact:
-    service_names: "{{ service_names }} + [service_name]"
+    service_names: "{{ service_names + [service_name] }}"
 
 ####################################################################
 ## logging.driver ##################################################
