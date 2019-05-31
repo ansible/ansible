@@ -346,7 +346,7 @@ options:
             - 'SystemAssigned, UserAssigned'
     vm_user_assigned_identities:
         description:
-            - List of user assigned identity names to assign to the VM. Only useful with vm_identity='UserAssigned' or 'SystemAssigned, UserAssigned'.
+            - List of user assigned identity names to assign to the VM. Only used when I(vm_identity=UserAssigned) or I(vm_identity='SystemAssigned, UserAssigned').
         type: list
         version_added: 2.9
     winrm:
@@ -850,7 +850,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             accept_terms=dict(type='bool', default=False),
             license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
             vm_identity=dict(type='str', choices=['SystemAssigned', 'UserAssigned', 'SystemAssigned, UserAssigned']),
-            vm_user_assigned_identities=dict(type='list', default=None),
+            vm_user_assigned_identities=dict(type='list'),
             winrm=dict(type='list'),
             boot_diagnostics=dict(type='dict'),
         )
