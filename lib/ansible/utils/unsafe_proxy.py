@@ -113,12 +113,12 @@ def wrap_var(v):
 
 def is_unsafe(val, recurse=False):
     '''
-    Our helper function, which will also recursively check dict and
+    Our helper function, which will can recursively check dict and
     list entries due to the fact that they may be repr'd and contain
     a key or value which contains jinja2 syntax and would otherwise
     lose the AnsibleUnsafe value.
     '''
-    if hasattr(val, '__UNSAFE__'):
+    if isinstance(val, AnsibleUnsafe) or hasattr(val, '__UNSAFE__'):
         return True
 
     elif recurse:
