@@ -5,7 +5,7 @@ Red Hat Ansible Tower
 
 `Red Hat Ansible Tower <https://www.ansible.com/products/tower>` is a web console and REST API for operationalizing Ansible across your team, organization, and enterpise. It's designed to be the hub for all of your automation tasks.
 
-Ansible Tower allows you to control access to who can access what through role-based access control, and allows sharing of securely stored credentials for SSH and other services.  Inventory can be synced with a wide variety of cloud sources, and powerful multi-playbook workflows allow you to model
+Ansible Tower gives you role-based access control, including control over the use of securely stored credentials for SSH and other services. You can sync your Ansible Tower inventory with a wide variety of cloud sources, and powerful multi-playbook workflows allow you to model
 complex processes.
 
 It logs all of your jobs, integrates well with LDAP, SAML, and other authentication sources, and has an amazing browsable REST API. Command line tools are available for easy integration with Jenkins as well.
