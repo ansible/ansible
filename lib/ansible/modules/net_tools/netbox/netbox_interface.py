@@ -108,6 +108,12 @@ options:
     choices: [ absent, present ]
     default: present
     type: str
+  app:
+    description:
+      - Use C(dcim) or C(virtualization) for selecting if the interface will be added to a Device or Virtual Machine.
+    choices: [ dcim, virtualization ]
+    default: dcim
+    type: str
   validate_certs:
     description:
       - |
@@ -187,6 +193,15 @@ EXAMPLES = r"""
           mgmt_only: true
           mode: Tagged
         state: present
+    - name: Create VM interface within Netbox with only required information
+      netbox_interface:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        app: virtualization
+        data:
+          virtual_machine: vm_100
+          name: interface_1
+        state: present
 """
 
 RETURN = r"""
@@ -203,7 +218,8 @@ msg:
 import json
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+#from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.netbox.netbox_utils import (
     find_ids,
     normalize_data,
@@ -235,6 +251,7 @@ def main():
         netbox_token=dict(type="str", required=True, no_log=True),
         data=dict(type="dict", required=True),
         state=dict(required=False, default="present", choices=["present", "absent"]),
+        app=dict(required=False, default="dcim", choices=["dcim", "virtualization"]),
         validate_certs=dict(type="bool", default=True)
     )
 
@@ -244,9 +261,10 @@ def main():
 
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
-        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
+        module.fail_json(msg="missing required lib pynetbox", exception=PYNETBOX_IMP_ERR)
+        #module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
     # Assign variables to be used with module
-    app = "dcim"
+    app = module.params["app"]
     endpoint = "interfaces"
     url = module.params["netbox_url"]
     token = module.params["netbox_token"]
@@ -304,7 +322,11 @@ def ensure_interface_present(nb, nb_endpoint, data):
         changed = False
         return {"msg": data, "changed": changed}
 
-    nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    if "dcim" in nb_endpoint.url:
+        nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    elif "virtualization" in nb_endpoint.url:
+        nb_intf = nb_endpoint.get(name=data["name"], virtual_machine_id=data["virtual_machine"])
+
     result = dict()
 
     if not nb_intf:
@@ -332,7 +354,10 @@ def ensure_interface_absent(nb, nb_endpoint, data):
     """
     :returns dict(msg, changed, diff)
     """
-    nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    if "dcim" in nb_endpoint.url:
+        nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
+    elif "virtualization" in nb_endpoint.url:
+        nb_intf = nb_endpoint.get(name=data["name"], virtual_machine_id=data["virtual_machine"])
     result = dict()
     if nb_intf:
         dummy, diff = delete_netbox_object(nb_intf, module.check_mode)
