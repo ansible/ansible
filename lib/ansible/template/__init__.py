@@ -49,6 +49,7 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var, is_unsafe
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -527,7 +528,7 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
-                            elif is_unsafe(resolved_val):
+                            elif is_unsafe(resolved_val) and not isinstance(resolved_val, AnsibleVaultEncryptedUnicode):
                                 return wrap_var(resolved_val)
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
