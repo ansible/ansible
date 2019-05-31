@@ -58,8 +58,5 @@ def test_removed_module_sys_exit(input_data):
 def test_removed_module_msgs(input_data, expected_msg, expected_warn, capsys):
     """Test for removed_module function, content of output messages."""
 
-    with pytest.raises(SystemExit) as wrapped_e:
-        removed_module(input_data)
-
     captured = capsys.readouterr()
     assert expected_msg, expected_warn in captured.out
