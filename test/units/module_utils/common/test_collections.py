@@ -153,5 +153,9 @@ class TestImmutableDict:
         assert len(imdict) == 2
 
     def test_repr(self):
-        imdict = ImmutableDict({1: 2, 'a': 'b'})
-        assert repr(imdict) == "ImmutableDict({1: 2, 'a': 'b'})"
+        initial_data = {1: 2, 'a': 'b'}
+        initial_data_repr = repr(initial_data)
+        imdict = ImmutableDict(initial_data)
+        actual_repr = repr(imdict)
+        expected_repr = "ImmutableDict({})".format(initial_data_repr)
+        assert actual_repr == expected_repr
