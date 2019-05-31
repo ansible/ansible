@@ -8,6 +8,6 @@ Red Hat Ansible Tower
 Ansible Tower allows you to control access to who can access what through role-based access control, and allows sharing of securely stored credentials for SSH and other services.  Inventory can be synced with a wide variety of cloud sources, and powerful multi-playbook workflows allow you to model
 complex processes.
 
-It logs all of your jobs, integrates well with LDAP, SAML, and other account sources, and has an amazing browsable REST API. Command line tools are available for easy integration with Jenkins as well.
+It logs all of your jobs, integrates well with LDAP, SAML, and other authentication sources, and has an amazing browsable REST API. Command line tools are available for easy integration with Jenkins as well.
 
 Find out more about Ansible Tower features and how to download it on the `Ansible Tower webpage <https://www.ansible.com/products/tower>`_. Ansible Tower is part of the Red Hat Ansible Automation subscription, and comes bundled with amazing support from Red Hat, Inc.
