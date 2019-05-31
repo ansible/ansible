@@ -107,7 +107,7 @@ options:
             - Format tags as 'key' or 'key:value'.
     zone:
         description:
-            - The Azure managed disk's zone. 
+            - The Azure managed disk's zone.
         choices:
             - 1
             - 2
