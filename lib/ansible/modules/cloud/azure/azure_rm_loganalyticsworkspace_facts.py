@@ -90,7 +90,7 @@ retention_in_days:
     description:
         - The workspace data retention in days.
         - -1 means Unlimited retention for I(sku=unlimited).
-        - 730 days is the maximum allowed for all other skus.
+        - 730 days is the maximum allowed for all other SKUs.
     type: int
     returned: success
     example: 40

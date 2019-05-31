@@ -55,12 +55,12 @@ options:
         description:
             - The workspace data retention in days.
             - -1 means Unlimited retention for I(sku=unlimited).
-            - 730 days is the maximum allowed for all other skus.
+            - 730 days is the maximum allowed for all other SKUs.
     intelligence_packs:
         description:
             - Manage intelligence packs possible for this workspace.
-            - Enable one pack by setting it to C(true). For example "{'Backup': true}".
-            - Disable one pack by setting it to C(false). For example "{'Backup': false}".
+            - Enable one pack by setting it to C(true). For example "Backup: true".
+            - Disable one pack by setting it to C(false). For example "Backup: false".
             - Other intelligence packs not list in this property will not be changed.
         type: dict
 extends_documentation_fragment:
@@ -104,7 +104,7 @@ retention_in_days:
     description:
         - The workspace data retention in days.
         - -1 means Unlimited retention for I(sku=unlimited).
-        - 730 days is the maximum allowed for all other skus.
+        - 730 days is the maximum allowed for all other SKUs.
     type: int
     returned: success
     example: 40
