@@ -134,8 +134,8 @@ options:
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
     - ' - C(num_cpus) (integer): Number of CPUs.'
-    - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. This is a devision of C(num_cpus).'
-          for example to create a VM with 2 sockets of 4 cores, specify C(num_cpus): 8 and C(num_cpu_cores_per_socket): 4
+    - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket.'
+    - ' C(num_cpus) must be a multiple of C(num_cpu_cores_per_socket). For example to create a VM with 2 sockets of 4 cores, specify C(num_cpus): 8 and C(num_cpu_cores_per_socket): 4'
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for the virtual machine
           will always be equal to the virtual machine's memory size. version_added: 2.5"
