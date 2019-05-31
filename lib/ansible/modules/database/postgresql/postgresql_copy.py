@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: postgresql_copy
-short_description: Copy data between a file and a table
+short_description: Copy data between a file and a PostgreSQL table
 description:
-- Copy data between a file and a table U(https://www.postgresql.org/docs/current/sql-copy.html).
+- Copy data between a file and a PostgreSQL table U(https://www.postgresql.org/docs/current/sql-copy.html).
 version_added: '2.9'
 
 options:
@@ -281,7 +281,7 @@ class PgCopyData(object):
         self.src = self.module.params['src']
         self.dst = self.module.params['copy_to']
 
-        if 'SELECT' in self.src:
+        if 'SELECT' in self.src.upper():
             # If src is SQL SELECT statement:
             query_fragments = ['COPY (%s)' % self.src]
         else:
@@ -336,7 +336,7 @@ class PgCopyData(object):
                 instead of the table name.
         """
 
-        if 'SELECT' in table:
+        if 'SELECT' in table.upper():
             # In this case table is actually SQL SELECT statement.
             # we restrict it by LIMIT 1 and run to check the table
             # is available for reading or not:
