@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: postgresql_copy
-short_description: Copy data between a file and a PostgreSQL table
+short_description: Copy data between a file/program and a PostgreSQL table
 description:
-- Copy data between a file and a PostgreSQL table U(https://www.postgresql.org/docs/current/sql-copy.html).
+- Copy data between a file/program and a PostgreSQL table U(https://www.postgresql.org/docs/current/sql-copy.html).
 version_added: '2.9'
 
 options:
