@@ -640,7 +640,7 @@
   - name: Test relative path with state=hard
     file:
       src: original_file.txt
-      dest: hard_link_file.txt"
+      dest: hard_link_file.txt
       state: hard
     register: hard_link_relpath
 
