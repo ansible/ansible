@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ansible.module_utils.urls import RedirectHandlerFactory, urllib_request, urllib_error
+from ansible.module_utils.urls import HAS_SSLCONTEXT, RedirectHandlerFactory, urllib_request, urllib_error
 from ansible.module_utils.six import StringIO
 
 import pytest
@@ -127,7 +127,7 @@ def test_redir_validate_certs(urllib_req, request_body, mocker):
     inst = handler()
     inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
 
-    assert opener_mock.add_handler.call_count == 1
+    assert opener_mock.add_handler.call_count == int(not HAS_SSLCONTEXT)
 
 
 def test_redir_http_error_308_urllib2(urllib_req, request_body):
