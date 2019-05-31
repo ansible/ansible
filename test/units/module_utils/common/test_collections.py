@@ -158,5 +158,5 @@ class TestImmutableDict:
         initial_data_repr = repr(initial_data)
         imdict = ImmutableDict(initial_data)
         actual_repr = repr(imdict)
-        expected_repr = "ImmutableDict({})".format(initial_data_repr)
+        expected_repr = "ImmutableDict({0})".format(initial_data_repr)
         assert actual_repr == expected_repr
