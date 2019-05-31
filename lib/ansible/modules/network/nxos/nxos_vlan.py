@@ -84,6 +84,7 @@ options:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
         This parameter can be used without aggregate as well.
+      - Removal of Vlan 1 is not allowed and will be ignored by purge.
     type: bool
     default: 'no'
   delay:
@@ -220,7 +221,7 @@ def map_obj_to_commands(updates, module):
             if obj_in_have:
                 commands.append('no vlan {0}'.format(vlan_id))
 
-        elif state == 'present' and not purge:
+        elif state == 'present':
             if not obj_in_have:
                 commands.append('vlan {0}'.format(vlan_id))
 
@@ -318,6 +319,9 @@ def map_obj_to_commands(updates, module):
 
     if purge:
         for h in have:
+            if h['vlan_id'] == '1':
+                # Deletion of vlan 1 is not allowed
+                continue
             obj_in_want = search_obj_in_list(h['vlan_id'], want)
             if not obj_in_want:
                 commands.append('no vlan {0}'.format(h['vlan_id']))
