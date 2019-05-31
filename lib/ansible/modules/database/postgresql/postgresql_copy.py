@@ -226,7 +226,7 @@ class PgCopyData(object):
         executed_queries (list) -- executed queries
         dst (str) -- data destination table (when copy_from)
         src (str) -- data source table (when copy_to)
-        opt_needs_quotes (tuple) -- values of these options must be passed
+        opt_need_quotes (tuple) -- values of these options must be passed
             to SQL in quotes
     """
 
