@@ -22,7 +22,7 @@ API_APPS_ENDPOINTS = dict(
     ipam=["ip_addresses", "prefixes", "roles", "vlans", "vlan_groups", "vrfs"],
     secrets=[],
     tenancy=["tenants", "tenant_groups"],
-    virtualization=["clusters"],
+    virtualization=["clusters","interfaces","virtual_machines"],
 )
 
 QUERY_TYPES = dict(
@@ -47,6 +47,7 @@ QUERY_TYPES = dict(
     vlan="name",
     vlan_group="slug",
     vrf="name",
+    virtual_machine="name",
 )
 
 CONVERT_TO_ID = dict(
@@ -73,6 +74,7 @@ CONVERT_TO_ID = dict(
     vlan="vlans",
     vlan_group="vlan_groups",
     vrf="vrfs",
+    virtual_machine="virtual_machines",
 )
 
 FACE_ID = dict(front=0, rear=1)
@@ -174,7 +176,7 @@ INTF_FORM_FACTOR = {
 INTF_MODE = {"access": 100, "tagged": 200, "tagged all": 300}
 
 ALLOWED_QUERY_PARAMS = {
-    "interface": set(["name", "device"]),
+    "interface": set(["name", "device", "virtual_machine"]),
     "lag": set(["name"]),
     "nat_inside": set(["vrf", "address"]),
     "vlan": set(["name", "site", "vlan_group", "tenant"]),
