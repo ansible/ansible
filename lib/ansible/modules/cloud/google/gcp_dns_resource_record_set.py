@@ -357,6 +357,7 @@ def prefetch_soa_resource(module):
             'service_account_file': module.params['service_account_file'],
             'auth_kind': module.params['auth_kind'],
             'service_account_email': module.params['service_account_email'],
+            'service_account_contents': module.params['service_account_contents'],
         },
         module,
     )
