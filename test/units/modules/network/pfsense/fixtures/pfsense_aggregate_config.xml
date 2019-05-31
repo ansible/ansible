@@ -898,11 +898,25 @@
 	</wizardtemp>
 	<vlans>
 		<vlan>
+			<if>vmx0</if>
+			<tag>100</tag>
+			<pcp></pcp>
+			<descr></descr>
+			<vlanif>vmx0.100</vlanif>
+		</vlan>
+		<vlan>
 			<if>vmx1</if>
 			<tag>1100</tag>
 			<pcp></pcp>
 			<descr></descr>
 			<vlanif>vmx1.1100</vlanif>
+		</vlan>
+		<vlan>
+			<if>vmx1</if>
+			<tag>1200</tag>
+			<pcp></pcp>
+			<descr></descr>
+			<vlanif>vmx1.1200</vlanif>
 		</vlan>
 	</vlans>
 </pfsense>

@@ -13,7 +13,7 @@ if sys.version_info < (2, 7):
 from xml.etree.ElementTree import fromstring, ElementTree
 
 from units.modules.utils import set_module_args
-from ansible.modules.networking.pfsense import pfsense_aggregate
+from ansible.modules.network.pfsense import pfsense_aggregate
 
 from .pfsense_module import TestPFSenseModule, load_fixture
 
@@ -125,8 +125,36 @@ class TestPFSenseAggregateModule(TestPFSenseModule):
         if tag is not None:
             self.fail('Separator found: ' + separator)
 
+    def assert_find_vlan(self, interface, vlan_id):
+        """ test if a vlan exist """
+        self.load_xml_result()
+        parent_tag = self.xml_result.find('vlans')
+        if parent_tag is None:
+            self.fail('Unable to find tag vlans')
+
+        elt_filter = {}
+        elt_filter['if'] = interface
+        elt_filter['tag'] = vlan_id
+        tag = self.find_xml_tag(parent_tag, elt_filter)
+        if tag is None:
+            self.fail('Vlan not found: {0}.{1}'.format(interface, vlan_id))
+
+    def assert_not_find_vlan(self, interface, vlan_id):
+        """ test if an vlan does not exist """
+        self.load_xml_result()
+        parent_tag = self.xml_result.find('vlans')
+        if parent_tag is None:
+            self.fail('Unable to find tag vlans')
+
+        elt_filter = {}
+        elt_filter['if'] = interface
+        elt_filter['vlan_id'] = vlan_id
+        tag = self.find_xml_tag(parent_tag, elt_filter)
+        if tag is not None:
+            self.fail('Vlan found: {0}.{1}'.format(interface, vlan_id))
+
     ############
-    # as we rely on pfsense_alias and pfsense_rule for modifying the xml
+    # as we rely on sub modules for modifying the xml
     # we dont perform extensive checks on the xml modifications
     # we just test if elements are created or deleted, and the respective output
     def test_aggregate_aliases(self):
@@ -307,3 +335,53 @@ class TestPFSenseAggregateModule(TestPFSenseModule):
         self.assert_find_rule_separator('test_separator', 'lan')
         self.assert_not_find_rule_separator('last_test_separator', 'lan')
         self.assert_not_find_rule_separator('test_sep_floating', 'floatingrules')
+
+    def test_aggregate_vlans(self):
+        """ test creation of some vlans """
+        args = dict(
+            purge_vlans=False,
+            aggregated_vlans=[
+                dict(vlan_id=100, interface='vmx0', descr='voice'),
+                dict(vlan_id=1200, interface='vmx1', state='absent'),
+                dict(vlan_id=101, interface='vmx1', descr='printers'),
+                dict(vlan_id=102, interface='vmx2', descr='users'),
+            ]
+        )
+        set_module_args(args)
+        result = self.execute_module(changed=True)
+        result_aliases = []
+        result_aliases.append("update vlan 'vmx0.100' set descr='voice'")
+        result_aliases.append("delete vlan 'vmx1.1200'")
+        result_aliases.append("create vlan 'vmx1.101', descr='printers', priority=''")
+        result_aliases.append("create vlan 'vmx2.102', descr='users', priority=''")
+
+        self.assertEqual(result['result_vlans'], result_aliases)
+        self.assert_find_vlan('vmx0', '100')
+        self.assert_not_find_vlan('vmx1', '1200')
+        self.assert_find_vlan('vmx1', '101')
+        self.assert_find_vlan('vmx2', '102')
+
+    def test_aggregate_vlans_with_purge(self):
+        """ test creation of some vlans with purge"""
+        args = dict(
+            purge_vlans=True,
+            aggregated_vlans=[
+                dict(vlan_id=1100, interface='vmx1'),
+                dict(vlan_id=1200, interface='vmx1', state='absent'),
+                dict(vlan_id=101, interface='vmx1', descr='printers'),
+                dict(vlan_id=102, interface='vmx2', descr='users'),
+            ]
+        )
+        set_module_args(args)
+        result = self.execute_module(changed=True)
+        result_aliases = []
+        result_aliases.append("delete vlan 'vmx1.1200'")
+        result_aliases.append("create vlan 'vmx1.101', descr='printers', priority=''")
+        result_aliases.append("create vlan 'vmx2.102', descr='users', priority=''")
+        result_aliases.append("delete vlan 'vmx0.100'")
+
+        self.assertEqual(result['result_vlans'], result_aliases)
+        self.assert_not_find_vlan('vmx1', '1200')
+        self.assert_find_vlan('vmx1', '101')
+        self.assert_find_vlan('vmx2', '102')
+        self.assert_not_find_vlan('vmx0', '100')

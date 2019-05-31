@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 import re
-from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule, PFSenseModuleBase
+from ansible.module_utils.network.pfsense.pfsense import PFSenseModule, PFSenseModuleBase
 
 ALIASES_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
@@ -130,6 +130,9 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
             if alias_elt is not None:
                 if params['type'] != alias_elt.find('type').text:
                     self.module.fail_json(msg='An alias with this name and a different type already exists')
+
+            if self.pfsense.get_interface_pfsense_by_name(params['name']) is not None:
+                self.module.fail_json(msg='An interface description with this name already exists')
 
             missings = ['type', 'address']
             for param, value in params.items():

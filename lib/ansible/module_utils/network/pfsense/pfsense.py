@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.compat.ipaddress import ip_address, ip_network
+import json
 import shutil
 import os
 import pwd
@@ -25,6 +26,9 @@ class PFSenseModule(object):
         self.rules = self.get_element('filter')
         self.shapers = self.get_element('shaper')
         self.dnshapers = self.get_element('dnshaper')
+        self.vlans = self.get_element('vlans')
+        self.ipsec = self.get_element('ipsec')
+        self.openvpn = self.get_element('openvpn')
         self.debug = open('/tmp/pfsense.debug', 'w')
 
     @staticmethod
@@ -60,9 +64,41 @@ class PFSenseModule(object):
     def get_interface_pfsense_by_name(self, name):
         """ return pfsense interface by name """
         for interface in self.interfaces:
-            interface_name = interface.find('descr').text
-            if interface_name.strip() == name:
+            descr_elt = interface.find('descr')
+            if descr_elt is not None and descr_elt.text.strip() == name:
                 return interface.tag
+        return None
+
+    def get_interface_by_physical_name(self, name):
+        """ return pfsense interface physical name """
+        for interface in self.interfaces:
+            if interface.find('if').text.strip() == name:
+                return interface.tag
+        return None
+
+    def get_interface_display_name(self, iface):
+        """ return pfsense interface display name """
+        for interface in self.interfaces:
+            if interface.tag == iface:
+                descr_elt = interface.find('descr')
+                if descr_elt is not None:
+                    return descr_elt.text.strip()
+                break
+        return iface
+
+    def get_interface_physical_name(self, iface):
+        """ return pfsense interface physical name """
+        for interface in self.interfaces:
+            if interface.tag == iface:
+                return interface.find('if').text.strip()
+        return None
+
+    def get_interface_physical_name_by_name(self, name):
+        """ return pfsense interface physical name by name """
+        for interface in self.interfaces:
+            descr_elt = interface.find('descr')
+            if descr_elt is not None and descr_elt.text.strip() == name:
+                return interface.find('if').text.strip()
         return None
 
     def is_interface_pfsense(self, name):
@@ -84,6 +120,11 @@ class PFSenseModule(object):
 
     def parse_interface(self, interface, fail=True):
         """ validate param interface field """
+        if (interface == 'enc0' or interface == 'IPsec') and self.is_ipsec_enabled():
+            return 'enc0'
+        if (interface == 'openvpn' or interface == 'OpenVPN') and self.is_openvpn_enabled():
+            return 'openvpn'
+
         if self.is_interface_name(interface):
             return self.get_interface_pfsense_by_name(interface)
         elif self.is_interface_pfsense(interface):
@@ -92,6 +133,26 @@ class PFSenseModule(object):
         if fail:
             self.module.fail_json(msg='%s is not a valid interface' % (interface))
         return None
+
+    def is_ipsec_enabled(self):
+        """ return True if ipsec is enabled """
+        if self.ipsec is None:
+            return False
+
+        for elt in self.ipsec:
+            if elt.tag == 'phase1' and elt.find('disabled') is None:
+                return True
+        return False
+
+    def is_openvpn_enabled(self):
+        """ return True if openvpn is enabled """
+        if self.openvpn is None:
+            return False
+
+        for elt in self.openvpn:
+            if elt.tag == 'openvpn-server' or elt.tag == 'openvpn-client':
+                return True
+        return False
 
     @staticmethod
     def rule_match_interface(rule_elt, interface, floating):
@@ -173,7 +234,7 @@ class PFSenseModule(object):
                     if subchanged:
                         changed = True
                 elif isinstance(value, list):
-                    this_list = value
+                    this_list = list(value)
                     # Remove existing items not in the new list
                     for list_elt in top_elt.findall(key):
                         if list_elt.text in this_list:
@@ -211,7 +272,12 @@ class PFSenseModule(object):
             if list(elt):
                 res[elt.tag] = PFSenseModule.element_to_dict(elt)
             else:
-                res[elt.tag] = elt.text if elt.text is not None else ''
+                if elt.tag in res:
+                    if isinstance(res[elt.tag], str):
+                        res[elt.tag] = [res[elt.tag]]
+                    res[elt.tag].append(elt.text)
+                else:
+                    res[elt.tag] = elt.text if elt.text is not None else ''
         return res
 
     def get_caref(self, name):
@@ -327,6 +393,14 @@ class PFSenseModule(object):
 
         return None
 
+    def find_vlan(self, interface, tag):
+        """ return vlan elt if found """
+        for vlan in self.vlans:
+            if vlan.find('if').text == interface and vlan.find('tag').text == tag:
+                return vlan
+
+        return None
+
     @staticmethod
     def uniqid(prefix=''):
         """ return an identifier based on time """
@@ -334,9 +408,18 @@ class PFSenseModule(object):
 
     def phpshell(self, command):
         """ Run a command in the php developer shell """
-        command = command + "\nexec\nexit"
+        command = "global $debug;\n$debug = 1;\n" + command + "\nexec\nexit"
         # Dummy argument suppresses displaying help message
         return self.module.run_command('/usr/local/sbin/pfSsh.php dummy', data=command)
+
+    def php(self, command):
+        """ Run a command in php and return the output """
+        cmd = '<?php\n'
+        cmd += command
+        cmd += '\n?>\n'
+        (dummy, stdout, stderr) = self.module.run_command('/usr/local/bin/php', data=cmd)
+        # TODO: check stderr for errors
+        return json.loads(stdout)
 
     def write_config(self, descr='Updated by ansible pfsense module'):
         """ Generate config file """
@@ -349,12 +432,13 @@ class PFSenseModule(object):
         revdescr.text = descr
         username = self.get_username()
         revision.find('username').text = username
-        # Use 'html' to have explicit close tags - 3.4 has short_empty_elements
-        # xml_declaration does not appear to be working
         (tmp_handle, tmp_name) = mkstemp()
         os.close(tmp_handle)
-        self.tree.write(tmp_name, xml_declaration=True, method='html')
+        # TODO: when pfsense will adopt python3
+        # detect python version and use 3.4 short_empty_elements parameter to try to preserve format
+        self.tree.write(tmp_name, xml_declaration=True, method='xml')
         shutil.move(tmp_name, self.config)
+        os.chmod(self.config, 0o644)
         try:
             os.remove('/tmp/config.cache')
         except OSError as exception:
@@ -369,26 +453,40 @@ class PFSenseModuleBase(object):
     """ class providing base services for pfSense modules """
 
     @staticmethod
-    def format_cli_field(alias, field, log_none=False, add_comma=True):
+    def fvalue_idem(value):
+        """ dummy value formatting function """
+        return value
+
+    def format_cli_field(self, after, field, log_none=False, add_comma=True, fvalue=None, default=None, fname=None):
         """ format field for pseudo-CLI command """
+        if fvalue is None:
+            fvalue = self.fvalue_idem
+
+        if fname is None:
+            fname = field
+
         res = ''
-        if field in alias:
-            if log_none and alias[field] is None:
-                res = "{0}=none".format(field)
-            if alias[field] is not None:
-                if isinstance(alias[field], str):
-                    res = "{0}='{1}'".format(field, alias[field].replace("'", "\\'"))
-                else:
-                    res = "{0}={1}".format(field, alias[field])
+        if field in after:
+            if log_none and after[field] is None:
+                res = "{0}=none".format(fname)
+            if after[field] is not None:
+                if default is None or after[field] != default:
+                    if isinstance(after[field], str):
+                        res = "{0}='{1}'".format(fname, fvalue(after[field].replace("'", "\\'")))
+                    else:
+                        res = "{0}={1}".format(fname, fvalue(after[field]))
+        elif log_none:
+            res = "{0}=none".format(fname)
+
         if add_comma and res:
             return ', ' + res
         return res
 
-    def format_updated_cli_field(self, after, before, field, add_comma=True):
+    def format_updated_cli_field(self, after, before, field, log_none=True, add_comma=True, fvalue=None, default=None, fname=None):
         """ format field for pseudo-CLI update command """
         if field in after and field in before:
             if after[field] != before[field]:
-                return self.format_cli_field(after, field, log_none=True, add_comma=add_comma)
+                return self.format_cli_field(after, field, log_none=log_none, add_comma=add_comma, fvalue=fvalue, default=default, fname=fname)
         elif field in after and field not in before or field not in after and field in before:
-            return self.format_cli_field(after, field, log_none=True, add_comma=add_comma)
+            return self.format_cli_field(after, field, log_none=log_none, add_comma=add_comma, fvalue=fvalue, default=default, fname=fname)
         return ''

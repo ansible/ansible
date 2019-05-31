@@ -7,7 +7,7 @@
 import time
 import re
 
-from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.network.pfsense.pfsense import PFSenseModule, PFSenseModuleBase
 
 RULES_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
@@ -18,7 +18,7 @@ RULES_ARGUMENT_SPEC = dict(
     floating=dict(required=False, type='bool'),
     direction=dict(required=False, choices=["any", "in", "out"]),
     ipprotocol=dict(required=False, default='inet', choices=['inet', 'inet46', 'inet6']),
-    protocol=dict(default='any', required=False, choices=["any", "tcp", "udp", "tcp/udp", "icmp"]),
+    protocol=dict(default='any', required=False, choices=["any", "tcp", "udp", "tcp/udp", "icmp", "igmp"]),
     source=dict(required=False, type='str'),
     destination=dict(required=False, type='str'),
     log=dict(required=False, type='bool'),
@@ -43,7 +43,7 @@ RULES_UNMANAGED_ELEMENTS = [
 ]
 
 
-class PFSenseRuleModule(object):
+class PFSenseRuleModule(PFSenseModuleBase):
     """ module managing pfsense rules """
 
     def __init__(self, module, pfsense=None):
@@ -58,10 +58,11 @@ class PFSenseRuleModule(object):
 
         self.diff = {'after': {}, 'before': {}}
 
-        self.results = {}
-        self.results['added'] = []
-        self.results['deleted'] = []
-        self.results['modified'] = []
+        self.result = {}
+        self.result['added'] = []
+        self.result['deleted'] = []
+        self.result['modified'] = []
+        self.result['commands'] = []
 
         # internals params
         self._rule = None
@@ -70,6 +71,8 @@ class PFSenseRuleModule(object):
         self._floating = None
         self._after = None
         self._before = None
+        self._params = None
+        self._position_changed = False
 
     def _interface_name(self):
         """ return formated interface name for logging """
@@ -232,6 +235,7 @@ class PFSenseRuleModule(object):
         current_position = self._get_rule_position()
         expected_position = self._get_expected_rule_position()
         if current_position == expected_position:
+            self._position_changed = False
             return False
 
         self.diff['before']['position'] = current_position
@@ -239,12 +243,104 @@ class PFSenseRuleModule(object):
         self._adjust_separators(current_position, add=False)
         self.rules.remove(rule_elt)
         self._insert(rule_elt)
+        self._position_changed = True
         return True
 
     def _update(self):
         """ make the target pfsense reload rules """
         return self.pfsense.phpshell('''require_once("filter.inc");
-if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
+if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
+
+    def _log_create(self, rule):
+        """ generate pseudo-CLI command to create a rule """
+        log = "create rule '{0}'".format(rule['descr'])
+        log += self.format_cli_field(self._params, 'source')
+        log += self.format_cli_field(self._params, 'destination')
+        log += self.format_cli_field(self._params, 'protocol')
+        log += self.format_cli_field(self._params, 'interface')
+        log += self.format_cli_field(self._params, 'floating')
+        log += self.format_cli_field(self._params, 'direction')
+        log += self.format_cli_field(self._params, 'ipprotocol', default='inet')
+        log += self.format_cli_field(self._params, 'statetype', default='keep state')
+        log += self.format_cli_field(self._params, 'action', default='pass')
+        log += self.format_cli_field(self._params, 'disabled', default=False)
+        log += self.format_cli_field(self._params, 'log', default=False)
+        log += self.format_cli_field(self._params, 'after')
+        log += self.format_cli_field(self._params, 'before')
+        log += self.format_cli_field(self._params, 'queue')
+        log += self.format_cli_field(self._params, 'ackqueue')
+        log += self.format_cli_field(self._params, 'in_queue')
+        log += self.format_cli_field(self._params, 'out_queue')
+
+        self.result['commands'].append(log)
+
+    def _log_delete(self, rule):
+        """ generate pseudo-CLI command to delete a rule """
+        log = "delete rule '{0}'".format(rule['descr'])
+        if self._floating:
+            log += ", interface='floating'"
+        else:
+            log += ", interface='{0}'".format(self.pfsense.get_interface_display_name(self._interface))
+        self.result['commands'].append(log)
+
+    @staticmethod
+    def _obj_address_to_log_field(rule, addr):
+        """ return formated address from dict """
+        field = ''
+        if isinstance(rule[addr], dict):
+            if 'any' in rule[addr]:
+                field = 'any'
+            if 'address' in rule[addr]:
+                field = rule[addr]['address']
+            if 'port' in rule[addr]:
+                if field:
+                    field += ':'
+                field += rule[addr]['port']
+        else:
+            field = rule[addr]
+        return field
+
+    def _obj_to_log_fields(self, rule):
+        """ return formated source and destination from dict """
+        res = {}
+        res['source'] = self._obj_address_to_log_field(rule, 'source')
+        res['destination'] = self._obj_address_to_log_field(rule, 'destination')
+        return res
+
+    def _log_update(self, rule, before):
+        """ generate pseudo-CLI command to update a rule """
+        log = "update rule '{0}'".format(rule['descr'])
+        if self._floating:
+            log += ", interface='floating'"
+        else:
+            log += ", interface='{0}'".format(self.pfsense.get_interface_display_name(self._interface))
+
+        fbefore = self._obj_to_log_fields(before)
+        fafter = self._obj_to_log_fields(rule)
+        fafter['before'] = self._before
+        fafter['after'] = self._after
+
+        values = ''
+        values += self.format_updated_cli_field(fafter, fbefore, 'source', add_comma=(values))
+        values += self.format_updated_cli_field(fafter, fbefore, 'destination', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'protocol', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'interface', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'floating', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'direction', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'ipprotocol', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'statetype', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'action', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'disabled', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'log', add_comma=(values))
+        if self._position_changed:
+            values += self.format_updated_cli_field(fafter, {}, 'after', log_none=False, add_comma=(values))
+            values += self.format_updated_cli_field(fafter, {}, 'before', log_none=False, add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'queue', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'ackqueue', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'in_queue', add_comma=(values))
+        values += self.format_updated_cli_field(rule, before, 'out_queue', add_comma=(values))
+
+        self.result['commands'].append(log + ' set ' + values)
 
     def _parse_address(self, param):
         """ validate param address field and returns it as a dict """
@@ -364,7 +460,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         self.rules.remove(rule_elt)
         self.changed = True
         self.diff['before'] = self._rule_element_to_dict(rule_elt)
-        self.results['deleted'].append(self._rule_element_to_dict(rule_elt))
+        self.result['deleted'].append(self._rule_element_to_dict(rule_elt))
 
     ##################
     # public methods
@@ -402,7 +498,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             self.pfsense.copy_dict_to_element(rule, rule_elt)
             self.diff['after'] = self._rule_element_to_dict(rule_elt)
             self._insert(rule_elt)
-            self.results['added'].append(rule)
+            self.result['added'].append(rule)
+            self._log_create(self._rule)
             self.change_descr = 'ansible pfsense_rule added %s' % (rule['descr'])
         else:
             self.diff['before'] = self._rule_element_to_dict(rule_elt)
@@ -424,8 +521,9 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
                     updated_elt.find('time').text = timestamp
                     updated_elt.find('username').text = self.pfsense.get_username()
                 self.diff['after'].update(self._rule_element_to_dict(rule_elt))
-                self.results['modified'].append(self._rule_element_to_dict(rule_elt))
+                self.result['modified'].append(self._rule_element_to_dict(rule_elt))
                 self.change_descr = 'ansible pfsense_rule updated "%s" interface %s action %s' % (rule['descr'], rule['interface'], rule['type'])
+                self._log_update(rule, self.diff['before'])
 
         if changed:
             self.changed = True
@@ -434,6 +532,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         """ delete rule """
         rule_elt, dummy = self._find_matching_rule()
         if rule_elt is not None:
+            self._log_delete(self._rule)
             self.diff['before'] = self._rule_element_to_dict(rule_elt)
             self._adjust_separators(self._get_rule_position(), add=False)
             self._remove_rule_elt(rule_elt)
@@ -496,6 +595,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
     def run(self, params):
         """ process input params to add/update/delete a rule """
+        self._params = params
         self._rule = self._params_to_rule(params)
         self._descr = self._rule['descr']
         self._interface = self._rule['interface']

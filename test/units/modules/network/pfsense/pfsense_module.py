@@ -47,20 +47,27 @@ class TestPFSenseModule(ModuleTestCase):
         """ mocking up """
         super(TestPFSenseModule, self).setUp()
 
-        self.mock_parse = patch('ansible.module_utils.networking.pfsense.pfsense.ET.parse')
+        self.mock_parse = patch('ansible.module_utils.network.pfsense.pfsense.ET.parse')
         self.parse = self.mock_parse.start()
 
-        self.mock_shutil_move = patch('ansible.module_utils.networking.pfsense.pfsense.shutil.move')
+        self.mock_shutil_move = patch('ansible.module_utils.network.pfsense.pfsense.shutil.move')
         self.shutil_move = self.mock_shutil_move.start()
 
-        self.mock_phpshell = patch('ansible.module_utils.networking.pfsense.pfsense.PFSenseModule.phpshell')
+        self.mock_php = patch('ansible.module_utils.network.pfsense.pfsense.PFSenseModule.php')
+        self.php = self.mock_php.start()
+        self.php.return_value = ['vmx0', 'vmx1', 'vmx2', 'vmx3']
+
+        self.mock_phpshell = patch('ansible.module_utils.network.pfsense.pfsense.PFSenseModule.phpshell')
         self.phpshell = self.mock_phpshell.start()
         self.phpshell.return_value = (0, '', '')
 
-        self.mock_mkstemp = patch('ansible.module_utils.networking.pfsense.pfsense.mkstemp')
+        self.mock_mkstemp = patch('ansible.module_utils.network.pfsense.pfsense.mkstemp')
         self.mkstemp = self.mock_mkstemp.start()
         self.mkstemp.return_value = mkstemp()
         self.tmp_file = self.mkstemp.return_value[1]
+
+        self.mock_chmod = patch('ansible.module_utils.network.pfsense.pfsense.os.chmod')
+        self.chmod = self.mock_chmod.start()
 
         self.maxDiff = None
 
@@ -70,8 +77,10 @@ class TestPFSenseModule(ModuleTestCase):
 
         self.mock_parse.stop()
         self.mock_shutil_move.stop()
+        self.mock_php.stop()
         self.mock_phpshell.stop()
         self.mock_mkstemp.stop()
+        self.mock_chmod.stop()
 
         try:
             if self.tmp_file is not None:
@@ -215,10 +224,13 @@ class TestPFSenseModule(ModuleTestCase):
         return elt
 
     @staticmethod
-    def unalias_interface(interface):
+    def unalias_interface(interface, physical=False):
         """ return real alias name if required """
         res = []
-        interfaces = dict(lan='lan', wan='wan', vpn='opt1', vt1='opt2', lan_100='opt3')
+        if physical:
+            interfaces = dict(lan='vmx1', wan='vmx0', opt1='vmx2', vpn='vmx2', opt2='vmx3', vt1='vmx3', opt3='vmx3.100', lan_100='vmx3.100')
+        else:
+            interfaces = dict(lan='lan', wan='wan', vpn='opt1', vt1='opt2', lan_100='opt3')
         for iface in interface.split(','):
             if interface in interfaces:
                 res.append(interfaces[iface])

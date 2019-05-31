@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_aggregate
-version_added: "2.8"
+version_added: "2.9"
 author: Frederic Bor (@f-bor)
 short_description: Manage multiple pfSense rules or aliases
 description:
@@ -32,6 +32,9 @@ options:
   aggregated_rule_separators:
     description: Dict of rule separators to apply on the target
     required: False
+  aggregated_vlans:
+    description: Dict of vlans to apply on the target
+    required: False
   purge_aliases:
     description: delete all the aliases that are not defined into aggregated_aliases
     required: False
@@ -44,6 +47,11 @@ options:
     default: False
   purge_rule_separators:
     description: delete all the rule separators that are not defined into aggregated_rule_separators
+    required: False
+    type: bool
+    default: False
+  purge_vlans:
+    description: delete all the vlans that are not defined into aggregated_vlans
     required: False
     type: bool
     default: False
@@ -89,15 +97,21 @@ result_separators:
     returned: success
     type: list
     sample: ["create rule_separator 'SSH', interface='lan', color='info'", "update rule_separator 'SSH' set color='warning'", "delete rule_separator 'SSH'"]
+result_vlans:
+    description: the set of commands that would be pushed to the remote device (if pfSense had a CLI)
+    returned: success
+    type: list
+    sample: ["create vlan 'mvneta.100', descr='voice', priority='5'", "update vlan 'mvneta.100', set priority='6'", "delete vlan 'mvneta.100'"]
 """
 
-from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
-from ansible.module_utils.networking.pfsense.pfsense_alias import PFSenseAliasModule, ALIASES_ARGUMENT_SPEC, ALIASES_REQUIRED_IF
-from ansible.module_utils.networking.pfsense.pfsense_rule import PFSenseRuleModule, RULES_ARGUMENT_SPEC, RULES_REQUIRED_IF
-from ansible.module_utils.networking.pfsense.pfsense_rule_separator import PFSenseRuleSeparatorModule
-from ansible.module_utils.networking.pfsense.pfsense_rule_separator import RULE_SEPARATORS_ARGUMENT_SPEC
-from ansible.module_utils.networking.pfsense.pfsense_rule_separator import RULE_SEPARATORS_REQUIRED_ONE_OF
-from ansible.module_utils.networking.pfsense.pfsense_rule_separator import RULE_SEPARATORS_MUTUALLY_EXCLUSIVE
+from ansible.module_utils.network.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.network.pfsense.pfsense_alias import PFSenseAliasModule, ALIASES_ARGUMENT_SPEC, ALIASES_REQUIRED_IF
+from ansible.module_utils.network.pfsense.pfsense_rule import PFSenseRuleModule, RULES_ARGUMENT_SPEC, RULES_REQUIRED_IF
+from ansible.module_utils.network.pfsense.pfsense_rule_separator import PFSenseRuleSeparatorModule
+from ansible.module_utils.network.pfsense.pfsense_rule_separator import RULE_SEPARATORS_ARGUMENT_SPEC
+from ansible.module_utils.network.pfsense.pfsense_rule_separator import RULE_SEPARATORS_REQUIRED_ONE_OF
+from ansible.module_utils.network.pfsense.pfsense_rule_separator import RULE_SEPARATORS_MUTUALLY_EXCLUSIVE
+from ansible.module_utils.network.pfsense.pfsense_vlan import PFSenseVlanModule, VLANS_ARGUMENT_SPEC
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -111,16 +125,23 @@ class PFSenseModuleAggregate(object):
         self.pfsense_aliases = PFSenseAliasModule(module, self.pfsense)
         self.pfsense_rules = PFSenseRuleModule(module, self.pfsense)
         self.pfsense_rule_separators = PFSenseRuleSeparatorModule(module, self.pfsense)
+        self.pfsense_vlans = PFSenseVlanModule(module, self.pfsense)
 
     def _update(self):
+        run = False
         cmd = 'require_once("filter.inc");\n'
         cmd += 'if (filter_configure() == 0) { \n'
         if self.pfsense_aliases.result['changed']:
+            run = True
             cmd += 'clear_subsystem_dirty(\'aliases\');\n'
         if self.pfsense_rules.changed or self.pfsense_rule_separators.result['changed']:
-            cmd += 'clear_subsystem_dirty(\'rules\');\n'
+            run = True
+            cmd += 'clear_subsystem_dirty(\'filter\');\n'
         cmd += '}'
-        return self.pfsense.phpshell(cmd)
+        if run:
+            return self.pfsense.phpshell(cmd)
+
+        return ('', '', '')
 
     def want_rule(self, rule_elt, rules):
         """ return True if we want to keep rule_elt """
@@ -169,16 +190,25 @@ class PFSenseModuleAggregate(object):
                 return True
         return False
 
+    @staticmethod
+    def want_vlan(vlan_elt, vlans):
+        """ return True if we want to keep vlan_elt """
+        tag = int(vlan_elt.find('tag').text)
+        interface = vlan_elt.find('if')
+
+        for vlan in vlans:
+            if vlan['state'] == 'absent':
+                continue
+            if vlan['vlan_id'] == tag and vlan['interface'] == interface.text:
+                return True
+        return False
+
     def run_rules(self):
         """ process input params to add/update/delete all rules """
         want = self.module.params['aggregated_rules']
 
         if want is None:
             return
-
-        # processing aggregated parameters
-        for params in want:
-            self.pfsense_rules.run(params)
 
         # delete every other rule if required
         if self.module.params['purge_rules']:
@@ -195,6 +225,10 @@ class PFSenseModuleAggregate(object):
 
             for params in todel:
                 self.pfsense_rules.run(params)
+
+        # processing aggregated parameters
+        for params in want:
+            self.pfsense_rules.run(params)
 
     def run_aliases(self):
         """ process input params to add/update/delete all aliases """
@@ -249,20 +283,49 @@ class PFSenseModuleAggregate(object):
             for params in todel:
                 self.pfsense_rule_separators.run(params)
 
+    def run_vlans(self):
+        """ process input params to add/update/delete all vlans """
+        want = self.module.params['aggregated_vlans']
+
+        if want is None:
+            return
+
+        # processing aggregated parameter
+        for param in want:
+            self.pfsense_vlans.run(param)
+
+        # delete every other vlans if required
+        if self.module.params['purge_vlans']:
+            todel = []
+            for vlan_elt in self.pfsense_vlans.vlans:
+                if not self.want_vlan(vlan_elt, want):
+                    params = {}
+                    params['state'] = 'absent'
+                    params['interface'] = vlan_elt.find('if').text
+                    params['vlan_id'] = int(vlan_elt.find('tag').text)
+                    todel.append(params)
+
+            for params in todel:
+                self.pfsense_vlans.run(params)
+
     def commit_changes(self):
         """ apply changes and exit module """
         stdout = ''
         stderr = ''
-        changed = self.pfsense_aliases.result['changed'] or self.pfsense_rules.changed or self.pfsense_rule_separators.result['changed']
+        changed = (
+            self.pfsense_aliases.result['changed'] or self.pfsense_rules.changed
+            or self.pfsense_rule_separators.result['changed'] or self.pfsense_vlans.result['changed']
+        )
+
         if changed and not self.module.check_mode:
             self.pfsense.write_config(descr='aggregated change')
             (dummy, stdout, stderr) = self._update()
 
         result = {}
         result['result_aliases'] = self.pfsense_aliases.result['commands']
-        result['aggregated_rules'] = {}
-        result['aggregated_rules'].update(self.pfsense_rules.results)
+        result['result_rules'] = self.pfsense_rules.result['commands']
         result['result_rule_separators'] = self.pfsense_rule_separators.result['commands']
+        result['result_vlans'] = self.pfsense_vlans.result['commands']
         result['changed'] = changed
         result['stdout'] = stdout
         result['stderr'] = stderr
@@ -276,12 +339,14 @@ def main():
         aggregated_rule_separators=dict(
             type='list', elements='dict',
             options=RULE_SEPARATORS_ARGUMENT_SPEC, required_one_of=RULE_SEPARATORS_REQUIRED_ONE_OF, mutually_exclusive=RULE_SEPARATORS_MUTUALLY_EXCLUSIVE),
+        aggregated_vlans=dict(type='list', elements='dict', options=VLANS_ARGUMENT_SPEC),
         purge_aliases=dict(default=False, type='bool'),
         purge_rules=dict(default=False, type='bool'),
         purge_rule_separators=dict(default=False, type='bool'),
+        purge_vlans=dict(default=False, type='bool'),
     )
 
-    required_one_of = [['aggregated_aliases', 'aggregated_rules', 'aggregated_rule_separators']]
+    required_one_of = [['aggregated_aliases', 'aggregated_rules', 'aggregated_rule_separators', 'aggregated_vlans']]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -293,6 +358,7 @@ def main():
     pfmodule.run_aliases()
     pfmodule.run_rules()
     pfmodule.run_rule_separators()
+    pfmodule.run_vlans()
     pfmodule.commit_changes()
 
 
