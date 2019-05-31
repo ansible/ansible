@@ -104,6 +104,7 @@
         source:
           type: CODEPIPELINE
           buildspec: ''
+        artifacts: {}
         state: absent
         <<: *aws_connection_info
       async: 300
