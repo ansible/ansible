@@ -27,7 +27,7 @@
 
     - name: Wait until IAM role is available
       pause:
-        seconds: 6
+        seconds: 10
 
     - name: Set variable with aws account id
       set_fact:
