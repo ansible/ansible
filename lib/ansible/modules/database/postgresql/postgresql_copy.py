@@ -78,10 +78,11 @@ options:
 notes:
 - Supports PostgreSQL version 9.4+.
 - COPY command is only allowed to database superusers.
-- Transaction mode is not suitable for checking because of there may be
-  a lot of data and their actual upload can affect database performance.
-  So, in check mode, we just check the src/dst table availability
-  and return the query that aclually has not been executed.
+- if I(check_mode=yes), we just check the src/dst table availability
+  and return the COPY query that aclually has not been executed.
+- If i(check_mode=yes) and the source has been passed as SQL, the module
+  will execute it and rolled the transaction back but pay attention
+  it can affect database performance (e.g., if SQL collects a lot of data).
 
 author:
 - Andrew Klychkov (@Andersson007)
@@ -323,13 +324,9 @@ class PgCopyData(object):
         return '(%s)' % ', '.join(opt)
 
     def __check_table(self, table):
-        """Check table for check mode.
+        """Check table or SQL in transaction mode for check_mode.
 
         Return True if it is OK.
-
-        Note: Transaction mode is not suitable for checking
-            because of there may be a lot of data and their actual upload
-            can affect database performance.
 
         Arguments:
             table (str) - Table name that needs to be checked.
@@ -339,12 +336,8 @@ class PgCopyData(object):
 
         if 'SELECT' in table.upper():
             # In this case table is actually SQL SELECT statement.
-            # we restrict it by LIMIT 1 and run to check the table
-            # is available for reading or not:
-            query = table
-            query += ' LIMIT 1'
             # If SQL fails, it's handled by exec_sql():
-            exec_sql(self, query)
+            exec_sql(self, table, add_to_executed=False)
             # If exec_sql was passed, it means all is OK:
             return True
 
@@ -391,9 +384,7 @@ def main():
         module.fail_json(msg='src param is necessary with copy_to')
 
     # Connect to DB and make cursor object:
-    # (Note: autocommit=True because check_mode doesn't use
-    # transaction mode and ROLLBACK)
-    db_connection = connect_to_db(module, autocommit=True)
+    db_connection = connect_to_db(module, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
@@ -412,6 +403,11 @@ def main():
         data.copy_from()
 
     # Finish:
+    if module.check_mode:
+        db_connection.rollback()
+    else:
+        db_connection.commit()
+
     cursor.close()
     db_connection.close()
 
