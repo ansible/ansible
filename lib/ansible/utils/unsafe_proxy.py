@@ -118,7 +118,7 @@ def is_unsafe(val, recurse=False):
     a key or value which contains jinja2 syntax and would otherwise
     lose the AnsibleUnsafe value.
     '''
-    if isinstance(val, AnsibleUnsafe) or hasattr(val, '__UNSAFE__'):
+    if isinstance(val, AnsibleUnsafe) or getattr(val, '__UNSAFE__', False):
         return True
 
     elif recurse:
