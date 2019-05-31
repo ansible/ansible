@@ -10,7 +10,7 @@
     when: auth_key is not defined
     
   - name: Use an invalid domain
-    meraki_config_template:
+    meraki_content_filtering:
       auth_key: '{{ auth_key }}'
       host: marrrraki.com
       state: query
@@ -25,7 +25,7 @@
       that:
         - '"Failed to connect to" in invalid_domain.msg'
 
-  - name: Create network with type switch
+  - name: Create network
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -35,6 +35,22 @@
       timezone: America/Chicago
     delegate_to: localhost
     register: create_net_appliance
+
+  - name: Test net_name and id exclusivity
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      net_id: 12345
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: net_exclusive
+    ignore_errors: yes    
+
+  - assert:
+      that:
+        - 'net_exclusive.msg == "net_name and net_id are mutually exclusive"'
 
   - name: Set single allowed URL pattern with check mode
     meraki_content_filtering:
@@ -147,16 +163,36 @@
       category_list_size: full list
       blocked_categories:
         - "Adult and Pornography"
-    register: blocked_cateogry
+    register: blocked_category
 
   - debug:
-      var: blocked_cateogry
+      var: blocked_category
 
   - assert:
       that:
-        - blocked_cateogry.changed == True
-        - blocked_cateogry.data.blockedUrlCategories | length == 1
-        - blocked_cateogry.data.urlCategoryListSize == "fullList"
+        - blocked_category.changed == True
+        - blocked_category.data.blockedUrlCategories | length == 1
+        - blocked_category.data.urlCategoryListSize == "fullList"
+
+  - name: Set blocked URL category with top sites
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      category_list_size: top sites
+      blocked_categories:
+        - "Adult and Pornography"
+    register: blocked_category
+
+  - debug:
+      var: blocked_category
+
+  - assert:
+      that:
+        - blocked_category.changed == True
+        - blocked_category.data.blockedUrlCategories | length == 1
+        - blocked_category.data.urlCategoryListSize == "topSites"
 
   always:
     - name: Reset policies
