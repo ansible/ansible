@@ -15,5 +15,5 @@ storage_accounts:
   - "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
 
 abs_names:
-  - "avbs1{{ resource_group | hash('md5') | truncate(3, True, '') }}"
-  - "avbs2{{ resource_group | hash('md5') | truncate(3, True, '') }}"
+  - "{{ 'avbs1' ~ resource_group | hash('md5') | truncate(3, True, '') }}"
+  - "{{ 'avbs2' ~ resource_group | hash('md5') | truncate(3, True, '') }}"

@@ -1,56 +1,56 @@
-- name: SETUP |  Create storage accounts
+- name: SETUP | Create storage accounts
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}"
     name: "{{ item }}"
     account_type: Standard_LRS
   loop: "{{ storage_accounts }}"
 
-- name: SETUP |  Create availability sets
+- name: SETUP | Create availability sets
   azure_rm_availabilityset:
     name: "{{ item }}"
     resource_group: "{{ resource_group }}"
   loop: "{{ abs_names }}"
 
-- name: SETUP |  Create virtual network
+- name: SETUP | Create virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     address_prefixes: "10.10.0.0/16"
 
-- name: SETUP |  Add subnet
+- name: SETUP | Add subnet
   azure_rm_subnet:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     address_prefix: "10.10.0.0/24"
     virtual_network: "{{ vm_name }}"
 
-- name: SETUP |  Create public ip
+- name: SETUP | Create public ip
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
     allocation_method: Static
     name: "{{ vm_name }}"
 
-- name: SETUP |  Create security group
+- name: SETUP | Create security group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     purge_rules: yes
     rules:
-      - name: SETUP |  ALLOW_SSH
+      - name: SETUP | ALLOW_SSH
         protocol: Tcp
         destination_port_range: 22
         access: Allow
         priority: 100
         direction: Inbound
 
-      - name: SETUP |  ALLOW_HTTP
+      - name: SETUP | ALLOW_HTTP
         protocol: Tcp
         destination_port_range: 80
         access: Allow
         priority: 110
         direction: Inbound
 
-- name: SETUP |  Create NIC for single nic VM
+- name: SETUP | Create NIC for single nic VM
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
