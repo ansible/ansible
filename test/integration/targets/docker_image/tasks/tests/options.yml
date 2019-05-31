@@ -6,7 +6,7 @@
 
 - name: Registering image name
   set_fact:
-    inames: "{{ inames }} + [iname, iname_1]"
+    inames: "{{ inames + [iname, iname_1] }}"
 
 ####################################################################
 ## buildargs #######################################################
