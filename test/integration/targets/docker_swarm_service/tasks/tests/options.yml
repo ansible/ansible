@@ -8,8 +8,8 @@
 
 - name: Registering container name
   set_fact:
-    service_names: "{{ service_names }} + [service_name]"
-    network_names: "{{ network_names }} + [network_name_1, network_name_2]"
+    service_names: "{{ service_names + [service_name] }}"
+    network_names: "{{ network_names + [network_name_1, network_name_2] }}"
 
 - docker_network:
     name: "{{ network_name }}"

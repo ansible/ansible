@@ -4,7 +4,7 @@
     nname_1: "{{ name_prefix ~ '-network-1' }}"
 - name: Registering network name
   set_fact:
-    dnetworks: "{{ dnetworks }} + [nname_1]"
+    dnetworks: "{{ dnetworks + [nname_1] }}"
 
 ####################################################################
 ## internal ########################################################

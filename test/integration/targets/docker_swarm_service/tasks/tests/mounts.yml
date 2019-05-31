@@ -6,8 +6,8 @@
 
 - name: Registering service name
   set_fact:
-    service_names: "{{ service_names }} + [service_name]"
-    volume_names: "{{ volume_names }} + [volume_name_1, volume_name_2]"
+    service_names: "{{ service_names + [service_name] }}"
+    volume_names: "{{ volume_names + [volume_name_1, volume_name_2] }}"
 
 - docker_volume:
     name: "{{ volume_name }}"
