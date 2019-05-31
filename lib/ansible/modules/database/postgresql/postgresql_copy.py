@@ -77,6 +77,7 @@ options:
 
 notes:
 - Supports PostgreSQL version 9.4+.
+- COPY command is only allowed to database superusers.
 - Transaction mode is not suitable for checking because of there may be
   a lot of data and their actual upload can affect database performance.
   So, in check mode, we just check the src/dst table availability
