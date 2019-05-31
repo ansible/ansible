@@ -33,7 +33,7 @@ options:
     required: true
   state:
     description:
-      - Whether to install (C(present)), or remove (C(absent)) a package. Other states depend on the underlying package module, i.e C(latest).
+      - Whether to install (C(present)), or remove (C(absent)) a package. Other states depend on the underlying package module, e.g. C(latest).
     required: true
   use:
     description:
