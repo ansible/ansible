@@ -5,7 +5,7 @@
 
 #
 # Basic absolute symlink to a file
-# 
+#
 - name: create soft link to file
   file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
   register: file1_result
@@ -308,3 +308,40 @@
     that:
       - 'file10_result is changed'
       - 'file10_target_stat["stat"]["mode"] == "0644"'
+
+
+# https://github.com/ansible/ansible/issues/56928
+- block:
+
+  - name: Create a testing file
+    file:
+      path: "{{ output_dir }}/test_follow1"
+      state: touch
+
+  - name: Create a symlink and change mode of the original file, since follow == yes by default
+    file:
+      src: "{{ output_dir }}/test_follow1"
+      dest: "{{ output_dir }}/test_follow1_link"
+      state: link
+      mode: 0700
+
+  - name: stat the original file
+    stat:
+      path: "{{ output_dir }}/test_follow1"
+    register: stat_out
+
+  - name: Check if the mode of the original file was set
+    assert:
+      that:
+        - 'stat_out.stat.mode == "0700"'
+
+  always:
+    - name: Clean up
+      file:
+        path: "{{ item }}"
+        state: touch
+      loop:
+        - "{{ output_dir }}/test_follow1"
+        - "{{ output_dir }}/test_follow1_link"
+
+# END #56928
