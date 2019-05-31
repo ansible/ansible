@@ -8,7 +8,7 @@
 
 - name: Registering network names
   set_fact:
-    dnetworks: "{{ dnetworks }} + [nname_ipam_0, nname_ipam_1, nname_ipam_2, nname_ipam_3]"
+    dnetworks: "{{ dnetworks + [nname_ipam_0, nname_ipam_1, nname_ipam_2, nname_ipam_3] }}"
 
 
 #################### network-ipam-0 deprecated ####################
