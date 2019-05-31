@@ -40,7 +40,6 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
-    #locals = SafeDict({}) if locals is None else SafeDict(locals)
     locals = {} if locals is None else locals
 
     # define certain JSON types
