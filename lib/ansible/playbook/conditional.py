@@ -31,6 +31,7 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import is_unsafe
 
 display = Display()
 
@@ -130,7 +131,7 @@ class Conditional:
 
         try:
             # if the conditional is "unsafe", disable lookups
-            disable_lookups = hasattr(conditional, '__UNSAFE__')
+            disable_lookups = is_unsafe(conditional)
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if bare_vars_warning and not isinstance(conditional, bool):
                 display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
@@ -140,7 +141,7 @@ class Conditional:
 
             # update the lookups flag, as the string returned above may now be unsafe
             # and we don't want future templating calls to do unsafe things
-            disable_lookups |= hasattr(conditional, '__UNSAFE__')
+            disable_lookups |= is_unsafe(conditional)
 
             # First, we do some low-level jinja2 parsing involving the AST format of the
             # statement to ensure we don't do anything unsafe (using the disable_lookup flag above)
