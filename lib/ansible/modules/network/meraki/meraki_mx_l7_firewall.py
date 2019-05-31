@@ -407,7 +407,7 @@ def main():
                                          'after': diff[1],
                                          }
                 meraki.result['data'] = payload
-                meraki.result['changed'] = False
+                meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
