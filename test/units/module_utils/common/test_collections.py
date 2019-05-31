@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c), Sviatoslav Sydorenko <ssydoren@redhat.com> 2018
+# Copyright (c) 2018–2019, Sviatoslav Sydorenko <webknjaz@redhat.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 """Test low-level utility functions from ``module_utils.common.collections``."""
 
