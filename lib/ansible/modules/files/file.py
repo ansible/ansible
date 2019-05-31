@@ -353,7 +353,9 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
     except RuntimeError as e:
         # on Python3 "RecursionError" is raised which is derived from "RuntimeError"
         # TODO once this function is moved into the common file utilities, this should probably raise more general exception
-        raise AnsibleModuleError(results={'msg': "An error occured when trying recursively setting attributes on %s. Original error was: '%s'" % (to_native(b_path), to_native(e))})
+        raise AnsibleModuleError(
+            results={'msg': "An error occured when trying recursively setting attributes on %s. Original error was: '%s'" % (to_native(b_path), to_native(e))}
+        )
 
     return changed
 
