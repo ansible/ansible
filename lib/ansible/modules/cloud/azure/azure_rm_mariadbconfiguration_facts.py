@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbconfiguration_facts
 version_added: "2.8"
-short_description: Get Azure MariaDB Configuration facts.
+short_description: Get Azure MariaDB Configuration facts
 description:
     - Get facts of Azure MariaDB Configuration.
 
@@ -39,8 +39,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -59,13 +59,14 @@ EXAMPLES = '''
 
 RETURN = '''
 settings:
-    description: A list of dictionaries containing MariaDB Server settings.
+    description:
+        - A list of dictionaries containing MariaDB Server settings.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Setting resource ID
+                - Setting resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testserver
