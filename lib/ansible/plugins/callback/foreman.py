@@ -77,6 +77,7 @@ except ImportError:
     HAS_REQUESTS = False
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean as to_bool
 from ansible.plugins.callback import CallbackBase
 
 
@@ -116,6 +117,7 @@ def get_time():
     except AttributeError:
         return time.time()
 
+
 def get_now():
     """
     Return the current timestamp as a string to be sent over the network.
@@ -144,9 +146,9 @@ class CallbackModule(CallbackBase):
         ssl_key = self.get_option('client_key')
 
         if HAS_REQUESTS:
-            requests_version = requests.__version__.split('.')
-            if int(requests_version[0]) < 2 or int(requests_version[1]) < 14:
-                self._disable_plugin(u'The `requests` python module is too old.')
+            requests_version = tuple(map(int, requests.__version__.split('.')))
+            if requests_version < (2, 14):
+                self._disable_plugin(u'The `requests` python module is older than 2.14.0.')
         else:
             self._disable_plugin(u'The `requests` python module is not installed.')
 
@@ -169,15 +171,18 @@ class CallbackModule(CallbackBase):
             self._display.warning(u'Disabling the Foreman callback plugin.')
 
     def _ssl_verify(self, option):
-        if option.lower() in ["1", "true", "on"]:
-            verify = True
-        elif option.lower() in ["0", "false", "off"]:
+
+        try:
+            verify = to_bool(option)
+        except TypeError:  # it wasn't a boolean value
+            verify = option  # Set to a CA bundle:
+
+        if verify is False:  # is only set to bool if try block succeeds
             requests.packages.urllib3.disable_warnings()
-            self._display.warning(u"SSL verification of %s disabled" %
-                                  self.foreman_url)
-            verify = False
-        else:  # Set to a CA bundle:
-            verify = option
+            self._display.warning(
+                u"SSL verification of %s disabled" % self.foreman_url,
+            )
+
         return verify
 
     def send_facts(self):
@@ -203,7 +208,7 @@ class CallbackModule(CallbackBase):
                 response.raise_for_status()
             except requests.exceptions.RequestException as err:
                 self._display.warning(u'Sending facts to Foreman at {url} failed for {host}: {err}'.format(
-                    host=host, err=to_text(err), url=self.foreman_url))
+                    host=to_text(host), err=to_text(err), url=to_text(self.foreman_url)))
 
     def send_reports(self, stats):
         """
@@ -238,7 +243,7 @@ class CallbackModule(CallbackBase):
                 response.raise_for_status()
             except requests.exceptions.RequestException as err:
                 self._display.warning(u'Sending report to Foreman at {url} failed for {host}: {err}'.format(
-                    host=host, err=to_text(err), url=self.foreman_url))
+                    host=to_text(host), err=to_text(err), url=to_text(self.foreman_url)))
 
             self.items[host] = []
 
