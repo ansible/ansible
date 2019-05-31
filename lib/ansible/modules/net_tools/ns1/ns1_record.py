@@ -20,7 +20,7 @@ module: ns1_record
 
 short_description: Create, modify and delete NS1 hosted DNS records.
 
-version_added: "2.8"
+version_added: "2.9"
 
 description:
   - Create, modify and delete record objects within an existing zone.
