@@ -218,8 +218,7 @@ msg:
 import json
 import traceback
 
-#from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.net_tools.netbox.netbox_utils import (
     find_ids,
     normalize_data,
@@ -261,8 +260,7 @@ def main():
 
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
-        module.fail_json(msg="missing required lib pynetbox", exception=PYNETBOX_IMP_ERR)
-        #module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
+        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
     # Assign variables to be used with module
     app = module.params["app"]
     endpoint = "interfaces"
