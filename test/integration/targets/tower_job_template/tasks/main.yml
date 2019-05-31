@@ -1,3 +1,17 @@
+- name: Create a tempfile for extra_vars
+  tempfile:
+    state: file
+    suffix: .yml
+  register: extra_vars_path
+
+- name: Fill extra_vars into generated file
+  copy:
+    content: "{{ extra_vars | to_nice_yaml }}"
+    dest: "{{ extra_vars_path.path }}"
+  vars:
+    extra_vars:
+      foo: bar
+
 - name: Create an SCM Credential
   tower_credential:
     name: SCM Credential for JT
@@ -47,6 +61,40 @@
     credential: Demo Credential
     job_type: run
     state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a Job Template with extra_vars_path
+  tower_job_template:
+    name: hello-world with extra_vars_path
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    credential: Demo Credential
+    job_type: run
+    state: present
+    extra_vars_path: "{{ extra_vars_path.path }}"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+      - "'extra_vars_path should not be used anymore.' in result.deprecations[0].msg"
+
+- name: Create a Job Template with extra_vars
+  tower_job_template:
+    name: hello-world with extra_vars
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    credential: Demo Credential
+    job_type: run
+    state: present
+    extra_vars:
+      foo: bar
   register: result
 
 - assert:

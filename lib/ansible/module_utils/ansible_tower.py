@@ -40,6 +40,14 @@ except ImportError:
     TOWER_CLI_IMP_ERR = traceback.format_exc()
     HAS_TOWER_CLI = False
 
+YAML_IMP_ERR = None
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
+    HAS_YAML = False
+
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -86,6 +94,11 @@ def tower_check_mode(module):
             module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
 
 
+def tower_dump_yaml(v):
+    '''Convert variable to yaml'''
+    return yaml.dump(v)
+
+
 class TowerModule(AnsibleModule):
     def __init__(self, argument_spec, **kwargs):
         args = dict(
@@ -110,3 +123,7 @@ class TowerModule(AnsibleModule):
         if not HAS_TOWER_CLI:
             self.fail_json(msg=missing_required_lib('ansible-tower-cli'),
                            exception=TOWER_CLI_IMP_ERR)
+
+        if not HAS_YAML:
+            self.fail_json(msg=missing_required_lib("PyYAML"),
+                           exception=YAML_IMP_ERR)

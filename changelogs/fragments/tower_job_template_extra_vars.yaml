@@ -1,0 +1,4 @@
+---
+minor_changes:
+- "extra_vars_path - Add deprecation warning, use ``extra_vars: \"{{ lookup('file', '/path/to/file') | from_yaml }}\"`` instead"
+- extra_vars - Set extra_vars for job template

@@ -65,6 +65,10 @@ options:
         - Control the output level Ansible produces as the playbook runs. 0 - Normal, 1 - Verbose, 2 - More Verbose, 3 - Debug, 4 - Connection Debug.
       choices: [0, 1, 2, 3, 4]
       default: 0
+    extra_vars:
+      description:
+        - Specify C(extra_vars) for the template.
+      version_added: 2.9
     extra_vars_path:
       description:
         - Path to the C(extra_vars) YAML file.
@@ -199,7 +203,7 @@ EXAMPLES = '''
     survey_spec: "{{ lookup('file', 'my_survey.json') }}"
 '''
 
-from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
+from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode, tower_dump_yaml
 
 try:
     import tower_cli
@@ -210,7 +214,7 @@ except ImportError:
     pass
 
 
-def update_fields(p):
+def update_fields(module, p):
     '''This updates the module field names
     to match the field names tower-cli expects to make
     calling of the modify/delete methods easier.
@@ -237,9 +241,18 @@ def update_fields(p):
         v = params.pop(old_k)
         params_update[new_k] = v
 
-    extra_vars = params.get('extra_vars_path')
+    extra_vars = params.get('extra_vars')
+    extra_vars_path = params.get('extra_vars_path')
+
+    if extra_vars_path is not None:
+        params_update['extra_vars'] = ['@' + extra_vars_path]
+        module.deprecate(
+            msg='extra_vars_path should not be used anymore. Use \'extra_vars: "{{ lookup(\'file\', \'/path/to/file\') | from_yaml }}"\' instead',
+            version="2.13"
+        )
+
     if extra_vars is not None:
-        params_update['extra_vars'] = ['@' + extra_vars]
+        params_update['extra_vars'] = [tower_dump_yaml(extra_vars)]
 
     params.update(params_update)
     return params
@@ -280,6 +293,7 @@ def main():
         forks=dict(type='int'),
         limit=dict(default=''),
         verbosity=dict(type='int', choices=[0, 1, 2, 3, 4], default=0),
+        extra_vars=dict(type='dict', required=False),
         extra_vars_path=dict(type='path', required=False),
         job_tags=dict(default=''),
         force_handlers_enabled=dict(type='bool', default=False),
@@ -317,7 +331,7 @@ def main():
         jt = tower_cli.get_resource('job_template')
 
         params = update_resources(module, module.params)
-        params = update_fields(params)
+        params = update_fields(module, params)
         params['create_on_missing'] = True
 
         try:

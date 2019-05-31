@@ -77,6 +77,8 @@ Noteworthy module changes
 * The ``bigiq_device_facts`` module was renamed to :ref:`bigiq_device_info <bigiq_device_info_module>`.
 * The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
 
+* The ``tower_job_template`` module accepts `extra_vars` parameter to set extra_vars for the job template.
+* The ``tower_job_template`` module parameter `extra_vars_path` is deprecated. Use `extra_vars` parameter instead. The previos behavior can be archived with ``extra_vars: "{{ lookup('file', '/path/to/file') | from_yaml }}"``
 
 Plugins
 =======
