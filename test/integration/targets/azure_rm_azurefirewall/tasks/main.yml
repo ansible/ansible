@@ -280,7 +280,7 @@
             destination_addresses:
               - '*'
             destination_ports:
-              - 443-445
+              - 443-444
               - '8443'
         name: netrulecoll
     ip_configurations:
