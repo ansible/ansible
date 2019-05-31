@@ -10,4 +10,4 @@ complex processes.
 
 It logs all of your jobs, integrates well with LDAP, SAML, and other account sources, and has an amazing browsable REST API. Command line tools are available for easy integration with Jenkins as well.
 
-Find out more about Ansible Tower features and how to download it on the `Ansible Tower webpage <https://www.ansible.com/products/tower>`_. Ansible Tower is part of the Red Hat Ansible Automation subscription, and comes bundled with amazing support from Ansible, Inc.
+Find out more about Ansible Tower features and how to download it on the `Ansible Tower webpage <https://www.ansible.com/products/tower>`_. Ansible Tower is part of the Red Hat Ansible Automation subscription, and comes bundled with amazing support from Red Hat, Inc.
