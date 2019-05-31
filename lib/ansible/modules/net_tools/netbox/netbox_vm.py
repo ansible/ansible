@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Mikhail Yohman (@FragmentedPacket) <mikhail.yohman@gmail.com>
 # Copyright: (c) 2018, David Gomez (@amb1s1) <david.gomez@networktocode.com>
+# Copyright: (c) 2019, Alvaro Arriola (@axarriola) <alvaroxarriola@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -26,7 +27,7 @@ author:
   - Alvaro Arriola (@axarriola)
 requirements:
   - pynetbox
-version_added: '2.8'
+version_added: '2.9'
 options:
   netbox_url:
     description:
@@ -53,33 +54,24 @@ options:
       platform:
         description:
           - The platform of the device
-      serial:
-        description:
-          - Serial number of the device
       primary_ip:
         description:
           - Primary IP of the VM
-        type: string
       primary_ip4:
         description:
           - Primary IPv4 of the VM
-        type: string
       primary_ip6:
         description:
           - Primary IPv6 of the VM
-        type: string
       vcpus:
         description:
           - Number of vcpus assigned to VM
-        type: integer
       memory:
         description:
           - Memory assigned to VM in MB
-        type: integer
       disk:
         description:
           - Disk size in GB
-        type: integer
       status:
         description:
           - The status of the device
