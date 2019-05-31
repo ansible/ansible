@@ -106,16 +106,27 @@ def basedir(source):
     return to_text(dname, errors='surrogate_or_strict')
 
 
-def cleanup_tmp_dir(path):
-    """Removes temporary directory"""
+def cleanup_tmp_file(path, warn=False):
+    """
+    Removes temporary file or directory. Optionally display a warning if unable
+    to remove the file or directory.
+
+    :arg path: Path to file or directory to be removed
+    :kwarg warn: Whether or not to display a warning when the file or directory
+        cannot be removed
+    """
     try:
-        if os.path.isdir(path):
+        if os.path.exists(path):
             try:
-                shutil.rmtree(path)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                elif os.path.isfile(path):
+                    os.unlink(path)
             except Exception as e:
-                # Importing here to avoid circular import
-                from ansible.utils.display import Display
-                display = Display()
-                display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+                if warn:
+                    # Importing here to avoid circular import
+                    from ansible.utils.display import Display
+                    display = Display()
+                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
     except Exception:
         pass
