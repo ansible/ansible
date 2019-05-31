@@ -1,0 +1,2 @@
+bugfixes:
+- "postgresql_pg_hba - Fix TypeError after which pg_hba.conf is wiped (https://github.com/ansible/ansible/issues/56430)"
