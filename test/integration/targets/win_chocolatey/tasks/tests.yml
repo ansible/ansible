@@ -458,7 +458,7 @@
 - name: install newer version of package
   win_chocolatey:
     name: '{{ test_choco_package1 }}'
-    state: present
+    state: latest
 
 - name: install older package with allow_multiple
   win_chocolatey:
