@@ -278,8 +278,8 @@ class WapiModule(WapiBase):
                     if each.get('ipv4addr') and each.get('ipv4addr') == proposed_object.get('ipv4addr'):
                         current_object = each
                     # To check for existing Host_record with same name with input Host_record by IP
-                    elif each.get('ipv4addrs')[0].get('ipv4addr') == proposed_object.get('ipv4addrs') \
-                            [0].get('ipv4addr'):
+                    elif each.get('ipv4addrs')[0].get('ipv4addr') and each.get('ipv4addrs')[0].get('ipv4addr')\
+                            == proposed_object.get('ipv4addrs')[0].get('ipv4addr'):
                         current_object = each
                     # Else set the current_object with input value
                     else:
