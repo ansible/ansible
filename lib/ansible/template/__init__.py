@@ -527,7 +527,7 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
-                            elif is_unsafe(resolved_val):
+                            elif is_unsafe(resolved_val, recurse=False):
                                 return wrap_var(resolved_val)
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION

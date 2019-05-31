@@ -29,20 +29,6 @@ from ansible.plugins.loader import filter_loader, test_loader
 from ansible.utils.unsafe_proxy import is_unsafe
 
 
-def SafeDict(MutableMapping):
-
-    def __init__(self, orig_dict):
-        self._orig = orig_dict
-        self.update(orig_dict)
-
-    def __getitem__(self, name):
-
-        if is_unsafe(self._orig[name]):
-            return name
-        else:
-            return self._orig[name]
-
-
 def safe_eval(expr, locals=None, include_exceptions=False):
     '''
     This is intended for allowing things like:
@@ -54,7 +40,8 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     Based on:
     http://stackoverflow.com/questions/12523516/using-ast-and-whitelists-to-make-pythons-eval-safe
     '''
-    locals = SafeDict({}) if locals is None else SafeDict(locals)
+    #locals = SafeDict({}) if locals is None else SafeDict(locals)
+    locals = {} if locals is None else locals
 
     # define certain JSON types
     # eg. JSON booleans are unknown to python eval()
