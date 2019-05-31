@@ -7,7 +7,7 @@
     cname_h3: "{{ cname_prefix ~ '-options-h3' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname, cname_h1, cname_h2, cname_h3]"
+    cnames: "{{ cnames + [cname, cname_h1, cname_h2, cname_h3] }}"
 
 ####################################################################
 ## auto_remove #####################################################
