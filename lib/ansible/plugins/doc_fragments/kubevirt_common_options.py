@@ -106,6 +106,17 @@ options:
         description:
             - "Specify tablets to be used as input devices"
         type: list
+    hostname:
+        description:
+            - "Specifies the hostname of the virtual machine. The hostname will be set either by dhcp, cloud-init if configured or virtual machine
+               name will be used."
+        version_added: 2.9
+    subdomain:
+        description:
+            - "If specified, the fully qualified virtual machine hostname will be hostname.subdomain.namespace.svc.cluster_domain. If not specified,
+               the virtual machine will not have a domain name at all. The DNS entry will resolve to the virtual machine, no matter if the virtual machine
+               itself can pick up a hostname."
+        version_added: 2.9
 requirements:
     - python >= 2.7
     - openshift >= 0.8.2
