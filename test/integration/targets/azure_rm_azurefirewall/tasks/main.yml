@@ -224,6 +224,9 @@
         name: azureFirewallIpConfiguration
   register: output
 
+- debug:
+    var: output
+
 - name: Assert that output has changed
   assert:
     that:
@@ -291,6 +294,9 @@
           name: "{{ public_ipaddress_name }}"
         name: azureFirewallIpConfiguration
   register: output
+
+- debug:
+    var: output
 
 - name: Assert that output has changed
   assert:
