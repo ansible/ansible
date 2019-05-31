@@ -83,32 +83,31 @@ class TestNxosVlanModule(TestNxosModule):
     def test_nxos_vlan_agg_1(self):
         # Aggregate: vlan 4/5 exist -> Add 6
         set_module_args(dict(aggregate=[
-            { 'name': '_5_', 'vlan_id': 5 },
-            { 'name': '_6_', 'vlan_id': 6 }
-            ]))
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_6_', 'vlan_id': 6}
+        ]))
         self.execute_module(changed=True, commands=[
             'vlan 6',
             'name _6_',
             'state active',
             'no shutdown',
             'exit'
-            ])
-
+        ])
 
     def test_nxos_vlan_agg_2(self):
         # Aggregate: vlan 4/5 exist -> Add none (idempotence)
         set_module_args(dict(aggregate=[
-            { 'name': '_5_', 'vlan_id': 5 },
-            { 'name': '_4_', 'vlan_id': 4 }
-            ]))
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_4_', 'vlan_id': 4}
+        ]))
         self.execute_module(changed=False)
 
     def test_nxos_vlan_agg_3(self):
         # Aggregate/Purge: vlan 4/5 exist -> Add 6, Purge 4
         set_module_args(dict(aggregate=[
-            { 'name': '_5_', 'vlan_id': 5 },
-            { 'name': '_6_', 'vlan_id': 6 }
-            ], purge=True))
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_6_', 'vlan_id': 6}
+        ], purge=True))
         self.execute_module(changed=True, commands=[
             'vlan 6',
             'name _6_',
@@ -116,14 +115,14 @@ class TestNxosVlanModule(TestNxosModule):
             'no shutdown',
             'exit',
             'no vlan 4'
-            ])
+        ])
 
     def test_nxos_vlan_agg_4(self):
         # Aggregate/Purge: vlan 4/5 exist -> Purge None (idempotence)
         set_module_args(dict(aggregate=[
-            { 'name': '_5_', 'vlan_id': 5 },
-            { 'name': '_4_', 'vlan_id': 4 }
-            ]))
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_4_', 'vlan_id': 4}
+        ]))
         self.execute_module(changed=False)
 
     def test_nxos_vlan_agg_5(self):
@@ -137,7 +136,7 @@ class TestNxosVlanModule(TestNxosModule):
             'exit',
             'no vlan 4',
             'no vlan 5'
-            ])
+        ])
 
     def test_nxos_vlan_agg_6(self):
         # Purge All: vlan 4/5 exist -> Purge 4/5
@@ -145,8 +144,7 @@ class TestNxosVlanModule(TestNxosModule):
         self.execute_module(changed=True, commands=[
             'no vlan 4',
             'no vlan 5'
-            ])
-
+        ])
 
     def test_nxos_vlan_range(self):
         set_module_args(dict(vlan_range='6-10'))
