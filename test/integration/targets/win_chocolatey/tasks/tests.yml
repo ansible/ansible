@@ -438,21 +438,22 @@
     state: downgrade
     version: 0.0.1
 
-- name: upgrade all packages
-  win_chocolatey:
-    name: all
-    state: latest
-  register: all_latest
-
-- name: get result of upgrade all packages
-  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
-  register: all_latest_actual
-
-- name: assert upgrade all packages
-  assert:
-    that:
-    - all_latest is changed
-    - all_latest_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
+# TODO: Re-enable once https://github.com/chocolatey/choco/issues/1837 is fixed and in a new release
+#- name: upgrade all packages
+#  win_chocolatey:
+#    name: all
+#    state: latest
+#  register: all_latest
+#
+#- name: get result of upgrade all packages
+#  win_command: choco.exe list --local-only --limit-output --exact {{ test_choco_package1|quote }}
+#  register: all_latest_actual
+#
+#- name: assert upgrade all packages
+#  assert:
+#    that:
+#    - all_latest is changed
+#    - all_latest_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
 
 - name: install newer version of package
   win_chocolatey:
