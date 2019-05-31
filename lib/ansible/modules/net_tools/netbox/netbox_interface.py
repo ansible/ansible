@@ -114,6 +114,7 @@ options:
     choices: [ dcim, virtualization ]
     default: dcim
     type: str
+    version_added: "2.9"
   validate_certs:
     description:
       - |
