@@ -1,2 +1,2 @@
-- bugfixes:
+bugfixes:
   - file - fix setting attributes for symlinked file (https://github.com/ansible/ansible/issues/56928)
