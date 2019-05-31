@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import pytest
 
+from ansible.module_utils.six import Iterator
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
@@ -24,7 +25,7 @@ class SeqStub:
 Sequence.register(SeqStub)
 
 
-class IteratorStub:
+class IteratorStub(Iterator):
     def __next__(self):
         raise StopIteration
 
