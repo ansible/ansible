@@ -64,8 +64,13 @@ do:
 
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
+    
+Depending on your setup, you may wish to use Ansible's ``--private-key`` command line option to specify a pem file instead.  You can also add the private key file:
 
-(Depending on your setup, you may wish to use Ansible's ``--private-key`` option to specify a pem file instead)
+    $ ssh-agent bash
+    $ ssh-add ~/.ssh/keypair.pem
+
+Another way to add private key files without using ssh-agent is using ``ansible_ssh_private_key_file`` in an inventory file as explained here:  :doc:`intro_inventory`.
 
 Now ping all your nodes:
 
