@@ -194,7 +194,8 @@ Function Install-Chocolatey {
         [String]$proxy_password,
         [String]$source,
         [String]$source_username,
-        [String]$source_password
+        [String]$source_password,
+        [String]$version
     )
 
     $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
@@ -211,20 +212,30 @@ Function Install-Chocolatey {
         [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
         $client = New-Object -TypeName System.Net.WebClient
-        $environment = @{}
+        $new_environment = @{}
         if ($proxy_url) {
             # the env values are used in the install.ps1 script when getting
             # external dependencies
-            $environment = [Environment]::GetEnvironmentVariables()
-            $environment.chocolateyProxyLocation = $proxy_url
+            $new_environment.chocolateyProxyLocation = $proxy_url
             $web_proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $proxy_url, $true
             $client.Proxy = $web_proxy
             if ($proxy_username -and $proxy_password) {
-                $environment.chocolateyProxyUser = $proxy_username
-                $environment.chocolateyProxyPassword = $proxy_password
+                $new_environment.chocolateyProxyUser = $proxy_username
+                $new_environment.chocolateyProxyPassword = $proxy_password
                 $sec_proxy_password = ConvertTo-SecureString -String $proxy_password -AsPlainText -Force
                 $web_proxy.Credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $proxy_username, $sec_proxy_password
             }
+        }
+        if ($version) {
+            # Set the chocolateyVersion environment variable when bootstrapping Chocolatey to install that specific
+            # version.
+            $new_environment.chocolateyVersion = $version
+        }
+
+        $environment = @{}
+        if ($new_environment.Count -gt 0) {
+            $environment = [Environment]::GetEnvironmentVariables()
+            $environment += $new_environment
         }
 
         if ($source) {
@@ -618,9 +629,20 @@ Function Uninstall-ChocolateyPackage {
 }
 
 # get the full path to choco.exe, otherwise install/upgrade to at least 0.10.5
-$choco_path = Install-Chocolatey -proxy_url $proxy_url -proxy_username $proxy_username `
-    -proxy_password $proxy_password -source $source -source_username $source_username `
-    -source_password $source_password
+$install_params = @{
+    proxy_url = $proxy_url
+    proxy_username = $proxy_username
+    proxy_password = $proxy_password
+    source = $source
+    source_username = $source_username
+    source_password = $source_password
+}
+if ($version -and "chocolatey" -in $name) {
+    # If a version is set and chocolatey is in the package list, pass the chocolatey version to the bootstrapping
+    # process.
+    $install_params.version = $version
+}
+$choco_path = Install-Chocolatey @install_params
 
 # get the version of all specified packages
 $package_info = @{}

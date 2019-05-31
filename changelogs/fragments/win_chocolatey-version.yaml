@@ -1,0 +1,2 @@
+bugfixes:
+- win_chocolatey - Install the specific Chocolatey version if the ``version`` option is set.
