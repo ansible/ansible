@@ -529,6 +529,7 @@ class Templar:
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
                             elif is_unsafe(resolved_val) and not isinstance(resolved_val, AnsibleVaultEncryptedUnicode):
+                                # we dont need to template most unsafe values, but do need vault objects as templating unvaults
                                 return wrap_var(resolved_val)
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
