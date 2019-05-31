@@ -54,7 +54,7 @@ Never use a trademark as a verb. Trademarks are products or services, never acti
 Never modify a trademark to a plural form. Instead, change the generic word from the singular to the plural.
 
     Correct:
-    "Corporate demand for Red Hata® Ansible Tower® configuration software is surging."
+    "Corporate demand for Red Hat® Ansible Tower® configuration software is surging."
 
     Incorrect:
     "Corporate demand for Ansible is surging."
