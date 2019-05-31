@@ -127,13 +127,13 @@ class TestImmutableDict:
     def test_immutable(self):
         imdict = ImmutableDict({1: 2})
 
-        with pytest.raises(TypeError) as exc_info:
-            imdict[1] = 3
-        assert exc_info.value.args[0] == "'ImmutableDict' object does not support item assignment"
+        expected_reason = r"^'ImmutableDict' object does not support item assignment$"
 
-        with pytest.raises(TypeError) as exc_info:
+        with pytest.raises(TypeError, match=expected_reason):
+            imdict[1] = 3
+
+        with pytest.raises(TypeError, match=expected_reason):
             imdict[5] = 3
-        assert exc_info.value.args[0] == "'ImmutableDict' object does not support item assignment"
 
     def test_hashable(self):
         # ImmutableDict is hashable when all of its values are hashable
@@ -144,9 +144,10 @@ class TestImmutableDict:
         # ImmutableDict is unhashable when one of its values is unhashable
         imdict = ImmutableDict({u'café': u'くらとみ', 1: [1, 2]})
 
-        with pytest.raises(TypeError) as exc_info:
+        expected_reason = r"^unhashable type: 'list'$"
+
+        with pytest.raises(TypeError, match=expected_reason):
             hash(imdict)
-        assert exc_info.value.args[0] == "unhashable type: 'list'"
 
     def test_len(self):
         imdict = ImmutableDict({1: 2, 'a': 'b'})
