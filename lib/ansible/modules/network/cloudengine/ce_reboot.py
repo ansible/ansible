@@ -30,15 +30,16 @@ description:
 author: Gong Jianjun (@QijunPan)
 requirements: ["ncclient"]
 options:
-  confirm:
-    description:
-      - Safeguard boolean. Set to true if you're sure you want to reboot.
-    type: bool
-  save_config:
-    description:
-      - Flag indicating whether to save the configuration.
-    type: bool
-    default: False
+    confirm:
+        description:
+            - Safeguard boolean. Set to true if you're sure you want to reboot.
+        type: bool
+        default: false
+    save_config:
+        description:
+            - Flag indicating whether to save the configuration.
+        type: bool
+        default: false
 '''
 
 EXAMPLES = '''
