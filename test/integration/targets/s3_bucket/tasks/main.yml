@@ -13,6 +13,19 @@
       no_log: true
 
     # ============================================================
+    - name: Create simple s3_bucket (check mode)
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        check_mode: yes
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+
+    # ============================================================
     - name: Create simple s3_bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible"
@@ -27,6 +40,19 @@
           - not output.requester_pays
 
     # ============================================================
+    - name: Try to update the same bucket with the same values (check mode)
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        check_mode: yes
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+
+    # ============================================================
     - name: Try to update the same bucket with the same values
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible"
@@ -39,6 +65,19 @@
           - not output.changed
           - output.name == '{{ resource_prefix }}-testbucket-ansible'
           - not output.requester_pays
+
+    # ============================================================
+    - name: Delete s3_bucket (check mode)
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible"
+        check_mode: yes
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
 
     # ============================================================
     - name: Delete s3_bucket
@@ -108,6 +147,25 @@
           - not output.changed
 
     # ============================================================
+    - name: Update bucket policy (check mode)
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        check_mode: yes
+        state: present
+        policy: "{{ lookup('template','policy-updated.json') }}"
+        requester_pays: yes
+        versioning: yes
+        tags:
+          example: tag1
+          another: tag2
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+
+    # ============================================================
     - name: Update bucket policy
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
@@ -134,6 +192,24 @@
     - name: Pause to help with s3 bucket eventual consistency
       pause:
         seconds: 10
+
+    - name: Update attributes for s3_bucket (check mode)
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        check_mode: yes
+        state: present
+        policy: "{{ lookup('template','policy.json') }}"
+        requester_pays: no
+        versioning: no
+        tags:
+          example: tag1-udpated
+          another: tag2
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
 
     - name: Update attributes for s3_bucket
       s3_bucket:
@@ -260,6 +336,19 @@
     - assert:
         that:
           - output.changed
+
+    # ============================================================
+    - name: Try to delete a missing bucket (check mode)
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.ansible.missing"
+        check_mode: yes
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
 
     # ============================================================
     - name: Try to delete a missing bucket (should not fail)
