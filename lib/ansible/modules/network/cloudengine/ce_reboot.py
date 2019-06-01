@@ -34,7 +34,6 @@ options:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         type: bool
-        default: false
     save_config:
         description:
             - Flag indicating whether to save the configuration.
@@ -134,7 +133,7 @@ def main():
     """ main """
 
     argument_spec = dict(
-        confirm=dict(required=True, type='bool', default='false'),
+        confirm=dict(required=True, type='bool'),
         save_config=dict(required=False, type='bool', default='false')
     )
 
