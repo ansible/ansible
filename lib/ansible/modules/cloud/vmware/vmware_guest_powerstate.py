@@ -29,28 +29,37 @@ options:
     - Set the state of the virtual machine.
     choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended, present]
     default: present
+    type: str
+    required: False
   name:
     description:
     - Name of the virtual machine to work with.
     - Virtual machine names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    type: str
+    required: False
   name_match:
     description:
     - If multiple virtual machines matching the name, use the first or last found.
     default: first
     choices: [ first, last ]
+    type: str
+    required: False
   uuid:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
     - This is required if name is not supplied.
+    type: str
+    required: False
   use_instance_uuid:
     description:
     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
     default: no
     type: bool
     version_added: '2.8'
+    required: False
   folder:
     description:
-    - Destination folder, absolute or relative path to find an existing guest or create the new guest.
+    - Destination folder path to find an existing guest.
     - The folder should include the datacenter. ESX's datacenter is ha-datacenter
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
@@ -62,14 +71,15 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    - '   folder: vm/folder2'
-    - '   folder: folder2'
-    default: /vm
+    type: str
+    required: False
   scheduled_at:
     description:
     - Date and time in string format at which specificed task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
+    type: str
+    required: False
   force:
     description:
     - Ignore warnings and complete the actions.
@@ -77,6 +87,7 @@ options:
     default: False
     type: bool
     version_added: 2.5
+    required: False
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdown-guest), by default the module will return immediately after sending the shutdown signal.
@@ -84,6 +95,7 @@ options:
     - The value sets a timeout in seconds for the module to wait for the state change.
     default: 0
     version_added: '2.6'
+    required: False
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -131,6 +143,7 @@ try:
 except ImportError:
     pass
 
+from random import randint
 from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, set_vm_power_state, vmware_argument_spec
@@ -146,18 +159,17 @@ def main():
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
         state_change_timeout=dict(type='int', default=0),
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
-                           mutually_exclusive=[
-                               ['name', 'uuid'],
-                           ],
-                           )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False,
+        mutually_exclusive=[['name', 'uuid']],
+    )
 
     result = dict(changed=False,)
 
@@ -174,6 +186,7 @@ def main():
                 module.fail_json(msg="Scheduling task requires vCenter, hostname %s "
                                      "is an ESXi server." % module.params.get('hostname'))
             powerstate = {
+                'present': vim.VirtualMachine.PowerOn,
                 'powered-off': vim.VirtualMachine.PowerOff,
                 'powered-on': vim.VirtualMachine.PowerOn,
                 'reboot-guest': vim.VirtualMachine.RebootGuest,
@@ -191,7 +204,7 @@ def main():
             schedule_task_desc = 'Schedule task for vm %s for operation %s at %s' % (vm.name,
                                                                                      module.params.get('state'),
                                                                                      scheduled_at)
-            schedule_task_spec.name = schedule_task_desc
+            schedule_task_spec.name = 'task_%s' % str(randint(10000, 99999))
             schedule_task_spec.description = schedule_task_desc
             schedule_task_spec.scheduler = vim.scheduler.OnceTaskScheduler()
             schedule_task_spec.scheduler.runAt = dt
