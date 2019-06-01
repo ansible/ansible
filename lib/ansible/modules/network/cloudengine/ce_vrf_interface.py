@@ -359,7 +359,7 @@ class VrfInterface(object):
     def get_interface_vpn(self):
         """ get the VPN instance associated with the interface"""
 
-        xml_str = CE_NC_GET_VRF_INTERFACE % (self.vpn_interface)
+        xml_str = CE_NC_GET_VRF_INTERFACE
         con_obj = get_nc_config(self.module, xml_str)
         if "<data/>" in con_obj:
             return
