@@ -133,7 +133,7 @@ def main():
 
     argument_spec = dict(
         confirm=dict(required=True, type='bool'),
-        save_config=dict(required=False, type='bool', default=False)
+        save_config=dict(type='bool', default=False)
     )
 
     argument_spec.update(ce_argument_spec)
