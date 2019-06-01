@@ -318,7 +318,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 result['result'] = k8s_obj
                 if wait:
                     success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
-                match, diffs = self.diff_objects(existing.to_dict(), result['result'].to_dict())
+                match, diffs = self.diff_objects(existing.to_dict(), result['result'])
                 result['changed'] = not match
                 result['method'] = 'replace'
                 result['diff'] = diffs
