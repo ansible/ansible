@@ -141,11 +141,11 @@ def syspatch_run(module):
             # Kernel update applied
             reboot_needed = True
         elif out.lower().find('syspatch updated itself'):
-            warnings.append['Syspatch was updated. Please run syspatch again.']
+            warnings.append('Syspatch was updated. Please run syspatch again.')
 
         # If no stdout, then warn user
-        if len(out) > 0:
-            warnings.append['syspatch had suggested changes, but stdout was empty.']
+        if len(out) == 0:
+            warnings.append('syspatch had suggested changes, but stdout was empty.')
 
         changed = True
     else:
