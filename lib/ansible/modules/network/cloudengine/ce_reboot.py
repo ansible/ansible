@@ -34,13 +34,13 @@ options:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         type: bool
-        default: false
+        default: False
     save_config:
         description:
             - Flag indicating whether to save the configuration.
-        required: false
+        required: False
         type: bool
-        default: false
+        default: False
 '''
 
 EXAMPLES = '''
@@ -55,7 +55,6 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       transport: cli
-
   tasks:
   - name: Reboot the device
     ce_reboot:
@@ -134,8 +133,8 @@ def main():
     """ main """
 
     argument_spec = dict(
-        confirm=dict(required=True, type='bool'),
-        save_config=dict(required=False, type='bool', default='false')
+        confirm=dict(required=True, type='bool', default=False),
+        save_config=dict(required=False, type='bool', default=False)
     )
 
     argument_spec.update(ce_argument_spec)
