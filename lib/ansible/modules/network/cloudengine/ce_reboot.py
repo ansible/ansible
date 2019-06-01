@@ -38,7 +38,6 @@ options:
     save_config:
         description:
             - Flag indicating whether to save the configuration.
-        required: False
         type: bool
         default: False
 '''
