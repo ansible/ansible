@@ -52,6 +52,16 @@ EXAMPLES = '''
 - name: Revert all patches
   syspatch:
     revert: all
+
+# NOTE: You can reboot automatically if a patch requires it:
+- name: Apply all patches and store result
+  syspatch:
+    revert: all
+  register: syspatch
+
+- name: Reboot if patch requires it
+  reboot:
+  when: syspatch.reboot_required
 '''
 
 RETURN = r'''
@@ -69,7 +79,7 @@ stderr:
   returned: always
   type: str
   sample: "syspatch: need root privileges"
-reboot_needed:
+reboot_required:
   description: Whether or not a reboot is required after an update
   returned: always
   type: bool
@@ -100,7 +110,7 @@ def run_module():
 def syspatch_run(module):
     cmd = ['/usr/sbin/syspatch']
     changed = False
-    reboot_needed = False
+    reboot_required = False
     warnings = []
 
     # Setup command flags
@@ -139,7 +149,7 @@ def syspatch_run(module):
             module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
         elif out.lower().find('create unique kernel'):
             # Kernel update applied
-            reboot_needed = True
+            reboot_required = True
         elif out.lower().find('syspatch updated itself'):
             warnings.append('Syspatch was updated. Please run syspatch again.')
 
@@ -153,7 +163,7 @@ def syspatch_run(module):
 
     return dict(
         changed=changed,
-        reboot_needed=reboot_needed,
+        reboot_required=reboot_required,
         rc=rc,
         stderr=err,
         stdout=out,
