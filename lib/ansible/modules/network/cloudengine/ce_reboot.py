@@ -133,7 +133,7 @@ def main():
     """ main """
 
     argument_spec = dict(
-        confirm=dict(required=True, type='bool', default=False),
+        confirm=dict(required=True, type='bool'),
         save_config=dict(required=False, type='bool', default=False)
     )
 
