@@ -16,9 +16,9 @@
     - name: Create simple s3_bucket (check mode)
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible"
-        check_mode: yes
         state: present
         <<: *aws_connection_info
+      check_mode: yes
       register: output
 
     - assert:
@@ -43,9 +43,9 @@
     - name: Try to update the same bucket with the same values (check mode)
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible"
-        check_mode: yes
         state: present
         <<: *aws_connection_info
+      check_mode: yes
       register: output
 
     - assert:
@@ -70,9 +70,9 @@
     - name: Delete s3_bucket (check mode)
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible"
-        check_mode: yes
         state: absent
         <<: *aws_connection_info
+      check_mode: yes
       register: output
 
     - assert:
@@ -150,7 +150,6 @@
     - name: Update bucket policy (check mode)
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
-        check_mode: yes
         state: present
         policy: "{{ lookup('template','policy-updated.json') }}"
         requester_pays: yes
@@ -159,6 +158,7 @@
           example: tag1
           another: tag2
         <<: *aws_connection_info
+      check_mode: yes
       register: output
 
     - assert:
@@ -196,7 +196,6 @@
     - name: Update attributes for s3_bucket (check mode)
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
-        check_mode: yes
         state: present
         policy: "{{ lookup('template','policy.json') }}"
         requester_pays: no
@@ -205,6 +204,7 @@
           example: tag1-udpated
           another: tag2
         <<: *aws_connection_info
+      check_mode: yes
       register: output
 
     - assert:
@@ -341,9 +341,9 @@
     - name: Try to delete a missing bucket (check mode)
       s3_bucket:
         name: "{{ resource_prefix }}.testbucket.ansible.missing"
-        check_mode: yes
         state: absent
         <<: *aws_connection_info
+      check_mode: yes
       register: output
 
     - assert:
