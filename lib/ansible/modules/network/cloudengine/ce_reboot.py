@@ -36,7 +36,7 @@ options:
     type: bool
   save_config:
     description:
-        - Flag indicating whether to save the configuration.
+      - Flag indicating whether to save the configuration.
     type: bool
     default: False
 '''
@@ -63,10 +63,10 @@ EXAMPLES = '''
 
 RETURN = '''
 rebooted:
-    description: Whether the device was instructed to reboot.
-    returned: success
-    type: bool
-    sample: true
+  description: Whether the device was instructed to reboot.
+  returned: success
+  type: bool
+  sample: true
 '''
 
 
