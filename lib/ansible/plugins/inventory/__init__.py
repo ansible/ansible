@@ -402,7 +402,7 @@ class Constructable(object):
 
                     if key:
                         prefix = keyed.get('prefix', '')
-                        if prefix = '':
+                        if prefix == '':
                             sep = ''
                         else:
                             sep = keyed.get('separator', '_')
