@@ -8,6 +8,7 @@
     setup_attach_host: true
     setup_datastore: true
     setup_virtualmachines: true
+
 - name: set state to poweroff the first VM
   vmware_guest_powerstate:
     validate_certs: False
@@ -19,9 +20,29 @@
     state: powered-off
   register: poweroff_d1_c1_f0
 
-- debug: var=poweroff_d1_c1_f0
+- debug:
+    var: poweroff_d1_c1_f0
 
 - name: make sure change was made
   assert:
     that:
         - poweroff_d1_c1_f0.changed
+
+- when: vcsim is not defined
+  block:
+  - name: Set a schedule task for first VM
+    vmware_guest_powerstate:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines[0].name }}"
+      folder: "{{ virtual_machines[0].folder }}"
+      scheduled_at: "10/10/2030 10:10"
+      state: powered-on
+    register: poweron_d1_c1_f0
+
+  - name: Check that task is schedule
+    assert:
+      that:
+        - poweron_d1_c1_f0.changed
