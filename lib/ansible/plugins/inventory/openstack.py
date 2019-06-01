@@ -209,7 +209,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             expand_hostvars = self._config_data.get('expand_hostvars', False)
             fail_on_errors = self._config_data.get('fail_on_errors', False)
-            filters = self._config_data.get('filters', None)
+            filters = self.templar.template(self._config_data.get('filters', None))
 
             if isinstance(filters, dict) or isinstance(filters, string_types):
                 source_data = cloud_inventory.search_hosts(
