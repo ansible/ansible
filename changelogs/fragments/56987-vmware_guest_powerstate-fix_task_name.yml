@@ -1,0 +1,2 @@
+minor_changes:
+- Use shorter and unique random task name for scheduled task created by vmware_guest_powerstate (https://github.com/ansible/ansible/issues/56987).
