@@ -139,11 +139,12 @@ def main():
     argument_spec.update(
         net_id=dict(type='str'),
         net_name=dict(type='str', aliases=['network']),
-        state=dict(type='str', default='present', choices=['present']),
+        state=dict(type='str', default='present', choices=['present', 'query']),
         allowed_urls=dict(type='list'),
         blocked_urls=dict(type='list'),
         blocked_categories=dict(type='list'),
         category_list_size=dict(type='str', choices=['top sites', 'full list']),
+        subset=dict(type='str', choices=['categories', 'policy']),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -177,6 +178,22 @@ def main():
         nets = meraki.get_nets(org_id=org_id)
         net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)
 
+    if meraki.params['state'] == 'query':
+        if meraki.params['subset']:
+            if meraki.params['subset'] == 'categories':
+                path = meraki.construct_path('categories', net_id=net_id)
+            elif meraki.params['subset'] == 'policy':
+                path = meraki.construct_path('policy', net_id=net_id)
+            meraki.result['data'] = meraki.request(path, method='GET')
+        else:
+            response_data = {'categories': None,
+                             'policy': None,
+                             }
+            path = meraki.construct_path('categories', net_id=net_id)
+            response_data['categories'] = meraki.request(path, method='GET')
+            path = meraki.construct_path('policy', net_id=net_id)
+            response_data['policy'] = meraki.request(path, method='GET')    
+            meraki.result['data']     = response_data
     if module.params['state'] == 'present':
         payload = dict()
         if meraki.params['allowed_urls']:

@@ -127,6 +127,60 @@
         - blocked_cateogry.data.blockedUrlCategories | length == 1
         - blocked_cateogry.data.urlCategoryListSize == "fullList"
 
+  - name: Query all content filtering information
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+    delegate_to: localhost
+    register: query_all
+
+  - debug:
+      var: query_all
+
+  - name: Query all content filtering assertion
+    assert:
+      that:
+        - query_all.data.categories is defined
+        - query_all.data.policy is defined
+
+  - name: Query categories
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: query
+      subset: categories
+    delegate_to: localhost
+    register: query_categories
+
+  - debug:
+      var: query_categories
+
+  - name: Query categories assertion
+    assert:
+      that:
+        - query_categories.data is defined
+
+  - name: Query content filtering policies
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      subset: policy
+      state: query
+    delegate_to: localhost
+    register: query_policy
+
+  - debug:
+      var: query_policy
+
+  - name: Query contnet filtering policy assertion
+    assert:
+      that:
+        - query_policy.data is defined
+
   always:
     - name: Reset policies
       meraki_content_filtering:
