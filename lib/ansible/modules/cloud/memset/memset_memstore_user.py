@@ -29,7 +29,6 @@ description:
     - Create/delete and manage the status of Memstore users.
 options:
     state:
-        required: true
         default: present
         type: str
         description:
@@ -62,10 +61,12 @@ options:
             - A password for the user. Required when the user is present.
             - I(update_password) must be C(True) for an existing user's password to be updated.
     update_password:
+        default: false
         type: bool
         description:
             - Change the user's password. The user must already exist.
             - This value will only be used if the user already exists prior to the task execution.
+            - This parameter requires C(password) to be set.
 '''
 
 EXAMPLES = '''
@@ -288,16 +289,16 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
             api_key=dict(required=True, type='str', no_log=True),
             username=dict(required=True, aliases=['name'], type='str'),
-            password=dict(required=False, type='str', no_log=True),
+            password=dict(type='str', no_log=True),
             memstore=dict(required=True, type='str'),
-            enabled=dict(required=False, default=False, type='bool'),
-            update_password=dict(required=False, default=False, type='bool')
+            enabled=dict(default=False, type='bool'),
+            update_password=dict(default=False, type='bool')
         ),
         supports_check_mode=True,
-        required_if=["update_password", True, ["password"]]
+        required_if=[['update_password', True, ['password']]]
     )
 
     # populate the dict with the user-provided vars.
