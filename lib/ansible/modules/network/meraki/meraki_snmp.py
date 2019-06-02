@@ -221,9 +221,6 @@ def set_snmp(meraki, org_id):
             meraki.result['changed'] = True
             return r
     else:
-        if meraki.module.check_mode is True:
-            meraki.result['data'] = snmp.update(payload)
-            meraki.exit_json(**meraki.result)
         return snmp
 
 
