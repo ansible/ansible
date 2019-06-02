@@ -166,7 +166,6 @@ def create_user(args=None, user=None):
         if user['enabled'] != args['enabled']:
             if args['check_mode']:
                 retvals['changed'] = True
-                retvals['diff'] = "enabled: {0}" . format(args['enabled'])
                 return(retvals)
 
             payload['name'], payload['username'] = args['memstore'], args['username']
