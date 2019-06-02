@@ -46,7 +46,7 @@ options:
     state:
         description:
         - States that a policy should be created or modified.
-        choices: [present]
+        choices: [present, query]
         default: present
         type: str
     allowed_urls:
@@ -67,7 +67,11 @@ options:
         - Determines whether a network filters fo rall URLs in a category or only the list of top blocked sites.
         choices: [ top sites, full list ]
         type: str
-
+    subset:
+        description:
+        - Display only certain facts.
+        choices: [categories, policy]
+        type: str
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -192,8 +196,8 @@ def main():
             path = meraki.construct_path('categories', net_id=net_id)
             response_data['categories'] = meraki.request(path, method='GET')
             path = meraki.construct_path('policy', net_id=net_id)
-            response_data['policy'] = meraki.request(path, method='GET')    
-            meraki.result['data']     = response_data
+            response_data['policy'] = meraki.request(path, method='GET')
+            meraki.result['data'] = response_data
     if module.params['state'] == 'present':
         payload = dict()
         if meraki.params['allowed_urls']:
