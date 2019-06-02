@@ -13,6 +13,18 @@ VMware Dynamic Inventory Plugin
 The best way to interact with your hosts is to use the VMware dynamic inventory plugin, which dynamically queries VMware APIs and
 tells Ansible what nodes can be managed.
 
+Requirements
+------------
+
+Using the VMware dynamic inventory plugins requires having the `pyVmomi <https://github.com/vmware/pyvmomi>`_
+installed on the host running Ansible. In addition to this if you want to gather tag related information for the virtual machines, you need to install `vSphere Automation SDK <https://code.vmware.com/web/sdk/65/vsphere-automation-python>`_.
+As ``pyVmomi`` library does not support REST API features like tagging and content library.
+You can find the installation instructions for ``vSphere Automation SDK`` - `here <https://github.com/vmware/vsphere-automation-sdk-python#installing-required-python-packages>`_.
+
+.. code-block:: bash
+
+    $ pip install pyvmomi
+
 To be able to use this VMware dynamic inventory plugin, you need to enable it first by specifying the following in the ``ansible.cfg`` file:
 
 .. code-block:: ini
@@ -67,6 +79,10 @@ And you can use this vaulted inventory configuration file using:
         The GitHub Page of pyVmomi
     `pyVmomi Issue Tracker <https://github.com/vmware/pyvmomi/issues>`_
         The issue tracker for the pyVmomi project
+    `vSphere Automation SDK GitHub Page <https://github.com/vmware/vsphere-automation-sdk-python>`_
+        The GitHub Page of vSphere Automation SDK for Python
+    `vSphere Automation SDK Issue Tracker <https://github.com/vmware/vsphere-automation-sdk-python/issues>`_
+        The issue tracker for vSphere Automation SDK for Python
     :ref:`working_with_playbooks`
         An introduction to playbooks
     :ref:`playbooks_vault`
