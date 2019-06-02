@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: meraki_content_filtering
 short_description: Edit Meraki MX content filtering policies
-version_added: "2.9"
+version_added: "2.8"
 description:
 - Allows for setting policy on content filtering.
 
@@ -72,6 +72,7 @@ options:
         - Display only certain facts.
         choices: [categories, policy]
         type: str
+        version_added: '2.9'
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
