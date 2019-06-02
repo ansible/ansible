@@ -140,38 +140,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-returned_items:
-    description: item when you peform a 'get' action
-    returned: success
-    type: list
-    sample:
-        [
-            {
-                "bank": {
-                    "s": "hsbc"
-                },
-                "quantity": {
-                    "n": "1000"
-                },
-                "person": {
-                    "s": "ochoa"
-                }
-            }
-        ]
-scanned_count:
-    description: the number of total items evaluated when you peform a 'get' action
-    returned: success
-    type: int
-    sample: 9589
-consumed_capacity:
-    description: the capacity units when you peform a 'get' action
-    returned: success
-    type: dict
-count:
-    description: the number of items in the response when you perform a 'get' action
-    returned: success
-    type: int
-    sample: 13
 response_metadata:
   description: aws response metadata
   returned: success
