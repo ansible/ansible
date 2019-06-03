@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
+# Copyright (c) 2017, Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -25,37 +25,43 @@ notes:
   - It's not possible to request a floating IP without associating it with a server at the same time.
   - This module requires the ipaddress python library. This library is included in Python since version 3.3. It is available as a
     module on PyPI for earlier versions.
-version_added: 2.5
-author: "Gaudenz Steinlin (@gaudenz) <gaudenz.steinlin@cloudscale.ch>"
+version_added: "2.5"
+author: "Gaudenz Steinlin (@gaudenz)"
 options:
   state:
     description:
       - State of the floating IP.
     default: present
     choices: [ present, absent ]
+    type: str
   ip:
     description:
       - Floating IP address to change.
       - Required to assign the IP to a different server or if I(state) is absent.
     aliases: [ network ]
+    type: str
   ip_version:
     description:
       - IP protocol version of the floating IP.
     choices: [ 4, 6 ]
+    type: int
   server:
     description:
       - UUID of the server assigned to this floating IP.
       - Required unless I(state) is absent.
+    type: str
   prefix_length:
     description:
       - Only valid if I(ip_version) is 6.
       - Prefix length for the IPv6 network. Currently only a prefix of /56 can be requested. If no I(prefix_length) is present, a
         single address is created.
     choices: [ 56 ]
+    type: int
   reverse_ptr:
     description:
       - Reverse PTR entry for this address.
       - You cannot set a reverse PTR entry for IPv6 floating networks. Reverse PTR entries are only allowed for single addresses.
+    type: str
 extends_documentation_fragment: cloudscale
 '''
 
@@ -138,7 +144,6 @@ state:
   sample: present
 '''
 
-import os
 import traceback
 
 IPADDRESS_IMP_ERR = None
@@ -226,12 +231,12 @@ class AnsibleCloudscaleFloatingIP(AnsibleCloudscaleBase):
 def main():
     argument_spec = cloudscale_argument_spec()
     argument_spec.update(dict(
-        state=dict(default='present', choices=('present', 'absent')),
-        ip=dict(aliases=('network', )),
+        state=dict(default='present', choices=('present', 'absent'), type='str'),
+        ip=dict(aliases=('network', ), type='str'),
         ip_version=dict(choices=(4, 6), type='int'),
-        server=dict(),
+        server=dict(type='str'),
         prefix_length=dict(choices=(56,), type='int'),
-        reverse_ptr=dict(),
+        reverse_ptr=dict(type='str'),
     ))
 
     module = AnsibleModule(
