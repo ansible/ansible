@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: memset_memstore_facts
+module: memset_memstore_info
 author: "Simon Weald (@glitchcrab)"
 version_added: "2.8"
 short_description: Retrieve Memstore product usage information.
@@ -24,6 +24,7 @@ notes:
       following minimum scope - I(memstore.usage).
 description:
     - Retrieve Memstore product usage information.
+    - This module was called C(memset_memstore_facts) before Ansible 2.9. The usage did not change.
 options:
     api_key:
         required: true
@@ -37,7 +38,7 @@ options:
 
 EXAMPLES = '''
 - name: get usage for mstestyaa1
-  memset_memstore_facts:
+  memset_memstore_info:
     name: mstestyaa1
     api_key: 5eb86c9896ab03919abcf03857163741
   delegate_to: localhost
@@ -155,6 +156,8 @@ def main():
         ),
         supports_check_mode=False
     )
+    if module._name == 'memset_memstore_facts':
+        module.deprecate("The 'memset_memstore_facts' module has been renamed to 'memset_memstore_info'", version='2.13')
 
     # populate the dict with the user-provided vars.
     args = dict()
