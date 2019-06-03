@@ -148,7 +148,7 @@ files:
     keywords: [ cloud, huawei, hwc ]
     labels: [ cloud, huawei ]
     maintainers: $team_ansible
-    ignored: $team_ansible
+    ignored: $team_huawei
   $modules/cloud/kubevirt/: &kubevirt
     keywords: [ kubevirt ]
     labels: [ cloud, kubevirt ]
@@ -1495,7 +1495,7 @@ macros:
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
-  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
   team_ios: rcarrillocruz
