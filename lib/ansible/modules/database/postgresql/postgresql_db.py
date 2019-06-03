@@ -65,6 +65,10 @@ options:
     - C(present) implies that the database should be created if necessary.
     - C(absent) implies that the database should be removed if present.
     - C(dump) requires a target definition to which the database will be backed up. (Added in Ansible 2.4)
+      Note that in some PostgreSQL versions of pg_dump, which is an embedded PostgreSQL unility and is used by the module,
+      returns rc 0 even when errors occurred (e.g. the connection is forbidden by pg_hba.conf, etc.),
+      so the module returns changed=True but the dump has not actually been done. Please, be sure that your version of
+      pg_dump returns rc 1 in this case.
     - C(restore) also requires a target definition from which the database will be restored. (Added in Ansible 2.4)
     - The format of the backup will be detected based on the target name.
     - Supported compression formats for dump and restore include C(.bz2), C(.gz) and C(.xz)
