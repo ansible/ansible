@@ -17,7 +17,7 @@
       register: test02
 
     - include_tasks: floating_ip.yml
-      with_items:
+      loop:
         - { 'ip_version': 4, 'reverse_ptr': '{{ cloudscale_resource_prefix }}-4.example.com' }
         - { 'ip_version': 6, 'reverse_ptr': '{{ cloudscale_resource_prefix }}-6.example.com' }
         - { 'ip_version': 6, 'prefix_length': 56 }
