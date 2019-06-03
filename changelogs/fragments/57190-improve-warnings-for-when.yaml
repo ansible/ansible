@@ -1,0 +1,3 @@
+bugfixes:
+  - Only warn for bare variables if they are not type boolean (https://github.com/ansible/ansible/issues/53428)
+  - Fix regression warning on jinja2 delimiters in when statements (https://github.com/ansible/ansible/issues/56830)
