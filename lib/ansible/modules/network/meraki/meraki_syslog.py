@@ -148,6 +148,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -254,7 +255,10 @@ def main():
 
         if meraki.is_update_required(original, payload):
             if meraki.module.check_mode is True:
+                diff = recursive_diff(original, payload)
                 original.update(payload)
+                meraki.result['diff'] = {'before': diff[0],
+                                         'after': diff[1]}
                 meraki.result['data'] = original
                 meraki.exit_json(**meraki.result)
             path = meraki.construct_path('query_update', net_id=net_id)
