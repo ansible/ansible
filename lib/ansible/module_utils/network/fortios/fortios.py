@@ -5,7 +5,7 @@
 # to the complete work.
 #
 # Copyright (c), Benjamin Jolivot <bjolivot@gmail.com>, 2014,
-# Miguel Angel Muñoz <magonzalez@fortinet.com>, 2019
+# Miguel Angel Munoz <magonzalez@fortinet.com>, 2019
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
