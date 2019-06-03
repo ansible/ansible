@@ -230,7 +230,7 @@ def ensure_absent(client, module):
             module.fail_json(msg="Region %s is not supported by EKS" % client.meta.region_name)
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't delete cluster %s" % name)
-            
+
     if wait:
         wait_until(client, module, 'cluster_deleted')
 
