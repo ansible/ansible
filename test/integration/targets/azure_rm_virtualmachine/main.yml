@@ -1,5 +1,5 @@
 - name: Setup for Azure VM tests
-  hosts: azure_testhost_1
+  hosts: localhost
   gather_facts: no
   tasks:
     - import_tasks: tasks/setup.yml
@@ -15,7 +15,7 @@
 
 
 - name: Teardown after Azure VM tests
-  hosts: azure_testhost_1
+  hosts: localhost
   gather_facts: no
   tasks:
     - import_tasks: tasks/teardown.yml
