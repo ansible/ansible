@@ -726,7 +726,7 @@ def main():
     # Write the file out if requested
     if r and dest is not None:
         if resp['status'] in status_code and resp['status'] != 304:
-            write_file(module, url, dest, content, resp)
+            write_file(module, dest, content, resp)
             # allow file attribute changes
             resp['changed'] = True
             module.params['path'] = dest

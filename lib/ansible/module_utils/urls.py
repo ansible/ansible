@@ -37,7 +37,6 @@ __metaclass__ = type
 
 import atexit
 import base64
-import cgi
 import email.mime.multipart
 import email.mime.nonmultipart
 import email.mime.application
@@ -762,13 +761,8 @@ def get_response_filename(response):
     filename = os.path.basename(path.rstrip('/')) or None
     if filename:
         filename = unquote(filename)
-    
-    content_disposition = response.headers.get('content-disposition')
-    if content_disposition:
-        mime_type, params = cgi.parse_header(content_disposition)
-        filename = params.get('filename') or filename
-    
-    return filename
+
+    return response.headers.get_param('filename', header='content-disposition') or filename
 
 
 class RequestWithMethod(urllib_request.Request):
