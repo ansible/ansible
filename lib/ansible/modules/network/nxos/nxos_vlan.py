@@ -320,7 +320,7 @@ def map_obj_to_commands(updates, module):
     if purge:
         for h in have:
             if h['vlan_id'] == '1':
-                # Deletion of vlan 1 is not allowed
+                module.warn("Deletion of vlan 1 is not allowed; purge will ignore vlan 1")
                 continue
             obj_in_want = search_obj_in_list(h['vlan_id'], want)
             if not obj_in_want:
