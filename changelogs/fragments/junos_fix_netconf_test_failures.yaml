@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix junos integration test failures (https://github.com/ansible/ansible/pull/57309)
+  - Fix in netconf plugin when data element is empty in xml response (https://github.com/ansible/ansible/pull/57981)
