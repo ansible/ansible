@@ -4,43 +4,15 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  # - name: Test an API key is provided
-  #   fail:
-  #     msg: Please define an API key
-  #   when: auth_key is not defined
-    
-  # - name: Use an invalid domain
-  #   meraki_switchport:
-  #     auth_key: '{{ auth_key }}'
-  #     host: marrrraki.com
-  #     state: query
-  #     serial: Q2HP-2C6E-GTLD
-  #     org_name: IntTestOrg
-  #   delegate_to: localhost
-  #   register: invaliddomain
-  #   ignore_errors: yes
-    
-  # - name: Disable HTTP
-  #   meraki_switchport:
-  #     auth_key: '{{ auth_key }}'
-  #     use_https: false
-  #     state: query
-  #     serial: Q2HP-2C6E-
-  #     output_level: debug
-  #   delegate_to: localhost
-  #   register: http
-  #   ignore_errors: yes
-
-  # - name: Connection assertions
-  #   assert:
-  #     that:
-  #       - '"Failed to connect to" in invaliddomain.msg'
-  #       - '"http" in http.url'
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
 
   - set_fact:
       syslog_test_net_name: 'syslog_{{test_net_name}}'
 
-  - name: Create network with type appliance and no timezone
+  - name: Create network with type appliance
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
@@ -76,12 +48,9 @@
     register: create_server_check
     check_mode: yes
 
-  - debug:
-      var: create_server_check
-
   - assert:
       that:
-        - create_server_check is not changed
+        - create_server_check is changed
         - create_server_check.data.servers is defined
 
   - name: Set syslog server
@@ -218,24 +187,8 @@
   - assert:
       that:
         - add_role.data.0.roles.0 == 'Flows'
-        # - add_role.data.0.roles | length == 2
 
   always:
-    - name: Delete syslog test network with check mode
-      meraki_network:
-        auth_key: '{{ auth_key }}'
-        state: absent
-        org_name: '{{test_org_name}}'
-        net_name: '{{syslog_test_net_name}}'
-      delegate_to: localhost
-      register: delete_all_check
-      check_mode: yes
-      ignore_errors: yes
-
-    - assert:
-        that:
-          - delete_all_check is not changed
-
     - name: Delete syslog test network
       meraki_network:
         auth_key: '{{ auth_key }}'
@@ -243,5 +196,3 @@
         org_name: '{{test_org_name}}'
         net_name: '{{syslog_test_net_name}}'
       delegate_to: localhost
-      register: delete_all
-      ignore_errors: yes
