@@ -833,6 +833,10 @@
 - include: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
 
+# Test postgresql_copy module
+- include: postgresql_copy.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
 # Test postgresql_ext.
 # pg_extension system view is available from PG 9.1.
 # The tests are restricted by Fedora because there will be errors related with
