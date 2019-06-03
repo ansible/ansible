@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_db - add note to the documentation about state dump and the incorrect rc (https://github.com/ansible/ansible/pull/57297)
