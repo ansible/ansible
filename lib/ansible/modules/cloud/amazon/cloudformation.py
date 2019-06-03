@@ -76,7 +76,6 @@ options:
   stack_policy_on_update:
     description:
       - the body of the cloudformation stack policy only applied during this update.
-    version_added: "2.x"
   tags:
     description:
       - Dictionary of tags to associate with stack and its resources during stack creation. Can be updated later, updating tags removes previous entries.
@@ -773,7 +772,7 @@ def main():
             # only use the policy on update
             if module.params['stack_policy_on_update'] is not None:
                 stack_params['StackPolicyDuringUpdateBody'] = module.params['stack_policy_on_update']
-                
+
             result = update_stack(module, stack_params, cfn, module.params.get('events_limit'))
 
         # format the stack output
