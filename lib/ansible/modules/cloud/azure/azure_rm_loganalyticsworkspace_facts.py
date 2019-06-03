@@ -102,7 +102,7 @@ intelligence_packs:
     example: [ {'name': 'CapacityPerformance', 'enabled': true} ]
 management_groups:
     description:
-        - List of management groups connected to the workspace.
+        - Management groups connected to the workspace.
     type: dict
     returned: success
     example: {'value': []}
@@ -117,7 +117,7 @@ shared_keys:
               }
 usages:
     description:
-        - List of usage metrics for the workspace.
+        - Usage metrics for the workspace.
     type: dict
     returned: success
     example: {
