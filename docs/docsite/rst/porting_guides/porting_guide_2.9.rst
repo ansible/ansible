@@ -75,6 +75,8 @@ Noteworthy module changes
 * The ``k8s_facts`` module was renamed to :ref:`k8s_info <k8s_info_module>`.
 * The ``bigip_device_facts`` module was renamed to :ref:`bigip_device_info <bigip_device_info_module>`.
 * The ``bigiq_device_facts`` module was renamed to :ref:`bigiq_device_info <bigiq_device_info_module>`.
+* The ``memset_memstore_facts`` module was renamed to :ref:`memset_memstore_info <memset_memstore_info_module>`.
+* The ``memset_server_facts`` module was renamed to :ref:`memset_server_info <memset_server_info_module>`.
 * The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
 
 
