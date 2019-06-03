@@ -24,7 +24,7 @@ description:
     - Get facts for a specific managed disk or all managed disks.
 
 notes:
-    - This module was called C(azure_rm_managed_disk_facts) before Ansible 2.8. The usage did not change.
+    - This module was called M(azure_rm_managed_disk_facts) before Ansible 2.8. The usage did not change.
 
 options:
     name:
@@ -66,7 +66,8 @@ EXAMPLES = r'''
 
 RETURN = r'''
 azure_managed_disk:
-    description: List of managed disk dicts.
+    description:
+        - List of managed disk dicts.
     returned: always
     type: list
     contains:
@@ -85,12 +86,12 @@ azure_managed_disk:
         storage_account_type:
             description:
                 - Type of storage for the managed disk.
-                - See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types for more information about this type.
+                - See U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disks-types) for more information about this type.
             type: str
             sample: Standard_LRS
         create_option:
             description:
-                - Create option of the disk
+                - Create option of the disk.
             type: str
             sample: copy
         source_uri:
@@ -99,7 +100,10 @@ azure_managed_disk:
             type: str
         os_type:
             description:
-                - "Type of Operating System: C(linux) or C(windows)."
+                - Type of Operating System.
+            choices:
+                - linux
+                - windows
             type: str
         disk_size_gb:
             description:
