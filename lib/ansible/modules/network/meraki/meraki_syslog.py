@@ -152,26 +152,6 @@ from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
-def is_net_valid(meraki, net_name, data):
-    for n in data:
-        if n['name'] == net_name:
-            return True
-    return False
-
-
-def construct_tags(tags):
-    ''' Assumes tags are a comma separated list '''
-    if tags is not None:
-        tags = tags.replace(' ', '')
-        tags = tags.split(',')
-        tag_list = str()
-        for t in tags:
-            tag_list = tag_list + " " + t
-        tag_list = tag_list + " "
-        return tag_list
-    return None
-
-
 def main():
 
     # define the available arguments/parameters that a user can pass to
@@ -260,6 +240,7 @@ def main():
                 meraki.result['diff'] = {'before': diff[0],
                                          'after': diff[1]}
                 meraki.result['data'] = original
+                meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             path = meraki.construct_path('query_update', net_id=net_id)
             r = meraki.request(path, method='PUT', payload=json.dumps(payload))
