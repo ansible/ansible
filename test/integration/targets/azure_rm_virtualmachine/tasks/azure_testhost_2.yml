@@ -1,4 +1,4 @@
-- name: Create virtual machine without public ip address and with boot diagnostics enabled
+- name: TEST | Create virtual machine without public ip address and with boot diagnostics enabled
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvmnoip
@@ -8,7 +8,7 @@
       short_hostname: testvm
       os_type: Linux
       public_ip_allocation_method: Disabled
-      availability_set: "{{ abs_names[0] }}"
+      availability_set: "{{ availability_set_names[0] }}"
       boot_diagnostics:
         enabled: yes
       image:
@@ -26,7 +26,7 @@
         - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
         - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
 
-- name: Delete VM with no public ip
+- name: TEST | Delete VM with no public ip
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: testvmnoip
@@ -43,21 +43,21 @@
          - name: testnic012
            resource_group: "{{ resource_group_secondary }}"
 
-- name: Create virtual network
+- name: TEST | Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group_secondary }}"
       name: "{{ vm_name }}"
       address_prefixes: "10.10.0.0/16"
   register: vn
 
-- name: Add subnet
+- name: TEST | Add subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group_secondary }}"
       name: "{{ vm_name }}"
       address_prefix: "10.10.0.0/24"
       virtual_network: "{{ vm_name }}"
 
-- name: Create NICs for dual nic VM
+- name: TEST | Create NICs for dual nic VM
   azure_rm_networkinterface:
       resource_group: "{{ item.resource_group }}"
       name: "{{ item.name }}"
@@ -66,7 +66,7 @@
       security_group: "{{ vm_name }}"
   loop: "{{ niclist }}"
 
-- name: Create virtual machine with two NICs
+- name: TEST | Create virtual machine with two NICs
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
@@ -81,7 +81,7 @@
       os_disk_size_gb: 64
       os_disk_name: testosdiskxx
       network_interfaces: "{{ niclist }}"
-      availability_set: "{{ abs_names[1] }}"
+      availability_set: "{{ availability_set_names[1] }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
@@ -96,13 +96,13 @@
         - azure_vm.properties.availabilitySet.id
         - azure_vm.properties.storageProfile.osDisk.name == 'testosdiskxx'
 
-- name: Retrieve vms facts (filtering by name)
+- name: TEST | Retrieve vms facts (filtering by name)
   azure_rm_virtualmachine_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
   register: results
 
-- name: Assert that facts module returned the second vm
+- name: TEST | Assert that facts module returned the second vm
   assert:
     that:
       - results.vms | length == 1
@@ -112,18 +112,18 @@
       - results.vms[0].resource_group == "{{ resource_group }}"
       - results.vms[0].power_state != None
 
-- name: Retrieve facts by tags
+- name: TEST | Retrieve facts by tags
   azure_rm_virtualmachine_facts:
     tags:
       - abc:def
   register: results
 
-- name: Assert that facts module returned the second vm
+- name: TEST | Assert that facts module returned the second vm
   assert:
     that:
       - results.vms | length >= 1
 
-- name: Should be idempotent with a dual NICs
+- name: TEST | Should be idempotent with a dual NICs
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
@@ -137,7 +137,7 @@
       os_type: Linux
       os_disk_size_gb: 64
       network_interfaces: "{{ niclist }}"
-      availability_set: "{{ abs_names[1] }}"
+      availability_set: "{{ availability_set_names[1] }}"
       image:
         offer: UbuntuServer
         publisher: Canonical
@@ -148,13 +148,13 @@
 - assert:
       that: not output.changed
 
-- name: Generalize VM
+- name: TEST | Generalize VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
       generalized: yes
 
-- name: Gather facts and check if machine is generalized
+- name: TEST | Gather facts and check if machine is generalized
   azure_rm_virtualmachine_facts:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
@@ -163,7 +163,7 @@
 - assert:
       that: generalized_output.vms[0].power_state == 'generalized'
 
-- name: Delete dual NIC VM
+- name: TEST | Delete dual NIC VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"

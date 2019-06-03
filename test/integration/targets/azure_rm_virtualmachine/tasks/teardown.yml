@@ -37,7 +37,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ item }}"
     state: absent
-  loop: "{{ abs_names | reverse | list }}"
+  loop: "{{ availability_set_names | reverse | list }}"
 
 - name: TEARDOWN | Destroy storage accounts
   azure_rm_storageaccount:

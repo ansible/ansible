@@ -9,7 +9,7 @@
   azure_rm_availabilityset:
     name: "{{ item }}"
     resource_group: "{{ resource_group }}"
-  loop: "{{ abs_names }}"
+  loop: "{{ availability_set_names }}"
 
 - name: SETUP | Create virtual network
   azure_rm_virtualnetwork:
@@ -36,14 +36,14 @@
     name: "{{ vm_name }}"
     purge_rules: yes
     rules:
-      - name: SETUP | ALLOW_SSH
+      - name: ALLOW_SSH
         protocol: Tcp
         destination_port_range: 22
         access: Allow
         priority: 100
         direction: Inbound
 
-      - name: SETUP | ALLOW_HTTP
+      - name: ALLOW_HTTP
         protocol: Tcp
         destination_port_range: 80
         access: Allow
