@@ -1,0 +1,2 @@
+bugfixes:
+- vyos_interface fix <https://github.com/ansible/ansible/pull/57169>
