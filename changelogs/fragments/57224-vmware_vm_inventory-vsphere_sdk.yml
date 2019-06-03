@@ -1,0 +1,2 @@
+minor_changes:
+- Add installation documentation for vSphere Automation SDK for Python in vmware inventory plugin docs (https://github.com/ansible/ansible/issues/57224).
