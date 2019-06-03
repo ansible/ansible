@@ -266,11 +266,11 @@ class WapiModule(WapiBase):
                     proposed_object[key] = self.module.params[key]
 
         # If configure_by_dns is set to False, then delete the default dns set in the param else throw exception
-        if not proposed_object.get('configure_for_dns') and proposed_object.get('view') == 'default' and ib_obj_type\
-                == NIOS_HOST_RECORD:
+        if not proposed_object.get('configure_for_dns') and proposed_object.get('view') == 'default'\
+                and ib_obj_type == NIOS_HOST_RECORD:
             del proposed_object['view']
-        elif not proposed_object.get('configure_for_dns') and proposed_object.get('view') != 'default' and ib_obj_type\
-                == NIOS_HOST_RECORD:
+        elif not proposed_object.get('configure_for_dns') and proposed_object.get('view') != 'default'\
+                and ib_obj_type == NIOS_HOST_RECORD:
             self.module.fail_json(msg='DNS Bypass is not allowed if DNS view is set other than \'default\'')
 
         if ib_obj_ref:
