@@ -37,7 +37,7 @@ options:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
-            - The pattern is matched against the file base name, excluding the directory the file is in
+            - The pattern is matched against the file base name, excluding the directory.
             - When using regexen, the pattern MUST match the ENTIRE file name, not just parts of it. So
               if you are looking to match all files ending in .default, you'd need to use '.*\.default'
               as a regexp and not just '\.default'.
