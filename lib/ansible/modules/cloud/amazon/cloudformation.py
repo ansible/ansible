@@ -73,6 +73,10 @@ options:
       - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified.
         for instance, allow all updates U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     version_added: "1.9"
+  stack_policy_on_update:
+    description:
+      - the body of the cloudformation stack policy only applied during this update.
+    version_added: "2.x"
   tags:
     description:
       - Dictionary of tags to associate with stack and its resources during stack creation. Can be updated later, updating tags removes previous entries.
@@ -629,6 +633,7 @@ def main():
         template=dict(default=None, required=False, type='path'),
         notification_arns=dict(default=None, required=False),
         stack_policy=dict(default=None, required=False),
+        stack_policy_on_update=dict(default=None, required=False),
         disable_rollback=dict(default=False, type='bool'),
         on_create_failure=dict(default=None, required=False, choices=['DO_NOTHING', 'ROLLBACK', 'DELETE']),
         create_timeout=dict(default=None, type='int'),
@@ -765,6 +770,10 @@ def main():
             if module.params.get('termination_protection') is not None:
                 update_termination_protection(module, cfn, stack_params['StackName'],
                                               bool(module.params.get('termination_protection')))
+            # only use the policy on update
+            if module.params['stack_policy_on_update'] is not None:
+                stack_params['StackPolicyDuringUpdateBody'] = module.params['stack_policy_on_update']
+                
             result = update_stack(module, stack_params, cfn, module.params.get('events_limit'))
 
         # format the stack output
