@@ -162,6 +162,7 @@ try:
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO
 
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
                                       get_aws_connection_info)
@@ -184,7 +185,11 @@ def create_metric_alarm(connection, module):
     insufficient_data_actions = module.params.get('insufficient_data_actions')
     ok_actions = module.params.get('ok_actions')
 
-    alarms = connection.describe_alarms(alarm_names=[name])
+    alarms = None
+    try:
+        alarms = connection.describe_alarms(alarm_names=[name])
+    except BotoServerError as e:
+        module.fail_json(msg="Failed to describe alarm %s: %s" % (name, str(e)), exception=traceback.format_exc())
 
     if not alarms:
 
@@ -209,7 +214,7 @@ def create_metric_alarm(connection, module):
             changed = True
             alarms = connection.describe_alarms(alarm_names=[name])
         except BotoServerError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to create alarm %s: %s" % (name, str(e)), exception=traceback.format_exc())
 
     else:
         alarm = alarms[0]
@@ -272,7 +277,11 @@ def create_metric_alarm(connection, module):
 def delete_metric_alarm(connection, module):
     name = module.params.get('name')
 
-    alarms = connection.describe_alarms(alarm_names=[name])
+    alarms = None
+    try:
+        alarms = connection.describe_alarms(alarm_names=[name])
+    except BotoServerError as e:
+        module.fail_json(msg="Failed to describe alarm %s: %s" % (name, str(e)), exception=traceback.format_exc())
 
     if alarms:
         try:
