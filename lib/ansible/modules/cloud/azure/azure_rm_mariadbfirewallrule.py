@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbfirewallrule
 version_added: "2.8"
-short_description: Manage MariaDB firewall rule instance.
+short_description: Manage MariaDB firewall rule instance
 description:
     - Create, update and delete instance of MariaDB firewall rule.
 
@@ -53,8 +53,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -71,7 +71,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testserver/fire
