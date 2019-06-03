@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbdatabase_facts
 version_added: "2.8"
-short_description: Get Azure MariaDB Database facts.
+short_description: Get Azure MariaDB Database facts
 description:
     - Get facts of MariaDB Database.
 
@@ -39,8 +39,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -59,13 +59,14 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing facts for MariaDB Databases.
+    description:
+        - A list of dictionaries containing facts for MariaDB Databases.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testser
