@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbdatabase
 version_added: "2.8"
-short_description: Manage MariaDB Database instance.
+short_description: Manage MariaDB Database instance
 description:
     - Create, update and delete instance of MariaDB Database.
 
@@ -38,19 +38,15 @@ options:
     charset:
         description:
             - The charset of the database. Check MariaDB documentation for possible values.
-            - This is only set on creation, use I(force_update) to recreate a database if the
-              values don't match.
+            - This is only set on creation, use I(force_update) to recreate a database if the values don't match.
     collation:
         description:
             - The collation of the database. Check MariaDB documentation for possible values.
-            - This is only set on creation, use I(force_update) to recreate a database if the
-              values don't match.
+            - This is only set on creation, use I(force_update) to recreate a database if the values don't match.
     force_update:
       description:
-          - When set to C(true), will delete and recreate the existing MariaDB database if any
-            of the properties don't match what is set.
-          - When set to C(false), no change will occur to the database even if any
-            of the properties do not match.
+          - When set to C(true), will delete and recreate the existing MariaDB database if any of the properties don't match what is set.
+          - When set to C(false), no change will occur to the database even if any of the properties do not match.
       type: bool
       default: 'no'
     state:
@@ -65,8 +61,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -81,7 +77,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testserver/databases/db1
