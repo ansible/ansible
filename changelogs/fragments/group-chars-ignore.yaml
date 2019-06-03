@@ -1,0 +1,4 @@
+---
+bugfixes:
+- suppress "default will change" warnings for ``TRANSFORM_INVALID_GROUP_CHARS``
+  setting when non-default option value is chosen
