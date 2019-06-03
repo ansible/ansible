@@ -48,8 +48,10 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                     warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
                 # remove this message after 2.10 AND changing the default to 'always'
-                display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
-                                   ' this will change, but still be user configurable on deprecation', version='2.10')
+                group_chars_setting, group_chars_origin = C.config.get_config_value_and_origin('TRANSFORM_INVALID_GROUP_CHARS')
+                if group_chars_origin == 'default':
+                    display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
+                                       ' this will change, but still be user configurable on deprecation', version='2.10')
 
     if warn:
         display.warning(warn)
