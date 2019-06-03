@@ -11,9 +11,11 @@ image:
   version: latest
 
 storage_accounts:
-  - "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
-  - "{{ resource_group | hash('md5') | truncate(18, True, '') }}"
+  - "{{ 'rg1' ~ resource_group | hash('md5') | truncate(18, True, '') }}"
+  - "{{ 'rg2' ~ resource_group | hash('md5') | truncate(18, True, '') }}"
 
-abs_names:
-  - "{{ 'avbs1' ~ resource_group | hash('md5') | truncate(3, True, '') }}"
-  - "{{ 'avbs2' ~ resource_group | hash('md5') | truncate(3, True, '') }}"
+availability_set_names:
+  - "{{ 'avbs1_' ~ resource_group | hash('md5') | truncate(8, True, '') }}"
+  - "{{ 'avbs2_' ~ resource_group | hash('md5') | truncate(8, True, '') }}"
+
+vm_name: "{{ 'vm-' ~ (inventory_hostname ~ resource_group) | hash('md5') | truncate(8, True, '') }}"
