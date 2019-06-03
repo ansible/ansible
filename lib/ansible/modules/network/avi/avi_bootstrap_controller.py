@@ -113,7 +113,7 @@ def controller_wait(controller_ip, port=None, round_wait=10, wait_time=3600):
     count = 0
     max_count = wait_time / round_wait
     ctrl_port = port if port else 80
-    path = "http://{}:{}{}".format(controller_ip, ctrl_port, "/api/cluster/runtime")
+    path = "http://{0}:{1}{2}".format(controller_ip, ctrl_port, "/api/cluster/runtime")
     ctrl_status = False
     while True:
         if count >= max_count:
