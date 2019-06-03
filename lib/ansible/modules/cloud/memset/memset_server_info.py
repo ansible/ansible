@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: memset_server_facts
+module: memset_server_info
 author: "Simon Weald (@glitchcrab)"
 version_added: "2.8"
 short_description: Retrieve server information.
@@ -24,6 +24,7 @@ notes:
       following minimum scope - I(server.info).
 description:
     - Retrieve server information.
+    - This module was called C(memset_server_facts) before Ansible 2.9. The usage did not change.
 options:
     api_key:
         required: true
@@ -37,7 +38,7 @@ options:
 
 EXAMPLES = '''
 - name: get details for testyaa1
-  memset_server_facts:
+  memset_server_info:
     name: testyaa1
     api_key: 5eb86c9896ab03919abcf03857163741
   delegate_to: localhost
@@ -280,6 +281,8 @@ def main():
         ),
         supports_check_mode=False
     )
+    if module._name == 'memset_server_facts':
+        module.deprecate("The 'memset_server_facts' module has been renamed to 'memset_server_info'", version='2.13')
 
     # populate the dict with the user-provided vars.
     args = dict()
