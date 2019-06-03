@@ -363,6 +363,7 @@ def main():
                                      "printer", "router-nat-device", "windows-pc",
                                      "windows-phone", "windows-tablet", "other-network-device"]},
                 "user": {"required": False, "type": "str"}
+                
             }
         }
     }
