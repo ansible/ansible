@@ -54,12 +54,12 @@ options:
         description:
           - Image UUID. Can either be a full UUID or C(*) for all images.
     name:
-        version_added: "2.8"
+        version_added: "2.9"
         required: false
         description:
           - Image name. Cannot be used with UUID.
     docker:
-        version_added: "2.8"
+        version_added: "2.9"
         required: false
         description:
         - Docker images need this flag enabled.
