@@ -420,7 +420,7 @@ def main():
             if meraki.module.check_mode is True:
                 meraki.result['data'] = {}
                 meraki.result['changed'] = True
-                meraki.exit_json(**meraki.result)                
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])
             response = meraki.request(path, 'DELETE')
             meraki.result['changed'] = True
