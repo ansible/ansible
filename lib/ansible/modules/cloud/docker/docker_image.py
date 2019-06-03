@@ -453,11 +453,11 @@ class ImageManager(DockerBaseClass):
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
         self.network = build.get('network')
-        self.nocache = build.get('nocache')
+        self.nocache = build.get('nocache', False)
         self.build_path = build.get('path')
         self.pull = build.get('pull')
         self.repository = parameters.get('repository')
-        self.rm = build.get('rm')
+        self.rm = build.get('rm', True)
         self.state = parameters.get('state')
         self.tag = parameters.get('tag')
         self.http_timeout = build.get('http_timeout')
@@ -879,14 +879,14 @@ def main():
         if client.module.params[option] != default_value:
             if client.module.params['build'] is None:
                 client.module.params['build'] = dict()
-            if client.module.params['build'].get(build_option) != default_value:
+            if client.module.params['build'].get(build_option, default_value) != default_value:
                 client.fail('Cannot specify both %s and build.%s!' % (option, build_option))
             client.module.params['build'][build_option] = client.module.params[option]
             client.module.warn('Please specify build.%s instead of %s. The %s option '
                                'has been renamed and will be removed in Ansible 2.12.' % (build_option, option, option))
     if client.module.params['source'] == 'build':
         if (not client.module.params['build'] or not client.module.params['build'].get('path')):
-            client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
+            client.fail('If "source" is set to "build", the "build.path" option must be specified.')
         if client.module.params['build'].get('pull') is None:
             client.module.warn("The default for build.pull is currently 'yes', but will be changed to 'no' in Ansible 2.12. "
                                "Please set build.pull explicitly to the value you need.")
