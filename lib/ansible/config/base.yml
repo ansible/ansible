@@ -1492,9 +1492,9 @@ TRANSFORM_INVALID_GROUP_CHARS:
   description:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
-    - When 'ignore', it does the same as 'never' sans the warning.
+    - When 'ignore', it does the same as 'never', without issuing a warning.
     - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
-    - When 'silently', it does the same as 'always' sans the warnings.
+    - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
