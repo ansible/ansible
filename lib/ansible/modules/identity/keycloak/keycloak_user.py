@@ -40,11 +40,13 @@ options:
             - On C(absent), the user will be removed if it exists
         choices: [ present, absent ]
         default: present
+        type: str
 
     realm:
         description:
             - The realm to create the user in.
         default: master
+        type: str
 
     attributes:
         description:
@@ -52,18 +54,21 @@ options:
             Keycloak will always return the value in a list of one element.
             Keys and values are converted into string.
         required: false
+        type: dict
 
     user_id:
         description:
             - user_id of client to be worked on. This is usually an UUID. This and I(client_username)
               are mutually exclusive.
         aliases: [ userId ]
+        type: str
 
     keycloak_username:
         description:
             - username of user to be worked on. This and I(user_id) are mutually exclusive.
             - keycloak lower the username
         aliases: [ keycloakUsername ]
+        type: str
 
     email_verified:
         description:
@@ -85,6 +90,7 @@ options:
             - when using the api, there is no check about the validity of the email in keycloak
             - but with manual action, the format is checked
         required: false
+        type: str
 
     required_actions:
         description:
@@ -92,16 +98,24 @@ options:
             - each element must be in the choices
         choices: [ UPDATE_PROFILE, VERIFY_EMAIL, UPDATE_PASSWORD, CONFIGURE_TOTP ]
         aliases: [ requiredActions ]
+        type: list
 
     first_name:
         description:
             - the user first name
         aliases: [ firstName ]
+        type: str
 
     last_name:
         description:
             - the user last name
         aliases: [ lastName ]
+        type: str
+
+    credentials:
+        description:
+            - a dictionary setting the user password.
+        type: dict
 
 extends_documentation_fragment:
     - keycloak
@@ -144,6 +158,7 @@ EXAMPLES = '''
     last_name: test
     required_actions: [ UPDATE_PROFILE, CONFIGURE_TOTP ]
     attributes: {'one key': 'one value', 'another key': 42}
+    credentials: {'type': 'password', 'user_secret'}
 '''
 
 RETURN = '''
@@ -224,7 +239,8 @@ def run_module():
         first_name=dict(type='str', aliases=['firstName']),
         last_name=dict(type='str', aliases=['lastName']),
         required_actions=dict(type='list', aliases=['requiredActions'],
-                              choices=AUTHORIZED_REQUIRED_ACTIONS)
+                              choices=AUTHORIZED_REQUIRED_ACTIONS),
+        credentials=dict(type='dict'),
     )
 
     argument_spec.update(meta_args)

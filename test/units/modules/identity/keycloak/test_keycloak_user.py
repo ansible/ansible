@@ -329,7 +329,8 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
         'auth_password': 'admin_password',
         'auth_realm': 'master',
         'state': 'present',
-        'email': 'user1@domain.net'
+        'email': 'user1@domain.net',
+        'credentials': {'type': 'password', 'value': 'user1_secret'}
     }
     arguments.update(user_to_update)
     set_module_args(arguments)

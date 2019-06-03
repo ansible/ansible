@@ -27,6 +27,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from copy import deepcopy
+
 __metaclass__ = type
 
 import json
@@ -577,6 +579,7 @@ class KeycloakAPI(object):
         else:
             user_representation.update({'username': user_name})
         user_url = URL_USERS.format(url=self.baseurl, realm=realm)
+        user_representation = self._put_values_in_list(user_representation, ['credentials'])
 
         try:
             return open_url(user_url, method='POST', headers=self.restheaders,
@@ -600,13 +603,8 @@ class KeycloakAPI(object):
             user_representation.pop('keycloakUsername')
         except KeyError:
             pass
-        try:
-            keycloak_attributes = user_representation.pop('keycloakAttributes')
-        except KeyError:
-            pass
-        else:
-            user_representation.update({'attributes': keycloak_attributes})
-
+        user_representation = self._put_values_in_list(user_representation,
+                                                       ['keycloakAttributes', 'credentials'])
         user_url = URL_USER.format(url=self.baseurl, realm=realm, id=uuid)
 
         try:
@@ -619,6 +617,25 @@ class KeycloakAPI(object):
                 user_representation=user_representation,
                 user_url=user_url
             )
+
+    @staticmethod
+    def _put_values_in_list(representation, key_list):
+        """Keycloak waits some dictionaries in a list.
+
+        Put the wanted keys into a list of one element. These values are waited
+        as dictionary by the modules.
+
+        :return: a representation with dictionary in one element list.
+        """
+        new_representation = deepcopy(representation)
+        for one_key in key_list:
+            try:
+                value = new_representation.pop(one_key)
+            except KeyError:
+                pass
+            else:
+                new_representation.update({one_key: [value]})
+        return new_representation
 
     def delete_user(self, id, realm="master"):
         """ Delete a user from Keycloak
