@@ -140,7 +140,7 @@ html_theme_options = {
 }
 
 html_context = {
-  'display_github': True,
+  'display_github': 'True',
   'github_user': 'ansible',
   'github_repo': 'ansible',
   'github_version': 'devel/docs/docsite/rst/',
