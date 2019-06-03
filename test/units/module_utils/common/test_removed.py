@@ -26,19 +26,19 @@ def test_removed_module_sys_exit(input_data):
     [
         (
             u'2.8',
-            u'This module has been removed.  '
+            u'This module has been removed. '
             'The module documentation for Ansible-2.7 may contain hints for porting',
             u'',
         ),
         (
             2.8,
-            u'This module has been removed.  '
+            u'This module has been removed. '
             'The module documentation for Ansible-2.7 may contain hints for porting',
             u'',
         ),
         (
             2,
-            u'This module has been removed.  '
+            u'This module has been removed. '
             'The module documentation for Ansible-1 may contain hints for porting',
             u'',
         ),
@@ -49,7 +49,7 @@ def test_removed_module_sys_exit(input_data):
         ),
         (
             0.1,
-            u'This module has been removed.  '
+            u'This module has been removed. '
             'The module documentation for Ansible-0.0 may contain hints for porting',
             u'',
         ),
