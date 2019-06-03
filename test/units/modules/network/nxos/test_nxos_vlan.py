@@ -72,7 +72,7 @@ class TestNxosVlanModule(TestNxosModule):
             """Load vlan output for aggregate/purge tests"""
             return([load_fixture('nxos_vlan', 'agg_show_vlan_brief.txt')])
 
-        if '_agg_' in self.__name__:
+        if '_agg_' in self._testMethodName:
             self.run_commands.side_effect = agg_load_from_file
         else:
             self.run_commands.side_effect = load_from_file
