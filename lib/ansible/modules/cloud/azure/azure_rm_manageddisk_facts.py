@@ -117,7 +117,7 @@ azure_managed_disk:
             description:
                 - Tags to assign to the managed disk.
             type: dict
-            sample: { "tag": value" }
+            sample: { "tag": "value" }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
