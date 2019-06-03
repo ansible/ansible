@@ -828,7 +828,7 @@ class Templar:
                     raise AnsibleUndefinedVariable(errmsg)
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
-                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)), orig_exc=te)
 
             if USE_JINJA2_NATIVE and not isinstance(res, string_types):
                 return res
