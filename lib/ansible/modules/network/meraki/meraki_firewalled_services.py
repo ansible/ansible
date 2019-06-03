@@ -83,10 +83,10 @@ EXAMPLES = r'''
 
 - name: Set icmp service to restricted
   meraki_firewalled_services:
-    auth_key: '{{ auth_key }}'
+    auth_key: abc123
     state: present
-    org_name: '{{test_org_name}}'
-    net_name: IntTestNetworkAppliance
+    org_name: YourOrg
+    net_name: YourNet
     service: web
     access: restricted
     allowed_ips:
@@ -96,18 +96,18 @@ EXAMPLES = r'''
 
 - name: Query appliance services
   meraki_firewalled_services:
-    auth_key: '{{ auth_key }}'
+    auth_key: abc123
     state: query
-    org_name: '{{test_org_name}}'
-    net_name: IntTestNetworkAppliance
+    org_name: YourOrg
+    net_name: YourNet
   delegate_to: localhost
 
 - name: Query services
   meraki_firewalled_services:
-    auth_key: '{{ auth_key }}'
+    auth_key: abc123
     state: query
-    org_name: '{{test_org_name}}'
-    net_name: IntTestNetworkAppliance
+    org_name: YourOrg
+    net_name: YourNet
     service: ICMP
   delegate_to: localhost
 '''
