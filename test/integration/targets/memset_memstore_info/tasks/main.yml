@@ -1,8 +1,8 @@
 ---
 - name: query API with invalid API key
-  memset_server_facts:
+  memset_memstore_info:
     api_key: 'wa9aerahhie0eekee9iaphoorovooyia'
-    name: 'testyaa1'
+    name: 'mstestyaa1'
   ignore_errors: true
   register: result
 
@@ -12,10 +12,10 @@
       - "'Memset API returned a 403 response (ApiErrorForbidden, Bad api_key)' in result.msg"
       - result is not successful
 
-- name: request server facts
-  memset_server_facts:
+- name: request memstore infos
+  memset_memstore_info:
     api_key: "{{ api_key }}"
-    name: 'testyaa1'
+    name: 'mstestyaa1'
   register: result
 
 - name: check the request succeeded
