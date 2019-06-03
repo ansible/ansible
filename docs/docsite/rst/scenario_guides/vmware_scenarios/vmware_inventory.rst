@@ -16,16 +16,17 @@ tells Ansible what nodes can be managed.
 Requirements
 ------------
 
-Using the VMware dynamic inventory plugins requires having the `pyVmomi <https://github.com/vmware/pyvmomi>`_
-installed on the host running Ansible. In addition to this if you want to gather tag related information for the virtual machines, you need to install `vSphere Automation SDK <https://code.vmware.com/web/sdk/65/vsphere-automation-python>`_.
-As ``pyVmomi`` library does not support REST API features like tagging and content library.
-You can find the installation instructions for ``vSphere Automation SDK`` - `here <https://github.com/vmware/vsphere-automation-sdk-python#installing-required-python-packages>`_.
+To use the VMware dynamic inventory plugins, you must install `pyVmomi <https://github.com/vmware/pyvmomi>`_
+on your control node (the host running Ansible).
+
+To include tag-related information for the virtual machines in your dynamic inventory, you also need the `vSphere Automation SDK <https://code.vmware.com/web/sdk/65/vsphere-automation-python>`_, which supports REST API features like tagging and content libraries, on your control node.
+You can install the ``vSphere Automation SDK`` following `these instructions <https://github.com/vmware/vsphere-automation-sdk-python#installing-required-python-packages>`_.
 
 .. code-block:: bash
 
     $ pip install pyvmomi
 
-To be able to use this VMware dynamic inventory plugin, you need to enable it first by specifying the following in the ``ansible.cfg`` file:
+To use this VMware dynamic inventory plugin, you need to enable it first by specifying the following in the ``ansible.cfg`` file:
 
 .. code-block:: ini
 
