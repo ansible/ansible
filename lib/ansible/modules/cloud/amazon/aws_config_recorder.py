@@ -184,6 +184,10 @@ def main():
             params['recordingGroup'].update({
                 'resourceTypes': module.params.get('recording_group').get('resource_types')
             })
+        else:
+            params['recordingGroup'].update({
+                'resourceTypes': []
+            })
 
     client = module.client('config', retry_decorator=AWSRetry.jittered_backoff())
 
