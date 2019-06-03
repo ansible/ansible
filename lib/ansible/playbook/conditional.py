@@ -28,7 +28,7 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import is_unsafe
@@ -193,13 +193,13 @@ class Conditional:
             elif val == "False":
                 return False
             else:
-                raise AnsibleError("unable to evaluate conditional: %s" % original)
+                raise AnsibleError("Unable to evaluate conditional (%s), got: %s" % (to_native(original), to_native(val)))
         except (AnsibleUndefinedVariable, UndefinedError) as e:
             # the templating failed, meaning most likely a variable was undefined. If we happened
             # to be looking for an undefined variable, return True, otherwise fail
             try:
                 # first we extract the variable name from the error message
-                var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
+                var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(to_text(e)).groups()[0]
                 # next we extract all defined/undefined tests from the conditional string
                 def_undef = self.extract_defined_undefined(conditional)
                 # then we loop through these, comparing the error variable name against
@@ -221,4 +221,4 @@ class Conditional:
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
             except Exception:
-                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
+                raise AnsibleUndefinedVariable("Failed to evaluate conditional (%s): %s" % (original, e))
