@@ -55,6 +55,8 @@ options:
   level:
     description:
       - Set logging severity levels.
+    default: debugging
+    choices: ['emergencies', 'alerts', 'critical', 'errors', 'warnings', 'notifications', 'informational', 'debugging']
   aggregate:
     description: List of logging definitions.
   state:
@@ -378,7 +380,8 @@ def main():
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str'),
-        level=dict(type='str', default='debugging'),
+        level=dict(type='str', default='debugging', choices=['emergencies', 'alerts', 'critical', 'errors', 'warnings',
+                                                             'notifications', 'informational', 'debugging']),
         state=dict(default='present', choices=['present', 'absent']),
     )
 
