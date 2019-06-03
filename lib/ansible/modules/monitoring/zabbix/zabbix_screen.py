@@ -38,6 +38,7 @@ options:
             - >
               The available states are: C(present) (default) and C(absent). If the screen already exists, and the state is not C(absent), the screen
               will be updated as needed.
+            - To sort hosts alphabetically, set the C(sort) option to C(true)
         required: true
 
 extends_documentation_fragment:
@@ -150,11 +151,13 @@ class Screen(object):
             return hostGroup_id
 
     # get monitored host_id by host_group_id
-    def get_host_ids_by_group_id(self, group_id):
+    def get_host_ids_by_group_id(self, group_id, sort):
         host_list = self._zapi.host.get({'output': 'extend', 'groupids': group_id, 'monitored_hosts': 1})
         if len(host_list) < 1:
             self._module.fail_json(msg="No host in the group.")
         else:
+            if sort:
+                host_list = sorted(host_list, key=lambda name: name['name'])
             host_ids = []
             for i in host_list:
                 host_id = i['hostid']
@@ -348,6 +351,7 @@ def main():
         screen_name = zabbix_screen['screen_name']
         screen_id = screen.get_screen_id(screen_name)
         state = "absent" if "state" in zabbix_screen and zabbix_screen['state'] == "absent" else "present"
+        sort = bool(zabbix_screen.get("sort", False))
 
         if state == "absent":
             if screen_id:
@@ -373,7 +377,7 @@ def main():
             if 'graph_height' in zabbix_screen:
                 graph_height = zabbix_screen['graph_height']
             host_group_id = screen.get_host_group_id(host_group)
-            hosts = screen.get_host_ids_by_group_id(host_group_id)
+            hosts = screen.get_host_ids_by_group_id(host_group_id, sort)
 
             screen_item_id_list = []
             resource_id_list = []
