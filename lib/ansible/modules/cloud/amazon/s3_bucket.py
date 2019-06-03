@@ -72,6 +72,16 @@ options:
     description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
     type: bool
+  encryption:
+    description:
+      - Describes the default server-side encryption to apply to new objects in the bucket.
+        In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
+    choices: [ 'none', 'AES256', 'aws:kms' ]
+    version_added: "2.9"
+  encryption_key_id:
+    description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
+                 not specified then it will default to the AWS provided KMS key.
+    version_added: "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -88,6 +98,7 @@ EXAMPLES = '''
 # Create a simple s3 bucket
 - s3_bucket:
     name: mys3bucket
+    state: present
 
 # Create a simple s3 bucket on Ceph Rados Gateway
 - s3_bucket:
@@ -142,6 +153,8 @@ def create_or_update_bucket(s3_client, module, location):
     requester_pays = module.params.get("requester_pays")
     tags = module.params.get("tags")
     versioning = module.params.get("versioning")
+    encryption = module.params.get("encryption")
+    encryption_key_id = module.params.get("encryption_key_id")
     changed = False
     result = {}
 
@@ -279,6 +292,38 @@ def create_or_update_bucket(s3_client, module, location):
 
         result['tags'] = current_tags_dict
 
+    # Encryption
+    if hasattr(s3_client, "get_bucket_encryption"):
+        try:
+            current_encryption = get_bucket_encryption(s3_client, name)
+        except (ClientError, BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to get bucket encryption")
+    elif encryption is not None:
+        module.fail_json(msg="Using bucket encryption requires botocore version >= 1.7.41")
+
+    if encryption is not None:
+        current_encryption_algorithm = current_encryption.get('SSEAlgorithm') if current_encryption else None
+        current_encryption_key = current_encryption.get('KMSMasterKeyID') if current_encryption else None
+        if encryption == 'none' and current_encryption_algorithm is not None:
+            try:
+                delete_bucket_encryption(s3_client, name)
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Failed to delete bucket encryption")
+            current_encryption = wait_encryption_is_applied(module, s3_client, name, None)
+            changed = True
+        elif encryption != 'none' and (encryption != current_encryption_algorithm) or (encryption == 'aws:kms' and current_encryption_key != encryption_key_id):
+            expected_encryption = {'SSEAlgorithm': encryption}
+            if encryption == 'aws:kms':
+                expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
+            try:
+                put_bucket_encryption(s3_client, name, expected_encryption)
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Failed to set bucket encryption")
+            current_encryption = wait_encryption_is_applied(module, s3_client, name, expected_encryption)
+            changed = True
+
+        result['encryption'] = current_encryption
+
     module.exit_json(changed=changed, name=name, **result)
 
 
@@ -358,8 +403,31 @@ def put_bucket_versioning(s3_client, bucket_name, required_versioning):
 
 
 @AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def get_bucket_encryption(s3_client, bucket_name):
+    try:
+        result = s3_client.get_bucket_encryption(Bucket=bucket_name)
+        return result.get('ServerSideEncryptionConfiguration').get('Rules')[0].get('ApplyServerSideEncryptionByDefault')
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFoundError':
+            return None
+        else:
+            raise e
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def put_bucket_encryption(s3_client, bucket_name, encryption):
+    server_side_encryption_configuration = {'Rules': [{'ApplyServerSideEncryptionByDefault': encryption}]}
+    s3_client.put_bucket_encryption(Bucket=bucket_name, ServerSideEncryptionConfiguration=server_side_encryption_configuration)
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
 def delete_bucket_tagging(s3_client, bucket_name):
     s3_client.delete_bucket_tagging(Bucket=bucket_name)
+
+
+@AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
+def delete_bucket_encryption(s3_client, bucket_name):
+    s3_client.delete_bucket_encryption(Bucket=bucket_name)
 
 
 @AWSRetry.exponential_backoff(max_delay=120)
@@ -408,6 +476,19 @@ def wait_payer_is_applied(module, s3_client, bucket_name, expected_payer, should
         return None
 
 
+def wait_encryption_is_applied(module, s3_client, bucket_name, expected_encryption):
+    for dummy in range(0, 12):
+        try:
+            encryption = get_bucket_encryption(s3_client, bucket_name)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to get updated encryption for bucket")
+        if encryption != expected_encryption:
+            time.sleep(5)
+        else:
+            return encryption
+    module.fail_json(msg="Bucket encryption failed to apply in the expected time")
+
+
 def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioning):
     for dummy in range(0, 24):
         try:
@@ -415,7 +496,7 @@ def wait_versioning_is_applied(module, s3_client, bucket_name, required_versioni
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Failed to get updated versioning for bucket")
         if versioning_status.get('Status') != required_versioning:
-            time.sleep(5)
+            time.sleep(8)
         else:
             return versioning_status
     module.fail_json(msg="Bucket versioning failed to apply in the expected time")
@@ -555,11 +636,16 @@ def main():
             state=dict(default='present', type='str', choices=['present', 'absent']),
             tags=dict(required=False, default=None, type='dict'),
             versioning=dict(default=None, type='bool'),
-            ceph=dict(default='no', type='bool')
+            ceph=dict(default='no', type='bool'),
+            encryption=dict(choices=['none', 'AES256', 'aws:kms']),
+            encryption_key_id=dict()
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(
+        argument_spec=argument_spec,
+        required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
+    )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
@@ -592,6 +678,14 @@ def main():
         module.fail_json(msg='Unknown error, failed to create s3 connection, no information from boto.')
 
     state = module.params.get("state")
+    encryption = module.params.get("encryption")
+    encryption_key_id = module.params.get("encryption_key_id")
+
+    # Parameter validation
+    if encryption_key_id is not None and encryption is None:
+        module.fail_json(msg="You must specify encryption parameter along with encryption_key_id.")
+    elif encryption_key_id is not None and encryption != 'aws:kms':
+        module.fail_json(msg="Only 'aws:kms' is a valid option for encryption parameter when you specify encryption_key_id.")
 
     if state == 'present':
         create_or_update_bucket(s3_client, module, location)
