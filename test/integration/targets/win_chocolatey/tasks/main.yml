@@ -1,11 +1,4 @@
 ---
-# We've been burned too many times with a new version breaking CI, fix the version in our tests.
-- name: ensure Chocolatey is installed
-  win_chocolatey:
-    name: chocolatey
-    version: 0.10.13
-    state: present
-
 - name: ensure test package is uninstalled
   win_chocolatey:
     name: '{{ test_choco_packages }}'
