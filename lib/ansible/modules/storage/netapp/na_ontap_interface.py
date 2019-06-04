@@ -98,12 +98,6 @@ options:
        migration capability is disabled automatically
     type: bool
 
-  force_subnet_association:
-    description:
-       Set this to true to acquire the address from the named subnet and assign the subnet to the LIF.
-    type: bool
-    version_added: '2.9'
-
   protocols:
     description:
     - Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
@@ -177,12 +171,16 @@ class NetAppOntapInterface(object):
             admin_status=dict(required=False, choices=['up', 'down']),
             subnet_name=dict(required=False, type='str'),
             is_auto_revert=dict(required=False, type='bool', default=None),
-            protocols=dict(required=False, type='list'),
-            force_subnet_association=dict(required=False, type='bool', default=None)
+            protocols=dict(required=False, type='list')
         ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
+            mutually_exclusive=[
+                ['subnet_name', 'address'],
+                ['subnet_name', 'netmask']
+            ],
+
             supports_check_mode=True
         )
         self.na_helper = NetAppModule()
@@ -194,7 +192,7 @@ class NetAppOntapInterface(object):
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
-    def get_interface(self, interface_name=None):
+    def get_interface(self):
         """
         Return details about the interface
         :param:
@@ -203,11 +201,10 @@ class NetAppOntapInterface(object):
         :return: Details about the interface. None if not found.
         :rtype: dict
         """
-        if interface_name is None:
-            interface_name = self.parameters['interface_name']
         interface_info = netapp_utils.zapi.NaElement('net-interface-get-iter')
         interface_attributes = netapp_utils.zapi.NaElement('net-interface-info')
-        interface_attributes.add_new_child('interface-name', interface_name)
+        interface_attributes.add_new_child('interface-name', self.parameters['interface_name'])
+        interface_attributes.add_new_child('vserver', self.parameters['vserver'])
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(interface_attributes)
         interface_info.add_child_elem(query)
@@ -234,7 +231,8 @@ class NetAppOntapInterface(object):
                 return_value['firewall_policy'] = interface_attributes['firewall-policy']
         return return_value
 
-    def set_options(self, options, parameters):
+    @staticmethod
+    def set_options(options, parameters):
         """ set attributes for create or modify """
         if parameters.get('home_port') is not None:
             options['home-port'] = parameters['home_port']
@@ -252,8 +250,6 @@ class NetAppOntapInterface(object):
             options['is-auto-revert'] = 'true' if parameters['is_auto_revert'] is True else 'false'
         if parameters.get('admin_status') is not None:
             options['administrative-status'] = parameters['admin_status']
-        if parameters.get('force_subnet_association') is not None:
-            options['force-subnet-association'] = 'true' if parameters['force_subnet_association'] else 'false'
 
     def set_protocol_option(self, required_keys):
         """ set protocols for create """
@@ -303,7 +299,7 @@ class NetAppOntapInterface(object):
             if node is not None:
                 self.parameters['home_node'] = node
         # validate if mandatory parameters are present for create
-        if not keys.issubset(set(self.parameters.keys())):
+        if not keys.issubset(set(self.parameters.keys())) and self.parameters.get('subnet_name') is None:
             self.module.fail_json(msg='Error: Missing one or more required parameters for creating interface: %s'
                                       % ', '.join(keys))
         # if role is intercluster, protocol cannot be specified
@@ -313,15 +309,19 @@ class NetAppOntapInterface(object):
 
     def create_interface(self):
         ''' calling zapi to create interface '''
-        required_keys = set(['role', 'address', 'home_port', 'netmask'])
-        data_protocols_obj = self.set_protocol_option(required_keys)
+        required_keys = set(['role', 'home_port'])
+        data_protocols_obj = None
+        if self.parameters.get('subnet_name') is None:
+            required_keys.add('address')
+            required_keys.add('netmask')
+            data_protocols_obj = self.set_protocol_option(required_keys)
         self.validate_create_parameters(required_keys)
 
         options = {'interface-name': self.parameters['interface_name'],
                    'role': self.parameters['role'],
                    'home-node': self.parameters.get('home_node'),
                    'vserver': self.parameters['vserver']}
-        self.set_options(options, self.parameters)
+        NetAppOntapInterface.set_options(options, self.parameters)
         interface_create = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-create', **options)
         if data_protocols_obj is not None:
             interface_create.add_child_elem(data_protocols_obj)
@@ -353,7 +353,7 @@ class NetAppOntapInterface(object):
         options = {'interface-name': self.parameters['interface_name'],
                    'vserver': self.parameters['vserver']
                    }
-        self.set_options(options, modify)
+        NetAppOntapInterface.set_options(options, modify)
         interface_modify = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-modify', **options)
         try:
             self.server.invoke_successfully(interface_modify, enable_tunneling=True)
