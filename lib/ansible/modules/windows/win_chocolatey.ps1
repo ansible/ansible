@@ -330,31 +330,62 @@ Function Install-Chocolatey {
 }
 
 Function Get-ChocolateyPackageVersion {
-    param(
-        [Parameter(Mandatory=$true)][String]$choco_path,
-        [Parameter(Mandatory=$true)][String]$name
+    Param (
+        [Parameter(Mandatory=$true)]
+        [System.String]
+        $choco_path,
+
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [System.String]
+        $name
     )
 
-    $command = Argv-ToString -arguments @($choco_path, "list", "--local-only", "--exact", "--limit-output", "--all-versions", $name)
-    $res = Run-Command -command $command
+    Begin {
+        # Due to https://github.com/chocolatey/choco/issues/1843, we get a list of all the installed packages and
+        # filter it ourselves. This has the added benefit of being quicker when dealing with multiple packages as we
+        # only call choco.exe once.
+        $command = Argv-ToString -arguments @($choco_path, 'list', '--local-only', '--limit-output', '--all-versions')
+        $res = Run-Command -command $command
 
-    # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
-    if ($res.rc -notin @(0, 2)) {
-        $module.Result.command = $command
-        $module.Result.rc = $res.rc
-        $module.Result.stdout = $res.stdout
-        $module.Result.stderr = $res.stderr
-        $module.FailJson("Error checking installation status for the package '$name'")
-    }
-    $stdout = $res.stdout.Trim()
-    $versions = $null
-    if ($stdout) {
-        # if a match occurs it is in the format of "package|version" we split
-        # by the last | to get the version in case package contains a pipe char
-        $versions = @($stdout.Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Substring($_.LastIndexOf("|") + 1) })
+        # Chocolatey v0.10.12 introduced enhanced exit codes, 2 means no results, e.g. no package
+        if ($res.rc -notin @(0, 2)) {
+            $module.Result.command = $command
+            $module.Result.rc = $res.rc
+            $module.Result.stdout = $res.stdout
+            $module.Result.stderr = $res.stderr
+            $module.FailJson('Error checking installation status for chocolatey packages')
+        }
+
+        # Parse the stdout to get a list of all packages installed and their versions.
+        $installed_packages = $res.stdout.Trim().Split([System.Environment]::NewLine) | ForEach-Object -Process {
+            if ($_.Contains('|')) {  # Sanity in case further output is added in the future.
+                $package_split = $_.Split('|', 2)
+                @{ Name = $package_split[0]; Version = $package_split[1] }
+            }
+        }
+
+        # Create a hashtable that will store our package version info.
+        $installed_info = @{}
     }
 
-    return ,$versions
+    Process {
+        if ($name -eq 'all') {
+            # All is a special package name that means all installed packages, we set a dummy version so absent, latest
+            # and downgrade will run with all.
+            $installed_info.'all' = @('0.0.0')
+        } else {
+            $package_info = $installed_packages | Where-Object { $_.Name -eq $name }
+            if ($null -eq $package_info) {
+                $installed_info.$name = $null
+            } else {
+                $installed_info.$name = @($package_info.Version)
+            }
+        }
+    }
+
+    End {
+        return $installed_info
+    }
 }
 
 Function Get-ChocolateyPin {
@@ -644,21 +675,12 @@ if ($version -and "chocolatey" -in $name) {
 }
 $choco_path = Install-Chocolatey @install_params
 
-# get the version of all specified packages
-$package_info = @{}
-foreach ($package in $name) {
-    # all is a special package name that means all installed packages, we set
-    # a dummy version so absent, latest, and downgrade will run with all
-    if ($package -eq "all") {
-        if ($state -in @("present", "reinstalled")) {
-            $module.FailJson("Cannot specify the package name as 'all' when state=$state")
-        }
-        $package_versions = @("0.0.0")
-    } else {
-        $package_versions = Get-ChocolateyPackageVersion -choco_path $choco_path -name $package
-    }
-    $package_info.$package = $package_versions
+if ('all' -in $name -and $state -in @('present', 'reinstalled')) {
+    $module.FailJson("Cannot specify the package name as 'all' when state=$state")
 }
+
+# get the version of all specified packages
+$package_info = $name | Get-ChocolateyPackageVersion -choco_path $choco_path
 
 if ($state -in "absent", "reinstalled") {
     $installed_packages = ($package_info.GetEnumerator() | Where-Object { $null -ne $_.Value }).Key
