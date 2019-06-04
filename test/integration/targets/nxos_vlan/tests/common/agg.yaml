@@ -8,6 +8,7 @@
     lines:
       - no vlan 102
       - no vlan 103
+      - no vlan 104
     provider: "{{ connection }}"
   ignore_errors: yes
 
@@ -84,8 +85,38 @@
     that:
       - 'result.changed == false'
 
+- name: "setup for purge test with aggregate add"
+  nxos_vlan:
+    vlan_id: 104
+    purge: true
+    provider: "{{ connection }}"
+
+- name: purge 104 with aggregate add 102-103
+  nxos_vlan: &purge_add
+    aggregate:
+      - { vlan_id: 102 }
+      - { vlan_id: 103 }
+    purge: true
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"vlan 102" in result.commands'
+      - '"vlan 103" in result.commands'
+      - '"no vlan 104" in result.commands'
+
+- name: purge_add - Idempotence
+  nxos_vlan: *purge_add
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
 - name: teardown
   nxos_config: *rm
   ignore_errors: yes
 
-- debug: msg="END connection={{ ansible_connection }}/agg.yaml" 
+- debug: msg="END connection={{ ansible_connection }}/agg.yaml"
