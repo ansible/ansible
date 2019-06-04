@@ -102,6 +102,7 @@ class TestMyModule(unittest.TestCase):
             name = 'test'
             type = 'mixed'
             vserver = 'ansible_test'
+            ports = ['a1', 'a2']
         else:
             hostname = 'hostname'
             username = 'username'
@@ -109,13 +110,15 @@ class TestMyModule(unittest.TestCase):
             name = 'name'
             type = 'mixed'
             vserver = 'vserver'
+            ports = ['a1', 'a2']
         return dict({
             'hostname': hostname,
             'username': username,
             'password': password,
             'name': name,
             'type': type,
-            'vserver': vserver
+            'vserver': vserver,
+            'ports': ports
         })
 
     def test_module_fail_when_required_args_missing(self):
