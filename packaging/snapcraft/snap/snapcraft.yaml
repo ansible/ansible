@@ -1,0 +1,60 @@
+name: ansible
+version: git
+version-script: cat $SNAPCRAFT_STAGE/version
+summary: Ansible
+description: |
+   An open source software that automates software provisioning, configuration management, and application deployment connecting via SSH.
+
+grade: stable
+confinement: classic
+base: core18
+
+architectures:  
+  - build-on: amd64
+
+parts:
+  ansible:
+    plugin: python
+    python-version: python3
+    source: https://github.com/ansible/ansible.git
+    stage-packages:
+      - build-essential
+      - software-properties-common
+      - zlib1g-dev
+      - libzmq3-dev
+      - libhdf5-serial-dev
+      - libfreetype6-dev 
+      - libcurl3-dev
+      - libc6
+
+    prime:
+      - -usr/share/doc
+      - -usr/share/fonts
+      - -usr/share/icons
+      - -usr/share/lintian
+      - -usr/share/man
+
+  wrapper:
+    after:
+      - ansible
+    plugin: dump
+    source: files/
+
+apps:
+  ansible:
+    command: bin/wrapper $SNAP/usr/share/ansible/bin/ansible
+    desktop: usr/share/applications/ansible.desktop
+    environment:
+      # Fallback to XWayland if running in a Wayland session.
+      DISABLE_WAYLAND: 1
+      GSETTINGS_SCHEMA_DIR: $SNAP/usr/share/glib-2.0/schemas
+
+  url-handler:
+    command: bin/wrapper $SNAP/usr/share/ansible/bin/ansible --open-url
+    desktop: usr/share/applications/ansible-url-handler.desktop
+    environment:
+      # Fallback to XWayland if running in a Wayland session.
+      DISABLE_WAYLAND: 1
+      GSETTINGS_SCHEMA_DIR: $SNAP/usr/share/glib-2.0/schemas
+  
+
