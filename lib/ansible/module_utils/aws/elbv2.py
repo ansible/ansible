@@ -712,7 +712,11 @@ class ELBListenerRules(object):
         condition_found = False
 
         for current_condition in current_conditions:
-            if current_condition['Field'] == condition['Field'] and current_condition['Values'][0] == condition['Values'][0]:
+            if current_condition.get('SourceIpConfig'):
+                if current_condition['Field'] == condition['Field'] and current_condition['SourceIpConfig']['Values'][0] == condition['SourceIpConfig']['Values'][0]:
+                    condition_found = True
+                    break
+            elif current_condition['Field'] == condition['Field'] and current_condition['Values'][0] == condition['Values'][0]:
                 condition_found = True
                 break
 
@@ -727,7 +731,7 @@ class ELBListenerRules(object):
         modified_rule = {}
 
         # Priority
-        if current_rule['Priority'] != new_rule['Priority']:
+        if int(current_rule['Priority']) != new_rule['Priority']:
             modified_rule['Priority'] = new_rule['Priority']
 
         # Actions
@@ -749,6 +753,8 @@ class ELBListenerRules(object):
             if len(current_rule['Actions']) == 1 and len(new_rule['Actions']) == 1:
                 if current_rule['Actions'] != new_rule['Actions']:
                     modified_rule['Actions'] = new_rule['Actions']
+                    print("modified_rule:")
+                    print(new_rule['Actions'])
             # if actions have multiple elements, we'll have to order them first before comparing.
             # multiple actions will have an 'Order' key for this purpose
             else:
@@ -769,9 +775,13 @@ class ELBListenerRules(object):
 
                 if current_actions_sorted != new_actions_sorted_no_secret:
                     modified_rule['Actions'] = new_rule['Actions']
+                    print("modified_rule:")
+                    print(new_rule['Actions'])
         # If the action lengths are different, then replace with the new actions
         else:
             modified_rule['Actions'] = new_rule['Actions']
+            print("modified_rule:")
+            print(new_rule['Actions'])
 
         # Conditions
         modified_conditions = []
