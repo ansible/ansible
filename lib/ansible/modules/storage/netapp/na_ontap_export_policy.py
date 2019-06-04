@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018-2019, NetApp, Inc
+# (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -35,7 +35,6 @@ options:
     - The name of the export-policy to be renamed.
     version_added: '2.7'
   vserver:
-    required: true
     description:
     - Name of the vserver to use.
 '''
@@ -91,10 +90,13 @@ class NetAppONTAPExportPolicy(object):
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
             from_name=dict(required=False, type='str', default=None),
-            vserver=dict(required=True, type='str')
+            vserver=dict(required=False, type='str')
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
+            required_if=[
+                ('state', 'present', ['vserver'])
+            ],
             supports_check_mode=True
         )
         parameters = self.module.params
@@ -122,7 +124,6 @@ class NetAppONTAPExportPolicy(object):
         export_policy_iter = netapp_utils.zapi.NaElement('export-policy-get-iter')
         export_policy_info = netapp_utils.zapi.NaElement('export-policy-info')
         export_policy_info.add_new_child('policy-name', name)
-        export_policy_info.add_new_child('vserver', self.vserver)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(export_policy_info)
         export_policy_iter.add_child_elem(query)
@@ -186,10 +187,12 @@ class NetAppONTAPExportPolicy(object):
         Apply action to export-policy
         """
         changed = False
+        export_policy_exists = False
         netapp_utils.ems_log_event("na_ontap_export_policy", self.server)
         rename_flag = False
         export_policy_details = self.get_export_policy()
         if export_policy_details:
+            export_policy_exists = True
             if self.state == 'absent':  # delete
                 changed = True
         else:
