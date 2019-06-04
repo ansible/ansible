@@ -88,6 +88,10 @@ else:
     from jinja2.utils import concat as j2_concat
 
 
+JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin'))
+JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end'))
+
+
 def generate_ansible_template_vars(path, dest_path=None):
     b_path = to_bytes(path)
     try:
@@ -165,9 +169,9 @@ def is_template(data, jinja_env):
     d2 = jinja_env.preprocess(data)
 
     for token in jinja_env.lex(d2):
-        if token[1] in ('variable_begin', 'block_begin'):
+        if token[1] in JINJA2_BEGIN_TOKENS:
             left += 1
-        elif token[1] in ('variable_end', 'block_begin'):
+        elif token[1] in JINJA2_END_TOKENS:
             right += 1
 
     return left and right and left == right
