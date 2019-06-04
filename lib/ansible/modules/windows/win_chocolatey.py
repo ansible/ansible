@@ -211,6 +211,9 @@ options:
     - Provide as a string (e.g. C('6.1')), otherwise it is considered to be
       a floating-point number and depending on the locale could become C(6,1),
       which will cause a failure.
+    - If I(name) is set to C(chocolatey) and Chocolatey is not installed on the
+      host, this will be the version of Chocolatey that is installed. You can
+      also set the C(chocolateyVersion) environment var.
     type: str
 notes:
 - This module will install or upgrade Chocolatey when needed.

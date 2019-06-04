@@ -468,14 +468,15 @@
   register: allow_multiple
 
 - name: get result of install older package with allow_multiple
-  win_command: choco.exe list --local-only --limit-output --all-versions --exact {{ test_choco_package1|quote }}
+  win_command: choco.exe list --local-only --limit-output --all-versions
   register: allow_multiple_actual
 
 - name: assert install older package with allow_multiple
   assert:
     that:
     - allow_multiple is changed
-    - allow_multiple_actual.stdout == "ansible|0.1.0\r\nansible|0.0.1\r\n"
+    - '"ansible|0.1.0" in allow_multiple_actual.stdout_lines'
+    - '"ansible|0.0.1" in allow_multiple_actual.stdout_lines'
 
 - name: pin 2 packages (check mode)
   win_chocolatey:
@@ -593,11 +594,12 @@
   register: remove_multiple
 
 - name: get result of uninstall specific version installed with allow_multiple
-  win_command: choco.exe list --local-only --limit-output --all-versions --exact {{ test_choco_package1|quote }}
+  win_command: choco.exe list --local-only --limit-output --all-versions
   register: remove_multiple_actual
 
 - name: assert uninstall specific version installed with allow_multiple
   assert:
     that:
     - remove_multiple is changed
-    - remove_multiple_actual.stdout == "ansible|0.1.0\r\n"
+    - '"ansible|0.0.1" not in remove_multiple_actual.stdout_lines'
+    - '"ansible|0.1.0" in remove_multiple_actual.stdout_lines'
