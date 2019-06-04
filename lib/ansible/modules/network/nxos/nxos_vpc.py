@@ -63,7 +63,7 @@ options:
     description:
       - VRF used for peer keepalive link
       - The VRF must exist on the device before using pkl_vrf.
-      - Note. 'default' is an overloaded term in regards to pkl_vrf. The default vrf context for pkl_vrf is the 'management' vrf; however, setting the playbook value to 'pkl_vrf: default' in this case actually refers to the literal 'default' RFIB, which will explicitly nvgen as 'vrf default'.
+      - "Note: 'default' is an overloaded term. Default vrf context for pkl_vrf is 'management'; however, 'pkl_vrf: default' refers to the literal 'default' rib."
     default: management
   peer_gw:
     description:
@@ -266,9 +266,9 @@ def get_vpc(module):
                     vpc['peer_gw'] = False if 'no ' in each else True
                 if 'peer-keepalive destination' in each:
                     # destination is reqd; src & vrf are optional
-                    m = re.search('destination (?P<pkl_dest>[\d.]+)'
-                                  '(?:.* source (?P<pkl_src>[\d.]+))*'
-                                  '(?:.* vrf (?P<pkl_vrf>\S+))*',
+                    m = re.search(r'destination (?P<pkl_dest>[\d.]+)'
+                                  r'(?:.* source (?P<pkl_src>[\d.]+))*'
+                                  r'(?:.* vrf (?P<pkl_vrf>\S+))*',
                                   each)
                     if m:
                         for pkl in m.groupdict().keys():
