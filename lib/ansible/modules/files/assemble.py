@@ -57,6 +57,7 @@ options:
     description:
     - If C(no), it will search for src at originating/master machine.
     - If C(yes), it will go to the remote/target machine for the src.
+    - Note: Default was changed from C(yes) to C(no) in version 2.8
     type: bool
     default: no
     version_added: '1.4'
