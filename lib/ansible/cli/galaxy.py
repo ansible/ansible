@@ -268,21 +268,23 @@ class GalaxyCLI(CLI):
 
     def execute_role(self):
         """
-        Perform the action on an Ansible Galaxy role.
+        Perform the action on an Ansible Galaxy role. Must be combined with a further action like delete/install/init
+        as listed below.
         """
         # To satisfy doc build
         pass
 
     def execute_collection(self):
         """
-        Perform the action on an Ansible Galaxy collection.
+        Perform the action on an Ansible Galaxy collection. Must be combined with a further action like init/install as
+        listed below.
         """
         # To satisfy doc build
         pass
 
     def execute_init(self):
         """
-        creates the skeleton framework of a role that complies with the galaxy metadata format.
+        creates the skeleton framework of a role or collection that complies with the galaxy metadata format.
         """
 
         galaxy_type = context.CLIARGS['type']
