@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqldatabase_facts
 version_added: "2.7"
-short_description: Get Azure MySQL Database facts.
+short_description: Get Azure MySQL Database facts
 description:
     - Get facts of MySQL Database.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,13 +57,14 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing facts for MySQL Databases.
+    description:
+        - A list of dictionaries containing facts for MySQL Databases.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testser
@@ -91,7 +92,7 @@ databases:
                 - The charset of the database.
             returned: always
             type: str
-            sample: UTF8
+            sample: utf8
         collation:
             description:
                 - The collation of the database.
