@@ -159,6 +159,20 @@ def _escape_backslashes(data, jinja_env):
     return data
 
 
+def _is_tmpl(data, jinja_env):
+    left = 0
+    right = 0
+    d2 = jinja_env.preprocess(data)
+
+    for token in jinja_env.lex(d2):
+        if token[1] in ('variable_begin', 'block_begin'):
+            left += 1
+        elif token[1] == ('variable_end', 'block_begin'):
+            right += 1
+
+    return left == right
+
+
 def _count_newlines_from_end(in_str):
     '''
     Counts the number of newlines at the end of a string. This is used during
@@ -596,13 +610,7 @@ class Templar:
     def is_template(self, data):
         ''' lets us know if data has a template'''
         if isinstance(data, string_types):
-            try:
-                new = self.do_template(data, fail_on_undefined=True)
-            except (AnsibleUndefinedVariable, UndefinedError):
-                return True
-            except Exception:
-                return False
-            return (new != data)
+            return _is_tmpl(data, self.environment)
         elif isinstance(data, (list, tuple)):
             for v in data:
                 if self.is_template(v):
