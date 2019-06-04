@@ -110,14 +110,15 @@ options:
   target_type:
     description:
       - The type of target that you must specify when registering targets with this target group. The possible values are
-        C(instance) (targets are specified by instance ID) or C(ip) (targets are specified by IP address).
-        Note that you can't specify targets for a target group using both instance IDs and IP addresses.
+        C(instance) (targets are specified by instance ID), C(ip) (targets are specified by IP address) or C(lambda) (target is specified by ARN).
+        Note that you can't specify targets for a target group using more than one type. Target type lambda only accept one target. When more than
+        one target is specified, only the first one is used. All follow targets are ignored.
         If the target type is ip, specify IP addresses from the subnets of the virtual private cloud (VPC) for the target
         group, the RFC 1918 range (10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16), and the RFC 6598 range (100.64.0.0/10).
         You can't specify publicly routable IP addresses.
     required: false
     default: instance
-    choices: ['instance', 'ip']
+    choices: ['instance', 'ip', 'lambda']
     version_added: 2.5
   targets:
     description:
@@ -211,6 +212,37 @@ EXAMPLES = '''
     state: present
     wait_timeout: 200
     wait: True
+
+# Using lambda as targets require that the target group
+# itself is allow to invoke the lambda function.
+# therefore you need first to create an empty target group
+# to receice its arn, second, allow the target group 
+# to invoke the lamba function and third, add the target
+# to the target group
+- name: first, create empty target group
+  elb_target_group:
+    name: my-lambda-targetgroup
+    target_type: lambda
+    state: present
+  register: out
+
+- name: second, allow invoke of the lambda
+  lambda_policy:
+    state: "{{ state | default('present') }}"
+    function_name: my-lambda-function
+    statement_id: someID
+    action: lambda:InvokeFunction
+    principal: elasticloadbalancing.amazonaws.com
+    source_arn: "{{ out.target_group_arn }}"
+    source_account: 123456789012
+  
+- name: third, add target
+    elb_target_group:
+    name: my-lambda-targetgroup
+    target_type: lambda
+    state: present
+    targets:
+        - Id: arn:aws:lambda:eu-central-1:123456789012:function:my-lambda-function
 
 '''
 
@@ -593,10 +625,10 @@ def create_or_update_target_group(connection, module):
                                         }
                                     ]
                                 )
-                            
+
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                            module.fail_json_aws(
-                                e, msg="Couldn't register targets")
+                        module.fail_json_aws(
+                            e, msg="Couldn't register targets")
             else:
                 if module.params.get("target_type") != "lambda":
 
@@ -778,11 +810,11 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
-                            required_if=[
+                              required_if=[
                                   ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
                                   ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
-                                ]
-                            )
+                              ]
+                              )
 
     connection = module.client('elbv2')
 
