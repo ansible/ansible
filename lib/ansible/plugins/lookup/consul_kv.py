@@ -143,7 +143,7 @@ class LookupModule(LookupBase):
                     scheme = kwargs.get('scheme', 'http')
                     validate_certs = kwargs.get('validate_certs', True)
                     client_cert = kwargs.get('client_cert', None)
-                    tokenapi =  kwargs.get('token', None)
+                    tokenapi = kwargs.get('token', None)
                     consul_api = consul.Consul(host=host, port=port, scheme=scheme, verify=validate_certs,
                                                cert=client_cert, token=tokenapi)
 
