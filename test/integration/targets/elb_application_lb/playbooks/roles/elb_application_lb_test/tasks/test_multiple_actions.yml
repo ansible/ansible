@@ -285,7 +285,7 @@
         - alb.listeners[0].rules[2].actions[0].type == "fixed-response"
 
 
-#  - name: test idempotence creating ALB with a listener
+#  - name: test creating ALB with a default listener with multiple actions
 #    elb_application_lb:
 #      name: "{{ alb_name }}"
 #      subnets: "{{ alb_subnets }}"
@@ -309,7 +309,6 @@
 #
 #  - assert:
 #      that:
-#        - not alb.changed
 #        - alb.listeners|length == 1
 #        - alb.listeners[0].rules[0].actions|length == 2
 #
