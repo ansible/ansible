@@ -117,7 +117,7 @@ options:
     description:
       - Raw cron schedule (0 0 * * *)
     type: str
-    version_added: "2.8"
+    version_added: "2.9"
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab.
