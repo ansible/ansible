@@ -164,17 +164,19 @@ def _escape_backslashes(data, jinja_env):
 
 
 def is_template(data, jinja_env):
-    left = 0
-    right = 0
+    found = None
     d2 = jinja_env.preprocess(data)
 
     for token in jinja_env.lex(d2):
         if token[1] in JINJA2_BEGIN_TOKENS:
-            left += 1
+            # Example: variable_end -> variable
+            found = token[1].split('_')[0]
         elif token[1] in JINJA2_END_TOKENS:
-            right += 1
+            if token[1].split('_')[0] == found:
+                return True
+            return False
 
-    return left and right and left == right
+    return False
 
 
 def _count_newlines_from_end(in_str):
