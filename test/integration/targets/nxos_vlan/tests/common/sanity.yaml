@@ -134,7 +134,6 @@
   - assert: *false
     when: platform is search('N3K|N7K')
 
-# Uncomment this once the get_capabilities() work on nxapi as well
   - name: Change mode
     nxos_vlan: &mode1
       vlan_id: 50
