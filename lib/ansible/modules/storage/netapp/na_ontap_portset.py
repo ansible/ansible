@@ -211,7 +211,7 @@ class NetAppONTAPPortset(object):
         :return: None
         """
         for port in ports:
-            self.modify_port(port, 'portset-remove')
+            self.modify_port(port, 'portset-remove', 'removing')
 
     def add_ports(self):
         """
@@ -222,9 +222,9 @@ class NetAppONTAPPortset(object):
         if self.parameters.get('ports') == [''] or self.parameters.get('ports') is None:
             return
         for port in self.parameters['ports']:
-            self.modify_port(port, 'portset-add')
+            self.modify_port(port, 'portset-add', 'adding')
 
-    def modify_port(self, port, zapi):
+    def modify_port(self, port, zapi, action):
         """
         Add or remove an port to/from a portset
         """
@@ -237,8 +237,8 @@ class NetAppONTAPPortset(object):
         try:
             self.server.invoke_successfully(portset_modify, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error modifying port in portset %s: %s' % (self.parameters['name'],
-                                                                                  to_native(error)),
+            self.module.fail_json(msg='Error %s port in portset %s: %s' % (action, self.parameters['name'],
+                                                                           to_native(error)),
                                   exception=traceback.format_exc())
 
     def apply(self):
@@ -257,6 +257,7 @@ class NetAppONTAPPortset(object):
             else:
                 if cd_action == 'create':
                     self.create_portset()
+                    self.add_ports()
                 elif cd_action == 'delete':
                     self.delete_portset()
                 elif modify:
