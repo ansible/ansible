@@ -1790,4 +1790,18 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
+ERIC_ECCLI_ADDITIONAL_RE_FILE:
+  name: Set the prompt and error information configuration file used in network eric eccli module
+  default: null
+  description:
+    - Specify a custom ECCLI prompt and error information configuration file,
+    - For each command run through ECCLI module, performs additional checking,
+    - If command's output matches any error regular expressions
+    - specified in this configuration file, then command runs fails.
+    - If command's output matches any prompt specified in this configuration file,
+    - the current received command's output is treated as complete.
+  env: [{name: ANSIBLE_ERIC_ECCLI_ADDITIONAL_RE_FILE}]
+  ini:
+  - {key: eric_eccli_additional_re_file, section: defaults}
+  type: string
 ...
