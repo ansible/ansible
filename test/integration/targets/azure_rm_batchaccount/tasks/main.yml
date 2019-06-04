@@ -40,3 +40,15 @@
   assert:
     that:
       - not output.changed
+
+- name: Create Batch Account -- delete
+  azure_rm_batchaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ batch_account_name }}"
+      state: absent
+  register: output
+
+- name: Assert that state has changed
+  assert:
+    that:
+      - output.changed
