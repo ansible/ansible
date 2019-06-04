@@ -170,7 +170,7 @@ def _is_tmpl(data, jinja_env):
         elif token[1] == ('variable_end', 'block_begin'):
             right += 1
 
-    return left == right
+    return left and right and left == right
 
 
 def _count_newlines_from_end(in_str):
