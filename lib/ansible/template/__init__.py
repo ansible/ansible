@@ -167,7 +167,7 @@ def _is_tmpl(data, jinja_env):
     for token in jinja_env.lex(d2):
         if token[1] in ('variable_begin', 'block_begin'):
             left += 1
-        elif token[1] == ('variable_end', 'block_begin'):
+        elif token[1] in ('variable_end', 'block_begin'):
             right += 1
 
     return left and right and left == right
