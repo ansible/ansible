@@ -171,7 +171,7 @@ def get_installed_versions(module, remote=False):
     (rc, out, err) = module.run_command(cmd, environ_update=environ, check_rc=True)
     installed_versions = []
     for line in out.splitlines():
-        match = re.match(r"\S+\s+\((.+)\)", line)
+        match = re.match(r"\S+\s+\((?:default: )?(.+)\)", line)
         if match:
             versions = match.group(1)
             for version in versions.split(', '):
