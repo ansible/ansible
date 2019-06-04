@@ -151,15 +151,20 @@ EXAMPLES = r'''
     - fillfactor=10
     - autovacuum_analyze_threshold=1
 
-- name: Create an unlogged table
+- name: Create an unlogged table in schema acme
   postgresql_table:
-    name: useless_data
+    name: acme.useless_data
     columns: waste_id int
     unlogged: true
 
 - name: Rename table foo to bar
   postgresql_table:
     table: foo
+    rename: bar
+
+- name: Rename table foo from schema acme to bar
+  postgresql_table:
+    name: acme.foo
     rename: bar
 
 - name: Set owner to someuser
@@ -178,9 +183,9 @@ EXAMPLES = r'''
     name: foo
     truncate: yes
 
-- name: Drop table foo
+- name: Drop table foo from schema.acme
   postgresql_table:
-    name: foo
+    name: acme.foo
     state: absent
 
 - name: Drop table bar cascade
@@ -260,12 +265,19 @@ class Table(object):
 
     def __exists_in_db(self):
         """Check table exists and refresh info"""
+        if "." in self.name:
+            schema = self.name.split('.')[-2]
+            tblname = self.name.split('.')[-1]
+        else:
+            schema = 'public'
+            tblname = self.name
+
         query = ("SELECT t.tableowner, t.tablespace, c.reloptions "
                  "FROM pg_tables AS t "
                  "INNER JOIN pg_class AS c ON  c.relname = t.tablename "
                  "INNER JOIN pg_namespace AS n ON c.relnamespace = n.oid "
                  "WHERE t.tablename = '%s' "
-                 "AND n.nspname = 'public'" % self.name)
+                 "AND n.nspname = '%s'" % (tblname, schema))
         res = self.__exec_sql(query)
         if res:
             self.exists = True
@@ -417,6 +429,9 @@ class Table(object):
         return self.__exec_sql(query, ddl=True)
 
     def drop(self, cascade=False):
+        if not self.exists:
+            return False
+
         query = "DROP TABLE %s" % pg_quote_identifier(self.name, 'table')
         if cascade:
             query += " CASCADE"

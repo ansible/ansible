@@ -12,6 +12,14 @@
     login_user: "{{ pg_user }}"
     name: alice
 
+- name: postgresql_table - create test schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+
 #
 # Check table creation
 #
@@ -727,3 +735,109 @@
     that:
       - result.rowcount == 0
   when: postgres_version_resp.stdout is version('9.1', '>=')
+
+#
+# Create table in a specific schema:
+#
+- name: postgresql_table - create table in a specific schema
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+# Check that the table exists and has a right schema after the previous step:
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'acme'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Try to create the table with the same name and schema again:
+- name: postgresql_table - create table  with the same name and schema again
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+# Create a table with the same name but in the default schema for the next test
+- name: postgresql_table - create table in the default schema
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+# Drop table from schema acme:
+- name: postgresql_table - drop the table from schema acme
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: postgresql_table - check that the table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'acme'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+- name: postgresql_table - try to drop the table from schema acme again
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: postgresql_table - check that the table with the same name in schema public exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'public'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
