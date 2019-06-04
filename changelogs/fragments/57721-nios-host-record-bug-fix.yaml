@@ -1,0 +1,3 @@
+bugfixes:
+- This PR fixes the issue raised where idempotency was failing when DNS bypassing was set to False and also exception
+  error faced in nios_host_reord - https://github.com/ansible/ansible/pull/57221.
