@@ -1,0 +1,2 @@
+bugfixes:
+- lineinfile - fix a race / file descriptor leak when writing the file (https://github.com/ansible/ansible/issues/57327)
