@@ -30,7 +30,7 @@ options:
       - When supplied, this argument will define the facts to be collected.
         Possible values for this include all, minimum, config, performance,
         capacity, network, subnet, interfaces, hgroups, pgroups, hosts,
-        admins, volumes, snapshots, pods, vgroups, offload and apps.
+        admins, volumes, snapshots, pods, vgroups, offload, apps and arrays.
     type: list
     required: false
     default: minimum
@@ -343,6 +343,7 @@ CAP_REQUIRED_API_VERSION = '1.6'
 SAN_REQUIRED_API_VERSION = '1.10'
 NVME_API_VERSION = '1.16'
 PREFERRED_API_VERSION = '1.15'
+CONN_STATUS_API_VERSION = '1.17'
 
 
 def generate_default_dict(array):
@@ -636,6 +637,26 @@ def generate_pods_dict(array):
     return pods_facts
 
 
+def generate_conn_array_dict(array):
+    conn_array_facts = {}
+    api_version = array._list_available_rest_versions()
+    if CONN_STATUS_API_VERSION in api_version:
+        carrays = array.list_connected_arrays()
+        for carray in range(0, len(carrays)):
+            arrayname = carrays[carray]['array_name']
+            conn_array_facts[arrayname] = {
+                'array_id': carrays[carray]['id'],
+                'throtled': carrays[carray]['throtled'],
+                'version': carrays[carray]['version'],
+                'type': carrays[carray]['type'],
+                'mgmt_ip': carrays[carray]['management_address'],
+                'repl_ip': carrays[carray]['replication_address'],
+            }
+            if CONN_STATUS_API_VERSION in api_version:
+                conn_array_facts[arrayname]['status'] = carrays[carray]['status']
+    return conn_array_facts
+
+
 def generate_apps_dict(array):
     apps_facts = {}
     api_version = array._list_available_rest_versions()
@@ -749,7 +770,7 @@ def main():
     valid_subsets = ('all', 'minimum', 'config', 'performance', 'capacity',
                      'network', 'subnet', 'interfaces', 'hgroups', 'pgroups',
                      'hosts', 'admins', 'volumes', 'snapshots', 'pods',
-                     'vgroups', 'offload', 'apps')
+                     'vgroups', 'offload', 'apps', 'arrays')
     subset_test = (test in valid_subsets for test in subset)
     if not all(subset_test):
         module.fail_json(msg="value must gather_subset must be one or more of: %s, got: %s"
@@ -792,6 +813,8 @@ def main():
         facts['s3_offload'] = generate_s3_offload_dict(array)
     if 'apps' in subset or 'all' in subset:
         facts['apps'] = generate_apps_dict(array)
+    if 'arrays' in subset or 'all' in subset:
+        facts['arrays'] = generate_conn_array_dict(array)
 
     module.exit_json(ansible_facts={'ansible_purefa_facts': facts})
 
