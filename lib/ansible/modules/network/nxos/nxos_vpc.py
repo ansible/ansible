@@ -63,7 +63,7 @@ options:
     description:
       - VRF used for peer keepalive link
       - The VRF must exist on the device before using pkl_vrf.
-      - "Note: 'default' is an overloaded term. Default vrf context for pkl_vrf is 'management'; however, 'pkl_vrf: default' refers to the literal 'default' rib."
+      - "(Note) 'default' is an overloaded term: Default vrf context for pkl_vrf is 'management'; 'pkl_vrf: default' refers to the literal 'default' rib."
     default: management
   peer_gw:
     description:
