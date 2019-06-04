@@ -159,7 +159,7 @@ def _escape_backslashes(data, jinja_env):
     return data
 
 
-def _is_tmpl(data, jinja_env):
+def is_template(data, jinja_env):
     left = 0
     right = 0
     d2 = jinja_env.preprocess(data)
@@ -610,7 +610,7 @@ class Templar:
     def is_template(self, data):
         ''' lets us know if data has a template'''
         if isinstance(data, string_types):
-            return _is_tmpl(data, self.environment)
+            return is_template(data, self.environment)
         elif isinstance(data, (list, tuple)):
             for v in data:
                 if self.is_template(v):
