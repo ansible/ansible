@@ -58,6 +58,14 @@ EXAMPLES = '''
     extra_zfs_properties:
       volsize: 10M
 
+- name: Create a new sparse volume called myvol in pool rpool.
+  zfs:
+    name: rpool/myvol
+    state: present
+    extra_zfs_properties:
+      volsize: 10M
+      sparse: true
+
 - name: Create a snapshot of rpool/myfs file system.
   zfs:
     name: rpool/myfs@mysnapshot
@@ -158,6 +166,9 @@ class Zfs(object):
                     cmd += ['-V', value]
                 elif prop == 'volblocksize':
                     cmd += ['-b', value]
+                elif prop == 'sparse':
+                    if value == 'on':
+                        cmd += ['-s']
                 else:
                     cmd += ['-o', '%s="%s"' % (prop, value)]
         if origin and action == 'clone':
