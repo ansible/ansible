@@ -55,7 +55,7 @@
 - name: save config
   netconf_config:
     backup: yes
-    register: result
+  register: result
 
 - assert:
     that:
