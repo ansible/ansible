@@ -443,7 +443,7 @@ class LocalNxapi:
 
         commands = to_list(commands)
         try:
-            resp, msg_timestamps = self.send_request(commands, output='config', check_status=True,
+            resp = self.send_request(commands, output='config', check_status=True,
                                                      return_error=return_error, opts=opts)
         except ValueError as exc:
             code = getattr(exc, 'code', 1)
