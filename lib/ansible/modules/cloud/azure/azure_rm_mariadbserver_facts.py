@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbserver_facts
 version_added: "2.8"
-short_description: Get Azure MariaDB Server facts.
+short_description: Get Azure MariaDB Server facts
 description:
     - Get facts of MariaDB Server.
 
@@ -38,8 +38,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -56,13 +56,14 @@ EXAMPLES = '''
 
 RETURN = '''
 servers:
-    description: A list of dictionaries containing facts for MariaDB servers.
+    description:
+        - A list of dictionaries containing facts for MariaDB servers.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/myabdud1223
@@ -92,13 +93,13 @@ servers:
             contains:
                 name:
                     description:
-                        - The name of the SKU
+                        - The name of the SKU.
                     returned: always
                     type: str
                     sample: GP_Gen4_2
                 tier:
                     description:
-                        - The tier of the particular SKU
+                        - The tier of the particular SKU.
                     returned: always
                     type: str
                     sample: GeneralPurpose
@@ -122,7 +123,7 @@ servers:
             sample: False
         admin_username:
             description:
-                - "The administrator's login name of a server."
+                - The administrator's login name of a server.
             returned: always
             type: str
             sample: serveradmin
@@ -145,7 +146,8 @@ servers:
             type: str
             sample: myabdud1223.mys.database.azure.com
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+                - Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
             sample: { tag1: abc }
 '''
