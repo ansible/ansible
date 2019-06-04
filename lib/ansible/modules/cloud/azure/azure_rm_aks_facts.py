@@ -14,14 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_aks_facts
+module: azure_rm_aks_info
 
 version_added: "2.6"
 
-short_description: Get Azure Kubernetes Service facts
+short_description: Get Azure Kubernetes Service information
 
 description:
-    - Get facts for a specific Azure Kubernetes Service or all Azure Kubernetes Services.
+    - Get information for a specific Azure Kubernetes Service or all Azure Kubernetes Services.
 
 options:
     name:
@@ -50,16 +50,16 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get facts for one Azure Kubernetes Service
-      azure_rm_aks_facts:
+    - name: Get information for one Azure Kubernetes Service
+      azure_rm_aks_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get facts for all Azure Kubernetes Services
-      azure_rm_aks_facts:
+    - name: Get information for all Azure Kubernetes Services
+      azure_rm_aks_info:
 
-    - name: Get facts by tags
-      azure_rm_aks_facts:
+    - name: Get information by tags
+      azure_rm_aks_info:
         tags:
           - testing
 '''
@@ -83,8 +83,8 @@ except Exception:
 AZURE_OBJECT_CLASS = 'managedClusters'
 
 
-class AzureRMManagedClusterFacts(AzureRMModuleBase):
-    """Utility class to get Azure Kubernetes Service facts"""
+class AzureRMManagedClusterInfo(AzureRMModuleBase):
+    """Utility class to get Azure Kubernetes Service information"""
 
     def __init__(self):
 
@@ -106,10 +106,10 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.tags = None
         self.show_kubeconfig = None
 
-        super(AzureRMManagedClusterFacts, self).__init__(
+        super(AzureRMManagedClusterInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
-            facts_module=True
+            info_module=True
         )
 
     def exec_module(self, **kwargs):
@@ -180,7 +180,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMManagedClusterFacts()
+    AzureRMManagedClusterInfo()
 
 
 if __name__ == '__main__':
