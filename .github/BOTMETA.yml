@@ -1105,6 +1105,12 @@ files:
   $plugins/connection/saltstack.py:
     support: community
   $plugins/connection/winrm.py: *windows_core
+  $plugins/connection/vmware_tools.py:
+    support: community
+    maintainers: $team_vmware
+    labels:
+      - vmware
+      - cloud
 ###############################
 # plugins/doc_fragments
   $plugins/doc_fragments/:
