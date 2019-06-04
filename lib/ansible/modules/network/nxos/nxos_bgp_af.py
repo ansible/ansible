@@ -764,7 +764,7 @@ def main():
     if candidate:
         candidate = candidate.items_text()
         if not module.check_mode:
-          load_config(module, candidate)
+        	load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:
