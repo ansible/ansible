@@ -83,10 +83,10 @@ options:
             - "Default value is set by engine."
     vm:
         description:
-            - "For creating vm poool without editing template."
+            - "For creating vm pool without editing template."
             - "Note: You can use C(vm) only for creating vm pool."
         type: dict
-        suboption:
+        suboptions:
             comment:
                 description:
                     - Comment of the Virtual Machine.
@@ -132,6 +132,19 @@ options:
                 description:
                     - "I(True) enable Single Sign On by Guest Agent, I(False) to disable it. By default is chosen by oVirt/RHV engine."
                 type: bool
+            smartcard_enabled:
+                description:
+                    - "If I(true), use smart card authentication."
+                type: bool
+            nics:
+                description:
+                    - List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary.
+                    - C(name) - Name of the NIC.
+                    - C(profile_name) - Profile name where NIC should be attached.
+                    - C(interface) -  Type of the network interface. One of following I(virtio), I(e1000), I(rtl8139), default is I(virtio).
+                    - C(mac_address) - Custom MAC address of the network interface, by default it's obtained from MAC pool.
+                    - NOTE - This parameter is used only when C(state) is I(running) or I(present) and is able to only create NICs.
+                    To manage NICs of the VM in more depth please use M(ovirt_nics) module instead.
         version_added: 2.9
 extends_documentation_fragment: ovirt
 '''
