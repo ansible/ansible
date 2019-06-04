@@ -142,14 +142,43 @@
           - eks_create is not changed
           - eks_create.name == eks_cluster_name
 
-    - name: remove EKS cluster
+    - name: remove EKS cluster, waiting until complete
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_delete
+
+    - name: check that EKS cluster was removed
+      assert:
+        that:
+          - eks_delete is changed
+
+    - name: create EKS cluster with same details but wait for it to become active
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: check that EKS cluster was created
+      assert:
+        that:
+          - eks_create is changed
+          - eks_create.name == eks_cluster_name
+
+    - name: remove EKS cluster, without waiting this time
       aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
         <<: *aws_connection_info
       register: eks_delete
 
-    - name: check that EKS cluster was created
+    - name: check that EKS cluster remove has started
       assert:
         that:
           - eks_delete is changed
@@ -163,12 +192,10 @@
       aws_eks_cluster:
         name: "{{ eks_cluster_name }}"
         state: absent
+        wait: yes
         <<: *aws_connection_info
       register: eks_delete
       ignore_errors: yes
-
-    - pause:
-        minutes: 5
 
     - debug:
         msg: "{{ eks_security_groups|reverse|list }}"
