@@ -58,18 +58,17 @@
     name: "vmforimage{{ rpfx }}"
     state: absent
 
-
 - name: Create or update a simple gallery.
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
-    name: myGallery
+    name: myGallery{{ rpfx }}
     location: West US
     description: This is the gallery description.
 
 - name: Create or update gallery image
   azure_rm_galleryimage:
     resource_group: "{{ resource_group }}"
-    gallery_name: myGallery
+    gallery_name: myGallery{{ rpfx }}
     name: myImage
     location: West US
     os_type: Windows
@@ -82,7 +81,7 @@
 - name: Create or update a simple gallery Image Version.
   azure_rm_galleryimageversion:
     resource_group: "{{ resource_group }}"
-    gallery_name: myGallery
+    gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
     name: myVersion
     location: West US
@@ -98,3 +97,23 @@
           name: testimagea
           resource_group: "{{ resource_group }}"
 
+- name: Delete gallery Image Version.
+  azure_rm_galleryimageversion:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: myVersion
+    absent: yes
+
+- name: Delete gallery image
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    absent: yes
+
+- name: Delete a simple gallery.
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    absent: yes
