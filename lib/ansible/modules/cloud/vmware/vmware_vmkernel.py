@@ -151,6 +151,9 @@ options:
       - "From version 2.5 onwards, this parameter is required."
       required: True
       version_added: 2.5
+    hostname:
+      descriptiom:
+      - Address or fqdn of the vCenter if present, required if using distributed virtual switch
 extends_documentation_fragment: vmware.documentation
 '''
 
