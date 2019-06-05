@@ -226,7 +226,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                   '/{resource_group}/providers/Microsoft.Compute'
                                   '/images/{name}'),
-                        disposition='source/managedImage/id')
+                        disposition='source/managedImage/id'
                     ),
                     replica_count=dict(
                         type='int',
