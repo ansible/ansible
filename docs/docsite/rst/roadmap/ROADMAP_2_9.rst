@@ -13,17 +13,15 @@ Expected
 
 PRs must be raised well in advance of the dates below to have a chance of being included in this Ansible release.
 
-- TBD 2019-??-?? Alpha 1 **Core freeze**
-  No new features to ``support:core`` code.
-  Includes no new options to existing Core modules
+.. note:: There is no Alpha phase in 2.9.
 
-- TBD 2019-??-?? Beta 1 **Feature freeze**
+- 2019-08-29 Beta 1 **Feature freeze**
   No new functionality (including modules/plugins) to any code
 
-- 2019-??-?? Release Candidate 1
-- 2019-??-?? Release Candidate 2 (if needed)
-- 2019-??-?? Release Candidate 3 (if needed)
-- 2019-??-?? Release
+- 2019-09-19 Release Candidate 1
+- 2019-09-26 Release Candidate 2 (if needed)
+- 2019-10-03 Release Candidate 3 (if needed)
+- 2019-10-16 Release
 
 
 
