@@ -1,0 +1,4 @@
+bugfixes:
+  - openvswitch_bridge - The module was not properly updating the vlan when
+    updating a bridge. This is now fixed so vlans are properly updated and
+    tests has been put in place to check that this doesn't break again.
