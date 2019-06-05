@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Caio Ramos <caioramos97@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+__metaclass__ = type
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -15,7 +18,7 @@ module: read_mail
 
 short_description: Module for reading emails from a IMAP server
 
-version_added: "2.8"
+version_added: "2.9"
 
 description:
     - "Get emails from a IMAP server using basic filtering rules an returns an email count and list"
@@ -28,9 +31,9 @@ options:
         default: localhost
     port:
         description:
-            - IMAP server port
+            - IMAP server port (defaults to 993 or 143)
         required: false
-        default: 993 or 143
+        default: None
     username:
         description:
             - Username to get the emails
@@ -53,11 +56,11 @@ options:
         description:
             - Default IMAP filters. Checkout the options at blablabla.
         required: false
-        default: ALL
+        default: {'ALL': ''}
 
 author:
     - Caio Ramos (@caiohsramos)
-    - Gabriely Rangel (@)
+    - Gabriely Rangel (@gprangel)
 '''
 
 EXAMPLES = '''
