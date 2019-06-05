@@ -164,6 +164,10 @@ def _escape_backslashes(data, jinja_env):
 
 
 def is_template(data, jinja_env):
+    """This function attempts to quickly detect whether a value is a jinja2
+    template. To do so, we look for the first 2 matching jinja2 tokens for
+    start and end delimiters.
+    """
     found = None
     start = True
     comment = False
