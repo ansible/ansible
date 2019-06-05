@@ -489,6 +489,17 @@ def common_environment():
         # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
         'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
         'ANSIBLE_KEEP_REMOTE_FILES',
+        # MacOS Homebrew Compatibility
+        # https://cryptography.io/en/latest/installation/#building-cryptography-on-macos
+        # This may also be required to install pyyaml with libyaml support when installed in non-standard locations.
+        # Example configuration for brew on macOS:
+        # export LDFLAGS="-L$(brew --prefix openssl)/lib/     -L$(brew --prefix libyaml)/lib/"
+        # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
+        # However, this is not adequate for PyYAML 3.13, which is the latest version supported on Python 2.6.
+        # For that version the standard location must be used, or `pip install` must be invoked with additional options:
+        # --global-option=build_ext --global-option=-L{path_to_lib_dir}
+        'LDFLAGS',
+        'CFLAGS',
     )
 
     env.update(pass_vars(required=required, optional=optional))
