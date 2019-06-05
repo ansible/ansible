@@ -118,6 +118,7 @@
       publisher: myPublisherName
       offer: myOfferName
       sku: mySkuName
+    description: Image Description
   register: output
 
 - assert:
@@ -136,6 +137,7 @@
       publisher: myPublisherNameXX
       offer: myOfferName
       sku: mySkuName
+    description: Image Description XXX
   register: output
 
 - assert:

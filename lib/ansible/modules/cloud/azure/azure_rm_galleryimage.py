@@ -263,7 +263,8 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
                 options=dict(
                     publisher=dict(
                         type='str',
-                        required=True
+                        required=True,
+                        updatable=False
                     ),
                     offer=dict(
                         type='str',
