@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlfirewallrule
 version_added: "2.8"
-short_description: Manage MySQL firewall rule instance.
+short_description: Manage MySQL firewall rule instance
 description:
     - Create, update and delete instance of MySQL firewall rule.
 
@@ -37,9 +37,11 @@ options:
     start_ip_address:
         description:
             - The start IP address of the MySQL firewall rule. Must be IPv4 format.
+        required: True
     end_ip_address:
         description:
             - The end IP address of the MySQL firewall rule. Must be IPv4 format.
+        required: True
     state:
         description:
             - Assert the state of the MySQL firewall rule. Use C(present) to create or update a rule and C(absent) to ensure it is not present.
@@ -52,7 +54,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -69,7 +71,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testserver/fire
