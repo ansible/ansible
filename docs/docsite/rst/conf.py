@@ -129,7 +129,16 @@ html_short_title = 'Ansible Documentation'
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
-    'collapse_navigation': "True"
+    'collapse_navigation': "True",
+    'vcs_pageview_mode': 'edit'
+}
+
+html_context = {
+    'display_github': 'True',
+    'github_user': 'ansible',
+    'github_repo': 'ansible',
+    'github_version': 'devel/docs/docsite/rst/',
+    'github_module_version': 'devel/lib/ansible/modules/'
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
