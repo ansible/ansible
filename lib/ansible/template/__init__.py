@@ -165,16 +165,29 @@ def _escape_backslashes(data, jinja_env):
 
 def is_template(data, jinja_env):
     found = None
+    start = True
+    comment = False
     d2 = jinja_env.preprocess(data)
 
-    for token in jinja_env.lex(d2):
-        if token[1] in JINJA2_BEGIN_TOKENS:
-            # Example: variable_end -> variable
-            found = token[1].split('_')[0]
-        elif token[1] in JINJA2_END_TOKENS:
-            if token[1].split('_')[0] == found:
-                return True
-            return False
+    # This wraps a lot of code, but this is due to lex returing a generator
+    # so we may get an exception at any part of the loop
+    try:
+        for token in jinja_env.lex(d2):
+            if token[1] in JINJA2_BEGIN_TOKENS:
+                if start and token[1] == 'comment_begin':
+                    # Comments can wrap other token types
+                    comment = True
+                start = False
+                # Example: variable_end -> variable
+                found = token[1].split('_')[0]
+            elif token[1] in JINJA2_END_TOKENS:
+                if token[1].split('_')[0] == found:
+                    return True
+                elif comment:
+                    continue
+                return False
+    except TemplateSyntaxError:
+        return False
 
     return False
 
