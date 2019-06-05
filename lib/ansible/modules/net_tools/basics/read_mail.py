@@ -31,9 +31,9 @@ options:
         default: localhost
     port:
         description:
-            - IMAP server port (defaults to 993 or 143)
+            - IMAP server port (defaults to 993 or 143 when less then 0)
         required: false
-        default: 993
+        default: -1
     username:
         description:
             - Username to get the emails
@@ -97,7 +97,7 @@ EXAMPLES = '''
     password: mypass
     filter:
       subject: mysubject
-      unseen: 
+      unseen:
 '''
 
 RETURN = '''
@@ -137,7 +137,7 @@ def run_module():
         username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
         ssl=dict(type='bool', required=False, default=True),
-        port=dict(type='int', required=False, default=None),
+        port=dict(type='int', required=False, default=-1),
         mailbox=dict(type='str', required=False, default='INBOX'),
         filter=dict(type='dict', required=False, default={'ALL': ''})
     )
@@ -161,10 +161,10 @@ def run_module():
     # create connection
     try:
         if module.params['ssl']:
-            port = 993 if module.params['port'] is None else module.params['port']
+            port = 993 if module.params['port'] < 0 else module.params['port']
             M = imaplib.IMAP4_SSL(module.params['host'], port=port)
         else:
-            port = 143 if module.params['port'] is None else module.params['port']
+            port = 143 if module.params['port'] < 0 else module.params['port']
             M = imaplib.IMAP4(module.params['host'], port=port)
     except Exception as e:
         module.fail_json(msg=str(e), **result)
