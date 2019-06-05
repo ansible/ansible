@@ -234,7 +234,6 @@ EXAMPLES = '''
     action: lambda:InvokeFunction
     principal: elasticloadbalancing.amazonaws.com
     source_arn: "{{ out.target_group_arn }}"
-    source_account: 123456789012
   
 - name: third, add target
     elb_target_group:
