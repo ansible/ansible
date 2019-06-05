@@ -140,6 +140,7 @@ AUTH_ARG_MAP = {
     'proxy': 'proxy',
 }
 
+
 class K8sAnsibleMixin(object):
     _argspec_cache = None
 
