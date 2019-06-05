@@ -1,0 +1,2 @@
+bugfixes:
+  - file - Fix setting relative paths for hard links (https://github.com/ansible/ansible/issues/55971)
