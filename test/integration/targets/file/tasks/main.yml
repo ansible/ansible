@@ -266,16 +266,15 @@
   diff: yes
   register: folder_absent_result
 
-- name: test debug
-  debug:
-    var: "{{ output_dir }}/foobar"
-
 - name: assert that the absent check lists expected files and folders
   assert:
     that:
       - folder_absent_result.diff.before.path_content is defined
-      - "{{ output_dir }}/foobar" in folder_absent_result.diff.before.path_content.directories
-      - "{{ output_dir }}/foobar/fileA" in folder_absent_result.diff.before.path_content.files
+      - test_folder in folder_absent_result.diff.before.path_content.directories
+      - test_file in folder_absent_result.diff.before.path_content.files
+  var:
+    test_folder: "{{ output_dir }}/foobar"
+    test_file: "{{ output_dir }}/foobar/fileA"
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234
