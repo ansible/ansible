@@ -81,22 +81,26 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                                 data = line.split('.')
                                 fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('hp-ux'):
-            # scan / get list of available fibre-channel devices (fcd)
             cmd = module.get_bin_path('ioscan')
-            cmd = cmd + " -fnC FC"
-            rc, ioscan_out, err = module.run_command(cmd)
-            if rc == 0 and ioscan_out:
-                cmd = module.get_bin_path('fcmsutil', opt_dirs=['/opt/fcms/bin'])
-                for line in ioscan_out.splitlines():
-                    line = line.strip()
-                    if '/dev/fcd' in line:
-                        dev = line.split(' ')
-                        cmd = cmd + " %s" % dev[0]
-                        rc, fcmsutil_out, err = module.run_command(cmd)
-                        #             N_Port Port World Wide Name = 0x50060b00006975ec
-                        if rc == 0 and fcmsutil_out:
-                            for line in fcmsutil_out.splitlines():
-                                if 'N_Port Port World Wide Name' in line:
-                                    data = line.split('=')
-                                    fc_facts['fibre_channel_wwn'].append(data[-1].strip())
+            cmd2 = module.get_bin_path('fcmsutil', opt_dirs=['/opt/fcms/bin'])
+            # go ahead if we have both commands available
+            if cmd and cmd2:
+                # ioscan / get list of available fibre-channel devices (fcd)
+                cmd = cmd + " -fnC FC"
+                rc, ioscan_out, err = module.run_command(cmd)
+                if rc == 0 and ioscan_out:
+                    for line in ioscan_out.splitlines():
+                        line = line.strip()
+                        if '/dev/fcd' in line:
+                            dev = line.split(' ')
+                            # get device information
+                            cmd = cmd2 + " %s" % dev[0]
+                            rc, fcmsutil_out, err = module.run_command(cmd)
+                            # lookup the following line
+                            #             N_Port Port World Wide Name = 0x50060b00006975ec
+                            if rc == 0 and fcmsutil_out:
+                                for line in fcmsutil_out.splitlines():
+                                    if 'N_Port Port World Wide Name' in line:
+                                        data = line.split('=')
+                                        fc_facts['fibre_channel_wwn'].append(data[-1].strip())
         return fc_facts
