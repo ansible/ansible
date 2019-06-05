@@ -13,7 +13,7 @@ Expected
 
 PRs must be raised well in advance of the dates below to have a chance of being included in this Ansible release.
 
-- 2019-06-29 Alpha 1 **Core freeze**
+- 2019-08-29 Alpha 1 **Core freeze**
   No new features to ``support:core`` code.
   Includes no new options to existing Core modules
 
