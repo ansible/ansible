@@ -1,0 +1,2 @@
+bugfixes:
+  - file - return more useful error message for recursion error (https://github.com/ansible/ansible/issues/56397)
