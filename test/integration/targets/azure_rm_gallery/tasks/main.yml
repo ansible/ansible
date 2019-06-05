@@ -163,10 +163,9 @@
         - name: East US
           regionalReplicaCount: '2'
           storageAccountType: Standard_ZRS
-      source:
-        managed_image:
-          name: testimagea
-          resource_group: "{{ resource_group }}"
+      managed_image:
+        name: testimagea
+        resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
@@ -191,10 +190,9 @@
         - name: East US
           regionalReplicaCount: '2'
           storageAccountType: Standard_ZRS
-      source:
-        managed_image:
-          name: testimagea
-          resource_group: "{{ resource_group }}"
+      managed_image:
+        name: testimagea
+        resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
@@ -219,10 +217,9 @@
         - name: East US
           regionalReplicaCount: '2'
           storageAccountType: Standard_ZRS
-      source:
-        managed_image:
-          name: testimagea
-          resource_group: "{{ resource_group }}"
+      managed_image:
+        name: testimagea
+        resource_group: "{{ resource_group }}"
   register: output
 
 - assert:

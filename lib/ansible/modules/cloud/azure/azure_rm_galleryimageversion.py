@@ -60,7 +60,7 @@ options:
             The target regions where the Image Version is going to be replicated
             to. This property is updatable.
         type: list
-      source:
+      managed_image:
         description:
           - undefined
         required: true
@@ -122,10 +122,9 @@ EXAMPLES = '''
         - name: East US
           regionalReplicaCount: '2'
           storageAccountType: Standard_ZRS
-      source:
-        managed_image:
-          name: myImage
-          resource_group: myResourceGroup
+      managed_image:
+        name: myImage
+        resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -195,16 +194,12 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         type='list',
                         disposition='targetRegions'
                     ),
-                    source=dict(
-                        type='dict',
-                        options=dict(
-                            managed_image=dict(
-                                type='raw',
-                                pattern=('/subscriptions/{subscription_id}/resourceGroups'
-                                         '/{resource_group}/providers/Microsoft.Compute'
-                                         '/images/{name}'),
-                                disposition='managedImage/id')
-                        )
+                    managed_image=dict(
+                        type='raw',
+                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                  '/{resource_group}/providers/Microsoft.Compute'
+                                  '/images/{name}'),
+                        disposition='source/managedImage/id')
                     ),
                     replica_count=dict(
                         type='int',
