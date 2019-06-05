@@ -162,10 +162,16 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
-def is_net_valid(meraki, net_name, data):
+def is_net_valid(data, net_name=None, net_id=None):
+    if net_name is None and net_id is None:
+        return False
     for n in data:
-        if n['name'] == net_name:
-            return True
+        if net_name:
+            if n['name'] == net_name:
+                return True
+        elif net_id:
+            if n['id'] == net_id:
+                return True
     return False
 
 
@@ -222,7 +228,7 @@ def main():
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
     if meraki.params['state'] != 'query':
-        if not meraki.params['net_name'] or meraki.params['net_id']:
+        if not meraki.params['net_name'] and not meraki.params['net_id']:
             meraki.fail_json(msg='net_name or net_id is required for present or absent states')
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
@@ -256,12 +262,16 @@ def main():
     nets = meraki.get_nets(org_id=org_id)
 
     # check if network is created
-    net_id = None
-    if meraki.params['net_name']:
-        if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
+    net_id = meraki.params['net_id']
+    net_exists = False
+    if net_id is not None:
+        if is_net_valid(nets, net_id=net_id) is False:
+            meraki.fail_json(msg="Network specified by net_id does not exist.")
+        net_exists = True
+    elif meraki.params['net_name']:
+        if is_net_valid(nets, net_name=meraki.params['net_name']) is True:
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
-    elif meraki.params['net_id']:
-        net_id = meraki.params['net_id']
+            net_exists = True
 
     if meraki.params['state'] == 'query':
         if not meraki.params['net_name'] and not meraki.params['net_id']:
@@ -272,7 +282,9 @@ def main():
                                                    data=nets
                                                    )
     elif meraki.params['state'] == 'present':
-        if net_id is None:
+        if net_exists is False:  # Network needs to be created
+            if 'type' not in meraki.params or meraki.params['type'] is None:
+                meraki.fail_json(msg="type parameter is required when creating a network.")
             path = meraki.construct_path('create',
                                          org_id=org_id
                                          )
@@ -308,10 +320,12 @@ def main():
                     if meraki.status == 200:
                         meraki.result['data'] = r
                         meraki.result['changed'] = True
+                        meraki.exit_json(**meraki.result)
+                else:
+                    meraki.result['data'] = status
+                    meraki.exit_json(**meraki.result)
     elif meraki.params['state'] == 'absent':
-        if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
-            net_id = meraki.get_net_id(net_name=meraki.params['net_name'],
-                                       data=nets)
+        if is_net_valid(nets, net_id=net_id) is True:
             path = meraki.construct_path('delete', net_id=net_id)
             r = meraki.request(path, method='DELETE')
             if meraki.status == 204:
