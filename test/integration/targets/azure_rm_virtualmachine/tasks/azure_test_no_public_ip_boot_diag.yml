@@ -1,4 +1,4 @@
-- include_tasks: network.yml
+- include_tasks: setup.yml
 
 - name: Create virtual machine without public ip address and with boot diagnostics enabled
   azure_rm_virtualmachine:
@@ -10,7 +10,7 @@
     short_hostname: testvm
     os_type: Linux
     public_ip_allocation_method: Disabled
-    availability_set: "{{ availability_set_names[0] }}"
+    availability_set: "{{ availability_set }}"
     boot_diagnostics:
       enabled: yes
     image:
@@ -39,21 +39,21 @@
   async: 5000
   poll: 0
 
-- name: Create virtual network
+- name: Create virtual network in secondary resource group
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group_secondary }}"
     name: "{{ vm_name }}"
     address_prefixes: "10.10.0.0/16"
   register: create_virt_net_result
 
-- name: Add subnet
+- name: Add subnet in secondary resource group
   azure_rm_subnet:
     resource_group: "{{ resource_group_secondary }}"
     name: "{{ vm_name }}"
     address_prefix: "10.10.0.0/24"
     virtual_network: "{{ vm_name }}"
 
-- name: Create NICs for dual nic VM
+- name: Create NICs for dual NIC VM in secondary resource group
   azure_rm_networkinterface:
     resource_group: "{{ item.resource_group }}"
     name: "{{ item.name }}"
@@ -67,7 +67,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     vm_size: Standard_A0
-    storage_account: "{{ storage_accounts[0] }}"
+    storage_account: "{{ storage_account }}"
     storage_container: "{{ vm_name }}"
     storage_blob: "{{ vm_name }}.vhd"
     admin_username: adminuser
@@ -77,7 +77,7 @@
     os_disk_size_gb: 64
     os_disk_name: testosdiskxx
     network_interfaces: "{{ niclist }}"
-    availability_set: "{{ availability_set_names[1] }}"
+    availability_set: "{{ availability_set }}"
     image:
       offer: UbuntuServer
       publisher: Canonical
@@ -124,7 +124,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     vm_size: Standard_A0
-    storage_account: "{{ storage_accounts[0] }}"
+    storage_account: "{{ storage_account }}"
     storage_container: "{{ vm_name }}"
     storage_blob: "{{ vm_name }}.vhd"
     admin_username: adminuser
@@ -133,7 +133,7 @@
     os_type: Linux
     os_disk_size_gb: 64
     network_interfaces: "{{ niclist }}"
-    availability_set: "{{ availability_set_names[1] }}"
+    availability_set: "{{ availability_set }}"
     image:
       offer: UbuntuServer
       publisher: Canonical
@@ -169,3 +169,5 @@
     vm_size: Standard_A0
   async: 5000
   poll: 0
+
+- include_tasks: teardown.yml

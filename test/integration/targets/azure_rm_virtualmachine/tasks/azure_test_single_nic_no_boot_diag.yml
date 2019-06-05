@@ -1,4 +1,4 @@
-- include_tasks: network.yml
+- include_tasks: setup.yml
 
 - name: Create public ip
   azure_rm_publicipaddress:
@@ -41,7 +41,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     vm_size: Standard_A0
-    storage_account: "{{ storage_accounts[0] }}"
+    storage_account: "{{ storage_account }}"
     storage_container: "{{ vm_name }}"
     storage_blob: "{{ vm_name }}.vhd"
     admin_username: adminuser
@@ -49,7 +49,7 @@
     short_hostname: testvm
     os_type: Linux
     network_interfaces: "{{ vm_name }}"
-    availability_set: "{{ availability_set_names[0] }}"
+    availability_set: "{{ availability_set }}"
     image:
       offer: UbuntuServer
       publisher: Canonical
@@ -75,7 +75,7 @@
     name: "{{ vm_name }}"
   register: vm_facts_no_boot_diag_result
 
-- name: TEST 1 | Ensure VM facts are correct
+- name: Ensure VM facts are correct
   assert:
     that:
       - vm_facts_no_boot_diag_result.vms != []
@@ -90,7 +90,7 @@
       enabled: yes
       # without specifying storage_account you get a new default storage account for the VM
 
-- name: TEST 1 | Ensure VM properties are correct
+- name: Ensure VM properties are correct
   assert:
     that:
       - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
@@ -104,7 +104,7 @@
     name: "{{ vm_name }}"
   register: vm_facts_boot_diag_result
 
-- name: TEST 1 | Ensure VM facts were returned
+- name: Ensure VM facts were returned
   assert:
     that:
       - vm_facts_boot_diag_result.vms != []
@@ -119,7 +119,7 @@
     name: "{{ vm_name }}"
     boot_diagnostics:
       enabled: yes
-      storage_account: "{{ storage_accounts[1] }}"
+      storage_account: "{{ storage_account }}"
   ignore_errors: yes
 
 - name: Disable boot diagnostics and change the storage account at the same time
@@ -128,9 +128,9 @@
       name: "{{ vm_name }}"
       boot_diagnostics:
         enabled: no
-        storage_account: "{{ storage_accounts[0] }}"
+        storage_account: "{{ storage_account }}"
 
-- name: TEST 1 | Ensure boot diagnostics was disabled
+- name: Ensure boot diagnostics was disabled
   assert:
     that:
       - not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
@@ -143,7 +143,7 @@
         enabled: yes
   register: reenable_boot_diag_result
 
-- name: TEST 1 | Ensure boot diagnostics was reenabled
+- name: Ensure boot diagnostics was reenabled
   assert:
     that:
       - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
@@ -199,7 +199,7 @@
     vm_size: Standard_A0
   register: restart_result
 
-- name: TEST 1 | Ensue VM was restarted
+- name: Ensue VM was restarted
   assert:
     that:
       - "azure_vm.powerstate in ['starting', 'running']"
@@ -213,7 +213,7 @@
     vm_size: Standard_A0
   register: deallocate_result
 
-- name: TEST 1 | Ensure VM was deallocated
+- name: Ensure VM was deallocated
   assert:
     that:
       - azure_vm.powerstate == 'deallocated'
@@ -226,7 +226,7 @@
     vm_size: Standard_A0
   register: start_result
 
-- name: TEST 1 | Ensure VM was started
+- name: Ensure VM was started
   assert:
     that:
       - "azure_vm.powerstate in ['starting', 'running']"
@@ -237,7 +237,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     vm_size: Standard_A0
-    storage_account: "{{ storage_accounts[0] }}"
+    storage_account: "{{ storage_account }}"
     storage_container: "{{ vm_name }}"
     storage_blob: "{{ vm_name }}.vhd"
     admin_username: adminuser
@@ -252,7 +252,7 @@
       version: latest
   register: single_nic_result
 
-- name: TEST 1 | Ensure nothing changed
+- name: Ensure nothing changed
   assert:
     that: single_nic_result is not changed
 
@@ -261,7 +261,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     vm_size: Standard_A1
-    storage_account: "{{ storage_accounts[0] }}"
+    storage_account: "{{ storage_account }}"
     storage_container: "{{ vm_name }}"
     storage_blob: "{{ vm_name }}.vhd"
     admin_username: adminuser
@@ -276,7 +276,7 @@
       version: latest
   register: resize_result
 
-- name: TEST 1 | Esure VM was resized
+- name: Esure VM was resized
   assert:
     that:
       - resize_result is changed
@@ -294,7 +294,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
 
-- name: TEST 1 | Ensure NIC was removed
+- name: Ensure NIC was removed
   assert:
     that: azure_networkinterfaces | length == 0
 
@@ -303,7 +303,7 @@
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
 
-- name: TEST 1 | Ensure public IP was removed
+- name: Ensure public IP was removed
   assert:
     that: azure_publicipaddresses | length == 0
 
@@ -313,27 +313,4 @@
     name: "{{ vm_name }}"
     state: absent
 
-- name: Destroy security group
-  azure_rm_securitygroup:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    state: absent
-
-- name: Destroy subnet
-  azure_rm_subnet:
-      resource_group: "{{ resource_group }}"
-      virtual_network: "{{ vm_name }}"
-      name: "{{ vm_name }}"
-      state: absent
-
-- name: Destroy virtual network
-  azure_rm_virtualnetwork:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    state: absent
-
-- name: Destroy public ip
-  azure_rm_publicipaddress:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    state: absent
+- include_tasks: teardown.yml

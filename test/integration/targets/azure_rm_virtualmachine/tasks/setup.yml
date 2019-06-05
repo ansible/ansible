@@ -1,12 +1,23 @@
-- name: SETUP | Create storage accounts
+- name: SETUP | Create storage account
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}"
-    name: "{{ item }}"
+    name: "{{ storage_account }}"
     account_type: Standard_LRS
-  loop: "{{ storage_accounts }}"
 
-- name: SETUP | Create availability sets
+- name: SETUP | Create availability set
   azure_rm_availabilityset:
-    name: "{{ item }}"
+    name: "{{ availability_set }}"
     resource_group: "{{ resource_group }}"
-  loop: "{{ availability_set_names }}"
+
+- name: SETUP | Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    address_prefixes: "10.10.0.0/16"
+
+- name: SETUP | Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    address_prefix: "10.10.0.0/24"
+    virtual_network: "{{ vm_name }}"

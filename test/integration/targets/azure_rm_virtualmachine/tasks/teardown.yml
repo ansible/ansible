@@ -1,14 +1,37 @@
-- name: TEARDOWN | Destroy availability sets
+- name: TEARDOWN | Destroy security group
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: TEARDOWN | Destroy subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      virtual_network: "{{ vm_name }}"
+      name: "{{ vm_name }}"
+      state: absent
+
+- name: TEARDOWN | Destroy virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: TEARDOWN | Destroy public ip
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: TEARDOWN | Destroy availability set
   azure_rm_availabilityset:
     resource_group: "{{ resource_group }}"
-    name: "{{ item }}"
+    name: "{{ availability_set }}"
     state: absent
-  loop: "{{ availability_set_names | reverse | list }}"
 
-- name: TEARDOWN | Destroy storage accounts
+- name: TEARDOWN | Destroy storage account
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}"
-    name: "{{ item }}"
+    name: "{{ storage_account }}"
     force_delete_nonempty: true
     state: absent
-  loop: "{{ storage_accounts | reverse | list }}"
