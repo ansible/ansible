@@ -113,7 +113,7 @@ class TestNxosVpcModule(TestNxosModule):
 
     def test_nxos_vpc_vrf_3(self):
         # vrf 'my_vrf'-> vrf 'test-vrf'
-        # Existing pkl_src should be removed
+        # Existing pkl_src should be retained even though playbook does not specify it
         self.get_config.return_value = load_fixture('nxos_vpc', 'vrf_test_vpc_config')
         set_module_args(dict(
             domain=100,
@@ -122,7 +122,7 @@ class TestNxosVpcModule(TestNxosModule):
         ))
         self.execute_module(changed=True, device='_vrf_test', commands=[
             'vpc domain 100',
-            'peer-keepalive destination 192.168.1.1 vrf test-vrf'
+            'peer-keepalive destination 192.168.1.1 source 10.1.1.1 vrf test-vrf'
         ])
 
     def test_nxos_vpc_vrf_4(self):
@@ -136,7 +136,7 @@ class TestNxosVpcModule(TestNxosModule):
         ))
         self.execute_module(changed=True, device='_vrf_test', commands=[
             'vpc domain 100',
-            'peer-keepalive destination 192.168.1.1 vrf management'
+            'peer-keepalive destination 192.168.1.1 source 10.1.1.1 vrf management'
         ])
 
     def test_nxos_vpc_vrf_5(self):

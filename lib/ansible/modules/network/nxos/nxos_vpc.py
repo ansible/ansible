@@ -279,25 +279,30 @@ def get_vpc(module):
 
 def pkl_dependencies(module, delta, existing):
     """peer-keepalive dependency checking.
-    'destination' is required with all pkl configs.
-    If delta has optional pkl keywords present, then all optional pkl keywords
-    in existing must be added to delta (if specified by the playbook);
-    otherwise the device cli will remove those values.
-    Example CLI:
-      peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf blue
-
-    {pkl_dest: 10.1.1.1, pkl_src: 10.1.1.2, pkl_vrf: orange} -> CLI changes to vrf orange
-    {pkl_dest: 10.1.1.1, pkl_vrf: blue}                      -> CLI removes source
+    1. 'destination' is required with all pkl configs.
+    2. If delta has optional pkl keywords present, then all optional pkl
+       keywords in existing must be added to delta, otherwise the device cli
+       will remove those values when the new config string is issued.
+    3. The desired behavior for this set of properties is to merge changes;
+       therefore if an optional pkl property exists on the device but not
+       in the playbook, then that existing property should be retained.
+    Example:
+      CLI:       peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf orange
+      Playbook:  {pkl_dest: 10.1.1.1, pkl_vrf: blue}
+      Result:    peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf blue
     """
     pkl_existing = [i for i in existing.keys() if i.startswith('pkl')]
-
     for pkl in pkl_existing:
         param = module.params.get(pkl)
-        if not delta.get(pkl) and param and param == existing[pkl]:
-            # delta is missing this param because it's idempotent;
-            # however another pkl command has changed; therefore
-            # explicitly add it to delta so that the cli retains it.
-            delta[pkl] = existing[pkl]
+        if not delta.get(pkl):
+            if param and param == existing[pkl]:
+                # delta is missing this param because it's idempotent;
+                # however another pkl command has changed; therefore
+                # explicitly add it to delta so that the cli retains it.
+                delta[pkl] = existing[pkl]
+            elif param is None and existing[pkl]:
+                # retain existing pkl commands even if not in playbook
+                delta[pkl] = existing[pkl]
 
 
 def get_commands_to_config_vpc(module, vpc, domain, existing):
