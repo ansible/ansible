@@ -1,0 +1,332 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# The file for testing postgresql_vacuum module.
+
+- vars:
+    test_table: acme
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: True
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: postgres
+
+  block:
+  # Test preparation:
+  - name: postgresql_vacuum - create test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      columns:
+      - id int
+      - name text
+
+  # Insert the data:
+  - name: postgresql_vacuum - insert rows into test table
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "INSERT INTO {{ test_table }} (id, name) VALUES (1, 'first')"
+
+  # Reset statistics:
+  - name: postgresql_vacuum - reset statistics
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT pg_stat_reset()"
+
+  # ##############
+  # Do main tests:
+
+  #
+  # ANALYZE
+  #
+
+  # check_mode analyze only - if it's OK, must always return changed=True:
+  - name: postgresql_vacuum - check mode of table analyze
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+      analyze_only: yes
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['ANALYZE "{{ test_table }}"']
+
+  - name: postgresql_vacuum - check analyze counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT analyze_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].analyze_count == 0
+
+  # true mode:
+  - name: postgresql_vacuum - analyze a table
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+      analyze_only: yes
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['ANALYZE "{{ test_table }}"']
+
+  - name: postgresql_vacuum - check analyze counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT analyze_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].analyze_count == 1
+
+  # true mode analyze with specific columns:
+  - name: postgresql_vacuum - analyze table columns
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      analyze_only: yes
+      table: '{{ test_table }}'
+      columns:
+      - id
+      - name
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['ANALYZE "{{ test_table }}" (id, name)']
+
+  - name: postgresql_vacuum - check analyze counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT analyze_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].analyze_count == 2
+
+  # true mode:
+  - name: postgresql_vacuum - analyze a database
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      analyze_only: yes
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['ANALYZE']
+
+  - name: postgresql_vacuum - check analyze counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT analyze_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].analyze_count == 3
+
+  #
+  # VACUUM
+  #
+
+  # check_mode vacuum - if it's OK, must always return changed=True:
+  - name: postgresql_vacuum - check mode of table vacuum
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM "{{ test_table }}"']
+
+  - name: postgresql_vacuum - check vacuum counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT vacuum_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].vacuum_count == 0
+
+  # true mode:
+  - name: postgresql_vacuum - vacuum a table
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM "{{ test_table }}"']
+
+  - name: postgresql_vacuum - check vacuum count
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT vacuum_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].vacuum_count == 1
+
+  # true mode:
+  - name: postgresql_vacuum - vacuum analyze freeze a table
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+      columns: id
+      analyze: yes
+      freeze: yes
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM (FREEZE, ANALYZE) "{{ test_table }}" (id)']
+
+  - name: postgresql_vacuum - check vacuum count
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT vacuum_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].vacuum_count == 2
+
+  # true mode:
+  - name: postgresql_vacuum - vacuum a database
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM']
+
+  - name: postgresql_vacuum - check vacuum count
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT vacuum_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].vacuum_count == 3
+
+  # true mode:
+  - name: postgresql_vacuum - vacuum with disable page skipping
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+      disable_page_skipping: yes
+    when: postgres_version_resp.stdout is version('9.6', '>=')
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM (DISABLE_PAGE_SKIPPING) "{{ test_table }}"']
+    when: postgres_version_resp.stdout is version('9.6', '>=')
+
+  - name: postgresql_vacuum - check vacuum count
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT vacuum_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+    when: postgres_version_resp.stdout is version('9.6', '>=')
+
+  - assert:
+      that:
+      - result.query_result[0].vacuum_count == 4
+    when: postgres_version_resp.stdout is version('9.6', '>=')
+
+  #
+  # VACUUM FULL
+  #
+
+  # Reset statistics:
+  - name: postgresql_vacuum - reset statistics
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT pg_stat_reset()"
+
+  # check_mode vacuum full analyze - if it's OK, must always return changed=True:
+  - name: postgresql_vacuum - check mode of table vacuum
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+      full: yes
+      analyze: yes
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM FULL ANALYZE "{{ test_table }}"']
+
+  - name: postgresql_vacuum - check vacuum counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT analyze_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].analyze_count == 0
+
+  # true mode vacuum full analyze
+  - name: postgresql_vacuum - vacuum full
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ test_table }}'
+      full: yes
+      analyze: yes
+
+  - assert:
+      that:
+      - result.changed == true
+      - result.queries == ['VACUUM FULL ANALYZE "{{ test_table }}"']
+
+  - name: postgresql_vacuum - check vacuum counter
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT analyze_count FROM pg_stat_user_tables WHERE relname = '{{ test_table }}'"
+
+  - assert:
+      that:
+      - result.query_result[0].analyze_count == 1
+
+  #
+  # Clean up
+  #
+  - name: postgresql_vacuum - drop the test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      state: absent

@@ -173,7 +173,7 @@ def exec_sql(obj, query, ddl=False, add_to_executed=True):
     Returns a query result if possible or True/False if ddl=True arg was passed.
     It necessary for statements that don't return any result (like DDL queries).
 
-    Arguments:
+    args:
         obj (obj) -- must be an object of a user class.
             The object must have module (AnsibleModule class object) and
             cursor (psycopg cursor object) attributes
@@ -233,7 +233,7 @@ class Vacuum(object):
 
         query_frag.append['FROM %s LIMIT 1' % pg_quote_identifier(self.module.param['table'], 'table')]
 
-        if exec_sql(obj, ' '.join(query_frag), ddl=True, add_to_executed=False):
+        if exec_sql(self, ' '.join(query_frag), ddl=True, add_to_executed=False):
             return True
 
         return None
@@ -388,7 +388,7 @@ def main():
     cursor.close()
     db_connection.close()
 
-    # Return some values:
+    # Return values:
     module.exit_json(
         changed=vacuum.changed,
         queries=vacuum.executed_queries,

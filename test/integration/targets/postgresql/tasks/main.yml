@@ -801,6 +801,10 @@
 - include: ssl.yml
   when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
 
+# Test postgresql_vacuum module
+- include: postgresql_vacuum.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=') and ansible_distribution != 'FreeBSD'
+
 # Test postgresql_set
 - include: postgresql_set.yml
   when: postgres_version_resp.stdout is version('9.4', '>=')
