@@ -337,6 +337,8 @@ class Connection(ConnectionBase):
         # Handle the back-end throttling
         for c in cmd:
             session.stdin.write(c.encode('utf-8'))
+            if self.is_windows:
+                time.sleep(15 / 1000.0)
 
         # Read stdout between the markers
         stdout = ''
@@ -388,6 +390,7 @@ class Connection(ConnectionBase):
 
         if self.is_windows:
             cmd = cmd + "; echo " + mark_start + " $? $LASTEXITCODE\necho " + mark_end + "\n"
+            time.sleep(1)
         else:
             if sudoable:
                 cmd = "sudo " + cmd
