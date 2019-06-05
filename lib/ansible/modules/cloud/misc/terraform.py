@@ -310,12 +310,13 @@ def main():
     if force_init:
         init_plugins(command[0], project_path, backend_config)
 
-    workspace_ctx = get_workspace_context(command[0], project_path)
-    if workspace_ctx["current"] != workspace:
-        if workspace not in workspace_ctx["all"]:
-            create_workspace(command[0], project_path, workspace)
-        else:
-            select_workspace(command[0], project_path, workspace)
+    if workspace is not None:
+        workspace_ctx = get_workspace_context(command[0], project_path)
+        if workspace_ctx["current"] != workspace:
+            if workspace not in workspace_ctx["all"]:
+                create_workspace(command[0], project_path, workspace)
+            else:
+                select_workspace(command[0], project_path, workspace)
 
     if state == 'present':
         command.extend(APPLY_ARGS)
@@ -384,10 +385,11 @@ def main():
         outputs = json.loads(outputs_text)
 
     # Restore the Terraform workspace found when running the module
-    if workspace_ctx["current"] != workspace:
-        select_workspace(command[0], project_path, workspace_ctx["current"])
-    if state == 'absent' and workspace != 'default' and purge_workspace is True:
-        remove_workspace(command[0], project_path, workspace)
+    if workspace is not None:
+        if workspace_ctx["current"] != workspace:
+            select_workspace(command[0], project_path, workspace_ctx["current"])
+        if state == 'absent' and workspace != 'default' and purge_workspace is True:
+            remove_workspace(command[0], project_path, workspace)
 
     module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
