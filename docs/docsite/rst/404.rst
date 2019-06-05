@@ -6,8 +6,8 @@ Oops!
 
 The page you're looking for doesn't exist in this version of the Ansible documentation.
 
-# add when we work out how
-# .. image:: images/cow.png
-#   :alt: Cowsay 404
-#
+.. # add when we work out how
+.. #.. image:: images/cow.png
+.. #   :alt: Cowsay 404
+.. #
 Return to the :ref:`index page for this version <ansible_documentation>` or use the navigation at left for other options.
