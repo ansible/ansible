@@ -485,6 +485,8 @@ def common_environment():
         'SSH_AUTH_SOCK',
         # MacOS High Sierra Compatibility
         # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
+        # Example configuration for macOS:
+        # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
         'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
         'ANSIBLE_KEEP_REMOTE_FILES',
     )
