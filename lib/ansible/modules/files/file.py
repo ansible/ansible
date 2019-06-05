@@ -635,7 +635,6 @@ def ensure_symlink(path, src, follow, force, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
-    file_args = module.load_file_common_arguments(module.params)
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
     # source is both the source of a symlink or an informational passing of the src for a template module
@@ -731,6 +730,12 @@ def ensure_symlink(path, src, follow, force, timestamps):
 
     if module.check_mode and not os.path.exists(b_path):
         return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
+
+    # Now that we might have created the symlink, get the arguments.
+    # We need to do it now so we can properly follow the symlink if needed
+    # because load_file_common_arguments sets 'path' according
+    # the value of follow and the symlink existance.
+    file_args = module.load_file_common_arguments(module.params)
 
     # Whenever we create a link to a nonexistent target we know that the nonexistent target
     # cannot have any permissions set on it.  Skip setting those and emit a warning (the user
