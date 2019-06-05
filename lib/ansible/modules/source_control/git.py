@@ -169,6 +169,15 @@ options:
               can be separated from working tree.
         version_added: "2.7"
 
+    gpg_whitelist:
+        description:
+           - A list of trusted GPG fingerprints to compare to the fingerprint of the
+             GPG-signed commit.
+           - Only used when I(verify_commit=yes).
+        type: list
+        default: []
+        version_added: "2.9"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -445,7 +454,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit, separate_git_dir, result):
+          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -500,7 +509,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         module.run_command(cmd, check_rc=True, cwd=dest)
 
     if verify_commit:
-        verify_commit_sign(git_path, module, dest, version)
+        verify_commit_sign(git_path, module, dest, version, gpg_whitelist)
 
 
 def has_local_mods(module, git_path, dest, bare):
@@ -874,7 +883,7 @@ def set_remote_branch(git_path, module, dest, remote, version, depth):
         module.fail_json(msg="Failed to fetch branch from remote: %s" % version, stdout=out, stderr=err, rc=rc)
 
 
-def switch_version(git_path, module, dest, remote, version, verify_commit, depth):
+def switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_whitelist):
     cmd = ''
     if version == 'HEAD':
         branch = get_head_branch(git_path, module, dest, remote)
@@ -910,21 +919,41 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
                              stdout=out1, stderr=err1, rc=rc, cmd=cmd)
 
     if verify_commit:
-        verify_commit_sign(git_path, module, dest, version)
+        verify_commit_sign(git_path, module, dest, version, gpg_whitelist)
 
     return (rc, out1, err1)
 
 
-def verify_commit_sign(git_path, module, dest, version):
+def verify_commit_sign(git_path, module, dest, version, gpg_whitelist):
     if version in get_annotated_tags(git_path, module, dest):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
-    cmd = "%s %s %s" % (git_path, git_sub, version)
+    cmd = "%s %s %s --raw" % (git_path, git_sub, version)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
+    if gpg_whitelist:
+        fingerprint = get_gpg_fingerprint(err)
+        if fingerprint not in gpg_whitelist:
+            module.fail_json(msg='The gpg_whitelist does not include the public key "%s" for this commit' % fingerprint, stdout=out, stderr=err, rc=rc)
     return (rc, out, err)
+
+
+def get_gpg_fingerprint(output):
+    """Return a fingerprint of the primary key.
+
+    Ref:
+    https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob;f=doc/DETAILS;hb=HEAD#l482
+    """
+    for line in output.splitlines():
+        data = line.split()
+        if data[1] != 'VALIDSIG':
+            continue
+
+        # if signed with a subkey, this contains the primary key fingerprint
+        data_id = 11 if len(data) == 11 else 2
+        return data[data_id]
 
 
 def git_version(git_path, module):
@@ -1018,6 +1047,7 @@ def main():
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
+            gpg_whitelist=dict(default=[], type='list'),
             accept_hostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
             ssh_opts=dict(default=None, required=False),
@@ -1044,6 +1074,7 @@ def main():
     allow_clone = module.params['clone']
     bare = module.params['bare']
     verify_commit = module.params['verify_commit']
+    gpg_whitelist = module.params['gpg_whitelist']
     reference = module.params['reference']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
     key_file = module.params['key_file']
@@ -1139,7 +1170,7 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -1194,7 +1225,7 @@ def main():
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version, verify_commit, depth)
+        switch_version(git_path, module, dest, remote, version, verify_commit, depth, gpg_whitelist)
 
     # Deal with submodules
     submodules_updated = False
