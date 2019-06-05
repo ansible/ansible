@@ -13,7 +13,7 @@ DOCUMENTATION = """
 ---
 module: eric_eccli_command
 version_added: "2.9"
-author: "Ericsson IPOS OAM team"
+author: Ericsson IPOS OAM team (@cheng)
 short_description: Run commands on remote devices running Ericsson ECCLI
 description:
   - Sends arbitrary commands to an ERICSSON eccli node and returns the results
@@ -120,9 +120,6 @@ tasks:
           prompt: 'aaa#'
         - ansible.cfg:
         - command: 'a{3}?#'
-
-        -If command's output matches any prompt specified in ansible.cfg,
-        -the current received command's output is treated as complete.
 """
 
 RETURN = """
