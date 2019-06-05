@@ -41,9 +41,6 @@ options:
       - >-
         The description of this Shared Image Gallery resource. This property is
         updatable.
-  identifier:
-    description:
-      - undefined
   state:
     description:
       - Assert the state of the Gallery.
@@ -119,10 +116,6 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
             ),
             description=dict(
                 type='str',
-                disposition='/properties/*'
-            ),
-            identifier=dict(
-                type='dict',
                 disposition='/properties/*'
             ),
             state=dict(
@@ -206,6 +199,7 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
                 self.results['compare'] = []
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
+                    self.body['properties'].pop('identifier', None)
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the Gallery instance')
