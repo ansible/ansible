@@ -165,6 +165,14 @@ def delegate_tox(args, exclude, require, integration_targets):
         if not args.python:
             cmd += ['--python', version]
 
+        # newer versions of tox do not support older python versions and will silently fall back to a different version
+        # passing this option will allow the delegated ansible-test to verify it is running under the expected python version
+        # tox 3.0.0 dropped official python 2.6 support: https://tox.readthedocs.io/en/latest/changelog.html#v3-0-0-2018-04-02
+        # tox 3.1.3 is the first version to support python 3.8 and later: https://tox.readthedocs.io/en/latest/changelog.html#v3-1-3-2018-08-03
+        # tox 3.1.3 appears to still work with python 2.6, making it a good version to use when supporting all python versions we use
+        # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
+        cmd += ['--check-python', version]
+
         if isinstance(args, TestConfig):
             if args.coverage and not args.coverage_label:
                 cmd += ['--coverage-label', 'tox-%s' % version]
