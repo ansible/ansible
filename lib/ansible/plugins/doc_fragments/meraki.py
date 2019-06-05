@@ -56,5 +56,5 @@ options:
     org_id:
         description:
         - ID of organization.
-        type: int
+        type: str
 '''
