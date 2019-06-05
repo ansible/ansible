@@ -224,6 +224,7 @@ EXAMPLES = '''
     name: my-lambda-targetgroup
     target_type: lambda
     state: present
+    modify_targets: False
   register: out
 
 - name: second, allow invoke of the lambda
@@ -652,10 +653,10 @@ def create_or_update_target_group(connection, module):
                 # remove lambda targets
                 else:
                     changed = False
-                    for item in current_targets["TargetHealthDescriptions"]:
+                    if current_targets["TargetHealthDescriptions"]:
                         changed = True
-                        target_to_remove = item["Target"]["Id"]
-                        break  # only one target is possible with lambda
+                        # only one target is possible with lambda
+                        target_to_remove = current_targets["TargetHealthDescriptions"][0]["Target"]["Id"]
                     if changed:
                         connection.deregister_targets(
                             TargetGroupArn=tg['TargetGroupArn'], Targets=[{"Id": target_to_remove}])
