@@ -33,6 +33,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 
@@ -147,8 +148,8 @@ class MerakiModule(object):
         if optional_ignore is not None:
             self.ignored_keys = self.ignored_keys + optional_ignore
 
-        if type(original) != type(proposed):
-            # self.fail_json(msg="Types don't match")
+        if not isinstance(original, string_types) and not isinstance(proposed, string_types) and type(original) != type(proposed):
+            # self.fail_json(msg="Types don't match", original=str(type(original)), proposed=str(type(proposed)))
             return True
         if isinstance(original, list):
             if len(original) != len(proposed):
