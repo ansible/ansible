@@ -11,7 +11,7 @@
 
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Create bridge again (idempotent)
   openvswitch_bridge:
@@ -20,7 +20,29 @@
 
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
-- name: Tear down test bridge
+- name: Add fake bridge
+  openvswitch_bridge:
+    bridge: fake-br-test
+    parent: br-test
+    vlan: 100
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Change fake bridge vlan
+  openvswitch_bridge:
+    bridge: fake-br-test
+    parent: br-test
+    vlan: 300
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Tear down test bridges
   command: ovs-vsctl del-br br-test
