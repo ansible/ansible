@@ -65,7 +65,11 @@ class Cliconf(CliconfBase):
         cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
 
-        return self.send_command(cmd)
+        data = self.send_command(cmd)
+        data = re.sub(r'^Building configuration...\s+Current configuration : \d+ bytes\n', '', data, re.MULTILINE)
+        data = re.sub(r'^Using \d+ out of \d+ bytes\n', '', data, re.MULTILINE)
+
+        return data
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         """
