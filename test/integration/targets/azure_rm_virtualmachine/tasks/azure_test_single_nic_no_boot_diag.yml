@@ -1,23 +1,12 @@
-- name: TEST | Create virtual network
-  azure_rm_virtualnetwork:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    address_prefixes: "10.10.0.0/16"
+- include_tasks: network.yml
 
-- name: TEST | Add subnet
-  azure_rm_subnet:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    address_prefix: "10.10.0.0/24"
-    virtual_network: "{{ vm_name }}"
-
-- name: TEST | Create public ip
+- name: Create public ip
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
     allocation_method: Static
     name: "{{ vm_name }}"
 
-- name: TEST | Create security group
+- name: Create security group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -37,7 +26,7 @@
         priority: 110
         direction: Inbound
 
-- name: TEST | Create NIC for single nic VM
+- name: Create NIC for single nic VM
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -46,7 +35,7 @@
     public_ip_name: "{{ vm_name }}"
     security_group: "{{ vm_name }}"
 
-- name: TEST | Create virtual machine with a single NIC and no boot diagnostics
+- name: Create virtual machine with a single NIC and no boot diagnostics
   register: output
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
@@ -70,7 +59,8 @@
       #!/bin/sh
       echo "custom_data was executed" > /tmp/custom_data.txt
 
-- assert:
+- name: Ensure VM was created properly
+  assert:
     that:
       - azure_vm.properties.provisioningState == 'Succeeded'
       - azure_vm.properties.availabilitySet.id
@@ -79,19 +69,20 @@
       # so we handle both cases
       - "'diagnosticsProfile' not in azure_vm.properties or not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled"
 
-- name: TEST | Get facts for virtual machine without boot diagnostics disabled
+- name: Get facts for virtual machine without boot diagnostics disabled
   azure_rm_virtualmachine_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
   register: vm_facts_no_boot_diag_result
 
-- assert:
+- name: TEST 1 | Ensure VM facts are correct
+  assert:
     that:
       - vm_facts_no_boot_diag_result.vms != []
       - not vm_facts_no_boot_diag_result.vms[0].boot_diagnostics.enabled
       - not vm_facts_no_boot_diag_result.vms[0].boot_diagnostics.storage_uri
 
-- name: TEST | Enable boot diagnostics on an existing VM for the first time without specifying a storage account
+- name: Enable boot diagnostics on an existing VM for the first time without specifying a storage account
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -99,20 +90,22 @@
       enabled: yes
       # without specifying storage_account you get a new default storage account for the VM
 
-- assert:
+- name: TEST 1 | Ensure VM properties are correct
+  assert:
     that:
       - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
       - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
       - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
       - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
 
-- name: TEST | Get facts for virtual machine with boot diagnostics enabled
+- name: Get facts for virtual machine with boot diagnostics enabled
   azure_rm_virtualmachine_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
   register: vm_facts_boot_diag_result
 
-- assert:
+- name: TEST 1 | Ensure VM facts were returned
+  assert:
     that:
       - vm_facts_boot_diag_result.vms != []
       - vm_facts_boot_diag_result.vms[0].boot_diagnostics.enabled
@@ -120,7 +113,7 @@
       - vm_facts_boot_diag_result.vms[0].boot_diagnostics.console_screenshot_uri is defined
       - vm_facts_boot_diag_result.vms[0].boot_diagnostics.serial_console_log_uri is defined
 
-- name: TEST | Change the boot diagnostics storage account while enabled
+- name: Change the boot diagnostics storage account while enabled
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -129,7 +122,7 @@
       storage_account: "{{ storage_accounts[1] }}"
   ignore_errors: yes
 
-- name: TEST | Disable boot diagnostics and change the storage account at the same time
+- name: Disable boot diagnostics and change the storage account at the same time
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
@@ -137,11 +130,12 @@
         enabled: no
         storage_account: "{{ storage_accounts[0] }}"
 
-- assert:
+- name: TEST 1 | Ensure boot diagnostics was disabled
+  assert:
     that:
       - not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
 
-- name: TEST | Re-enable boot diagnostics on an existing VM where it was previously configured
+- name: Re-enable boot diagnostics on an existing VM where it was previously configured
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name }}"
@@ -149,7 +143,8 @@
         enabled: yes
   register: reenable_boot_diag_result
 
-- assert:
+- name: TEST 1 | Ensure boot diagnostics was reenabled
+  assert:
     that:
       - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
       - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
@@ -164,7 +159,7 @@
 #     ansible_password: Password123!
 #     ansible_host_key_checking: no
 
-# - name: TEST | wait for SSH port to be open
+# - name: wait for SSH port to be open
 #   wait_for:
 #     host: '{{ hostvars["new_azure_vm"].ansible_host }}'
 #     port: 22
@@ -173,21 +168,21 @@
 
 # # TODO: figure out how to make this work under ansible-test with the coverage injector
 # - block:
-#     - name: TEST | wait for host to answer on SSH
+#     - name: wait for host to answer on SSH
 #      delegate_to: new_azure_vm
 #      wait_for_connection:
 
-#     - name: TEST | get content from custom_data script
+#     - name: get content from custom_data script
 #      raw: cat /tmp/custom_data.txt
 #      register: custom_data_content
 
-#    - name: TEST | assert contents
+#    - name: assert contents
 #      assert:
 #        that: custom_data_content.stdout | regex_search('custom_data was executed')
 #   delegate_to: new_azure_vm
 
 # # TODO: figure out how to make this work under ansible-test with the coverage injector
-# - name: TEST | wait for file/content created by custom_data script
+# - name: wait for file/content created by custom_data script
 #   delegate_to: new_azure_vm
 #   vars:
 #     ansible_python_interpreter: python
@@ -196,7 +191,7 @@
 #     search_regex: ^custom_data was executed$
 #     timeout: 20
 
-- name: TEST | Restart the virtual machine
+- name: Restart the virtual machine
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -204,12 +199,13 @@
     vm_size: Standard_A0
   register: restart_result
 
-- assert:
+- name: TEST 1 | Ensue VM was restarted
+  assert:
     that:
       - "azure_vm.powerstate in ['starting', 'running']"
       - restart_result is changed
 
-- name: TEST | Deallocate the virtual machine
+- name: Deallocate the virtual machine
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -217,24 +213,26 @@
     vm_size: Standard_A0
   register: deallocate_result
 
-- assert:
+- name: TEST 1 | Ensure VM was deallocated
+  assert:
     that:
       - azure_vm.powerstate == 'deallocated'
       - deallocate_result is changed
 
-- name: TEST | Start the virtual machine
+- name: Start the virtual machine
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     vm_size: Standard_A0
   register: start_result
 
-- assert:
+- name: TEST 1 | Ensure VM was started
+  assert:
     that:
       - "azure_vm.powerstate in ['starting', 'running']"
       - start_result is changed
 
-- name: TEST | Should be idempotent with a single NIC
+- name: Should be idempotent with a single NIC
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -254,10 +252,11 @@
       version: latest
   register: single_nic_result
 
-- assert:
+- name: TEST 1 | Ensure nothing changed
+  assert:
     that: single_nic_result is not changed
 
-- name: TEST | Resize VM
+- name: Resize VM
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -277,60 +276,63 @@
       version: latest
   register: resize_result
 
-- assert:
+- name: TEST 1 | Esure VM was resized
+  assert:
     that:
       - resize_result is changed
       - resize_result.ansible_facts.azure_vm.properties.hardwareProfile.vmSize == "Standard_A1"
 
-- name: TEST | Delete VM
+- name: Delete VM
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     state: absent
     vm_size: Standard_A0
 
-- name: TEST | NIC should be gone
+- name: NIC should be gone
   azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
 
-- assert:
+- name: TEST 1 | Ensure NIC was removed
+  assert:
     that: azure_networkinterfaces | length == 0
 
-- name: TEST | PIP should be gone
+- name: Public IP should be gone
   azure_rm_publicipaddress_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
 
-- assert:
+- name: TEST 1 | Ensure public IP was removed
+  assert:
     that: azure_publicipaddresses | length == 0
 
-- name: TEST | Destroy NIC
+- name: Destroy NIC
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     state: absent
 
-- name: TEST | Destroy security groups
+- name: Destroy security group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_vame }}"
+    name: "{{ vm_name }}"
     state: absent
 
-- name: TEST | Destroy subnet
+- name: Destroy subnet
   azure_rm_subnet:
       resource_group: "{{ resource_group }}"
       virtual_network: "{{ vm_name }}"
       name: "{{ vm_name }}"
       state: absent
 
-- name: TEST | Destroy virtual network
+- name: Destroy virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     state: absent
 
-- name: TEST | Destroy public ip
+- name: Destroy public ip
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"

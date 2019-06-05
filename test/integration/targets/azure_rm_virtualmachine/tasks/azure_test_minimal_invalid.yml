@@ -1,5 +1,5 @@
 # TODO: Until we have a module to create/delete images this is the best tests I can do
-- name: TEST | assert error thrown with invalid image dict
+- name: Assert error thrown with invalid image dict
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: testvm002
@@ -8,7 +8,7 @@
   register: fail_invalid_image_dict
   failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]"'
 
-- name: TEST | assert error thrown with invalid image type
+- name: Assert error thrown with invalid image type
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: testvm002
@@ -17,7 +17,7 @@
   register: fail_invalid_image_type
   failed_when: 'fail_invalid_image_type.msg != "parameter error: expecting image to be a string or dict not list"'
 
-- name: TEST | assert error finding missing custom image
+- name: Assert error finding missing custom image
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: testvm002
@@ -25,7 +25,7 @@
   register: fail_missing_custom_image
   failed_when: fail_missing_custom_image.msg != "Error could not find image with name invalid-image"
 
-- name: TEST | assert error finding missing custom image (dict style)
+- name: Assert error finding missing custom image (dict style)
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: testvm002
@@ -77,7 +77,7 @@
 # - assert:
 #     that: create_image_plan_again is not changed
 
-- name: TEST | Create minimal VM with defaults
+- name: Create minimal VM with defaults
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
@@ -91,32 +91,32 @@
       version: latest
   register: vm_output
 
-- name: TEST | Delete VM
+- name: Delete VM
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"
     remove_on_absent: all_autocreated
     state: absent
 
-- name: TEST | Query NIC
+- name: Query NIC
   azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}01"
   register: nic_result
 
-- name: TEST | Query NSG
+- name: Query NSG
   azure_rm_securitygroup_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}01"
   register: nsg_result
 
-- name: TEST | Query PIP
+- name: Query public IP
   azure_rm_publicipaddress_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}01"
   register: pip_result
 
-- name: TEST | Assert that autocreated resources were deleted
+- name: Assert that autocreated resources were deleted
   assert:
     that:
       # what about the default storage group?
