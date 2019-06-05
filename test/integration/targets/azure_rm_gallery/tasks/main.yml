@@ -138,7 +138,7 @@
       publisher: myPublisherName
       offer: myOfferName
       sku: mySkuName
-    description: Image Description XXX
+    description: Image Description XXXs
   register: output
 
 - assert:
