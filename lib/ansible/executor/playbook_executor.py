@@ -158,7 +158,7 @@ class PlaybookExecutor:
 
                         break_play = False
                         # we are actually running plays
-                        batches, ignores = self._get_serialized_batches(new_play)
+                        batches, ignores = self._get_serialized_batches(play)
                         if len(batches) == 0:
                             self._tqm.send_callback('v2_playbook_on_play_start', play)
                             self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
