@@ -7,6 +7,7 @@ pylint ; python_version >= '3.5' # pylint 2.0.0 and later require python 3+
 pytest
 rstcheck ; python_version >= '2.7' # rstcheck requires python 2.7+
 sphinx
+sphinx-notfound-page
 straight.plugin  # needed for hacking/build-ansible which will host changelog generation
 virtualenv
 voluptuous
