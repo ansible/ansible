@@ -182,6 +182,10 @@ def parse_args():
                         action='store_true',
                         help='redact sensitive values in output')
 
+    common.add_argument('--check-python',
+                        choices=SUPPORTED_PYTHON_VERSIONS,
+                        help=argparse.SUPPRESS)
+
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
     test.add_argument('include',
