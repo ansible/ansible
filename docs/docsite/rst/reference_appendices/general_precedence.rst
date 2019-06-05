@@ -4,18 +4,18 @@
 How Ansible resolves configuration, data and keywords
 =====================================================
 
-Ansible has many ways to specify certain information, specially when dealing with 'connections'
+Ansible has many ways to specify certain information, especially when dealing with 'connections'
 as this information can be very sensitive to different factors and users have many different contexts to
 deal with.
 
-This desgin allows Ansible to deal with heterogeneous environments, i.e when a host or group of hosts will have different 'connection' information than the others and should always be accessed in this way.
-You are not mandated to use the variables, but most people do out of convenience and then can get confused by their 'high precedence' and how to override them.
+This design allows Ansible to deal with heterogeneous environments, that is, when a host or group of hosts have different 'connection' information than the others and should always be accessed in this way.
+You are not required to use the variables, but most people do out of convenience and then can get confused by their 'high precedence' and how to override them.
 
 In general the precedence is simple, when things are defined at the same level, 'last wins', as per the levels
 this is the most general list, from least to most:
 
  Configuration
- Command Line options
+- Command Line options
  Playbooks
  Connection variables
 
@@ -29,13 +29,14 @@ Configuration
 
 This mainly reffers to 2 things, 'the ansible configuration file' and environment variables. The internal precedence is as follows (from least to most):
 
-   configuration file (only first found used, they don't merge)
-      "value of ANSIBLE_CONFIG"
-      `./ansible.cfg`
-      `~/.ansible.cfg`
-      `/etc/ansible/ansible.cfg`
+- configuration file (only first found used, they don't merge)
 
-   environment variable (this just follows normal shell precedence, last time defined overwrites previous values)
+  -  "value of ANSIBLE_CONFIG"
+   - `./ansible.cfg`
+   - `~/.ansible.cfg`
+   - `/etc/ansible/ansible.cfg`
+
+- environment variable (this just follows normal shell precedence, last time defined overwrites previous values)
 
 You can use the ``ansible-config`` command line utility to see the current value of a configuration item and where it came from.
 
@@ -73,9 +74,9 @@ Playbook keywords
 `````````````````
 This is probably the simplest one as it flows with the playbook itself, the more specific wins against the more general:
 
-   play (most general)
-   blocks/includes/imports/roles (optional and can contain tasks and each other)
-   tasks (most specific)
+- play (most general)
+- blocks/includes/imports/roles (optional and can contain tasks and each other)
+- tasks (most specific)
 
 A simple example::
 
@@ -105,9 +106,9 @@ Connection variables are 'normal variables' with specific names we have set as o
 They are still just variables, data, not keywords nor configuration items. These variables are used to override host/group specific information needed to execute the actions.
 Originally this was just 'connection parameters' but has been expanded to things like selecting the correct temporary directory to use and the correct python/ruby/powershell/etc interpreter to invoke for a module.
 
-In the end they are just variables and follow normal variable precedence, which we already list here: https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable
+In the end they are just variables and follow normal variable precedence. See :ref:`ansible_variable_precedence`.
 
-You also need to keep in mind there are a couple of levels of scoping in playbooks, the first is 'playbook object scope'::
+You also need to keep in mind there are a couple of levels of scoping in playbooks. The first is 'playbook object scope'::
 
    - hosts: localhost
      gather_facts: false
@@ -129,8 +130,8 @@ You also need to keep in mind there are a couple of levels of scoping in playboo
        - name: we are back to the play scope value
          debug: var=me
 
-These variables don't survive the playbook object they were defined in and will not be availabel to subsequent objects, including other plays.
+These variables don't survive the playbook object they were defined in and will not be available to subsequent objects, including other plays.
 
-And there is also a 'host scope', variables that are directly associated with the host (also available via the `hostvars[]` dictionary), which is availablel across plays, these are variables defined in inventory, vars plugins or from modules (set_fact, include_vars).
+And there is also a 'host scope' - variables that are directly associated with the host (also available via the `hostvars[]` dictionary). The host  scope variables are  available across plays and are  defined in inventory, vars plugins, or from modules (set_fact, include_vars).
 
-All of the above makes knowing where to define a variable and it's overrides a complex subject, but only if you start using many different ways to define a variable, normally you only use a few and just need to know the interactions between those methods.
+All of the above makes knowing where to define a variable and its overrides a complex subject, but only if you start using many different ways to define a variable. Normally you only use a few and just need to know the interactions between those methods.
