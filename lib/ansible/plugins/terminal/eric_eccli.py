@@ -20,6 +20,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 def load_additional_regular_setting(all_eres, all_pres):
     new_eres = []
     new_pres = []
@@ -36,16 +37,16 @@ def load_additional_regular_setting(all_eres, all_pres):
             file = open(config_file, "r")
             lines = file.readlines()
             for line in lines:
-                line=line.strip('\n')
+                line = line.strip('\n')
                 li = line.strip()
-                if li == '[ERE]' :
+                if li == '[ERE]':
                     mode = 1
-                elif li == '[PRE]' :
+                elif li == '[PRE]':
                     mode = 2
                 else:
                     if li and (li.startswith("#") == False):
                         if python_version == 3:
-                            new_re = re.compile(bytes(line,'ascii'))
+                            new_re = re.compile(bytes(line, 'ascii'))
                         else:
                             new_re = re.compile(line)
                         if mode == 1:
@@ -66,6 +67,7 @@ def load_additional_regular_setting(all_eres, all_pres):
         if file in locals():
             file.close()
 
+
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
@@ -76,17 +78,9 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        #covered example syntax error: expecting
         re.compile(br"[\r\n]+syntax error: .*"),
-        #Should not use Aborted: .*, for example
-        #Aborted: by user, should be treated as success
-        #Aborted: permission denied, should be treated as fail
-        #re.compile(br"Aborted: permission denied"),
-        #Current decision, still use RE Aborted: .*
         re.compile(br"Aborted: .*"),
-        #covered example Error: access denied
         re.compile(br"[\r\n]+Error: .*"),
-        #other errors
         re.compile(br"[\r\n]+% Error:.*"),
         re.compile(br"[\r\n]+% Invalid input.*"),
         re.compile(br"[\r\n]+% Incomplete command:.*")
@@ -100,4 +94,3 @@ class TerminalModule(TerminalBase):
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-

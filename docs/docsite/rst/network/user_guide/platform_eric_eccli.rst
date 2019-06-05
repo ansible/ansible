@@ -38,7 +38,7 @@ Using CLI in Ansible
 ====================
 
 Example CLI ``group_vars/eric_eccli.yml``
-----------------------------------
+-----------------------------------------
 
 .. code-block:: yaml
 

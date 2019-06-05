@@ -1,4 +1,4 @@
-# (c) 2019 Ericsson.   
+# (c) 2019 Ericsson.
 #
 # This file is part of Ansible
 #

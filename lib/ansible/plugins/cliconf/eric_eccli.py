@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 DOCUMENTATION = """
 ---
@@ -28,10 +30,8 @@ version_added: "2.9"
 """
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-import collections
+#import collections
+from ansible.module_utils.common._collections_compat import Mapping
 import re
 import time
 import json
@@ -80,7 +80,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -96,5 +96,3 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
-
-

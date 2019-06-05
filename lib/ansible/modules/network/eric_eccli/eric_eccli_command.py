@@ -12,7 +12,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: eric_eccli_command
-author: Ericsson IPOS OAM team
+version_added: "2.9"
+author: "Ericsson IPOS OAM team"
 short_description: Run commands on remote devices running Ericsson ECCLI
 description:
   - Sends arbitrary commands to an ERICSSON eccli node and returns the results
@@ -109,25 +110,16 @@ tasks:
 
   - name: Set the prompt and error information regular expressions
     eric_eccli_command:
-        -Some prompt info is output as end mark after excuting a command,Tell us error or succeed.
-        -maybe these will occur change in a new version,so we can add new regular expressions in
-        -ansible.cfg. 
-    example:
-     [ERE]
-        [local]evr_2d01_vfrwd-evr1#dd
-        --------------------------------^
-        error input: element does not exist
+      commands:
+        - command: 'evr_2d01_vfrwd-evr1#dd'
+          prompt: 'error input: element does not exist'
+        - ansible.cfg:
+        - command: '[\r\n]+ error input: .*'
 
-        ansible.cfg:
-        - command: [\r\n]+ error input: .*
-
-     [PRE]       
-        [local]evr_2d01_vfrwd-evr1#aaa 
-        into aaa model......
-        aaa#
-
-        ansible.cfg:
-        - command: a{3}?#
+        - command: 'evr_2d01_vfrwd-evr1#aaa'
+          prompt: 'aaa#'
+        - ansible.cfg:
+        - command: 'a{3}?#'
 
         -If command's output matches any prompt specified in ansible.cfg,
         -the current received command's output is treated as complete.
