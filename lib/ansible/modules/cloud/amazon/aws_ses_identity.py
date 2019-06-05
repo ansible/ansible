@@ -215,7 +215,7 @@ notification_attributes:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, get_aws_connection_info
 
 import time
 
@@ -526,7 +526,7 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        region = module.params.get('region')
+        region = get_aws_connection_info(module, boto3=True)[0]
         account_id = get_account_id(module)
         validate_params_for_identity_present(module)
         create_or_update_identity(connection, module, region, account_id)
