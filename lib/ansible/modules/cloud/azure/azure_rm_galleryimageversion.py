@@ -205,35 +205,41 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/',
-                required=True
+                disposition='/'
             ),
             publishing_profile=dict(
                 type='dict',
                 disposition='/properties/publishingProfile',
-                required=True,
                 options=dict(
                     target_regions=dict(
                         type='list',
                         disposition='targetRegions'
                     ),
                     source=dict(
-                        type='raw',
-                        disposition='source/managedImage/id',
-                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
-                                 '/{resource_group}/providers/Microsoft.Compute'
-                                 '/images/{name}')
+                        type='dict',
+                        options=dict(
+                          #name=dict(
+                          #  type='str',
+                          #  required=True                            
+                          #),
+                          managed_image=dict(
+                            type='raw',
+                            pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                    '/{resource_group}/providers/Microsoft.Compute'
+                                    '/images/{name}'),
+                            disposition='managedImage/id')
+                        )
                     ),
                     replica_count=dict(
-                        type='number',
+                        type='int',
                         disposition='replicaCount'
                     ),
                     exclude_from_latest=dict(
-                        type='boolean',
+                        type='bool',
                         disposition='excludeFromLatest'
                     ),
                     end_of_life_date=dict(
-                        type='datetime',
+                        type='str',
                         disposition='endOfLifeDate'
                     ),
                     storage_account_type=dict(
@@ -329,6 +335,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             else:
                 modifiers = {}
                 self.create_compare_modifiers(self.module_arg_spec, '', modifiers)
+                self.results['modifiers'] = modifiers
+                self.results['compare'] = []
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
 
@@ -424,11 +432,12 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                                               self.status_code,
                                               600,
                                               30)
+            response = json.loads(response.text)
             found = True
             self.log("Response : {0}".format(response))
-            # self.log("GalleryImageVersion instance : {0} found".format(response.name))
+            # self.log("AzureFirewall instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the GalleryImageVersion instance.')
+            self.log('Did not find the AzureFirewall instance.')
         if found is True:
             return response
 

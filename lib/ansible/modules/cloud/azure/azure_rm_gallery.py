@@ -136,8 +136,7 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/',
-                required=True
+                disposition='/'
             ),
             description=dict(
                 type='str',
@@ -321,11 +320,12 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
                                               self.status_code,
                                               600,
                                               30)
+            response = json.loads(response.text)
             found = True
             self.log("Response : {0}".format(response))
-            # self.log("Gallery instance : {0} found".format(response.name))
+            # self.log("AzureFirewall instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the Gallery instance.')
+            self.log('Did not find the AzureFirewall instance.')
         if found is True:
             return response
 

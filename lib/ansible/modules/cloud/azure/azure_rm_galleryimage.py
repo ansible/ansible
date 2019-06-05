@@ -244,8 +244,7 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/',
-                required=True
+                disposition='/'
             ),
             description=dict(
                 type='str',
@@ -267,15 +266,13 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
                 type='str',
                 disposition='/properties/osType',
                 choices=['windows',
-                         'linux'],
-                required=True
+                         'linux']
             ),
             os_state=dict(
                 type='str',
                 disposition='/properties/osState',
                 choices=['generalized',
-                         'specialized'],
-                required=True
+                         'specialized']
             ),
             end_of_life_date=dict(
                 type='datetime',
@@ -284,7 +281,6 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
             identifier=dict(
                 type='dict',
                 disposition='/properties/*',
-                required=True,
                 options=dict(
                     publisher=dict(
                         type='str',
@@ -532,11 +528,12 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
                                               self.status_code,
                                               600,
                                               30)
+            response = json.loads(response.text)
             found = True
             self.log("Response : {0}".format(response))
-            # self.log("GalleryImage instance : {0} found".format(response.name))
+            # self.log("AzureFirewall instance : {0} found".format(response.name))
         except CloudError as e:
-            self.log('Did not find the GalleryImage instance.')
+            self.log('Did not find the AzureFirewall instance.')
         if found is True:
             return response
 

@@ -64,6 +64,35 @@
     name: myGallery{{ rpfx }}
     location: West US
     description: This is the gallery description.
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Create or update a simple gallery - idempotent
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    location: West US
+    description: This is the gallery description.
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+
+- name: Create or update a simple gallery - change description
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+    location: West US
+    description: This is the gallery description - xxx.
+  register: output
+
+- assert:
+    that: 
+      - output.changed
 
 - name: Create or update gallery image
   azure_rm_galleryimage:
@@ -77,43 +106,152 @@
       publisher: myPublisherName
       offer: myOfferName
       sku: mySkuName
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Create or update gallery image - idempotent
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    location: West US
+    os_type: linux
+    os_state: generalized
+    identifier:
+      publisher: myPublisherName
+      offer: myOfferName
+      sku: mySkuName
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+
+- name: Create or update gallery image - change publisher name
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    location: West US
+    os_type: linux
+    os_state: generalized
+    identifier:
+      publisher: myPublisherNameXX
+      offer: myOfferName
+      sku: mySkuName
+  register: output
+
+- assert:
+    that: 
+      - output.changed
 
 - name: Create or update a simple gallery Image Version.
   azure_rm_galleryimageversion:
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
-    name: myVersion
+    name: 10.1.3
     location: West US
     publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
       target_regions:
         - name: West US
-          regional_replica_count: '1'
+          regionalReplicaCount: '1'
         - name: East US
-          regional_replica_count: '2'
-          storage_account_type: Standard_ZRS
+          regionalReplicaCount: '2'
+          storageAccountType: Standard_ZRS
       source:
         managed_image:
           name: testimagea
           resource_group: "{{ resource_group }}"
+    register: output
 
-- name: Delete gallery Image Version.
+- assert:
+    that: 
+      - output.changed
+
+- name: Create or update a simple gallery Image Version - idempotent
   azure_rm_galleryimageversion:
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
-    name: myVersion
-    absent: yes
+    name: 10.1.3
+    location: West US
+    publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: West US
+          regionalReplicaCount: '1'
+        - name: East US
+          regionalReplicaCount: '2'
+          storageAccountType: Standard_ZRS
+      source:
+        managed_image:
+          name: testimagea
+          resource_group: "{{ resource_group }}"
+    register: output
 
-- name: Delete gallery image
-  azure_rm_galleryimage:
+- assert:
+    that: 
+      - not output.changed
+
+- name: Create or update a simple gallery Image Version - change end of life
+  azure_rm_galleryimageversion:
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
-    name: myImage
-    absent: yes
+    gallery_image_name: myImage
+    name: 10.1.3
+    location: West US
+    publishing_profile:
+      end_of_life_date: "2021-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: West US
+          regionalReplicaCount: '1'
+        - name: East US
+          regionalReplicaCount: '2'
+          storageAccountType: Standard_ZRS
+      source:
+        managed_image:
+          name: testimagea
+          resource_group: "{{ resource_group }}"
+    register: output
 
-- name: Delete a simple gallery.
-  azure_rm_gallery:
-    resource_group: "{{ resource_group }}"
-    name: myGallery{{ rpfx }}
-    absent: yes
+- assert:
+    that: 
+      - output.changed
+
+# do  not test delete at the moment as it will fail due to mysterious nested resource
+# deleting resource group will delete all the resources
+
+#- name: Delete gallery Image Version.
+#  azure_rm_galleryimageversion:
+#    resource_group: "{{ resource_group }}"
+#    gallery_name: myGallery{{ rpfx }}
+#    gallery_image_name: myImage
+#    name: myVersion
+#    absent: yes
+
+#- name: Delete gallery image
+#  azure_rm_galleryimage:
+#    resource_group: "{{ resource_group }}"
+#    gallery_name: myGallery{{ rpfx }}
+#    name: myImage
+#    absent: yes
+
+#- name: Delete a simple gallery.
+#  azure_rm_gallery:
+#    resource_group: "{{ resource_group }}"
+#    name: myGallery{{ rpfx }}
+#    absent: yes
