@@ -96,6 +96,7 @@ options:
       - "Dependency: 'feature bfd'"
     version_added: "2.9"
     type: bool
+    default: false
   passive_interface:
     description:
       - Setting to C(yes) will suppress routing update on interface.
