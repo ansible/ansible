@@ -109,7 +109,7 @@ class AzureRMManagedClusterInfo(AzureRMModuleBase):
         super(AzureRMManagedClusterInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
-            info_module=True
+            facts_module=True
         )
 
     def exec_module(self, **kwargs):
