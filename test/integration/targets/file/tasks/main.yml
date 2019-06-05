@@ -270,8 +270,8 @@
   assert:
     that:
       - folder_absent_result.diff.before.path_content is defined
-      - "'{{output_dir}}/foobar' in folder_absent_result.diff.before.path_content.directories"
-      - "'{{output_dir}}/foobar/fileA' in folder_absent_result.diff.before.path_content.files"
+      - "'{{ output_dir }}/foobar' in folder_absent_result.diff.before.path_content.directories"
+      - "'{{ output_dir }}/foobar/fileA' in folder_absent_result.diff.before.path_content.files"
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234
