@@ -144,7 +144,7 @@ class ModuleArgsParser:
         if additional_args:
             if isinstance(additional_args, string_types):
                 templar = Templar(loader=None)
-                if templar._contains_vars(additional_args):
+                if templar.is_template(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
                     raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
@@ -311,7 +311,7 @@ class ModuleArgsParser:
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
-            if templar._contains_vars(raw_params):
+            if templar.is_template(raw_params):
                 args['_variable_params'] = raw_params
             else:
                 raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,

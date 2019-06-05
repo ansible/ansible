@@ -531,7 +531,7 @@ class Templar:
             if isinstance(variable, string_types):
                 result = variable
 
-                if self._contains_vars(variable):
+                if self.is_template(variable):
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
@@ -640,26 +640,7 @@ class Templar:
                     return True
         return False
 
-    def templatable(self, data):
-        '''
-        returns True if the data can be templated w/o errors
-        '''
-        templatable = True
-        try:
-            self.template(data)
-        except Exception:
-            templatable = False
-        return templatable
-
-    def _contains_vars(self, data):
-        '''
-        returns True if the data contains a variable pattern
-        '''
-        if isinstance(data, string_types):
-            for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
-                if marker in data:
-                    return True
-        return False
+    templatable = _contains_vars = is_template
 
     def _convert_bare_variable(self, variable):
         '''

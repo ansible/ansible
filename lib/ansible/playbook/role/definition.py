@@ -129,7 +129,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
-            if templar._contains_vars(role_name):
+            if templar.is_template(role_name):
                 role_name = templar.template(role_name)
 
         return role_name
