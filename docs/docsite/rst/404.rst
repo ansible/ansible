@@ -1,3 +1,5 @@
+:orphan:
+
 .. _page_not_found:
 
 *****
@@ -6,7 +8,7 @@ Oops!
 
 The page you're looking for doesn't exist in this version of the Ansible documentation.
 
-.. # add when we work out how
+.. # add when https://github.com/rtfd/sphinx-notfound-page/issues/42 is fixed
 .. #.. image:: images/cow.png
 .. #   :alt: Cowsay 404
 .. #
