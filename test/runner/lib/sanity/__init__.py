@@ -23,6 +23,7 @@ from lib.util import (
 
 from lib.ansible_util import (
     ansible_environment,
+    check_pyyaml,
 )
 
 from lib.target import (
@@ -99,6 +100,8 @@ def command_sanity(args):
         for version in versions:
             if args.python and version and version != args.python_version:
                 continue
+
+            check_pyyaml(args, version or args.python_version)
 
             display.info('Sanity check using %s%s' % (test.name, ' with Python %s' % version if version else ''))
 
