@@ -170,7 +170,11 @@ import re
 from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-from msrestazure.azure_exceptions import CloudError
+try:
+    from msrestazure.azure_exceptions import CloudError
+except ImportError:
+    # This is handled in azure_rm_common
+    pass
 
 
 class Actions:
@@ -220,8 +224,12 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         disposition='targetRegions'
                     ),
                     source=dict(
-                        type='dict',
-                        required=True
+                        type='raw',
+                        disposition='source/managedImage/id',
+                        pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                 '/{resource_group}/providers/Microsoft.Compute'
+                                 '/images/{name}')
+                    ),
                     ),
                     replica_count=dict(
                         type='number',
@@ -308,7 +316,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
         self.url = self.url.replace('{{ subscription_id }}', self.subscription_id)
         self.url = self.url.replace('{{ resource_group }}', self.resource_group)
         self.url = self.url.replace('{{ gallery_name }}', self.gallery_name)
-        self.url = self.url.replace('{{ image_name }}', self.image_name)
+        self.url = self.url.replace('{{ image_name }}', self.gallery_image_name)
         self.url = self.url.replace('{{ version_name }}', self.name)
 
         old_response = self.get_resource()
