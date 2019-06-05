@@ -167,7 +167,7 @@
         managed_image:
           name: testimagea
           resource_group: "{{ resource_group }}"
-    register: output
+  register: output
 
 - assert:
     that: 
@@ -195,7 +195,7 @@
         managed_image:
           name: testimagea
           resource_group: "{{ resource_group }}"
-    register: output
+  register: output
 
 - assert:
     that: 
@@ -223,7 +223,7 @@
         managed_image:
           name: testimagea
           resource_group: "{{ resource_group }}"
-    register: output
+  register: output
 
 - assert:
     that: 
