@@ -20,6 +20,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.collection import build_collection
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
@@ -170,8 +171,21 @@ class GalaxyCLI(CLI):
         collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
         collection_parser.required = True
 
-        self.add_init_parser(collection_parser, [offline, force, common])
+        self.add_init_parser(collection_parser, [force])
         self.add_login_parser(collection_parser, [common])
+
+        build_parser = collection_parser.add_parser(
+            'build', help='Build an Ansible Collection artifact that can be published to Ansible Galaxy.',
+            parents=[force, common])
+        build_parser.set_defaults(func=self.execute_build)
+        build_parser.add_argument(
+            'args', metavar='collection', nargs='*', default=('./',),
+            help='Path to the collection(s) directory to build, this should be the directory that contains the '
+                 'galaxy.yml file. The default is the current working directory.')
+
+        build_parser.add_argument(
+            '--output-path', dest='output_path', default='./',
+            help='The path in which the collection is built to. The default is the current working directory.')
 
     def add_init_parser(self, parser, parents):
         galaxy_type = parser.dest
@@ -281,6 +295,27 @@ class GalaxyCLI(CLI):
         """
         # To satisfy doc build
         pass
+
+    def execute_build(self):
+        """
+        Build an Ansible Galaxy collection artifact that can be stored in a central repository like Ansible Galaxy.
+        """
+        force = context.CLIARGS['force']
+        output_path = os.path.expanduser(os.path.expandvars(context.CLIARGS['output_path']))
+        if not os.path.isabs(output_path):
+            output_path = os.path.abspath(output_path)
+
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        elif os.path.isfile(output_path):
+            raise AnsibleError("- the output collection directory %s is a file - aborting" % output_path)
+
+        for collection_path in context.CLIARGS['args']:
+            collection_path = os.path.expanduser(os.path.expandvars(collection_path))
+            if not os.path.isabs(collection_path):
+                collection_path = os.path.abspath(collection_path)
+
+            build_collection(collection_path, output_path, force)
 
     def execute_init(self):
         """
