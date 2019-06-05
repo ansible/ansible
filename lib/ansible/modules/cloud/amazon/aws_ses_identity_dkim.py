@@ -109,17 +109,17 @@ def get_identity_dkim_settings(module, client, identity):
 def ses_verify_dkim_domain(module, client, identity):
     domain = identity.split('@')[-1]
     try:
-        response = client.verify_domain_dkim(Domain=domain)
+        if not module.check_mode:
+            response = client.verify_domain_dkim(Domain=domain)
+            return response['DkimTokens']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to start DKIM verification for {domain}.'.format(domain=domain))
-    dkim_tokens = response['DkimTokens']
-    return dkim_tokens
 
 
 def enable_identity_dkim_settings(module, client, identity):
     try:
-        response = client.set_identity_dkim_enabled(DkimEnabled=True, Identity=identity)
-        return response
+        if not module.check_mode:
+            return client.set_identity_dkim_enabled(DkimEnabled=True, Identity=identity)
     except (BotoCoreError) as e:
         module.fail_json_aws(e, msg='Failed to enable DKIM for {identity}.'.format(identity=identity))
     except (ClientError) as e:
@@ -130,10 +130,10 @@ def enable_identity_dkim_settings(module, client, identity):
 
 def disable_identity_dkim_settings(module, client, identity):
     try:
-        response = client.set_identity_dkim_enabled(DkimEnabled=False, Identity=identity)
+        if not module.check_mode:
+            return client.set_identity_dkim_enabled(DkimEnabled=False, Identity=identity)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to disable DKIM settings for {identity}'.format(identity=identity))
-    return response
 
 
 def main():
