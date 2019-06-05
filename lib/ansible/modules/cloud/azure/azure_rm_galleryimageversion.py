@@ -230,7 +230,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                                  '/{resource_group}/providers/Microsoft.Compute'
                                  '/images/{name}')
                     ),
-                    ),
                     replica_count=dict(
                         type='number',
                         disposition='replicaCount'

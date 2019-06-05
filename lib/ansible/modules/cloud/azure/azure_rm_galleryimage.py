@@ -38,10 +38,6 @@ options:
         allowed characters are alphabets and numbers with dots, dashes, and
         periods allowed in the middle. The maximum length is 80 characters.
     required: true
-  gallery_image:
-    description:
-      - Parameters supplied to the create or update gallery image operation.
-    required: true
   location:
     description:
       - Resource location
@@ -64,12 +60,17 @@ options:
     description:
       - >-
         This property allows you to specify the type of the OS that is included
-        in the disk when creating a VM from a managed image. <br><br> Possible
-        values are: <br><br> **Windows** <br><br> **Linux**
+        in the disk when creating a VM from a managed image.
+    choices:
+      - windows
+      - linux
     required: true
   os_state:
     description:
       - The allowed values for OS State are 'Generalized'.
+    choices:
+      - generalized
+      - specialized
     required: true
   end_of_life_date:
     description:
@@ -265,15 +266,15 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
             os_type=dict(
                 type='str',
                 disposition='/properties/osType',
-                choices=['Windows',
-                         'Linux'],
+                choices=['windows',
+                         'linux'],
                 required=True
             ),
             os_state=dict(
                 type='str',
                 disposition='/properties/osState',
-                choices=['Generalized',
-                         'Specialized'],
+                choices=['generalized',
+                         'specialized'],
                 required=True
             ),
             end_of_life_date=dict(
