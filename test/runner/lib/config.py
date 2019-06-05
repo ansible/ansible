@@ -12,6 +12,7 @@ from lib.util import (
     find_python,
     generate_pip_command,
     get_docker_completion,
+    ApplicationError,
 )
 
 from lib.metadata import (
@@ -67,7 +68,9 @@ class EnvironmentConfig(CommonConfig):
         if self.python == 'default':
             self.python = None
 
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
+        actual_major_minor = '.'.join(str(i) for i in sys.version_info[:2])
+
+        self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
         self.delegate = self.tox or self.docker or self.remote
@@ -78,6 +81,9 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+
+        if args.check_python and args.check_python != actual_major_minor:
+            raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
 
     @property
     def python_executable(self):
