@@ -45,12 +45,6 @@ options:
         period. Digits must be within the range of a 32-bit integer. Format:
         <MajorVersion>.<MinorVersion>.<Patch>
     required: true
-  gallery_image_version:
-    description:
-      - >-
-        Parameters supplied to the create or update gallery Image Version
-        operation.
-    required: true
   location:
     description:
       - Resource location
