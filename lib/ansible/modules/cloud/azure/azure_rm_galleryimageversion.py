@@ -134,7 +134,8 @@ id:
     - Resource Id
   returned: always
   type: str
-  sample: null
+  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalle
+           ry1283/images/myImage/versions/10.1.3"
 '''
 
 import time
@@ -200,8 +201,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                             managed_image=dict(
                                 type='raw',
                                 pattern=('/subscriptions/{subscription_id}/resourceGroups'
-                                        '/{resource_group}/providers/Microsoft.Compute'
-                                        '/images/{name}'),
+                                         '/{resource_group}/providers/Microsoft.Compute'
+                                         '/images/{name}'),
                                 disposition='managedImage/id')
                         )
                     ),

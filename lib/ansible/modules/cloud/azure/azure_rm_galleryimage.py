@@ -178,7 +178,8 @@ id:
     - Resource Id
   returned: always
   type: str
-  sample: null
+  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalle
+           ry1283/images/myImage"
 '''
 
 import time
@@ -447,7 +448,7 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-           self.results["id"] = response["id"]
+            self.results["id"] = response["id"]
 
         return self.results
 

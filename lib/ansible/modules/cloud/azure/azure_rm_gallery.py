@@ -77,7 +77,7 @@ id:
     - Resource Id
   returned: always
   type: str
-  sample: null
+  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGallery1283"
 '''
 
 import time

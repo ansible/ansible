@@ -146,13 +146,12 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                 comparison_result = False
             else:
                 for k in set(new.keys()) | set(old.keys()):
-                    if k == 'provisioningState':
-                        continue
                     new_item = new.get(k, None)
                     old_item = old.get(k, None)
                     if new_item is None:
-                        new[k] = old_item
-                        result['compare'].append('new item was empty, using old [' + path + '][ ' + k + ' ]')
+                        if isinstance(old_item, dict):
+                            new[k] = old_item
+                            result['compare'].append('new item was empty, using old [' + path + '][ ' + k + ' ]')
                     elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
                         comparison_result = False
             return comparison_result
