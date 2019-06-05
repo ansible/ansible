@@ -216,7 +216,7 @@ EXAMPLES = '''
 # Using lambda as targets require that the target group
 # itself is allow to invoke the lambda function.
 # therefore you need first to create an empty target group
-# to receice its arn, second, allow the target group 
+# to receice its arn, second, allow the target group
 # to invoke the lamba function and third, add the target
 # to the target group
 - name: first, create empty target group
@@ -235,9 +235,9 @@ EXAMPLES = '''
     action: lambda:InvokeFunction
     principal: elasticloadbalancing.amazonaws.com
     source_arn: "{{ out.target_group_arn }}"
-  
+
 - name: third, add target
-    elb_target_group:
+  elb_target_group:
     name: my-lambda-targetgroup
     target_type: lambda
     state: present
