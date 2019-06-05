@@ -165,7 +165,7 @@ To create a changelog entry, create a new file with a unique name in the ``chang
 
 A single changelog fragment may contain multiple sections but most will only contain one section.
 The toplevel keys (bugfixes, major_changes, etc) are defined in the
-`config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>` for our release note tool. Here are the valid sections and a description of each:
+`config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
 
 **major_changes**
     Major changes to Ansible itself. Generally does not include module or plugin changes.
