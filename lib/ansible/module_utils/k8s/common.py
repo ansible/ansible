@@ -125,7 +125,7 @@ AUTH_ARG_SPEC = {
     'proxy': {},
 }
 
-# Map ansible parameters to kubernetes-client parameters
+# Map kubernetes-client parameters to ansible parameters
 AUTH_ARG_MAP = {
     'kubeconfig': 'kubeconfig',
     'context': 'context',
