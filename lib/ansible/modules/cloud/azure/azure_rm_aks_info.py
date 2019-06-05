@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_aks_info
 
-version_added: "2.6"
+version_added: "2.9"
 
 short_description: Get Azure Kubernetes Service information
 
@@ -37,7 +37,7 @@ options:
         description:
             - Show kubeconfig of the AKS cluster.
             - Note the operation will cost more network overhead, not recommended when listing AKS.
-        version_added: "2.8"
+        version_added: "2.9"
         choices:
             - user
             - admin
