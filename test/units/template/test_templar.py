@@ -112,6 +112,7 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
             '{# {{ foo }} #}',
             '{# {{ nothing }} {# #}',
             '{# {{ nothing }} {# #} #}',
+            '{% raw %}{{ foo }}{% endraw %}',
         ]
         for test in tests:
             self.assertTrue(self.templar.is_template(test))
@@ -129,6 +130,7 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
             '{# foo %}',
             '{# foo }}',
             '{{ foo {{',
+            '{% raw %}{% foo %}',
         ]
         for test in tests:
             self.assertFalse(self.templar.is_template(test))

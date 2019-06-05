@@ -88,8 +88,8 @@ else:
     from jinja2.utils import concat as j2_concat
 
 
-JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin'))
-JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end'))
+JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
+JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
 
 
 def generate_ansible_template_vars(path, dest_path=None):
