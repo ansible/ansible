@@ -35,7 +35,7 @@ module: one_vm
 short_description: Creates or terminates OpenNebula instances
 description:
   - Manages OpenNebula instances
-version_added: "2.9"
+version_added: "2.6"
 requirements:
   - pyone
 options:
@@ -178,6 +178,7 @@ options:
       - Create a private persistent copy of the template plus any image defined in DISK, and instantiate that copy.
     default: NO
     type: bool
+    version_added: '2.9'
 author:
     - "Milan Ilic (@ilicmilan)"
     - "Jan Meerkamp (@meerkampdvv)"
@@ -726,7 +727,7 @@ def set_vm_permissions(module, client, vms, permissions):
             mode_bits = [int(d) for d in permissions_str]
             try:
                 client.vm.chmod(
-                vm.ID, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3], mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
+                    vm.ID, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3], mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
             except pyone.OneAuthorizationException:
                 module.fail_json(msg="Permissions changing is unsuccessful, but instances are present if you deployed them.")
 
@@ -789,7 +790,7 @@ def create_disk_str(module, client, template_id, disk_size_str):
     template = client.template.info(template_id)
 
     if isinstance(template.TEMPLATE['DISK'], list):
-        module.fail_json(msg='You can pass disk_size only if template has exact one disk. This template has ' + str(disks_num) + ' disks.')
+        module.fail_json(msg='You can pass disk_size only if template has exact one disk. This template has ' + str(len(template.TEMPLATE['DISK'])) + ' disks.')
 
     disk = {}
     # Get all info about existed disk e.g. IMAGE_ID,...
