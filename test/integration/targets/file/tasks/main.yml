@@ -563,9 +563,6 @@
   stat: path={{output_dir}}/test_follow_rec_target_dir/foo
   register: file_in_dir_result
 
-- debug: var=file_result.stat.mode
-- debug: var=dir_result.stat.mode
-- debug: var=file_in_dir_result.stat.mode
 - name: assert that the link targets were unmodified
   assert:
     that:
@@ -588,12 +585,77 @@
   stat: path={{output_dir}}/test_follow_rec_target_dir/foo
   register: file_in_dir_result
 
-- debug: var=file_result.stat.mode
-- debug: var=dir_result.stat.mode
-- debug: var=file_in_dir_result.stat.mode
 - name: assert that the link targets were modified
   assert:
     that:
     - file_result.stat.mode == '0600'
     - dir_result.stat.mode == '0600'
     - file_in_dir_result.stat.mode == '0600'
+
+# https://github.com/ansible/ansible/issues/55971
+- name: Test missing src and path
+  file:
+    state: hard
+  register: file_error1
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error1 is failed"
+      - "file_error1.msg == 'missing required arguments: path'"
+
+- name: Test missing src
+  file:
+    dest: "{{ output_dir }}/hard.txt"
+    state: hard
+  register: file_error2
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error2 is failed"
+      - "file_error2.msg == 'src is required for creating new hardlinks'"
+
+- name: Test non-existing src
+  file:
+    src: non-existing-file-that-does-not-exist.txt
+    dest: "{{ output_dir }}/hard.txt"
+    state: hard
+  register: file_error3
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error3 is failed"
+      - "file_error3.msg == 'src does not exist'"
+      - "file_error3.dest == '{{ output_dir }}/hard.txt' | expanduser"
+      - "file_error3.src == 'non-existing-file-that-does-not-exist.txt'"
+
+- block:
+  - name: Create a testing file
+    file:
+      dest: original_file.txt
+      state: touch
+
+  - name: Test relative path with state=hard
+    file:
+      src: original_file.txt
+      dest: hard_link_file.txt
+      state: hard
+    register: hard_link_relpath
+
+  - name: Just check if it was successful, we don't care about the actual hard link in this test
+    assert:
+      that:
+        - "hard_link_relpath is success"
+
+  always:
+    - name: Clean up
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - original_file.txt
+        - hard_link_file.txt
+
+# END #55971
