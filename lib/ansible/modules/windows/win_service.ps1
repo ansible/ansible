@@ -522,7 +522,9 @@ Function Set-ServiceRecovery($name, $actions) {
 
     if ($recovery_actions -ne $processed_actions) {
 
-            $cmd_output=sc.exe \\$env:computername failure $name reset= $reset actions= $actions_string
+            if (!$check_mode) {
+                $cmd_output=sc.exe failure $name reset= $reset actions= $actions_string
+            }
 
             if ($LASTEXITCODE -ne 0) {
                 Fail-Json $result ("Service recovery set failed." + $cmd_output)
