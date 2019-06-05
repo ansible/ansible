@@ -749,6 +749,7 @@
 - assert:
     that:
       - result.changed == true
+      - result.queries == ['CREATE TABLE "acme"."test_schema_table"']
 
 # Check that the table exists and has a right schema after the previous step:
 - name: postgresql_table - check that table exists after the previous step
@@ -794,13 +795,14 @@
   postgresql_table:
     db: postgres
     login_user: "{{ pg_user }}"
-    name: acme.test_schema_table
+    name: postgres.acme.test_schema_table
     state: absent
   register: result
 
 - assert:
     that:
       - result.changed == true
+      - result.queries == ['DROP TABLE "postgres"."acme"."test_schema_table"']
 
 - name: postgresql_table - check that the table doesn't exist after the previous step
   become_user: "{{ pg_user }}"
@@ -841,3 +843,16 @@
 - assert:
     that:
       - result.rowcount == 1
+
+- name: postgresql_table - rename the table that contents a schema name
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: public.test_schema_table
+    rename: new_test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.queries == ['ALTER TABLE "public"."test_schema_table" RENAME TO "new_test_schema_table"']
