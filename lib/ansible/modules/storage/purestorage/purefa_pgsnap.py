@@ -235,8 +235,12 @@ def main():
         module.fail_json(msg="Selected volume {0} does not exist in the Protection Group".format(module.params['name']))
     if ":" in module.params['name']:
         rvolume = get_rpgsnapshot(module, array)
+        if rvolume is None:
+            module.fail_json(msg="Selected restore snapshot {0} does not exist in the Protection Group".format(module.params['restore']))
     else:
         rvolume = get_pgroupvolume(module, array)
+        if rvolume is None:
+            module.fail_json(msg="Selected restore volume {0} does not exist in the Protection Group".format(module.params['restore']))
 
     if state == 'copy' and rvolume:
         restore_pgsnapvolume(module, array)
@@ -250,6 +254,8 @@ def main():
         delete_pgsnapshot(module, array)
     elif state == 'absent' and not pgsnap:
         module.exit_json(changed=False)
+
+    module.exit_json(changed=False)
 
 
 if __name__ == '__main__':
