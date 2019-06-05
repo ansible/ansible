@@ -461,7 +461,7 @@ class Sequence(object):
         """Implements ALTER SEQUENCE SET SCHEMA command behavior."""
         query = ['ALTER SEQUENCE']
         query.append(self.__add_schema())
-        query .append('SET SCHEMA %s' % pg_quote_identifier(self.module.params['newschema'], 'schema'))
+        query.append('SET SCHEMA %s' % pg_quote_identifier(self.module.params['newschema'], 'schema'))
 
         return exec_sql(self, ' '.join(query), ddl=True)
 
