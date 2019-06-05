@@ -737,7 +737,7 @@
   when: postgres_version_resp.stdout is version('9.1', '>=')
 
 #
-# Create table in a specific schema:
+# Create, drop, and rename table in a specific schema:
 #
 - name: postgresql_table - create table in a specific schema
   postgresql_table:
@@ -751,7 +751,6 @@
       - result.changed == true
       - result.queries == ['CREATE TABLE "acme"."test_schema_table" ()']
 
-# Check that the table exists and has a right schema after the previous step:
 - name: postgresql_table - check that table exists after the previous step
   become_user: "{{ pg_user }}"
   become: yes
@@ -766,8 +765,7 @@
     that:
       - result.rowcount == 1
 
-# Try to create the table with the same name and schema again:
-- name: postgresql_table - create table  with the same name and schema again
+- name: postgresql_table - try to create a table with the same name and schema again
   postgresql_table:
     db: postgres
     login_user: "{{ pg_user }}"
@@ -778,8 +776,7 @@
     that:
       - result.changed == false
 
-# Create a table with the same name but in the default schema for the next test
-- name: postgresql_table - create table in the default schema
+- name: postgresql_table - create a table in the default schema for the next test
   postgresql_table:
     db: postgres
     login_user: "{{ pg_user }}"
@@ -790,7 +787,6 @@
     that:
       - result.changed == true
 
-# Drop table from schema acme:
 - name: postgresql_table - drop the table from schema acme
   postgresql_table:
     db: postgres

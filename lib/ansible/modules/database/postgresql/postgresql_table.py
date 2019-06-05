@@ -183,7 +183,7 @@ EXAMPLES = r'''
     name: foo
     truncate: yes
 
-- name: Drop table foo from schema.acme
+- name: Drop table foo from schema acme
   postgresql_table:
     name: acme.foo
     state: absent
