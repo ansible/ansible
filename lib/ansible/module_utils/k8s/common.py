@@ -169,7 +169,6 @@ class K8sAnsibleMixin(object):
                         env_value = env_value.lower() not in ['0', 'false', 'no']
                     auth[true_name] = env_value
             else:
-                print( "Setting", true_name, "from", arg_name, "to value", auth_params[arg_name] )
                 auth[true_name] = auth_params[arg_name]
 
         def auth_set(*names):
@@ -190,7 +189,7 @@ class K8sAnsibleMixin(object):
         # Override any values in the default configuration with Ansible parameters
         configuration = kubernetes.client.Configuration()
         for key, value in iteritems(auth):
-            if key in AUTH_ARG_MAP and value is not None:
+            if key in AUTH_ARG_MAP.keys() and value is not None:
                 if key == 'api_key':
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
                 else:
