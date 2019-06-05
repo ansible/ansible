@@ -929,14 +929,6 @@
   assert:
     that:
     - check_win_service_recovery_settings is changed
-    - check_win_service_recovery_settings.recovery.reset_fail_count_after == 300
-    - check_win_service_recovery_settings.recovery.on_first_failure == 'restart'
-    - check_win_service_recovery_settings.recovery.first_failure_timeout == 60000
-    - check_win_service_recovery_settings.recovery.on_second_failure == 'restart'
-    - check_win_service_recovery_settings.recovery.second_failure_timeout == 60000
-    - check_win_service_recovery_settings.recovery.on_subsequent_failure == 'restart'
-    - check_win_service_recovery_settings.recovery.subsequent_failure_timeout == 60000
-
 
 - name: set recovery settings for the service
   win_service:
