@@ -592,7 +592,7 @@ import os
 
 def get_template(module, client, predicate):
 
-    pool = client.templatepool.info(-2,-1,-1,-1)
+    pool = client.templatepool.info(-2, -1, -1, -1)
     # Filter -2 means fetch all templates user can Use
     found = 0
     found_template = None
@@ -630,7 +630,7 @@ def get_template_id(module, client, requested_id, requested_name):
 def get_vm_by_id(client, vm_id):
     try:
         vm = client.vm.info(int(vm_id))
-    except:
+    except BaseException:
         return None
     return vm
 
@@ -713,7 +713,6 @@ def parse_vm_permissions(client, vm):
     return permissions
 
 
-
 def set_vm_permissions(module, client, vms, permissions):
     changed = False
 
@@ -726,8 +725,7 @@ def set_vm_permissions(module, client, vms, permissions):
             permissions_str = bin(int(permissions, base=8))[2:]  # 600 -> 110000000
             mode_bits = [int(d) for d in permissions_str]
             try:
-                client.vm.chmod(vm.ID, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3],
-                            mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
+                client.vm.chmod(vm.ID, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3], mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
             except pyone.OneAuthorizationException:
                 module.fail_json(msg="Permissions changing is unsuccessful, but instances are present if you deployed them.")
 
@@ -789,7 +787,7 @@ def create_disk_str(module, client, template_id, disk_size_str):
 
     template = client.template.info(template_id)
 
-    if isinstance(template.TEMPLATE['DISK'],list):
+    if isinstance(template.TEMPLATE['DISK'], list):
         module.fail_json(msg='You can pass disk_size only if template has exact one disk. This template has ' + str(disks_num) + ' disks.')
 
     disk = {}
@@ -835,7 +833,7 @@ def create_vm(module, client, template_id, attributes_dict, labels_list, disk_si
     vm_extra_template_str = create_attributes_str(attributes_dict, labels_list) + create_nics_str(network_attrs_list) + disk_str
     try:
         vm_id = client.template.instantiate(template_id, vm_name, vm_start_on_hold, vm_extra_template_str, vm_persistent)
-    except pyone.OneException,e:
+    except pyone.OneException as e:
         module.fail_json(msg=str(e))
     vm = get_vm_by_id(client, vm_id)
 
@@ -859,7 +857,7 @@ def get_vm_labels_and_attributes_dict(client, vm_id):
     attrs_dict = {}
     labels_list = []
 
-    for key, value  in vm_USER_TEMPLATE.items():
+    for key, value in vm_USER_TEMPLATE.items():
         if key != 'LABELS':
             attrs_dict[key] = value
         else:
@@ -870,7 +868,7 @@ def get_vm_labels_and_attributes_dict(client, vm_id):
 
 
 def get_all_vms_by_attributes(client, attributes_dict, labels_list):
-    pool = client.vmpool.info(-2,-1,-1,-1).VM
+    pool = client.vmpool.info(-2, -1, -1, -1).VM
     vm_list = []
     name = ''
     if attributes_dict:
@@ -921,7 +919,8 @@ def get_all_vms_by_attributes(client, attributes_dict, labels_list):
     return vm_list
 
 
-def create_count_of_vms(module, client, template_id, count, attributes_dict, labels_list, disk_size, network_attrs_list, wait, wait_timeout, vm_start_on_hold, vm_persistent):
+def create_count_of_vms(
+    module, client, template_id, count, attributes_dict, labels_list, disk_size, network_attrs_list, wait, wait_timeout, vm_start_on_hold, vm_persistent):
     new_vms_list = []
 
     vm_name = ''
@@ -986,7 +985,8 @@ def create_exact_count_of_vms(module, client, template_id, exact_count, attribut
     if vm_count_diff > 0:
         # Add more VMs
         changed, instances_list, tagged_instances = create_count_of_vms(module, client, template_id, vm_count_diff, attributes_dict,
-                                                                        labels_list, disk_size, network_attrs_list, wait, wait_timeout, vm_start_on_hold, vm_persistent)
+                                                                        labels_list, disk_size, network_attrs_list, wait, wait_timeout,
+                                                                        vm_start_on_hold, vm_persistent)
 
         tagged_instances_list += instances_list
     elif vm_count_diff < 0:
@@ -1031,7 +1031,7 @@ def wait_for_state(module, client, vm, wait_timeout, state_predicate):
         if state_predicate(state, lcm_state):
             return vm
         elif state not in [VM_STATES.index('INIT'), VM_STATES.index('PENDING'), VM_STATES.index('HOLD'),
-                           VM_STATES.index('ACTIVE'),VM_STATES.index('CLONING'), VM_STATES.index('POWEROFF')]:
+                           VM_STATES.index('ACTIVE'), VM_STATES.index('CLONING'), VM_STATES.index('POWEROFF')]:
             module.fail_json(msg='Action is unsuccessful. VM state: ' + VM_STATES[state])
 
         time.sleep(1)
@@ -1190,7 +1190,7 @@ def disk_save_as(module, client, vm, disk_saveas, wait_timeout):
             module.fail_json(msg="'disksaveas' option can be used only when the VM is in 'POWEROFF' state")
         try:
             client.vm.disksaveas(vm.ID, disk_id, image_name, 'OS', -1)
-        except pyone.OneException,e:
+        except pyone.OneException as e:
             module.fail_json(msg=str(e))
         wait_for_poweroff(module, client, vm, wait_timeout)  # wait for VM to leave the hotplug_saveas_poweroff state
 
@@ -1218,7 +1218,7 @@ def get_connection_info(module):
                     authstring = open(authfile, "r").read().rstrip()
                     username = authstring.split(":")[0]
                     password = authstring.split(":")[1]
-                except:
+                except BaseException:
                     module.fail_json(msg="Could not read ONE_AUTH file")
             else:
                 module.fail_json(msg="No Credentials are set")
@@ -1282,7 +1282,7 @@ def main():
                                ['instance_ids', 'cpu'], ['instance_ids', 'vcpu'],
                                ['instance_ids', 'memory'], ['instance_ids', 'disk_size'],
                                ['instance_ids', 'networks'],
-                               ['persistent','disk_size']
+                               ['persistent', 'disk_size']
                            ],
                            supports_check_mode=True)
 
@@ -1319,7 +1319,7 @@ def main():
     if not (auth.username and auth.password):
         module.warn("Credentials missing")
     else:
-        one_client = pyone.OneServer(auth.url, session=auth.username + ':' + auth.password )
+        one_client = pyone.OneServer(auth.url, session=auth.username + ':' + auth.password)
 
     if attributes:
         attributes = dict((key.upper(), value) for key, value in attributes.items())
@@ -1385,7 +1385,8 @@ def main():
     elif template_id is not None and state == 'present':
         # Deploy count VMs
         changed, instances_list, tagged_instances_list = create_count_of_vms(module, one_client, template_id, count,
-                                                                             attributes, labels, disk_size, networks, wait, wait_timeout, put_vm_on_hold, persistent)
+                                                                             attributes, labels, disk_size, networks, wait, wait_timeout,
+                                                                             put_vm_on_hold, persistent)
         # instances_list - new instances
         # tagged_instances_list - all instances with specified `count_attributes` and `count_labels`
         vms = instances_list
@@ -1467,3 +1468,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+ 
