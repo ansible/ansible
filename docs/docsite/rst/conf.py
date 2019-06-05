@@ -45,7 +45,7 @@ AUTHOR = 'Ansible, Inc'
 # They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 # TEST: 'sphinxcontrib.fulltoc'
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'pygments_lexer']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'pygments_lexer', 'notfound.extension']
 
 # Later on, add 'sphinx.ext.viewcode' to the list if you want to have
 # colorized code generated too for references.
@@ -202,6 +202,16 @@ html_use_opensearch = 'https://docs.ansible.com/ansible/latest'
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Poseidodoc'
 
+# Configuration for sphinx-notfound-pages
+# with no 'notfound_template' and no 'notfound_context' set,
+# the extension builds 404.rst into a location-agnostic 404 page
+#
+# default is `en` - using this for the sub-site:
+notfound_default_language = "ansible"
+# default is `latest`:
+notfound_default_version = "devel"
+# makes default setting explicit:
+notfound_no_urls_prefix = False
 
 # Options for LaTeX output
 # ------------------------
