@@ -29,7 +29,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
 from ansible.utils.display import Display
-    
+
 display = Display()
 
 
@@ -56,18 +56,18 @@ def load_additional_regular_setting(all_eres, all_pres):
                 elif li == '[PRE]':
                     mode = 2
                 else:
-                    if li and (li.startswith("#") == 0):
+                    if li and (li.startswith("#") is False):
                         if python_version == 3:
                             new_re = re.compile(bytes(line, 'ascii'))
                         else:
                             new_re = re.compile(line)
                         if mode == 1:
-                            if ((new_re in new_eres) == 0):
-                                if ((new_re in all_eres) == 0):
+                            if ((new_re in new_eres) is False):
+                                if ((new_re in all_eres) is False):
                                     new_eres.append(new_re)
                         elif mode == 2:
-                            if ((new_re in new_pres) == 0):
-                                if ((new_re in all_pres) == 0):
+                            if ((new_re in new_pres) is False):
+                                if ((new_re in all_pres) is False):
                                     new_pres.append(new_re)
                         else:
                             display.vvvv(u'Regular expression loading skipping:%s' % line)
