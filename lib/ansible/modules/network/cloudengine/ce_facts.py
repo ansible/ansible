@@ -324,7 +324,10 @@ class Interfaces(FactsBase):
             tmp_neighbors = neighbors[2:]
             for item in tmp_neighbors:
                 tmp_item = item.split()
-                neighbors_dict[tmp_item[0]] = tmp_item[3]
+                if len(tmp_item) > 3:
+                    neighbors_dict[tmp_item[0]] = tmp_item[3]
+                else:
+                    neighbors_dict[tmp_item[0]] = None
             self.facts['neighbors'] = neighbors_dict
 
 
