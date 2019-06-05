@@ -28,7 +28,12 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
 
-_common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
+_common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
+
+# Setting to None allows limited support for PowerShell 1.0 (raw module only)
+_powershell_executionpolicy = os.environ.get('POWERSHELL_EXECUTIONPOLICY', 'Unrestricted')
+if _powershell_executionpolicy != "None":
+    _common_args.extend(['-ExecutionPolicy', _powershell_executionpolicy])
 
 # Primarily for testing, allow explicitly specifying PowerShell version via
 # an environment variable.
