@@ -911,6 +911,33 @@
   register: fail_pause_stopped_service
   failed_when: "fail_pause_stopped_service.msg != 'failed to pause service ' + test_win_service_name + ': The service does not support pausing'"
 
+- name: check recovery settings for the service
+  win_service:
+    name: "{{test_win_service_name}}"
+    recovery:
+      reset_fail_count_after: 300
+      on_first_failure: restart
+      first_failure_timeout: 60000
+      on_second_failure: restart
+      second_failure_timeout: 60000
+      on_subsequent_failure: restart
+      subsequent_failure_timeout: 60000
+  register: check_win_service_recovery_settings
+  check_mode: yes
+
+- name: check that the recovery settings check mode succeeded
+  assert:
+    that:
+    - check_win_service_recovery_settings is changed
+    - check_win_service_recovery_settings.recovery.reset_fail_count_after == 300
+    - check_win_service_recovery_settings.recovery.on_first_failure == 'restart'
+    - check_win_service_recovery_settings.recovery.first_failure_timeout == 60000
+    - check_win_service_recovery_settings.recovery.on_second_failure == 'restart'
+    - check_win_service_recovery_settings.recovery.second_failure_timeout == 60000
+    - check_win_service_recovery_settings.recovery.on_subsequent_failure == 'restart'
+    - check_win_service_recovery_settings.recovery.subsequent_failure_timeout == 60000
+
+
 - name: set recovery settings for the service
   win_service:
     name: "{{test_win_service_name}}"
@@ -924,7 +951,7 @@
       subsequent_failure_timeout: 60000
   register: win_service_recovery_settings
 
-- name: check that that the recovery settings succeeded
+- name: check that the recovery settings succeeded
   assert:
     that:
     - win_service_recovery_settings is changed
@@ -949,7 +976,7 @@
       subsequent_failure_timeout: 60000
   register: win_service_recovery_settings_again
 
-- name: check that that the recovery settings again no changes
+- name: check that the recovery settings again brings no changes
   assert:
     that:
     - win_service_recovery_settings_again is not changed
