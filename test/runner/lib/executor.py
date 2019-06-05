@@ -74,6 +74,7 @@ from lib.docker_util import (
 
 from lib.ansible_util import (
     ansible_environment,
+    check_pyyaml,
 )
 
 from lib.target import (
@@ -804,6 +805,8 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     if setup_errors:
         raise ApplicationError('Found %d invalid setup aliases:\n%s' % (len(setup_errors), '\n'.join(setup_errors)))
 
+    check_pyyaml(args, args.python_version)
+
     test_dir = os.path.expanduser('~/ansible_testing')
 
     if not args.explain and any('needs/ssh/' in target.aliases for target in targets):
@@ -1347,6 +1350,8 @@ def command_units(args):
         sys.exit()
 
     for version, command, env in version_commands:
+        check_pyyaml(args, version)
+
         display.info('Unit test with Python %s' % version)
 
         try:
