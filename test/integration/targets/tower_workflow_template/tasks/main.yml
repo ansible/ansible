@@ -59,47 +59,135 @@
     job_type: run
     state: present
 
-- name: Add a Survey to second Job Template
-  tower_job_template:
-    name: my-job-2
-    project: Job Template Test Project
-    inventory: Demo Inventory
-    playbook: hello_world.yml
-    credential: Demo Credential
-    job_type: run
-    state: present
-    survey_enabled: yes
-    survey_spec: '{"spec": [{"index": 0, "question_name": "my question?", "default": "mydef", "variable": "myvar", "type": "text", "required": "false"}], "description": "test", "name": "test"}'
+
+- name: Create empty workflow job template
+  tower_workflow_template:
+    name: my-workflow
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- tower_receive:
+    workflow: my-workflow
+  register: result
+
+- assert:
+    that:
+      - "result.assets[0].name == 'my-workflow'"
+      - "result.assets[0].asset_relation.workflow_nodes | length == 0 "
+      - "result.assets[0].asset_relation.survey_spec.name is undefined"
+      - "result.assets[0].allow_simultaneous is undefined"
+      - "result.assets[0].ask_inventory_on_launch is undefined"
+      - "result.assets[0].ask_variables_on_launch is undefined"
 
 
 - name: Create a workflow job template
   tower_workflow_template:
     name: my-workflow
-    schema: '[{"success": [{"job_template": "my-job-1"}], "job_template": "my-job-2"}]'
+    inventory: Demo Inventory
+    schema: 
+      - job_template: "my-job-1"
+        success:
+          - job_template: "my-job-2"
+    survey_spec:
+      name: test survey
+      description: test description
+      spec:
+        - index: 0
+          question_name: "my question?"
+          default: "mydef"
+          variable: "myvar"
+          type: "text"
+          required: false
+    extra_vars:
+      var1: value1
+      var2: value2
+    concurrent_jobs_enabled: yes
+    ask_inventory: yes
+    ask_extra_vars: yes
   register: result
 
 - assert:
     that:
       - "result is changed"
+
+- tower_receive:
+    workflow: my-workflow
+  register: result
+
+- assert:
+    that:
+      - "result.assets[0].name == 'my-workflow'"
+      - "result.assets[0].inventory is defined"
+      - "(result.assets[0].extra_vars | from_json).var1 is defined"
+      - "(result.assets[0].extra_vars | from_json).var2 is defined"
+      - "result.assets[0].asset_relation.workflow_nodes[0].unified_job_name == 'my-job-1'"
+      - "result.assets[0].asset_relation.workflow_nodes[1].unified_job_name == 'my-job-2'"
+      - "result.assets[0].asset_relation.survey_spec.name == 'test survey'"
+      - "result.assets[0].allow_simultaneous is defined"
+      - "result.assets[0].ask_inventory_on_launch is defined"
+      - "result.assets[0].ask_variables_on_launch is defined"
+
+
+- name: Create a workflow job template with deprecated parameters
+  tower_workflow_template:
+    name: my-deprecated-workflow
+    inventory: Demo Inventory
+    survey: '{"spec": [{"index": 0, "question_name": "my second question?", "default": "mydef", "variable": "myvar", "type": "text", "required": false}], "description": "test", "name": "test"}'
+    allow_simultaneous: yes
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+      - "result.deprecations[0].msg is defined"
+      - "result.deprecations[1].msg is defined"
+
+- tower_receive:
+    workflow: my-deprecated-workflow
+  register: result
+
+- assert:
+    that:
+      - "result.assets[0].name == 'my-deprecated-workflow'"
+      - "result.assets[0].allow_simultaneous is defined"
+      - "result.assets[0].asset_relation.survey_spec.name == 'test'"
+
 
 - name: Delete a workflow job template
   tower_workflow_template:
-    name: my-workflow
+    name: "{{ item }}"
     state: absent
   register: result
+  with_items:
+    - my-workflow
+    - my-deprecated-workflow
 
 - assert:
     that:
       - "result is changed"
 
-- name: Check module fails with correct msg
+- name: Check module fails with correct msg (organization)
   tower_workflow_template:
     name: my-workflow
     organization: Non Existing Organization
-    schema: '[{"success": [{"job_template": "my-job-1"}], "job_template": "my-job-2"}]'
+    state: present
   register: result
   ignore_errors: true
 
 - assert:
     that:
-      - "result.msg =='Failed to update organization source,organization not found: The requested object could not be found.'"
+      - "result.msg =='Failed to update workflow job template: The requested object could not be found.'"
+
+- name: Check module fails with correct msg (inventory)
+  tower_workflow_template:
+    name: my-workflow
+    inventory: Non Existing Inventory
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update workflow job template: The requested object could not be found.'"

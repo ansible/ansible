@@ -1,0 +1,8 @@
+---
+minor_changes:
+- use same code structure as in ``tower_job_template``
+- use same parameters as in ``tower_job_template`` module
+- rename survey to survey_spec
+- rename allow_simultaneous to concurrent_jobs_enabled
+- add deprecation warnings for renamed parameters
+- add missing parameter ask_extra_vars

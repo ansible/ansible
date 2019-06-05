@@ -57,6 +57,8 @@ No notable changes
 Noteworthy module changes
 -------------------------
 
+* :ref:`tower_workflow_template <tower_workflow_template_module>` `survey` parameter will be deprecated in version `2.14`, use `survey_spec` parameter instead.
+* :ref:`tower_workflow_template <tower_workflow_template_module>` `allow_simultaneous` parameter will be deprecated in version `2.14`, use `concurrent_jobs_enabled` parameter instead.
 * :ref:`vmware_datastore_maintenancemode <vmware_datastore_maintenancemode_module>` now returns ``datastore_status`` instead of Ansible internal key ``results``.
 * :ref:`vmware_host_kernel_manager <vmware_host_kernel_manager_module>` now returns ``host_kernel_status`` instead of Ansible internal key ``results``.
 * :ref:`vmware_host_ntp <vmware_host_ntp_module>` now returns ``host_ntp_status`` instead of Ansible internal key ``results``.
