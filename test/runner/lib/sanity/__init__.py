@@ -215,6 +215,10 @@ class SanityTest(ABC):
 
 class SanityCodeSmellTest(SanityTest):
     """Sanity test script."""
+    UNSUPPORTED_PYTHON_VERSIONS = (
+        '2.6',  # some tests use voluptuous, but the version we require does not support python 2.6
+    )
+
     def __init__(self, path):
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
@@ -238,6 +242,10 @@ class SanityCodeSmellTest(SanityTest):
         :type targets: SanityTargets
         :rtype: TestResult
         """
+        if args.python_version in self.UNSUPPORTED_PYTHON_VERSIONS:
+            display.warning('Skipping %s on unsupported Python version %s.' % (self.name, args.python_version))
+            return SanitySkipped(self.name)
+
         if self.path.endswith('.py'):
             cmd = [args.python_executable, self.path]
         else:
