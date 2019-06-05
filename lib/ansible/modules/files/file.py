@@ -52,8 +52,7 @@ options:
     description:
     - Path of the file to link to.
     - This applies only to C(state=link) and C(state=hard).
-    - Will accept absolute and non-existing paths.
-    - Will accept relative paths unless state=hard.
+    - For C(state=link), this will also accept a non-existing path.
     - Relative paths are relative to the file being created (C(path)) which is how
       the Unix command C(ln -s SRC DEST) treats relative paths.
     type: path
@@ -758,35 +757,13 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
     atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
-    # src is the source of a hardlink.  We require it if we are creating a new hardlink
-    if src is None and not os.path.exists(b_path):
-        raise AnsibleModuleError(results={'msg': 'src and dest are required for creating new hardlinks'})
+    # src is the source of a hardlink.  We require it if we are creating a new hardlink.
+    # We require path in the argument_spec so we know it is present at this point.
+    if src is None:
+        raise AnsibleModuleError(results={'msg': 'src is required for creating new hardlinks'})
 
-    # Toshio: Begin suspect block
-    # I believe that this block of code is wrong for hardlinks.
-    # src may be relative.
-    # If it is relative, it should be relative to the cwd (so just use abspath).
-    # This is different from symlinks where src is relative to the symlink's path.
-
-    # Why must src be an absolute path?
-    if not os.path.isabs(b_src):
-        raise AnsibleModuleError(results={'msg': "src must be an absolute path"})
-
-    # If this is a link, then it can't be a dir so why is it in the conditional?
-    if not os.path.islink(b_path) and os.path.isdir(b_path):
-        relpath = path
-    else:
-        b_relpath = os.path.dirname(b_path)
-        relpath = to_native(b_relpath, errors='strict')
-
-    # Why? This does nothing because src was checked to be absolute above?
-    absrc = os.path.join(relpath, src)
-    b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-    if not force and not os.path.exists(b_absrc):
-        raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
-                                                 ' really want to create the link: %s' % absrc,
-                                          'path': path, 'src': src})
-    # Toshio: end suspect block
+    if not os.path.exists(b_src):
+        raise AnsibleModuleError(results={'msg': 'src does not exist', 'dest': path, 'src': src})
 
     diff = initial_diff(path, 'hard', prev_state)
     changed = False
