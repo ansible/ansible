@@ -60,6 +60,19 @@ options:
             The target regions where the Image Version is going to be replicated
             to. This property is updatable.
         type: list
+        suboptions:
+          name:
+            description:
+              - Region name.
+          regional_replica_count:
+            description:
+              - >-
+                The number of replicas of the Image Version to be created per
+                region. This property would take effect for a region when
+                regionalReplicaCount is not specified. This property is updatable.
+          storage_account_type:
+            description:
+              - Storage account type.
       managed_image:
         description:
           - undefined
@@ -118,10 +131,10 @@ EXAMPLES = '''
       storage_account_type: Standard_LRS
       target_regions:
         - name: West US
-          regionalReplicaCount: '1'
+          regional_replica_count: 1
         - name: East US
-          regionalReplicaCount: '2'
-          storageAccountType: Standard_ZRS
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
       managed_image:
         name: myImage
         resource_group: myResourceGroup
@@ -192,7 +205,21 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 options=dict(
                     target_regions=dict(
                         type='list',
-                        disposition='targetRegions'
+                        disposition='targetRegions',
+                        options=dict(
+                            name=dict(
+                                type='str',
+                                required=True
+                            ),
+                            regional_replica_count=dict(
+                                type='int',
+                                disposition='regionalReplicaCount'
+                            ),
+                            storage_account_type=dict(
+                                type='str',
+                                disposition='storageAccountType'
+                            )
+                        )
                     ),
                     managed_image=dict(
                         type='raw',

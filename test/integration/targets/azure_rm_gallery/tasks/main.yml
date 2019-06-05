@@ -159,10 +159,10 @@
       storage_account_type: Standard_LRS
       target_regions:
         - name: West US
-          regionalReplicaCount: '1'
+          regional_replica_count: 1
         - name: East US
-          regionalReplicaCount: '2'
-          storageAccountType: Standard_ZRS
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
       managed_image:
         name: testimagea
         resource_group: "{{ resource_group }}"
@@ -186,10 +186,10 @@
       storage_account_type: Standard_LRS
       target_regions:
         - name: West US
-          regionalReplicaCount: '1'
+          regional_replica_count: 1
         - name: East US
-          regionalReplicaCount: '2'
-          storageAccountType: Standard_ZRS
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
       managed_image:
         name: testimagea
         resource_group: "{{ resource_group }}"
@@ -213,10 +213,10 @@
       storage_account_type: Standard_LRS
       target_regions:
         - name: West US
-          regionalReplicaCount: '1'
+          regional_replica_count: 1
         - name: East US
-          regionalReplicaCount: '2'
-          storageAccountType: Standard_ZRS
+          regional_replica_count: 2
+          storage_account_type: Standard_ZRS
       managed_image:
         name: testimagea
         resource_group: "{{ resource_group }}"
