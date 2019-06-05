@@ -272,7 +272,7 @@
       - folder_absent_result.diff.before.path_content is defined
       - test_folder in folder_absent_result.diff.before.path_content.directories
       - test_file in folder_absent_result.diff.before.path_content.files
-  var:
+  vars:
     test_folder: "{{ output_dir }}/foobar"
     test_file: "{{ output_dir }}/foobar/fileA"
 
