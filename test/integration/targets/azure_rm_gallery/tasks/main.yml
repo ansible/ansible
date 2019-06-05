@@ -47,17 +47,11 @@
     resource_group: "{{ resource_group }}"
     name: "vmforimage{{ rpfx }}"
     generalized: yes
-- name: Create image A
+- name: Create custom image
   azure_rm_image:
     resource_group: "{{ resource_group }}"
     name: testimagea
     source: "vmforimage{{ rpfx }}"
-- name: Delete VM
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "vmforimage{{ rpfx }}"
-    state: absent
-
 - name: Create or update a simple gallery.
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"

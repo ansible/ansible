@@ -107,33 +107,25 @@ EXAMPLES = '''
 - name: Create or update a simple gallery Image Version.
   azure_rm_galleryimageversion:
     resource_group: myResourceGroup
-    gallery_name: myGallery
+    gallery_name: myGallery1283
     gallery_image_name: myImage
-    name: myVersion
-    gallery_image_version:
-      location: West US
-      properties:
-        publishingProfile:
-          targetRegions:
-            - name: West US
-              regionalReplicaCount: '1'
-            - name: East US
-              regionalReplicaCount: '2'
-              storageAccountType: Standard_ZRS
-          source:
-            managedImage:
-              id: >-
-                /subscriptions/{{ subscription_id }}/resourceGroups/{{
-                resource_group }}/providers/Microsoft.Compute/images/{{
-                image_name }}
-- name: Delete a gallery Image Version.
-  azure_rm_galleryimageversion:
-    resource_group: myResourceGroup
-    gallery_name: myGallery
-    gallery_image_name: myImage
-    name: myVersion
-    state: absent
-
+    name: 10.1.3
+    location: West US
+    publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 3
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: West US
+          regionalReplicaCount: '1'
+        - name: East US
+          regionalReplicaCount: '2'
+          storageAccountType: Standard_ZRS
+      source:
+        managed_image:
+          name: myImage
+          resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -143,19 +135,6 @@ id:
   returned: always
   type: str
   sample: null
-name:
-  description:
-    - Resource name
-  returned: always
-  type: str
-  sample: null
-type:
-  description:
-    - Resource type
-  returned: always
-  type: str
-  sample: null
-
 '''
 
 import time
@@ -218,16 +197,12 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                     source=dict(
                         type='dict',
                         options=dict(
-                          #name=dict(
-                          #  type='str',
-                          #  required=True                            
-                          #),
-                          managed_image=dict(
-                            type='raw',
-                            pattern=('/subscriptions/{subscription_id}/resourceGroups'
-                                    '/{resource_group}/providers/Microsoft.Compute'
-                                    '/images/{name}'),
-                            disposition='managedImage/id')
+                            managed_image=dict(
+                                type='raw',
+                                pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                        '/{resource_group}/providers/Microsoft.Compute'
+                                        '/images/{name}'),
+                                disposition='managedImage/id')
                         )
                     ),
                     replica_count=dict(
@@ -373,9 +348,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-           self.results["id"] = response["id"]
-           self.results["name"] = response["name"]
-           self.results["type"] = response["type"]
+            self.results["id"] = response["id"]
 
         return self.results
 

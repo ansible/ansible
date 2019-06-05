@@ -158,27 +158,18 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create or update a simple gallery image.
+- name: Create or update gallery image
   azure_rm_galleryimage:
     resource_group: myResourceGroup
-    gallery_name: myGallery
+    gallery_name: myGallery1283
     name: myImage
-    gallery_image:
-      location: West US
-      properties:
-        osType: Windows
-        osState: Generalized
-        identifier:
-          publisher: myPublisherName
-          offer: myOfferName
-          sku: mySkuName
-- name: Delete a gallery image.
-  azure_rm_galleryimage:
-    resource_group: myResourceGroup
-    gallery_name: myGallery
-    name: myImage
-    state: absent
-
+    location: West US
+    os_type: linux
+    os_state: generalized
+    identifier:
+      publisher: myPublisherName
+      offer: myOfferName
+      sku: mySkuName
 '''
 
 RETURN = '''
@@ -188,19 +179,6 @@ id:
   returned: always
   type: str
   sample: null
-name:
-  description:
-    - Resource name
-  returned: always
-  type: str
-  sample: null
-type:
-  description:
-    - Resource type
-  returned: always
-  type: str
-  sample: null
-
 '''
 
 import time
@@ -470,8 +448,6 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
 
         if response:
            self.results["id"] = response["id"]
-           self.results["name"] = response["name"]
-           self.results["type"] = response["type"]
 
         return self.results
 

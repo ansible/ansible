@@ -66,17 +66,9 @@ EXAMPLES = '''
 - name: Create or update a simple gallery.
   azure_rm_gallery:
     resource_group: myResourceGroup
-    name: myGallery
-    gallery:
-      location: West US
-      properties:
-        description: This is the gallery description.
-- name: Delete a gallery.
-  azure_rm_gallery:
-    resource_group: myResourceGroup
-    name: myGallery
-    state: absent
-
+    name: myGallery1283
+    location: West US
+    description: This is the gallery description.
 '''
 
 RETURN = '''
@@ -86,19 +78,6 @@ id:
   returned: always
   type: str
   sample: null
-name:
-  description:
-    - Resource name
-  returned: always
-  type: str
-  sample: null
-type:
-  description:
-    - Resource type
-  returned: always
-  type: str
-  sample: null
-
 '''
 
 import time
@@ -261,9 +240,7 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-           self.results["id"] = response["id"]
-           self.results["name"] = response["name"]
-           self.results["type"] = response["type"]
+            self.results["id"] = response["id"]
 
         return self.results
 
