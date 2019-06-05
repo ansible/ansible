@@ -15,8 +15,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_applicationsecuritygroup_info
-version_added: "2.9"
+module: azure_rm_applicationsecuritygroup_facts
+version_added: "2.8"
 short_description: Get Azure Application Security Group facts
 description:
     - Get facts of Azure Application Security Group.
@@ -42,14 +42,14 @@ author:
 
 EXAMPLES = '''
   - name: List application security groups in specific resource group
-    azure_rm_applicationsecuritygroup_info:
+    azure_rm_applicationsecuritygroup_facts:
       resource_group: myResourceGroup
 
   - name: List application security groups in specific subscription
-    azure_rm_applicationsecuritygroup_info:
+    azure_rm_applicationsecuritygroup_facts:
 
   - name: Get application security group by name
-    azure_rm_applicationsecuritygroup_info:
+    azure_rm_applicationsecuritygroup_facts:
         resource_group: myResourceGroup
         name: myApplicationSecurityGroup
         tags:
@@ -110,7 +110,7 @@ def applicationsecuritygroup_to_dict(asg):
     )
 
 
-class AzureRMApplicationSecurityGroupInfo(AzureRMModuleBase):
+class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -129,7 +129,7 @@ class AzureRMApplicationSecurityGroupInfo(AzureRMModuleBase):
 
         self.results = dict(changed=False)
 
-        super(AzureRMApplicationSecurityGroupInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMApplicationSecurityGroupFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                                    supports_check_mode=False,
                                                                    supports_tags=False)
 
@@ -217,7 +217,7 @@ class AzureRMApplicationSecurityGroupInfo(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMApplicationSecurityGroupInfo()
+    AzureRMApplicationSecurityGroupFacts()
 
 
 if __name__ == '__main__':

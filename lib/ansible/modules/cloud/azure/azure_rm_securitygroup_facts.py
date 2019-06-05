@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_securitygroup_info
+module: azure_rm_securitygroup_facts
 
-version_added: "2.9"
+version_added: "2.1"
 
 short_description: Get security group facts.
 
@@ -48,12 +48,12 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one security group
-      azure_rm_securitygroup_info:
+      azure_rm_securitygroup_facts:
         resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all security groups
-      azure_rm_securitygroup_info:
+      azure_rm_securitygroup_facts:
         resource_group: myResourceGroup
 
 '''
@@ -200,7 +200,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_OBJECT_CLASS = 'NetworkSecurityGroup'
 
 
-class AzureRMSecurityGroupInfo(AzureRMModuleBase):
+class AzureRMSecurityGroupFacts(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -219,7 +219,7 @@ class AzureRMSecurityGroupInfo(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMSecurityGroupInfo, self).__init__(self.module_arg_spec,
+        super(AzureRMSecurityGroupFacts, self).__init__(self.module_arg_spec,
                                                         supports_tags=False,
                                                         facts_module=True)
 
@@ -268,7 +268,7 @@ class AzureRMSecurityGroupInfo(AzureRMModuleBase):
 
 
 def main():
-    AzureRMSecurityGroupInfo()
+    AzureRMSecurityGroupFacts()
 
 
 if __name__ == '__main__':
