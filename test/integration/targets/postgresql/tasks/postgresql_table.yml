@@ -749,7 +749,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.queries == ['CREATE TABLE "acme"."test_schema_table"']
+      - result.queries == ['CREATE TABLE "acme"."test_schema_table" ()']
 
 # Check that the table exists and has a right schema after the previous step:
 - name: postgresql_table - check that table exists after the previous step
