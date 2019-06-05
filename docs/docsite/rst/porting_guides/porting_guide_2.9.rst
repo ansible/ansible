@@ -78,7 +78,7 @@ Noteworthy module changes
 * The ``memset_memstore_facts`` module was renamed to :ref:`memset_memstore_info <memset_memstore_info_module>`.
 * The ``memset_server_facts`` module was renamed to :ref:`memset_server_info <memset_server_info_module>`.
 * The ``one_image_facts`` module was renamed to :ref:`one_image_info <one_image_info_module>`.
-
+* The ``azure_rm_..._facts`` module was renamed to :ref:`azure_rm_aks_info <azure_rm_..._info_module>`.
 
 Plugins
 =======

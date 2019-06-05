@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_resourcegroup_facts
+module: azure_rm_resourcegroup_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get resource group facts.
 
@@ -49,20 +49,20 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one resource group
-      azure_rm_resourcegroup_facts:
+      azure_rm_resourcegroup_info:
         name: myResourceGroup
 
     - name: Get facts for all resource groups
-      azure_rm_resourcegroup_facts:
+      azure_rm_resourcegroup_info:
 
     - name: Get facts by tags
-      azure_rm_resourcegroup_facts:
+      azure_rm_resourcegroup_info:
         tags:
           - testing
           - foo:bar
 
     - name: Get facts for one resource group including resources it contains
-      azure_rm_resourcegroup_facts:
+      azure_rm_resourcegroup_info:
           name: myResourceGroup
           list_resources: yes
 '''
@@ -133,7 +133,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_OBJECT_CLASS = 'ResourceGroup'
 
 
-class AzureRMResourceGroupFacts(AzureRMModuleBase):
+class AzureRMResourceGroupInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -153,7 +153,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
         self.tags = None
         self.list_resources = None
 
-        super(AzureRMResourceGroupFacts, self).__init__(self.module_arg_spec,
+        super(AzureRMResourceGroupInfo, self).__init__(self.module_arg_spec,
                                                         supports_tags=False,
                                                         facts_module=True)
 
@@ -218,7 +218,7 @@ class AzureRMResourceGroupFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMResourceGroupFacts()
+    AzureRMResourceGroupInfo()
 
 
 if __name__ == '__main__':

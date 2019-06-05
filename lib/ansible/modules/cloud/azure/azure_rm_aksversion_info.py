@@ -14,9 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_aksversion_facts
-
-version_added: "2.8"
+module: azure_rm_aksversion_info
+version_added: "2.9"
 
 short_description: Get available kubernetes versions supported by Azure Kubernetes Service
 
@@ -41,10 +40,10 @@ author:
 
 EXAMPLES = '''
     - name: Get available versions for AKS in location eastus
-      azure_rm_aksversion_facts:
+      azure_rm_aksversion_info:
         location: eastus
     - name: Get  available versions an AKS can be upgrade to
-      azure_rm_aksversion_facts:
+      azure_rm_aksversion_info:
         location: eastis
         version: 1.11.6
 '''

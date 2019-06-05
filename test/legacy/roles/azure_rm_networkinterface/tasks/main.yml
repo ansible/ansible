@@ -166,7 +166,7 @@
           - output.state.tags.testing == 'testing'
 
 - name: Gather facts for tags
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     tags: testing
   register: output
 
@@ -175,7 +175,7 @@
           - azure_networkinterfaces | length >= 1
 
 - name: Gather facts for resource group and tags
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     tags: testing
   register: output
@@ -185,7 +185,7 @@
           - azure_networkinterfaces| length == 1
 
 - name: Gather facts for name and tags
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: nic003
     tags: testing
@@ -262,7 +262,7 @@
           - output.state.network_security_group.name == 'nic00401'
 
 - name: Gather facts for security group nic00401
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       name: nic00401
   register: output
@@ -289,7 +289,7 @@
           - output.state.network_security_group.name == 'nic00501'
 
 - name: Gather facts for security group nic00501
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       name: nic00501
   register: output
@@ -301,7 +301,7 @@
           - azure_securitygroups[0].properties.securityRules[1].properties.destinationPortRange == '9005-9010'
 
 - name: Gather facts for one nic
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
       resource_group: "{{ resource_group }}"
       name: nic003
   register: output
@@ -311,7 +311,7 @@
           - azure_networkinterfaces | length == 1
 
 - name: Gather facts for all nics in resource groups
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
       resource_group: "{{ resource_group }}"
   register: output
 
@@ -320,7 +320,7 @@
           - azure_networkinterfaces | length >= 3
 
 - name: Gather facts for all nics
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
   register: output
 
 - assert:

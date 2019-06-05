@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_networkinterface_facts
+module: azure_rm_networkinterface_info
 
-version_added: "2.1"
+version_added: "2.9"
 
 short_description: Get network interface facts.
 
@@ -47,16 +47,16 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one network interface
-      azure_rm_networkinterface_facts:
+      azure_rm_networkinterface_info:
         resource_group: myResourceGroup
         name: nic001
 
     - name: Get network interfaces within a resource group
-      azure_rm_networkinterface_facts:
+      azure_rm_networkinterface_info:
         resource_group: myResourceGroup
 
     - name: Get network interfaces by tag
-      azure_rm_networkinterface_facts:
+      azure_rm_networkinterface_info:
         resource_group: myResourceGroup
         tags:
           - testing
@@ -256,7 +256,7 @@ def nic_to_dict(nic):
     )
 
 
-class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
+class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -275,7 +275,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMNetworkInterfaceFacts, self).__init__(self.module_arg_spec,
+        super(AzureRMNetworkInterfaceInfo, self).__init__(self.module_arg_spec,
                                                            supports_tags=False,
                                                            facts_module=True
                                                            )
@@ -335,7 +335,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMNetworkInterfaceFacts()
+    AzureRMNetworkInterfaceInfo()
 
 
 if __name__ == '__main__':
