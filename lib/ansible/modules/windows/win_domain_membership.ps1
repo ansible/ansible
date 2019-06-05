@@ -178,7 +178,7 @@ Function Join-Workgroup {
 
     # we're already on a workgroup- change it.
     Else {
-        Set-Workgroup $workgroup_name > $null
+        Set-Workgroup $workgroup_name
     }
 }
 
@@ -289,7 +289,7 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password > $null
+                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
 
                     # this change requires a reboot
                     $result.reboot_required = $true
