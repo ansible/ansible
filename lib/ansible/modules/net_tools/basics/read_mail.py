@@ -33,7 +33,7 @@ options:
         description:
             - IMAP server port (defaults to 993 or 143)
         required: false
-        default: None
+        default: 993
     username:
         description:
             - Username to get the emails
@@ -54,7 +54,7 @@ options:
         default: INBOX
     filter:
         description:
-            - Default IMAP filters. Checkout the options at blablabla.
+            - Default IMAP filters. Checkout the options at RFC 3501 section 6.4.4.
         required: false
         default: {'ALL': ''}
 
@@ -80,7 +80,7 @@ EXAMPLES = '''
     ssl: no
 
 # using filters
-- name: Read mails with filters
+- name: Read mails with 'subject' and 'to' filters
   read_mail:
     host: imap.myhost.com
     port: 42
@@ -89,6 +89,15 @@ EXAMPLES = '''
     filter:
       subject: mysubject
       to: example@example.com
+
+- name: Read unseen mails with 'subject' filter
+  read_mail:
+    host: imap.myhost.com
+    username: myuser
+    password: mypass
+    filter:
+      subject: mysubject
+      unseen: 
 '''
 
 RETURN = '''
@@ -173,7 +182,8 @@ def run_module():
     search_array = []
     for k, v in module.params['filter'].items():
         search_array.append(k)
-        search_array.append(v)
+        if v:
+            search_array.append(v)
     status, search = M.search(None, *search_array)
     if status != 'OK':
         module.fail_json(msg='Error filtering', **result)
