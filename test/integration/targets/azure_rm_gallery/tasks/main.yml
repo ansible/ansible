@@ -126,7 +126,7 @@
     that: 
       - not output.changed
 
-- name: Create or update gallery image - change publisher name
+- name: Create or update gallery image - change description
   azure_rm_galleryimage:
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
@@ -135,7 +135,7 @@
     os_type: linux
     os_state: generalized
     identifier:
-      publisher: myPublisherNameXX
+      publisher: myPublisherName
       offer: myOfferName
       sku: mySkuName
     description: Image Description XXX
