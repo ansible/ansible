@@ -536,13 +536,8 @@ lib/ansible/modules/network/junos/junos_logging.py E322
 lib/ansible/modules/network/junos/junos_rpc.py E326
 lib/ansible/modules/network/junos/junos_static_route.py E322
 lib/ansible/modules/network/junos/junos_vrf.py E324
-lib/ansible/modules/network/meraki/meraki_device.py E325
 lib/ansible/modules/network/meraki/meraki_mr_l3_firewall.py E325
-lib/ansible/modules/network/meraki/meraki_mx_l3_firewall.py E325
-lib/ansible/modules/network/meraki/meraki_network.py E325
 lib/ansible/modules/network/meraki/meraki_ssid.py E325
-lib/ansible/modules/network/meraki/meraki_switchport.py E325
-lib/ansible/modules/network/meraki/meraki_vlan.py E325
 lib/ansible/modules/network/netact/netact_cm_command.py E326
 lib/ansible/modules/network/netconf/netconf_config.py E326
 lib/ansible/modules/network/netscaler/netscaler_cs_action.py E323
