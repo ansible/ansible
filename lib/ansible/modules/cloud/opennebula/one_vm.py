@@ -35,7 +35,7 @@ module: one_vm
 short_description: Creates or terminates OpenNebula instances
 description:
   - Manages OpenNebula instances
-version_added: "2.6"
+version_added: "2.9"
 requirements:
   - pyone
 options:
@@ -725,7 +725,8 @@ def set_vm_permissions(module, client, vms, permissions):
             permissions_str = bin(int(permissions, base=8))[2:]  # 600 -> 110000000
             mode_bits = [int(d) for d in permissions_str]
             try:
-                client.vm.chmod(vm.ID, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3], mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
+                client.vm.chmod(
+                vm.ID, mode_bits[0], mode_bits[1], mode_bits[2], mode_bits[3], mode_bits[4], mode_bits[5], mode_bits[6], mode_bits[7], mode_bits[8])
             except pyone.OneAuthorizationException:
                 module.fail_json(msg="Permissions changing is unsuccessful, but instances are present if you deployed them.")
 
@@ -920,7 +921,7 @@ def get_all_vms_by_attributes(client, attributes_dict, labels_list):
 
 
 def create_count_of_vms(
-    module, client, template_id, count, attributes_dict, labels_list, disk_size, network_attrs_list, wait, wait_timeout, vm_start_on_hold, vm_persistent):
+        module, client, template_id, count, attributes_dict, labels_list, disk_size, network_attrs_list, wait, wait_timeout, vm_start_on_hold, vm_persistent):
     new_vms_list = []
 
     vm_name = ''
@@ -1468,4 +1469,3 @@ def main():
 
 if __name__ == '__main__':
     main()
- 
