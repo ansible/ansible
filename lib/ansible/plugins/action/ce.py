@@ -19,7 +19,13 @@ from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command', 'ce_facts']
+CLI_SUPPORTED_MODULES = ['ce_rollback', 'ce_mlag_interface', 'ce_startup', 'ce_config',
+                         'ce_command', 'ce_facts', 'ce_evpn_global', 'ce_evpn_bgp_rr',
+                         'ce_mtu', 'ce_evpn_bgp', 'ce_snmp_location', 'ce_snmp_contact',
+                         'ce_snmp_traps', 'ce_netstream_global', 'ce_netstream_aging',
+                         'ce_netstream_export', 'ce_netstream_template', 'ce_ntp_auth',
+                         'ce_stp', 'ce_vxlan_global', 'ce_vxlan_arp', 'ce_vxlan_gateway',
+                         'ce_acl_interface']
 
 
 class ActionModule(ActionNetworkModule):
