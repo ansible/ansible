@@ -88,7 +88,8 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             if rc == 0 and ioscan_out:
                 cmd = module.get_bin_path('fcmsutil', opt_dirs=['/opt/fcms/bin'])
                 for line in ioscan_out.splitlines():
-                    if '/dev/fcd' in line.strip():
+                    line = line.strip()
+                    if '/dev/fcd' in line:
                         dev = line.split(' ')
                         cmd = cmd + " %s" % dev[0]
                         rc, fcmsutil_out, err = module.run_command(cmd)
