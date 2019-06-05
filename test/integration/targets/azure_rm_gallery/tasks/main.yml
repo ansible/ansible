@@ -1,0 +1,100 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    address_prefixes: "10.0.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: testSubnet
+    address_prefix: "10.0.1.0/24"
+    virtual_network: testVnet
+
+- name: Create public IP address
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: testPublicIP
+
+- name: Create virtual network inteface cards for VM A and B
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}nic"
+    virtual_network: testVnet
+    subnet: testSubnet
+
+- name: Create VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    admin_username: testuser
+    admin_password: "Password1234!"
+    vm_size: Standard_B1ms
+    network_interfaces: "vmforimage{{ rpfx }}nic"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+- name: Generalize VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    generalized: yes
+- name: Create image A
+  azure_rm_image:
+    resource_group: "{{ resource_group }}"
+    name: testimagea
+    source: "vmforimage{{ rpfx }}"
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    state: absent
+
+
+- name: Create or update a simple gallery.
+  azure_rm_gallery:
+    resource_group: "{{ resource_group }}"
+    name: myGallery
+    location: West US
+    description: This is the gallery description.
+
+- name: Create or update gallery image
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery
+    name: myImage
+    location: West US
+    os_type: Windows
+    os_state: Generalized
+    identifier:
+      publisher: myPublisherName
+      offer: myOfferName
+      sku: mySkuName
+
+- name: Create or update a simple gallery Image Version.
+  azure_rm_galleryimageversion:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery
+    gallery_image_name: myImage
+    name: myVersion
+    location: West US
+    publishing_profile:
+      target_regions:
+        - name: West US
+          regional_replica_count: '1'
+        - name: East US
+          regional_replica_count: '2'
+          storage_account_type: Standard_ZRS
+      source:
+        managed_image:
+          name: testimagea
+          resource_group: "{{ resource_group }}"
+
