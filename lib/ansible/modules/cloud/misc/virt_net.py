@@ -310,7 +310,7 @@ class LibvirtConnection(object):
                         update_host = etree.fromstring(xml)
                         for child in update_host.getchildren():
                             update_host.remove(child)
-                        delete_xml = update_host.tostring()
+                        delete_xml = etree.tostring(update_host, encoding='utf8').decode('utf8')
                         res = 0
                         res += network.update(libvirt.VIR_NETWORK_UPDATE_COMMAND_DELETE,
                                               libvirt.VIR_NETWORK_SECTION_DNS_HOST,
