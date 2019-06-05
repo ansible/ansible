@@ -1,0 +1,2 @@
+minor_changes:
+- "meraki_content_filtering - Add support for check mode."
