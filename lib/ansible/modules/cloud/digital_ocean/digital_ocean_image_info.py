@@ -17,21 +17,22 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_image_facts
-short_description: Gather facts about DigitalOcean images
+module: digital_ocean_image_info
+short_description: Gather information about DigitalOcean images
 description:
-    - This module can be used to gather facts about DigitalOcean provided images.
+    - This module can be used to gather information about DigitalOcean provided images.
     - These images can be either of type C(distribution), C(application) and C(private).
+    - This module was called C(digital_ocean_image_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   image_type:
     description:
-     - Specifies the type of image facts to be retrived.
-     - If set to C(application), then facts are gathered related to all application images.
-     - If set to C(distribution), then facts are gathered related to all distribution images.
-     - If set to C(private), then facts are gathered related to all private images.
-     - If not set to any of above, then facts are gathered related to all images.
+     - Specifies the type of image information to be retrived.
+     - If set to C(application), then information are gathered related to all application images.
+     - If set to C(distribution), then information are gathered related to all distribution images.
+     - If set to C(private), then information are gathered related to all private images.
+     - If not set to any of above, then information are gathered related to all images.
     default: 'all'
     choices: [ 'all', 'application', 'distribution', 'private' ]
     required: false
@@ -42,23 +43,23 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all images
-  digital_ocean_image_facts:
+- name: Gather information about all images
+  digital_ocean_image_info:
     image_type: all
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about application images
-  digital_ocean_image_facts:
+- name: Gather information about application images
+  digital_ocean_image_info:
     image_type: application
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about distribution images
-  digital_ocean_image_facts:
+- name: Gather information about distribution images
+  digital_ocean_image_info:
     image_type: distribution
     oauth_token: "{{ oauth_token }}"
 
 - name: Get distribution about image with slug coreos-beta
-  digital_ocean_image_facts:
+  digital_ocean_image_info:
   register: resp_out
 - set_fact:
     distribution_name: "{{ item.distribution }}"
@@ -72,7 +73,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean image facts
+    description: DigitalOcean image information
     returned: success
     type: list
     sample: [
@@ -139,6 +140,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_image_facts':
+        module.deprecate("The 'digital_ocean_image_facts' module has been renamed to 'digital_ocean_image_info'", version='2.13')
 
     try:
         core(module)

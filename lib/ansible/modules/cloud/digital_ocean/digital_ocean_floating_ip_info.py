@@ -15,10 +15,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_floating_ip_facts
-short_description: DigitalOcean Floating IPs facts
+module: digital_ocean_floating_ip_info
+short_description: DigitalOcean Floating IPs information
 description:
-     - This module can be used to fetch DigitalOcean Floating IPs facts.
+     - This module can be used to fetch DigitalOcean Floating IPs information.
+     - This module was called C(digital_ocean_floating_ip_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 author: "Patrick Marques (@pmarques)"
 extends_documentation_fragment: digital_ocean.documentation
@@ -30,8 +31,8 @@ requirements:
 
 
 EXAMPLES = '''
-- name: "Gather facts about all Floating IPs"
-  digital_ocean_floating_ip_facts:
+- name: "Gather information about all Floating IPs"
+  digital_ocean_floating_ip_info:
   register: result
 
 - name: "List of current floating ips"
@@ -101,7 +102,7 @@ def core(module):
     if status_code == 200:
         module.exit_json(changed=False, floating_ips=floating_ips)
     else:
-        module.fail_json(msg="Error fetching facts [{0}: {1}]".format(
+        module.fail_json(msg="Error fetching information [{0}: {1}]".format(
             status_code, response.json["message"]))
 
 
@@ -109,6 +110,8 @@ def main():
     module = AnsibleModule(
         argument_spec=DigitalOceanHelper.digital_ocean_argument_spec()
     )
+    if module._name == 'digital_ocean_floating_ip_facts':
+        module.deprecate("The 'digital_ocean_floating_ip_facts' module has been renamed to 'digital_ocean_floating_ip_info'", version='2.13')
 
     try:
         core(module)

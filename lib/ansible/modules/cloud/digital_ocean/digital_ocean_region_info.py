@@ -17,10 +17,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_region_facts
-short_description: Gather facts about DigitalOcean regions
+module: digital_ocean_region_info
+short_description: Gather information about DigitalOcean regions
 description:
-    - This module can be used to gather facts about regions.
+    - This module can be used to gather information about regions.
+    - This module was called C(digital_ocean_region_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 extends_documentation_fragment: digital_ocean.documentation
@@ -30,12 +31,12 @@ requirements:
 
 
 EXAMPLES = '''
-- name: Gather facts about all regions
-  digital_ocean_region_facts:
+- name: Gather information about all regions
+  digital_ocean_region_info:
     oauth_token: "{{ oauth_token }}"
 
 - name: Get Name of region where slug is known
-  digital_ocean_region_facts:
+  digital_ocean_region_info:
     oauth_token: "{{ oauth_token }}"
   register: resp_out
 - debug: var=resp_out
@@ -50,7 +51,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean regions facts
+    description: DigitalOcean regions information
     returned: success
     type: list
     sample: [
@@ -106,6 +107,8 @@ def core(module):
 def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_region_facts':
+        module.deprecate("The 'digital_ocean_region_facts' module has been renamed to 'digital_ocean_region_info'", version='2.13')
 
     try:
         core(module)
