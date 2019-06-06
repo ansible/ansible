@@ -5,14 +5,20 @@
 
 - include: targets/nxos_install_os/tasks/upgrade/enable_scp_server.yaml
 
+- name: 'Remove SSH known_hosts file before scp of image file'
+  nxos_command:
+    commands: 'run bash rm /var/home/admin/.ssh/known_hosts'
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
 - name: "Copy {{ si }} to bootflash"
   nxos_file_copy:
     file_pull: True
     file_pull_timeout: 1200
     remote_file: "{{image_dir}}{{ si }}"
-    remote_scp_server: 192.168.1.1
-    remote_scp_server_user: scp_user
-    remote_scp_server_password: scp_password
+    remote_scp_server: "{{ remote_scp_server }}"
+    remote_scp_server_user: "{{ remote_scp_user }}"
+    remote_scp_server_password: "{{ remote_scp_password }}"
   register: result
 
 #- name: "Copy {{ si }} to bootflash"
@@ -33,9 +39,9 @@
     file_pull: True
     file_pull_timeout: 1200
     remote_file: "{{image_dir}}{{ ki }}"
-    remote_scp_server: 192.168.1.1
-    remote_scp_server_user: scp_user
-    remote_scp_server_password: scp_password
+    remote_scp_server: "{{ remote_scp_server }}"
+    remote_scp_server_user: "{{ remote_scp_user }}"
+    remote_scp_server_password: "{{ remote_scp_password }}"
   when: ki is defined
   register: result
 
