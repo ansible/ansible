@@ -32,9 +32,7 @@ options:
   state:
     description:
     - The sequence state.
-    - I(state=absent) is mutually exclusive with I(data_type), I(increment),
-      I(minvalue), I(maxvalue), I(start), I(cache), I(cycle), I(rename_to) ,
-      I(newschema) and I(owner).
+    - If I(state=absent) other options will be ignored except of I(schema).
     default: present
     choices: [ absent, present ]
     type: str
@@ -90,7 +88,7 @@ options:
       or I(minvalue) has been reached by an ascending or descending sequence
       respectively. If the limit is reached, the next number generated will be
       the minvalue or maxvalue, respectively.
-    - If false (NO CYCLE) is specified, any calls to nextval after the sequence
+    - If C(false) (NO CYCLE) is specified, any calls to nextval after the sequence
       has reached its maximum value will return an error. False (NO CYCLE) is
       the default.
     type: bool
@@ -112,12 +110,14 @@ options:
     type: str
   schema:
     description:
-    - The schema in the new I(sequence) will be created.
+    - The schema of the I(sequence). This is be used to create and relocate
+      a I(sequence) in the given schema.
     default: public
     type: str
   newschema:
     description:
-    - The new schema for the I(sequence).
+    - The new schema for the I(sequence). Will be used for moving a
+      I(sequence) to another I(schema).
     - Works only for existing sequences.
     type: str
   session_role:
@@ -498,16 +498,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[
-            ['absent', 'data_type'],
-            ['absent', 'increment'],
-            ['absent', 'minvalue'],
-            ['absent', 'maxvalue'],
-            ['absent', 'start'],
-            ['absent', 'cache'],
-            ['absent', 'cycle'],
-            ['absent', 'rename_to'],
-            ['absent', 'owner'],
-            ['absent', 'newschema'],
             ['rename_to', 'data_type'],
             ['rename_to', 'increment'],
             ['rename_to', 'minvalue'],
@@ -533,26 +523,10 @@ def main():
     # Note: we don't need to check mutually exclusive params here, because they are
     # checked automatically by AnsibleModule (mutually_exclusive=[] list above).
 
-    # sequence = module.params["sequence"]
-    # state = module.params["state"]
-    # data_type = module.params["data_type"]
-    # increment = module.params["increment"]
-    # minvalue = module.params["minvalue"]
-    # maxvalue = module.params["maxvalue"]
-    # start = module.params["start"]
-    # cache = module.params["cache"]
-    # cycle = module.params["cycle"]
-    # cascade = module.params["cascade"]
-    # rename_to = module.params["rename_to"]
-    # schema = module.params["schema"]
-    # owner = module.params["owner"]
-    # newschema = module.params["newschema"]
-
-    # Connect to DB and make cursor object:
-    db_connection = connect_to_db(module, autocommit=True)
     # Change autocommit to False if check_mode:
-    if module.check_mode:
-        db_connection.set_session(autocommit=False)
+    autocommit = not module.check_mode
+    # Connect to DB and make cursor object:
+    db_connection = connect_to_db(module, autocommit=autocommit)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
@@ -574,7 +548,7 @@ def main():
     # Drop non-existing sequence
     elif not data.exists and module.params['state'] == 'absent':
         # Nothing to do
-        module.warn(warning="Tries to drop nonexistent sequence '%s'" % module.params['sequence'])
+        changed = False
 
     # Drop existing sequence
     elif data.exists and module.params['state'] == 'absent':
