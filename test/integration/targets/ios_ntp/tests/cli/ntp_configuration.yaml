@@ -92,7 +92,6 @@
   always:
   - name: Remove ntp config
     ios_ntp: *remove
-    ignore_errors: yes
 
   - name: remove NTP_ACL from device
     ios_config:
