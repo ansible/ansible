@@ -20,7 +20,7 @@ module: azure_rm_networkinterface_facts
 
 version_added: "2.1"
 
-short_description: Get network interface facts.
+short_description: Get network interface facts
 
 description:
     - Get facts for a specific network interface or all network interfaces within a resource group.
@@ -40,8 +40,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -65,7 +65,8 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_networkinterfaces:
-    description: List of network interface dicts.
+    description:
+        - List of network interface dicts.
     returned: always
     type: list
     example: [{
@@ -105,7 +106,8 @@ azure_networkinterfaces:
         "type": "Microsoft.Network/networkInterfaces"
     }]
 networkinterfaces:
-    description: List of network interface dict, the dict contains parameters can be passed to C(azure_rm_networkinterface) module.
+    description:
+        - List of network interface dict, the dict contains parameters can be passed to M(azure_rm_networkinterface) module.
     type: list
     returned: always
     contains:
@@ -124,7 +126,7 @@ networkinterfaces:
         virtual_network:
             description:
                 - An existing virtual network with which the network interface will be associated.
-                - It is a dict which contains C(name) and C(resource_group) of the virtual network.
+                - It is a dict which contains I(name) and I(resource_group) of the virtual network.
         subnet:
             description:
                 - Name of an existing subnet within the specified virtual network.
@@ -143,13 +145,13 @@ networkinterfaces:
                         - Private ip address for the ip configuration.
                 private_ip_allocation_method:
                     description:
-                        - private ip allocation method.
+                        - Private ip allocation method.
                 public_ip_address:
                     description:
                         - Name of the public ip address. None for disable ip address.
                 public_ip_allocation_method:
                     description:
-                        - public ip allocation method.
+                        - Public ip allocation method.
                 load_balancer_backend_address_pools:
                     description:
                         - List of an existing load-balancer backend address pool id to associate with the network interface.
@@ -162,7 +164,7 @@ networkinterfaces:
                     sample: /subscriptions/<subsid>/resourceGroups/<rg>/providers/Microsoft.Network/applicationSecurityGroups/myASG
         enable_accelerated_networking:
             description:
-                - Specifies whether the network interface should be created with the accelerated networking feature or not
+                - Specifies whether the network interface should be created with the accelerated networking feature or not.
         create_with_security_group:
             description:
                 - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
@@ -175,8 +177,8 @@ networkinterfaces:
                 - Whether to enable IP forwarding
         dns_servers:
             description:
-                - Which DNS servers should the NIC lookup
-                - List of IP's
+                - Which DNS servers should the NIC lookup.
+                - List of IP's.
         mac_address:
             description:
                 - The MAC address of the network interface.
@@ -188,15 +190,18 @@ networkinterfaces:
                 - The DNS settings in network interface.
             contains:
                 dns_servers:
-                    description: List of DNS servers IP addresses.
+                    description:
+                        - List of DNS servers IP addresses.
                 applied_dns_servers:
                     description:
                         - If the VM that uses this NIC is part of an Availability Set, then this list will have the union of all DNS servers
                           from all NICs that are part of the Availability Set. This property is what is configured on each of those VMs.
                 internal_dns_name_label:
-                    description: Relative DNS name for this NIC used for internal communications between VMs in the same virtual network.
+                    description:
+                        - Relative DNS name for this NIC used for internal communications between VMs in the same virtual network.
                 internal_fqdn:
-                    description: Fully qualified DNS name supporting internal communications between VMs in the same virtual network.
+                    description:
+                        - Fully qualified DNS name supporting internal communications between VMs in the same virtual network.
 '''  # NOQA
 try:
     from msrestazure.azure_exceptions import CloudError
