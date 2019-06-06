@@ -891,7 +891,7 @@ class TaskExecutor:
 
         if getattr(become_plugin, 'require_tty', False) and not getattr(connection, 'has_tty', False):
             raise AnsibleError(
-                "The '%s' connection does not provide a tty which is requied for the selected "
+                "The '%s' connection does not provide a tty which is required for the selected "
                 "become plugin: %s." % (conn_type, become_plugin.name)
             )
 
