@@ -18,15 +18,15 @@
     state: latest
     force: yes
 
-- name: Add Erlang Solutions public GPG key
+- name: Add RabbitMQ release signing key
   apt_key:
-    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/setup_rabbitmq/erlang_solutions.asc
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_rabbitmq/rabbitmq-release-signing-key.asc
     state: present
 
-- name: Add Erlang Solutions repository
+- name: Add RabbitMQ Erlang repository
   apt_repository:
-    repo: "deb https://packages.erlang-solutions.com/ubuntu {{ ansible_distribution_release }} contrib"
-    filename: 'erlang-solutions'
+    repo: "deb https://dl.bintray.com/rabbitmq-erlang/debian {{ ansible_distribution_release }} erlang-20.x"
+    filename: 'rabbitmq-erlang'
     state: present
     update_cache: yes
 
