@@ -139,9 +139,16 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+
+
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import re
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
 from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
