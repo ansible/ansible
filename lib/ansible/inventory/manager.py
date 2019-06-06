@@ -491,18 +491,6 @@ class InventoryManager(object):
         # (We can't be more restrictive about the expression because the
         # fnmatch semantics permit [\[:\]] to occur.)
 
-        pattern_with_subscript = re.compile(
-            r'''^
-                (.+)                    # A pattern expression ending with...
-                \[(?:                   # A [subscript] expression comprising:
-                    (-?[0-9]+)|         # A single positive or negative number
-                    ([0-9]+)([:-])      # Or an x:y or x: range.
-                    ([0-9]*)
-                )\]
-                $
-            ''', re.X
-        )
-
         subscript = None
         m = PATTERN_WITH_SUBSCRIPT.match(pattern)
         if m:
