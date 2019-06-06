@@ -53,7 +53,7 @@
     that:
       - not output.changed
 
-- name: Create Batch Account -- delete
+- name: Delete Batch Account
   azure_rm_batchaccount:
       resource_group: "{{ resource_group }}"
       name: "{{ batch_account_name }}"
