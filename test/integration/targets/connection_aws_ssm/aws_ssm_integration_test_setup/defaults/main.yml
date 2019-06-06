@@ -1,4 +1,4 @@
 ---
 instance_type: t2.micro
 linux_ami_id: ami-035be7bafff33b6b6
-windows_ami_id: ami-0bf148826ef491d16
+windows_ami_id: ami-0a9ca0496f746e6e0
