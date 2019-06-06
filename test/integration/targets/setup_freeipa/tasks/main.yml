@@ -17,6 +17,10 @@
           - "ipa-server-dns"
         state: present
 
+    - name: Check ipa-server setup.
+      command: ipa service-find --all
+      register: freeipa_output
+
     - name: Configure ipa-server.
       command:
         ipa-server-install
@@ -38,6 +42,7 @@
           --auto-forwarders
           --forward-policy=first
           --no-dnssec-validation
+      when: "Number of entries returned 5" not in freeipa_output.stdout
 
     - name: Install Freeipa Server | Enable ntpd.
       systemd:
