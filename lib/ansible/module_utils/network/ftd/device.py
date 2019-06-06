@@ -29,8 +29,9 @@ except ImportError:
 
 def assert_kick_is_installed(module):
     if not HAS_KICK:
-        module.fail_json(msg='Firepower-kick library is required to run this module. '
-                             'Please, install it with `pip install firepower-kick` command and run the playbook again.')
+        module.fail_json(msg='Firepower-kickstart library is required to run this module. '
+                             'Please, install it with `pip install firepower-kickstart` '
+                             'command and run the playbook again.')
 
 
 class FtdModel:
