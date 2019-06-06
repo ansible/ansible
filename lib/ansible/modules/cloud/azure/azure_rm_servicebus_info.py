@@ -394,9 +394,9 @@ class AzureRMServiceBusInfo(AzureRMModuleBase):
         self.show_sas_policies = None
 
         super(AzureRMServiceBusInfo, self).__init__(self.module_arg_spec,
-                                                     supports_tags=False,
-                                                     required_if=required_if,
-                                                     facts_module=True)
+                                                    supports_tags=False,
+                                                    required_if=required_if,
+                                                    facts_module=True)
 
     def exec_module(self, **kwargs):
 

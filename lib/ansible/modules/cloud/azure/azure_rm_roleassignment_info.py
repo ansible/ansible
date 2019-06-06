@@ -158,8 +158,8 @@ class AzureRMRoleAssignmentInfo(AzureRMModuleBase):
         mutually_exclusive = [['name', 'assignee']]
 
         super(AzureRMRoleAssignmentInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                         supports_tags=False,
-                                                         mutually_exclusive=mutually_exclusive)
+                                                        supports_tags=False,
+                                                        mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""

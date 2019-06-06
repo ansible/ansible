@@ -171,7 +171,7 @@ class AzureRMVirtualNetworkPeeringInfo(AzureRMModuleBase):
         self.results = dict(changed=False)
 
         super(AzureRMVirtualNetworkPeeringInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                                supports_tags=False)
+                                                               supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
