@@ -192,6 +192,7 @@ options:
             - I(True) if the disk should be activated.
         version_added: "2.8"
         type: bool
+        default: True
 extends_documentation_fragment: ovirt
 '''
 
@@ -663,7 +664,7 @@ def main():
         image_provider=dict(default=None),
         host=dict(default=None),
         wipe_after_delete=dict(type='bool', default=None),
-        activate=dict(default=None, type='bool'),
+        activate=dict(default=True, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
