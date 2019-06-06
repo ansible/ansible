@@ -43,6 +43,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVar
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -65,10 +66,11 @@ __all__ = ['Templar', 'generate_ansible_template_vars']
 # A regex for checking to see if a variable we're trying to
 # expand is just a single variable name.
 
+JINJA2_OVERRIDE = '#jinja2:'
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = (bool, Number)
+T_F = frozenset(["True", "False"])
 
-JINJA2_OVERRIDE = '#jinja2:'
 
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
@@ -560,12 +562,13 @@ class Templar:
                         )
 
                         if not USE_JINJA2_NATIVE:
-                            unsafe = is_unsafe(result, recurse=True)
                             if convert_data and not self._no_type_regex.match(variable):
-                                # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                                if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                                        result.startswith("[") or result in ("True", "False"):
+                                if result in T_F:
+                                    result = boolean(result)
+                                elif (result.startswith(("{", "[")) and not result.startswith(self.environment.variable_start_string)):
+                                    unsafe = is_unsafe(result, recurse=True)
                                     try:
+                                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
                                         eval_results = safe_eval(result, include_exceptions=True)
                                     except Exception as e:
                                         raise AnsibleError("could not safely eval: %s" % to_native(e), orig_exc=e)
@@ -574,8 +577,7 @@ class Templar:
                                         if unsafe:
                                             result = wrap_var(result)
                                     else:
-                                        # FIXME: if the safe_eval raised an error, should we do something with it?
-                                        pass
+                                        display.debug("ignored failed safe eval for %s: %s " % (to_text(variable), to_text(eval_results[1]))
 
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
@@ -819,6 +821,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
+                # not an AnsibleUnsafe object, has it's own unsafe property
                 if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
