@@ -118,7 +118,7 @@
       hello_interval: 40
       sparse: True
       border: True
-      bfd: True
+      bfd: enable
       provider: "{{ connection }}"
       state: present
     register: result
@@ -136,7 +136,7 @@
       interface: "{{ testint }}"
       sparse: False
       border: False
-      bfd: False
+      bfd: disable
       provider: "{{ connection }}"
       state: present
     register: result
