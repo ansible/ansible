@@ -474,7 +474,7 @@ class ValidCollectionTests(object):
         cls.collection_dir = os.path.join(cls.test_dir, cls.namespace_name, cls.collection_name)
 
         # create role using default skeleton
-        gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', '-c', '--offline'] + galaxy_args + ['--init-path', cls.test_dir, collection_name])
+        gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', '-c'] + galaxy_args + ['--init-path', cls.test_dir, collection_name])
         gc.run()
         cls.gc = gc
 

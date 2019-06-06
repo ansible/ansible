@@ -171,12 +171,12 @@ class GalaxyCLI(CLI):
         collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
         collection_parser.required = True
 
-        self.add_init_parser(collection_parser, [force])
+        self.add_init_parser(collection_parser, [common, force])
         self.add_login_parser(collection_parser, [common])
 
         build_parser = collection_parser.add_parser(
             'build', help='Build an Ansible Collection artifact that can be published to Ansible Galaxy.',
-            parents=[force, common])
+            parents=[common, force])
         build_parser.set_defaults(func=self.execute_build)
         build_parser.add_argument(
             'args', metavar='collection', nargs='*', default=('./',),

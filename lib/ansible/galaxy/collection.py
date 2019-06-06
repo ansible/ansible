@@ -11,6 +11,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import time
 import yaml
 
 from hashlib import sha256
@@ -27,6 +28,8 @@ from ansible.utils.hashing import secure_hash, secure_hash_s
 display = Display()
 
 MANIFEST_FORMAT = 1
+
+AUTHOR_REGEX = re.compile(r'^(?:(?P<name>.*)\s+<)(?:(?P<email>.*)>\s*)?(?:\((?P<url>.*)\))?')
 
 
 def build_collection(collection_path, output_path, force):
@@ -65,8 +68,10 @@ def build_collection(collection_path, output_path, force):
 def _get_galaxy_yml(galaxy_yml_path):
     mandatory_keys = frozenset(['namespace', 'name', 'version', 'authors'])
     optional_strings = ('description', 'repository', 'documentation', 'homepage', 'issues')
-    optional_lists = ('license', 'tags')
+    optional_lists = ('license', 'tags', 'authors')  # authors isn't optional but this will ensure it is list
     optional_dicts = ('dependencies',)
+    all_keys = frozenset(list(mandatory_keys) + list(optional_strings) + list(optional_lists) + list(optional_dicts) +
+                         ['repository', 'documentation', 'homepage_url', 'issues'])
 
     try:
         with open(to_bytes(galaxy_yml_path), 'rb') as g_yaml:
@@ -81,7 +86,10 @@ def _get_galaxy_yml(galaxy_yml_path):
         raise AnsibleError("The collection galaxy.yml at %s is missing the following mandatory keys: %s"
                            % (to_native(galaxy_yml_path), ", ".join(missing_keys)))
 
-    # TODO: should the galaxy.yml be strict and fail on extra keys
+    extra_keys = set_keys.difference(all_keys)
+    if len(extra_keys) > 0:
+        display.warning("Found unknown keys in collection galaxy.yml at %s: %s"
+                        % (to_native(galaxy_yml_path), ", ".join(extra_keys)))
 
     # Add the defaults if they have not been set
     for optional_string in optional_strings:
@@ -89,8 +97,12 @@ def _get_galaxy_yml(galaxy_yml_path):
             galaxy_yml[optional_string] = ""
 
     for optional_list in optional_lists:
-        if optional_list not in galaxy_yml:
+        list_val = galaxy_yml.get(optional_list, None)
+
+        if list_val is None:
             galaxy_yml[optional_list] = []
+        elif not isinstance(list_val, list):
+            galaxy_yml[optional_list] = [list_val]
 
     for optional_dict in optional_dicts:
         if optional_dict not in galaxy_yml:
@@ -100,7 +112,7 @@ def _get_galaxy_yml(galaxy_yml_path):
 
 
 def _build_files_manifest(collection_path):
-    ignore_files = frozenset(['*.pyc', '*.retry', 'galaxy.yml'])
+    ignore_files = frozenset(['*.pyc', '*.retry'])
     ignore_dirs = frozenset(['CVS', '.bzr', '.hg', '.git', '.svn', '__pycache__', '.tox'])
 
     entry_template = {
@@ -110,58 +122,76 @@ def _build_files_manifest(collection_path):
         'chksum_sha256': None,
         '_format': MANIFEST_FORMAT
     }
+    manifest = []
 
-    # TODO: This was in the docs, is it actually required?
-    current_dir_entry = entry_template.copy()
-    current_dir_entry['name'] = '.'
-    current_dir_entry['ftype'] = 'dir'
-    manifest = [current_dir_entry]
+    def _walk(path, top_level_dir, parent_dirs):
+        for item in os.listdir(path):
+            abs_path = os.path.join(path, item)
+            rel_base_dir = '' if path == top_level_dir else path[len(top_level_dir) + 1:]
+            rel_path = os.path.join(rel_base_dir, item)
 
-    for root, dirs, files in os.walk(collection_path, followlinks=False):  # TODO: should we follow symlinks
+            if os.path.isdir(abs_path):
+                if item in ignore_dirs:
+                    display.vvv("Skipping %s for collection build" % abs_path)
+                    continue
 
-        # Get the relative basedir path within the collection
-        basedir = root[len(collection_path) + 1:] if root != collection_path else ''
+                if os.path.islink(abs_path):
+                    link_target = os.path.realpath(abs_path)
 
-        for filename in files:
-            if any([fnmatch.fnmatch(filename, pattern) for pattern in ignore_files]):
-                continue
+                    if not link_target.startswith(top_level_dir):
+                        display.warning("Skipping %s as it is a symbolic link to a directory outside the collection"
+                                        % abs_path)
+                        continue
 
-            manifest_entry = entry_template.copy()
-            manifest_entry['name'] = os.path.join(basedir, filename)
-            manifest_entry['ftype'] = 'file'
-            manifest_entry['chksum_type'] = 'sha256'
-            manifest_entry['chksum_sha256'] = secure_hash(os.path.join(root, filename), hash_func=sha256)
+                manifest_entry = entry_template.copy()
+                manifest_entry['name'] = rel_path
+                manifest_entry['ftype'] = 'dir'
 
-            manifest.append(manifest_entry)
+                manifest.append(manifest_entry)
 
-        for dirname in dirs:
-            if dirname in ignore_dirs:
-                continue
+                _walk(abs_path, top_level_dir, parent_dirs)
+            else:
+                if item == 'galaxy.yml':
+                    continue
+                elif any([fnmatch.fnmatch(item, pattern) for pattern in ignore_files]):
+                    display.vvv("Skipping %s for collection build" % abs_path)
+                    continue
 
-            manifest_entry = entry_template.copy()
-            manifest_entry['name'] = os.path.join(basedir, dirname)
-            manifest_entry['ftype'] = 'dir'
+                manifest_entry = entry_template.copy()
+                manifest_entry['name'] = rel_path
+                manifest_entry['ftype'] = 'file'
+                manifest_entry['chksum_type'] = 'sha256'
+                manifest_entry['chksum_sha256'] = secure_hash(abs_path, hash_func=sha256)
 
-            manifest.append(manifest_entry)
+                manifest.append(manifest_entry)
+
+    dir_stats = os.stat(collection_path)
+    parents = frozenset(((dir_stats.st_dev, dir_stats.st_ino),))
+    _walk(collection_path, collection_path, parents)
 
     return manifest
 
 
-def _build_manifest(namespace, name, version, authors, tags, description, license,
-                    dependencies, **kwargs):
+def _build_manifest(namespace, name, version, authors, tags, description, license, dependencies, **kwargs):
 
     def _parse_author_info(author):
-        # TODO: can we set the standard to be a dict instead of a string, saves on regex parsing
-        # TODO: parse with regex
-        # temp regex: ^(?P<name>[\w\s]*)\s+\<(?P<email>[\w_.+-]+@[\w-]+\.[\w-.]+)\>\s+
+        email = None
+        url = None
+
+        match = AUTHOR_REGEX.match(author)
+        if match:
+            author = match.group('name')
+            email = match.group('email')
+            url = match.group('url')
+
         return {
             'name': author,
-            'email': None,
-            'url': None
+            'email': email,
+            'url': url
         }
     authors = [_parse_author_info(info) for info in authors]
 
-    # TODO: figure out dependencies dict
+    dependencies = {name: {'version': version} for name, version in dependencies.items()}
 
     manifest = {
         'format': MANIFEST_FORMAT,
@@ -171,8 +201,8 @@ def _build_manifest(namespace, name, version, authors, tags, description, licens
         'keywords': tags,
         'description': description,
         'license': license,
-        'license_file': None,  # TODO: verify this meeting
-        'readme': None,  # TODO: verify this in meeting
+        'license_file': None,  # TODO: thaumos to verify the need for license_file and readme
+        'readme': None,
         'dependencies': dependencies,
         'file_manifest': {
             'name': 'FILES.json',
@@ -199,21 +229,31 @@ def _build_collection_tar(collection_path, tar_path, collection_manifest, file_m
             b_io = BytesIO(b)
             tar_info = tarfile.TarInfo(name)
             tar_info.size = len(b)
+            tar_info.mtime = time.time()
+            tar_info.mode = 0o0644
             tar_file.addfile(tarinfo=tar_info, fileobj=b_io)
 
         for file_info in file_manifest:
-            if file_info['name'] == '.':
-                continue
-            elif file_info['ftype'] == 'dir':
-                t = tarfile.TarInfo(file_info['name'])
-                t.type = tarfile.DIRTYPE
-                tar_file.addfile(t)
-            else:
-                filename = to_text(file_info['name'], errors='surrogate_or_strict')
-                src_path = os.path.join(to_text(collection_path, errors='surrogate_or_strict'), filename)
-                tar_file.add(src_path, arcname=filename)
+            filename = to_text(file_info['name'], errors='surrogate_or_strict')
+            src_path = os.path.join(to_text(collection_path, errors='surrogate_or_strict'), filename)
+
+            if os.path.islink(src_path) and os.path.isfile(src_path):
+                src_path = os.path.realpath(src_path)
+
+            def reset_stat(tarinfo):
+                if tarinfo.issym() or tarinfo.islnk():
+                    return None
+
+                tarinfo.mode = 0o0755 if tarinfo.isdir() else 0o0644
+                tarinfo.uid = tarinfo.gid = 0
+                tarinfo.uname = tarinfo.gname = ''
+                return tarinfo
+
+            tar_file.add(src_path, arcname=filename, recursive=False, filter=reset_stat)
 
         tar_file.close()
+
         shutil.copy(tar_filepath, tar_path)
+        display.display('Created collection for %s at %s' % (collection_manifest['name'], tar_path))
     finally:
         shutil.rmtree(tempdir)
