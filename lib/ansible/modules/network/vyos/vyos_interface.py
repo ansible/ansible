@@ -227,7 +227,7 @@ def map_obj_to_commands(updates):
 
 
 def map_config_to_obj(module):
-    data = get_config(module)
+    data = get_config(module, flags=['| grep interface'])
     obj = []
     for line in data.split('\n'):
         if line.startswith('set interfaces ethernet'):
