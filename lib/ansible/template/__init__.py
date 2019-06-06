@@ -88,6 +88,10 @@ else:
     from jinja2.utils import concat as j2_concat
 
 
+JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
+JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
+
+
 def generate_ansible_template_vars(path, dest_path=None):
     b_path = to_bytes(path)
     try:
@@ -157,6 +161,39 @@ def _escape_backslashes(data, jinja_env):
         data = ''.join(new_data)
 
     return data
+
+
+def is_template(data, jinja_env):
+    """This function attempts to quickly detect whether a value is a jinja2
+    template. To do so, we look for the first 2 matching jinja2 tokens for
+    start and end delimiters.
+    """
+    found = None
+    start = True
+    comment = False
+    d2 = jinja_env.preprocess(data)
+
+    # This wraps a lot of code, but this is due to lex returing a generator
+    # so we may get an exception at any part of the loop
+    try:
+        for token in jinja_env.lex(d2):
+            if token[1] in JINJA2_BEGIN_TOKENS:
+                if start and token[1] == 'comment_begin':
+                    # Comments can wrap other token types
+                    comment = True
+                start = False
+                # Example: variable_end -> variable
+                found = token[1].split('_')[0]
+            elif token[1] in JINJA2_END_TOKENS:
+                if token[1].split('_')[0] == found:
+                    return True
+                elif comment:
+                    continue
+                return False
+    except TemplateSyntaxError:
+        return False
+
+    return False
 
 
 def _count_newlines_from_end(in_str):
@@ -498,7 +535,7 @@ class Templar:
             if isinstance(variable, string_types):
                 result = variable
 
-                if self._contains_vars(variable):
+                if self.is_template(variable):
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
@@ -596,13 +633,7 @@ class Templar:
     def is_template(self, data):
         ''' lets us know if data has a template'''
         if isinstance(data, string_types):
-            try:
-                new = self.do_template(data, fail_on_undefined=True)
-            except (AnsibleUndefinedVariable, UndefinedError):
-                return True
-            except Exception:
-                return False
-            return (new != data)
+            return is_template(data, self.environment)
         elif isinstance(data, (list, tuple)):
             for v in data:
                 if self.is_template(v):
@@ -613,26 +644,7 @@ class Templar:
                     return True
         return False
 
-    def templatable(self, data):
-        '''
-        returns True if the data can be templated w/o errors
-        '''
-        templatable = True
-        try:
-            self.template(data)
-        except Exception:
-            templatable = False
-        return templatable
-
-    def _contains_vars(self, data):
-        '''
-        returns True if the data contains a variable pattern
-        '''
-        if isinstance(data, string_types):
-            for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
-                if marker in data:
-                    return True
-        return False
+    templatable = _contains_vars = is_template
 
     def _convert_bare_variable(self, variable):
         '''
