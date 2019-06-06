@@ -63,8 +63,8 @@ EXAMPLES = '''
 
     - name: Get facts for one resource group including resources it contains
       azure_rm_resourcegroup_info:
-          name: myResourceGroup
-          list_resources: yes
+        name: myResourceGroup
+        list_resources: yes
 '''
 RETURN = '''
 azure_resourcegroups:
