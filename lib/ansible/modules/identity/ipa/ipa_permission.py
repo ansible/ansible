@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -11,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: ipa_permission
-author: Lek
+author: Lek (@HaloGithub)
 short_description: Manage FreeIPA RBAC permission. Tested on FreeIPA v4.6.4.
 description:
 - Add, modify and delete a permission within FreeIPA server using FreeIPA API.
@@ -50,7 +52,7 @@ options:
     default: "present"
     choices: ["present", "absent"]
 extends_documentation_fragment: ipa.documentation
-version_added: "2.8"
+version_added: "2.9"
 '''
 
 EXAMPLES = '''

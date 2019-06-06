@@ -50,4 +50,3 @@
           - '"Testing privilege." in ipa_privilege_output.privilege.description'
           - '"TEST_PERMISSION_02" in ipa_privilege_output.privilege.memberof_permission'
           - ipa_privilege_output.privilege.memberof_permission | length == 1
-
