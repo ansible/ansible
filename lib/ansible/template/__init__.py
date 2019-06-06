@@ -67,6 +67,7 @@ __all__ = ['Templar', 'generate_ansible_template_vars']
 # expand is just a single variable name.
 
 JINJA2_OVERRIDE = '#jinja2:'
+J2O_LEN = len(JINJA2_OVERRIDE)
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = (bool, Number)
 T_F = frozenset(["True", "False"])
@@ -774,9 +775,9 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if hasattr(data, 'startswith') and data.startswith(JINJA2_OVERRIDE):
+            if isinstance(data, string_types) and data[:J2O_LEN] == JINJA2_OVERRIDE:
                 eol = data.find('\n')
-                line = data[len(JINJA2_OVERRIDE):eol]
+                line = data[J2O_LEN:eol]
                 data = data[eol + 1:]
                 for pair in line.split(','):
                     (key, val) = pair.split(':')
