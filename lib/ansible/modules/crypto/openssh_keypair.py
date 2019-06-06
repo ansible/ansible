@@ -107,7 +107,7 @@ fingerprint:
     description: The fingerprint of the key.
     returned: changed or success
     type: str
-    sample: 4096 SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM example@example.com (RSA)
+    sample: SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM
 public_key:
     description: The public key of the generated SSH private key
     returned: changed or success
@@ -232,13 +232,13 @@ class Keypair(object):
         # return result as a dict
 
         """Serialize the object into a dictionary."""
-
         result = {
             'changed': self.changed,
             'size': self.size,
             'type': self.type,
             'filename': self.path,
-            'fingerprint': self.fingerprint,
+            # On removal this has no value
+            'fingerprint': self.fingerprint[1] if self.fingerprint else '',
             'public_key': self.public_key,
         }
 
