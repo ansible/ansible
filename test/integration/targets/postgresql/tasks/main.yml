@@ -203,7 +203,7 @@
     - 'yes'
 
 - set_fact:
-    encryption_values: '{{ encryption_values }} + ["no"]'
+    encryption_values: '{{ encryption_values + ["no"]}}'
   when: postgres_version_resp.stdout is version('10', '<=')
 
 - include: test_password.yml

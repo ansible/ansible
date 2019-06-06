@@ -484,7 +484,7 @@ class Templar:
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                                     result.startswith("[") or result in ("True", "False"):
-                                eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                eval_results = safe_eval(result, include_exceptions=True)
                                 if eval_results[1] is None:
                                     result = eval_results[0]
                                     if unsafe:
