@@ -1,0 +1,2 @@
+bugfixes:
+   - openssh_keypair - The fingerprint return value was incorrectly returning a list of ssh-keygen output; it now returns just the fingerprint value as a string
