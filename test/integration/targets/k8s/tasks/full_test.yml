@@ -18,6 +18,19 @@
       debug:
         var: output
 
+    - name: Setting validate_certs to true causes a failure
+      k8s:
+        name: testing
+        kind: namespace
+        validate_certs: yes
+      ignore_errors: yes
+      register: output
+
+    - name: assert that validate_certs caused a failure (and therefore was correctly translated to verify_ssl)
+      assert:
+        that:
+          - output is failed
+
     - name: k8s_info works with empty resources
       k8s_info:
         kind: Deployment
