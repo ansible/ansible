@@ -15,7 +15,7 @@ from ansible.module_utils.net_tools.netbox.netbox_utils import (
 
 def test_normalize_data():
     assert "name" not in QUERY_TYPES
-    assert QUERY_TYPES.get("rack") == "slug"
+    assert QUERY_TYPES.get("rack") == "name"
     assert QUERY_TYPES.get("primary_ip") != "slug"
 
     raw_data = {
