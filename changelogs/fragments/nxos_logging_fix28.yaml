@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_logging facilties defaults (https://github.com/ansible/ansible/pull/57144).
