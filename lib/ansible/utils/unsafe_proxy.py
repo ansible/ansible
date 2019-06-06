@@ -121,12 +121,12 @@ def is_unsafe(val, recurse=False):
     if getattr(val, '__UNSAFE__', False) or isinstance(val, AnsibleUnsafe):
         return True
 
-    elif recurse:
+    elif recurse and not isinstance(val, string_types):
         if isinstance(val, Mapping):
             for key in val.keys():
                 if is_unsafe(key) or is_unsafe(val[key], True):
                     return True
-        elif isinstance(val, Sequence) and not isinstance(val, string_types):
+        elif isinstance(val, Sequence):
             for item in val:
                 if is_unsafe(item, True):
                     return True
