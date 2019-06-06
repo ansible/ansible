@@ -1,0 +1,2 @@
+minor_changes:
+  - "win_iis_webapplication - add new options ``connect_as``, ``username``, ``password``."
