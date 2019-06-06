@@ -1,4 +1,6 @@
 ---
+- debug: msg="START connection={{ ansible_connection }} ios_ntp sanity test"
+
 - name: remove NTP (if set)
   ios_ntp: &remove
     server: 10.75.32.5
@@ -31,6 +33,15 @@
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: load acl NTP_ACL into device
+    ios_config:
+      lines:
+        - 10 permit ip host 192.0.2.1 any log
+      parents: ip access-list extended NTP_ACL
+    register: result
+
+  - assert: *true
 
   - name: configure NTP
     ios_ntp: &config1
@@ -81,3 +92,9 @@
   always:
   - name: Remove ntp config
     ios_ntp: *remove
+    ignore_errors: yes
+
+  - name: remove NTP_ACL from device
+    ios_config:
+      lines:
+        - no ip access-list extended NTP_ACL
