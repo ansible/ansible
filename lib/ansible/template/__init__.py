@@ -578,7 +578,7 @@ class Templar:
                                         if unsafe:
                                             result = wrap_var(result)
                                     else:
-                                        display.debug("ignored failed safe eval for %s: %s " % (to_text(variable), to_text(eval_results[1]))
+                                        display.debug("ignored failed safe eval for %s: %s " % (to_text(variable), to_text(eval_results[1])))
 
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
