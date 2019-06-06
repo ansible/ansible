@@ -52,7 +52,7 @@
       interface: "{{ nxos_int1|upper }}"
       ospf: 1
       area: 12345678
-      bfd: True
+      bfd: enable
       cost: 55
       passive_interface: true
       hello_interval: 15
@@ -269,7 +269,7 @@
       interface: "{{ testint }}"
       ospf: 1
       area: 12345678
-      bfd: False
+      bfd: disable
       cost: 55
       passive_interface: true
       hello_interval: 15
@@ -285,9 +285,6 @@
     register: result
 
   - assert: *false
-
-  - name: "Interface cleanup"
-    nxos_config: *intdefault
 
   always:
   - name: Disable features

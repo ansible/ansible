@@ -58,9 +58,9 @@ options:
       - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level.
       - Valid values are 'enable', 'disable' or 'default'.
       - "Dependency: 'feature bfd'"
-    default: Not configured
     version_added: "2.9"
     type: str
+    choices: ['enable', 'disable', 'default']
   cost:
     description:
       - The cost associated with this cisco_interface_ospf instance.
@@ -422,7 +422,7 @@ def main():
         interface=dict(required=True, type='str'),
         ospf=dict(required=True, type='str'),
         area=dict(required=True, type='str'),
-        bfd=dict(choices=['enable', 'disable', 'default'], default='default', required=False, type='str'),
+        bfd=dict(choices=['enable', 'disable', 'default'], required=False, type='str'),
         cost=dict(required=False, type='str'),
         hello_interval=dict(required=False, type='str'),
         dead_interval=dict(required=False, type='str'),
