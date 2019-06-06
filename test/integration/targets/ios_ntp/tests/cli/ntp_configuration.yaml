@@ -2,6 +2,7 @@
 - debug: msg="START connection={{ ansible_connection }} ios_ntp sanity test"
 
 - name: remove NTP (if set)
+  become: true
   ios_ntp: &remove
     server: 10.75.32.5
     source_int: "{{ test_interface }}"
@@ -16,6 +17,7 @@
 - block:
 
   - name: configure NTP
+    become: true
     ios_ntp: &config
       server: 10.75.32.5
       source_int: "{{ test_interface }}"
@@ -27,6 +29,7 @@
         - "result.changed == true"
 
   - name: idempotence check
+    become: true
     ios_ntp: *config
     register: result
 
@@ -35,6 +38,7 @@
         - "result.changed == false"
 
   - name: load acl NTP_ACL into device
+    become: true
     ios_config:
       lines:
         - 10 permit ip host 192.0.2.1 any log
@@ -44,6 +48,7 @@
   - assert: *true
 
   - name: configure NTP
+    become: true
     ios_ntp: &config1
       acl: NTP_ACL
       logging: true
@@ -53,12 +58,14 @@
   - assert: *true
 
   - name: idempotence check
+    become: true
     ios_ntp: *config1
     register: result
 
   - assert: *false
 
   - name: configure NTP with diffferen values
+    become: true
     ios_ntp: &config2
       key_id: 10
       auth_key: 15435A030726242723273C21181319000A
@@ -69,12 +76,14 @@
   - assert: *true
 
   - name: idempotence check
+    become: true
     ios_ntp: *config2
     register: result
 
   - assert: *false
 
   - name: remove part of config
+    become: true
     ios_ntp: &config3
       acl: NTP_ACL
       logging: true
@@ -84,6 +93,7 @@
   - assert: *true
 
   - name: idempotence check
+    become: true
     ios_ntp: *config3
     register: result
 
@@ -91,9 +101,11 @@
 
   always:
   - name: Remove ntp config
+    become: true
     ios_ntp: *remove
 
   - name: remove NTP_ACL from device
+    become: true
     ios_config:
       lines:
         - no ip access-list extended NTP_ACL
