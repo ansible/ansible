@@ -598,7 +598,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_together=[['timer_bgp_hold', 'timer_bgp_keepalive']],
-                           supports_check_mode=True)
+                           supports_check_mode=False)
 
     warnings = list()
     check_args(module, warnings)

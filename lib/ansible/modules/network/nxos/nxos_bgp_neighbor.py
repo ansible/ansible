@@ -414,7 +414,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=[['timers_holdtime', 'timers_keepalive'], ['pwd', 'pwd_type']],
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     warnings = list()

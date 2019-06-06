@@ -626,7 +626,7 @@ def main():
                             ['max_prefix_interval', 'max_prefix_warning'],
                             ['default_originate', 'default_originate_route_map'],
                             ['allowas_in', 'allowas_in_max']],
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     warnings = list()

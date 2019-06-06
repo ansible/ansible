@@ -711,7 +711,7 @@ def main():
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
         required_together=[DAMPENING_PARAMS, ['distance_ibgp', 'distance_ebgp', 'distance_local']],
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     warnings = list()
