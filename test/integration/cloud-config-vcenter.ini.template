@@ -15,13 +15,12 @@
 vcenter_username: @VMWARE_USERNAME
 vcenter_password: @VMWARE_PASSWORD
 vcenter_hostname: @VMWARE_HOSTNAME
-vcenter_port: @VMWARE_PORT
 vmware_validate_certs: @VMWARE_VALIDATE_CERTS
 esxi1_username: @ESXI1_USERNAME
 esxi1_hostname: @ESXI1_HOSTNAME
-esxi1_https_port: @ESXI1_HTTPS_PORT
 esxi1_password: @ESXI1_PASSWORD
 esxi2_username: @ESXI2_USERNAME
 esxi2_hostname: @ESXI2_HOSTNAME
-esxi2_https_port: @ESXI2_HTTPS_PORT
 esxi2_password: @ESXI2_PASSWORD
+vmware_proxy_host: @VMWARE_PROXY_HOST
+vmware_proxy_port: @VMWARE_PROXY_PORT
