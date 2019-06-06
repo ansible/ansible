@@ -60,11 +60,9 @@ class TestNxosVpcModule(TestNxosModule):
             """Load vpc output for vrf tests"""
             module, commands = args
             output = list()
-            # import json
             for command in commands:
                 filename = 'vrf_test_' + str(command).split(' | ')[0].replace(' ', '_')
                 output.append(load_fixture('nxos_vpc', filename))
-            # import pdb;pdb.set_trace()
             return output
 
         self.load_config.return_value = None
