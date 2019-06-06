@@ -15,7 +15,7 @@
     name: "{{ vm_name }}"
     address_prefixes: "10.10.0.0/16"
 
-- name: SETUP | Add subnet
+- name: SETUP | Create subnet
   azure_rm_subnet:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name }}"

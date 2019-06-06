@@ -313,4 +313,41 @@
     name: "{{ vm_name }}"
     state: absent
 
-- include_tasks: teardown.yml
+- name: Destroy security group
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: Destroy subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      virtual_network: "{{ vm_name }}"
+      name: "{{ vm_name }}"
+      state: absent
+
+- name: Destroy virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: Destroy public ip
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+
+- name: Destroy availability set
+  azure_rm_availabilityset:
+    resource_group: "{{ resource_group }}"
+    name: "{{ availability_set }}"
+    state: absent
+
+- name: Destroy storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    force_delete_nonempty: true
+    state: absent
+

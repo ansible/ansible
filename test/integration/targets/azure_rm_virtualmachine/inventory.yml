@@ -1,7 +1,8 @@
 all:
   hosts:
-    azure_test_single_nic_no_boot_diag:
-    azure_test_no_public_ip_boot_diag:
+    azure_test_public_ip:
+    azure_test_no_public_ip:
+    azure_test_dual_nic:
       niclist:
         - name: testnic011
           resource_group: "{{ resource_group_secondary }}"
