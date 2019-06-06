@@ -1,2 +1,2 @@
 ---
-testcase: "upgrade"
+testcase: " {{ testcase }}"
