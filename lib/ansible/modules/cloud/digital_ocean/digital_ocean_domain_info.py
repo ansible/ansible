@@ -17,16 +17,17 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_domain_facts
-short_description: Gather facts about DigitalOcean Domains
+module: digital_ocean_domain_info
+short_description: Gather information about DigitalOcean Domains
 description:
-    - This module can be used to gather facts about DigitalOcean provided Domains.
+    - This module can be used to gather information about DigitalOcean provided Domains.
+    - This module was called C(digital_ocean_domain_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   domain_name:
     description:
-     - Name of the domain to gather facts for.
+     - Name of the domain to gather information for.
     required: false
 requirements:
   - "python >= 2.6"
@@ -35,17 +36,17 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all domains
-  digital_ocean_domain_facts:
+- name: Gather information about all domains
+  digital_ocean_domain_info:
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about domain with given name
-  digital_ocean_domain_facts:
+- name: Gather information about domain with given name
+  digital_ocean_domain_info:
     oauth_token: "{{ oauth_token }}"
     domain_name: "example.com"
 
 - name: Get ttl from domain
-  digital_ocean_domain_facts:
+  digital_ocean_domain_info:
   register: resp_out
 - set_fact:
     domain_ttl: "{{ item.ttl }}"
@@ -58,7 +59,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean Domain facts
+    description: DigitalOcean Domain information
     returned: success
     type: list
     sample: [
@@ -129,6 +130,8 @@ def main():
         domain_name=dict(type='str', required=False),
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_domain_facts':
+        module.deprecate("The 'digital_ocean_domain_facts' module has been renamed to 'digital_ocean_domain_info'", version='2.13')
 
     try:
         core(module)

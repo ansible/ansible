@@ -17,10 +17,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_firewall_facts
-short_description: Gather facts about DigitalOcean firewalls
+module: digital_ocean_firewall_info
+short_description: Gather information about DigitalOcean firewalls
 description:
-    - This module can be used to gather facts about DigitalOcean firewalls.
+    - This module can be used to gather information about DigitalOcean firewalls.
+    - This module was called C(digital_ocean_firewall_facts) before Ansible 2.9. The usage did not change.
 author: "Anthony Bond (@BondAnthony)"
 version_added: "2.8"
 options:
@@ -35,17 +36,17 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all firewalls
-  digital_ocean_firewall_facts:
+- name: Gather information about all firewalls
+  digital_ocean_firewall_info:
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about a specific firewall by name
-  digital_ocean_firewall_facts:
+- name: Gather information about a specific firewall by name
+  digital_ocean_firewall_info:
     oauth_token: "{{ oauth_token }}"
     name: "firewall_name"
 
 - name: Gather information from a firewall rule
-  digital_ocean_firewall_facts:
+  digital_ocean_firewall_info:
     name: SSH
   register: resp_out
 
@@ -59,7 +60,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean firewall facts
+    description: DigitalOcean firewall information
     returned: success
     type: list
     sample: [
@@ -122,6 +123,8 @@ def main():
         name=dict(type='str', required=False),
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_firewall_facts':
+        module.deprecate("The 'digital_ocean_firewall_facts' module has been renamed to 'digital_ocean_firewall_info'", version='2.13')
 
     try:
         core(module)
