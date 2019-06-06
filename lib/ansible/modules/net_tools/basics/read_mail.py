@@ -21,7 +21,10 @@ short_description: Module for reading emails from a IMAP server
 version_added: "2.9"
 
 description:
-    - "Get emails from a IMAP server using basic filtering rules an returns an email count and list"
+    - Get emails from a IMAP server using basic filtering rules and returns
+      the email count and a list of dictionaries where each represents an email
+      that satisfied the filters. This module is intended to be used by other 
+      tasks that take actions depending on the result of the emails.
 
 options:
     host:
@@ -31,7 +34,7 @@ options:
         default: localhost
     port:
         description:
-            - IMAP server port (defaults to 993 or 143 when less then 0)
+            - IMAP server port (defaults to 993, if TLS is chosen, or 143 if not)
         required: false
         default: -1
     username:
@@ -42,9 +45,9 @@ options:
         description:
             - Password to get the emails
         required: true
-    ssl:
+    tls:
         description:
-            - Whether to use SSL or not
+            - Whether to use TLS connection or not
         required: false
         default: true
     mailbox:
@@ -54,7 +57,7 @@ options:
         default: INBOX
     filter:
         description:
-            - Default IMAP filters. Checkout the options at RFC 3501 section 6.4.4.
+            - Default IMAP filters. Checkout the options at RFC 3501 section 6.4.4
         required: false
         default: {'ALL': ''}
 
@@ -64,23 +67,20 @@ author:
 '''
 
 EXAMPLES = '''
-# simplest use
-- name: Read mails
+- name: Read mails from "imap.myhost.com" with default user (localhost) and password "mypass"
   read_mail:
     host: imap.myhost.com
     password: mypass
 
-# no ssl and custom username and port
-- name: Read mails
+- name: Read mails from a server with no TLS on port 42
   read_mail:
     host: imap.myhost.com
     port: 42
     username: myuser
     password: mypass
-    ssl: no
+    tls: no
 
-# using filters
-- name: Read mails with 'subject' and 'to' filters
+- name: Read mails with subject "mysubject", and to "example@example.com"
   read_mail:
     host: imap.myhost.com
     port: 42
@@ -102,15 +102,16 @@ EXAMPLES = '''
 
 RETURN = '''
 host:
-    description: The original host param that was passed in
+    description: The host used to perform the request
     type: str
     returned: always
 username:
-    description: The username used in the request
+    description: The username used to perform the request
     type: str
     returned: always
 mails:
-    description: A list of the email's headers that satisfied the filter
+    description: A list of dictionaries with the keys: 'to', 'from' and 'subject',
+    where each one represents an email that satisfied the filter
     type: list
     returned: always
 mails_count:
@@ -136,7 +137,7 @@ def run_module():
         host=dict(type='str', required=False, default='localhost'),
         username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
-        ssl=dict(type='bool', required=False, default=True),
+        tls=dict(type='bool', required=False, default=True),
         port=dict(type='int', required=False, default=-1),
         mailbox=dict(type='str', required=False, default='INBOX'),
         filter=dict(type='dict', required=False, default={'ALL': ''})
@@ -160,7 +161,7 @@ def run_module():
 
     # create connection
     try:
-        if module.params['ssl']:
+        if module.params['tls']:
             port = 993 if module.params['port'] < 0 else module.params['port']
             M = imaplib.IMAP4_SSL(module.params['host'], port=port)
         else:
