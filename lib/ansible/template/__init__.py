@@ -565,7 +565,7 @@ class Templar:
                             if convert_data and not self._no_type_regex.match(variable):
                                 if result in T_F:
                                     result = boolean(result)
-                                elif (result.startswith(("{", "[")) and not result.startswith(self.environment.variable_start_string)):
+                                elif result[0] in ("{", "[") and not result.startswith(self.environment.variable_start_string):
                                     unsafe = is_unsafe(result, recurse=True)
                                     try:
                                         # if this looks like a dictionary or list, convert it to such using the safe_eval method
