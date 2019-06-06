@@ -280,7 +280,7 @@ class InventoryManager(object):
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
-                    display.vvv("%s declined parsing %s as it did not pass it's verify_file() method" % (plugin_name, source))
+                    display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
