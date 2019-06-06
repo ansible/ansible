@@ -81,6 +81,25 @@
       assert:
         that: not output.changed
 
+    - name: Create a ConfigMap
+      k8s:
+        kind: ConfigMap
+        name: test-force-update
+        namespace: testing
+        definition:
+          data:
+            key: value
+
+    - name: Force update ConfigMap
+      k8s:
+        kind: ConfigMap
+        name: test-force-update
+        namespace: testing
+        definition:
+          data:
+            key: newvalue
+        force: yes
+
     - name: Create PVC
       k8s:
         state: present
