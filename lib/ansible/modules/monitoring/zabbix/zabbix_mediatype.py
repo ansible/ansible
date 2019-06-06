@@ -86,11 +86,11 @@ options:
     script_params:
         type: 'list'
         description:
-            - List of script parameters. 
+            - List of script parameters.
             - Required when I(type=script).
     gsm_modem:
         type: 'str'
-        description:    
+        description:
             - Serial device name of the gsm modem.
             - Required when i(type=sms).
     username:
@@ -157,11 +157,13 @@ def to_numeric_value(value, strs):
     except Exception as e:
         return None
 
+
 def validate_params(module, params):
     for param in params:
         if module.params[param[0]] == param[1]:
             if None in [module.params[i] for i in param[2]]:
                 module.fail_json(msg="Following arguments are required when {} is {}: {}".format(param[0], param[1], ', '.join(param[2])))
+
 
 def construct_parameters(**kwargs):
     """
@@ -169,118 +171,119 @@ def construct_parameters(**kwargs):
     """
     if kwargs['transport_type'] == 'email':
         return dict(
-            description = kwargs['name'],
-            status = to_numeric_value(kwargs['status'], 
-                                      {'enabled': 0,
-                                       'disabled': 1}),
-            type = to_numeric_value(kwargs['transport_type'],
-                                              {'email': 0,
-                                               'script': 1,
-                                               'sms': 2,
-                                               'jabber': 3,
-                                               'ez_texting':100}),
-            maxsessions = str(kwargs['max_sessions']),
-            maxattempts = str(kwargs['max_attempts']),
-            attempt_interval = str(kwargs['attempt_interval']),
-            smtp_server = kwargs['smtp_server'],
-            smtp_port = str(kwargs['smtp_server_port']),
-            smtp_helo = kwargs['smtp_helo'],
-            smtp_email = kwargs['smtp_email'],
-            smtp_security = to_numeric_value(str(kwargs['smtp_security']),
-                                             {'None': 0,
-                                              'STARTTLS': 1,
-                                              'SSL/TLS': 2}),
-            smtp_authentication = to_numeric_value(str(kwargs['smtp_authentication']),
-                                                   {'False': 0,
-                                                    'True': 1}),
-            smtp_verify_host = to_numeric_value(str(kwargs['smtp_verify_host']),
-                                                {'False': 0,
-                                                 'True': 1}),
-            smtp_verify_peer = to_numeric_value(str(kwargs['smtp_verify_peer']),
-                                                {'False': 0,
-                                                 'True': 1}),
-            username = kwargs['username'],
-            passwd = kwargs['password']
+            description=kwargs['name'],
+            status=to_numeric_value(kwargs['status'],
+                                    {'enabled': 0,
+                                     'disabled': 1}),
+            type=to_numeric_value(kwargs['transport_type'],
+                                  {'email': 0,
+                                   'script': 1,
+                                   'sms': 2,
+                                   'jabber': 3,
+                                   'ez_texting': 100}),
+            maxsessions=str(kwargs['max_sessions']),
+            maxattempts=str(kwargs['max_attempts']),
+            attempt_interval=str(kwargs['attempt_interval']),
+            smtp_server=kwargs['smtp_server'],
+            smtp_port=str(kwargs['smtp_server_port']),
+            smtp_helo=kwargs['smtp_helo'],
+            smtp_email=kwargs['smtp_email'],
+            smtp_security=to_numeric_value(str(kwargs['smtp_security']),
+                                           {'None': 0,
+                                            'STARTTLS': 1,
+                                            'SSL/TLS': 2}),
+            smtp_authentication=to_numeric_value(str(kwargs['smtp_authentication']),
+                                                 {'False': 0,
+                                                  'True': 1}),
+            smtp_verify_host=to_numeric_value(str(kwargs['smtp_verify_host']),
+                                              {'False': 0,
+                                               'True': 1}),
+            smtp_verify_peer=to_numeric_value(str(kwargs['smtp_verify_peer']),
+                                              {'False': 0,
+                                               'True': 1}),
+            username=kwargs['username'],
+            passwd=kwargs['password']
         )
 
     elif kwargs['transport_type'] == 'script':
         if kwargs['script_params'] is None:
-            _script_params = '' #ZBX-15706
+            _script_params = ''  # ZBX-15706
         else:
             _script_params = '\n'.join(str(i) for i in kwargs['script_params']) + '\n'
         return dict(
-            description = kwargs['name'],
-            status = to_numeric_value(kwargs['status'], 
-                                      {'enabled': 0,
-                                       'disabled': 1}),
-            type = to_numeric_value(kwargs['transport_type'],
-                                              {'email': 0,
-                                               'script': 1,
-                                               'sms': 2,
-                                               'jabber': 3,
-                                               'ez_texting':100}),
-            maxsessions = str(kwargs['max_sessions']),
-            maxattempts = str(kwargs['max_attempts']),
-            attempt_interval = str(kwargs['attempt_interval']),
-            exec_path = kwargs['script_name'],
-            exec_params = _script_params
+            description=kwargs['name'],
+            status=to_numeric_value(kwargs['status'],
+                                    {'enabled': 0,
+                                     'disabled': 1}),
+            type=to_numeric_value(kwargs['transport_type'],
+                                  {'email': 0,
+                                   'script': 1,
+                                   'sms': 2,
+                                   'jabber': 3,
+                                   'ez_texting': 100}),
+            maxsessions=str(kwargs['max_sessions']),
+            maxattempts=str(kwargs['max_attempts']),
+            attempt_interval=str(kwargs['attempt_interval']),
+            exec_path=kwargs['script_name'],
+            exec_params=_script_params
         )
     elif kwargs['transport_type'] == 'sms':
         return dict(
-            description = kwargs['name'],
-            status = to_numeric_value(kwargs['status'], 
-                                      {'enabled': 0,
-                                       'disabled': 1}),
-            type = to_numeric_value(kwargs['transport_type'],
-                                              {'email': 0,
-                                               'script': 1,
-                                               'sms': 2,
-                                               'jabber': 3,
-                                               'ez_texting':100}),
-            maxsessions = str(kwargs['max_sessions']),
-            maxattempts = str(kwargs['max_attempts']),
-            attempt_interval = str(kwargs['attempt_interval']),
-            gsm_modem = kwargs['gsm_modem']
+            description=kwargs['name'],
+            status=to_numeric_value(kwargs['status'],
+                                    {'enabled': 0,
+                                     'disabled': 1}),
+            type=to_numeric_value(kwargs['transport_type'],
+                                  {'email': 0,
+                                   'script': 1,
+                                   'sms': 2,
+                                   'jabber': 3,
+                                   'ez_texting': 100}),
+            maxsessions=str(kwargs['max_sessions']),
+            maxattempts=str(kwargs['max_attempts']),
+            attempt_interval=str(kwargs['attempt_interval']),
+            gsm_modem=kwargs['gsm_modem']
         )
     elif kwargs['transport_type'] == 'jabber':
         return dict(
-            description = kwargs['name'],
-            status = to_numeric_value(kwargs['status'], 
-                                      {'enabled': 0,
-                                       'disabled': 1}),
-            type = to_numeric_value(kwargs['transport_type'],
-                                              {'email': 0,
-                                               'script': 1,
-                                               'sms': 2,
-                                               'jabber': 3,
-                                               'ez_texting':100}),
-            maxsessions = str(kwargs['max_sessions']),
-            maxattempts = str(kwargs['max_attempts']),
-            attempt_interval = str(kwargs['attempt_interval']),
-            username = kwargs['username'],
-            passwd = kwargs['password']
+            description=kwargs['name'],
+            status=to_numeric_value(kwargs['status'],
+                                    {'enabled': 0,
+                                     'disabled': 1}),
+            type=to_numeric_value(kwargs['transport_type'],
+                                  {'email': 0,
+                                   'script': 1,
+                                   'sms': 2,
+                                   'jabber': 3,
+                                   'ez_texting': 100}),
+            maxsessions=str(kwargs['max_sessions']),
+            maxattempts=str(kwargs['max_attempts']),
+            attempt_interval=str(kwargs['attempt_interval']),
+            username=kwargs['username'],
+            passwd=kwargs['password']
         )
     elif kwargs['transport_type'] == 'ez_texting':
         return dict(
-            description = kwargs['name'],
-            status = to_numeric_value(kwargs['status'], 
-                                      {'enabled': 0,
-                                       'disabled': 1}),
-            type = to_numeric_value(kwargs['transport_type'],
-                                              {'email': 0,
-                                               'script': 1,
-                                               'sms': 2,
-                                               'jabber': 3,
-                                               'ez_texting':100}),
-            maxsessions = str(kwargs['max_sessions']),
-            maxattempts = str(kwargs['max_attempts']),
-            attempt_interval = str(kwargs['attempt_interval']),
-            username = kwargs['username'],
-            passwd = kwargs['password'],
-            exec_path = to_numeric_value(kwargs['message_text_limit'],
-                                         {'USA': 0,
-                                          'Canada': 1}),
+            description=kwargs['name'],
+            status=to_numeric_value(kwargs['status'],
+                                    {'enabled': 0,
+                                     'disabled': 1}),
+            type=to_numeric_value(kwargs['transport_type'],
+                                  {'email': 0,
+                                   'script': 1,
+                                   'sms': 2,
+                                   'jabber': 3,
+                                   'ez_texting': 100}),
+            maxsessions=str(kwargs['max_sessions']),
+            maxattempts=str(kwargs['max_attempts']),
+            attempt_interval=str(kwargs['attempt_interval']),
+            username=kwargs['username'],
+            passwd=kwargs['password'],
+            exec_path=to_numeric_value(kwargs['message_text_limit'],
+                                       {'USA': 0,
+                                        'Canada': 1}),
         )
+
 
 def check_if_mediatype_exists(module, zbx, name):
     """
@@ -298,6 +301,7 @@ def check_if_mediatype_exists(module, zbx, name):
     except Exception as e:
         module.fail_json(msg="Failed to get ID of the mediatype '{}': {}".format(name, e))
 
+
 def difference(module, zbx, mediatype_id, **kwargs):
     existing_mediatype = container_to_bytes(zbx.mediatype.get({
         'output': 'extend',
@@ -308,15 +312,17 @@ def difference(module, zbx, mediatype_id, **kwargs):
     else:
         _diff = {}
         for key in kwargs:
-            if (not (kwargs[key] == None and existing_mediatype[key] == '')) and kwargs[key] != existing_mediatype[key]:
+            if (not (kwargs[key] is None and existing_mediatype[key] == '')) and kwargs[key] != existing_mediatype[key]:
                 _diff[key] = kwargs[key]
         return _diff
+
 
 def delete_mediatype(module, zbx, mediatype_id):
     try:
         return zbx.mediatype.delete([mediatype_id])
     except Exception as e:
         module.fail_json(msg="Failed to delete mediatype '{}': {}".format(mediatype_id, e))
+
 
 def update_mediatype(module, zbx, **kwargs):
     try:
@@ -325,14 +331,16 @@ def update_mediatype(module, zbx, **kwargs):
     except Exception as e:
         module.fail_json(msg="Failed to update mediatype '{}': {}".format(kwargs['mediatypeid'], e))
 
+
 def create_mediatype(module, zbx, **kwargs):
     try:
         mediatype_id = zbx.mediatype.create(kwargs)
     except Exception as e:
         module.fail_json(msg="Failed to create mediatype '{}': {}".format(kwargs['description'], e))
 
+
 def main():
-    argument_spec=dict(
+    argument_spec = dict(
         server_url=dict(type='str', required=True, aliases=['url']),
         login_user=dict(type='str', required=True),
         login_password=dict(type='str', required=True, no_log=True),
@@ -457,7 +465,7 @@ def main():
     )
 
     if mediatype_exists:
-        #TODO: Check mode!!!
+        # TODO: Check mode!!!
         if state == 'absent':
             mediatype_id = delete_mediatype(module, zbx, mediatype_id)
             module.exit_json(changed=True, msg="Mediatype deleted. Name: {}, ID: {}".format(name, mediatype_id))
