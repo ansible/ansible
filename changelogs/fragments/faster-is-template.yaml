@@ -1,0 +1,5 @@
+minor_changes:
+- Templar - Speed up ``is_template`` by lexing the string, instead of actually
+  templating the string (https://github.com/ansible/ansible/pull/57489)
+- InventoryManager - Speed up host subset calculation by performing direct host
+  uuid comparisons, instead of Host object comparisons

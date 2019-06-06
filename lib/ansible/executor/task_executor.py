@@ -231,7 +231,7 @@ class TaskExecutor:
                 loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, loader=self._loader, fail_on_undefined=fail,
                                                          convert_bare=False)
                 if not fail:
-                    loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
+                    loop_terms = [t for t in loop_terms if not templar.is_template(t)]
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
@@ -427,7 +427,7 @@ class TaskExecutor:
             # with_items loop) so don't make the templated string permanent yet.
             templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
             task_action = self._task.action
-            if templar._contains_vars(task_action):
+            if templar.is_template(task_action):
                 task_action = templar.template(task_action, fail_on_undefined=False)
 
             if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
@@ -445,7 +445,7 @@ class TaskExecutor:
                     # contains a template that we can squash for
                     template_no_item = template_with_item = None
                     if name:
-                        if templar._contains_vars(name):
+                        if templar.is_template(name):
                             variables[loop_var] = '\0$'
                             template_no_item = templar.template(name, variables, cache=False)
                             variables[loop_var] = '\0@'
