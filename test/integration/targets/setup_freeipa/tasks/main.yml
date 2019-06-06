@@ -1,6 +1,10 @@
 ---
 
 - block:
+    - name: Ensure FreeIPA server hostname is set.
+      hostname:
+        name: "{{ freeipa_server_domain }}"
+
     - name: Install Samba.
       yum:
         name: samba
