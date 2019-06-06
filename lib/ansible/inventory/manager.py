@@ -69,9 +69,9 @@ def order_patterns(patterns):
     pattern_intersection = []
     pattern_exclude = []
     for p in patterns:
-        if p.startswith("!"):
+        if p[0] == "!":
             pattern_exclude.append(p)
-        elif p.startswith("&"):
+        elif p[0] == "&":
             pattern_intersection.append(p)
         elif p:
             pattern_regular.append(p)
@@ -328,7 +328,7 @@ class InventoryManager(object):
     def _match_list(self, items, pattern_str):
         # compile patterns
         try:
-            if not pattern_str.startswith('~'):
+            if not pattern_str[0] == '~':
                 pattern = re.compile(fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
@@ -410,10 +410,10 @@ class InventoryManager(object):
                 hosts.append(self._inventory.get_host(p))
             else:
                 that = self._match_one_pattern(p)
-                if p.startswith("!"):
+                if p[0] == "!":
                     that = frozenset(that)
                     hosts = [h for h in hosts if h not in that]
-                elif p.startswith("&"):
+                elif p[0] == "&":
                     that = frozenset(that)
                     hosts = [h for h in hosts if h in that]
                 else:
@@ -550,7 +550,7 @@ class InventoryManager(object):
                 results.extend(self._inventory.groups[groupname].get_hosts())
 
         # check hosts if no groups matched or it is a regex/glob pattern
-        if not matching_groups or pattern.startswith('~') or any(special in pattern for special in ('.', '?', '*', '[')):
+        if not matching_groups or pattern[0] == '~' or any(special in pattern for special in ('.', '?', '*', '[')):
             # pattern might match host
             matching_hosts = self._match_list(self._inventory.hosts, pattern)
             if matching_hosts:
@@ -616,7 +616,7 @@ class InventoryManager(object):
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:
-                if x.startswith("@"):
+                if x[0] == "@":
                     fd = open(x[1:])
                     results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
                     fd.close()
