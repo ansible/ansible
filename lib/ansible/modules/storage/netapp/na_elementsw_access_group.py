@@ -216,8 +216,8 @@ class ElementSWAccessGroup(object):
         # Validate account id
         # Return account_id if found, None otherwise
         try:
-            account_id = self.elementsw_helper.account_exists(self.account_id)
-            return account_id
+            self.account_id = self.elementsw_helper.account_exists(self.account_id)
+            return self.account_id
         except Exception:
             return None
 
