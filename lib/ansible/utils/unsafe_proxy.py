@@ -124,7 +124,7 @@ def is_unsafe(val, recurse=False):
     elif recurse:
         if isinstance(val, Mapping):
             for key in val.keys():
-                if is_unsafe(val[key], True):
+                if is_unsafe(key) or is_unsafe(val[key], True):
                     return True
         elif isinstance(val, Sequence) and not isinstance(val, string_types):
             for item in val:
