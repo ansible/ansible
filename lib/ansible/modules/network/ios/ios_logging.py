@@ -38,7 +38,7 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', 'console', 'monitor', 'buffered']
+    choices: ['on', 'host', 'console', 'monitor', 'buffered', 'trap']
   name:
     description:
       - If value of C(dest) is I(file) it indicates file-name,
@@ -55,6 +55,8 @@ options:
   level:
     description:
       - Set logging severity levels.
+    default: debugging
+    choices: ['emergencies', 'alerts', 'critical', 'errors', 'warnings', 'notifications', 'informational', 'debugging']
   aggregate:
     description: List of logging definitions.
   state:
@@ -137,7 +139,7 @@ def validate_size(value, module):
 
 
 def map_obj_to_commands(updates, module, os_version):
-    dest_group = ('console', 'monitor', 'buffered', 'on')
+    dest_group = ('console', 'monitor', 'buffered', 'on', 'trap')
     commands = list()
     want, have = updates
     for w in want:
@@ -164,7 +166,7 @@ def map_obj_to_commands(updates, module, os_version):
                     commands.append('no logging {0}'.format(dest))
 
                 else:
-                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on, trap')
 
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
@@ -269,7 +271,7 @@ def parse_level(line, dest):
 
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility', 'trap')
 
     data = get_config(module, flags=['| include logging'])
 
@@ -374,11 +376,12 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
+        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered', 'trap']),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str'),
-        level=dict(type='str', default='debugging'),
+        level=dict(type='str', default='debugging', choices=['emergencies', 'alerts', 'critical', 'errors', 'warnings',
+                                                             'notifications', 'informational', 'debugging']),
         state=dict(default='present', choices=['present', 'absent']),
     )
 
