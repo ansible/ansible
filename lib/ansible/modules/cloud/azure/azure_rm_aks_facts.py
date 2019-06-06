@@ -83,7 +83,7 @@ except Exception:
 AZURE_OBJECT_CLASS = 'managedClusters'
 
 
-class AzureRMManagedClusterFfacts(AzureRMModuleBase):
+class AzureRMManagedClusterFacts(AzureRMModuleBase):
     """Utility class to get Azure Kubernetes Service facts"""
 
     def __init__(self):
