@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbserver
 version_added: "2.8"
-short_description: Manage MariaDB Server instance
+short_description: Manage MariaDB Server instance.
 description:
     - Create, update and delete instance of MariaDB Server.
 
@@ -37,17 +37,14 @@ options:
         suboptions:
             name:
                 description:
-                    - The name of the SKU, typically, tier + family + cores, for example C(B_Gen4_1), C(GP_Gen5_8).
+                    - The name of the sku, typically, a letter + Number code, e.g. P3.
             tier:
                 description:
-                    - The tier of the particular SKU, for example C(Basic).
-                choices:
-                    - basic
-                    - standard
+                    - The tier of the particular SKU, e.g. Basic.
+                choices: ['basic', 'standard']
             capacity:
                 description:
-                    - The scale up/out capacity, representing server's compute units.
-                type: int
+                    - "The scale up/out capacity, representing server's compute units."
             size:
                 description:
                     - The size code, to be interpreted by resource as appropriate.
@@ -57,12 +54,10 @@ options:
     storage_mb:
         description:
             - The maximum storage allowed for a server.
-        type: int
     version:
         description:
             - Server version.
-        choices:
-            - 10.2
+        choices: ['10.2']
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -70,13 +65,13 @@ options:
         default: False
     admin_username:
         description:
-            - The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation).
+            - "The administrator's login name of a server. Can only be specified when the server is being created (and is required for creation)."
     admin_password:
         description:
             - The password of the administrator login.
     create_mode:
         description:
-            - Create mode of SQL Server.
+            - Create mode of SQL Server
         default: Default
     state:
         description:
@@ -91,8 +86,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - Zim Kalinowski (@zikalino)
-    - Matti Ranta (@techknowlogick)
+    - "Zim Kalinowski (@zikalino)"
+    - "Matti Ranta (@techknowlogick)"
 
 '''
 
@@ -115,19 +110,19 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID.
+        - Resource ID
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/mariadbsrv1b6dd89593
 version:
     description:
-        - Server version. Possible values include C(10.2).
+        - 'Server version. Possible values include: C(10.2)'
     returned: always
     type: str
     sample: 10.2
 state:
     description:
-        - A state of a server that is visible to user. Possible values include C(Ready), C(Dropping), C(Disabled).
+        - 'A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)'
     returned: always
     type: str
     sample: Ready

@@ -20,10 +20,10 @@ module: azure_rm_resourcegroup_info
 
 version_added: "2.9"
 
-short_description: Get resource group facts.
+short_description: Get resource group information.
 
 description:
-    - Get facts for a specific resource group or all resource groups.
+    - Get information for a specific resource group or all resource groups.
 
 options:
     name:
@@ -48,23 +48,23 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get facts for one resource group
+    - name: Get information for one resource group
       azure_rm_resourcegroup_info:
         name: myResourceGroup
 
-    - name: Get facts for all resource groups
+    - name: Get information for all resource groups
       azure_rm_resourcegroup_info:
 
-    - name: Get facts by tags
+    - name: Get information by tags
       azure_rm_resourcegroup_info:
         tags:
           - testing
           - foo:bar
 
-    - name: Get facts for one resource group including resources it contains
+    - name: Get information for one resource group including resources it contains
       azure_rm_resourcegroup_info:
-        name: myResourceGroup
-        list_resources: yes
+          name: myResourceGroup
+          list_resources: yes
 '''
 RETURN = '''
 azure_resourcegroups:

@@ -44,7 +44,7 @@
      - output.state.tags.delete == 'on-exit'
      - output.state.tags.foo == 'bar'
 
-- name: Gather facts by tags
+- name: Gather information by tags
   azure_rm_resourcegroup_info:
     tags:
       - testing
@@ -113,7 +113,7 @@
       location: "{{ location }}"
   register: output
 
-- name: Gather facts for a resource group
+- name: Gather information for a resource group
   azure_rm_resourcegroup_info:
       name: "{{ resource_group }}"
   register: output
@@ -121,7 +121,7 @@
 - assert:
       that: azure_resourcegroups | length == 1
 
-- name: Gather facts for all resource groups
+- name: Gather information for all resource groups
   azure_rm_resourcegroup_info:
   register: output
 

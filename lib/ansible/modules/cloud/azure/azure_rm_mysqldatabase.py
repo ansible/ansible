@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mysqldatabase
 version_added: "2.5"
-short_description: Manage MySQL Database instance
+short_description: Manage MySQL Database instance.
 description:
     - Create, update and delete instance of MySQL Database.
 
@@ -37,17 +37,21 @@ options:
     charset:
         description:
             - The charset of the database. Check MySQL documentation for possible values.
-            - This is only set on creation, use I(force_update) to recreate a database if the values don't match.
+            - This is only set on creation, use I(force_update) to recreate a database if the
+              values don't match.
     collation:
         description:
             - The collation of the database. Check MySQL documentation for possible values.
-            - This is only set on creation, use I(force_update) to recreate a database if the values don't match.
+            - This is only set on creation, use I(force_update) to recreate a database if the
+              values don't match.
     force_update:
-        description:
-            - When set to C(true), will delete and recreate the existing MySQL database if any of the properties don't match what is set.
-            - When set to C(false), no change will occur to the database even if any of the properties do not match.
-        type: bool
-        default: 'no'
+      description:
+          - When set to C(true), will delete and recreate the existing MySQL database if any
+            of the properties don't match what is set.
+          - When set to C(false), no change will occur to the database even if any
+            of the properties do not match.
+      type: bool
+      default: 'no'
     state:
         description:
             - Assert the state of the MySQL Database. Use C(present) to create or update a database and C(absent) to delete it.
@@ -60,7 +64,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - Zim Kalinowski (@zikalino)
+    - "Zim Kalinowski (@zikalino)"
 
 '''
 
@@ -75,7 +79,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID.
+        - Resource ID
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testserver/databases/db1
