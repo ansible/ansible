@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: read_mail
 
@@ -23,7 +23,7 @@ version_added: "2.9"
 description:
     - Get emails from a IMAP server using basic filtering rules and returns
       the email count and a list of dictionaries where each represents an email
-      that satisfied the filters. This module is intended to be used by other 
+      that satisfied the filters. This module is intended to be used by other
       tasks that take actions depending on the result of the emails.
 
 options:
@@ -66,7 +66,7 @@ author:
     - Gabriely Rangel (@gprangel)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Read mails from "imap.myhost.com" with default user (localhost) and password "mypass"
   read_mail:
     host: imap.myhost.com
@@ -100,7 +100,7 @@ EXAMPLES = '''
       unseen:
 '''
 
-RETURN = '''
+RETURN = r'''
 host:
     description: The host used to perform the request
     type: str
