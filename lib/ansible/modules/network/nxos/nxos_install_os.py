@@ -222,6 +222,8 @@ def parse_show_install(data):
             ud['server_error'] = True
         elif data == -32603:
             ud['server_error'] = True
+        elif data == 1:
+            ud['server_error'] = True
         return ud
     else:
         ud['list_data'] = data.split('\n')
