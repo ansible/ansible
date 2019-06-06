@@ -2,3 +2,11 @@ destructive
 shippable/posix/group2
 skip/freebsd
 skip/osx
+skip/linux/centos6
+skip/linux/fedora28
+skip/linux/fedora29
+skip/linux/opensuse15py2
+skip/linux/opensuse15
+skip/linux/ubuntu1604
+skip/linux/ubuntu1804
+skip/windows

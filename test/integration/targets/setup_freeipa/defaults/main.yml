@@ -10,8 +10,8 @@ freeipa_admin_password: 12345678
 
 freeipa_server_ip: "{{ ansible_default_ipv4.address }}"
 
-freeipa_domain: example.local
+freeipa_domain: "{{ ansible_hostname }}"
 
-freeipa_server_domain: freeipa-master.example.local
+freeipa_server_domain: "freeipa-master.{{ ansible_hostname }}"
 
 freeipa_validate_certs: false
