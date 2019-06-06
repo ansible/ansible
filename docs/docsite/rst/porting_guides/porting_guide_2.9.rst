@@ -144,6 +144,7 @@ Noteworthy module changes
 * The ``azure_rm_virtualnetwork_facts`` module was renamed to :ref:`azure_rm_virtualnetwork_info <azure_rm_virtualnetwork_info_module>`.
 * The ``azure_rm_virtualnetworkpeering_facts`` module was renamed to :ref:`azure_rm_virtualnetworkpeering_info <azure_rm_virtualnetworkpeering_info_module>`.
 * The ``azure_rm_webapp_facts`` module was renamed to :ref:`azure_rm_webapp_info <azure_rm_webapp_info_module>`.
+
 Plugins
 =======
 
