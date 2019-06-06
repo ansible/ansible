@@ -15,6 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_aksversion_facts
+
 version_added: "2.8"
 
 short_description: Get available kubernetes versions supported by Azure Kubernetes Service
