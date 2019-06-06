@@ -360,8 +360,8 @@ class InventoryManager(object):
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset = self._evaluate_patterns(self._subset)
-                    hosts = [h for h in hosts if h in subset]
+                    subset_uuids = [s._uuid for s in self._evaluate_patterns(self._subset)]
+                    hosts = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
