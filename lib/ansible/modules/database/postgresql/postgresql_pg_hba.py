@@ -493,6 +493,8 @@ class PgHbaRule(dict):
                 cols.insert(4, None)
             if len(cols) < 7:
                 cols.insert(7, None)
+            else:
+                cols[6] = " ".join(cols[6:])
             if cols[5] not in PG_HBA_METHODS:
                 raise PgHbaValueError("Rule {0} has no valid method.".format(line))
         rule = dict(zip(PG_HBA_HDR, cols[:7]))
