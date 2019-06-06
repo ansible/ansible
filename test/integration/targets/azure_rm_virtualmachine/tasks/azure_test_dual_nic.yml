@@ -130,16 +130,3 @@
     vm_size: Standard_A0
   async: 5000
   poll: 0
-
-# - name: Destroy availability set
-#   azure_rm_availabilityset:
-#     resource_group: "{{ resource_group }}"
-#     name: "{{ availability_set }}"
-#     state: absent
-
-# - name: Destroy storage account
-#   azure_rm_storageaccount:
-#     resource_group: "{{ resource_group }}"
-#     name: "{{ storage_account }}"
-#     force_delete_nonempty: true
-#     state: absent

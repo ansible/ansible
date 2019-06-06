@@ -350,4 +350,3 @@
     name: "{{ storage_account }}"
     force_delete_nonempty: true
     state: absent
-
