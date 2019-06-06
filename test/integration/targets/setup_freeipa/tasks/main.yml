@@ -19,6 +19,7 @@
 
     - name: Check ipa-server setup.
       command: ipa service-find --all
+      ignore_errors: false
       register: freeipa_output
 
     - name: Configure ipa-server.
