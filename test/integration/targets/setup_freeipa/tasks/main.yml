@@ -1,15 +1,5 @@
 ---
 
-# - name: Ensure FreeIPA server hostname is set.
-#   hostname:
-#     name: "{{ freeipa_server_domain }}"
-
-- name: Setup local DNS.
-  lineinfile:
-    path: /etc/hosts
-    regexp: ^127\.0\.0\.1
-    line: "127.0.0.1 {{ freeipa_server_domain }}"
-
 - name: Install Samba.
   yum:
     name: samba
@@ -18,8 +8,8 @@
 - name: Install ipa-server packages.
   yum:
     name:
-      - "ipa-server-{{ freeipa_version }}"
-      - "ipa-server-dns-{{ freeipa_version }}"
+      - "ipa-server"
+      - "ipa-server-dns"
     state: present
 
 - name: Configure ipa-server.

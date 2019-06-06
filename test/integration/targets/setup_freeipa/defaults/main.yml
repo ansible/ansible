@@ -1,7 +1,5 @@
 ---
 
-freeipa_version: 4.6.4-10.el7.centos.3
-
 freeipa_ds_password: 12345678
 
 freeipa_admin: admin

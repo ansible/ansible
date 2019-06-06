@@ -1,5 +1,6 @@
 destructive
 shippable/posix/group2
+skip/docker
 skip/freebsd
 skip/osx
 skip/centos6
