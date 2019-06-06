@@ -71,10 +71,18 @@ class Cliconf(CliconfBase):
             if format not in option_values['format']:
                 raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ', '.join(option_values['format'])))
 
+        if not flags:
+            flags = []
+
         if format == 'text':
-            out = self.send_command('show configuration')
+            command = 'show configuration'
         else:
-            out = self.send_command('show configuration commands')
+            command = 'show configuration commands'
+
+        command += ' '.join(to_list(flags))
+        command = command.strip()
+
+        out = self.send_command(command)
         return out
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
