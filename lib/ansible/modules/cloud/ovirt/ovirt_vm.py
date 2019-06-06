@@ -262,7 +262,7 @@ options:
         version_added: "2.5"
     lease:
         description:
-            - Name of the storage domain this virtual machine lease reside on.
+            - Name of the storage domain this virtual machine lease reside on. Pass an empty string to remove the lease.
             - NOTE - Supported since oVirt 4.1.
         version_added: "2.4"
     custom_compatibility_version:
@@ -1345,7 +1345,7 @@ class VmsModule(BaseModule):
                     id=get_id_by_name(
                         service=self._connection.system_service().storage_domains_service(),
                         name=self.param('lease')
-                    )
+                    ) if self.param('lease') else None
                 )
             ) if self.param('lease') is not None else None,
             cpu=otypes.Cpu(
