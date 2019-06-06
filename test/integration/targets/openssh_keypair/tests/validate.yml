@@ -1,3 +1,33 @@
+- name: Log privatekey1 return values
+  debug:
+    var: privatekey1_result
+
+- name: Validate privatekey1 return fingerprint
+  assert:
+    that:
+      - privatekey1_result["fingerprint"] is string
+      - privatekey1_result["fingerprint"].startswith("SHA256:")
+  # only distro old enough that it still gives md5 with no prefix
+  when: ansible_distribution != 'CentOS' and ansible_distribution_major_version != '6'
+
+- name: Validate privatekey1 return public_key
+  assert:
+    that:
+      - privatekey1_result["public_key"] is string
+      - privatekey1_result["public_key"].startswith("ssh-rsa ")
+
+- name: Validate privatekey1 return size value
+  assert:
+    that:
+      - privatekey1_result["size"]|type_debug == 'int'
+      - privatekey1_result["size"] == 4096
+
+- name: Validate privatekey1 return key type
+  assert:
+    that:
+      - privatekey1_result["type"] is string
+      - privatekey1_result["type"] == "rsa"
+
 - name: Validate privatekey1 (test - RSA key with size 4096 bits)
   shell: "ssh-keygen -lf {{ output_dir }}/privatekey1 | grep -o -E '^[0-9]+'"
   register: privatekey1
