@@ -3,10 +3,3 @@ shippable/posix/group2
 skip/docker
 skip/freebsd
 skip/osx
-skip/centos6
-skip/fedora28
-skip/fedora29
-skip/opensuse15py2
-skip/opensuse15
-skip/ubuntu1604
-skip/ubuntu1804
