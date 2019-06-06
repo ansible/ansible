@@ -1,5 +1,12 @@
 ---
-- { include: network_cli.yaml, tags: ['cli'] }
-- { include: network_local.yaml, tags: ['local'] }
-- { include: httpapi.yaml, tags: ['httpapi'] }
-- { include: nxapi.yaml, tags: ['nxapi'] }
+# Upgrade using SSH
+- include: network_cli.yaml
+  when: connection_type == 'network_cli'
+- include: network_local.yaml
+  when: connection_type == 'cli_local'
+
+# Upgrade using NX-API
+- include: httpapi.yaml
+  when: connection_type == 'httpapi'
+- include: nxapi.yaml
+  when: connection_type == 'nxapi_local'
