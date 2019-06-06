@@ -61,6 +61,20 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
     """
     res = {}
 
+    def resolve_href(value):
+        # Fetch nested values of struct:
+        try:
+            value = connection.follow_link(value)
+        except sdk.Error:
+            value = None
+        nested_obj = dict(
+            (attr, convert_value(getattr(value, attr)))
+            for attr in attributes if getattr(value, attr, None)
+        )
+        nested_obj['id'] = getattr(value, 'id', None)
+        nested_obj['href'] = getattr(value, 'href', None)
+        return nested_obj
+
     def remove_underscore(val):
         if val.startswith('_'):
             val = val[1:]
@@ -73,19 +87,8 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
         if isinstance(value, sdk.Struct):
             if not fetch_nested or not value.href:
                 return get_dict_of_struct(value)
+            return resolve_href(value)
 
-            # Fetch nested values of struct:
-            try:
-                value = connection.follow_link(value)
-            except sdk.Error:
-                value = None
-            nested_obj = dict(
-                (attr, convert_value(getattr(value, attr)))
-                for attr in attributes if getattr(value, attr, None)
-            )
-            nested_obj['id'] = getattr(value, 'id', None)
-            nested_obj['href'] = getattr(value, 'href', None)
-            return nested_obj
         elif isinstance(value, Enum) or isinstance(value, datetime):
             return str(value)
         elif isinstance(value, list) or isinstance(value, sdk.List):
@@ -99,7 +102,9 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
             ret = []
             for i in value:
                 if isinstance(i, sdk.Struct):
-                    if not nested:
+                    if fetch_nested and i.href:
+                        ret.append(resolve_href(i))
+                    elif not nested:
                         ret.append(get_dict_of_struct(i))
                     else:
                         nested_obj = dict(
