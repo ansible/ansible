@@ -48,6 +48,18 @@ IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS
 
 IGNORED = re.compile(b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
 
+PATTERN_WITH_SUBSCRIPT = re.compile(
+    r'''^
+        (.+)                    # A pattern expression ending with...
+        \[(?:                   # A [subscript] expression comprising:
+            (-?[0-9]+)|         # A single positive or negative number
+            ([0-9]+)([:-])      # Or an x:y or x: range.
+            ([0-9]*)
+        )\]
+        $
+    ''', re.X
+)
+
 
 def order_patterns(patterns):
     ''' takes a list of patterns and reorders them by modifier to apply them consistently '''
@@ -347,10 +359,10 @@ class InventoryManager(object):
 
         if pattern_hash:
             if not ignore_limits and self._subset:
-                pattern_hash += u":%s" % to_text(self._subset, errors='surrogate_or_strict')
+                pattern_hash += u":%s" % u':'.join(self._subset)
 
             if not ignore_restrictions and self._restriction:
-                pattern_hash += u":%s" % to_text(self._restriction, errors='surrogate_or_strict')
+                pattern_hash += u":%s" % u':'.join(self._restriction)
 
             if pattern_hash not in self._hosts_patterns_cache:
 
@@ -360,7 +372,7 @@ class InventoryManager(object):
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset_uuids = [s._uuid for s in self._evaluate_patterns(self._subset)]
+                    subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
                     hosts = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
@@ -399,11 +411,14 @@ class InventoryManager(object):
             else:
                 that = self._match_one_pattern(p)
                 if p.startswith("!"):
-                    hosts = [h for h in hosts if h not in frozenset(that)]
+                    that = frozenset(that)
+                    hosts = [h for h in hosts if h not in that]
                 elif p.startswith("&"):
-                    hosts = [h for h in hosts if h in frozenset(that)]
+                    that = frozenset(that)
+                    hosts = [h for h in hosts if h in that]
                 else:
-                    hosts.extend([h for h in that if h.name not in frozenset([y.name for y in hosts])])
+                    added_hosts = frozenset(y.name for y in hosts)
+                    hosts.extend([h for h in that if h.name not in added_hosts])
         return hosts
 
     def _match_one_pattern(self, pattern):
@@ -444,7 +459,7 @@ class InventoryManager(object):
         Duplicate matches are always eliminated from the results.
         """
 
-        if pattern.startswith("&") or pattern.startswith("!"):
+        if pattern[1] in ("&", "!"):
             pattern = pattern[1:]
 
         if pattern not in self._pattern_cache:
@@ -469,7 +484,7 @@ class InventoryManager(object):
         """
 
         # Do not parse regexes for enumeration info
-        if pattern.startswith('~'):
+        if pattern[1] == '~':
             return (pattern, None)
 
         # We want a pattern followed by an integer or range subscript.
@@ -489,7 +504,7 @@ class InventoryManager(object):
         )
 
         subscript = None
-        m = pattern_with_subscript.match(pattern)
+        m = PATTERN_WITH_SUBSCRIPT.match(pattern)
         if m:
             (pattern, idx, start, sep, end) = m.groups()
             if idx:
@@ -585,7 +600,7 @@ class InventoryManager(object):
             return
         elif not isinstance(restriction, list):
             restriction = [restriction]
-        self._restriction = [h.name for h in restriction]
+        self._restriction = set(to_text(h.name) for h in restriction)
 
     def subset(self, subset_pattern):
         """
@@ -603,10 +618,10 @@ class InventoryManager(object):
             for x in subset_patterns:
                 if x.startswith("@"):
                     fd = open(x[1:])
-                    results.extend([l.strip() for l in fd.read().split("\n")])
+                    results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
                     fd.close()
                 else:
-                    results.append(x)
+                    results.append(to_text(x))
             self._subset = results
 
     def remove_restriction(self):
