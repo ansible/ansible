@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nxapi local failures nxos_install_os (https://github.com/ansible/ansible/pull/55993).
