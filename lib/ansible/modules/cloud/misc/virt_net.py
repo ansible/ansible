@@ -308,7 +308,7 @@ class LibvirtConnection(object):
                 else:
                     if not self.module.check_mode:
                         update_host = etree.fromstring(xml)
-                        for child in update_host.getchildren():
+                        for child in list(update_host):
                             update_host.remove(child)
                         delete_xml = etree.tostring(update_host, encoding='utf8').decode('utf8')
                         res = 0
