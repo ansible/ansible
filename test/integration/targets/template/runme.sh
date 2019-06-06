@@ -9,3 +9,6 @@ ansible testhost -i testhost, -m debug -a 'msg={{ hostvars["localhost"] }}' -e "
 
 # Test for https://github.com/ansible/ansible/issues/27262
 ansible-playbook ansible_managed.yml -c  ansible_managed.cfg -i ../../inventory -e @../../integration_config.yml -v "$@"
+
+# Test for several corner cases #57188
+ansible-playbook corner_cases.yml -v "$@"
