@@ -6,13 +6,13 @@
         cn: "{{ ipa_privilege_cn }}"
         description: Testing privilege.
         state: present
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
 
     - shell:
-        "echo {{ ipa_pass }} | kinit {{ ipa_user }} && ipa privilege-find {{ ipa_privilege_cn }}"
+        "echo {{ freeipa_admin_password }} | kinit {{ freeipa_admin }} && ipa privilege-find {{ ipa_privilege_cn }}"
       register: ipa_privilege_output
 
     - assert:
@@ -22,10 +22,10 @@
     - ipa_privilege:
         cn: "{{ ipa_privilege_cn }}"
         state: absent
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
 
 - name: Create a privilege with a non-existent permission.
   block:
@@ -34,10 +34,10 @@
         description: Test privilege
         permission:
           - "{{ ipa_permission_cn1 }}"
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
       ignore_errors: true
       register: ipa_privilege_output
 
@@ -48,10 +48,10 @@
     - ipa_privilege:
         cn: "{{ ipa_privilege_cn }}"
         state: absent
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
 
 - name: Create a privilege with a existing permission.
   block:
@@ -64,20 +64,20 @@
         attrs:
           - cn
         state: present
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
 
     - ipa_privilege:
         cn: "{{ ipa_privilege_cn }}"
         description: Test privilege
         permission:
           - "{{ ipa_permission_cn1 }}"
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
       ignore_errors: true
       register: ipa_privilege_output
 

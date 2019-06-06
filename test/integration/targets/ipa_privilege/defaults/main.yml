@@ -4,8 +4,3 @@ ipa_permission_cn1: TEST_PERMISSION_01
 ipa_permission_cn2: TEST_PERMISSION_02
 ipa_privilege_cn: TEST_PRIVILEGE_01
 ipa_privilege_rename: TEST_PRIVILEGE_NEW_NAME_01
-
-ipa_host: my-freeipa-server-01.example.local
-ipa_user: admin
-ipa_pass: 12345678
-ipa_validate_certs: false

@@ -4,10 +4,10 @@
   ipa_privilege:
     cn: "{{ item }}"
     state: absent
-    ipa_host: "{{ ipa_host }}"
-    ipa_user: "{{ ipa_user }}"
-    ipa_pass: "{{ ipa_pass }}"
-    validate_certs: "{{ ipa_validate_certs }}"
+    ipa_host: "{{ freeipa_server_domain }}"
+    ipa_user: "{{ freeipa_admin }}"
+    ipa_pass: "{{ freeipa_admin_password }}"
+    validate_certs: "{{ freeipa_validate_certs }}"
   loop:
     - "{{ ipa_privilege_cn }}"
     - "{{ ipa_privilege_rename }}"
@@ -17,10 +17,10 @@
     cn: "{{ item }}"
     ipapermbindruletype: permission
     state: absent
-    ipa_host: "{{ ipa_host }}"
-    ipa_user: "{{ ipa_user }}"
-    ipa_pass: "{{ ipa_pass }}"
-    validate_certs: "{{ ipa_validate_certs }}"
+    ipa_host: "{{ freeipa_server_domain }}"
+    ipa_user: "{{ freeipa_admin }}"
+    ipa_pass: "{{ freeipa_admin_password }}"
+    validate_certs: "{{ freeipa_validate_certs }}"
   loop:
     - "{{ ipa_permission_cn1 }}"
     - "{{ ipa_permission_cn2 }}"

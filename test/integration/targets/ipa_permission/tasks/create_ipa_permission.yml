@@ -11,10 +11,10 @@
         attrs:
           - cn
         state: present
-        ipa_host: "{{ ipa_host }}"
-        ipa_user: "{{ ipa_user }}"
-        ipa_pass: "{{ ipa_pass }}"
-        validate_certs: "{{ ipa_validate_certs }}"
+        ipa_host: "{{ freeipa_server_domain }}"
+        ipa_user: "{{ freeipa_admin }}"
+        ipa_pass: "{{ freeipa_admin_password }}"
+        validate_certs: "{{ freeipa_validate_certs }}"
       register: ipa_permission_output
 
     - assert:

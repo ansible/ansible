@@ -1,0 +1,69 @@
+---
+
+- name: Install Samba.
+  yum:
+    name: samba
+    state: present
+
+- name: Ensure firewalld is enabled and started.
+  systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Ensure necessary ports are opened.
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - 22/tcp   # SSH
+    - 80/tcp   # HTTP
+    - 443/tcp  # HTTPS
+    - 389/tcp  # LDAP
+    - 636/tcp  # LDAPS
+    - 88/tcp   # kerberos
+    - 464/tcp  # kerberos
+    - 53/tcp   # bind
+    - 88/udp   # kerberos
+    - 464/udp  # kerberos
+    - 53/udp   # bind
+    - 123/udp  # ntp
+    - 8443/tcp  # pki
+  notify: reload firewalld
+
+- name: Install ipa-server packages.
+  yum:
+    name:
+      - "ipa-server-{{ freeipa_version }}"
+      - "ipa-server-dns-{{ freeipa_version }}"
+    state: present
+
+- name: Configure ipa-server.
+  command:
+    ipa-server-install
+      --unattended
+      --ds-password={{ freeipa_ds_password }}
+      --admin-password={{ freeipa_admin_password }}
+      --ip-address={{ freeipa_server_ip }}
+      --domain={{ freeipa_domain }}
+      --realm={{ freeipa_domain | upper }}
+      --hostname={{ freeipa_server_domain }}
+      --setup-kra
+      --setup-dns
+      --idstart=100000
+      --idmax=199999
+      --no-hbac-allow
+      --mkhomedir
+      --ssh-trust-dns
+      --auto-reverse
+      --auto-forwarders
+      --forward-policy=first
+      --no-dnssec-validation
+
+- name: Install Freeipa Server | Enable ntpd.
+  systemd:
+    name: ntpd
+    state: started
+    enabled: true
