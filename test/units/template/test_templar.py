@@ -104,17 +104,43 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         # self.assertEqual(res['{{ a_keyword }}'], "blip")
         print(res)
 
-    def test_templatable(self):
-        res = self.templar.templatable('foo')
-        self.assertTrue(res)
+    def test_is_template_true(self):
+        tests = [
+            '{{ foo }}',
+            '{% foo %}',
+            '{# foo #}',
+            '{# {{ foo }} #}',
+            '{# {{ nothing }} {# #}',
+            '{# {{ nothing }} {# #} #}',
+            '{% raw %}{{ foo }}{% endraw %}',
+        ]
+        for test in tests:
+            self.assertTrue(self.templar.is_template(test))
 
-    def test_templatable_none(self):
-        res = self.templar.templatable(None)
-        self.assertTrue(res)
+    def test_is_template_false(self):
+        tests = [
+            'foo',
+            '{{ foo',
+            '{% foo',
+            '{# foo',
+            '{{ foo %}',
+            '{{ foo #}',
+            '{% foo }}',
+            '{% foo #}',
+            '{# foo %}',
+            '{# foo }}',
+            '{{ foo {{',
+            '{% raw %}{% foo %}',
+        ]
+        for test in tests:
+            self.assertFalse(self.templar.is_template(test))
 
-    @patch('ansible.template.Templar.template', side_effect=AnsibleError)
-    def test_templatable_exception(self, mock_template):
-        res = self.templar.templatable('foo')
+    def test_is_template_raw_string(self):
+        res = self.templar.is_template('foo')
+        self.assertFalse(res)
+
+    def test_is_template_none(self):
+        res = self.templar.is_template(None)
         self.assertFalse(res)
 
     def test_template_convert_bare_string(self):
