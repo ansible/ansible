@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_vlan fix broken purge behavior (https://github.com/ansible/ansible/pull/57229).
