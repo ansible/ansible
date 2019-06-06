@@ -30,17 +30,17 @@
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    name: "{{ vm1 | basename }}"
 #    folder: "{{ vm1 | dirname }}"
-#  register: guest_facts_0001
+#  register: guest_info_0001
 #
-#- debug: msg="{{ guest_facts_0001 }}"
+#- debug: msg="{{ guest_info_0001 }}"
 #
 #- assert:
 #    that:
-#      - "guest_facts_0001['instance']['hw_name'] == vm1 | basename"
-#      - "guest_facts_0001['instance']['hw_product_uuid'] is defined"
-#      - "guest_facts_0001['instance']['guest_tools_status'] == 'guestToolsRunning'"
+#      - "guest_info_0001['instance']['hw_name'] == vm1 | basename"
+#      - "guest_info_0001['instance']['hw_product_uuid'] is defined"
+#      - "guest_info_0001['instance']['guest_tools_status'] == 'guestToolsRunning'"
 #
-#- set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
+#- set_fact: vm1_uuid="{{ guest_info_0001['instance']['hw_product_uuid'] }}"
 #
 #- debug: var=vm1_uuid
 #
@@ -52,13 +52,13 @@
 #    username: "{{ vcsim_instance['json']['username'] }}"
 #    password: "{{ vcsim_instance['json']['password'] }}"
 #    uuid: "{{ vm1_uuid }}"
-#  register: guest_facts_0002
+#  register: guest_info_0002
 #
-#- debug: msg="{{ guest_facts_0002 }}"
+#- debug: msg="{{ guest_info_0002 }}"
 #
 #- assert:
 #    that:
-#      - "guest_facts_0002['instance']['hw_name'] == vm1 | basename"
-#      - "guest_facts_0002['instance']['hw_product_uuid'] is defined"
-#      - "guest_facts_0002['instance']['hw_product_uuid'] == vm1_uuid"
-#      - "guest_facts_0002['instance']['guest_tools_status'] == 'guestToolsRunning'"
+#      - "guest_info_0002['instance']['hw_name'] == vm1 | basename"
+#      - "guest_info_0002['instance']['hw_product_uuid'] is defined"
+#      - "guest_info_0002['instance']['hw_product_uuid'] == vm1_uuid"
+#      - "guest_info_0002['instance']['guest_tools_status'] == 'guestToolsRunning'"

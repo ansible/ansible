@@ -1,4 +1,4 @@
-# Test code for the vmware_host_firewall_facts module.
+# Test code for the vmware_host_firewall_info module.
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 - import_role:
@@ -6,8 +6,8 @@
   vars:
     setup_attach_host: true
 
-- name: Gather firewall facts for a given ESXi
-  vmware_host_firewall_facts:
+- name: Gather firewall info for a given ESXi
+  vmware_host_firewall_info:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
@@ -29,8 +29,8 @@
     vars:
       setup_attach_host: true
 
-  - name: Gather firewall facts for all ESXi host from given cluster
-    vmware_host_firewall_facts:
+  - name: Gather firewall info for all ESXi host from given cluster
+    vmware_host_firewall_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
@@ -43,8 +43,8 @@
         - "not firewall_0001_results.changed"
         - "firewall_0001_results.hosts_firewall_facts is defined"
 
-  - name: Gather firewall facts for ESXi host
-    vmware_host_firewall_facts:
+  - name: Gather firewall info for ESXi host
+    vmware_host_firewall_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
@@ -57,8 +57,8 @@
         - "not firewall_0002_results.changed"
         - "firewall_0002_results.hosts_firewall_facts is defined"
 
-  - name: Gather firewall facts for all ESXi host from given cluster in check mode
-    vmware_host_firewall_facts:
+  - name: Gather firewall info for all ESXi host from given cluster in check mode
+    vmware_host_firewall_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"

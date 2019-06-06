@@ -1,4 +1,4 @@
-# Test code for the vmware_drs_group_facts module
+# Test code for the vmware_drs_group_info module
 # Copyright: (c) 2018, Karsten Kaj Jakobsen <kj@patientsky.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -7,8 +7,8 @@
 
 - when: vcsim is defined or esxi_hosts | length >= 3
   block:
-  - name: Gather DRS group facts from given cluster
-    vmware_drs_group_facts:
+  - name: Gather DRS group info from given cluster
+    vmware_drs_group_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
@@ -25,8 +25,8 @@
         - "not drs_group_0001_results.drs_group_facts.DC0_C1 is defined"
         - "not drs_group_0001_results.changed"
 
-  - name: Gather DRS group facts from given datacenter
-    vmware_drs_group_facts:
+  - name: Gather DRS group info from given datacenter
+    vmware_drs_group_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"

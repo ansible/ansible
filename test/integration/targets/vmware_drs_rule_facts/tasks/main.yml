@@ -1,4 +1,4 @@
-# Test code for the vmware_drs_rule_facts module
+# Test code for the vmware_drs_rule_info module
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -12,8 +12,8 @@
     vars:
       setup_attach_host: true
 
-  - name: Gather facts about DRS rule from given cluster
-    vmware_drs_rule_facts:
+  - name: Gather info about DRS rule from given cluster
+    vmware_drs_rule_info:
       validate_certs: False
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
@@ -29,8 +29,8 @@
         - "drs_rule_0001_results.drs_rule_facts is defined"
         - "not drs_rule_0001_results.changed"
 
-  - name: Gather facts about DRS rule from given datacenter
-    vmware_drs_rule_facts:
+  - name: Gather info about DRS rule from given datacenter
+    vmware_drs_rule_info:
       validate_certs: False
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"

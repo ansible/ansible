@@ -1,4 +1,4 @@
-# Test code for the vmware_dvs_portgroup_facts module.
+# Test code for the vmware_dvs_portgroup_info module.
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -9,9 +9,9 @@
 
 - when: vcsim is not defined
   block:
-    - &dvs_facts
-      name: Gather facts about DVS portgroup
-      vmware_dvs_portgroup_facts:
+    - &dvs_info
+      name: Gather info about DVS portgroup
+      vmware_dvs_portgroup_info:
         validate_certs: False
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -26,8 +26,8 @@
         that:
           - dvs_results.dvs_portgroup_facts is defined
 
-    - <<: *dvs_facts
-      name: Gather facts about DVS portgroup in check mode
+    - <<: *dvs_info
+      name: Gather info about DVS portgroup in check mode
       check_mode: yes
 
     - debug:

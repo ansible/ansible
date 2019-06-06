@@ -1,4 +1,4 @@
-# Test code for the vmware_host_capability_facts module.
+# Test code for the vmware_host_capability_info module.
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -11,8 +11,8 @@
     vars:
       setup_attach_host: true
 
-  - name: Gather capability facts for all ESXi host from given cluster
-    vmware_host_capability_facts:
+  - name: Gather capability info for all ESXi host from given cluster
+    vmware_host_capability_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
@@ -24,8 +24,8 @@
         - not (capability_0001_results is changed)
         - capability_0001_results.hosts_capability_facts is defined
 
-  - name: Gather capability facts for ESXi host
-    vmware_host_capability_facts:
+  - name: Gather capability info for ESXi host
+    vmware_host_capability_info:
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"

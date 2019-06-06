@@ -1,4 +1,4 @@
-# Test code for the vmware_about_facts module.
+# Test code for the vmware_about_info module.
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -6,7 +6,7 @@
     name: prepare_vmware_tests
 
 - name: Get Details about VMware vCenter Server
-  vmware_about_facts: &vmware_about_data
+  vmware_about_info: &vmware_about_data
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
@@ -33,7 +33,7 @@
     - version
 
 - name: Get Details about VMware vCenter Server in check mode
-  vmware_about_facts:
+  vmware_about_info:
     <<: *vmware_about_data
   register: about
   check_mode: yes

@@ -1,0 +1,1 @@
+vmware_target_canonical_info.py
