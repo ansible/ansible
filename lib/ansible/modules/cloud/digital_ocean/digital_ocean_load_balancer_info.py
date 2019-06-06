@@ -17,10 +17,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_load_balancer_facts
-short_description: Gather facts about DigitalOcean load balancers
+module: digital_ocean_load_balancer_info
+short_description: Gather information about DigitalOcean load balancers
 description:
-    - This module can be used to gather facts about DigitalOcean provided load balancers.
+    - This module can be used to gather information about DigitalOcean provided load balancers.
+    - This module was called C(digital_ocean_load_balancer_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
@@ -35,17 +36,17 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all load balancers
-  digital_ocean_load_balancer_facts:
+- name: Gather information about all load balancers
+  digital_ocean_load_balancer_info:
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about load balancer with given id
-  digital_ocean_load_balancer_facts:
+- name: Gather information about load balancer with given id
+  digital_ocean_load_balancer_info:
     oauth_token: "{{ oauth_token }}"
     load_balancer_id: "4de7ac8b-495b-4884-9a69-1050c6793cd6"
 
 - name: Get name from load balancer id
-  digital_ocean_load_balancer_facts:
+  digital_ocean_load_balancer_info:
   register: resp_out
 - set_fact:
     load_balancer_name: "{{ item.name }}"
@@ -58,7 +59,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean Load balancer facts
+    description: DigitalOcean Load balancer information
     returned: success
     type: list
     sample: [
@@ -106,6 +107,8 @@ def main():
         load_balancer_id=dict(type='str', required=False),
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_load_balancer_facts':
+        module.deprecate("The 'digital_ocean_load_balancer_facts' module has been renamed to 'digital_ocean_load_balancer_info'", version='2.13')
 
     try:
         core(module)
