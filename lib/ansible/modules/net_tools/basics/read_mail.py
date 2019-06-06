@@ -110,7 +110,7 @@ username:
     type: str
     returned: always
 mails:
-    description: A list of dictionaries with the keys: 'to', 'from' and 'subject',
+    description: A list of dictionaries with the keys 'to', 'from' and 'subject',
     where each one represents an email that satisfied the filter
     type: list
     returned: always
