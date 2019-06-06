@@ -208,9 +208,8 @@ options:
           Required if type is set C(iso).'
     - ' - C(controller_type) (string): C(controller_type), C(controller_number) and C(unit_number) are mandatory attributes.
           Only C(ide) controller type for CD-ROM is supported for now.'
-    - ' - C(controller_number) (int): For C(ide) controller, valid values are 0, 1. For C(sata) controller, valid value from 0 to 3.'
-    - ' - C(unit_number) (int): For CD-ROM attach to C(ide) controller, valid values are 0, 1. For CD-ROM attach to C(sata)
-          controller, valid value from 0 to 29.'
+    - ' - C(controller_number) (int): For C(ide) controller, valid value is 0 or 1.'
+    - ' - C(unit_number) (int): For CD-ROM device attach to C(ide) controller, valid value is 0 or 1.'
     - ' - C(state) (string): If set to C(absent) and CD-ROM exists, then the specified CD-ROM removed. For IDE controller,
           CD-ROM hot-add and hot-remove operations are not supported.'
     version_added: '2.5'
