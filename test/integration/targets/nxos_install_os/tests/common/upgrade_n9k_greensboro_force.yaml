@@ -4,14 +4,14 @@
   when: connection is defined
 
 # Set directory pointer to software images
-- set_fact: image_dir='/auto/fe_ssr/agents-ci/agents_images/release_images/hamilton/REL_9_2_1/'
+- set_fact: image_dir='/auto/fe_ssr/agents-ci/agents_images/release_images/greensboro/REL_7_0_3_I7_4/'
 
 - set_fact: checkmode='no'
 - set_fact: issu='desired'
 - set_fact: copy_images=True
 
 # Set boot pointers and reload
-- set_fact: force=False
+- set_fact: force=True
 
 - set_fact: delete_files=True
 - set_fact:
@@ -25,7 +25,9 @@
   nxos_config:
     lines:
       - terminal dont-ask
-      - no feature ngmvpn
+      - no feature nv overlay
+      - no nxapi ssl protocols
+      - no nxapi ssl ciphers weak
     match: none
     provider: "{{ connection }}"
   ignore_errors: yes
@@ -33,7 +35,7 @@
 #---------------------------------------------------------#
 # Upgrade Device                                          #
 #---------------------------------------------------------#
-- set_fact: si='nxos.9.2.1.bin'
+- set_fact: si='nxos.7.0.3.I7.4.bin'
 
-- name: Upgrade N9k Device to Hamilton Release Image
+- name: Upgrade N9k Device to Greensboro Release Image
   include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
