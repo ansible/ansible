@@ -35,7 +35,7 @@
     register: create_route
 
   - set_fact:
-      route_ids: "{{ route_ids }} + [ '{{ create_route.data.id }}' ]"
+      route_ids: "{{ route_ids + [create_route.data.id] }}"
 
   - name: Create second static_route
     meraki_static_route:
@@ -50,7 +50,7 @@
     register: second_create
 
   - set_fact:
-      route_ids: "{{ route_ids }} + [ '{{ second_create.data.id }}' ]"
+      route_ids: "{{ route_ids + [second_create.data.id] }}"
 
   - assert:
       that:

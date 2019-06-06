@@ -204,7 +204,7 @@
   set_fact:
     port_info: []
 - set_fact:
-    port_info: "{{ port_info }} + [{{ item[0] |combine(item[1]) }}]"
+    port_info: "{{ port_info + [item[0] |combine(item[1])] }}"
   loop: "{{ tmp }}"
 
 # Compile list of expected host port information for verifying changes
@@ -225,7 +225,7 @@
   set_fact:
     expected_port_info: []
 - set_fact:
-    expected_port_info: "{{ expected_port_info }} + [{{ item[0] |combine(item[1]) }}]"
+    expected_port_info: "{{ expected_port_info + [ item[0] |combine(item[1]) ] }}"
   loop: "{{ tmp }}"
 
 # Verify that each host object has the expected protocol type and address/port
