@@ -143,10 +143,6 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-
-
-
-
 import re
 import time
 
