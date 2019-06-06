@@ -2,6 +2,7 @@
   connection: local
   openssh_keypair:
     path: '{{ output_dir }}/privatekey1'
+  register: privatekey1_result
 
 - name: Generate privatekey2 - size 2048
   openssh_keypair:
