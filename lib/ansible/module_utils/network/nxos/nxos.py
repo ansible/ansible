@@ -916,9 +916,11 @@ class NxosCmdRef:
 
         return match
 
-    def set_context(self, context=[]):
+    def set_context(self, context=None):
         """Update ref with command context.
         """
+        if context is None:
+            context = []
         ref = self._ref
         # Process any additional context that this propoerty might require.
         # 1) Global context from NxosCmdRef _template.
@@ -1084,7 +1086,7 @@ class NxosCmdRef:
                 for dkey, dvalue in existing.items():
                     if isinstance(dvalue, dict):
                         # Remove values set to string 'None' from dvalue
-                        dvalue = {k: v for k, v in dvalue.items() if v != 'None'}
+                        dvalue = dict((k, v) for k, v in dvalue.items() if v != 'None')
                     if compare(playval, dvalue):
                         item_found = True
                 if item_found:
