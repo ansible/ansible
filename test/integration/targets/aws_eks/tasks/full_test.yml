@@ -2,9 +2,7 @@
 # tasks file for aws_eks modules
 
 - block:
-    # FIXME: ap-south-1 only has two AZs, ap-south-1a and ap-south-1b
-    # That makes it my best guess as to it being among the last to support EKS
-    # If it does become supported, change this test to use an unsupported region
+    # If us-west-1 does become supported, change this test to use an unsupported region
     # or if all regions are supported, delete this test
     - name: attempt to use eks in unsupported region
       aws_eks_cluster:
@@ -13,7 +11,7 @@
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token }}"
-        region: ap-south-1
+        region: us-west-1
       register: aws_eks_unsupported_region
       ignore_errors: yes
 
@@ -217,6 +215,7 @@
         vpc_id: '{{ setup_vpc.vpc.id }}'
         <<: *aws_connection_info
       with_items: "{{ eks_security_groups }}"
+      ignore_errors: yes
 
     - name: remove security groups
       ec2_group:
