@@ -1,41 +1,44 @@
 ---
 
-- name: Install Samba.
-  yum:
-    name: samba
-    state: present
+- block:
+    - name: Install Samba.
+      yum:
+        name: samba
+        state: present
 
-- name: Install ipa-server packages.
-  yum:
-    name:
-      - "ipa-server"
-      - "ipa-server-dns"
-    state: present
+    - name: Install ipa-server packages.
+      yum:
+        name:
+          - "ipa-server"
+          - "ipa-server-dns"
+        state: present
 
-- name: Configure ipa-server.
-  command:
-    ipa-server-install
-      --unattended
-      --ds-password={{ freeipa_ds_password }}
-      --admin-password={{ freeipa_admin_password }}
-      --ip-address={{ freeipa_server_ip }}
-      --domain={{ freeipa_domain }}
-      --realm={{ freeipa_domain | upper }}
-      --hostname={{ freeipa_server_domain }}
-      --setup-kra
-      --setup-dns
-      --idstart=100000
-      --idmax=199999
-      --no-hbac-allow
-      --mkhomedir
-      --ssh-trust-dns
-      --auto-reverse
-      --auto-forwarders
-      --forward-policy=first
-      --no-dnssec-validation
+    - name: Configure ipa-server.
+      command:
+        ipa-server-install
+          --unattended
+          --ds-password={{ freeipa_ds_password }}
+          --admin-password={{ freeipa_admin_password }}
+          --ip-address={{ freeipa_server_ip }}
+          --domain={{ freeipa_domain }}
+          --realm={{ freeipa_domain | upper }}
+          --hostname={{ freeipa_server_domain }}
+          --setup-kra
+          --setup-dns
+          --idstart=100000
+          --idmax=199999
+          --no-hbac-allow
+          --mkhomedir
+          --ssh-trust-dns
+          --auto-reverse
+          --auto-forwarders
+          --forward-policy=first
+          --no-dnssec-validation
 
-- name: Install Freeipa Server | Enable ntpd.
-  systemd:
-    name: ntpd
-    state: started
-    enabled: true
+    - name: Install Freeipa Server | Enable ntpd.
+      systemd:
+        name: ntpd
+        state: started
+        enabled: true
+  when:
+  - ansible_os_family == "RedHat" and ansible_distribution_major_version|int <= 7
