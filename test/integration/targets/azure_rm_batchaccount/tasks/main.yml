@@ -68,3 +68,9 @@
   assert:
     that:
       - output.changed
+
+- name: Clean up storage account
+  azure_rm_storageaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ storage_account_name }}"
+      state: absent
