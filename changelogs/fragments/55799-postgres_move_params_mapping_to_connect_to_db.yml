@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql - move params mapping from main to connect_to_db() function (https://github.com/ansible/ansible/pull/55799)
