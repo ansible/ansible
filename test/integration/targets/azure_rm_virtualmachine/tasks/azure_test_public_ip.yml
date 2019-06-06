@@ -191,47 +191,6 @@
 #     search_regex: ^custom_data was executed$
 #     timeout: 20
 
-- name: Restart the virtual machine
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    restarted: yes
-    vm_size: Standard_A0
-  register: restart_result
-
-- name: Ensue VM was restarted
-  assert:
-    that:
-      - "azure_vm.powerstate in ['starting', 'running']"
-      - restart_result is changed
-
-- name: Deallocate the virtual machine
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    allocated: no
-    vm_size: Standard_A0
-  register: deallocate_result
-
-- name: Ensure VM was deallocated
-  assert:
-    that:
-      - azure_vm.powerstate == 'deallocated'
-      - deallocate_result is changed
-
-- name: Start the virtual machine
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    vm_size: Standard_A0
-  register: start_result
-
-- name: Ensure VM was started
-  assert:
-    that:
-      - "azure_vm.powerstate in ['starting', 'running']"
-      - start_result is changed
-
 - name: Should be idempotent with a single NIC
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"

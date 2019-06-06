@@ -2,6 +2,7 @@ all:
   hosts:
     azure_test_public_ip:
     azure_test_no_public_ip:
+    azure_test_deallocate:
     azure_test_dual_nic:
       niclist:
         - name: testnic011
@@ -15,7 +16,7 @@ all:
 
     storage_account: "{{ 'rg1' ~ (resource_group ~ inventory_hostname) | hash('md5') | truncate(18, True, '') }}"
     availability_set: "{{ 'avbs1_' ~ (resource_group ~ inventory_hostname) | hash('md5') | truncate(8, True, '') }}"
-    vm_name: "{{ 'vm-' ~ (inventory_hostname ~ resource_group) | hash('md5') | truncate(8, True, '') }}"
+    vm_name: "{{ 'vm-' ~ (resource_group ~ inventory_hostname) | hash('md5') | truncate(8, True, '') }}"
 
     ssh_keys:
       - path: '/home/chouseknecht/.ssh/authorized_keys'
