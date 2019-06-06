@@ -302,19 +302,32 @@ def check_if_mediatype_exists(module, zbx, name):
         module.fail_json(msg="Failed to get ID of the mediatype '{}': {}".format(name, e))
 
 
-def difference(module, zbx, mediatype_id, **kwargs):
+def diff(existing, new):
+    before = {}
+    after = {}
+    for key in new:
+        before[key] = existing[key]
+        if new[key] is None:
+            after[key] = ''
+        else:
+            after[key] = new[key]
+    return {'before': before, 'after': after}
+
+
+def get_update_params(module, zbx, mediatype_id, **kwargs):
     existing_mediatype = container_to_bytes(zbx.mediatype.get({
         'output': 'extend',
         'mediatypeids': [mediatype_id]
     })[0])
+
     if existing_mediatype['type'] != kwargs['type']:
-        return kwargs
+        return kwargs, diff(existing_mediatype, kwargs)
     else:
-        _diff = {}
+        params_to_update = {}
         for key in kwargs:
             if (not (kwargs[key] is None and existing_mediatype[key] == '')) and kwargs[key] != existing_mediatype[key]:
-                _diff[key] = kwargs[key]
-        return _diff
+                params_to_update[key] = kwargs[key]
+        return params_to_update, diff(existing_mediatype, kwargs)
 
 
 def delete_mediatype(module, zbx, mediatype_id):
@@ -386,7 +399,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if module.params['state'] == 'present':
@@ -465,25 +478,30 @@ def main():
     )
 
     if mediatype_exists:
-        # TODO: Check mode!!!
         if state == 'absent':
+            if module.check_mode:
+                module.exit_json(changed=True, msg="Mediatype would have been deleted. Name: {}, ID: {}".format(name, mediatype_id))
             mediatype_id = delete_mediatype(module, zbx, mediatype_id)
             module.exit_json(changed=True, msg="Mediatype deleted. Name: {}, ID: {}".format(name, mediatype_id))
         else:
-            diff = difference(module, zbx, mediatype_id, **parameters)
-            if diff == {}:
+            params_to_update, diff = get_update_params(module, zbx, mediatype_id, **parameters)
+            if params_to_update == {}:
                 module.exit_json(changed=False, msg="Mediatype is up to date: {}".format(name))
             else:
+                if module.check_mode:
+                    module.exit_json(changed=True, diff=diff, msg="Mediatype would have been updated. Name: {}, ID: {}".format(name, mediatype_id))
                 mediatype_id = update_mediatype(
                     module, zbx,
                     mediatypeid=mediatype_id,
-                    **diff
+                    **params_to_update
                 )
-                module.exit_json(changed=True, msg="Mediatype updated. Name: {}, ID: {}".format(name, mediatype_id))
+                module.exit_json(changed=True, diff=diff, msg="Mediatype updated. Name: {}, ID: {}".format(name, mediatype_id))
     else:
         if state == "absent":
             module.exit_json(changed=False)
         else:
+            if module.check_mode:
+                module.exit_json(changed=True, msg="Mediatype would have been created. Name: {}, ID: {}".format(name, mediatype_id))
             mediatype_id = create_mediatype(module, zbx, **parameters)
             module.exit_json(changed=True, msg="Mediatype created: {}, ID: {}".format(name, mediatype_id))
 
