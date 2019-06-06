@@ -267,7 +267,7 @@ class VmPoolsModule(BaseModule):
             type=otypes.VmPoolType(
                 self._module.params['type']
             ) if self._module.params['type'] else None,
-            vm=self.build_vm(vm)
+            vm=self.build_vm(vm) if self._module.params['vm'] else None,
         )
 
     def build_vm(self, vm):
