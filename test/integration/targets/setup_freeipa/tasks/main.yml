@@ -4,6 +4,12 @@
 #   hostname:
 #     name: "{{ freeipa_server_domain }}"
 
+- name: Setup local DNS.
+  lineinfile:
+    path: /etc/hosts
+    regexp: ^127\.0\.0\.1
+    line: "127.0.0.1 {{ freeipa_server_domain }}"
+
 - name: Install Samba.
   yum:
     name: samba
