@@ -459,7 +459,7 @@ class InventoryManager(object):
         Duplicate matches are always eliminated from the results.
         """
 
-        if pattern[1] in ("&", "!"):
+        if pattern[0] in ("&", "!"):
             pattern = pattern[1:]
 
         if pattern not in self._pattern_cache:
@@ -484,7 +484,7 @@ class InventoryManager(object):
         """
 
         # Do not parse regexes for enumeration info
-        if pattern[1] == '~':
+        if pattern[0] == '~':
             return (pattern, None)
 
         # We want a pattern followed by an integer or range subscript.
