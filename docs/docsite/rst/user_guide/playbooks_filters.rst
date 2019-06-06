@@ -40,7 +40,7 @@ To avoid such behaviour and generate long lines it is possible to use ``width`` 
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying python functions.
+While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying Python functions.
 Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
 
 
@@ -125,7 +125,7 @@ For the first two files in the list, the default mode will be determined by the 
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
 .. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
-      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
+      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (Python null) value will cause the
       later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
       the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
@@ -1127,7 +1127,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
     {{ 'localhost:80' | regex_replace(':80') }}
 
 .. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
-   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some python versions will match the whole string and an empty string at the
+   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
    end, which means it will make two replacements.
 
     # add "https://" prefix to each item in a list
@@ -1153,7 +1153,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. versionadded:: 2.0
 
-To escape special characters within a standard python regex, use the "regex_escape" filter (using the default re_type='python' option)::
+To escape special characters within a standard Python regex, use the "regex_escape" filter (using the default re_type='python' option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
