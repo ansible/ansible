@@ -1,0 +1,29 @@
+---
+
+- name: Modify a permission.
+  block:
+    - ipa_permission:
+        cn: "{{ ipa_permission_cn }}"
+        ipapermbindruletype: anonymous
+        ipapermright:
+          - read
+          - write
+        type: user
+        attrs:
+          - cn
+          - ou
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      register: ipa_permission_output
+
+    - assert:
+        that:
+          - '"read" in ipa_permission_output.permission.ipapermright'
+          - '"write" in ipa_permission_output.permission.ipapermright'
+          - '"cn" in ipa_permission_output.permission.ipapermincludedattr'
+          - '"ou" in ipa_permission_output.permission.ipapermincludedattr'
+          - '"anonymous" in ipa_permission_output.permission.ipapermbindruletype'
+          - ipa_permission_output.permission.ipapermbindruletype | length == 1

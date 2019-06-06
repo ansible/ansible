@@ -1,0 +1,86 @@
+---
+
+- name: Create a privilege without permission.
+  block:
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        description: Testing privilege.
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+
+    - shell:
+        "echo {{ ipa_pass }} | kinit {{ ipa_user }} && ipa privilege-find {{ ipa_privilege_cn }}"
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - '"Number of entries returned 1" in ipa_privilege_output.stdout'
+
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        state: absent
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+
+- name: Create a privilege with a non-existent permission.
+  block:
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        description: Test privilege
+        permission:
+          - "{{ ipa_permission_cn1 }}"
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      ignore_errors: true
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - true == ipa_privilege_output.failed
+
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        state: absent
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+
+- name: Create a privilege with a existing permission.
+  block:
+    - ipa_permission:
+        cn: "{{ ipa_permission_cn1 }}"
+        ipapermbindruletype: permission
+        ipapermright:
+          - read
+        type: user
+        attrs:
+          - cn
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        description: Test privilege
+        permission:
+          - "{{ ipa_permission_cn1 }}"
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      ignore_errors: true
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - '"{{ ipa_permission_cn1 }}" in ipa_privilege_output.privilege.memberof_permission'

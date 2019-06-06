@@ -1,0 +1,11 @@
+---
+
+- name: Run ipa_permission tests.
+  block:
+    - import_tasks: ./create_ipa_permission.yml
+    - import_tasks: ./modify_ipa_permission.yml
+    - import_tasks: ./rename_ipa_permission.yml
+    - import_tasks: ./remove_ipa_permission.yml
+    - import_tasks: ./cleanup.yml
+  when:
+  - ansible_os_family == "RedHat" and ansible_distribution_major_version|int <= 7

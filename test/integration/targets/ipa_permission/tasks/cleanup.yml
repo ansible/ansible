@@ -1,0 +1,14 @@
+---
+
+- name: Remove permissions.
+  ipa_permission:
+    cn: "{{ item }}"
+    ipapermbindruletype: permission
+    state: absent
+    ipa_host: "{{ ipa_host }}"
+    ipa_user: "{{ ipa_user }}"
+    ipa_pass: "{{ ipa_pass }}"
+    validate_certs: "{{ ipa_validate_certs }}"
+  loop:
+    - "{{ ipa_permission_cn }}"
+    - "{{ ipa_permission_rename }}"

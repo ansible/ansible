@@ -1,0 +1,55 @@
+---
+
+- name: Rename a non-existent privilege.
+  block:
+    - ipa_privilege:
+        cn: "NON_EXISTENT_PRIVILEGE"
+        rename: "{{ ipa_privilege_rename }}"
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      ignore_errors: true
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - false == ipa_privilege_output.changed
+
+- name: Rename a privilege without permission.
+  block:
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        rename: "{{ ipa_privilege_rename }}"
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - ipa_privilege_output.changed
+
+- name: Rename a privilege with permission.
+  block:
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_rename }}"
+        permission:
+          - "{{ ipa_permission_cn1 }}"
+          - "{{ ipa_permission_cn2 }}"
+        rename: "{{ ipa_privilege_cn }}"
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - '"{{ ipa_privilege_cn }}" in ipa_privilege_output.privilege.cn'
+          - '"{{ ipa_permission_cn1 }}" in ipa_privilege_output.privilege.memberof_permission'
+          - '"{{ ipa_permission_cn2 }}" in ipa_privilege_output.privilege.memberof_permission'

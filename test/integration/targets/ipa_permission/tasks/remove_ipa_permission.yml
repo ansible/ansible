@@ -1,0 +1,17 @@
+---
+
+- name: Remove a permission.
+  block:
+    - ipa_permission:
+        cn: "{{ ipa_permission_rename }}"
+        ipapermbindruletype: anonymous
+        state: absent
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      register: ipa_permission_output
+
+    - assert:
+        that:
+          - ipa_permission_output.changed

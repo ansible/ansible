@@ -1,0 +1,53 @@
+---
+
+- name: Modify a privilege without permission.
+  block:
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        description: Testing privilege new description.
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - '"Testing privilege new description." in ipa_privilege_output.privilege.description'
+          - ipa_privilege_output.privilege.description | length == 1
+
+- name: Modify a privilege with permission.
+  block:
+    - ipa_permission:
+        cn: "{{ ipa_permission_cn2 }}"
+        ipapermbindruletype: permission
+        ipapermright:
+          - read
+        type: user
+        attrs:
+          - cn
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+
+    - ipa_privilege:
+        cn: "{{ ipa_privilege_cn }}"
+        description: Testing privilege.
+        permission:
+          - "{{ ipa_permission_cn2 }}"
+        state: present
+        ipa_host: "{{ ipa_host }}"
+        ipa_user: "{{ ipa_user }}"
+        ipa_pass: "{{ ipa_pass }}"
+        validate_certs: "{{ ipa_validate_certs }}"
+      register: ipa_privilege_output
+
+    - assert:
+        that:
+          - '"Testing privilege." in ipa_privilege_output.privilege.description'
+          - '"TEST_PERMISSION_02" in ipa_privilege_output.privilege.memberof_permission'
+          - ipa_privilege_output.privilege.memberof_permission | length == 1
+

@@ -1,0 +1,18 @@
+---
+
+- name: Run ipa_privilege tests.
+  block:
+    - import_tasks: ./create_ipa_privilege.yml
+    - import_tasks: ./modify_ipa_privilege.yml
+    - import_tasks: ./rename_ipa_privilege.yml
+    - import_tasks: ./remove_ipa_privilege.yml
+    # ---------------------------------------- #
+    - import_tasks: ./cleanup.yml
+    - import_tasks: ./rename_ipa_permission_and_check_privilege.yml
+    # ---------------------------------------- #
+    - import_tasks: ./cleanup.yml
+    - import_tasks: ./remove_ipa_permission_and_check_privilege.yml
+    # ---------------------------------------- #
+    - import_tasks: ./cleanup.yml
+  when:
+  - ansible_os_family == "RedHat" and ansible_distribution_major_version|int <= 7
