@@ -1,0 +1,13 @@
+minor_changes:
+- The ``digital_ocean_account_facts`` module has been renamed to ``digital_ocean_account_info``.
+- The ``digital_ocean_certificate_facts`` module has been renamed to ``digital_ocean_certificate_info``.
+- The ``digital_ocean_domain_facts`` module has been renamed to ``digital_ocean_domain_info``.
+- The ``digital_ocean_firewall_facts`` module has been renamed to ``digital_ocean_firewall_info``.
+- The ``digital_ocean_floating_ip_facts`` module has been renamed to ``digital_ocean_floating_ip_info``.
+- The ``digital_ocean_image_facts`` module has been renamed to ``digital_ocean_image_info``.
+- The ``digital_ocean_load_balancer_facts`` module has been renamed to ``digital_ocean_load_balancer_info``.
+- The ``digital_ocean_region_facts`` module has been renamed to ``digital_ocean_region_info``.
+- The ``digital_ocean_size_facts`` module has been renamed to ``digital_ocean_size_info``.
+- The ``digital_ocean_snapshot_facts`` module has been renamed to ``digital_ocean_snapshot_info``.
+- The ``digital_ocean_tag_facts`` module has been renamed to ``digital_ocean_tag_info``.
+- The ``digital_ocean_volume_facts`` module has been renamed to ``digital_ocean_volume_info``.

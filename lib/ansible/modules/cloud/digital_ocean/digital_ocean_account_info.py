@@ -17,10 +17,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_account_facts
-short_description: Gather facts about DigitalOcean User account
+module: digital_ocean_account_info
+short_description: Gather information about DigitalOcean User account
 description:
-    - This module can be used to gather facts about User account.
+    - This module can be used to gather information about User account.
+    - This module was called C(digital_ocean_account_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 
@@ -32,15 +33,15 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about user account
-  digital_ocean_account_facts:
+- name: Gather information about user account
+  digital_ocean_account_info:
     oauth_token: "{{ oauth_token }}"
 '''
 
 
 RETURN = '''
 data:
-    description: DigitalOcean account facts
+    description: DigitalOcean account information
     returned: success
     type: dict
     sample: {
@@ -65,7 +66,7 @@ def core(module):
 
     response = rest.get("account")
     if response.status_code != 200:
-        module.fail_json(msg="Failed to fetch 'account' facts due to error : %s" % response.json['message'])
+        module.fail_json(msg="Failed to fetch 'account' information due to error : %s" % response.json['message'])
 
     module.exit_json(changed=False, data=response.json["account"])
 
@@ -73,6 +74,8 @@ def core(module):
 def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_account_facts':
+        module.deprecate("The 'digital_ocean_account_facts' module has been renamed to 'digital_ocean_account_info'", version='2.13')
     try:
         core(module)
     except Exception as e:

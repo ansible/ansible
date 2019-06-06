@@ -17,10 +17,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_size_facts
-short_description: Gather facts about DigitalOcean Droplet sizes
+module: digital_ocean_size_info
+short_description: Gather information about DigitalOcean Droplet sizes
 description:
-    - This module can be used to gather facts about droplet sizes.
+    - This module can be used to gather information about droplet sizes.
+    - This module was called C(digital_ocean_size_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 requirements:
@@ -30,12 +31,12 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all droplet sizes
-  digital_ocean_size_facts:
+- name: Gather information about all droplet sizes
+  digital_ocean_size_info:
     oauth_token: "{{ oauth_token }}"
 
 - name: Get droplet Size Slug where vcpus is 1
-  digital_ocean_size_facts:
+  digital_ocean_size_info:
     oauth_token: "{{ oauth_token }}"
   register: resp_out
 - debug: var=resp_out
@@ -52,7 +53,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean droplet size facts
+    description: DigitalOcean droplet size information
     returned: success
     type: list
     sample: [
@@ -94,7 +95,7 @@ def core(module):
 
     response = rest.get('sizes')
     if response.status_code != 200:
-        module.fail_json(msg="Failed to fetch 'sizes' facts due to error : %s" % response.json['message'])
+        module.fail_json(msg="Failed to fetch 'sizes' information due to error : %s" % response.json['message'])
 
     module.exit_json(changed=False, data=response.json['sizes'])
 
@@ -104,6 +105,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+    if module._name == 'digital_ocean_size_facts':
+        module.deprecate("The 'digital_ocean_size_facts' module has been renamed to 'digital_ocean_size_info'", version='2.13')
 
     try:
         core(module)

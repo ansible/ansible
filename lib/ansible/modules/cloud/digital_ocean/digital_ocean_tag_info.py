@@ -17,16 +17,17 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_certificate_facts
-short_description: Gather facts about DigitalOcean certificates
+module: digital_ocean_tag_info
+short_description: Gather information about DigitalOcean tags
 description:
-    - This module can be used to gather facts about DigitalOcean provided certificates.
+    - This module can be used to gather information about DigitalOcean provided tags.
+    - This module was called C(digital_ocean_tag_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
-  certificate_id:
+  tag_name:
     description:
-     - Certificate ID that can be used to identify and reference a certificate.
+     - Tag name that can be used to identify and reference a tag.
     required: false
 requirements:
   - "python >= 2.6"
@@ -35,39 +36,41 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all certificates
-  digital_ocean_certificate_facts:
+- name: Gather information about all tags
+  digital_ocean_tag_info:
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about certificate with given id
-  digital_ocean_certificate_facts:
+- name: Gather information about tag with given name
+  digital_ocean_tag_info:
     oauth_token: "{{ oauth_token }}"
-    certificate_id: "892071a0-bb95-49bc-8021-3afd67a210bf"
+    tag_name: "extra_awesome_tag"
 
-- name: Get not after facts about certificate
-  digital_ocean_certificate_facts:
+- name: Get resources from tag name
+  digital_ocean_tag_info:
   register: resp_out
 - set_fact:
-    not_after_date: "{{ item.not_after }}"
+    resources: "{{ item.resources }}"
   loop: "{{ resp_out.data|json_query(name) }}"
   vars:
-    name: "[?name=='web-cert-01']"
-- debug: var=not_after_date
+    name: "[?name=='extra_awesome_tag']"
+- debug: var=resources
 '''
 
 
 RETURN = '''
 data:
-    description: DigitalOcean certificate facts
+    description: DigitalOcean tag information
     returned: success
     type: list
     sample: [
         {
-          "id": "892071a0-bb95-49bc-8021-3afd67a210bf",
-          "name": "web-cert-01",
-          "not_after": "2017-02-22T00:23:00Z",
-          "sha1_fingerprint": "dfcc9f57d86bf58e321c2c6c31c7a971be244ac7",
-          "created_at": "2017-02-08T16:02:37Z"
+            "name": "extra-awesome",
+            "resources": {
+            "droplets": {
+                "count": 1,
+                ...
+                }
+            }
         },
     ]
 '''
@@ -79,31 +82,33 @@ from ansible.module_utils._text import to_native
 
 
 def core(module):
-    certificate_id = module.params.get('certificate_id', None)
+    tag_name = module.params.get('tag_name', None)
     rest = DigitalOceanHelper(module)
 
-    base_url = 'certificates?'
-    if certificate_id is not None:
-        response = rest.get("%s/%s" % (base_url, certificate_id))
+    base_url = 'tags?'
+    if tag_name is not None:
+        response = rest.get("%s/%s" % (base_url, tag_name))
         status_code = response.status_code
 
         if status_code != 200:
-            module.fail_json(msg="Failed to retrieve certificates for DigitalOcean")
+            module.fail_json(msg="Failed to retrieve tags for DigitalOcean")
 
         resp_json = response.json
-        certificate = resp_json['certificate']
+        tag = resp_json['tag']
     else:
-        certificate = rest.get_paginated_data(base_url=base_url, data_key_name='certificates')
+        tag = rest.get_paginated_data(base_url=base_url, data_key_name='tags')
 
-    module.exit_json(changed=False, data=certificate)
+    module.exit_json(changed=False, data=tag)
 
 
 def main():
     argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
     argument_spec.update(
-        certificate_id=dict(type='str', required=False),
+        tag_name=dict(type='str', required=False),
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_tag_facts':
+        module.deprecate("The 'digital_ocean_tag_facts' module has been renamed to 'digital_ocean_tag_info'", version='2.13')
 
     try:
         core(module)
