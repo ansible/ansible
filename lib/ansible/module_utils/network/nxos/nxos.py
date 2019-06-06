@@ -1064,7 +1064,9 @@ class NxosCmdRef:
             if 'present' in ref['_state']:
                 if existing is None:
                     return False
-                elif playval == existing or playval in existing.values():
+                elif playval == existing:
+                    return True
+                elif isinstance(existing, dict) and playval in existing.values():
                     return True
 
             if 'absent' in ref['_state']:
