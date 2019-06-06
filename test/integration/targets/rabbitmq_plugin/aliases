@@ -3,4 +3,3 @@ shippable/posix/group1
 skip/osx
 skip/freebsd
 skip/rhel
-disabled  # temporarily disabled until the erlang-solution repositories are fixed
