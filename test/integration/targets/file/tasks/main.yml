@@ -266,6 +266,17 @@
   diff: yes
   register: folder_absent_result
 
+- name: debug variables to see why they're not referencing as expected
+  debug:
+    var: "{{ item }}"
+  with_items:
+    - output_dir
+    - test_folder
+    - test_file
+  vars:
+    test_folder: "{{ output_dir }}/foobar"
+    test_file: "{{ output_dir }}/foobar/fileA"
+
 - name: assert that the absent check lists expected files and folders
   assert:
     that:
