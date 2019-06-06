@@ -3,4 +3,4 @@
 
 [testgroup]
 # ansible_python_interpreter must be set to avoid interpreter discovery
-testhost ansible_host=192.168.33.10 ansible_user=vagrant ansible_ssh_private_key_file=~/Working/Vagrant/centos7/.vagrant/machines/default/virtualbox/private_key ansible_python_interpreter=/usr/bin/python ansible_become=true
+testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
