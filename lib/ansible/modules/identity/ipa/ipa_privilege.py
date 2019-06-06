@@ -102,7 +102,7 @@ class PrivilegeIPAClient(IPAClient):
             body = {'cn': item}
             result = self._post_json(method='permission_find', name=None, item=body)
             if not result:
-                raise Exception('Permission not found: {}.'.format(item))
+                raise Exception('Permission not found: {perm}.'.format(perm=item))
 
     def privilege_add(self, name, item):
         # Remove `cn` property, or it will show error:
@@ -168,7 +168,7 @@ def ensure(module, client):
     # Original privilege.
     ipa_priv = client.privilege_find(name)
     if rename is not None and not ipa_priv:
-        raise Exception('Privilege "{}" not found, cannot rename.'.format(name))
+        raise Exception('Privilege "{name}" not found, cannot rename.'.format(name=name))
 
     if state == 'present':
 

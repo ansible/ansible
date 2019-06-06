@@ -207,7 +207,7 @@ def ensure(module, client):
     # Original permission.
     ipa_perm = client.permission_find(name)
     if rename is not None and not ipa_perm:
-        raise Exception('Permission "{}" not found, cannot rename.'.format(name))
+        raise Exception('Permission "{name}" not found, cannot rename.'.format(name=name))
 
     if state == 'present':
         if not ipa_perm:
