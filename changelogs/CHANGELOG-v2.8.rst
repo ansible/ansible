@@ -5,6 +5,114 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.1
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-06-06
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Improve creating VM from template. Merge VM disks/interfaces with the template defaults.
+- Remove duplicate implementation of memory reservation parameter in vmware_guest (https://github.com/ansible/ansible/issues/54335).
+- Use shorter and unique random task name for scheduled task created by vmware_guest_powerstate (https://github.com/ansible/ansible/issues/56987).
+- meraki_ssid - Add examples to documentation.
+- rabbitmq_queue - corrected name field description
+- vmware_guest now accepts Python 2 and Python 3 compatible string translate method (https://github.com/ansible/ansible/issues/54118).
+- vmware_guest_disk module supports use_instance_uuid parameter since Ansible 2.8 (https://github.com/ansible/ansible/issues/56021).
+- xenserver_guest - wait_for_ip_address is now ignored when state=absent (https://github.com/ansible/ansible/issues/55348).
+
+Bugfixes
+--------
+
+- ACI - DO not encode query_string
+- ACI modules - Fix non-signature authentication
+- Add missing directory provided via ``--playbook-dir`` to adjacent collection loading
+- Fix "Interface not found" errors when using eos_l2_interface with nonexistant interfaces configured
+- Fix cannot get credential when `source_auth` set to `credential_file`.
+- Fix netconf_config backup string issue (https://github.com/ansible/ansible/issues/56022)
+- Fix privilege escalation support for the docker connection plugin when credentials need to be supplied (e.g. sudo with password).
+- Fix vyos cli prompt inspection (https://github.com/ansible/ansible/pull/55589)
+- Fixed loading namespaced documentation fragments from collections.
+- Fixing bug came up after running cnos_vrf module against coverity.
+- Properly handle data importer failures on PVC creation, instead of timing out.
+- To fix the ios static route TC failure in CI  - https://github.com/ansible/ansible/pull/56292
+- To fix the nios member module params - https://github.com/ansible/ansible/pull/54419
+- To fix the nios_zone module idempotency failure  - https://github.com/ansible/ansible/pull/55595
+- add terminal initial prompt for initial connection(https://github.com/ansible/ansible/pull/57057).
+- allow include_role to work with ansible command
+- allow python_requirements_facts to report on dependencies containing dashes
+- asa_config fix <https://github.com/ansible/ansible/pull/56559>
+- azure_rm_roledefinition - fix a small error in build scope. (https://github.com/ansible/ansible/pull/55797)
+- azure_rm_virtualnetworkpeering - fix cross subscriptions virtual network peering. (https://github.com/ansible/ansible/pull/55854)
+- cgroup_perf_recap - When not using file_per_task, make sure we don't prematurely close the perf files
+- display underlying error when reporting an invalid ``tasks:`` block.
+- dnf - fix wildcard matching for state: absent (https://github.com/ansible/ansible/issues/55938)
+- docker connection plugin - accept version ``dev`` as 'newest version' and print warning.
+- docker_container - ``oom_killer`` and ``oom_score_adj`` options are available since docker-py 1.8.0, not 2.0.0 as assumed by the version check.
+- docker_container - fix network creation when ``networks_cli_compatible`` is enabled.
+- docker_container - use docker API's ``restart`` instead of ``stop``/``start`` to restart a container.
+- docker_image - if ``build`` was not specified, the wrong default for ``build.rm`` is used.
+- docker_image - if ``nocache`` set to ``yes`` but not ``build.nocache``, the module failed.
+- docker_image - module failed when ``source: build`` was set but ``build.path`` options not specified.
+- docker_network module - fix idempotency when using ``aux_addresses`` in ``ipam_config``.
+- ec2_instance - make Name tag idempotent (https://github.com/ansible/ansible/pull/55224)
+- eos: don't fail modules without become set, instead show message and continue
+- eos_config: check for session support when asked to 'diff_against: session'
+- eos_eapi: fix idempotency issues when vrf was unspecified.
+- fix bugs for ce - more info see
+- fix incorrect uses of to_native that should be to_text instead.
+- hcloud_volume - Fix idempotency when attaching a server to a volume.
+- ibm_storage - Added a check for null fields in ibm_storage utils module.
+- include_tasks - whitelist ``listen`` as a valid keyword (https://github.com/ansible/ansible/issues/56580)
+- k8s - resource updates applied with force work correctly now
+- keep results subset also when not no_log.
+- meraki_switchport - improve reliability with native VLAN functionality.
+- netapp_e_iscsi_target - fix netapp_e_iscsi_target chap secret size and clearing functionality
+- netapp_e_volumes - fix workload profileId indexing when no previous workload tags exist on the storage array.
+- nxos_acl some platforms/versions raise when no ACLs are present (https://github.com/ansible/ansible/pull/55609).
+- nxos_facts fix <https://github.com/ansible/ansible/pull/57009>
+- nxos_file_copy fix passwordless workflow (https://github.com/ansible/ansible/pull/55441).
+- nxos_interface Fix admin_state check for n6k (https://github.com/ansible/ansible/pull/55673).
+- nxos_snmp_traps fix group all for N35 platforms (https://github.com/ansible/ansible/pull/55995).
+- nxos_snmp_user fix platform fixes for get_snmp_user (https://github.com/ansible/ansible/pull/55832).
+- nxos_vlan mode idempotence bug (https://github.com/ansible/ansible/pull/55144).
+- nxos_vlan vlan names containing regex ctl chars should be escaped (https://github.com/ansible/ansible/pull/55463).
+- nxos_vtp_* modules fix n6k issues (https://github.com/ansible/ansible/pull/55737).
+- openssl_certificate - fix private key passphrase handling for ``cryptography`` backend.
+- openssl_pkcs12 - fixes crash when private key has a passphrase and the module is run a second time.
+- os_stack - Apply tags conditionally so that the module does not throw up an error when using an older distro of openstacksdk (https://github.com/ansible/ansible/pull/56710)
+- pass correct loading context to persistent connections other than local
+- pkg_mgr - Ansible 2.8.0 failing to install yum packages on Amazon Linux (https://github.com/ansible/ansible/issues/56583)
+- postgresql - added initial SSL related tests
+- postgresql - added missing_required_libs, removed excess param mapping
+- postgresql - move connect_to_db and get_pg_version into module_utils/postgres.py (https://github.com/ansible/ansible/pull/55514)
+- postgresql_db - add note to the documentation about state dump and the incorrect rc (https://github.com/ansible/ansible/pull/57297)
+- postgresql_db - fix for postgresql_db fails if stderr contains output (https://github.com/ansible/ansible/issues/56703)
+- postgresql_ping - fixed a typo in the module documentation (https://github.com/ansible/ansible/pull/56608)
+- preserve actual ssh error when we cannot connect.
+- route53_facts - the module did not advertise check mode support, causing it not to be run in check mode.
+- sysctl: the module now also checks the output of STDERR to report if values are correctly set (https://github.com/ansible/ansible/pull/55695)
+- ufw - correctly check status when logging is off (https://github.com/ansible/ansible/issues/56674)
+- uri - always return a value for status even during failure (https://github.com/ansible/ansible/issues/55897)
+- urls - Handle redirects properly for IPv6 address by not splitting on ``:`` and rely on already parsed hostname and port values (https://github.com/ansible/ansible/issues/56258)
+- vmware_vm_facts - fix the support with regular ESXi
+- vyos_interface fix <https://github.com/ansible/ansible/pull/57169>
+- we don't really need to template vars on definition as we do this on demand in templating.
+- win_acl - Fix qualifier parser when using UNC paths - https://github.com/ansible/ansible/issues/55875
+- win_hostname - Fix non netbios compliant name handling (https://github.com/ansible/ansible/issues/55283)
+- winrm - Fix issue when attempting to parse CLIXML on send input failure
+- xenserver_guest - fixed an issue where VM whould be powered off even though check mode is used if reconfiguration requires VM to be powered off.
+- xenserver_guest - proper error message is shown when maximum number of network interfaces is reached and multiple network interfaces are added at once.
+- yum - Fix false error message about autoremove not being supported (https://github.com/ansible/ansible/issues/56458)
+- yum - fix failure when using ``update_cache`` standalone (https://github.com/ansible/ansible/issues/56638)
+- yum - handle special "_none_" value for proxy in yum.conf and .repo files (https://github.com/ansible/ansible/issues/56538)
+
 v2.8.0
 ======
 
@@ -1294,7 +1402,7 @@ postgresql
 - postgresql_info - Gather information about PostgreSQL servers
 - postgresql_membership - Add or remove PostgreSQL roles from groups
 - postgresql_owner - Change an owner of PostgreSQL database object
-- postgresql_pg_hba - Add, remove or modifie a rule in a pg_hba file
+- postgresql_pg_hba - Add, remove or modify a rule in a pg_hba file
 - postgresql_ping - Check remote PostgreSQL server availability
 - postgresql_query - Run PostgreSQL queries
 - postgresql_set - Change a PostgreSQL server configuration parameter
