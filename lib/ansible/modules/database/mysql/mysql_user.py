@@ -106,6 +106,7 @@ notes:
 author:
 - Jonathan Mainguy (@Jmainguy)
 - Benjamin Malynovytch (@bmalynovytch)
+- Aliaksei Zeliashchonak (@azeliashchonak)
 extends_documentation_fragment: mysql
 '''
 
@@ -419,11 +420,18 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # and in the new privileges, then we need to see if there's a difference.
             db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
             for db_table in db_table_intersect:
-                priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+                if "ALL" in new_priv[db_table] and db_table == "*.*":
+                    version = get_db_version(cursor)
+                    if version == "8":
+                        full_priv = {db_table: privileges_get_all(cursor)}
+                        priv_diff = set(full_priv[db_table]) ^ set(curr_priv[db_table])
+                    else:
+                        priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+                else:
+                    priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 if len(priv_diff) > 0:
-                    msg = "Privileges updated"
                     if module.check_mode:
-                        return (True, msg)
+                        return True
                     if not append_privs:
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
                     privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -479,7 +487,8 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\\6)? ?(.*)""", grant[0])
+        res = re.match(
+            """GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\6)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
@@ -491,6 +500,22 @@ def privileges_get(cursor, user, host):
         db = res.group(2)
         output[db] = privileges
     return output
+
+
+def privileges_get_all(cursor):
+    privileges = []
+    cursor.execute('SELECT DISTINCT PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.USER_PRIVILEGES WHERE IS_GRANTABLE="yes"')
+    grants = cursor.fetchall()
+    for grant in grants:
+        privileges.append(grant[0])
+    return privileges
+
+
+def get_db_version(cursor):
+    cursor.execute("SELECT @@version")
+    output = cursor.fetchall()[0]
+    version = output[0].split(".")[0]
+    return version
 
 
 def privileges_unpack(priv, mode):
