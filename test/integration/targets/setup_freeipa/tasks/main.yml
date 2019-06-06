@@ -5,34 +5,6 @@
     name: samba
     state: present
 
-- name: Ensure firewalld is enabled and started.
-  systemd:
-    name: firewalld
-    state: started
-    enabled: true
-
-- name: Ensure necessary ports are opened.
-  firewalld:
-    port: "{{ item }}"
-    permanent: true
-    immediate: true
-    state: enabled
-  loop:
-    - 22/tcp   # SSH
-    - 80/tcp   # HTTP
-    - 443/tcp  # HTTPS
-    - 389/tcp  # LDAP
-    - 636/tcp  # LDAPS
-    - 88/tcp   # kerberos
-    - 464/tcp  # kerberos
-    - 53/tcp   # bind
-    - 88/udp   # kerberos
-    - 464/udp  # kerberos
-    - 53/udp   # bind
-    - 123/udp  # ntp
-    - 8443/tcp  # pki
-  notify: reload firewalld
-
 - name: Install ipa-server packages.
   yum:
     name:
