@@ -238,6 +238,8 @@ def main():
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
         else:
             nets = meraki.get_nets(org_id=org_id)
+    else:
+        nets = meraki.get_nets(org_id=org_id)
 
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_config_templates(meraki, org_id)
