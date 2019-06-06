@@ -84,7 +84,7 @@ options:
     private_ip_allocation_method:
         description:
             - (Deprecate) Specify whether or not the assigned IP address is permanent.
-            - NOTE: When creating a network interface specifying a value of C(Static) requires that a I(private_ip_address) value be provided.
+            - When creating a network interface specifying a value of C(Static) requires that a I(private_ip_address) value be provided.
             - You can update the allocation method to C(Static) after a dynamic private ip address has been assigned.
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         default: Dynamic
@@ -404,7 +404,8 @@ state:
                         - The reference of the subnet resource.
                     type: dict
                     sample: {
-                        "id": "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myresourcegroup/providers/Microsoft.Network/virtualNetworks/tnb57dc95318/subnets/tnb57dc95318",
+                        "id": "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
+                         myresourcegroup/providers/Microsoft.Network/virtualNetworks/tnb57dc95318/subnets/tnb57dc95318",
                         "name": "tnb57dc95318",
                         "resource_group": "myresourcegroup",
                         "virtual_network_name": "tnb57dc95318"
@@ -428,7 +429,8 @@ state:
                 - The reference of the network security group resource.
             type: dict
             sample: {
-                "id": "/subscriptions//xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/nsg001",
+                "id": "/subscriptions//xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/
+                myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/nsg001",
                 "name": "nsg001"
                 }
         primary:
@@ -451,7 +453,6 @@ state:
                 - Type of the resource.
             type: str
             sample: "Microsoft.Network/networkInterfaces"
-    }
 '''
 
 try:
