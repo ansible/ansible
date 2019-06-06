@@ -17,27 +17,28 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_snapshot_facts
-short_description: Gather facts about DigitalOcean Snapshot
+module: digital_ocean_snapshot_info
+short_description: Gather information about DigitalOcean Snapshot
 description:
-    - This module can be used to gather facts about snapshot facts based upon provided values such as droplet, volume and snapshot id.
+    - This module can be used to gather information about snapshot information based upon provided values such as droplet, volume and snapshot id.
+    - This module was called C(digital_ocean_snapshot_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   snapshot_type:
     description:
-     - Specifies the type of snapshot facts to be retrived.
-     - If set to C(droplet), then facts are gathered related to snapshots based on Droplets only.
-     - If set to C(volume), then facts are gathered related to snapshots based on volumes only.
-     - If set to C(by_id), then facts are gathered related to snapshots based on snapshot id only.
-     - If not set to any of the above, then facts are gathered related to all snapshots.
+     - Specifies the type of snapshot information to be retrived.
+     - If set to C(droplet), then information are gathered related to snapshots based on Droplets only.
+     - If set to C(volume), then information are gathered related to snapshots based on volumes only.
+     - If set to C(by_id), then information are gathered related to snapshots based on snapshot id only.
+     - If not set to any of the above, then information are gathered related to all snapshots.
     default: 'all'
     choices: [ 'all', 'droplet', 'volume', 'by_id']
     required: false
   snapshot_id:
     description:
      - To retrieve information about a snapshot, please specify this as a snapshot id.
-     - If set to actual snapshot id, then facts are gathered related to that particular snapshot only.
+     - If set to actual snapshot id, then information are gathered related to that particular snapshot only.
      - This is required parameter, if C(snapshot_type) is set to C(by_id).
     required: false
 requirements:
@@ -47,29 +48,29 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all snapshots
-  digital_ocean_snapshot_facts:
+- name: Gather information about all snapshots
+  digital_ocean_snapshot_info:
     snapshot_type: all
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about droplet snapshots
-  digital_ocean_snapshot_facts:
+- name: Gather information about droplet snapshots
+  digital_ocean_snapshot_info:
     snapshot_type: droplet
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about volume snapshots
-  digital_ocean_snapshot_facts:
+- name: Gather information about volume snapshots
+  digital_ocean_snapshot_info:
     snapshot_type: volume
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about snapshot by snapshot id
-  digital_ocean_snapshot_facts:
+- name: Gather information about snapshot by snapshot id
+  digital_ocean_snapshot_info:
     snapshot_type: by_id
     snapshot_id: 123123123
     oauth_token: "{{ oauth_token }}"
 
-- name: Get facts about snapshot named big-data-snapshot1
-  digital_ocean_snapshot_facts:
+- name: Get information about snapshot named big-data-snapshot1
+  digital_ocean_snapshot_info:
   register: resp_out
 - set_fact:
     snapshot_id: "{{ item.id }}"
@@ -83,7 +84,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean snapshot facts
+    description: DigitalOcean snapshot information
     returned: success
     type: list
     sample: [
@@ -122,7 +123,7 @@ def core(module):
         status_code = response.status_code
 
         if status_code != 200:
-            module.fail_json(msg="Failed to fetch snapshot facts due to error : %s" % response.json['message'])
+            module.fail_json(msg="Failed to fetch snapshot information due to error : %s" % response.json['message'])
 
         snapshot.extend(response.json["snapshot"])
     else:
@@ -151,6 +152,8 @@ def main():
             ['snapshot_type', 'by_id', ['snapshot_id']],
         ],
     )
+    if module._name == 'digital_ocean_snapshot_facts':
+        module.deprecate("The 'digital_ocean_snapshot_facts' module has been renamed to 'digital_ocean_snapshot_info'", version='2.13')
 
     try:
         core(module)

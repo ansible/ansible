@@ -17,17 +17,18 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: digital_ocean_volume_facts
-short_description: Gather facts about DigitalOcean volumes
+module: digital_ocean_volume_info
+short_description: Gather information about DigitalOcean volumes
 description:
-    - This module can be used to gather facts about DigitalOcean provided volumes.
+    - This module can be used to gather information about DigitalOcean provided volumes.
+    - This module was called C(digital_ocean_volume_facts) before Ansible 2.9. The usage did not change.
 author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   region_name:
     description:
      - Name of region to restrict results to volumes available in a specific region.
-     - Please use M(digital_ocean_region_facts) for getting valid values related regions.
+     - Please use M(digital_ocean_region_info) for getting valid values related regions.
     required: false
 
 requirements:
@@ -38,17 +39,17 @@ extends_documentation_fragment: digital_ocean.documentation
 
 
 EXAMPLES = '''
-- name: Gather facts about all volume
-  digital_ocean_volume_facts:
+- name: Gather information about all volume
+  digital_ocean_volume_info:
     oauth_token: "{{ oauth_token }}"
 
-- name: Gather facts about volume in given region
-  digital_ocean_volume_facts:
+- name: Gather information about volume in given region
+  digital_ocean_volume_info:
     region_name: nyc1
     oauth_token: "{{ oauth_token }}"
 
-- name: Get facts about volume named nyc3-test-volume
-  digital_ocean_volume_facts:
+- name: Get information about volume named nyc3-test-volume
+  digital_ocean_volume_info:
   register: resp_out
 - set_fact:
     volume_id: "{{ item.id }}"
@@ -61,7 +62,7 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: DigitalOcean volume facts
+    description: DigitalOcean volume information
     returned: success
     type: list
     sample: [
@@ -131,6 +132,8 @@ def main():
         region_name=dict(type='str', required=False),
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'digital_ocean_volume_facts':
+        module.deprecate("The 'digital_ocean_volume_facts' module has been renamed to 'digital_ocean_volume_info'", version='2.13')
 
     try:
         core(module)
