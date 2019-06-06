@@ -4,6 +4,7 @@
 
 - vars:
     test_table: acme
+    non_existent_table: non_existent_table
     task_parameters: &task_parameters
       become_user: '{{ pg_user }}'
       become: True
@@ -43,6 +44,19 @@
   #
   # ANALYZE
   #
+  # check_mode analyze only of non-existent table, must fail:
+  - name: postgresql_vacuum - check mode of table analyze, the table doesn't exist
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ non_existent_table }}'
+      analyze_only: yes
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result.failed == true
 
   # check_mode analyze only - if it's OK, must always return changed=True:
   - name: postgresql_vacuum - check mode of table analyze
@@ -142,6 +156,18 @@
   #
   # VACUUM
   #
+  # check_mode vacuum of non-existent table:
+  - name: postgresql_vacuum - check mode of table vacuum, non-existent table, must fail
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ non_existent_table }}'
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result.failed == true
 
   # check_mode vacuum - if it's OK, must always return changed=True:
   - name: postgresql_vacuum - check mode of table vacuum
@@ -272,8 +298,23 @@
       <<: *pg_parameters
       query: "SELECT pg_stat_reset()"
 
+  # check_mode vacuum full analyze for non-existent table, must fail:
+  - name: postgresql_vacuum - check mode of table vacuum full, non-existent table
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_vacuum:
+      <<: *pg_parameters
+      table: '{{ non_existent_table }}'
+      full: yes
+      analyze: yes
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result.failed == true
+
   # check_mode vacuum full analyze - if it's OK, must always return changed=True:
-  - name: postgresql_vacuum - check mode of table vacuum
+  - name: postgresql_vacuum - check mode of table vacuum full
     check_mode: yes
     <<: *task_parameters
     postgresql_vacuum:

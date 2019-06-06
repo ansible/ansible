@@ -231,7 +231,7 @@ class Vacuum(object):
         else:
             query_frag.append('*')
 
-        query_frag.append['FROM %s LIMIT 1' % pg_quote_identifier(self.module.param['table'], 'table')]
+        query_frag.append('FROM %s LIMIT 1' % pg_quote_identifier(self.module.params['table'], 'table'))
 
         if exec_sql(self, ' '.join(query_frag), ddl=True, add_to_executed=False):
             return True
@@ -295,7 +295,7 @@ class Vacuum(object):
 
         if self.module.check_mode:
             if self.module.params.get('table'):
-                if self.__check_obj:
+                if self.__check_obj():
                     # if the table or column doesn't exist,
                     # self.__check_obj will fail
                     self.changed = True
