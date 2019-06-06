@@ -12,3 +12,7 @@ ansible-playbook ansible_managed.yml -c  ansible_managed.cfg -i ../../inventory 
 
 # Test for #42585
 ANSIBLE_ROLES_PATH=../ ansible-playbook custom_template.yml -i ../../inventory -e @../../integration_config.yml -v "$@"
+
+
+# Test for several corner cases #57188
+ansible-playbook corner_cases.yml -v "$@"
