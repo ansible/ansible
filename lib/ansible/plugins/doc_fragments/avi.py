@@ -46,7 +46,7 @@ options:
         suboptions:
             controller:
                 description:
-                  - Avi controller IP
+                  - Avi controller IP or SQDN
             username:
                 description:
                   - Avi controller username
@@ -67,16 +67,19 @@ options:
             port:
                 description:
                   - Avi controller port
+            token:
+                description:
+                  - Avi controller API token
             timeout:
                 description:
                   - Avi controller request timeout
                 default: 300
             session_id:
                 description:
-                  - Avi controller API session id
+                  - Avi controller API session id to reuse existing session with csrftoken
             csrftoken:
                 description:
-                  - Avi controller API csrftoken
+                  - Avi controller API csrftoken to reuse existing session with session id
         type: dict
         version_added: "2.5"
     api_context:

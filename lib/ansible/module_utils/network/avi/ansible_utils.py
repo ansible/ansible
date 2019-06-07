@@ -553,6 +553,7 @@ def avi_common_argument_spec():
         tenant_uuid=dict(default='', type='str'),
         port=dict(type='int'),
         timeout=dict(default=300, type='int'),
+        token=dict(default='', type='str', no_log=True),
         session_id=dict(default='', type='str', no_log=True),
         csrftoken=dict(default='', type='str', no_log=True)
     )
