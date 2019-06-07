@@ -158,7 +158,7 @@ EXAMPLES = '''
     last_name: test
     required_actions: [ UPDATE_PROFILE, CONFIGURE_TOTP ]
     attributes: {'one key': 'one value', 'another key': 42}
-    credentials: {'type': 'password', 'user_secret'}
+    credentials: {'type': 'password', 'user_secret': 'userTest1secret'}
 '''
 
 RETURN = '''
