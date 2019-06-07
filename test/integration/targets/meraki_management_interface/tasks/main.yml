@@ -1,0 +1,196 @@
+# Test code for the Meraki Management Interface module
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+
+  - set_fact:
+      net_name: Home - Appliance
+
+  - name: Create test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      net_name: '{{net_name}}'
+      type: appliance
+    delegate_to: localhost
+    register: net
+
+  - set_fact:
+      net_id: net.data.id
+
+  - name: Set WAN1 as DHCP in check mode
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+      wan1:
+        wan_enabled: enabled
+        using_static_ip: no
+        vlan: 1
+    delegate_to: localhost
+    register: set_wan1_check
+    check_mode: yes
+
+  - debug:
+      var: set_wan1_check
+
+  - assert:
+      that:
+        - set_wan1_check is changed
+        - set_wan1_check.data is defined
+
+  - name: Set WAN1 as DHCP
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+      wan1:
+        wan_enabled: enabled
+        using_static_ip: no
+        vlan: 1
+    delegate_to: localhost
+    register: set_wan1
+
+  - debug:
+      var: set_wan1
+
+  - assert:
+      that:
+        - set_wan1 is changed
+        - set_wan1.data is defined
+
+  - name: Set WAN1 as DHCP with idempotency
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+      wan1:
+        wan_enabled: enabled
+        using_static_ip: no
+        vlan: 1
+    delegate_to: localhost
+    register: set_wan1_idempotent
+
+  - debug:
+      var: set_wan1_idempotent
+
+  - assert:
+      that:
+        - set_wan1_idempotent is not changed
+        - set_wan1_idempotent.data is defined
+
+  - name: Set WAN2 as static IP
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+      wan2:
+        wan_enabled: enabled
+        using_static_ip: yes
+        static_ip: 192.168.16.195
+        static_gateway_ip: 192.168.16.1
+        static_subnet_mask: 255.255.255.0
+        static_dns:
+          - 1.1.1.1
+        vlan: 1
+    delegate_to: localhost
+    register: set_wan2
+
+  - debug:
+      var: set_wan2
+
+  - assert:
+      that:
+        - set_wan2 is changed
+        - set_wan2.data is defined
+
+  - name: Test too many DNS servers
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+      wan1:
+        wan_enabled: enabled
+        using_static_ip: yes
+        static_ip: 192.0.1.2
+        static_gateway_ip: 192.0.1.1
+        static_subnet_mask: 255.255.255.0
+        static_dns:
+          - 1.1.1.1
+          - 8.8.8.8
+          - 4.4.4.4
+        vlan: 1
+    delegate_to: localhost
+    register: too_many_dns
+    ignore_errors: yes
+
+  - debug:
+      var: too_many_dns
+
+  - assert:
+      that:
+        - 'too_many_dns.msg == "Maximum number of static DNS addresses is 2."'
+
+  - name: Query management information
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+    delegate_to: localhost
+    register: query_mx
+
+  - debug:
+      var: query_mx
+
+  - assert:
+      that:
+        - query_mx.data is defined
+
+  always:
+  ############################################################################
+  # Tear down starts here
+  ############################################################################
+  - name: Reset settings for all interfaces
+    meraki_management_interface:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      net_id: '{{net_id}}'
+      serial: '{{serial}}'
+      wan1:
+        wan_enabled: disabled
+        using_static_ip: no
+      wan2:
+        wan_enabled: enabled
+        using_static_ip: no
+    delegate_to: localhost
+    ignore_errors: yes
+
+  # Network deletion is commented out since this requires a device in a network
+  # - name: Delete network
+  #   meraki_network:
+  #     auth_key: '{{auth_key}}'
+  #     state: absent
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{net_name}}'
+  #   delegate_to: localhost
+  #   register: delete_network
