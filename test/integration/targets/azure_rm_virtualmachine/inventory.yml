@@ -1,22 +1,48 @@
 all:
   hosts:
+    azure_test_invalid:
     azure_test_public_ip:
+      network: 10.42.0.0/24
+      subnet: 10.42.0.0/28
+
     azure_test_no_public_ip:
+      network: 10.42.1.0/24
+      subnet: 10.42.1.0/28
+
     azure_test_deallocate:
+      network: 10.42.2.0/24
+      subnet: 10.42.2.0/28
+
+    azure_test_minimal:
+      network: 10.42.3.0/24
+      subnet: 10.42.3.0/28
+
     azure_test_dual_nic:
-      niclist:
-        - name: testnic011
+      network: 10.42.4.0/24
+      subnet: 10.42.4.0/28
+      secondary_network: 10.42.5.0/24
+      secondary_subnet: 10.42.5.0/28
+      nic_list:
+        - name: "{{ 'int' ~ uid_short ~ '-1' }}"
           resource_group: "{{ resource_group_secondary }}"
-        - name: testnic012
+        - name: "{{ 'int' ~ uid_short ~ '-2' }}"
           resource_group: "{{ resource_group_secondary }}"
-    azure_test_minimal_invalid:
+
   vars:
     ansible_connection: local
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
-    storage_account: "{{ 'rg1' ~ (resource_group ~ inventory_hostname) | hash('md5') | truncate(18, True, '') }}"
-    availability_set: "{{ 'avbs1_' ~ (resource_group ~ inventory_hostname) | hash('md5') | truncate(8, True, '') }}"
-    vm_name: "{{ 'vm-' ~ (resource_group ~ inventory_hostname) | hash('md5') | truncate(8, True, '') }}"
+    uid: "{{ (resource_group ~ inventory_hostname) | hash('md5') | truncate(18, True, '') }}"
+    uid_short: "{{ (resource_group ~ inventory_hostname) | hash('md5') | truncate(10, True, '') }}"
+
+    storage_account: "{{ 'stor' ~ uid }}"
+    availability_set: "{{ 'avbs' ~ uid_short }}"
+    vm_name: "{{ 'vm' ~ uid_short }}"
+    network_name: "{{ 'vnet' ~ uid_short }}"
+    subnet_name: "{{ 'snet' ~ uid_short }}"
+    security_group: "{{ 'sg' ~ uid_short }}"
+    public_ip_name: "{{ 'ip' ~ uid_short }}"
+    interface_name: "{{ 'int' ~ uid_short }}"
 
     ssh_keys:
       - path: '/home/chouseknecht/.ssh/authorized_keys'

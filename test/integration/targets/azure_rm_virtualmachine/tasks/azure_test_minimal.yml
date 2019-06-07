@@ -1,41 +1,5 @@
 - include_tasks: setup.yml
 
-# TODO: Until we have a module to create/delete images this is the best tests I can do
-- name: Assert error thrown with invalid image dict
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    image:
-      offer: UbuntuServer
-  register: fail_invalid_image_dict
-  failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]"'
-
-- name: Assert error thrown with invalid image type
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    image:
-      - testing
-  register: fail_invalid_image_type
-  failed_when: 'fail_invalid_image_type.msg != "parameter error: expecting image to be a string or dict not list"'
-
-- name: Assert error finding missing custom image
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    image: invalid-image
-  register: fail_missing_custom_image
-  failed_when: fail_missing_custom_image.msg != "Error could not find image with name invalid-image"
-
-- name: Assert error finding missing custom image (dict style)
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    image:
-      name: invalid-image
-  register: fail_missing_custom_image_dict
-  failed_when: fail_missing_custom_image_dict.msg != "Error could not find image with name invalid-image"
-
 # # Tests possible when CI user acccount setup with required authority
 # - name: Create virtual machine with image and plan which requires acceptance of terms
 #   azure_rm_virtualmachine:
@@ -100,22 +64,22 @@
     remove_on_absent: all_autocreated
     state: absent
 
-- name: Query NIC
+- name: Query auto created NIC
   azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ vm_name }}01"
   register: nic_result
 
-- name: Query NSG
+- name: Query auto created security group
   azure_rm_securitygroup_facts:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ vm_name }}01"
   register: nsg_result
 
-- name: Query public IP
+- name: Query auto created public IP
   azure_rm_publicipaddress_facts:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ vm_name }}01"
   register: pip_result
 
 - name: Assert that autocreated resources were deleted
@@ -128,21 +92,15 @@
 
 - name: Destroy subnet
   azure_rm_subnet:
-      resource_group: "{{ resource_group }}"
-      virtual_network: "{{ vm_name }}"
-      name: "{{ vm_name }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    virtual_network: "{{ network_name }}"
+    name: "{{ subnet_name }}"
+    state: absent
 
 - name: Destroy virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    state: absent
-
-- name: Destroy public ip
-  azure_rm_publicipaddress:
-    resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ network_name }}"
     state: absent
 
 - name: Destroy availability set
@@ -155,5 +113,5 @@
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}"
     name: "{{ storage_account }}"
-    force_delete_nonempty: true
+    force_delete_nonempty: yes
     state: absent

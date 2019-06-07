@@ -1,3 +1,6 @@
+- debug:
+    msg: "UID is {{ uid_short }}"
+
 - name: SETUP | Create storage account
   azure_rm_storageaccount:
     resource_group: "{{ resource_group }}"
@@ -12,12 +15,12 @@
 - name: SETUP | Create virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    address_prefixes: "10.10.0.0/16"
+    name: "{{ network_name }}"
+    address_prefixes: "{{ network }}"
 
 - name: SETUP | Create subnet
   azure_rm_subnet:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    address_prefix: "10.10.0.0/24"
-    virtual_network: "{{ vm_name }}"
+    name: "{{ subnet_name }}"
+    address_prefix: "{{ subnet }}"
+    virtual_network: "{{ network_name }}"

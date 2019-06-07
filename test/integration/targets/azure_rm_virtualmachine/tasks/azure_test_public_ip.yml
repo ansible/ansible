@@ -4,12 +4,12 @@
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
     allocation_method: Static
-    name: "{{ vm_name }}"
+    name: "{{ public_ip_name }}"
 
 - name: Create security group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ security_group }}"
     purge_rules: yes
     rules:
       - name: ALLOW_SSH
@@ -29,11 +29,11 @@
 - name: Create NIC for single nic VM
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
-    virtual_network: "{{ vm_name }}"
-    subnet: "{{ vm_name }}"
-    public_ip_name: "{{ vm_name }}"
-    security_group: "{{ vm_name }}"
+    name: "{{ interface_name }}"
+    virtual_network: "{{ network_name }}"
+    subnet: "{{ subnet_name }}"
+    public_ip_name: "{{ public_ip_name }}"
+    security_group: "{{ security_group }}"
 
 - name: Create virtual machine with a single NIC and no boot diagnostics
   register: output
@@ -48,7 +48,7 @@
     admin_password: Password123!
     short_hostname: testvm
     os_type: Linux
-    network_interfaces: "{{ vm_name }}"
+    network_interfaces: "{{ interface_name }}"
     availability_set: "{{ availability_set }}"
     image:
       offer: UbuntuServer
@@ -203,7 +203,7 @@
     admin_password: Password123!
     short_hostname: testvm
     os_type: Linux
-    network_interfaces: "{{ vm_name }}"
+    network_interfaces: "{{ interface_name }}"
     image:
       offer: UbuntuServer
       publisher: Canonical
@@ -227,7 +227,7 @@
     admin_password: Password123!
     short_hostname: testvm
     os_type: Linux
-    network_interfaces: "{{ vm_name }}"
+    network_interfaces: "{{ interface_name }}"
     image:
       offer: UbuntuServer
       publisher: Canonical
@@ -251,7 +251,7 @@
 - name: NIC should be gone
   azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ interface_name }}"
 
 - name: Ensure NIC was removed
   assert:
@@ -260,7 +260,7 @@
 - name: Public IP should be gone
   azure_rm_publicipaddress_facts:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ public_ip_name }}"
 
 - name: Ensure public IP was removed
   assert:
@@ -269,32 +269,32 @@
 - name: Destroy NIC
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ interface_name }}"
     state: absent
 
 - name: Destroy security group
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ security_group }}"
     state: absent
 
 - name: Destroy subnet
   azure_rm_subnet:
-      resource_group: "{{ resource_group }}"
-      virtual_network: "{{ vm_name }}"
-      name: "{{ vm_name }}"
-      state: absent
+    resource_group: "{{ resource_group }}"
+    virtual_network: "{{ network_name }}"
+    name: "{{ subnet_name }}"
+    state: absent
 
 - name: Destroy virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ network_name }}"
     state: absent
 
 - name: Destroy public ip
   azure_rm_publicipaddress:
     resource_group: "{{ resource_group }}"
-    name: "{{ vm_name }}"
+    name: "{{ public_ip_name }}"
     state: absent
 
 - name: Destroy availability set
