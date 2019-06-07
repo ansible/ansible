@@ -5,7 +5,7 @@
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     datacenter: '{{ dc1 }}'
-    cluster: '{{ cluster_name }}'
+    cluster: '{{ ccr1 }}'
     resource_pool: DC0_C0_RP1
     mem_shares: normal
     mem_limit: -1
