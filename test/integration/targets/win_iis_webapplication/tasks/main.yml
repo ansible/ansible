@@ -40,10 +40,31 @@
 
   always:
   # Cleanup
+  - name: remove test application
+    win_iis_webapplication:
+      state: absent
+      site: "{{ test_site_name }}"
+      name: "{{ test_app_name }}"
+
+  - name: remove test application pool
+    win_iis_webapppool:
+      name: "{{ test_apppool }}"
+      state: absent
+
+  - name: remove test site
+    win_iis_website:
+      name: "{{ test_site_name }}"
+      state: absent
+
   - name: restore iis configuration
     win_copy:
       src: '{{ ansible_env.TEMP }}\applicationHost.config'
       dest: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
       remote_src: yes
+    register: copy_result
+
+  - assert:
+      that:
+        - "stat_result.stat.checksum == copy_result.checksum"
 
   when: ansible_distribution_version is version('6.1','ge')

@@ -69,6 +69,11 @@
     - 'result.physical_path == test_physical_path'
     - "result.connect_as == 'specific_user'"
 
+- name: create new test application pool
+  win_iis_webapppool:
+    name: "{{ test_apppool }}"
+    state: present
+
 - name: change app pool and use pass through authentication
   win_iis_webapplication:
     state: present
