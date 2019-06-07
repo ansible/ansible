@@ -2157,9 +2157,9 @@ class RedfishUtils(object):
         if 'Members' in d:  # collections case
             for m in d.get('Members'):
                 u = m.get('@odata.id')
-                s = self.get_request(self.root_uri + u)
-                if s.get('ret'):
-                    p = s.get('data')
+                r = self.get_request(self.root_uri + u)
+                if r.get('ret'):
+                    p = r.get('data')
                     if p:
                         e = {subsystem.lower() + '_uri': u,
                              status: p.get(status,
@@ -2173,7 +2173,6 @@ class RedfishUtils(object):
 
     def get_health_subsystem(self, subsystem, data, health):
         if subsystem in data:
-            health[subsystem] = []
             sub = data.get(subsystem)
             if isinstance(sub, list):
                 for r in sub:
@@ -2187,6 +2186,13 @@ class RedfishUtils(object):
                 if '@odata.id' in sub:
                     uri = sub.get('@odata.id')
                     self.get_health_resource(subsystem, uri, health, None)
+        elif 'Members' in data:
+            for m in data.get('Members'):
+                u = m.get('@odata.id')
+                r = self.get_request(self.root_uri + u)
+                if r.get('ret'):
+                    d = r.get('data')
+                    self.get_health_subsystem(subsystem, d, health)
 
     def get_health_report(self, category, uri, subsystems):
         result = {}
@@ -2218,13 +2224,18 @@ class RedfishUtils(object):
                     continue
             else:  # ex: Memory
                 d = data
+            health[sub] = []
             self.get_health_subsystem(sub, d, health)
+            if not health[sub]:
+                del health[sub]
 
         result["entries"] = health
         return result
 
     def get_system_health_report(self, systems_uri):
-        subsystems = ['Processors', 'Memory', 'Storage', 'EthernetInterfaces']
+        subsystems = ['Processors', 'Memory', 'SimpleStorage', 'Storage',
+                      'EthernetInterfaces', 'NetworkInterfaces.NetworkPorts',
+                      'NetworkInterfaces.NetworkDeviceFunctions']
         return self.get_health_report('System', systems_uri, subsystems)
 
     def get_multi_system_health_report(self):
