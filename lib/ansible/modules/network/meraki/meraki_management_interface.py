@@ -134,6 +134,32 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- name: Set WAN2 as static IP
+  meraki_management_interface:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_id: YourNetId
+    serial: AAAA-BBBB-CCCC
+    wan2:
+      wan_enabled: enabled
+      using_static_ip: yes
+      static_ip: 192.168.16.195
+      static_gateway_ip: 192.168.16.1
+      static_subnet_mask: 255.255.255.0
+      static_dns:
+        - 1.1.1.1
+      vlan: 1
+  delegate_to: localhost
+
+- name: Query management information
+  meraki_management_interface:
+    auth_key: abc123
+    state: query
+    org_name: YourOrg
+    net_id: YourNetId
+    serial: AAAA-BBBB-CCCC
+  delegate_to: localhost
 '''
 
 RETURN = r'''
