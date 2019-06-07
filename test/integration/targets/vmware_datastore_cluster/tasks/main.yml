@@ -37,13 +37,25 @@
     that:
      - not add_dsc.changed
 
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: 'my_datastore_folder'
+    folder_type: datastore
+    state: present
+    validate_certs: no
+  register: my_datastore_folder
+
 - name: Add a datastore cluster using folder
   vmware_datastore_cluster:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     validate_certs: no
-    folder: "/F0/{{ dc1 }}/datastore/F0"
+    folder: "{{ my_datastore_folder.result.path }}"
     datastore_cluster_name: DSC2
     state: present
   register: add_dsc_folder_check
