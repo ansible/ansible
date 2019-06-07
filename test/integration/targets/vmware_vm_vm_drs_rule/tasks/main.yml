@@ -37,7 +37,7 @@
         password: "{{ vcenter_password }}"
         drs_rule_name: drs_rule_0001
         cluster_name: "{{ ccr1 }}"
-        vms: "{{ infra.vm_list }}"
+        vms: "{{ virtual_machines | map(attribute='name') | list }}"
         enabled: False
         affinity_rule: False
         mandatory: False

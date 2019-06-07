@@ -17,7 +17,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: "{{ ds2 }}"
   register: vapp_vm
 
 - debug: var=vapp_vm
