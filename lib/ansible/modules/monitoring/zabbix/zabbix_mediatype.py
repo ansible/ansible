@@ -64,7 +64,7 @@ options:
         type: 'int'
         description:
             - The maximum number of alerts that can be processed in parallel.
-            - Possible range is 0-100
+            - Possible value is 1 when I(type=sms) and 0-100 otherwise.
         default: 1
     max_attempts:
         type: 'int'
@@ -92,37 +92,68 @@ options:
         type: 'str'
         description:
             - Serial device name of the gsm modem.
-            - Required when i(type=sms).
+            - Required when I(type=sms).
     username:
         type: 'str'
         description:
             - Username or Jabber identifier.
             - Required when I(type=jabber) or I(type=ez_texting).
+            - Required when I(type=email) and I(smtp_authentication=true).
     password:
         type: 'str'
         description:
             - Authentication password.
             - Required when I(type=jabber) or I(type=ez_texting).
+            - Required when I(type=email) and I(smtp_authentication=true).
     smtp_server:
         type: 'str'
         description:
             - SMTP server host.
-            - Required when i(type=email).
+            - Required when I(type=email).
+        default: 'localhost'
     smtp_server_port:
         type: 'int'
         description:
             - SMTP server port.
+            - Required when I(type=email).
+        default: 25
     smtp_helo:
         type: 'str'
         description:
             - SMTP HELO.
-            - Required when i(type=email).
+            - Required when I(type=email).
+        default: 'localhost'
     smtp_email:
         type: 'str'
         description:
             - Email address from which notifications will be sent.
-            - Required when i(type=email).
-    # TODO: Check not documented parameters for Email types
+            - Required when I(type=email).
+    smtp_authentication:
+        type: 'bool'
+        description:
+            - Whether SMTP authetication with username and password should be enabled or not.
+            - If set to C(true), C(username) and C(password) should be specified.
+        default: false
+    smtp_security:
+        type: 'str'
+        description:
+            - SMTP connection security level to use.
+        choices:
+            - None
+            - STARTTLS
+            - SSL/TLS
+    smtp_verify_host:
+        type: 'bool'
+        description:
+            - SSL verify host for SMTP.
+            - Can be specified when I(smtp_security=STARTTLS) or I(smtp_security=SSL/TLS)
+        default: false
+    smtp_verify_peer:
+        type: 'bool'
+        description:
+            - SSL verify peer for SMTP.
+            - Can be specified when I(smtp_security=STARTTLS) or I(smtp_security=SSL/TLS)
+        default: false
     message_text_limit:
         type: 'str'
         description:
@@ -137,7 +168,59 @@ extends_documentation_fragment:
 
 '''
 
+RETURN = '''
+msg:
+    description: User friendly message describing the action.
+    returned: success
+    type: str
+    sample: 'Mediatype updated. Name: Ops Email, ID: 42'
+'''
+
 EXAMPLES = '''
+- name: 'Create an email mediatype with SMTP authentication'
+  zabbix_mediatype:
+    name: "Ops email"
+    server_url: "http://example.com/zabbix/"
+    login_user: Admin
+    login_password: "zabbix"
+    type: 'email'
+    smtp_server: 'example.com'
+    smtp_server_port: 2000
+    smtp_email: 'ops@example.com'
+    smtp_authentication: true
+    username: 'smtp_user'
+    password: 'smtp_pass'
+
+- name: 'Create a script mediatype'
+  zabbix_mediatype:
+    name: "my script"
+    server_url: "http://example.com/zabbix/"
+    login_user: Admin
+    login_password: "zabbix"
+    type: 'script'
+    script_name: 'my_script.py'
+    script_params:
+      - 'arg1'
+      - 'arg2'
+
+- name: 'Create a jabber mediatype'
+  zabbix_mediatype:
+    name: "My jabber"
+    server_url: "http://example.com/zabbix/"
+    login_user: Admin
+    login_password: "zabbix"
+    type: 'jabber'
+    username: 'jabber_id'
+    password: 'jabber_pass'
+
+- name: 'Create an SMS mediatype'
+  zabbix_mediatype:
+    name: "My SMS Mediatype"
+    server_url: "http://example.com/zabbix/"
+    login_user: Admin
+    login_password: "zabbix"
+    type: 'sms'
+    gsm_modem: '/dev/ttyS0'
 '''
 
 try:
@@ -152,22 +235,45 @@ from ansible.module_utils.common.text.converters import container_to_bytes
 
 
 def to_numeric_value(value, strs):
-    try:
-        return str(strs[value])
-    except Exception as e:
-        return None
+    return strs.get(value)
 
 
 def validate_params(module, params):
+    """Validates arguments that are required together.
+
+    Fails the module with the message that shows the missing
+    requirements if there are some.
+
+    Args:
+        module: AnsibleModule object.
+        params (list): Each element of this list
+            is a list like
+            ['argument_key', 'argument_value', ['required_arg_1',
+                                                'required_arg_2']].
+            Format is the same as `required_if` parameter of AnsibleModule.
+    """
     for param in params:
         if module.params[param[0]] == param[1]:
             if None in [module.params[i] for i in param[2]]:
-                module.fail_json(msg="Following arguments are required when {key} is {value}: {arguments}".format(key=param[0], value=param[1], arguments=', '.join(param[2])))
+                module.fail_json(
+                    msg="Following arguments are required when {key} is {value}: {arguments}".format(
+                        key=param[0],
+                        value=param[1],
+                        arguments=', '.join(param[2])
+                    )
+                )
 
 
 def construct_parameters(**kwargs):
-    """
-    Returns a dict of parameters only related to the specified `transport_type=`
+    """Translates data to a format suitable for Zabbix API and filters
+    the ones that are related to the specified mediatype type.
+
+    Args:
+        **kwargs: Arguments passed to the module.
+
+    Returns:
+        A dictionary of arguments that are related to kwargs['transport_type'],
+        and are in a format that is understandable by Zabbix API.
     """
     if kwargs['transport_type'] == 'email':
         return dict(
@@ -286,8 +392,15 @@ def construct_parameters(**kwargs):
 
 
 def check_if_mediatype_exists(module, zbx, name):
-    """
-    Check if mediatype exists and return a typle like (bool('exists or not'), id or None)
+    """Checks if mediatype exists.
+
+    Args:
+        module: AnsibleModule object
+        zbx: ZabbixAPI object
+        name: Zabbix mediatype name
+
+    Returns:
+        Tuple of (True, `id of the mediatype`) if mediatype exists, (False, None) otherwise
     """
     try:
         mediatype_list = zbx.mediatype.get({
@@ -303,6 +416,16 @@ def check_if_mediatype_exists(module, zbx, name):
 
 
 def diff(existing, new):
+    """Constructs the diff for Ansible's --diff option.
+
+    Args:
+        existing (dict): Existing mediatype data.
+        new (dict): New mediatype data.
+
+    Returns:
+        A dictionary like {'before': existing, 'after': new}
+        with filtered empty values.
+    """
     before = {}
     after = {}
     for key in new:
@@ -315,6 +438,20 @@ def diff(existing, new):
 
 
 def get_update_params(module, zbx, mediatype_id, **kwargs):
+    """Filters only the parameters that are different and need to be updated.
+
+    Args:
+        module: AnsibleModule object.
+        zbx: ZabbixAPI object.
+        mediatype_id (int): ID of the mediatype to be updated.
+        **kwargs: Parameters for the new mediatype.
+
+    Returns:
+        A tuple where the first element is a dictionary of parameters
+        that need to be updated and the second one is a dictionary
+        returned by diff() function with
+        existing mediatype data and new params passed to it.
+    """
     existing_mediatype = container_to_bytes(zbx.mediatype.get({
         'output': 'extend',
         'mediatypeids': [mediatype_id]
@@ -364,9 +501,9 @@ def main():
         state=dict(type='str', default='present', choices=['present', 'absent']),
         type=dict(type='str', choices=['email', 'script', 'sms', 'jabber', 'ez_texting'], required=True),
         status=dict(type='str', default='enabled', choices=['enabled', 'disabled'], required=False),
-        max_sessions=dict(type='int', default=1, choices=range(100), required=False),
-        max_attempts=dict(type='int', default=3, choices=range(10), required=False),
-        attempt_interval=dict(type='int', default=10, choices=range(60), required=False),
+        max_sessions=dict(type='int', default=1, required=False),
+        max_attempts=dict(type='int', default=3, required=False),
+        attempt_interval=dict(type='int', default=10, required=False),
         # Script
         script_name=dict(type='str', required=False),
         script_params=dict(type='list', required=False),
@@ -380,7 +517,7 @@ def main():
         smtp_server_port=dict(type='int', default=25, required=False),
         smtp_helo=dict(type='str', default='localhost', required=False),
         smtp_email=dict(type='str', required=False),
-        smtp_security=dict(type='str', required=False),
+        smtp_security=dict(type='str', required=False, choices=['None', 'STARTTLS', 'SSL/TLS']),
         smtp_authentication=dict(type='bool', default=False, required=False),
         smtp_verify_host=dict(type='bool', default=False, required=False),
         smtp_verify_peer=dict(type='bool', default=False, required=False),
@@ -480,30 +617,71 @@ def main():
     if mediatype_exists:
         if state == 'absent':
             if module.check_mode:
-                module.exit_json(changed=True, msg="Mediatype would have been deleted. Name: {name}, ID: {_id}".format(name=name, _id=mediatype_id))
+                module.exit_json(
+                    changed=True,
+                    msg="Mediatype would have been deleted. Name: {name}, ID: {_id}".format(
+                        name=name,
+                        _id=mediatype_id
+                    )
+                )
             mediatype_id = delete_mediatype(module, zbx, mediatype_id)
-            module.exit_json(changed=True, msg="Mediatype deleted. Name: {name}, ID: {_id}".format(name=name, _id=mediatype_id))
+            module.exit_json(
+                changed=True,
+                msg="Mediatype deleted. Name: {name}, ID: {_id}".format(
+                    name=name,
+                    _id=mediatype_id
+                )
+            )
         else:
             params_to_update, diff = get_update_params(module, zbx, mediatype_id, **parameters)
             if params_to_update == {}:
-                module.exit_json(changed=False, msg="Mediatype is up to date: {name}".format(name=name))
+                module.exit_json(
+                    changed=False,
+                    msg="Mediatype is up to date: {name}".format(name=name)
+                )
             else:
                 if module.check_mode:
-                    module.exit_json(changed=True, diff=diff, msg="Mediatype would have been updated. Name: {name}, ID: {_id}".format(name=name, _id=mediatype_id))
+                    module.exit_json(
+                        changed=True,
+                        diff=diff,
+                        msg="Mediatype would have been updated. Name: {name}, ID: {_id}".format(
+                            name=name,
+                            _id=mediatype_id
+                        )
+                    )
                 mediatype_id = update_mediatype(
                     module, zbx,
                     mediatypeid=mediatype_id,
                     **params_to_update
                 )
-                module.exit_json(changed=True, diff=diff, msg="Mediatype updated. Name: {name}, ID: {_id}".format(name=name, _id=mediatype_id))
+                module.exit_json(
+                    changed=True,
+                    diff=diff,
+                    msg="Mediatype updated. Name: {name}, ID: {_id}".format(
+                        name=name,
+                        _id=mediatype_id
+                    )
+                )
     else:
         if state == "absent":
             module.exit_json(changed=False)
         else:
             if module.check_mode:
-                module.exit_json(changed=True, msg="Mediatype would have been created. Name: {name}, ID: {_id}".format(name=name, _id=mediatype_id))
+                module.exit_json(
+                    changed=True,
+                    msg="Mediatype would have been created. Name: {name}, ID: {_id}".format(
+                        name=name,
+                        _id=mediatype_id
+                    )
+                )
             mediatype_id = create_mediatype(module, zbx, **parameters)
-            module.exit_json(changed=True, msg="Mediatype created: {name}, ID: {_id}".format(name=name, _id=mediatype_id))
+            module.exit_json(
+                changed=True,
+                msg="Mediatype created: {name}, ID: {_id}".format(
+                    name=name,
+                    _id=mediatype_id
+                )
+            )
 
 
 if __name__ == '__main__':
