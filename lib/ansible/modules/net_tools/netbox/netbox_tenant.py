@@ -235,7 +235,7 @@ def _check_and_adapt_data(nb, data):
     return data
 
 
-def ensure_site_present(nb, nb_endpoint, data):
+def ensure_tenant_present(nb, nb_endpoint, data):
     """
     :returns dict(interface, msg, changed): dictionary resulting of the request,
     where 'site' is the serialized interface fetched or newly created in Netbox
@@ -270,7 +270,7 @@ def ensure_site_present(nb, nb_endpoint, data):
     return result
 
 
-def ensure_site_absent(nb, nb_endpoint, data):
+def ensure_tenant_absent(nb, nb_endpoint, data):
     """
     :returns dict(msg, changed)
     """
