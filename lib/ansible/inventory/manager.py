@@ -413,13 +413,13 @@ class InventoryManager(object):
             else:
                 that = self._match_one_pattern(p)
                 if p[0] == "!":
-                    that = frozenset(that)
+                    that = set(that)
                     hosts = [h for h in hosts if h not in that]
                 elif p[0] == "&":
-                    that = frozenset(that)
+                    that = set(that)
                     hosts = [h for h in hosts if h in that]
                 else:
-                    added_hosts = frozenset(y.name for y in hosts)
+                    added_hosts = set(y.name for y in hosts)
                     hosts.extend([h for h in that if h.name not in added_hosts])
         return hosts
 
