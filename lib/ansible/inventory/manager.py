@@ -353,16 +353,18 @@ class InventoryManager(object):
 
         # Check if pattern already computed
         if isinstance(pattern, list):
-            pattern_hash = u":".join(pattern)
+            pattern_list = pattern[:]
         else:
-            pattern_hash = pattern
+            pattern_list = [pattern]
 
-        if pattern_hash:
+        if pattern_list:
             if not ignore_limits and self._subset:
-                pattern_hash += u":%s" % u':'.join(self._subset)
+                pattern_list.extend(self._subset)
 
             if not ignore_restrictions and self._restriction:
-                pattern_hash += u":%s" % u':'.join(self._restriction)
+                pattern_list.extend(self._restriction)
+
+            pattern_hash = tuple(pattern_list)
 
             if pattern_hash not in self._hosts_patterns_cache:
 
