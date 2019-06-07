@@ -28,6 +28,10 @@ DOCUMENTATION = '''
         description: Whether to decrypt secrets or not
         required: False
         default: True
+    extends_documentation_fragment:
+        - inventory_cache
+        - constructed
+        - aws_credentials
 '''
 
 EXAMPLES = '''
@@ -39,12 +43,12 @@ aws_profile: default
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, boto3_inventory_conn
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.utils.display import Display
 
 try:
-    import boto3
+    import boto3  # noqa
     import botocore
 except ImportError:
     raise AnsibleError("The ssm dynamic inventory plugin requires boto3 and "
@@ -60,6 +64,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def __init__(self):
         super(InventoryModule, self).__init__()
+        self.credentials = {}
 
     def verify_file(self, path):
         ''' Verify plugin configuration file. '''
@@ -73,23 +78,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def parse(self, inventory, loader, path, cache=True):
         ''' Retrieve data '''
         super(InventoryModule, self).parse(inventory, loader, path)
-        cache_key = self._get_cache_prefix(path)
-        config_data = self._read_config_data(path)
-        self.setup(config_data, cache, cache_key)
 
-    def setup(self, config_data, cache, cache_key):
+        self._read_config_data(path)
+
+        cache_key = self._get_cache_prefix(path)
+        self.setup(cache, cache_key)
+
+    def setup(self, cache, cache_key):
         ''' Retrieve parameters from config file and fetch data. '''
         decrypt = True
 
-        path = config_data.get('path')
-        region = config_data.get('region')
-        if isinstance(config_data.get('decrypt'), bool):
-            decrypt = config_data.get('decrypt')
+        path = self.get_option('path')
+        region = self.get_option('region')
+        if isinstance(self.get_option('decrypt'), bool):
+            decrypt = self.get_option('decrypt')
 
         if not path or not region:
             raise AnsibleError('path and region should be present')
 
-        client = self.get_client(config_data)
+        client = self.get_client()
 
         source_data = None
         if cache and cache_key in self._cache:
@@ -101,44 +108,30 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not source_data:
             self.fetch_data(client, path, decrypt)
 
-    def get_client(self, config_data):
+    def get_client(self):
         ''' Connect to AWS and return client to use with SSM. '''
 
-        aws_profile = config_data.get('aws_profile')
-        region = config_data.get('region')
-        aws_access_key_id = config_data.get('aws_access_key_id')
-        aws_secret_access_key = config_data.get('aws_secret_access_key')
-        aws_security_token = config_data.get('aws_security_token')
+        boto_profile = self.get_option('aws_profile')
+        region = self.get_option('region')
+        aws_access_key_id = self.get_option('aws_access_key')
+        aws_secret_access_key = self.get_option('aws_secret_key')
+        aws_security_token = self.get_option('aws_security_token')
 
-        if aws_profile:
-            client = self.generate_session(
-                profile_name=aws_profile,
-                region_name=region
-            )
-        elif aws_access_key_id and aws_secret_access_key and \
-                aws_security_token:
-            client = self.generate_session(
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_security_token,
-            )
-        else:
-            raise AnsibleError("Insufficient credentials found. Please "
-                               "provide them in your inventory configuration"
-                               "file")
+        if aws_access_key_id:
+            self.credentials['aws_access_key_id'] = aws_access_key_id
+        if aws_secret_access_key:
+            self.credentials['aws_secret_access_key'] = aws_secret_access_key
+        if aws_security_token:
+            self.credentials['aws_session_token'] = aws_security_token
+        if boto_profile:
+            self.credentials['profile_name'] = boto_profile
 
-        return client
-
-    def generate_session(self, **kwargs):
-        ''' Generate a session with boto3 and return client. '''
         try:
-            session = boto3.Session(**kwargs)
+            client = boto3_inventory_conn('client', 'ssm', region, **self.credentials)
         except (botocore.exceptions.ProfileNotFound,
                 botocore.exceptions.PartialCredentialsError) as e:
             raise AnsibleError("Insufficient boto credentials found: {0}".
                                format(to_native(e)))
-
-        client = session.client('ssm')
 
         return client
 
