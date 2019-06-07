@@ -71,6 +71,20 @@
       validate_certs: no
   with_items: "{{ esxi_hosts }}"
 
+- name: Delete a datastore cluster to datacenter
+  vmware_datastore_cluster:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    datacenter_name: "{{ dc1 }}"
+    datastore_cluster_name: '{{ item }}'
+    state: absent
+  with_items:
+    - DSC1
+    - DSC2
+  ignore_errors: yes
+
 - name: Remove the datacenter
   vmware_datacenter:
     validate_certs: no
