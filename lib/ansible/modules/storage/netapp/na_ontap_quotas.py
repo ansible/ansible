@@ -326,7 +326,7 @@ class NetAppONTAPQuotas(object):
                 elif cd_action == 'delete':
                     self.quota_entry_delete()
                 elif modify_quota is not None:
-                    for key in modify_quota:
+                    for key in list(modify_quota):
                         modify_quota[key.replace("_", "-")] = modify_quota.pop(key)
                     self.quota_entry_modify(modify_quota)
                 if modify_quota_status is not None:
