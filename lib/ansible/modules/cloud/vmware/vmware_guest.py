@@ -2151,6 +2151,8 @@ class PyVmomiHelper(PyVmomi):
 
         if self.params['template']:
             is_clone = True
+        else:
+            is_clone = False
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
