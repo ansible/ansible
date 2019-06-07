@@ -60,6 +60,14 @@ DOCUMENTATION = '''
             - 'https://code.vmware.com/web/sdk/65/vsphere-automation-python'
             default: False
             type: boolean
+        filter_powerstate:
+            description:
+            - Only add virtual machines that are powered on to the tag groups.
+            - Requires 'vSphere Automation SDK' library to be installed on the given controller machine.
+            - Please refer following URLs for installation steps
+            - 'https://code.vmware.com/web/sdk/65/vsphere-automation-python'
+            default: False
+            type: boolean
 '''
 
 EXAMPLES = '''
@@ -71,6 +79,7 @@ EXAMPLES = '''
     password: Esxi@123$%
     validate_certs: False
     with_tags: True
+    filter_powerstate: False
 '''
 
 import ssl
@@ -103,12 +112,13 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 
 class BaseVMwareInventory:
-    def __init__(self, hostname, username, password, port, validate_certs, with_tags):
+    def __init__(self, hostname, username, password, port, validate_certs, with_tags, filter_powerstate):
         self.hostname = hostname
         self.username = username
         self.password = password
         self.port = port
         self.with_tags = with_tags
+        self.filter_powerstate = filter_powerstate
         self.validate_certs = validate_certs
         self.content = None
         self.rest_content = None
@@ -312,6 +322,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             password=self.get_option('password'),
             port=self.get_option('port'),
             with_tags=self.get_option('with_tags'),
+            filter_powerstate=self.get_option('filter_powerstate'),
             validate_certs=self.get_option('validate_certs')
         )
 
@@ -397,17 +408,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                     self._populate_host_properties(vm_obj, current_host)
 
-                    # Only gather facts related to tag if vCloud and vSphere is installed.
-                    if HAS_VSPHERE and self.pyv.with_tags:
-                        # Add virtual machine to appropriate tag group
-                        vm_mo_id = vm_obj.obj._GetMoId()
-                        vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
-                        attached_tags = tag_association.list_attached_tags(vm_dynamic_id)
-
-                        for tag_id in attached_tags:
-                            self.inventory.add_child(tags_info[tag_id], current_host)
-                            cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
-
                     # Based on power state of virtual machine
                     vm_power = str(vm_obj.obj.summary.runtime.powerState)
                     if vm_power not in cacheable_results:
@@ -415,6 +415,18 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         self.inventory.add_group(vm_power)
                     cacheable_results[vm_power]['hosts'].append(current_host)
                     self.inventory.add_child(vm_power, current_host)
+
+                    # Only gather facts related to tag if vCloud and vSphere is installed.
+                    if HAS_VSPHERE and self.pyv.with_tags:
+                        # Add virtual machine to appropriate tag group
+                        vm_mo_id = vm_obj.obj._GetMoId()
+                        vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
+                        attached_tags = tag_association.list_attached_tags(vm_dynamic_id)
+
+                        if not self.pyv.filter_powerstate or vm_power == 'poweredOn':
+                            for tag_id in attached_tags:
+                                self.inventory.add_child(tags_info[tag_id], current_host)
+                                cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
 
                     # Based on guest id
                     vm_guest_id = vm_obj.obj.config.guestId
