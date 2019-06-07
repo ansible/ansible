@@ -4,12 +4,11 @@
     hostname: '{{ item }}'
     username: '{{ esxi_user }}'
     password: '{{ esxi_password }}'
-    esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
     datastore_name: '{{ ds1 }}'
     datastore_type: '{{ infra.datastores[ds1].type }}'
     nfs_server: '{{ infra.datastores[ds1].server }}'
     nfs_path: '{{ infra.datastores[ds1].path }}'
-    nfs_ro: '{{ infra.datastores[ds2].ro }}'
+    nfs_ro: '{{ infra.datastores[ds1].ro }}'
     state: present
     validate_certs: no
   with_items: "{{ esxi_hosts }}"
@@ -19,7 +18,6 @@
     hostname: '{{ item }}'
     username: '{{ esxi_user }}'
     password: '{{ esxi_password }}'
-    esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
     datastore_name: '{{ ds2 }}'
     datastore_type: '{{ infra.datastores[ds2].type }}'
     nfs_server: '{{ infra.datastores[ds2].server }}'
@@ -37,7 +35,7 @@
     password: '{{ vcenter_password }}'
     cluster: '{{ ccr1 }}'
   register: setup_datastore_datatstore_facts
-  failed_when: setup_datastore_datatstore_facts.datastores|length != 2
+  failed_when: setup_datastore_datatstore_facts.datastores|selectattr('type', 'equalto', 'NFS')|list|length != 2
   until: setup_datastore_datatstore_facts is succeeded
   retries: 60
   delay: 1

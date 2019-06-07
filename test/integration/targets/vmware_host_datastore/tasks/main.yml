@@ -14,7 +14,7 @@
         datastore_type: '{{ infra.datastores[ds1].type }}'
         nfs_server: '{{ infra.datastores[ds1].server }}'
         nfs_path: '{{ infra.datastores[ds1].path }}'
-        nfs_ro: '{{ infra.datastores[ds2].ro }}'
+        nfs_ro: '{{ infra.datastores[ds1].ro }}'
         state: present
         validate_certs: no
       ignore_errors: true
@@ -35,7 +35,7 @@
         datastore_type: '{{ infra.datastores[ds1].type }}'
         nfs_server: '{{ infra.datastores[ds1].server }}'
         nfs_path: '{{ infra.datastores[ds1].path }}'
-        nfs_ro: '{{ infra.datastores[ds2].ro }}'
+        nfs_ro: '{{ infra.datastores[ds1].ro }}'
         state: present
         validate_certs: no
       ignore_errors: true
@@ -56,7 +56,7 @@
         datastore_type: '{{ infra.datastores[ds1].type }}'
         nfs_server: '{{ infra.datastores[ds1].server }}'
         nfs_path: '{{ infra.datastores[ds1].path }}'
-        nfs_ro: '{{ infra.datastores[ds2].ro }}'
+        nfs_ro: '{{ infra.datastores[ds1].ro }}'
         state: present
         validate_certs: no
       register: mount_vmware_host_datastore

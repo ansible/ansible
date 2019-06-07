@@ -7,24 +7,27 @@ f0: F0
 switch1: switch1
 dvswitch1: DVS0
 # The ESXi entries in the inventory
+vcenter_hostname: vcenter.test
+vcenter_username: administrator@vsphere.local
+vcenter_password: blablabla
 esxi_hosts:
-  - esxi-67-1.lab
-  - esxi-67-2.lab
+  - esxi1.test
+  - esxi2.test
 esxi_user: root
-esxi_password: "!234AaAa56"
+esxi_password: balbalbla
 esxi1: "{{ esxi_hosts[0] }}"
 esxi2: "{{ esxi_hosts[1] }}"
 infra:
   datastores:
     LocalDS_0:
       type: nfs
-      server: 192.168.123.1
-      path: /srv/esx_lab/isos
+      server: gateway.test
+      path: /srv/share/isos
       ro: true
     LocalDS_1:
       type: nfs
-      server: 192.168.123.1
-      path: /srv/esx_lab/vms
+      server: gateway.test
+      path: /srv/share/vms
       ro: false
 virtual_machines:
   - name: DC0_H0_VM0
