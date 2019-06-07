@@ -22,6 +22,7 @@ description:
 - Allows for configuration of management interfaces on Meraki devices.
 notes:
 - C(WAN2) parameter is only valid for MX appliances.
+- C(enabled) can only be set to C(not configured) for MS switches.
 options:
     state:
         description:
