@@ -3,7 +3,7 @@
 
 #
 # Dell EMC OpenManage Ansible Modules
-# Version 1.2
+# Version 2.0
 # Copyright (C) 2019 Dell Inc.
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -20,10 +20,11 @@ from ansible.module_utils import basic
 from ansible.modules.remote_management.dellemc.ome import ome_device_info
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
-default_args = {'hostname': '192.168.0.1', 'username': 'username', 'password':'password'}
+default_args = {'hostname': '192.168.0.1', 'username': 'username', 'password': 'password'}
 resource_basic_inventory = {"basic_inventory": "DeviceService/Devices"}
-resource_detailed_inventory = {"detailed_inventory:": {"device_id":{1234: None},
-                                                       "device_service_tag":{1345:"MXL1234"}}}
+resource_detailed_inventory = {"detailed_inventory:": {"device_id": {1234: None},
+                                                       "device_service_tag": {1345: "MXL1234"}}}
+
 
 class TestOmeDeviceInfo(object):
     module = ome_device_info
@@ -58,7 +59,7 @@ class TestOmeDeviceInfo(object):
         response_class_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome.ome_device_info._get_resource_parameters')
         return response_class_mock
 
-    def test_main_basic_inventory_success_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock,response_mock):
+    def test_main_basic_inventory_success_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock, response_mock):
         get_resource_parameters_mock.return_value = resource_basic_inventory
         connection_mock.__enter__.return_value = connection_mock
         connection_mock.invoke_request.return_value = response_mock
@@ -68,7 +69,7 @@ class TestOmeDeviceInfo(object):
         assert result['changed'] is False
         assert 'device_info' in result
 
-    def test_main_basic_inventory_failure_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock,response_mock):
+    def test_main_basic_inventory_failure_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock, response_mock):
         get_resource_parameters_mock.return_value = resource_basic_inventory
         connection_mock.__enter__.return_value = connection_mock
         connection_mock.invoke_request.return_value = response_mock
@@ -76,13 +77,14 @@ class TestOmeDeviceInfo(object):
         result = self._run_module_with_fail_json(default_args)
         assert result['msg'] == 'Failed to fetch the device information'
 
-    def test_main_detailed_inventory_success_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock,response_mock):
-        default_args.update({"fact_subset":"detailed_inventory","system_query_options":{"device_id":[1234],"device_service_tag":["MXL1234"]}})
-        detailed_inventory = {"detailed_inventory:": {"device_id": {1234: "DeviceService/Devices(1234)/InventoryDetails"}, "device_service_tag": {"MXL1234":"DeviceService/Devices(4321)/InventoryDetails"}}}
+    def test_main_detailed_inventory_success_case(self, module_mock, validate_inputs_mock, connection_mock, get_resource_parameters_mock, response_mock):
+        default_args.update({"fact_subset": "detailed_inventory", "system_query_options": {"device_id": [1234], "device_service_tag": ["MXL1234"]}})
+        detailed_inventory = {"detailed_inventory:": {"device_id": {1234: "DeviceService/Devices(1234)/InventoryDetails"},
+                                                      "device_service_tag": {"MXL1234": "DeviceService/Devices(4321)/InventoryDetails"}}}
         get_resource_parameters_mock.return_value = detailed_inventory
         connection_mock.__enter__.return_value = connection_mock
         connection_mock.invoke_request.return_value = response_mock
-        response_mock.json_data = {"value": [{"device_id": {"1234": "details"}}, {"device_service_tag":{"MXL1234": "details"}}]}
+        response_mock.json_data = {"value": [{"device_id": {"1234": "details"}}, {"device_service_tag": {"MXL1234": "details"}}]}
         response_mock.status_code = 200
         result = self._run_module(default_args)
         assert result['changed'] is False
@@ -100,8 +102,9 @@ class TestOmeDeviceInfo(object):
 
     @pytest.mark.parametrize("fact_subset, mutually_exclusive_call", [("basic_inventory", False), ("detailed_inventory", True)])
     def test_validate_inputs(self, fact_subset, mutually_exclusive_call, mocker):
-        module_params = {"fact_subset":fact_subset}
-        check_mutually_inclusive_arguments_mock = mocker.patch('ansible.modules.remote_management.dellemc.ome.ome_device_info._check_mutually_inclusive_arguments')
+        module_params = {"fact_subset": fact_subset}
+        check_mutually_inclusive_arguments_mock = mocker.patch(
+            'ansible.modules.remote_management.dellemc.ome.ome_device_info._check_mutually_inclusive_arguments')
         check_mutually_inclusive_arguments_mock.return_value = None
         self.module._validate_inputs(module_params)
         if mutually_exclusive_call:
@@ -110,7 +113,8 @@ class TestOmeDeviceInfo(object):
             check_mutually_inclusive_arguments_mock.assert_not_called()
         check_mutually_inclusive_arguments_mock.reset_mock()
 
-    system_query_options_params = [{"system_query_options" : None}, {"system_query_options":{"device_id":None}},{"system_query_options":{"device_service_tag":None}}]
+    system_query_options_params = [{"system_query_options": None}, {"system_query_options": {"device_id": None}},
+                                   {"system_query_options": {"device_service_tag": None}}]
 
     @pytest.mark.parametrize("system_query_options_params", system_query_options_params)
     def test_check_mutually_inclusive_arguments(self, system_query_options_params):
@@ -118,10 +122,10 @@ class TestOmeDeviceInfo(object):
         required_args = ["device_id", "device_service_tag"]
         module_params.update(system_query_options_params)
         with pytest.raises(ValueError) as ex:
-            self.module._check_mutually_inclusive_arguments(module_params["fact_subset"],module_params,["device_id", "device_service_tag"])
+            self.module._check_mutually_inclusive_arguments(module_params["fact_subset"], module_params, ["device_id", "device_service_tag"])
         assert "One of the following {0} is required for {1}".format(required_args, module_params["fact_subset"]) == str(ex.value)
 
-    params = [{"fact_subset": "basic_inventory", "system_query_options": {"device_id":[1234]}},
+    params = [{"fact_subset": "basic_inventory", "system_query_options": {"device_id": [1234]}},
               {"fact_subset": "subsystem_health", "system_query_options": {"device_service_tag": ["MXL1234"]}},
               {"fact_subset": "detailed_inventory", "system_query_options": {"device_id": [1234], "inventory_type": "serverDeviceCards"}}]
 
@@ -129,8 +133,8 @@ class TestOmeDeviceInfo(object):
     def test_get_resource_parameters(self, module_params, connection_mock):
         self.module._get_resource_parameters(module_params, connection_mock)
 
-    @pytest.mark.parametrize("module_params,data", [({"system_query_options": None}, None),({"system_query_options": {"fileter": None}}, None),
-                                                   ({"system_query_options": {"filter": "abc"}}, "$filter")])
+    @pytest.mark.parametrize("module_params,data", [({"system_query_options": None}, None), ({"system_query_options": {"fileter": None}}, None),
+                                                    ({"system_query_options": {"filter": "abc"}}, "$filter")])
     def test_get_query_parameters(self, module_params, data):
         res = self.module._get_query_parameters(module_params)
         if data is not None:
