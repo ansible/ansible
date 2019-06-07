@@ -31,8 +31,8 @@
     register: copy_result
 
   - assert:
-    that:
-      - "stat_result.stat.checksum == copy_result.checksum"
+      that:
+        - "stat_result.stat.checksum == copy_result.checksum"
 
   # Tests
   - name: run tests on hosts that support it
@@ -43,7 +43,7 @@
   - name: restore iis configuration
     win_copy:
       src: '{{ ansible_env.TEMP }}\applicationHost.config'
-      dest: 'C:\Windows\System32\inetsrv\config\applicationHost.config'
+      dest: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
       remote_src: yes
 
   when: ansible_distribution_version is version('6.1','ge')
