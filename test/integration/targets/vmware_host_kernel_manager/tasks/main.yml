@@ -9,6 +9,16 @@
         setup_attach_host: true
         setup_datastore: true
 
+    - name: First, set ipv6=0, for consistency
+      vmware_host_kernel_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: False
+        esxi_hostname: '{{ esxi1 }}'
+        kernel_module_name: "tcpip4"
+        kernel_module_option: "ipv6=0"
+
     - name: host connected, module exists, options exist, arguments different
       vmware_host_kernel_manager:
         hostname: '{{ vcenter_hostname }}'

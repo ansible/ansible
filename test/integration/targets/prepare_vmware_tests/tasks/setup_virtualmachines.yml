@@ -20,7 +20,7 @@
       scsi: paravirtual
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] Fedora-Workstation-Live-x86_64-29-1.2.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
     networks:
     - name: VM Network
   with_items: '{{ virtual_machines }}'
@@ -48,7 +48,7 @@
       scsi: paravirtual
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] Fedora-Workstation-Live-x86_64-29-1.2.iso"
+      iso_path: "[{{ ds1 }}] fedora.iso"
     networks:
     - name: VM Network
   with_items: '{{ virtual_machines_in_cluster }}'
