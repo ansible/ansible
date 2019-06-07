@@ -110,7 +110,7 @@ username:
     type: str
     returned: always
 mails:
-    description: A list of dictionaries with the keys 'to', 'from' and 'subject',
+    description: A list of dictionaries with the keys 'to', 'from', 'subject' and 'body',
         where each one represents an email that satisfied the filter
     type: list
     returned: always
@@ -200,7 +200,8 @@ def run_module():
         result['mails'].append({
             'to': decode_header(msg['to'])[0][0],
             'from': decode_header(msg['from'])[0][0],
-            'subject': decode_header(msg['subject'])[0][0]
+            'subject': decode_header(msg['subject'])[0][0],
+            'body': msg.get_payload(0).get_payload(None, True)
         })
     result['mails_count'] = len(result['mails'])
 
