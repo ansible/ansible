@@ -2,12 +2,8 @@
 # Cannot use win_feature to install IIS on Server 2008.
 # Run a brief check and skip hosts that don't support
 # that operation
-- name: check if win_feature will work on test host
-  win_command: powershell.exe "Get-WindowsFeature"
-  register: module_available
-  failed_when: False
 
-# Run actual tests
+# Run on Server 2008R2 and higher
 - block:
   - name: ensure IIS features are installed
     win_feature:
@@ -20,16 +16,23 @@
     win_reboot:
     when: feature_install.reboot_required
 
+    # may be possible that copy corrupts the file
+  - name: Get iis configuration checksum
+    win_stat:
+      path: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
+      checksum_algorithm: sha1
+    register: stat_result
+
   - name: take a copy of the original iis configuration
     win_copy:
-      src: 'C:\Windows\System32\inetsrv\config\applicationHost.config'
-      dest: '{{ remote_tmp_dir }}\applicationHost.config'
+      src: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
+      dest: '{{ ansible_env.TEMP }}\applicationHost.config'
       remote_src: yes
+    register: copy_result
 
-  - name: set version of IIS for tests
-    win_file_version:
-      path: C:\Windows\System32\inetsrv\w3wp.exe
-    register: iis_version
+  - assert:
+    that:
+      - "stat_result.stat.checksum == copy_result.checksum"
 
   # Tests
   - name: run tests on hosts that support it
@@ -39,7 +42,8 @@
   # Cleanup
   - name: restore iis configuration
     win_copy:
-      src: '{{ remote_tmp_dir }}\applicationHost.config'
+      src: '{{ ansible_env.TEMP }}\applicationHost.config'
       dest: 'C:\Windows\System32\inetsrv\config\applicationHost.config'
       remote_src: yes
-  when: module_available.rc == 0
+
+  when: ansible_distribution_version is version('6.1','ge')
