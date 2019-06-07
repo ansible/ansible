@@ -298,6 +298,7 @@ EXAMPLES = r'''
     acme_directory: https://acme-v01.api.letsencrypt.org/directory
     remaining_days: 60
     data: "{{ sample_com_challenge }}"
+  when: sample_com_challenge is changed
 '''
 
 RETURN = '''
