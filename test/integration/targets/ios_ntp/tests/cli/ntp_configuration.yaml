@@ -11,6 +11,7 @@
     auth_key: 15435A030726242723273C21181319000A
     auth: true
     state: absent
+    provider: "{{ cli }}"
   ignore_errors: true
 
 - block:
@@ -20,6 +21,7 @@
       server: 10.75.32.5
       source_int: "{{ test_interface }}"
       state: present
+      provider: "{{ cli }}"
     register: result
 
   - assert: &true
@@ -39,6 +41,7 @@
       lines:
         - 10 permit ip host 192.0.2.1 any log
       parents: ip access-list extended NTP_ACL
+      provider: "{{ cli }}"
     register: result
 
   - assert: *true
@@ -48,6 +51,7 @@
       acl: NTP_ACL
       logging: true
       state: present
+      provider: "{{ cli }}"
     register: result
 
   - assert: *true
@@ -64,6 +68,7 @@
       auth_key: 15435A030726242723273C21181319000A
       auth: true
       state: present
+      provider: "{{ cli }}"
     register: result
 
   - assert: *true
@@ -79,6 +84,7 @@
       acl: NTP_ACL
       logging: true
       state: absent
+      provider: "{{ cli }}"
     register: result
 
   - assert: *true
@@ -97,3 +103,5 @@
     ios_config:
       lines:
         - no ip access-list extended NTP_ACL
+      provider: "{{ cli }}"
+
