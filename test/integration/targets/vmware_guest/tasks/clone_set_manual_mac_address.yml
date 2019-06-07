@@ -38,6 +38,6 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_with_mac_addr.results|map(attribute='changed')|unique|list == [true]"
-        - "clone_with_mac_addr.results[0]['instance']['hw_eth0']['addresstype'] == 'manual'"
-        - "clone_with_mac_addr.results[0]['instance']['hw_eth0']['macaddress'] == 'aa:bb:cc:dd:aa:b0'"
+        - "clone_manual_mac_address.results|map(attribute='changed')|unique|list == [true]"
+        - "clone_manual_mac_address.results[0]['instance']['hw_eth0']['addresstype'] == 'manual'"
+        - "clone_manual_mac_address.results[0]['instance']['hw_eth0']['macaddress'] == 'aa:bb:cc:dd:aa:b0'"
