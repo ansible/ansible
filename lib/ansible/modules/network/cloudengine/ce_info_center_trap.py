@@ -334,7 +334,7 @@ class InfoCenterTrap(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                global_cfg = root.findall("data/syslog/globalParam")
+                global_cfg = root.findall("syslog/globalParam")
                 if global_cfg:
                     for tmp in global_cfg:
                         tmp_dict = dict()
@@ -417,7 +417,7 @@ class InfoCenterTrap(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                source_cfg = root.findall("data/syslog/icSources/icSource")
+                source_cfg = root.findall("syslog/icSources/icSource")
                 if source_cfg:
                     for tmp in source_cfg:
                         tmp_dict = dict()
