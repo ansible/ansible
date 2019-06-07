@@ -20,7 +20,6 @@
     name: "{{ item.name }}"
     virtual_network: "{{ network_name ~ '-2' }}"
     subnet: "{{ subnet_name ~ '-2' }}"
-    security_group: "{{ security_group }}"
   loop: "{{ nic_list }}"
 
 - name: Create virtual machine with two NICs

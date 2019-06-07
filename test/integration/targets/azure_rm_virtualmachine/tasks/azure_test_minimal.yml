@@ -50,6 +50,7 @@
     admin_username: "testuser"
     admin_password: "Pass123$$$abx!"
     vm_size: Standard_B1ms
+    virtual_network: "{{ network_name }}"
     image:
       offer: UbuntuServer
       publisher: Canonical

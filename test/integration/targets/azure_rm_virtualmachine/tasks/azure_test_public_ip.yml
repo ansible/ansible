@@ -26,7 +26,7 @@
         priority: 110
         direction: Inbound
 
-- name: Create NIC for single nic VM
+- name: Create network interface
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
     name: "{{ interface_name }}"

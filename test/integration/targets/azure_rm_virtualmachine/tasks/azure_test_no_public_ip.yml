@@ -12,6 +12,7 @@
     public_ip_allocation_method: Disabled
     storage_account_name: "{{ storage_account }}"
     availability_set: "{{ availability_set }}"
+    virtual_network: "{{ network_name }}"
     boot_diagnostics:
       enabled: yes
     image:
