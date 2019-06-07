@@ -218,11 +218,11 @@ class PgCopyData(object):
 
     Arguments:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
 
     Attributes:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
         changed (bool) --  something was changed after execution or not
         executed_queries (list) -- executed queries
         dst (str) -- data destination table (when copy_from)
