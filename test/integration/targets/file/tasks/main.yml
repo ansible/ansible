@@ -266,17 +266,6 @@
   diff: yes
   register: folder_absent_result
 
-- name: debug variables to see why they're not referencing as expected
-  debug:
-    var: "{{ item }}"
-  with_items:
-    - output_dir
-    - test_folder
-    - test_file
-  vars:
-    test_folder: "{{ output_dir }}/foobar"
-    test_file: "{{ output_dir }}/foobar/fileA"
-
 - name: assert that the absent check lists expected files and folders
   assert:
     that:
@@ -284,8 +273,8 @@
       - test_folder in folder_absent_result.diff.before.path_content.directories
       - test_file in folder_absent_result.diff.before.path_content.files
   vars:
-    test_folder: "{{ output_dir }}/foobar"
-    test_file: "{{ output_dir }}/foobar/fileA"
+    test_folder: "{{ folder_absent_result.path }}/foobar"
+    test_file: "{{ folder_absent_result.path }}/foobar/fileA"
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234
