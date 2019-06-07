@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - Readded support for Cumulus Linux which broke in v2.8.0 (https://github.com/ansible/ansible/pull/57493)
