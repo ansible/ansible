@@ -195,64 +195,79 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+
+changed:
+    description: task makes a change or not
+    returned: success
+    type: bool
+diff:
+    description: diff for src and dest
+    returned: success
+    type: str
+    sample: /path/to/file.txt
+failed:
+    description: task failed or not
+    returned: success
+    type: bool
+    sample: /path/to/file.txt
 dest:
     description: Destination file/path
-    returned: success
+    returned: success and non check_mode
     type: str
     sample: /path/to/file.txt
 src:
     description: Source file used for the copy on the target machine
-    returned: changed
+    returned: changed and non check_mode
     type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 md5sum:
     description: MD5 checksum of the file after running copy
-    returned: when supported
+    returned: when supported and non check_mode
     type: str
     sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
     description: SHA1 checksum of the file after running copy
-    returned: success
+    returned: success and non check_mode
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 backup_file:
     description: Name of backup file created
-    returned: changed and if backup=yes
+    returned: changed and if backup=yes and non check_mode
     type: str
     sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
     description: Group id of the file, after execution
-    returned: success
+    returned: success and non check_mode
     type: int
     sample: 100
 group:
     description: Group of the file, after execution
-    returned: success
+    returned: success and non check_mode
     type: str
     sample: httpd
 owner:
     description: Owner of the file, after execution
-    returned: success
+    returned: success and non check_mode
     type: str
     sample: httpd
 uid:
     description: Owner id of the file, after execution
-    returned: success
+    returned: success and non check_mode
     type: int
     sample: 100
 mode:
     description: Permissions of the target, after execution
-    returned: success
+    returned: success and non check_mode
     type: str
     sample: 0644
 size:
     description: Size of the target, after execution
-    returned: success
+    returned: success and non check_mode
     type: int
     sample: 1220
 state:
     description: State of the target, after execution
-    returned: success
+    returned: success and non check_mode
     type: str
     sample: file
 '''
