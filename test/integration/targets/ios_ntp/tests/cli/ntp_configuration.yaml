@@ -104,4 +104,3 @@
       lines:
         - no ip access-list extended NTP_ACL
       provider: "{{ cli }}"
-
