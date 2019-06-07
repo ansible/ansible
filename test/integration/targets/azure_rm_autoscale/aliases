@@ -1,4 +1,4 @@
 cloud/azure
-shippable/azure/group2
+shippable/azure/group5
 destructive
 azure_rm_autoscale
