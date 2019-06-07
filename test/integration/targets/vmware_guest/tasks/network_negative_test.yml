@@ -2,49 +2,17 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-
-- debug: var=vmlist
-
-- set_fact:
-   vm1: "{{ vmlist['json'][0] }}"
-
-- debug: var=vm1
+- debug: var=f0
 
 - name: create new VMs with non-existent network
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -55,7 +23,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: non_existent_network
   ignore_errors: yes
 
@@ -64,18 +32,18 @@
 - name: assert that no changes were not made
   assert:
     that:
-        - "not non_existent_network.changed"
-        - "\"Network 'Non existent VM' does not exist\" in non_existent_network.msg"
+        - not (non_existent_network is changed)
+        - "'does not exist' in non_existent_network.msg"
 
 - name: create new VMs with network and with only IP
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -88,7 +56,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: no_netmask
   ignore_errors: yes
 
@@ -103,12 +71,12 @@
 - name: create new VMs with network and with only netmask
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -121,7 +89,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: no_ip
   ignore_errors: yes
 
@@ -136,12 +104,12 @@
 - name: create new VMs with network and without network name
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -154,7 +122,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: no_network_name
   ignore_errors: yes
 
@@ -169,12 +137,12 @@
 - name: create new VMs with network and without network name
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -187,7 +155,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: no_network
   ignore_errors: yes
 
@@ -202,12 +170,12 @@
 - name: create new VMs with invalid device type
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -221,7 +189,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: invalid_device_type
   ignore_errors: yes
 
@@ -236,12 +204,12 @@
 - name: create new VMs with invalid device MAC address
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -256,7 +224,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: invalid_mac
   ignore_errors: yes
 
@@ -271,12 +239,12 @@
 - name: create new VMs with invalid network type
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -292,7 +260,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: invalid_network_type
   ignore_errors: yes
 
@@ -307,12 +275,12 @@
 - name: create new VMs with IP, netmask and network type as "DHCP"
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -328,7 +296,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: invalid_dhcp_network_type
   ignore_errors: yes
 
@@ -343,12 +311,12 @@
 - name: create new VMs with no network type which set network type as "DHCP"
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     name: new_vm_no_nw_type
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     disk:
       - size: 3mb
         type: thin
@@ -359,7 +327,7 @@
         num_cpus: 3
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ f0 }}"
   register: no_network_type
   ignore_errors: yes
 

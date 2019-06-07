@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifact_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact facts.
+short_description: Get Azure DevTest Lab Artifact facts
 description:
     - Get facts of Azure DevTest Lab Artifact.
 
@@ -42,7 +42,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,7 +57,8 @@ EXAMPLES = '''
 
 RETURN = '''
 artifacts:
-    description: A list of dictionaries containing facts for DevTest Lab Artifact.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Artifact.
     returned: always
     type: complex
     contains:
@@ -100,7 +101,7 @@ artifacts:
             sample: Installs My Software
         file_path:
             description:
-                - "Artifact's path in the repo."
+                - Artifact's path in the repo.
             returned: always
             type: str
             sample: Artifacts/myArtifact

@@ -1,0 +1,85 @@
+# Test playbook for the firewalld module - source operations
+# (c) 2019, Hideki Saito <saito@fgrep.org>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: firewalld source test permanent enabled
+  firewalld:
+    source: 192.0.2.0/24
+    zone: internal
+    permanent: True
+    state: enabled
+  register: result
+
+- name: assert firewalld source test permanent enabled worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld source test permanent enabled rerun (verify not changed)
+  firewalld:
+    source: 192.0.2.0/24
+    zone: internal
+    permanent: True
+    state: enabled
+  register: result
+
+- name: assert firewalld source test permanent enabled rerun worked (verify not changed)
+  assert:
+    that:
+    - result is not changed
+
+- name: firewalld source test permanent disabled
+  firewalld:
+    source: 192.0.2.0/24
+    zone: internal
+    permanent: True
+    state: disabled
+  register: result
+
+- name: assert firewalld source test permanent disabled worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld source test permanent disabled rerun (verify not changed)
+  firewalld:
+    source: 192.0.2.0/24
+    zone: internal
+    permanent: True
+    state: disabled
+  register: result
+
+- name: assert firewalld source test permanent disabled rerun worked (verify not changed)
+  assert:
+    that:
+    - result is not changed
+
+- name: firewalld source test permanent enabled is exclusive (verify exclusive error)
+  firewalld:
+    source: 192.0.2.0/24
+    port: 8081/tcp
+    zone: internal
+    permanent: True
+    state: enabled
+  register: result
+  ignore_errors: true
+
+- name: assert firewalld source test permanent enabled is exclusive (verify exclusive error)
+  assert:
+    that:
+    - result is not changed
+    - "result.msg == 'can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, interface or source at once'"

@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cdnprofile
 version_added: "2.8"
-short_description: Manage a Azure CDN profile.
+short_description: Manage a Azure CDN profile
 description:
     - Create, update and delete a Azure CDN profile.
 
@@ -30,11 +30,11 @@ options:
         required: true
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     sku:
         description:
             - The pricing tier, defines a CDN provider, feature list and rate of the CDN profile.
-            - Detailed pricing can be find at U(https://azure.microsoft.com/en-us/pricing/details/cdn/)
+            - Detailed pricing can be find at U(https://azure.microsoft.com/en-us/pricing/details/cdn/).
         choices:
             - standard_verizon
             - premium_verizon
@@ -55,15 +55,15 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
     - name: Create a CDN profile
       azure_rm_cdnprofile:
           resource_group: myResourceGroup
-          name: cdntest
+          name: myCDN
           sku: standard_akamai
           tags:
               testing: testing
@@ -71,16 +71,16 @@ EXAMPLES = '''
     - name: Delete the CDN profile
       azure_rm_cdnprofile:
         resource_group: myResourceGroup
-        name: cdntest
+        name: myCDN
         state: absent
 '''
 RETURN = '''
 id:
-    description: Current state of the CDN profile
+    description: Current state of the CDN profile.
     returned: always
     type: dict
     example:
-            id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+            id: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Cdn/profiles/myCDN
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 

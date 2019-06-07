@@ -1,0 +1,2 @@
+minor_changes:
+  - Add folder option in vmware_datastore_cluster to place datastore cluster in specific folder (https://github.com/ansible/ansible/issues/48010).

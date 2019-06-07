@@ -65,6 +65,7 @@
   docker_swarm:
     state: present
     force: yes
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
     autolock_managers: yes
   diff: yes
   register: output_7

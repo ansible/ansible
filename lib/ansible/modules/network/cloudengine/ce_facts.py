@@ -205,11 +205,14 @@ class Default(FactsBase):
         data = self.responses[0]
         if data:
             version = data.split("\n")
-            tmp_version = version[11:]
-            for item in tmp_version:
-                tmp_item = item.split()
-                tmp_key = tmp_item[1] + " " + tmp_item[2]
-                self.facts[tmp_key] = tmp_item[4]
+            for item in version:
+                if re.findall(r"^\d+\S\s+", item.strip()):
+                    tmp_item = item.split()
+                    tmp_key = tmp_item[1] + " " + tmp_item[2]
+                    if len(tmp_item) > 5:
+                        self.facts[tmp_key] = " ".join(tmp_item[4:])
+                    else:
+                        self.facts[tmp_key] = tmp_item[4]
 
         data = self.responses[1]
         if data:
@@ -293,12 +296,17 @@ class Interfaces(FactsBase):
         super(Interfaces, self).populate()
 
         data = self.responses[0]
+        begin = False
         if data:
             interface_info = data.split("\n")
-            tmp_interface = interface_info[12:]
-            for item in tmp_interface:
-                tmp_item = item.split()
-                interface_dict[tmp_item[0]] = tmp_item[1]
+            for item in interface_info:
+                if begin:
+                    tmp_item = item.split()
+                    interface_dict[tmp_item[0]] = tmp_item[1]
+
+                if re.findall(r"^Interface", item.strip()):
+                    begin = True
+
             self.facts['interfaces'] = interface_dict
 
         data = self.responses[1]
@@ -316,7 +324,10 @@ class Interfaces(FactsBase):
             tmp_neighbors = neighbors[2:]
             for item in tmp_neighbors:
                 tmp_item = item.split()
-                neighbors_dict[tmp_item[0]] = tmp_item[3]
+                if len(tmp_item) > 3:
+                    neighbors_dict[tmp_item[0]] = tmp_item[3]
+                else:
+                    neighbors_dict[tmp_item[0]] = None
             self.facts['neighbors'] = neighbors_dict
 
 

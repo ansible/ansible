@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: junos_facts
 version_added: "2.1"
-author: "Nathaniel Case (@qalthos)"
+author: "Nathaniel Case (@Qalthos)"
 short_description: Collect facts from remote devices running Juniper Junos
 description:
   - Collects fact information from a remote device running the Junos
@@ -354,7 +354,8 @@ def main():
 
         if subset not in VALID_SUBSETS:
             module.fail_json(msg='Subset must be one of [%s], got %s' %
-                             (', '.join(VALID_SUBSETS), subset))
+                             (', '.join(sorted([subset for subset in
+                                                VALID_SUBSETS])), subset))
 
         if exclude:
             exclude_subsets.add(subset)

@@ -139,23 +139,26 @@
     that:
       - output.changed == true
 
-- name: Use REST API to retrieve keyvault (as facts not available yet)
-  azure_rm_resource_facts:
-    api_version: '2018-02-14'
+- name: Get key vault facts
+  azure_rm_keyvault_info:
     resource_group: "{{ resource_group }}"
-    provider: keyvault
-    resource_type: vaults
-    resource_name: "vault{{ rpfx }}"
-  register: output
+    name: "vault{{ rpfx }}"
+  register: facts
+
 - name: Assert the facts are properly set
   assert:
     that:
-      - output.response[0].tags.aaa == "bbb"
+      - facts['keyvaults'] | length == 1
+      - facts['keyvaults'][0]['vault_uri'] != None
+      - facts['keyvaults'][0]['name'] != None
+      - facts['keyvaults'][0]['access_policies'] != None
+      - facts['keyvaults'][0]['sku'] != None
+      - facts['keyvaults'][0]['id'] != None
 #
 # azure_rm_keyvaultkey tests
 #
 
-- name: create a kevyault key
+- name: create a keyvault key
   block:
     - azure_rm_keyvaultkey:
         keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
@@ -172,7 +175,7 @@
         state: absent
         key_name: testkey
 
-- name: delete a kevyault key
+- name: delete a keyvault key
   azure_rm_keyvaultkey:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
     state: absent
@@ -185,7 +188,7 @@
 #
 # azure_rm_keyvaultsecret tests
 #
-- name: create a kevyault secret
+- name: create a keyvault secret
   block:
     - azure_rm_keyvaultsecret:
         keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
@@ -203,7 +206,7 @@
         state: absent
         secret_name: testsecret
 
-- name: delete a kevyault secret
+- name: delete a keyvault secret
   azure_rm_keyvaultsecret:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
     state: absent

@@ -58,7 +58,7 @@ Function Assert-DictionaryEquals {
 
         if ($actual_value -is [System.Collections.IDictionary]) {
             $actual_value | Assert-DictionaryEquals -Expected $expected_value
-        } elseif ($actual_value -is [System.Collections.ArrayList]) {
+        } elseif ($actual_value -is [System.Collections.ArrayList] -or $actual_value -is [Array]) {
             for ($i = 0; $i -lt $actual_value.Count; $i++) {
                 $actual_entry = $actual_value[$i]
                 $expected_entry = $expected_value[$i]
@@ -2346,6 +2346,23 @@ test_no_log - Invoked with:
         $actual.changed | Assert-Equals -Expected $false
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{}}
         $actual.output | Assert-DictionaryEquals -Expected @{a = "a"; b = "b"}
+    }
+
+    "String json array to object" = {
+        $input_json = '["abc", "def"]'
+        $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
+        $actual -is [Array] | Assert-Equals -Expected $true
+        $actual.Length | Assert-Equals -Expected 2
+        $actual[0] | Assert-Equals -Expected "abc"
+        $actual[1] | Assert-Equals -Expected "def"
+    }
+
+    "String json array of dictionaries to object" = {
+        $input_json = '[{"abc":"def"}]'
+        $actual = [Ansible.Basic.AnsibleModule]::FromJson($input_json)
+        $actual -is [Array] | Assert-Equals -Expected $true
+        $actual.Length | Assert-Equals -Expected 1
+        $actual[0] | Assert-DictionaryEquals -Expected @{"abc" = "def"}
     }
 }
 

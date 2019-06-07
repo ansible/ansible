@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # Copyright (c) 2017, 2018, Oracle and/or its affiliates.
-# This software is made available to you under the terms of the GPL 3.0 license or the Apache 2.0 license.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# Apache License v2.0
-# See LICENSE.TXT for details.
 
 from __future__ import absolute_import, division, print_function
 
@@ -21,6 +18,8 @@ module: oci_vcn
 short_description: Manage Virtual Cloud Networks(VCN) in OCI
 description:
     - This module allows the user to create, delete and update virtual cloud networks(VCNs) in OCI.
+      The complete Oracle Cloud Infrastructure Ansible Modules can be downloaded from
+      U(https://github.com/oracle/oci-ansible-modules/releases).
 version_added: "2.8"
 options:
     cidr_block:

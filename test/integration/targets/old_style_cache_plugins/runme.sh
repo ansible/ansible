@@ -1,19 +1,8 @@
 #!/usr/bin/env bash
 
-# We don't set -u here, due to pypa/virtualenv#150
-set -ex
+set -eux
 
-MYTMPDIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
-
-trap 'rm -rf "${MYTMPDIR}"' EXIT
-
-# This is needed for the ubuntu1604py3 tests
-# Ubuntu patches virtualenv to make the default python2
-# but for the python3 tests we need virtualenv to use python3
-PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
-
-virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/redis-cache"
-source "${MYTMPDIR}/redis-cache/bin/activate"
+source virtualenv.sh
 
 # Run test if dependencies are installed
 failed_dep_1=$(ansible localhost -m pip -a "name=redis>=2.4.5 state=present" "$@" | tee out.txt | grep -c 'FAILED!' || true)

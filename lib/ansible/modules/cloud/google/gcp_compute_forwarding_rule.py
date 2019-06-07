@@ -81,19 +81,12 @@ options:
     - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP,
       AH, SCTP or ICMP.
     - When the load balancing scheme is INTERNAL, only TCP and UDP are valid.
+    - 'Some valid choices include: "TCP", "UDP", "ESP", "AH", "SCTP", "ICMP"'
     required: false
-    choices:
-    - TCP
-    - UDP
-    - ESP
-    - AH
-    - SCTP
-    - ICMP
   backend_service:
     description:
-    - A reference to a BackendService to receive the matched traffic.
-    - This is used for internal load balancing.
-    - "(not used for external load balancing) ."
+    - A BackendService to receive the matched traffic. This is used only for INTERNAL
+      load balancing.
     - 'This field represents a link to a BackendService resource in GCP. It can be
       specified in two ways. First, you can place a dictionary with key ''selfLink''
       and value of your resource''s selfLink Alternatively, you can add `register:
@@ -102,12 +95,9 @@ options:
     required: false
   ip_version:
     description:
-    - The IP Version that will be used by this forwarding rule. Valid options are
-      IPV4 or IPV6. This can only be specified for a global forwarding rule.
+    - ipVersion is not a valid field for regional forwarding rules.
+    - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
-    choices:
-    - IPV4
-    - IPV6
   load_balancing_scheme:
     description:
     - 'This signifies what the ForwardingRule will be used for and can only take the
@@ -115,10 +105,8 @@ options:
       be used for Internal Network Load Balancing (TCP, UDP). The value of EXTERNAL
       means that this will be used for External Load Balancing (HTTP(S) LB, External
       TCP/UDP LB, SSL Proxy) .'
+    - 'Some valid choices include: "INTERNAL", "EXTERNAL"'
     required: false
-    choices:
-    - INTERNAL
-    - EXTERNAL
   name:
     description:
     - Name of the resource; provided by the client when the resource is created. The
@@ -133,7 +121,7 @@ options:
     - For internal load balancing, this field identifies the network that the load
       balanced IP should belong to for this Forwarding Rule. If this field is not
       specified, the default network will be used.
-    - This field is not used for external load balancing.
+    - This field is only used for INTERNAL load balancing.
     - 'This field represents a link to a Network resource in GCP. It can be specified
       in two ways. First, you can place a dictionary with key ''selfLink'' and value
       of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
@@ -164,12 +152,10 @@ options:
     required: false
   subnetwork:
     description:
-    - A reference to a subnetwork.
-    - For internal load balancing, this field identifies the subnetwork that the load
-      balanced IP should belong to for this Forwarding Rule.
+    - The subnetwork that the load balanced IP should belong to for this Forwarding
+      Rule. This field is only used for INTERNAL load balancing.
     - If the network specified is in auto subnet mode, this field is optional. However,
       if the network is in custom subnet mode, a subnetwork must be specified.
-    - This field is not used for external load balancing.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
       in two ways. First, you can place a dictionary with key ''selfLink'' and value
       of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
@@ -178,12 +164,10 @@ options:
     required: false
   target:
     description:
+    - This field is only used for EXTERNAL load balancing.
     - A reference to a TargetPool resource to receive the matched traffic.
-    - For regional forwarding rules, this target must live in the same region as the
-      forwarding rule. For global forwarding rules, this target must be a global load
-      balancing resource. The forwarded traffic must be of a type appropriate to the
-      target object.
-    - This field is not used for internal load balancing.
+    - This target must live in the same region as the forwarding rule.
+    - The forwarded traffic must be of a type appropriate to the target object.
     - 'This field represents a link to a TargetPool resource in GCP. It can be specified
       in two ways. First, you can place a dictionary with key ''selfLink'' and value
       of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
@@ -193,9 +177,10 @@ options:
     version_added: 2.7
   all_ports:
     description:
-    - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
-      and specify this field as `true` to allow packets addressed to any ports to
-      be forwarded to the backends configured with this forwarding rule.
+    - For internal TCP/UDP load balancing (i.e. load balancing scheme is INTERNAL
+      and protocol is TCP/UDP), set this to true to allow packets addressed to any
+      ports to be forwarded to the backends configured with this forwarding rule.
+      Used with backend service. Cannot be set if port or portRange are set.
     required: false
     type: bool
     version_added: 2.8
@@ -204,11 +189,9 @@ options:
     - 'The networking tier used for configuring this address. This field can take
       the following values: PREMIUM or STANDARD. If this field is not specified, it
       is assumed to be PREMIUM.'
+    - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
     version_added: 2.8
-    choices:
-    - PREMIUM
-    - STANDARD
   service_label:
     description:
     - An optional prefix to the service name for this Forwarding Rule.
@@ -218,7 +201,7 @@ options:
       `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
       letter, and all following characters must be a dash, lowercase letter, or digit,
       except the last character, which cannot be a dash.
-    - This field is only used for internal load balancing.
+    - This field is only used for INTERNAL load balancing.
     required: false
     version_added: 2.8
   region:
@@ -316,15 +299,13 @@ IPProtocol:
   type: str
 backendService:
   description:
-  - A reference to a BackendService to receive the matched traffic.
-  - This is used for internal load balancing.
-  - "(not used for external load balancing) ."
+  - A BackendService to receive the matched traffic. This is used only for INTERNAL
+    load balancing.
   returned: success
   type: dict
 ipVersion:
   description:
-  - The IP Version that will be used by this forwarding rule. Valid options are IPV4
-    or IPV6. This can only be specified for a global forwarding rule.
+  - ipVersion is not a valid field for regional forwarding rules.
   returned: success
   type: str
 loadBalancingScheme:
@@ -351,7 +332,7 @@ network:
   - For internal load balancing, this field identifies the network that the load balanced
     IP should belong to for this Forwarding Rule. If this field is not specified,
     the default network will be used.
-  - This field is not used for external load balancing.
+  - This field is only used for INTERNAL load balancing.
   returned: success
   type: dict
 portRange:
@@ -379,29 +360,26 @@ ports:
   type: list
 subnetwork:
   description:
-  - A reference to a subnetwork.
-  - For internal load balancing, this field identifies the subnetwork that the load
-    balanced IP should belong to for this Forwarding Rule.
+  - The subnetwork that the load balanced IP should belong to for this Forwarding
+    Rule. This field is only used for INTERNAL load balancing.
   - If the network specified is in auto subnet mode, this field is optional. However,
     if the network is in custom subnet mode, a subnetwork must be specified.
-  - This field is not used for external load balancing.
   returned: success
   type: dict
 target:
   description:
+  - This field is only used for EXTERNAL load balancing.
   - A reference to a TargetPool resource to receive the matched traffic.
-  - For regional forwarding rules, this target must live in the same region as the
-    forwarding rule. For global forwarding rules, this target must be a global load
-    balancing resource. The forwarded traffic must be of a type appropriate to the
-    target object.
-  - This field is not used for internal load balancing.
+  - This target must live in the same region as the forwarding rule.
+  - The forwarded traffic must be of a type appropriate to the target object.
   returned: success
   type: dict
 allPorts:
   description:
-  - When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit `port`/`port_range`
-    and specify this field as `true` to allow packets addressed to any ports to be
-    forwarded to the backends configured with this forwarding rule.
+  - For internal TCP/UDP load balancing (i.e. load balancing scheme is INTERNAL and
+    protocol is TCP/UDP), set this to true to allow packets addressed to any ports
+    to be forwarded to the backends configured with this forwarding rule. Used with
+    backend service. Cannot be set if port or portRange are set.
   returned: success
   type: bool
 networkTier:
@@ -420,13 +398,13 @@ serviceLabel:
     `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
     letter, and all following characters must be a dash, lowercase letter, or digit,
     except the last character, which cannot be a dash.
-  - This field is only used for internal load balancing.
+  - This field is only used for INTERNAL load balancing.
   returned: success
   type: str
 serviceName:
   description:
   - The internal fully qualified service name for this Forwarding Rule.
-  - This field is only used for internal load balancing.
+  - This field is only used for INTERNAL load balancing.
   returned: success
   type: str
 region:
@@ -458,10 +436,10 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             ip_address=dict(type='str'),
-            ip_protocol=dict(type='str', choices=['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']),
+            ip_protocol=dict(type='str'),
             backend_service=dict(type='dict'),
-            ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
+            ip_version=dict(type='str'),
+            load_balancing_scheme=dict(type='str'),
             name=dict(required=True, type='str'),
             network=dict(type='dict'),
             port_range=dict(type='str'),
@@ -469,7 +447,7 @@ def main():
             subnetwork=dict(type='dict'),
             target=dict(type='dict'),
             all_ports=dict(type='bool'),
-            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
+            network_tier=dict(type='str'),
             service_label=dict(type='str'),
             region=dict(required=True, type='str'),
         )

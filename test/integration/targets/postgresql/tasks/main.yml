@@ -235,7 +235,7 @@
     - 'yes'
 
 - set_fact:
-    encryption_values: '{{ encryption_values }} + ["no"]'
+    encryption_values: '{{ encryption_values + ["no"]}}'
   when: postgres_version_resp.stdout is version('10', '<=')
 
 - include: test_password.yml
@@ -820,6 +820,9 @@
 # Test postgresql_tablespace module
 - include: postgresql_tablespace.yml
 
+# Test postgresql_db module, specific options:
+- include: postgresql_db.yml
+
 # Test postgresql_privs
 - include: postgresql_privs.yml
 
@@ -829,6 +832,14 @@
 # Test default_privs with target_role
 - include: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Test postgresql_copy module
+- include: postgresql_copy.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Test postgresql_sequence module
+- include: postgresql_sequence.yml
+  when: postgres_version_resp.stdout is version('9.0', '>=')
 
 # Test postgresql_ext.
 # pg_extension system view is available from PG 9.1.

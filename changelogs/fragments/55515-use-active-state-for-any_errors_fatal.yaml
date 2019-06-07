@@ -1,0 +1,2 @@
+bugfixes:
+  - Be sure to use the active state when checking for any_errors_fatal

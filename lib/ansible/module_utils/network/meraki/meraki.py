@@ -32,11 +32,12 @@
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 
 def meraki_argument_spec():
-    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
+    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY']), required=True),
                 host=dict(type='str', default='api.meraki.com'),
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
@@ -60,6 +61,7 @@ class MerakiModule(object):
         self.nets = None
         self.org_id = None
         self.net_id = None
+        self.check_mode = module.check_mode
 
         # normal output
         self.existing = None
@@ -69,6 +71,7 @@ class MerakiModule(object):
         self.original = None
         self.proposed = dict()
         self.merged = None
+        self.ignored_keys = ['id', 'organizationId']
 
         # debug output
         self.filter_string = ''
@@ -83,7 +86,7 @@ class MerakiModule(object):
                          'network': '/organizations/{org_id}/networks',
                          'admins': '/organizations/{org_id}/admins',
                          'configTemplates': '/organizations/{org_id}/configTemplates',
-                         'samlRoles': '/organizations/{org_id}/samlRoles',
+                         'samlymbols': '/organizations/{org_id}/samlRoles',
                          'ssids': '/networks/{net_id}/ssids',
                          'groupPolicies': '/networks/{net_id}/groupPolicies',
                          'staticRoutes': '/networks/{net_id}/staticRoutes',
@@ -127,30 +130,48 @@ class MerakiModule(object):
         else:
             self.params['protocol'] = 'http'
 
-    def is_update_required(self, original, proposed, optional_ignore=None):
-        """Compare original and proposed data to see if an update is needed."""
-        is_changed = False
-        ignored_keys = ('id', 'organizationId')
-        if not optional_ignore:
-            optional_ignore = ('')
-
-        # for k, v in original.items():
-        #     try:
-        #         if k not in ignored_keys and k not in optional_ignore:
-        #             if v != proposed[k]:
-        #                 is_changed = True
-        #     except KeyError:
-        #         if v != '':
-        #             is_changed = True
-        for k, v in proposed.items():
+    def sanitize(self, original, proposed):
+        """Determine which keys are unique to original"""
+        keys = []
+        for k, v in original.items():
             try:
-                if k not in ignored_keys and k not in optional_ignore:
-                    if v != original[k]:
-                        is_changed = True
+                if proposed[k] and k not in self.ignored_keys:
+                    pass
             except KeyError:
-                if v != '':
-                    is_changed = True
-        return is_changed
+                keys.append(k)
+        return keys
+
+    def is_update_required(self, original, proposed, optional_ignore=None):
+        ''' Compare two data-structures '''
+        self.ignored_keys.append('net_id')
+        if optional_ignore is not None:
+            self.ignored_keys = self.ignored_keys + optional_ignore
+
+        if type(original) != type(proposed):
+            # self.fail_json(msg="Types don't match")
+            return True
+        if isinstance(original, list):
+            if len(original) != len(proposed):
+                # self.fail_json(msg="Length of lists don't match")
+                return True
+            for a, b in zip(original, proposed):
+                if self.is_update_required(a, b):
+                    # self.fail_json(msg="List doesn't match", a=a, b=b)
+                    return True
+        elif isinstance(original, dict):
+            for k, v in proposed.items():
+                if k not in self.ignored_keys:
+                    if k in original:
+                        if self.is_update_required(original[k], proposed[k]):
+                            return True
+                    else:
+                        # self.fail_json(msg="Key not in original", k=k)
+                        return True
+        else:
+            if original != proposed:
+                # self.fail_json(msg="Fallback", original=original, proposed=proposed)
+                return True
+        return False
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
@@ -211,20 +232,19 @@ class MerakiModule(object):
             self.nets.append(t)
         return self.nets
 
-    # def get_net(self, org_name, net_name, data=None):
-    #     path = self.construct_path('get_all', function='network', org_id=org_id)
-    #     r = self.request(path, method='GET')
-    #     return r
-
-    def get_net(self, org_name, net_name, org_id=None, data=None):
+    def get_net(self, org_name, net_name=None, org_id=None, data=None, net_id=None):
         ''' Return network information '''
         if not data:
             if not org_id:
                 org_id = self.get_org_id(org_name)
             data = self.get_nets(org_id=org_id)
         for n in data:
-            if n['name'] == net_name:
-                return n
+            if net_id:
+                if n['id'] == net_id:
+                    return n
+            elif net_name:
+                if n['name'] == net_name:
+                    return n
         return False
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
@@ -249,9 +269,28 @@ class MerakiModule(object):
                 return template['id']
         self.fail_json(msg='No configuration template named {0} found'.format(name))
 
-    def construct_path(self, action, function=None, org_id=None, net_id=None, org_name=None, custom=None):
-        """Build a path from the URL catalog.
+    def construct_params_list(self, keys, aliases=None):
+        qs = {}
+        for key in keys:
+            if key in aliases:
+                qs[aliases[key]] = self.module.params[key]
+            else:
+                qs[key] = self.module.params[key]
+        return qs
 
+    def encode_url_params(self, params):
+        """Encodes key value pairs for URL"""
+        return "?{0}".format(urlencode(params))
+
+    def construct_path(self,
+                       action,
+                       function=None,
+                       org_id=None,
+                       net_id=None,
+                       org_name=None,
+                       custom=None,
+                       params=None):
+        """Build a path from the URL catalog.
         Uses function property from class for catalog lookup.
         """
         built_path = None
@@ -265,6 +304,8 @@ class MerakiModule(object):
             built_path = built_path.format(org_id=org_id, net_id=net_id, **custom)
         else:
             built_path = built_path.format(org_id=org_id, net_id=net_id)
+        if params:
+            built_path += self.encode_url_params(params)
         return built_path
 
     def request(self, path, method=None, payload=None):

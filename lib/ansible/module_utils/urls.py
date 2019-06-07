@@ -32,7 +32,9 @@ for users making use of a module. If possible, avoid third party libraries by us
 this code instead.
 '''
 
+import atexit
 import base64
+import functools
 import netrc
 import os
 import platform
@@ -140,7 +142,7 @@ if not HAS_SSLCONTEXT and HAS_SSL:
 
 # The following makes it easier for us to script updates of the bundled backports.ssl_match_hostname
 # The bundled backports.ssl_match_hostname should really be moved into its own file for processing
-_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.5.0.1"}
+_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.7.0.1"}
 
 LOADED_VERIFY_LOCATIONS = set()
 
@@ -166,76 +168,157 @@ if not HAS_MATCH_HOSTNAME:
 
     """The match_hostname() function from Python 3.4, essential when using SSL."""
 
-    class CertificateError(ValueError):
-        pass
+    try:
+        # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not
+        from _ssl import SSLCertVerificationError
+        CertificateError = SSLCertVerificationError
+    except ImportError:
+        class CertificateError(ValueError):
+            pass
 
-    def _dnsname_match(dn, hostname, max_wildcards=1):
+    def _dnsname_match(dn, hostname):
         """Matching according to RFC 6125, section 6.4.3
 
-        http://tools.ietf.org/html/rfc6125#section-6.4.3
+        - Hostnames are compared lower case.
+        - For IDNA, both dn and hostname must be encoded as IDN A-label (ACE).
+        - Partial wildcards like 'www*.example.org', multiple wildcards, sole
+          wildcard or wildcards in labels other then the left-most label are not
+          supported and a CertificateError is raised.
+        - A wildcard must match at least one character.
         """
-        pats = []
         if not dn:
             return False
 
-        # Ported from python3-syntax:
-        # leftmost, *remainder = dn.split(r'.')
-        parts = dn.split(r'.')
-        leftmost = parts[0]
-        remainder = parts[1:]
-
-        wildcards = leftmost.count('*')
-        if wildcards > max_wildcards:
-            # Issue #17980: avoid denials of service by refusing more
-            # than one wildcard per fragment.  A survey of established
-            # policy among SSL implementations showed it to be a
-            # reasonable choice.
-            raise CertificateError(
-                "too many wildcards in certificate DNS name: " + repr(dn))
-
+        wildcards = dn.count('*')
         # speed up common case w/o wildcards
         if not wildcards:
             return dn.lower() == hostname.lower()
 
-        # RFC 6125, section 6.4.3, subitem 1.
-        # The client SHOULD NOT attempt to match a presented identifier in which
-        # the wildcard character comprises a label other than the left-most label.
-        if leftmost == '*':
-            # When '*' is a fragment by itself, it matches a non-empty dotless
-            # fragment.
-            pats.append('[^.]+')
-        elif leftmost.startswith('xn--') or hostname.startswith('xn--'):
-            # RFC 6125, section 6.4.3, subitem 3.
-            # The client SHOULD NOT attempt to match a presented identifier
-            # where the wildcard character is embedded within an A-label or
-            # U-label of an internationalized domain name.
-            pats.append(re.escape(leftmost))
+        if wildcards > 1:
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "too many wildcards in certificate DNS name: %s" % repr(dn))
+
+        dn_leftmost, sep, dn_remainder = dn.partition('.')
+
+        if '*' in dn_remainder:
+            # Only match wildcard in leftmost segment.
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "wildcard can only be present in the leftmost label: "
+                "%s." % repr(dn))
+
+        if not sep:
+            # no right side
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "sole wildcard without additional labels are not support: "
+                "%s." % repr(dn))
+
+        if dn_leftmost != '*':
+            # no partial wildcard matching
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise CertificateError(
+                "partial wildcards in leftmost label are not supported: "
+                "%s." % repr(dn))
+
+        hostname_leftmost, sep, hostname_remainder = hostname.partition('.')
+        if not hostname_leftmost or not sep:
+            # wildcard must match at least one char
+            return False
+        return dn_remainder.lower() == hostname_remainder.lower()
+
+    def _inet_paton(ipname):
+        """Try to convert an IP address to packed binary form
+
+        Supports IPv4 addresses on all platforms and IPv6 on platforms with IPv6
+        support.
+        """
+        # inet_aton() also accepts strings like '1'
+        # Divergence: We make sure we have native string type for all python versions
+        try:
+            b_ipname = to_bytes(ipname, errors='strict')
+        except UnicodeError:
+            raise ValueError("%s must be an all-ascii string." % repr(ipname))
+
+        # Set ipname in native string format
+        if sys.version_info < (3,):
+            n_ipname = b_ipname
         else:
-            # Otherwise, '*' matches any dotless string, e.g. www*
-            pats.append(re.escape(leftmost).replace(r'\*', '[^.]*'))
+            n_ipname = ipname
 
-        # add the remaining fragments, ignore any wildcards
-        for frag in remainder:
-            pats.append(re.escape(frag))
+        if n_ipname.count('.') == 3:
+            try:
+                return socket.inet_aton(n_ipname)
+            # Divergence: OSError on late python3.  socket.error earlier.
+            # Null bytes generate ValueError on python3(we want to raise
+            # ValueError anyway), TypeError # earlier
+            except (OSError, socket.error, TypeError):
+                pass
 
-        pat = re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
-        return pat.match(hostname)
+        try:
+            return socket.inet_pton(socket.AF_INET6, n_ipname)
+        # Divergence: OSError on late python3.  socket.error earlier.
+        # Null bytes generate ValueError on python3(we want to raise
+        # ValueError anyway), TypeError # earlier
+        except (OSError, socket.error, TypeError):
+            # Divergence .format() to percent formatting for Python < 2.6
+            raise ValueError("%s is neither an IPv4 nor an IP6 "
+                             "address." % repr(ipname))
+        except AttributeError:
+            # AF_INET6 not available
+            pass
+
+        # Divergence .format() to percent formatting for Python < 2.6
+        raise ValueError("%s is not an IPv4 address." % repr(ipname))
+
+    def _ipaddress_match(ipname, host_ip):
+        """Exact matching of IP addresses.
+
+        RFC 6125 explicitly doesn't define an algorithm for this
+        (section 1.7.2 - "Out of Scope").
+        """
+        # OpenSSL may add a trailing newline to a subjectAltName's IP address
+        ip = _inet_paton(ipname.rstrip())
+        return ip == host_ip
 
     def match_hostname(cert, hostname):
         """Verify that *cert* (in decoded format as returned by
         SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
-        rules are followed, but IP addresses are not accepted for *hostname*.
+        rules are followed.
+
+        The function matches IP addresses rather than dNSNames if hostname is a
+        valid ipaddress string. IPv4 addresses are supported on all platforms.
+        IPv6 addresses are supported on platforms with IPv6 support (AF_INET6
+        and inet_pton).
 
         CertificateError is raised on failure. On success, the function
         returns nothing.
         """
         if not cert:
-            raise ValueError("empty or no certificate")
+            raise ValueError("empty or no certificate, match_hostname needs a "
+                             "SSL socket or SSL context with either "
+                             "CERT_OPTIONAL or CERT_REQUIRED")
+        try:
+            # Divergence: Deal with hostname as bytes
+            host_ip = _inet_paton(to_text(hostname, errors='strict'))
+        except UnicodeError:
+            # Divergence: Deal with hostname as byte strings.
+            # IP addresses should be all ascii, so we consider it not
+            # an IP address if this fails
+            host_ip = None
+        except ValueError:
+            # Not an IP address (common case)
+            host_ip = None
         dnsnames = []
         san = cert.get('subjectAltName', ())
         for key, value in san:
             if key == 'DNS':
-                if _dnsname_match(value, hostname):
+                if host_ip is None and _dnsname_match(value, hostname):
+                    return
+                dnsnames.append(value)
+            elif key == 'IP Address':
+                if host_ip is not None and _ipaddress_match(value, host_ip):
                     return
                 dnsnames.append(value)
         if not dnsnames:
@@ -250,7 +333,7 @@ if not HAS_MATCH_HOSTNAME:
                             return
                         dnsnames.append(value)
         if len(dnsnames) > 1:
-            raise CertificateError("hostname %r " "doesn't match either of %s" % (hostname, ', '.join(map(repr, dnsnames))))
+            raise CertificateError("hostname %r doesn't match either of %s" % (hostname, ', '.join(map(repr, dnsnames))))
         elif len(dnsnames) == 1:
             raise CertificateError("hostname %r doesn't match %r" % (hostname, dnsnames[0]))
         else:
@@ -320,9 +403,9 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
             self.context = None
             if HAS_SSLCONTEXT:
-                self.context = create_default_context()
+                self.context = self._context
             elif HAS_URLLIB3_PYOPENSSLCONTEXT:
-                self.context = PyOpenSSLContext(PROTOCOL)
+                self.context = self._context = PyOpenSSLContext(PROTOCOL)
             if self.context and self.cert_file:
                 self.context.load_cert_chain(self.cert_file, self.key_file)
 
@@ -353,7 +436,16 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
     class CustomHTTPSHandler(urllib_request.HTTPSHandler):
 
         def https_open(self, req):
-            return self.do_open(CustomHTTPSConnection, req)
+            kwargs = {}
+            if HAS_SSLCONTEXT:
+                kwargs['context'] = self._context
+            return self.do_open(
+                functools.partial(
+                    CustomHTTPSConnection,
+                    **kwargs
+                ),
+                req
+            )
 
         https_request = AbstractHTTPHandler.do_request_
 
@@ -478,8 +570,24 @@ def generic_urlparse(parts):
         generic_parts['fragment'] = parts.fragment
         generic_parts['username'] = parts.username
         generic_parts['password'] = parts.password
-        generic_parts['hostname'] = parts.hostname
-        generic_parts['port'] = parts.port
+        hostname = parts.hostname
+        if hostname and hostname[0] == '[' and '[' in parts.netloc and ']' in parts.netloc:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            hostname = parts.netloc.split(']')[0][1:].lower()
+        generic_parts['hostname'] = hostname
+
+        try:
+            port = parts.port
+        except ValueError:
+            # Py2.6 doesn't parse IPv6 addresses correctly
+            netloc = parts.netloc.split('@')[-1].split(']')[-1]
+            if ':' in netloc:
+                port = netloc.split(':')[1]
+                if port:
+                    port = int(port)
+            else:
+                port = None
+        generic_parts['port'] = port
     else:
         # we have to use indexes, and then parse out
         # the other parts not supported by indexing
@@ -538,7 +646,7 @@ class RequestWithMethod(urllib_request.Request):
             return urllib_request.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=None):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -553,9 +661,10 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            handler = maybe_add_ssl_handler(newurl, validate_certs)
-            if handler:
-                urllib_request._opener.add_handler(handler)
+            if not HAS_SSLCONTEXT:
+                handler = maybe_add_ssl_handler(newurl, validate_certs, ca_path=ca_path)
+                if handler:
+                    urllib_request._opener.add_handler(handler)
 
             # Preserve urllib2 compatibility
             if follow_redirects == 'urllib2':
@@ -638,7 +747,7 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
                    ' python >= 2.7.9 on your managed machine')
         msg.append(' (the python executable used (%s) is version: %s)' %
                    (sys.executable, ''.join(sys.version.splitlines())))
-        if not HAS_URLLIB3_PYOPENSSLCONTEXT or not HAS_URLLIB3_SSL_WRAP_SOCKET:
+        if not HAS_URLLIB3_PYOPENSSLCONTEXT and not HAS_URLLIB3_SSL_WRAP_SOCKET:
             msg.append('or you can install the `urllib3`, `pyOpenSSL`,'
                        ' `ndg-httpsclient`, and `pyasn1` python modules')
 
@@ -655,6 +764,15 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
 
+def atexit_remove_file(filename):
+    if os.path.exists(filename):
+        try:
+            os.unlink(filename)
+        except Exception:
+            # just ignore if we cannot delete, things should be ok
+            pass
+
+
 class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     A custom handler class for SSL validation.
@@ -665,21 +783,38 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, ca_path=None):
         self.hostname = hostname
         self.port = port
+        self.ca_path = ca_path
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
         # standard locations for the current distribution
 
         ca_certs = []
+        cadata = bytearray()
         paths_checked = []
+
+        if self.ca_path:
+            paths_checked = [self.ca_path]
+            with open(to_bytes(self.ca_path, errors='surrogate_or_strict'), 'rb') as f:
+                if HAS_SSLCONTEXT:
+                    cadata.extend(
+                        ssl.PEM_cert_to_DER_cert(
+                            to_native(f.read(), errors='surrogate_or_strict')
+                        )
+                    )
+                else:
+                    ca_certs.append(f.read())
+            return ca_certs, cadata, paths_checked
+
+        if not HAS_SSLCONTEXT:
+            paths_checked.append('/etc/ssl/certs')
 
         system = to_text(platform.system(), errors='surrogate_or_strict')
         # build a list of paths to check for .crt/.pem files
         # based on the platform type
-        paths_checked.append('/etc/ssl/certs')
         if system == u'Linux':
             paths_checked.append('/etc/pki/ca-trust/extracted/pem')
             paths_checked.append('/etc/pki/tls/certs')
@@ -697,13 +832,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         # location if the OS platform one is not available
         paths_checked.append('/etc/ansible')
 
-        tmp_fd, tmp_path = tempfile.mkstemp()
-        to_add_fd, to_add_path = tempfile.mkstemp()
-        to_add = False
+        tmp_path = None
+        if not HAS_SSLCONTEXT:
+            tmp_fd, tmp_path = tempfile.mkstemp()
+            atexit.register(atexit_remove_file, tmp_path)
 
         # Write the dummy ca cert if we are running on macOS
         if system == u'Darwin':
-            os.write(tmp_fd, b_DUMMY_CA_CERT)
+            if HAS_SSLCONTEXT:
+                cadata.extend(
+                    ssl.PEM_cert_to_DER_cert(
+                        to_native(b_DUMMY_CA_CERT, errors='surrogate_or_strict')
+                    )
+                )
+            else:
+                os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
 
@@ -717,26 +860,29 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
                         try:
-                            cert_file = open(full_path, 'rb')
-                            cert = cert_file.read()
-                            cert_file.close()
-                            os.write(tmp_fd, cert)
-                            os.write(tmp_fd, b'\n')
                             if full_path not in LOADED_VERIFY_LOCATIONS:
-                                to_add = True
-                                os.write(to_add_fd, cert)
-                                os.write(to_add_fd, b'\n')
-                                LOADED_VERIFY_LOCATIONS.add(full_path)
+                                with open(full_path, 'rb') as cert_file:
+                                    b_cert = cert_file.read()
+                                if HAS_SSLCONTEXT:
+                                    try:
+                                        cadata.extend(
+                                            ssl.PEM_cert_to_DER_cert(
+                                                to_native(b_cert, errors='surrogate_or_strict')
+                                            )
+                                        )
+                                    except ValueError:
+                                        continue
+                                else:
+                                    os.write(tmp_fd, b_cert)
+                                    os.write(tmp_fd, b'\n')
                         except (OSError, IOError):
                             pass
 
-        if not to_add:
-            try:
-                os.remove(to_add_path)
-            except OSError:
-                pass
-            to_add_path = None
-        return (tmp_path, to_add_path, paths_checked)
+        if HAS_SSLCONTEXT:
+            default_verify_paths = ssl.get_default_verify_paths()
+            paths_checked[:0] = [default_verify_paths.capath]
+
+        return (tmp_path, cadata, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=None):
         '''
@@ -767,47 +913,40 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def _make_context(self, to_add_ca_cert_path):
+    def make_context(self, cafile, cadata):
+        cafile = self.ca_path or cafile
+        if self.ca_path:
+            cadata = None
+        else:
+            cadata = cadata or None
+
         if HAS_SSLCONTEXT:
-            context = create_default_context()
+            context = create_default_context(cafile=cafile)
         elif HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = PyOpenSSLContext(PROTOCOL)
         else:
             raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
 
-        if to_add_ca_cert_path:
-            context.load_verify_locations(to_add_ca_cert_path)
+        if cafile or cadata:
+            context.load_verify_locations(cafile=cafile, cadata=cadata)
         return context
 
     def http_request(self, req):
-        tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
-        https_proxy = os.environ.get('https_proxy')
-        context = None
-        try:
-            context = self._make_context(to_add_ca_cert_path)
-        except Exception:
-            # We'll make do with no context below
-            pass
+        tmp_ca_cert_path, cadata, paths_checked = self.get_ca_certs()
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
+        https_proxy = os.environ.get('https_proxy')
 
-        if not use_proxy:
-            # ignore proxy settings for this host request
-            if tmp_ca_cert_path:
-                try:
-                    os.remove(tmp_ca_cert_path)
-                except OSError:
-                    pass
-            if to_add_ca_cert_path:
-                try:
-                    os.remove(to_add_ca_cert_path)
-                except OSError:
-                    pass
-            return req
+        context = None
+        try:
+            context = self.make_context(tmp_ca_cert_path, cadata)
+        except NotImplementedError:
+            # We'll make do with no context below
+            pass
 
         try:
-            if https_proxy:
+            if use_proxy and https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
                 proxy_hostname = proxy_parts.get('hostname', None)
@@ -855,46 +994,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         except socket.error as e:
             raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
-        try:
-            # cleanup the temp file created, don't worry
-            # if it fails for some reason
-            os.remove(tmp_ca_cert_path)
-        except Exception:
-            pass
-
-        try:
-            # cleanup the temp file created, don't worry
-            # if it fails for some reason
-            if to_add_ca_cert_path:
-                os.remove(to_add_ca_cert_path)
-        except Exception:
-            pass
-
         return req
 
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs):
+def maybe_add_ssl_handler(url, validate_certs, ca_path=None):
     parsed = generic_urlparse(urlparse(url))
     if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
-        # do the cert validation
-        netloc = parsed.netloc
-        if '@' in netloc:
-            netloc = netloc.split('@', 1)[1]
-        if ':' in netloc:
-            hostname, port = netloc.split(':', 1)
-            port = int(port)
-        else:
-            hostname = netloc
-            port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
@@ -917,7 +1031,8 @@ def rfc2822_date_string(timetuple, zone='-0000'):
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
-                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None):
+                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
+                 ca_path=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -951,6 +1066,7 @@ class Request:
         self.client_cert = client_cert
         self.client_key = client_key
         self.unix_socket = unix_socket
+        self.ca_path = ca_path
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -966,7 +1082,7 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None):
+             unix_socket=None, ca_path=None):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1002,7 +1118,8 @@ class Request:
             request
         :kwarg use_gssapi: (optional) Use GSSAPI handler of requests.
         :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
-        connection to the provided url
+            connection to the provided url
+        :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :returns: HTTPResponse
         """
 
@@ -1027,14 +1144,15 @@ class Request:
         client_key = self._fallback(client_key, self.client_key)
         cookies = self._fallback(cookies, self.cookies)
         unix_socket = self._fallback(unix_socket, self.unix_socket)
+        ca_path = self._fallback(ca_path, self.ca_path)
 
         handlers = []
 
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs)
-        if ssl_handler:
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path)
+        if ssl_handler and not HAS_SSLCONTEXT:
             handlers.append(ssl_handler)
         if HAS_GSSAPI and use_gssapi:
             handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
@@ -1095,6 +1213,7 @@ class Request:
             proxyhandler = urllib_request.ProxyHandler({})
             handlers.append(proxyhandler)
 
+        context = None
         if HAS_SSLCONTEXT and not validate_certs:
             # In 2.7.9, the default context validates certificates
             context = SSLContext(ssl.PROTOCOL_SSLv23)
@@ -1112,13 +1231,23 @@ class Request:
                                                    client_key=client_key,
                                                    unix_socket=unix_socket))
 
+        if ssl_handler and HAS_SSLCONTEXT and validate_certs:
+            tmp_ca_path, cadata, paths_checked = ssl_handler.get_ca_certs()
+            try:
+                context = ssl_handler.make_context(tmp_ca_path, cadata)
+            except NotImplementedError:
+                pass
+
         # pre-2.6 versions of python cannot use the custom https
         # handler, since the socket class is lacking create_connection.
         # Some python builds lack HTTPS support.
         if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
-            handlers.append(CustomHTTPSHandler)
+            kwargs = {}
+            if HAS_SSLCONTEXT:
+                kwargs['context'] = context
+            handlers.append(CustomHTTPSHandler(**kwargs))
 
-        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
+        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, ca_path=ca_path))
 
         # add some nicer cookie handling
         if cookies is not None:
@@ -1236,7 +1365,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False, unix_socket=None):
+             use_gssapi=False, unix_socket=None, ca_path=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1248,7 +1377,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket)
+                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path)
 
 
 #
@@ -1284,7 +1413,7 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False, unix_socket=None):
+              use_gssapi=False, unix_socket=None, ca_path=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1299,7 +1428,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg int timeout:   Default: 10
     :kwarg boolean use_gssapi:   Default: False
     :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
-    connection to the provided url
+        connection to the provided url
+    :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
@@ -1342,7 +1472,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     cookies = cookiejar.LWPCookieJar()
 
     r = None
-    info = dict(url=url)
+    info = dict(url=url, status=-1)
     try:
         r = open_url(url, data=data, headers=headers, method=method,
                      use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
@@ -1350,7 +1480,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket)
+                     unix_socket=unix_socket, ca_path=ca_path)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
@@ -1384,11 +1514,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
-            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e))
+            module.fail_json(msg='%s. You can also install python-ssl from EPEL' % to_native(e), **info)
         else:
-            module.fail_json(msg='%s' % to_native(e))
+            module.fail_json(msg='%s' % to_native(e), **info)
     except (ConnectionError, ValueError) as e:
-        module.fail_json(msg=to_native(e))
+        module.fail_json(msg=to_native(e), **info)
     except urllib_error.HTTPError as e:
         try:
             body = e.read()

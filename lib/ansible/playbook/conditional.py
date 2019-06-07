@@ -114,23 +114,27 @@ class Conditional:
         if isinstance(conditional, bool):
             return conditional
 
-        if C.CONDITIONAL_BARE_VARS:
-            if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-                display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
-                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
-                conditional = all_vars[conditional]
-
         if templar.is_template(conditional):
             display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
+
+        bare_vars_warning = False
+        if C.CONDITIONAL_BARE_VARS:
+            if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
+                conditional = all_vars[conditional]
+                bare_vars_warning = True
+
         # make sure the templar is using the variables specified with this method
-        templar.set_available_variables(variables=all_vars)
+        templar.available_variables = all_vars
 
         try:
             # if the conditional is "unsafe", disable lookups
             disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
+            if bare_vars_warning and not isinstance(conditional, bool):
+                display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
+                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 

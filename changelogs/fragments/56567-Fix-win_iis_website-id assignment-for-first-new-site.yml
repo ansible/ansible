@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_iis_website - site_id not used if no sites exist already and creating a new site (https://github.com/ansible/ansible/issues/47057)"

@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: frr_facts
 version_added: "2.8"
-author: "Nilashish Chakraborty (@nilashishc)"
+author: "Nilashish Chakraborty (@NilashishC)"
 short_description: Collect facts from remote devices running Free Range Routing (FRR).
 description:
   - Collects a base set of device facts from a remote device that

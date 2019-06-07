@@ -7,13 +7,25 @@
  - name: Clearing (if) previous disks were created
    azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
-       name: "{{ item }}"
+       name: "md{{ rpfx }}{{ item }}"
+       managed_by: ''
        state: absent
    with_items:
-     - "md{{ rpfx }}os"
-     - "md{{ rpfx }}3"
-     - "md{{ rpfx }}2"
-     - "md{{ rpfx }}1"
+       - 1
+       - 2
+       - 3
+
+ - name: Test invalid account name (should give error)
+   azure_rm_manageddisk:
+       resource_group: "{{ resource_group }}"
+       name: "invalid_char$"
+       disk_size_gb: 1
+   register: output
+   ignore_errors: yes
+   check_mode: no
+
+ - name: Assert task failed
+   assert: { that: "output['failed'] == True" }
 
  - name: Create managed disk (Check Mode)
    azure_rm_manageddisk:
@@ -32,18 +44,6 @@
      that:
        - output.changed
        - output.state
-
- - name: Test invalid account name (should give error)
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "invalid_char$"
-       disk_size_gb: 1
-   register: output
-   ignore_errors: yes
-   check_mode: no
-
- - name: Assert task failed
-   assert: { that: "output['failed'] == True" }
 
  - name: Create new managed disk succesfully
    azure_rm_manageddisk:
@@ -65,62 +65,6 @@
        - output.state.os_type == None
        - output.state.storage_account_type == "Standard_LRS"
 
- - name: Create new managed disk with zone
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}3"
-       storage_account_type: "Standard_LRS"
-       disk_size_gb: 1
-       zone: 1
-       tags:
-           testing: testing
-           delete: never
-   register: output
-
- - name: Assert status succeeded and results include an zone value
-   assert:
-     that:
-       - output.changed
-       - output.state.zone == ["1"] 
-
- - name: Change the operating system type of the managed disk to linux
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 1
-       os_type: linux
-       storage_account_type: "Standard_LRS"
-       tags:
-           testing: testing
-           delete: never
-   register: output
-
- - assert:
-     that:
-       - output.changed
-       - output.state.os_type == 'linux'
-
- - name: Create new managed disk with an os_type specified at creation
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}os"
-       storage_account_type: "Standard_LRS"
-       disk_size_gb: 1
-       os_type: windows
-   register: win
-
- - name: Assert status of os_type specified at creation
-   assert:
-     that:
-       - win.changed
-       - win.state.os_type == 'windows'
-
- - name: Clean up managed disk created with os_type
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}os"
-       state: absent
-
  - name: Copy disk to a new managed disk
    azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
@@ -128,27 +72,31 @@
        create_option: "copy"
        source_uri: "{{ output.state.id }}"
        disk_size_gb: 1
-   register: copy
+   register: disk2
 
  - name: Assert status succeeded and results include an Id value
    assert:
      that:
-       - copy.changed
-       - copy.state.id is defined
+       - disk2.changed
+       - disk2.state.id is defined
 
- - name: Update a new disk without changes
+ - name: Create disk to a new managed disk with zone and os type
    azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       storage_account_type: "Standard_LRS"
+       name: "md{{ rpfx }}3"
+       source_uri: "{{ output.state.id }}"
        disk_size_gb: 1
-   register: output
+       zone: "1"
+       os_type: windows
+   register: disk3
 
  - name: Assert status succeeded and results include an Id value
    assert:
      that:
-       - not output.changed
-       - output.state.id is defined
+       - disk3.changed
+       - disk3.state.id is defined
+       - disk3.state.zone == "1"
+       - disk3.state.os_type == "windows"
 
  - name: Change storage account type to an invalid type
    azure_rm_manageddisk:
@@ -162,101 +110,26 @@
  - name: Assert storage account type change failed
    assert: { that: "output['failed'] == True" }
 
- - name: Change disk size to incompatible size
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 3000000
-   register: output
-   ignore_errors: yes
-
- - name: Assert disk size change to incompatible size failure
-   assert: { that: "output['failed'] == True" }
-
- - name: Change disk to bigger size
+ - name: Update disk options (os_type, account_type, size, tags)
    azure_rm_manageddisk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
-   register: output
-
- - name: Assert status succeeded
-   assert:
-     that:
-       - output.changed
-       - output.state.disk_size_gb == 2
-
- - name: Change disk to Standard SSD
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
+       os_type: linux
        storage_account_type: "StandardSSD_LRS"
-       disk_size_gb: 2
+       tags:
+           galaxy: "no"
+           delete: never
    register: output
-
- - name: Assert status succeeded
-   assert:
-     that:
-       - output.changed
-       - output.state.storage_account_type == "StandardSSD_LRS"
-
- - name: Gather facts to one specific disk
-   azure_rm_manageddisk_facts:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
 
  - assert:
      that:
-       - "azure_managed_disk | length == 1"
-       - azure_managed_disk[0].storage_account_type == "StandardSSD_LRS"
-
- - name: Change disk to Premium (SSD)
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       storage_account_type: "Premium_LRS"
-       disk_size_gb: 2
-   register: output
-
- - name: Assert status succeeded
-   assert:
-     that:
        - output.changed
-       - output.state.storage_account_type == "Premium_LRS"
-
- - name: Update disk tags
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       tags:
-           testing: testing
-           delete: never
-           galaxy: 'no'
-   register: output
-
- - name: Assert disk incremented tags
-   assert:
-       that:
-           - "output.state.tags | length == 3"
-           - "output.state.tags.galaxy == 'no'"
-
- - name: Update disk tags
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       tags:
-           testing: testing
-           delete: never
-   register: output
-
- - name: Assert disk tags are 2
-   assert:
-       that:
-           - "output.state.tags | length == 2"
-           - "output.state.tags.testing == 'testing'"
-           - "output.state.tags.delete == 'never'"
+       - output.state.storage_account_type == "StandardSSD_LRS"
+       - output.state.disk_size_gb == 2
+       - "output.state.tags | length == 2"
+       - "output.state.tags.galaxy == 'no'"
+       - output.state.os_type == 'linux'
 
  - name: Gather facts to one specific disk
    azure_rm_manageddisk_facts:
@@ -266,17 +139,9 @@
  - assert:
        that:
            - "azure_managed_disk | length == 1"
-           - azure_managed_disk[0].storage_account_type == "Premium_LRS"
+           - azure_managed_disk[0].storage_account_type == "StandardSSD_LRS"
            - azure_managed_disk[0].disk_size_gb == 2
            - "azure_managed_disk[0].os_type == 'linux'"
-
- - name: Gather facts
-   azure_rm_manageddisk_facts:
-       resource_group: "{{ resource_group }}"
-
- - assert:
-       that:
-           - "azure_managed_disk | length > 0"
 
  - set_fact:
      parameter: "{{parameter |combine({item.key: item.value})}}"
@@ -297,191 +162,6 @@
  - assert:
        that:
            - not output.changed
-
- - name: Create virtual network
-   azure_rm_virtualnetwork:
-       resource_group: "{{ resource_group }}"
-       name: "tr{{ rpfx }}"
-       address_prefixes: "10.10.0.0/16"
-
- - name: Add subnet
-   azure_rm_subnet:
-       resource_group: "{{ resource_group }}"
-       name: "tr{{ rpfx }}"
-       address_prefix: "10.10.0.0/24"
-       virtual_network: "tr{{ rpfx }}"
-
- - name: Create public ip
-   azure_rm_publicipaddress:
-       resource_group: "{{ resource_group }}"
-       allocation_method: Static
-       name: "tr{{ rpfx }}"
-
- - name: Create security group
-   azure_rm_securitygroup:
-       resource_group: "{{ resource_group }}"
-       name: "tr{{ rpfx }}"
-
- - name: Create NIC
-   azure_rm_networkinterface:
-       resource_group: "{{ resource_group }}"
-       name: "tr{{ rpfx }}"
-       virtual_network: "tr{{ rpfx }}"
-       subnet: "tr{{ rpfx }}"
-       public_ip_name: "tr{{ rpfx }}"
-       security_group: "tr{{ rpfx }}"
-
- - name: Create virtual machine
-   azure_rm_virtualmachine:
-       resource_group: "{{ resource_group }}"
-       name: "tr{{ rpfx }}"
-       admin_username: adminuser
-       admin_password: Password123!
-       os_type: Linux
-       managed_disk_type: Premium_LRS
-       vm_size: Standard_DS1_v2
-       network_interfaces: "tr{{ rpfx }}"
-       image:
-         offer: UbuntuServer
-         publisher: Canonical
-         sku: 16.04-LTS
-         version: latest
- 
- - name: Mount the disk to virtual machine (check mode)
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       managed_by: "tr{{ rpfx }}"
-       tags:
-           testing: testing
-           delete: never
-   register: mounted
-   check_mode: yes
-
- - assert:
-     that:
-       - not mounted.state.managed_by
-
- - name: Mount the disk to virtual machine
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       managed_by: "tr{{ rpfx }}"
-       tags:
-           testing: testing
-           delete: never
-   register: mounted
-
- - assert:
-     that:
-       - "'tr{{ rpfx }}' in mounted.state.managed_by"
-
- - name: Mount the disk to virtual machine (idempotent)
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       tags:
-           testing: testing
-           delete: never
-   register: mounted
-
- - assert:
-     that:
-       - not mounted.changed
-       - "'tr{{ rpfx }}' in mounted.state.managed_by"
- 
- - name: Unmount the disk to virtual machine (check mode)
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       managed_by: ''
-       tags:
-           testing: testing
-           delete: never
-   check_mode: yes
-   register: mounted
-
- - assert:
-     that:
-       - mounted.changed
-
- - name: Unmount the disk to virtual machine
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       managed_by: ''
-       tags:
-           testing: testing
-           delete: never
-   register: mounted
-
- - assert:
-     that:
-       - mounted.changed
-       - not mounted.state.managed_by
-
- - name: Unmount the disk to virtual machine (idempotent)
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       managed_by: ''
-       disk_size_gb: 2
-       tags:
-           testing: testing
-           delete: never
-   register: mounted
-
- - assert:
-     that:
-       - not mounted.changed
-       - not mounted.state.managed_by
-
- - name: Update disk size
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 4
-       tags:
-           testing: testing
-           delete: never
-   register: output
-
- - assert:
-    that:
-      - output.state.disk_size_gb == 4
-
- - name: Attach the disk to virtual machine again
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 4
-       managed_by: "tr{{ rpfx }}"
-       tags:
-           testing: testing
-           delete: never
-   register: mounted
-
- - assert:
-     that:
-       - mounted.changed
-       - "'tr{{ rpfx }}' in mounted.state.managed_by"
-
- - name: Change disk size to incompatible size
-   azure_rm_manageddisk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       state: absent
-       managed_by: "tr{{ rpfx }}"
-   register: output
-   ignore_errors: yes
-
- - name: Assert delete failed since disk is attached to VM
-   assert: { that: "output['failed'] == True" }
 
  - name: Delete managed disk (Check Mode)
    azure_rm_manageddisk:

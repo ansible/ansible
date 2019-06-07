@@ -33,13 +33,28 @@ import json
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, get_timestamp
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, string_types, PY2, PY3
 from ansible.module_utils.urls import fetch_url
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
+try:
+    if PY3:
+        from collections import OrderedDict
+    else:
+        from ordereddict import OrderedDict
+    HAS_ORDEREDDICT = True
+except ImportError:
+    HAS_ORDEREDDICT = False
 
 _DEVICE_CONNECTION = None
 
@@ -154,13 +169,13 @@ class Cli:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         connection = self._get_connection()
 
         try:
-            out, timestamps = connection.run_commands(commands, check_rc)
+            out = connection.run_commands(commands, check_rc)
             if check_rc == 'retry_json':
                 capabilities = self.get_capabilities()
                 network_api = capabilities.get('network_api')
@@ -170,11 +185,8 @@ class Cli:
                         if ('Invalid command at' in resp or 'Ambiguous command at' in resp) and 'json' in resp:
                             if commands[index]['output'] == 'json':
                                 commands[index]['output'] = 'text'
-                                out, timestamps = connection.run_commands(commands, check_rc)
-            if return_timestamps:
-                return out, timestamps
-            else:
-                return out
+                                out = connection.run_commands(commands, check_rc)
+            return out
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc))
 
@@ -344,7 +356,6 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timestamps = list()
         timeout = self._module.params['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
@@ -352,7 +363,6 @@ class LocalNxapi:
             if self._nxapi_auth:
                 headers['Cookie'] = self._nxapi_auth
 
-            timestamp = get_timestamp()
             response, headers = fetch_url(
                 self._module, self._url, data=req, headers=headers,
                 timeout=timeout, method='POST', use_proxy=use_proxy
@@ -380,13 +390,12 @@ class LocalNxapi:
                             self._error(output=output, **item)
                     elif 'body' in item:
                         result.append(item['body'])
-                        timestamps.append(timestamp)
                     # else:
                         # error in command but since check_status is disabled
                         # silently drop it.
                         # result.append(item['msg'])
 
-            return result, timestamps
+            return result
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
@@ -400,18 +409,17 @@ class LocalNxapi:
         try:
             return self._device_configs[cmd]
         except KeyError:
-            out, out_timestamps = self.send_request(cmd)
+            out = self.send_request(cmd)
             cfg = str(out[0]).strip()
             self._device_configs[cmd] = cfg
             return cfg
 
-    def run_commands(self, commands, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands, check_rc=True):
         """Run list of commands on remote device and return results
         """
         output = None
         queue = list()
         responses = list()
-        timestamps = list()
 
         def _send(commands, output):
             return self.send_request(commands, output, check_status=check_rc)
@@ -422,27 +430,26 @@ class LocalNxapi:
                 item['output'] = 'json'
 
             if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
-                out, out_timestamps = _send(queue, output)
-                responses.extend(out)
-                timestamps.extend(out_timestamps)
+                responses.extend(_send(queue, output))
                 queue = list()
 
             output = item['output'] or 'json'
             queue.append(item['command'])
 
         if queue:
-            out, out_timestamps = _send(queue, output)
-            responses.extend(out)
-            timestamps.extend(out_timestamps)
+            responses.extend(_send(queue, output))
 
-        if return_timestamps:
-            return responses, timestamps
-        else:
-            return responses
+        return responses
 
     def load_config(self, commands, return_error=False, opts=None, replace=None):
         """Sends the ordered set of commands to the device
         """
+
+        if opts is None:
+            opts = {}
+
+        responses = []
+
         if replace:
             device_info = self.get_device_info()
             if '9K' not in device_info.get('network_os_platform', ''):
@@ -450,12 +457,30 @@ class LocalNxapi:
             commands = 'config replace {0}'.format(replace)
 
         commands = to_list(commands)
-        msg, msg_timestamps = self.send_request(commands, output='config', check_status=True,
-                                                return_error=return_error, opts=opts)
+        try:
+            resp = self.send_request(commands, output='config', check_status=True,
+                                     return_error=return_error, opts=opts)
+        except ValueError as exc:
+            code = getattr(exc, 'code', 1)
+            message = getattr(exc, 'err', exc)
+            err = to_text(message, errors='surrogate_then_replace')
+            if opts.get('ignore_timeout') and code:
+                responses.append(code)
+                return responses
+            elif code and 'no graceful-restart' in err:
+                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
+                    msg = ['']
+                    responses.extend(msg)
+                    return responses
+                else:
+                    self._module.fail_json(msg=err)
+            elif code:
+                self._module.fail_json(msg=err)
+
         if return_error:
-            return msg
+            return resp
         else:
-            return []
+            return responses.extend(resp)
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         diff = {}
@@ -530,7 +555,7 @@ class HttpApi:
 
         return self._connection_obj
 
-    def run_commands(self, commands, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands, check_rc=True):
         """Runs list of commands on remote device and returns results
         """
         try:
@@ -548,11 +573,7 @@ class HttpApi:
             if response[0] == '{':
                 out[index] = json.loads(response)
 
-        if return_timestamps:
-            # workaround until timestamps are implemented
-            return out, list()
-        else:
-            return out
+        return out
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
@@ -681,6 +702,359 @@ class HttpApi:
         return None
 
 
+class NxosCmdRef:
+    """NXOS Command Reference utilities.
+    The NxosCmdRef class takes a yaml-formatted string of nxos module commands
+    and converts it into dict-formatted database of getters/setters/defaults
+    and associated common and platform-specific values. The utility methods
+    add additional data such as existing states, playbook states, and proposed cli.
+    The utilities also abstract away platform differences such as different
+    defaults and different command syntax.
+
+    Callers must provide a yaml formatted string that defines each command and
+    its properties; e.g. BFD global:
+    ---
+    _template: # _template holds common settings for all commands
+      # Enable feature bfd if disabled
+      feature: bfd
+      # Common getter syntax for BFD commands
+      get_command: show run bfd all | incl '^(no )*bfd'
+
+    interval:
+      kind: dict
+      getval: bfd interval (?P<tx>\\d+) min_rx (?P<min_rx>\\d+) multiplier (?P<multiplier>\\d+)
+      setval: bfd interval {tx} min_rx {min_rx} multiplier {multiplier}
+      default:
+        tx: 50
+        min_rx: 50
+        multiplier: 3
+      N3K:
+        # Platform overrides
+        default:
+          tx: 250
+          min_rx: 250
+          multiplier: 3
+    """
+
+    def __init__(self, module, cmd_ref_str):
+        """Initialize cmd_ref from yaml data."""
+        self._module = module
+        self._check_imports()
+        self._yaml_load(cmd_ref_str)
+        ref = self._ref
+
+        # Create a list of supported commands based on ref keys
+        ref['commands'] = sorted([k for k in ref if not k.startswith('_')])
+        ref['_proposed'] = []
+        ref['_state'] = module.params.get('state', 'present')
+        self.feature_enable()
+        self.get_platform_defaults()
+        self.normalize_defaults()
+
+    def __getitem__(self, key=None):
+        if key is None:
+            return self._ref
+        return self._ref[key]
+
+    def _check_imports(self):
+        module = self._module
+        msg = nxosCmdRef_import_check()
+        if msg:
+            module.fail_json(msg=msg)
+
+    def _yaml_load(self, cmd_ref_str):
+        if PY2:
+            self._ref = yaml.load(cmd_ref_str)
+        elif PY3:
+            self._ref = yaml.load(cmd_ref_str, Loader=yaml.FullLoader)
+
+    def feature_enable(self):
+        """Add 'feature <foo>' to _proposed if ref includes a 'feature' key. """
+        ref = self._ref
+        feature = ref['_template'].get('feature')
+        if feature:
+            show_cmd = "show run | incl 'feature {0}'".format(feature)
+            output = self.execute_show_command(show_cmd, 'text')
+            if not output or 'CLI command error' in output:
+                msg = "** 'feature {0}' is not enabled. Module will auto-enable feature {0} ** ".format(feature)
+                self._module.warn(msg)
+                ref['_proposed'].append('feature {0}'.format(feature))
+                ref['_cli_is_feature_disabled'] = ref['_proposed']
+
+    def get_platform_shortname(self):
+        """Query device for platform type, normalize to a shortname/nickname.
+        Returns platform shortname (e.g. 'N3K-3058P' returns 'N3K') or None.
+        """
+        # TBD: add this method logic to get_capabilities() after those methods
+        #      are made consistent across transports
+        platform_info = self.execute_show_command('show inventory', 'json')
+        if not platform_info or not isinstance(platform_info, dict):
+            return None
+        inventory_table = platform_info['TABLE_inv']['ROW_inv']
+        for info in inventory_table:
+            if 'Chassis' in info['name']:
+                network_os_platform = info['productid']
+                break
+        else:
+            return None
+
+        # Supported Platforms: N3K,N5K,N6K,N7K,N9K,N3K-F,N9K-F
+        m = re.match('(?P<short>N[35679][K57])-(?P<N35>C35)*', network_os_platform)
+        if not m:
+            return None
+        shortname = m.group('short')
+
+        # Normalize
+        if m.groupdict().get('N35'):
+            shortname = 'N35'
+        elif re.match('N77', shortname):
+            shortname = 'N7K'
+        elif re.match(r'N3K|N9K', shortname):
+            for info in inventory_table:
+                if '-R' in info['productid']:
+                    # Fretta Platform
+                    shortname += '-F'
+                    break
+        return shortname
+
+    def get_platform_defaults(self):
+        """Update ref with platform specific defaults"""
+        plat = self.get_platform_shortname()
+        if not plat:
+            return
+
+        ref = self._ref
+        ref['_platform_shortname'] = plat
+        # Remove excluded commands (no platform support for command)
+        for k in ref['commands']:
+            if plat in ref[k].get('_exclude', ''):
+                ref['commands'].remove(k)
+
+        # Update platform-specific settings for each item in ref
+        plat_spec_cmds = [k for k in ref['commands'] if plat in ref[k]]
+        for k in plat_spec_cmds:
+            for plat_key in ref[k][plat]:
+                ref[k][plat_key] = ref[k][plat][plat_key]
+
+    def normalize_defaults(self):
+        """Update ref defaults with normalized data"""
+        ref = self._ref
+        for k in ref['commands']:
+            if 'default' in ref[k] and ref[k]['default']:
+                kind = ref[k]['kind']
+                if 'int' == kind:
+                    ref[k]['default'] = int(ref[k]['default'])
+                elif 'list' == kind:
+                    ref[k]['default'] = [str(i) for i in ref[k]['default']]
+                elif 'dict' == kind:
+                    for key, v in ref[k]['default'].items():
+                        if v:
+                            v = str(v)
+                        ref[k]['default'][key] = v
+
+    def execute_show_command(self, command, format):
+        """Generic show command helper.
+        Warning: 'CLI command error' exceptions are caught, must be handled by caller.
+        Return device output as a newline-separated string or None.
+        """
+        cmds = [{
+            'command': command,
+            'output': format,
+        }]
+        output = None
+        try:
+            output = run_commands(self._module, cmds)
+            if output:
+                output = output[0]
+        except ConnectionError as exc:
+            if 'CLI command error' in repr(exc):
+                # CLI may be feature disabled
+                output = repr(exc)
+            else:
+                raise
+        return output
+
+    def pattern_match_existing(self, output, k):
+        """Pattern matching helper for `get_existing`.
+        `k` is the command name string. Use the pattern from cmd_ref to
+        find a matching string in the output.
+        Return regex match object or None.
+        """
+        ref = self._ref
+        pattern = re.compile(ref[k]['getval'])
+        match_lines = [re.search(pattern, line) for line in output]
+        if 'dict' == ref[k]['kind']:
+            match = [m for m in match_lines if m]
+            if not match:
+                return None
+            match = match[0]
+
+        else:
+            match = [m.groups() for m in match_lines if m]
+            if not match:
+                return None
+            if len(match) > 1:
+                # TBD: Add support for multiple instances
+                raise ValueError("get_existing: multiple match instances are not currently supported")
+            match = list(match[0])  # tuple to list
+
+            # Handle config strings that nvgen with the 'no' prefix.
+            # Example match behavior:
+            # When pattern is: '(no )*foo *(\S+)*$' AND
+            #  When output is: 'no foo'  -> match: ['no ', None]
+            #  When output is: 'foo 50'  -> match: [None, '50']
+            if None is match[0]:
+                match.pop(0)
+            elif 'no' in match[0]:
+                match.pop(0)
+                if not match:
+                    return None
+
+        return match
+
+    def get_existing(self):
+        """Update ref with existing command states from the device.
+        Store these states in each command's 'existing' key.
+        """
+        ref = self._ref
+        if ref.get('_cli_is_feature_disabled'):
+            return
+        show_cmd = ref['_template']['get_command']
+        output = self.execute_show_command(show_cmd, 'text') or []
+        if not output:
+            return
+
+        # Walk each cmd in ref, use cmd pattern to discover existing cmds
+        output = output.split('\n')
+        for k in ref['commands']:
+            match = self.pattern_match_existing(output, k)
+            if not match:
+                continue
+            kind = ref[k]['kind']
+            if 'int' == kind:
+                ref[k]['existing'] = int(match[0])
+            elif 'list' == kind:
+                ref[k]['existing'] = [str(i) for i in match]
+            elif 'dict' == kind:
+                # The getval pattern should contain regex named group keys that
+                # match up with the setval named placeholder keys; e.g.
+                #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
+                #   setval: my-cmd {foo} bar {baz}
+                ref[k]['existing'] = {}
+                for key in match.groupdict().keys():
+                    ref[k]['existing'][key] = str(match.group(key))
+            elif 'str' == kind:
+                ref[k]['existing'] = match[0]
+            else:
+                raise ValueError("get_existing: unknown 'kind' value specified for key '{0}'".format(k))
+
+    def get_playvals(self):
+        """Update ref with values from the playbook.
+        Store these values in each command's 'playval' key.
+        """
+        ref = self._ref
+        module = self._module
+        for k in ref.keys():
+            if k in module.params and module.params[k] is not None:
+                playval = module.params[k]
+                # Normalize each value
+                if 'int' == ref[k]['kind']:
+                    playval = int(playval)
+                elif 'list' == ref[k]['kind']:
+                    playval = [str(i) for i in playval]
+                elif 'dict' == ref[k]['kind']:
+                    for key, v in playval.items():
+                        playval[key] = str(v)
+                ref[k]['playval'] = playval
+
+    def get_proposed(self):
+        """Compare playbook values against existing states and create a list
+        of proposed commands.
+        Return a list of raw cli command strings.
+        """
+        ref = self._ref
+        # '_proposed' may be empty list or contain initializations; e.g. ['feature foo']
+        proposed = ref['_proposed']
+        # Create a list of commands that have playbook values
+        play_keys = [k for k in ref['commands'] if 'playval' in ref[k]]
+
+        # Compare against current state
+        for k in play_keys:
+            playval = ref[k]['playval']
+            existing = ref[k].get('existing', ref[k]['default'])
+            if playval == existing and ref['_state'] == 'present':
+                continue
+            if isinstance(existing, dict) and all(x is None for x in existing.values()):
+                existing = None
+            if existing is None and ref['_state'] == 'absent':
+                continue
+            cmd = None
+            kind = ref[k]['kind']
+            if 'int' == kind:
+                cmd = ref[k]['setval'].format(playval)
+            elif 'list' == kind:
+                cmd = ref[k]['setval'].format(*(playval))
+            elif 'dict' == kind:
+                # The setval pattern should contain placeholder keys that
+                # match up with the getval regex named group keys; e.g.
+                #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
+                #   setval: my-cmd {foo} bar {baz}
+                cmd = ref[k]['setval'].format(**playval)
+            elif 'str' == kind:
+                if 'deleted' in playval:
+                    if existing:
+                        cmd = 'no ' + ref[k]['setval'].format(existing)
+                else:
+                    cmd = ref[k]['setval'].format(playval)
+            else:
+                raise ValueError("get_proposed: unknown 'kind' value specified for key '{0}'".format(k))
+            if cmd:
+                if 'absent' == ref['_state'] and not re.search(r'^no', cmd):
+                    cmd = 'no ' + cmd
+                # Add processed command to cmd_ref object
+                ref[k]['setcmd'] = cmd
+
+        # Commands may require parent commands for proper context.
+        # Global _template context is replaced by parameter context
+        for k in play_keys:
+            if ref[k].get('setcmd') is None:
+                continue
+            parent_context = ref['_template'].get('context', [])
+            parent_context = ref[k].get('context', parent_context)
+            if isinstance(parent_context, list):
+                for ctx_cmd in parent_context:
+                    if re.search(r'setval::', ctx_cmd):
+                        ctx_cmd = ref[ctx_cmd.split('::')[1]].get('setcmd')
+                        if ctx_cmd is None:
+                            continue
+                    proposed.append(ctx_cmd)
+            elif isinstance(parent_context, str):
+                if re.search(r'setval::', parent_context):
+                    parent_context = ref[parent_context.split('::')[1]].get('setcmd')
+                    if parent_context is None:
+                        continue
+                proposed.append(parent_context)
+
+            proposed.append(ref[k]['setcmd'])
+
+        # Remove duplicate commands from proposed before returning
+        return OrderedDict.fromkeys(proposed).keys()
+
+
+def nxosCmdRef_import_check():
+    """Return import error messages or empty string"""
+    msg = ''
+    if PY2:
+        if not HAS_ORDEREDDICT:
+            msg += "Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'\n"
+        if not HAS_YAML:
+            msg += "Mandatory python library 'yaml' is not present, try 'pip install yaml'\n"
+    elif PY3:
+        if not HAS_YAML:
+            msg += "Mandatory python library 'PyYAML' is not present, try 'pip install PyYAML'\n"
+    return msg
+
+
 def is_json(cmd):
     return to_text(cmd).endswith('| json')
 
@@ -706,6 +1080,7 @@ def to_command(module, commands):
         output=dict(default=default_output),
         prompt=dict(type='list'),
         answer=dict(type='list'),
+        newline=dict(type='bool', default=True),
         sendonly=dict(type='bool', default=False),
         check_all=dict(type='bool', default=False),
     ), module)
@@ -726,9 +1101,9 @@ def get_config(module, flags=None):
     return conn.get_config(flags=flags)
 
 
-def run_commands(module, commands, check_rc=True, return_timestamps=False):
+def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands), check_rc, return_timestamps)
+    return conn.run_commands(to_command(module, commands), check_rc)
 
 
 def load_config(module, config, return_error=False, opts=None, replace=None):

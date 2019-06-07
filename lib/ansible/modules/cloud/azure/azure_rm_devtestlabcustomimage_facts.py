@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabcustomimage_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab Custom Image facts.
+short_description: Get Azure DevTest Lab Custom Image facts
 description:
     - Get facts of Azure Azure DevTest Lab Custom Image.
 
@@ -41,7 +41,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -61,7 +61,8 @@ EXAMPLES = '''
 
 RETURN = '''
 custom_images:
-    description: A list of dictionaries containing facts for Custom Image.
+    description:
+        - A list of dictionaries containing facts for Custom Image.
     returned: always
     type: complex
     contains:
@@ -108,7 +109,7 @@ custom_images:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: "{ 'MyTag': 'MyValue' }"
+            sample: "{ 'MyTag':'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

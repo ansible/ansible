@@ -1,0 +1,6 @@
+---
+- when: vcsim is not defined
+  import_tasks: init_real_lab.yml
+
+- when: vcsim is defined
+  import_tasks: init_vcsim.yml

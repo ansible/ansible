@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlab_facts
 version_added: "2.8"
-short_description: Get Azure DevTest Lab facts.
+short_description: Get Azure DevTest Lab facts
 description:
     - Get facts of Azure DevTest Lab.
 
@@ -36,7 +36,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 '''
 
 EXAMPLES = '''
@@ -55,7 +55,8 @@ EXAMPLES = '''
 
 RETURN = '''
 labs:
-    description: A list of dictionaries containing facts for Lab.
+    description:
+        - A list of dictionaries containing facts for Lab.
     returned: always
     type: complex
     contains:

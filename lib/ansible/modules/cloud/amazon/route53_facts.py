@@ -432,6 +432,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
         mutually_exclusive=[
             ['hosted_zone_method', 'health_check_method'],
         ],

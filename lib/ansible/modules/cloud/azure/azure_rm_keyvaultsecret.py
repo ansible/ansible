@@ -15,10 +15,11 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvaultsecret
 version_added: 2.5
-short_description: Use Azure KeyVault Secrets.
+short_description: Use Azure KeyVault Secrets
 description:
-    - Create or delete a secret within a given keyvault. By using Key Vault, you can encrypt
-      keys and secrets (such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords).
+    - Create or delete a secret within a given keyvault.
+    - By using Key Vault, you can encrypt keys and secrets.
+    - Such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords.
 options:
     keyvault_uri:
             description:
@@ -33,8 +34,7 @@ options:
             - Secret to be secured by keyvault.
     state:
         description:
-            - Assert the state of the subnet. Use C(present) to create or update a secret and
-              C(absent) to delete a secret .
+            - Assert the state of the subnet. Use C(present) to create or update a secret and C(absent) to delete a secret .
         default: present
         choices:
             - absent
@@ -45,7 +45,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ian Philpot (@iphilpot)"
+    - Ian Philpot (@iphilpot)
 
 '''
 
@@ -68,12 +68,14 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the secret.
+    description:
+        - Current state of the secret.
     returned: success
     type: complex
     contains:
         secret_id:
-          description: Secret resource path.
+          description:
+              - Secret resource path.
           type: str
           example: https://contoso.vault.azure.net/secrets/hello/e924f053839f4431b35bc54393f98423
 '''

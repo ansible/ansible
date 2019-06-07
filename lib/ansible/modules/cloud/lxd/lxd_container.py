@@ -145,7 +145,7 @@ notes:
   - You can copy a file from the host to the container
     with the Ansible M(copy) and M(template) module and the `lxd` connection plugin.
     See the example below.
-  - You can copy a file in the creatd container to the localhost
+  - You can copy a file in the created container to the localhost
     with `command=lxc file pull container_name/dir/filename filename`.
     See the first example below.
 '''
@@ -180,6 +180,30 @@ EXAMPLES = '''
       delegate_to: mycontainer
       raw: apt-get install -y python
       when: python_install_check.rc == 1
+
+# An example for creating an Ubuntu 14.04 container using an image fingerprint.
+# This requires changing 'server' and 'protocol' key values, replacing the
+# 'alias' key with with 'fingerprint' and supplying an appropriate value that
+# matches the container image you wish to use.
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a started container
+      lxd_container:
+        name: mycontainer
+        state: started
+        source:
+          type: image
+          mode: pull
+          # Provides current (and older) Ubuntu images with listed fingerprints
+          server: https://cloud-images.ubuntu.com/releases
+          # Protocol used by 'ubuntu' remote (as shown by 'lxc remote list')
+          protocol: simplestreams
+          # This provides an Ubuntu 14.04 LTS amd64 image from 20150814.
+          fingerprint: e9a8bdfab6dc
+        profiles: ["default"]
+        wait_for_ipv4_addresses: true
+        timeout: 600
 
 # An example for deleting a container
 - hosts: localhost

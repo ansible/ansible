@@ -10,7 +10,6 @@ import re
 import time
 import textwrap
 import functools
-import pipes
 import sys
 import hashlib
 import difflib
@@ -61,6 +60,7 @@ from lib.util import (
     get_remote_completion,
     named_temporary_file,
     COVERAGE_OUTPUT_PATH,
+    cmd_quote,
 )
 
 from lib.docker_util import (
@@ -74,6 +74,7 @@ from lib.docker_util import (
 
 from lib.ansible_util import (
     ansible_environment,
+    check_pyyaml,
 )
 
 from lib.target import (
@@ -219,7 +220,7 @@ def install_command_requirements(args, python_version=None):
 
         if changes:
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
-                                   '\n'.join((' '.join(pipes.quote(c) for c in cmd) for cmd in changes)))
+                                   '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
     # ask pip to check for conflicts between installed packages
     try:
@@ -804,6 +805,8 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
     if setup_errors:
         raise ApplicationError('Found %d invalid setup aliases:\n%s' % (len(setup_errors), '\n'.join(setup_errors)))
 
+    check_pyyaml(args, args.python_version)
+
     test_dir = os.path.expanduser('~/ansible_testing')
 
     if not args.explain and any('needs/ssh/' in target.aliases for target in targets):
@@ -1152,6 +1155,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
     )
@@ -1346,6 +1350,8 @@ def command_units(args):
         sys.exit()
 
     for version, command, env in version_commands:
+        check_pyyaml(args, version)
+
         display.info('Unit test with Python %s' % version)
 
         try:

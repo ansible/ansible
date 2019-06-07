@@ -42,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters.)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
   region:
@@ -65,8 +65,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -189,7 +189,8 @@ items:
       type: list
     vlanTag8021q:
       description:
-      - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+      - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+        PARTNER type this will be managed upstream.
       returned: success
       type: int
     region:
@@ -221,7 +222,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

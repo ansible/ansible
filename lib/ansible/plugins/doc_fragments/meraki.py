@@ -15,6 +15,7 @@ options:
         description:
         - Authentication key provided by the dashboard. Required if environmental variable C(MERAKI_KEY) is not set.
         type: str
+        required: yes
     host:
         description:
         - Hostname for Meraki dashboard.
@@ -55,5 +56,5 @@ options:
     org_id:
         description:
         - ID of organization.
-        type: int
+        type: str
 '''

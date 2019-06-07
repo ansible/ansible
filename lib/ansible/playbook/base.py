@@ -342,13 +342,15 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
 
         # save the omit value for later checking
-        omit_value = templar._available_variables.get('omit')
+        omit_value = templar.available_variables.get('omit')
 
         for (name, attribute) in iteritems(self._valid_attrs):
 
             if attribute.static:
                 value = getattr(self, name)
-                if templar.is_template(value):
+
+                # we don't template 'vars' but allow template as values for later use
+                if name not in ('vars',) and templar.is_template(value):
                     display.warning('"%s" is not templatable, but we found: %s, '
                                     'it will not be templated and will be used "as is".' % (name, value))
                 continue
@@ -592,7 +594,7 @@ class Base(FieldAttributeBase):
     _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
 
     # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
 
     # module default params
     _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)

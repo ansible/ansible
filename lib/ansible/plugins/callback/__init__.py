@@ -98,6 +98,10 @@ class CallbackBase(AnsiblePlugin):
         # load from config
         self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
+    def _run_is_verbose(self, result, verbosity=0):
+        return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
+                and result._result.get('_ansible_verbose_override', False) is False)
+
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):

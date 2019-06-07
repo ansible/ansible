@@ -176,10 +176,8 @@ options:
       options: logging.googleapis.com - the Google Cloud Logging service.'
     - none - no logs will be exported from the cluster.
     - if left as an empty string,logging.googleapis.com will be used.
+    - 'Some valid choices include: "logging.googleapis.com", "none"'
     required: false
-    choices:
-    - logging.googleapis.com
-    - none
   monitoring_service:
     description:
     - The monitoring service the cluster should use to write metrics.
@@ -187,10 +185,8 @@ options:
       service.'
     - none - no metrics will be exported from the cluster.
     - if left as an empty string, monitoring.googleapis.com will be used.
+    - 'Some valid choices include: "monitoring.googleapis.com", "none"'
     required: false
-    choices:
-    - monitoring.googleapis.com
-    - none
   network:
     description:
     - The name of the Google Compute Engine network to which the cluster is connected.
@@ -651,8 +647,8 @@ def main():
                 ),
             ),
             master_auth=dict(type='dict', options=dict(username=dict(type='str'), password=dict(type='str'))),
-            logging_service=dict(type='str', choices=['logging.googleapis.com', 'none']),
-            monitoring_service=dict(type='str', choices=['monitoring.googleapis.com', 'none']),
+            logging_service=dict(type='str'),
+            monitoring_service=dict(type='str'),
             network=dict(type='str'),
             private_cluster_config=dict(
                 type='dict',

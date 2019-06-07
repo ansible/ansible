@@ -1129,7 +1129,7 @@ def main():
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
-        packages = [package for package in unfiltered_packages if package != '*']
+        packages = [package.strip() for package in unfiltered_packages if package != '*']
         all_installed = '*' in unfiltered_packages
         latest = p['state'] == 'latest'
 

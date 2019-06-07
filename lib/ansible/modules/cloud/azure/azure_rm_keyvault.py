@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvault
 version_added: "2.5"
-short_description: Manage Key Vault instance.
+short_description: Manage Key Vault instance
 description:
     - Create, update and delete instance of Key Vault.
 
@@ -28,7 +28,7 @@ options:
         required: True
     vault_name:
         description:
-            - Name of the vault
+            - Name of the vault.
         required: True
     location:
         description:
@@ -38,11 +38,11 @@ options:
             - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
     sku:
         description:
-            - SKU details
+            - SKU details.
         suboptions:
             family:
                 description:
-                    - SKU family name
+                    - SKU family name.
             name:
                 description:
                     - SKU name to specify whether the key vault is a standard vault or a premium vault.
@@ -52,8 +52,8 @@ options:
                     - 'premium'
     access_policies:
         description:
-            - "An array of 0 to 16 identities that have access to the key vault. All identities in the array must use the same tenant ID as the key vault's
-               tenant ID."
+            - An array of 0 to 16 identities that have access to the key vault.
+            - All identities in the array must use the same tenant ID as the key vault's tenant ID.
         suboptions:
             tenant_id:
                 description:
@@ -61,16 +61,16 @@ options:
                     - Current keyvault C(tenant_id) value will be used if not specified.
             object_id:
                 description:
-                    - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
-                       unique for the list of access policies."
+                    - The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault.
+                    - The object ID must be unique for the list of access policies.
                     - Please note this is not application id. Object id can be obtained by running "az ad sp show --id <application id>".
                 required: True
             application_id:
                 description:
-                    -  Application ID of the client making request on behalf of a principal
+                    -  Application ID of the client making request on behalf of a principal.
             keys:
                 description:
-                    - List of permissions to keys
+                    - List of permissions to keys.
                 choices:
                     - 'encrypt'
                     - 'decrypt'
@@ -90,7 +90,7 @@ options:
                     - 'purge'
             secrets:
                 description:
-                    - List of permissions to secrets
+                    - List of permissions to secrets.
                 choices:
                     - 'get'
                     - 'list'
@@ -102,7 +102,7 @@ options:
                     - 'purge'
             certificates:
                 description:
-                    - List of permissions to certificates
+                    - List of permissions to certificates.
                 choices:
                     - 'get'
                     - 'list'
@@ -120,7 +120,7 @@ options:
                     - 'purge'
             storage:
                 description:
-                    - List of permissions to storage accounts
+                    - List of permissions to storage accounts.
     enabled_for_deployment:
         description:
             - Property to specify whether Azure Virtual Machines are permitted to retrieve certificates stored as secrets from the key vault.
@@ -154,7 +154,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

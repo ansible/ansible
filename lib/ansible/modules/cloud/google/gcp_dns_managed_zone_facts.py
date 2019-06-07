@@ -57,8 +57,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -73,6 +73,60 @@ items:
       - The DNS name of this managed zone, for instance "example.com.".
       returned: success
       type: str
+    dnssecConfig:
+      description:
+      - DNSSEC configuration.
+      returned: success
+      type: complex
+      contains:
+        kind:
+          description:
+          - Identifies what kind of resource this is.
+          returned: success
+          type: str
+        nonExistence:
+          description:
+          - Specifies the mechanism used to provide authenticated denial-of-existence
+            responses. Output only while state is not OFF. .
+          returned: success
+          type: str
+        state:
+          description:
+          - Specifies whether DNSSEC is enabled, and what mode it is in.
+          returned: success
+          type: str
+        defaultKeySpecs:
+          description:
+          - Specifies parameters that will be used for generating initial DnsKeys
+            for this ManagedZone. Output only while state is not OFF .
+          returned: success
+          type: complex
+          contains:
+            algorithm:
+              description:
+              - String mnemonic specifying the DNSSEC algorithm of this key.
+              returned: success
+              type: str
+            keyLength:
+              description:
+              - Length of the keys in bits.
+              returned: success
+              type: int
+            keyType:
+              description:
+              - Specifies whether this is a key signing key (KSK) or a zone signing
+                key (ZSK). Key signing keys have the Secure Entry Point flag set and,
+                when active, will only be used to sign resource record sets of type
+                DNSKEY. Zone signing keys do not have the Secure Entry Point flag
+                set and will be used to sign all other types of resource record sets.
+                .
+              returned: success
+              type: str
+            kind:
+              description:
+              - Identifies what kind of resource this is.
+              returned: success
+              type: str
     id:
       description:
       - Unique identifier for the resource; defined by the server.
@@ -159,7 +213,7 @@ def main():
         items = items.get('managedZones')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

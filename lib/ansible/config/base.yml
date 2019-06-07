@@ -418,32 +418,6 @@ DEFAULT_ASK_PASS:
   - {key: ask_pass, section: defaults}
   type: boolean
   yaml: {key: defaults.ask_pass}
-DEFAULT_ASK_SUDO_PASS:
-  name: Ask for the sudo password
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.9"
-    alternatives: become
-  description:
-    - This controls whether an Ansible playbook should prompt for a sudo password.
-  env: [{name: ANSIBLE_ASK_SUDO_PASS}]
-  ini:
-  - {key: ask_sudo_pass, section: defaults}
-  type: boolean
-DEFAULT_ASK_SU_PASS:
-  name: Ask for the su password
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.9"
-    alternatives: become
-  description:
-    - This controls whether an Ansible playbook should prompt for a su password.
-  env: [{name: ANSIBLE_ASK_SU_PASS}]
-  ini:
-  - {key: ask_su_pass, section: defaults}
-  type: boolean
 DEFAULT_ASK_VAULT_PASS:
   name: Ask for the vault password(s)
   default: False
@@ -851,19 +825,6 @@ DEFAULT_MODULE_COMPRESSION:
   - {key: module_compression, section: defaults}
 # vars:
 #   - name: ansible_module_compression
-DEFAULT_MODULE_LANG:
-  name: Target language environment
-  default: "{{ CONTROLLER_LANG }}"
-  description:
-    - "Language locale setting to use for modules when they execute on the target."
-    - "If empty it tries to set itself to the LANG environment variable on the controller."
-    - "This is only used if DEFAULT_MODULE_SET_LOCALE is set to true"
-  env: [{name: ANSIBLE_MODULE_LANG}]
-  ini:
-  - {key: module_lang, section: defaults}
-  deprecated:
-    why: Modules are coded to set their own locale if needed for screenscraping
-    version: "2.9"
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -879,18 +840,6 @@ DEFAULT_MODULE_PATH:
   ini:
   - {key: library, section: defaults}
   type: pathspec
-DEFAULT_MODULE_SET_LOCALE:
-  name: Target locale
-  default: False
-  description:
-    - Controls if we set locale for modules when executing on the target.
-  env: [{name: ANSIBLE_MODULE_SET_LOCALE}]
-  ini:
-  - {key: module_set_locale, section: defaults}
-  type: boolean
-  deprecated:
-    why: Modules are coded to set their own locale if needed for screenscraping
-    version: "2.9"
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon separated paths in which Ansible will search for Module utils files, which are shared by modules.
@@ -1108,39 +1057,6 @@ DEFAULT_SU:
   - {key: su, section: defaults}
   type: boolean
   yaml: {key: defaults.su}
-DEFAULT_SU_EXE:
-  name: su executable
-  default: su
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.9"
-    alternatives: become
-  description: 'specify an "su" executable, otherwise it relies on PATH.'
-  env: [{name: ANSIBLE_SU_EXE}]
-  ini:
-  - {key: su_exe, section: defaults}
-DEFAULT_SU_FLAGS:
-  name: su flags
-  default: ''
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.9"
-    alternatives: become
-  description: 'Flags to pass to su'
-  env: [{name: ANSIBLE_SU_FLAGS}]
-  ini:
-  - {key: su_flags, section: defaults}
-DEFAULT_SU_USER:
-  name: su user
-  default:
-  description: 'User you become when using "su", leaving it blank will use the default configured on the target (normally root)'
-  env: [{name: ANSIBLE_SU_USER}]
-  ini:
-  - {key: su_user, section: defaults}
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.9"
-    alternatives: become
 DEFAULT_SYSLOG_FACILITY:
   name: syslog facility
   default: LOG_USER
@@ -1337,6 +1253,18 @@ DOCSITE_ROOT_URL:
   ini:
   - {key: docsite_root_url, section: defaults}
   version_added: "2.8"
+DUPLICATE_YAML_DICT_KEY:
+  name: Controls ansible behaviour when finding duplicate keys in YAML.
+  default: warn
+  description:
+    - By default Ansible will issue a warning when a duplicate dict key is encountered in YAML.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_DUPLICATE_YAML_DICT_KEY}]
+  ini:
+  - {key: duplicate_dict_key, section: defaults}
+  type: string
+  choices: ['warn', 'error', 'ignore']
+  version_added: "2.9"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True

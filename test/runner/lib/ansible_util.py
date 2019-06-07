@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import os
 
 from lib.constants import (
@@ -10,12 +11,19 @@ from lib.constants import (
 
 from lib.util import (
     common_environment,
+    display,
+    find_python,
+    run_command,
     ApplicationError,
 )
 
 from lib.config import (
     IntegrationConfig,
+    EnvironmentConfig,
 )
+
+
+CHECK_YAML_VERSIONS = {}
 
 
 def ansible_environment(args, color=True, ansible_config=None):
@@ -65,3 +73,28 @@ def ansible_environment(args, color=True, ansible_config=None):
         ))
 
     return env
+
+
+def check_pyyaml(args, version):
+    """
+    :type args: EnvironmentConfig
+    :type version: str
+    """
+    if version in CHECK_YAML_VERSIONS:
+        return
+
+    python = find_python(version)
+    stdout, _dummy = run_command(args, [python, 'test/runner/yamlcheck.py'], capture=True)
+
+    if args.explain:
+        return
+
+    CHECK_YAML_VERSIONS[version] = result = json.loads(stdout)
+
+    yaml = result['yaml']
+    cloader = result['cloader']
+
+    if not yaml:
+        display.warning('PyYAML is not installed for interpreter: %s' % python)
+    elif not cloader:
+        display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)

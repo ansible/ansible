@@ -82,6 +82,7 @@ notes:
       output of your scripts.
       This option was added in Ansible 2.1.
     - This module is also supported for Windows targets.
+    - This module should be run with elevated priviliges on BSD systems to gather facts like ansible_product_version.
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

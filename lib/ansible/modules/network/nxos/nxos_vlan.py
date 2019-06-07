@@ -75,6 +75,7 @@ options:
       - Set VLAN mode to classical ethernet or fabricpath.
         This is a valid option for Nexus 5000 and 7000 series.
     choices: ['ce','fabricpath']
+    default: 'ce'
     version_added: "2.4"
   aggregate:
     description: List of VLANs definitions.
@@ -83,6 +84,7 @@ options:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
         This parameter can be used without aggregate as well.
+      - Removal of Vlan 1 is not allowed and will be ignored by purge.
     type: bool
     default: 'no'
   delay:
@@ -154,6 +156,7 @@ import time
 
 from copy import deepcopy
 
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import normalize_interface, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -196,6 +199,8 @@ def map_obj_to_commands(updates, module):
     commands = list()
     purge = module.params['purge']
     want, have = updates
+    info = get_capabilities(module).get('device_info')
+    os_platform = info.get('network_os_platform')
 
     for w in want:
         vlan_id = w['vlan_id']
@@ -208,7 +213,9 @@ def map_obj_to_commands(updates, module):
         state = w['state']
         del w['state']
 
-        obj_in_have = search_obj_in_list(vlan_id, have)
+        obj_in_have = search_obj_in_list(vlan_id, have) or {}
+        if not re.match('N[567]', os_platform) or (not obj_in_have.get('mode') and mode == 'ce'):
+            mode = w['mode'] = None
 
         if state == 'absent':
             if obj_in_have:
@@ -312,6 +319,9 @@ def map_obj_to_commands(updates, module):
 
     if purge:
         for h in have:
+            if h['vlan_id'] == '1':
+                module.warn("Deletion of vlan 1 is not allowed; purge will ignore vlan 1")
+                continue
             obj_in_want = search_obj_in_list(h['vlan_id'], want)
             if not obj_in_want:
                 commands.append('no vlan {0}'.format(h['vlan_id']))
@@ -496,8 +506,7 @@ def parse_vlan_non_structured(module, netcfg, vlans):
             if name_match:
                 name = name_match.group(1)
                 obj['name'] = name
-
-                state_match = re.search(r'{0}\s*{1}\s*(\S+)'.format(vlan_id, name), vlan, re.M)
+                state_match = re.search(r'{0}\s*{1}\s*(\S+)'.format(vlan_id, re.escape(name)), vlan, re.M)
                 if state_match:
                     vlan_state_match = state_match.group(1)
                     if vlan_state_match == 'suspended':
@@ -518,7 +527,7 @@ def parse_vlan_non_structured(module, netcfg, vlans):
 
                     vlan = ','.join(vlan.splitlines())
                     interfaces = list()
-                    intfs_match = re.search(r'{0}\s*{1}\s*{2}\s*(.*)'.format(vlan_id, name, vlan_state_match),
+                    intfs_match = re.search(r'{0}\s*{1}\s*{2}\s*(.*)'.format(vlan_id, re.escape(name), vlan_state_match),
                                             vlan, re.M)
                     if intfs_match:
                         intfs = intfs_match.group(1)
@@ -628,7 +637,7 @@ def main():
         delay=dict(default=10, type='int'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False, default='up'),
-        mode=dict(choices=['ce', 'fabricpath'], required=False),
+        mode=dict(default='ce', choices=['ce', 'fabricpath']),
     )
 
     aggregate_spec = deepcopy(element_spec)

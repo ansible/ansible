@@ -53,6 +53,14 @@ options:
         Valid values are a string, formatted as an IP address
         (i.e. "0.0.0.0") or as an integer.
     required: true
+  bfd:
+    description:
+      - Enables bfd at interface level. This overrides the bfd variable set at the ospf router level.
+      - Valid values are 'enable', 'disable' or 'default'.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: str
+    choices: ['enable', 'disable', 'default']
   cost:
     description:
       - The cost associated with this cisco_interface_ospf instance.
@@ -112,12 +120,14 @@ EXAMPLES = '''
     interface: ethernet1/32
     ospf: 1
     area: 1
+    bfd: disable
     cost: default
 
 - nxos_interface_ospf:
     interface: loopback0
     ospf: prod
     area: 0.0.0.0
+    bfd: enable
     network: point-to-point
     state: present
 '''
@@ -127,7 +137,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["interface Ethernet1/32", "ip router ospf 1 area 0.0.0.1"]
+    sample: ["interface Ethernet1/32", "ip router ospf 1 area 0.0.0.1", "ip ospf bfd disable"]
 '''
 
 
@@ -148,6 +158,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'cost': 'ip ospf cost',
     'ospf': 'ip router ospf',
     'area': 'ip router ospf',
+    'bfd': 'ip ospf bfd',
     'hello_interval': 'ip ospf hello-interval',
     'dead_interval': 'ip ospf dead-interval',
     'passive_interface': 'ip ospf passive-interface',
@@ -198,6 +209,12 @@ def get_value(arg, config, module):
             value = True
         else:
             value = None
+    elif arg == 'bfd':
+        m = re.search(r'\s*ip ospf bfd(?P<disable> disable)?', config)
+        if m:
+            value = 'disable' if m.group('disable') else 'enable'
+        else:
+            value = 'default'
     elif arg in BOOL_PARAMS:
         value = bool(has_command)
     else:
@@ -254,6 +271,8 @@ def get_default_commands(existing, proposed, existing_commands, key, module):
                 encryption_type,
                 existing['message_digest_password'])
             commands.append(command)
+    elif 'ip ospf bfd' in key:
+        commands.append('no {0}'.format(key))
     elif 'passive-interface' in key:
         commands.append('default ip ospf passive-interface')
     else:
@@ -310,6 +329,16 @@ def state_present(module, existing, proposed, candidate):
             module.fail_json(msg='loopback interface does not support passive_interface')
         if key == 'ip ospf network' and value == 'broadcast' and module.params.get('interface').upper().startswith('LO'):
             module.fail_json(msg='loopback interface does not support ospf network type broadcast')
+
+        if key == 'ip ospf bfd':
+            cmd = key
+            if 'disable' in value:
+                cmd += ' disable'
+            elif 'default' in value and existing.get('bfd') is not None:
+                cmd = 'no ' + cmd
+            commands.append(cmd)
+            continue
+
         if value is True:
             commands.append(key)
         elif value is False:
@@ -339,7 +368,12 @@ def state_absent(module, existing, proposed, candidate):
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in existing_commands.items():
-        if 'ip ospf passive-interface' in key:
+        if 'ip ospf bfd' in key:
+            if 'default' not in value:
+                # cli is present when enabled or disabled; this removes either case
+                commands.append('no ip ospf bfd')
+            continue
+        if 'ip ospf passive-interface' in key and value is not None:
             # cli is present for both enabled or disabled; 'no' will not remove
             commands.append('default ip ospf passive-interface')
             continue
@@ -388,6 +422,7 @@ def main():
         interface=dict(required=True, type='str'),
         ospf=dict(required=True, type='str'),
         area=dict(required=True, type='str'),
+        bfd=dict(choices=['enable', 'disable', 'default'], required=False, type='str'),
         cost=dict(required=False, type='str'),
         hello_interval=dict(required=False, type='str'),
         dead_interval=dict(required=False, type='str'),
@@ -447,6 +482,8 @@ def main():
                 value = False
             elif str(value).lower() == 'default':
                 value = 'default'
+            elif key == 'bfd':
+                value = str(value).lower()
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
             elif 'passive_interface' in key and existing.get(key) is None and value is False:

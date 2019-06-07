@@ -61,7 +61,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a backend bucket that already exists
   gcp_compute_backend_bucket:
@@ -109,7 +109,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a backend bucket that does not exist
   gcp_compute_backend_bucket:

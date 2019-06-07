@@ -157,18 +157,14 @@ options:
           SCSI or NVME. The default is SCSI.
         - Persistent disks must always use SCSI and the request will fail if you attempt
           to attach a persistent disk in any other format than SCSI.
+        - 'Some valid choices include: "SCSI", "NVME"'
         required: false
-        choices:
-        - SCSI
-        - NVME
       mode:
         description:
         - The mode in which to attach this disk, either READ_WRITE or READ_ONLY. If
           not specified, the default is to attach the disk in READ_WRITE mode.
+        - 'Some valid choices include: "READ_WRITE", "READ_ONLY"'
         required: false
-        choices:
-        - READ_WRITE
-        - READ_ONLY
       source:
         description:
         - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
@@ -185,10 +181,8 @@ options:
         description:
         - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
           the default is PERSISTENT.
+        - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
         required: false
-        choices:
-        - SCRATCH
-        - PERSISTENT
   guest_accelerators:
     description:
     - List of the type and count of accelerator cards attached to the instance .
@@ -202,14 +196,11 @@ options:
         description:
         - Full or partial URL of the accelerator type resource to expose to this instance.
         required: false
-  label_fingerprint:
+  labels:
     description:
-    - A fingerprint for this request, which is essentially a hash of the metadata's
-      contents and used for optimistic locking. The fingerprint is initially generated
-      by Compute Engine and changes after every request to modify or update metadata.
-      You must always provide an up-to-date fingerprint hash in order to update or
-      change metadata.
+    - Labels to apply to this instance. A list of key->value pairs.
     required: false
+    version_added: 2.9
   metadata:
     description:
     - The metadata key/value pairs to assign to instances that are created from this
@@ -270,9 +261,8 @@ options:
           type:
             description:
             - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
+            - 'Some valid choices include: "ONE_TO_ONE_NAT"'
             required: true
-            choices:
-            - ONE_TO_ONE_NAT
       alias_ip_ranges:
         description:
         - An array of alias IP ranges for this network interface. Can only be specified
@@ -370,16 +360,10 @@ options:
       RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
     - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
       off .
+    - 'Some valid choices include: "PROVISIONING", "STAGING", "RUNNING", "STOPPING",
+      "SUSPENDING", "SUSPENDED", "TERMINATED"'
     required: false
     version_added: 2.8
-    choices:
-    - PROVISIONING
-    - STAGING
-    - RUNNING
-    - STOPPING
-    - SUSPENDING
-    - SUSPENDED
-    - TERMINATED
   tags:
     description:
     - A list of tags to apply to this instance. Tags are used to identify valid sources
@@ -451,6 +435,8 @@ EXAMPLES = '''
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
+    labels:
+      environment: production
     network_interfaces:
     - network: "{{ network }}"
       access_configs:
@@ -649,13 +635,15 @@ id:
   type: int
 labelFingerprint:
   description:
-  - A fingerprint for this request, which is essentially a hash of the metadata's
-    contents and used for optimistic locking. The fingerprint is initially generated
-    by Compute Engine and changes after every request to modify or update metadata.
-    You must always provide an up-to-date fingerprint hash in order to update or change
-    metadata.
+  - The fingerprint used for optimistic locking of this resource. Used internally
+    during updates.
   returned: success
   type: str
+labels:
+  description:
+  - Labels to apply to this instance. A list of key->value pairs.
+  returned: success
+  type: dict
 metadata:
   description:
   - The metadata key/value pairs to assign to instances that are created from this
@@ -901,14 +889,14 @@ def main():
                             source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
                         ),
                     ),
-                    interface=dict(type='str', choices=['SCSI', 'NVME']),
-                    mode=dict(type='str', choices=['READ_WRITE', 'READ_ONLY']),
+                    interface=dict(type='str'),
+                    mode=dict(type='str'),
                     source=dict(type='dict'),
-                    type=dict(type='str', choices=['SCRATCH', 'PERSISTENT']),
+                    type=dict(type='str'),
                 ),
             ),
             guest_accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
-            label_fingerprint=dict(type='str'),
+            labels=dict(type='dict'),
             metadata=dict(type='dict'),
             machine_type=dict(type='str'),
             min_cpu_platform=dict(type='str'),
@@ -920,9 +908,7 @@ def main():
                     access_configs=dict(
                         type='list',
                         elements='dict',
-                        options=dict(
-                            name=dict(required=True, type='str'), nat_ip=dict(type='dict'), type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT'])
-                        ),
+                        options=dict(name=dict(required=True, type='str'), nat_ip=dict(type='dict'), type=dict(required=True, type='str')),
                     ),
                     alias_ip_ranges=dict(type='list', elements='dict', options=dict(ip_cidr_range=dict(type='str'), subnetwork_range_name=dict(type='str'))),
                     network=dict(type='dict'),
@@ -934,7 +920,7 @@ def main():
                 type='dict', options=dict(automatic_restart=dict(type='bool'), on_host_maintenance=dict(type='str'), preemptible=dict(type='bool'))
             ),
             service_accounts=dict(type='list', elements='dict', options=dict(email=dict(type='str'), scopes=dict(type='list', elements='str'))),
-            status=dict(type='str', choices=['PROVISIONING', 'STAGING', 'RUNNING', 'STOPPING', 'SUSPENDING', 'SUSPENDED', 'TERMINATED']),
+            status=dict(type='str'),
             tags=dict(type='dict', options=dict(fingerprint=dict(type='str'), items=dict(type='list', elements='str'))),
             zone=dict(required=True, type='str'),
         )
@@ -987,8 +973,18 @@ def update(module, link, kind, fetch):
 
 
 def update_fields(module, request, response):
+    if response.get('labels') != request.get('labels'):
+        label_fingerprint_update(module, request, response)
     if response.get('machineType') != request.get('machineType'):
         machine_type_update(module, request, response)
+
+
+def label_fingerprint_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/instances/{name}/setLabels"]).format(**module.params),
+        {u'labelFingerprint': response.get('labelFingerprint'), u'labels': module.params.get('labels')},
+    )
 
 
 def machine_type_update(module, request, response):
@@ -1010,7 +1006,7 @@ def resource_to_request(module):
         u'canIpForward': module.params.get('can_ip_forward'),
         u'disks': InstanceDisksArray(module.params.get('disks', []), module).to_request(),
         u'guestAccelerators': InstanceGuestacceleratorsArray(module.params.get('guest_accelerators', []), module).to_request(),
-        u'labelFingerprint': module.params.get('label_fingerprint'),
+        u'labels': module.params.get('labels'),
         u'metadata': module.params.get('metadata'),
         u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params),
         u'minCpuPlatform': module.params.get('min_cpu_platform'),
@@ -1096,6 +1092,7 @@ def response_to_hash(module, response):
         u'guestAccelerators': InstanceGuestacceleratorsArray(response.get(u'guestAccelerators', []), module).from_response(),
         u'id': response.get(u'id'),
         u'labelFingerprint': response.get(u'labelFingerprint'),
+        u'labels': response.get(u'labels'),
         u'metadata': response.get(u'metadata'),
         u'machineType': response.get(u'machineType'),
         u'minCpuPlatform': response.get(u'minCpuPlatform'),
