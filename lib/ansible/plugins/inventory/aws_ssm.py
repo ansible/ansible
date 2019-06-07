@@ -135,7 +135,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             session = boto3.Session(**kwargs)
         except (botocore.exceptions.ProfileNotFound,
                 botocore.exceptions.PartialCredentialsError) as e:
-            raise AnsibleError("Insufficient boto credentials found: {}".
+            raise AnsibleError("Insufficient boto credentials found: {0}".
                                format(to_native(e)))
 
         client = session.client('ssm')
@@ -150,12 +150,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 path_list = list(filter(None, name.split('/')))
                 len_path = len(path_list) - 1
                 if len_path < 3:
-                    display.vvvv("Ignoring {} SSM parameter, must have a "
+                    display.vvvv("Ignoring {0} SSM parameter, must have a "
                                  "depth of 3 to be used with plugin "
                                  "e.g. /search/group/host/variable"
                                  .format(name))
                 for index, (current, previous) in enumerate(
-                            zip(path_list[1:], path_list), 1):
+                        zip(path_list[1:], path_list), 1):
                     if index == 1:
                         self.inventory.add_group("all")
                         self.inventory.add_group(current)
@@ -177,7 +177,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         ''' and return list of dicts. '''
         ret = []
         response = client.get_parameters_by_path(
-            Path="/{}".format(path),
+            Path="/{0}".format(path),
             Recursive=True,
             WithDecryption=decrypt,
         )
@@ -187,17 +187,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         while 'NextToken' in response:
             response = client.get_parameters_by_path(
                 NextToken=response['NextToken'],
-                Path="/{}".format(path),
+                Path="/{0}".format(path),
                 Recursive=True,
                 WithDecryption=decrypt
-                )
+            )
             paramlist.extend(response['Parameters'])
 
         if len(paramlist):
             ret.append(boto3_tag_list_to_ansible_dict(
-                                            paramlist,
-                                            tag_name_key_name="Name",
-                                            tag_value_key_name="Value"))
+                       paramlist,
+                       tag_name_key_name="Name",
+                       tag_value_key_name="Value"))
         else:
             ret.append({})
 
