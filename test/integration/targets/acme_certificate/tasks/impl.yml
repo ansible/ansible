@@ -202,7 +202,7 @@
     rsa_bits: 2048
     subject_alt_name:
     - "IP:127.0.0.1"
-    - "IP:::1"
+    # - "IP:::1"
     subject_alt_name_critical: no
     account_key: account-ec256
     challenge: http-01
