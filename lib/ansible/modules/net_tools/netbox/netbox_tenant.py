@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
+# Copyright: (c) 2019, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -112,7 +112,7 @@ EXAMPLES = r"""
           name: Tenant ABC
           group: Very Special Tenants
           description: ABC Incorporated
-          comments: ### This tenant is super cool
+          comments: "### This tenant is super cool"
           tags:
             - tagA
             - tagB
@@ -225,25 +225,17 @@ def _slugify(input):
         input = input.lower()
 
     return input
-      
+
+
 def _check_and_adapt_data(nb,data):
     
-    # slugify tenant group and look up ID
+    # group ID lookup
     if "group" in data:
-
       group_id = find_ids(nb,{"tenant_group":_slugify(data["group"])})
       data["group"] = group_id["tenant_group"]
 
-    #data = find_ids(nb, data)
-
-    if "-" in data["name"]:
-        tenant_slug = data["name"].replace(" ", "").lower()
-    elif " " in data["name"]:
-        tenant_slug = data["name"].replace(" ", "-").lower()
-    else:
-        tenant_slug = data["name"].lower()
-
-    data["slug"] = tenant_slug
+    # slug required for creation
+    data["slug"] = _slugify(data["name"])
     
     return data
 
@@ -258,13 +250,13 @@ def ensure_tenant_present(nb, nb_endpoint, data):
         changed = False
         return {"msg": data, "changed": changed}
 
-    # can't query this endpoint based on slug, so querying by name instead
+    # can't query this endpoint based on slug, querying by name instead
     nb_tenant = nb_endpoint.get(name=data["name"])
     result = dict()
     if not nb_tenant:
         tenant, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
         changed = True
-        msg = "Tenant %s created" % (data["name"] + "," + data["slug"])
+        msg = "Tenant %s created" % (data["name"])
         result["diff"] = diff
     else:
         tenant, diff = update_netbox_object(nb_tenant, data, module.check_mode)
