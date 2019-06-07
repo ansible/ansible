@@ -31,21 +31,23 @@ class NetappTest(ModuleTestCase):
     def test_is_embedded_embedded_pass(self):
         """Verify is_embedded successfully returns True when an embedded web service's rest api is inquired."""
         self._set_args()
-        with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": False})):
+        with mock.patch(self.REQ_FUNC, side_effect=[(200, {"version": "03.10.9000.0009"}),
+                                                    (200, {"runningAsProxy": False})]):
             base = StubNetAppESeriesModule()
             self.assertTrue(base.is_embedded())
-        with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
+        with mock.patch(self.REQ_FUNC, side_effect=[(200, {"version": "03.10.9000.0009"}),
+                                                    (200, {"runningAsProxy": True})]):
             base = StubNetAppESeriesModule()
             self.assertFalse(base.is_embedded())
 
     def test_is_embedded_fail(self):
         """Verify exception is thrown when a web service's rest api fails to return about information."""
         self._set_args()
-        with mock.patch(self.REQ_FUNC, return_value=Exception()):
+        with mock.patch(self.REQ_FUNC, side_effect=[(200, {"version": "03.10.9000.0009"}), Exception()]):
             with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to retrieve the webservices about information!"):
                 base = StubNetAppESeriesModule()
                 base.is_embedded()
-        with mock.patch(self.REQ_FUNC, side_effect=[URLError(""), Exception()]):
+        with mock.patch(self.REQ_FUNC, side_effect=[(200, {"version": "03.10.9000.0009"}), URLError(""), Exception()]):
             with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to retrieve the webservices about information!"):
                 base = StubNetAppESeriesModule()
                 base.is_embedded()
@@ -61,7 +63,7 @@ class NetappTest(ModuleTestCase):
         base.is_embedded = lambda: True
         for current_version in test_set:
             with mock.patch(self.REQ_FUNC, return_value=(200, {"version": current_version})):
-                self.assertTrue(base._is_web_services_valid())
+                self.assertTrue(base._check_web_services_version())
 
     def test_check_web_services_version_fail(self):
         """Verify that an unacceptable rest api version fails."""
@@ -75,9 +77,23 @@ class NetappTest(ModuleTestCase):
         for current_version in test_set:
             with mock.patch(self.REQ_FUNC, return_value=(200, {"version": current_version})):
                 with self.assertRaisesRegexp(AnsibleFailJson, r"version does not meet minimum version required."):
-                    base._is_web_services_valid()
+                    base._check_web_services_version()
 
-    def test_check_is_web_services_valid_fail(self):
+    def test_check_web_services_version_pass(self):
+        """Verify that an unacceptable rest api version fails."""
+        minimum_required = "02.10.9000.0010"
+        test_set = ["02.10.9000.0009", "02.09.9000.0010", "01.10.9000.0010"]
+
+        self._set_args()
+        base = StubNetAppESeriesModule()
+        base.web_services_version = minimum_required
+        base.is_embedded = lambda: True
+        for current_version in test_set:
+            with mock.patch(self.REQ_FUNC, return_value=(200, {"version": current_version})):
+                with self.assertRaisesRegexp(AnsibleFailJson, r"version does not meet minimum version required."):
+                    base._check_web_services_version()
+
+    def test_check_check_web_services_version_fail(self):
         """Verify exception is thrown when api url is invalid."""
         invalid_url_forms = ["localhost:8080/devmgr/v2",
                              "http:///devmgr/v2"]
@@ -89,11 +105,11 @@ class NetappTest(ModuleTestCase):
             with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
                 with self.assertRaisesRegexp(AnsibleFailJson, r"Failed to provide valid API URL."):
                     base = StubNetAppESeriesModule()
-                    base._is_web_services_valid()
+                    base._check_web_services_version()
 
         for url in invalid_url_protocols:
             self._set_args({"api_url": url})
             with mock.patch(self.REQ_FUNC, return_value=(200, {"runningAsProxy": True})):
                 with self.assertRaisesRegexp(AnsibleFailJson, r"Protocol must be http or https."):
                     base = StubNetAppESeriesModule()
-                    base._is_web_services_valid()
+                    base._check_web_services_version()

@@ -269,9 +269,9 @@ class NetAppESeriesModule(object):
             self.url += "/"
 
         self.is_embedded_mode = None
-        self.web_services_validate = None
+        self.is_web_services_valid_cache = None
 
-    def _is_web_services_valid(self):
+    def _check_web_services_version(self):
         """Verify proxy or embedded web services meets minimum version required for module.
 
         The minimum required web services version is evaluated against version supplied through the web services rest
@@ -281,7 +281,7 @@ class NetAppESeriesModule(object):
 
         :raise AnsibleFailJson: raised when the contacted api service does not meet the minimum required version.
         """
-        if not self.web_services_validate:
+        if not self.is_web_services_valid_cache:
 
             url_parts = list(urlparse(self.url))
             if not url_parts[0] or not url_parts[1]:
@@ -314,9 +314,7 @@ class NetAppESeriesModule(object):
                                           " Version required: [%s]." % (data["version"], self.web_services_version))
 
             self.module.log("Web services rest api version met the minimum required version.")
-            self.web_services_validate = True
-
-        return self.web_services_validate
+            self.is_web_services_valid_cache = True
 
     def is_embedded(self):
         """Determine whether web services server is the embedded web services.
@@ -327,6 +325,8 @@ class NetAppESeriesModule(object):
         :raise AnsibleFailJson: raised when web services about endpoint failed to be contacted.
         :return bool: whether contacted web services is running from storage array (embedded) or from a proxy.
         """
+        self._check_web_services_version()
+
         if self.is_embedded_mode is None:
             about_url = self.url + self.DEFAULT_REST_API_ABOUT_PATH
             try:
@@ -348,22 +348,23 @@ class NetAppESeriesModule(object):
         :param dict headers: dictionary containing request headers.
         :param bool ignore_errors: forces the request to ignore any raised exceptions.
         """
-        if self._is_web_services_valid():
-            if headers is None:
-                headers = self.DEFAULT_HEADERS
+        self._check_web_services_version()
 
-            if not isinstance(data, str) and headers["Content-Type"] == "application/json":
-                data = json.dumps(data)
+        if headers is None:
+            headers = self.DEFAULT_HEADERS
 
-            if path.startswith("/"):
-                path = path[1:]
-            request_url = self.url + self.DEFAULT_REST_API_PATH + path
+        if not isinstance(data, str) and headers["Content-Type"] == "application/json":
+            data = json.dumps(data)
 
-            if self.log_requests or True:
-                self.module.log(pformat(dict(url=request_url, data=data, method=method)))
+        if path.startswith("/"):
+            path = path[1:]
+        request_url = self.url + self.DEFAULT_REST_API_PATH + path
 
-            return request(url=request_url, data=data, method=method, headers=headers, use_proxy=True, force=False, last_mod_time=None,
-                           timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT, force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
+        if self.log_requests or True:
+            self.module.log(pformat(dict(url=request_url, data=data, method=method)))
+
+        return request(url=request_url, data=data, method=method, headers=headers, use_proxy=True, force=False, last_mod_time=None,
+                       timeout=self.DEFAULT_TIMEOUT, http_agent=self.HTTP_AGENT, force_basic_auth=True, ignore_errors=ignore_errors, **self.creds)
 
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
