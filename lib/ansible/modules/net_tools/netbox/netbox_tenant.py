@@ -60,7 +60,7 @@ options:
         type: str
       tags:
         description:
-          - Any tags that the prefix may need to be associated with
+          - Any tags that the tenant may need to be associated with
         type: list
       custom_fields:
         description:
@@ -96,13 +96,12 @@ EXAMPLES = r"""
           name: Tenant ABC
         state: present
 
-    - name: Delete site within netbox
+    - name: Delete tenant within netbox
       netbox_tenant:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
           name: Tenant ABC
-          
         state: absent
 
     - name: Create tenant with all parameters
@@ -144,8 +143,7 @@ from ansible.module_utils.net_tools.netbox.netbox_utils import (
     normalize_data,
     create_netbox_object,
     delete_netbox_object,
-    update_netbox_object,
-    SITE_STATUS,
+    update_netbox_object
 )
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
@@ -198,8 +196,9 @@ def main():
         module.fail_json(msg="Incorrect application specified: %s" % (app))
     nb_endpoint = getattr(nb_app, endpoint)
     norm_data = normalize_data(data)
+    _check_and_adapt_data(nb,data)
+
     try:
-        norm_data = _check_and_adapt_data(nb, norm_data)
 
         if "present" in state:
             return module.exit_json(
@@ -216,12 +215,26 @@ def main():
     except AttributeError as e:
         return module.fail_json(msg=str(e))
 
+def _slugify(input):
 
-def _check_and_adapt_data(nb, data):
-    data = find_ids(nb, data)
+    if "-" in input:
+        input = input.replace(" ", "").lower()
+    elif " " in input:
+        input = input.replace(" ", "-").lower()
+    else:
+        input = input.lower()
 
-    if data.get("status"):
-        data["status"] = SITE_STATUS.get(data["status"].lower())
+    return input
+      
+def _check_and_adapt_data(nb,data):
+    
+    # slugify tenant group and look up ID
+    if "group" in data:
+
+      group_id = find_ids(nb,{"tenant_group":_slugify(data["group"])})
+      data["group"] = group_id["tenant_group"]
+
+    #data = find_ids(nb, data)
 
     if "-" in data["name"]:
         tenant_slug = data["name"].replace(" ", "").lower()
@@ -231,29 +244,30 @@ def _check_and_adapt_data(nb, data):
         tenant_slug = data["name"].lower()
 
     data["slug"] = tenant_slug
-
+    
     return data
 
 
 def ensure_tenant_present(nb, nb_endpoint, data):
     """
-    :returns dict(interface, msg, changed): dictionary resulting of the request,
-    where 'site' is the serialized interface fetched or newly created in Netbox
+    :returns dict(tenant, msg, changed): dictionary resulting of the request,
+    where 'tenant' is the serialized tenant fetched or newly created in Netbox
     """
 
     if not isinstance(data, dict):
         changed = False
         return {"msg": data, "changed": changed}
 
-    nb_tenant = nb_endpoint.get(slug=data["slug"])
+    # can't query this endpoint based on slug, so querying by name instead
+    nb_tenant = nb_endpoint.get(name=data["name"])
     result = dict()
     if not nb_tenant:
         tenant, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
         changed = True
-        msg = "Tenant %s created" % (data["name"])
+        msg = "Tenant %s created" % (data["name"] + "," + data["slug"])
         result["diff"] = diff
     else:
-        tenant, diff = update_netbox_object(nb_site, data, module.check_mode)
+        tenant, diff = update_netbox_object(nb_tenant, data, module.check_mode)
         if tenant is False:
             module.fail_json(
                 msg="Request failed, couldn't update tenant: %s" % (data["name"])
@@ -274,7 +288,7 @@ def ensure_tenant_absent(nb, nb_endpoint, data):
     """
     :returns dict(msg, changed)
     """
-    nb_tenant = nb_endpoint.get(slug=data["slug"])
+    nb_tenant = nb_endpoint.get(name=data["name"])
     result = dict()
     if nb_tenant:
         dummy, diff = delete_netbox_object(nb_tenant, module.check_mode)
