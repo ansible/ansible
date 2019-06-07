@@ -274,7 +274,7 @@ class InfoCenterLog(object):
         root = ElementTree.fromstring(xml_str)
 
         # get global param info
-        glb = root.find("data/syslog/globalParam")
+        glb = root.find("syslog/globalParam")
         if glb:
             for attr in glb:
                 if attr.tag in ["bufferSize", "logTimeStamp", "icLogBuffEn"]:
@@ -282,7 +282,7 @@ class InfoCenterLog(object):
 
         # get info-center source info
         log_dict["source"] = dict()
-        src = root.find("data/syslog/icSources/icSource")
+        src = root.find("syslog/icSources/icSource")
         if src:
             for attr in src:
                 if attr.tag in ["moduleName", "icChannelId", "icChannelName", "logEnFlg", "logEnLevel"]:
