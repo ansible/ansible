@@ -75,6 +75,7 @@ Ansible loads plugins automatically too, loading each type of plugin separately 
 You can create or add a local plugin in any of these locations:
 
 * any directory added to the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable (these variables, such as ``$ANSIBLE_INVENTORY_PLUGINS`` and ``$ANSIBLE_VARS_PLUGINS`` take colon-separated lists like ``$PATH``)
+* Adding or adjusting the ``library`` parameter to the ``ansible.cfg`` file
 * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback``
 * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/action``
 
