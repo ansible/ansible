@@ -32,7 +32,8 @@ options:
   state:
     description:
     - The sequence state.
-    - If I(state=absent) other options will be ignored except of I(schema).
+    - If I(state=absent) other options will be ignored except of I(name) and
+      I(schema).
     default: present
     choices: [ absent, present ]
     type: str
