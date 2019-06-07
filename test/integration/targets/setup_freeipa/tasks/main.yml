@@ -1,10 +1,6 @@
 ---
 
 - block:
-    - name: Ensure FreeIPA server hostname is set.
-      hostname:
-        name: "{{ freeipa_server_domain }}"
-
     - name: Install Samba.
       yum:
         name: samba
@@ -18,8 +14,10 @@
         state: present
 
     - name: Check ipa-server setup.
-      command: ipa service-find --all
+      shell:
+        "echo {{ freeipa_admin_password }} | kinit {{ freeipa_admin }} && ipa service-find --all"
       ignore_errors: true
+      changed_when: false
       register: freeipa_output
 
     - name: Configure ipa-server.
