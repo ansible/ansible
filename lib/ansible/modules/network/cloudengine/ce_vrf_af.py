@@ -568,7 +568,7 @@ class VrfAf(object):
 
         # get the vpn address family and RD text
         vrf_addr_types = root.findall(
-            "data/l3vpn/l3vpncomm/l3vpnInstances/l3vpnInstance/vpnInstAFs/vpnInstAF")
+            "l3vpn/l3vpncomm/l3vpnInstances/l3vpnInstance/vpnInstAFs/vpnInstAF")
         if vrf_addr_types:
             for vrf_addr_type in vrf_addr_types:
                 vrf_af_info = dict()
