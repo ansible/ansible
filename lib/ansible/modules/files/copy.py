@@ -201,15 +201,13 @@ changed:
     returned: success
     type: bool
 diff:
-    description: diff for src and dest
+    description: diff between src and dest
     returned: success
     type: str
-    sample: /path/to/file.txt
 failed:
     description: task failed or not
     returned: success
     type: bool
-    sample: /path/to/file.txt
 dest:
     description: Destination file/path
     returned: success and non check_mode
