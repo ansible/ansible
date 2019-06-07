@@ -481,22 +481,19 @@ class PgHbaRule(dict):
             msg = "Rule {0} has unknown type: {1}."
             raise PgHbaValueError(msg.format(line, cols[0]))
         if cols[0] == 'local':
-            if cols[3] not in PG_HBA_METHODS:
-                raise PgHbaValueError("Rule {0} of 'local' type has invalid auth-method {1}"
-                                      "on 4th column ".format(line, cols[3]))
-            cols.insert(3, None)
-            cols.insert(3, None)
+            cols.insert(3, None) # No address
+            cols.insert(3, None) # No IP-mask
+        if len(cols) < 6:
+            cols.insert(4, None) # No IP-mask
+        elif cols[5] not in PG_HBA_METHODS:
+            cols.insert(4, None) # No IP-mask
+        if cols[5] not in PG_HBA_METHODS:
+            raise PgHbaValueError("Rule {0} of '{1}' type has invalid auth-method '{2}'".format(line, cols[0], cols[5]))
+
+        if len(cols) < 7:
+            cols.insert(6, None) # No auth-options
         else:
-            if len(cols) < 6:
-                cols.insert(4, None)
-            elif cols[5] not in PG_HBA_METHODS:
-                cols.insert(4, None)
-            if len(cols) < 7:
-                cols.insert(7, None)
-            else:
-                cols[6] = " ".join(cols[6:])
-            if cols[5] not in PG_HBA_METHODS:
-                raise PgHbaValueError("Rule {0} has no valid method.".format(line))
+            cols[6] = " ".join(cols[6:]) # combine all auth-options
         rule = dict(zip(PG_HBA_HDR, cols[:7]))
         for key, value in rule.items():
             if value:
@@ -576,7 +573,7 @@ class PgHbaRule(dict):
             return myweight < hisweight
         try:
             return self['src'] < other['src']
-        except TypeError:
+        except (TypeError, KeyError):
             return self.source_type_weight() < other.source_type_weight()
         errormessage = 'We have two rules ({1}, {2})'.format(self, other)
         errormessage += ' with exact same weight. Please file a bug.'
@@ -626,6 +623,9 @@ class PgHbaRule(dict):
         Basically make sure that IPv6Networks are sorted higher than IPv4Networks.
         This is a 'when all else fails' solution in __lt__.
         """
+        if self['type'] == 'local':
+            return 3
+
         sourceobj = self.source()
         if isinstance(sourceobj, ipaddress.IPv4Network):
             return 2
