@@ -95,6 +95,7 @@ options:
             ip_range:
                 description:
                 - CIDR notation range of IP addresses to apply rule to.
+                - Port can be appended to range with a C(":").
                 type: str
             port:
                 description:
@@ -183,13 +184,54 @@ data:
                     returned: success
                     type: string
                     sample: applications
-                value:
-                    description:
-                        - Matching value based on type.
-                        - Returned type will vary.
+                applications:
+                    description: List of applications within a category.
+                    type: list
+                    contains:
+                        id:
+                            description: URI of application.
+                            returned: success
+                            type: string
+                            sample: Gmail
+                        name:
+                            description: Descriptive name of application.
+                            returned: success
+                            type: string
+                            sample: meraki:layer7/application/4
+                applicationCategory:
+                    description: List of application categories within a category.
+                    type: list
+                    contains:
+                        id:
+                            description: URI of application.
+                            returned: success
+                            type: string
+                            sample: Gmail
+                        name:
+                            description: Descriptive name of application.
+                            returned: success
+                            type: string
+                            sample: meraki:layer7/application/4
+                port:
+                    description: Port number in rule.
                     returned: success
                     type: string
-                    sample: 80
+                    sample: 23
+                ipRange:
+                    description: Range of IP addresses in rule.
+                    returned: success
+                    type: string
+                    sample: 1.1.1.0/23
+                whitelistedCountries:
+                    description: Countries to be whitelisted.
+                    returned: success
+                    type: string
+                    sample: CA
+                blacklistedCountries:
+                    description: Countries to be blacklisted.
+                    returned: success
+                    type: string
+                    sample: RU
         application_categories:
             description: List of application categories and applications.
             type: list
@@ -221,6 +263,7 @@ data:
                         sample: layer7/category/1
 '''
 
+import copy
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
@@ -285,6 +328,14 @@ def assemble_payload(meraki, net_id, rule):
                     'value': rule['countries']
                     }
     return new_rule
+
+
+def restructure_response(rules):
+    for rule in rules['rules']:
+        type = rule['type']
+        rule[type] = copy.deepcopy(rule['value'])
+        del rule['value']
+    return rules
 
 
 def get_rules(meraki, net_id):
@@ -390,7 +441,7 @@ def main():
         if meraki.params['categories'] is True:  # Output only applications
             meraki.result['data'] = get_applications(meraki, net_id)
         else:
-            meraki.result['data'] = get_rules(meraki, net_id)
+            meraki.result['data'] = restructure_response(get_rules(meraki, net_id))
     elif meraki.params['state'] == 'present':
         rules = get_rules(meraki, net_id)
         path = meraki.construct_path('get_all', net_id=net_id)
@@ -402,16 +453,19 @@ def main():
             payload = dict()
         if meraki.is_update_required(rules, payload):
             if meraki.module.check_mode is True:
-                diff = recursive_diff(rules, payload)
+                response = restructure_response(payload)
+                # meraki.fail_json(msg="Payload", payload=response)
+                diff = recursive_diff(rules, response)
                 meraki.result['diff'] = {'before': diff[0],
                                          'after': diff[1],
                                          }
-                meraki.result['data'] = payload
+                meraki.result['data'] = response
                 meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
+            response = restructure_response(response)
             if meraki.status == 200:
-                diff = recursive_diff(rules, payload)
+                diff = recursive_diff(rules, response)
                 meraki.result['diff'] = {'before': diff[0],
                                          'after': diff[1],
                                          }

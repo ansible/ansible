@@ -71,9 +71,6 @@
     delegate_to: localhost
     register: query_categories
 
-  - debug:
-      var: query_categories
-
   - assert:
       that:
         - query_categories.data is defined
@@ -97,6 +94,78 @@
   - assert:
       that:
         - create_ip_range_check is changed
+
+  - name: Create firewall rule for IP range
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24 
+    delegate_to: localhost
+    register: create_ip_range
+
+  - debug:
+      var: create_ip_range
+
+  - assert:
+      that:
+        - create_ip_range is changed
+        - create_ip_range.data.rules | length == 1
+
+  - name: Create firewall rule for IP range with idempotency with check mode
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    delegate_to: localhost
+    register: create_ip_range_idempotent_check
+    check_mode: yes
+
+  - assert:
+      that:
+        - create_ip_range_idempotent_check is not changed
+
+  - name: Create firewall rule for IP range with idempotency
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.0/24
+    delegate_to: localhost
+    register: create_ip_range_idempotent
+
+  - assert:
+      that:
+        - create_ip_range_idempotent is not changed
+
+  - name: Create firewall rule for IP and port
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: ip_range
+          ip_range: 10.11.12.1:23
+    delegate_to: localhost
+    register: create_ip_range_port
+
+  - debug:
+      var: create_ip_range_port
+
+  - assert:
+      that:
+        - create_ip_range_port is changed
 
   - name: Create firewall rule for IP range
     meraki_mx_l7_firewall:
@@ -304,6 +373,24 @@
   - assert:
       that:
         - whitelist_countries is changed
+
+  - name: Create firewall rule for whitelisted countries with idempotency
+    meraki_mx_l7_firewall:
+      auth_key: '{{ auth_key }}'
+      org_name: '{{test_org_name}}'
+      net_name: TestNetAppliance
+      state: present
+      rules:
+        - type: whitelisted_countries
+          countries:
+            - US
+            - FR
+    delegate_to: localhost
+    register: whitelist_countries_idempotent
+
+  - assert:
+      that:
+        - whitelist_countries_idempotent is not changed
 
   - name: Create multiple firewall rules
     meraki_mx_l7_firewall:
