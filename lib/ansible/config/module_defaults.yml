@@ -566,7 +566,7 @@ groupings:
   - azure
   azure_rm_resourcegroup:
   - azure
-  azure_rm_resourcegroup_facts:
+  azure_rm_resourcegroup_info:
   - azure
   azure_rm_securitygroup:
   - azure
