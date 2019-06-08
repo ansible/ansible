@@ -84,8 +84,6 @@ options:
       - The entries will be written out in a specific order.
         With this option you can control by which field they are ordered first, second and last.
         s=source, d=databases, u=users.
-        This option is deprecated since 2.9 and will be removed in 2.11.
-        Sortorder is now hardcoded to sdu.
     default: sdu
     choices: [ sdu, sud, dsu, dus, usd, uds ]
   state:
@@ -288,7 +286,7 @@ class PgHba(object):
                     line, comment = line.split('#', 1)
                     self.comment.append('#' + comment)
                 try:
-                    self.add_rule(PgHbaRule(line=line))
+                    self.add_rule(PgHbaRule(line=line, order=self.order))
                 except PgHbaRuleError:
                     pass
             file.close()
@@ -404,9 +402,10 @@ class PgHbaRule(dict):
     '''
     This class represents one rule as defined in a line in a PgHbaFile.
     '''
+    order = None
 
     def __init__(self, contype=None, databases=None, users=None, source=None, netmask=None,
-                 method=None, options=None, line=None):
+                 method=None, options=None, line=None, order='sdu'):
         '''
         This function can be called with a comma seperated list of databases and a comma seperated
         list of users and it will act as a generator that returns a expanded list of rules one by
@@ -414,6 +413,10 @@ class PgHbaRule(dict):
         '''
 
         super(PgHbaRule, self).__init__()
+        if order not in PG_HBA_ORDERS:
+            msg = "invalid order setting {0} (should be one of '{1}')."
+            raise PgHbaError(msg.format(order, "', '".join(PG_HBA_ORDERS)))
+        self.order = order
 
         if line:
             # Read valies from line if parsed
@@ -558,24 +561,28 @@ class PgHbaRule(dict):
         Therefore for ipv4, we use prefixlen (0-32) * 4 for weight,
         which corresponds to ipv6 (0-128).
         """
-        myweight = self.source_weight()
-        hisweight = other.source_weight()
-        if myweight != hisweight:
-            return myweight > hisweight
+        for orderpart in self.order:
+            if orderpart == 's':
+                myweight = self.source_weight()
+                hisweight = other.source_weight()
+                if myweight != hisweight:
+                    return myweight > hisweight
+            elif orderpart == 'd':
+                myweight = self.db_weight()
+                hisweight = other.db_weight()
+                if myweight != hisweight:
+                    return myweight < hisweight
+            elif orderpart == 'u':
+                myweight = self.user_weight()
+                hisweight = other.user_weight()
+                if myweight != hisweight:
+                    return myweight < hisweight
 
-        myweight = self.db_weight()
-        hisweight = other.db_weight()
-        if myweight != hisweight:
-            return myweight < hisweight
-
-        myweight = self.user_weight()
-        hisweight = other.user_weight()
-        if myweight != hisweight:
-            return myweight < hisweight
         try:
             return self['src'] < other['src']
         except TypeError:
             return self.source_type_weight() < other.source_type_weight()
+
         errormessage = 'We have two rules ({1}, {2})'.format(self, other)
         errormessage += ' with exact same weight. Please file a bug.'
         raise PgHbaValueError(errormessage)
@@ -709,7 +716,10 @@ def main():
         try:
             for database in databases.split(','):
                 for user in users.split(','):
-                    rule = PgHbaRule(contype, database, user, source, netmask, method, options)
+                    rule = PgHbaRule(contype=contype, databases=database,
+                                     users=user, source=source, netmask=netmask,
+                                     method=method, options=options,
+                                     order=order)
                     if state == "present":
                         ret['msgs'].append('Adding')
                         pg_hba.add_rule(rule)
