@@ -1,14 +1,10 @@
-- name: raw with unicode arg and output
-  raw: echo 汉语
-  register: command
-
-- name: check output of raw with unicode arg and output
-  assert:
-    that:
-      - "'汉语' in command.stdout"
-
 - name: create local file with unicode filename and content
-  local_action: lineinfile dest={{ output_dir }}/语/汉语.txt create=true line=汉语
+  lineinfile:
+    dest: "{{ output_dir }}/语/汉语.txt"
+    create: true
+    line: 汉语
 
 - name: remove local file with unicode filename and content
-  local_action: file path={{ output_dir }}/语/汉语.txt state=absent
+  file:
+    path: "{{ output_dir }}/语/汉语.txt"
+    state: absent
