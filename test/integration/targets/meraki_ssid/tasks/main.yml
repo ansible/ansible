@@ -316,28 +316,27 @@
       that:
         - set_radius_server.data.radiusServers.0.host == '192.0.1.200'
 
-  # New idempotency algorithm is required for this check
-  # - name: Configure RADIUS servers with idempotency
-  #   meraki_ssid:
-  #     auth_key: '{{auth_key}}'
-  #     state: present
-  #     org_name: '{{test_org_name}}'
-  #     net_name: TestNetSSID
-  #     name: AnsibleSSID
-  #     auth_mode: open-with-radius
-  #     radius_servers:
-  #       - host: 192.0.1.200
-  #         port: 1234
-  #         secret: abc98765
-  #   delegate_to: localhost
-  #   register: set_radius_server_idempotent
+  - name: Configure RADIUS servers with idempotency
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: open-with-radius
+      radius_servers:
+        - host: 192.0.1.200
+          port: 1234
+          secret: abc98765
+    delegate_to: localhost
+    register: set_radius_server_idempotent
 
-  # - debug:
-  #     var: set_radius_server_idempotent
+  - debug:
+      var: set_radius_server_idempotent
 
-  # - assert:
-  #     that:
-  #       - set_radius_server_idempotent is not changed
+  - assert:
+      that:
+        - set_radius_server_idempotent is not changed
 
   always:
   - name: Delete SSID

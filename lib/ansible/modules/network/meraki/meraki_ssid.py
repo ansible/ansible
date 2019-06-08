@@ -572,7 +572,7 @@ def main():
         if number is None:
             number = get_ssid_number(meraki.params['name'], ssids)
         original = ssids[number]
-        if meraki.is_update_required(original, payload, optional_ignore=('secret')):
+        if meraki.is_update_required(original, payload, optional_ignore=['secret']):
             ssid_id = meraki.params['number']
             if ssid_id is None:  # Name should be used to lookup number
                 ssid_id = get_ssid_number(meraki.params['name'], ssids)
