@@ -140,13 +140,17 @@ class RabbitMqUser(object):
         self._tags = None
         self._permissions = []
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._check_rc = None
 
     def _exec(self, args, run_in_check_mode=False):
+        if self._check_rc is None:
+           self._check_rc = True
+        
         if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node:
                 cmd.extend(['-n', self.node])
-            rc, out, err = self.module.run_command(cmd + args, check_rc=True)
+            rc, out, err = self.module.run_command(cmd + args, check_rc=self._check_rc)
             return out.splitlines()
         return list()
 
@@ -190,6 +194,7 @@ class RabbitMqUser(object):
         return perms_list
 
     def check_password(self):
+        self._check_rc=False
         return self._exec(['authenticate_user', self.username, self.password], True)
 
     def add(self):
