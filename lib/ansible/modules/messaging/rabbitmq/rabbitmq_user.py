@@ -144,8 +144,8 @@ class RabbitMqUser(object):
 
     def _exec(self, args, run_in_check_mode=False):
         if self._check_rc is None:
-           self._check_rc = True
-        
+            self._check_rc = True
+
         if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node:
@@ -194,7 +194,7 @@ class RabbitMqUser(object):
         return perms_list
 
     def check_password(self):
-        self._check_rc=False
+        self._check_rc = False
         return self._exec(['authenticate_user', self.username, self.password], True)
 
     def add(self):
