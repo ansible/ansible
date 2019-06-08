@@ -122,11 +122,6 @@ def enable_identity_dkim_settings(module, client, identity):
             return client.set_identity_dkim_enabled(DkimEnabled=True, Identity=identity)
     except (BotoCoreError) as e:
         module.fail_json_aws(e, msg='Failed to enable DKIM for {identity}.'.format(identity=identity))
-    except (ClientError) as e:
-        pass
-        # The enable call will always return a ClientError, complaining about missing DNS record, but still changes setting to 'enabled'.
-        # So once DNS validation goes through it should work already, hence we ignore errors here.
-
 
 def disable_identity_dkim_settings(module, client, identity):
     try:
