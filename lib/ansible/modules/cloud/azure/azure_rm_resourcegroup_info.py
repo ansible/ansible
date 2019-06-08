@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_resourcegroup_info
 
-version_added: "2.9"
+version_added: "2.1"
 
 short_description: Get resource group facts.
 

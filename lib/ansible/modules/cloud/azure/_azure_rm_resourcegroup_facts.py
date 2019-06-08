@@ -1,0 +1,1 @@
+azure_rm_resourcegroup_info.py
