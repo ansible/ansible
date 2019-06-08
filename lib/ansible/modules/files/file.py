@@ -296,7 +296,7 @@ def get_state(path):
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     try:
-        if os.path.lexists(b_path):
+        if os.lstat(b_path):
             if os.path.islink(b_path):
                 return 'link'
             elif os.path.isdir(b_path):
