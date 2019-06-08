@@ -455,7 +455,7 @@ def main():
             if meraki.module.check_mode is True:
                 response = restructure_response(payload)
                 # meraki.fail_json(msg="Payload", payload=response)
-                diff = recursive_diff(rules, response)
+                diff = recursive_diff(restructure_response(rules), response)
                 meraki.result['diff'] = {'before': diff[0],
                                          'after': diff[1],
                                          }
@@ -465,7 +465,7 @@ def main():
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             response = restructure_response(response)
             if meraki.status == 200:
-                diff = recursive_diff(rules, response)
+                diff = recursive_diff(restructure_response(rules), response)
                 meraki.result['diff'] = {'before': diff[0],
                                          'after': diff[1],
                                          }
