@@ -20,12 +20,14 @@ options:
     description:
       - Adapter name or list of adapter names for which to manage DNS settings ('*' is supported as a wildcard value).
       - The adapter name used is the connection caption in the Network Control Panel or the InterfaceAlias of C(Get-DnsClientServerAddress).
+    type: list
     required: yes
   dns_servers:
     description:
       - Single or ordered list of DNS servers (IPv4 and IPv6 addresses) to configure for lookup. An empty list will configure the adapter to use the
         DHCP-assigned values on connections where DHCP is enabled, or disable DNS lookup on statically-configured connections.
       - Before 2.9 use ipv4_addresses instead.
+    type: list
     required: yes
     aliases: [ "ipv4_addresses", "ip_addresses", "addresses" ]
     version_added: "2.9"
