@@ -481,19 +481,19 @@ class PgHbaRule(dict):
             msg = "Rule {0} has unknown type: {1}."
             raise PgHbaValueError(msg.format(line, cols[0]))
         if cols[0] == 'local':
-            cols.insert(3, None) # No address
-            cols.insert(3, None) # No IP-mask
+            cols.insert(3, None)  # No address
+            cols.insert(3, None)  # No IP-mask
         if len(cols) < 6:
-            cols.insert(4, None) # No IP-mask
+            cols.insert(4, None)  # No IP-mask
         elif cols[5] not in PG_HBA_METHODS:
-            cols.insert(4, None) # No IP-mask
+            cols.insert(4, None)  # No IP-mask
         if cols[5] not in PG_HBA_METHODS:
             raise PgHbaValueError("Rule {0} of '{1}' type has invalid auth-method '{2}'".format(line, cols[0], cols[5]))
 
         if len(cols) < 7:
-            cols.insert(6, None) # No auth-options
+            cols.insert(6, None)  # No auth-options
         else:
-            cols[6] = " ".join(cols[6:]) # combine all auth-options
+            cols[6] = " ".join(cols[6:])  # combine all auth-options
         rule = dict(zip(PG_HBA_HDR, cols[:7]))
         for key, value in rule.items():
             if value:
