@@ -48,6 +48,7 @@ DOCUMENTATION = """
         ini:
           - section: callback_grafana_annotations
             key: grafana_url
+        type: string
       validate_certs:
         description: validate the SSL certificate of the Grafana server. (For HTTPS url)
         env:
@@ -68,6 +69,7 @@ DOCUMENTATION = """
           - section: callback_grafana_annotations
             key: http_agent
         default: 'Ansible (grafana_annotations callback)'
+        type: string
       grafana_api_key:
         description: Grafana API key, allowing to authenticate when posting on the HTTP API.
                      If not provided, grafana_login and grafana_password will
@@ -77,6 +79,7 @@ DOCUMENTATION = """
         ini:
           - section: callback_grafana_annotations
             key: grafana_api_key
+        type: string
       grafana_user:
         description: Grafana user used for authentication. Ignored if grafana_api_key is provided.
         env:
@@ -85,6 +88,7 @@ DOCUMENTATION = """
           - section: callback_grafana_annotations
             key: grafana_user
         default: ansible
+        type: string
       grafana_password:
         description: Grafana password used for authentication. Ignored if grafana_api_key is provided.
         env:
@@ -93,6 +97,7 @@ DOCUMENTATION = """
           - section: callback_grafana_annotations
             key: grafana_password
         default: ansible
+        type: string
       grafana_dashboard_id:
         description: The grafana dashboard id where the annotation shall be created.
         env:
@@ -100,13 +105,16 @@ DOCUMENTATION = """
         ini:
           - section: callback_grafana_annotations
             key: grafana_dashboard_id
+        type: integer
       grafana_panel_id:
-        description: The grafana panel id where the annotation shall be created.
+        description: The grafana panel ids where the annotation shall be created.
+                     Give a single integer or a comma-separated list of integers.
         env:
           - name: GRAFANA_PANEL_ID
         ini:
           - section: callback_grafana_annotations
             key: grafana_panel_id
+        type: string
 """
 
 
@@ -204,11 +212,7 @@ class CallbackModule(CallbackBase):
             'text': text,
             'tags': ['ansible', 'ansible_event_start', self.playbook]
         }
-        if self.dashboard_id:
-            data["dashboardId"] = int(self.dashboard_id)
-        if self.panel_id:
-            data["panelId"] = int(self.panel_id)
-        self._send_annotation(json.dumps(data))
+        self._send_annotation(data)
 
     def v2_playbook_on_stats(self, stats):
         end_time = datetime.now()
@@ -233,11 +237,7 @@ class CallbackModule(CallbackBase):
             'text': text,
             'tags': ['ansible', 'ansible_report', self.playbook]
         }
-        if self.dashboard_id:
-            data["dashboardId"] = int(self.dashboard_id)
-        if self.panel_id:
-            data["panelId"] = int(self.panel_id)
-        self._send_annotation(json.dumps(data))
+        self._send_annotations(data)
 
     def v2_runner_on_failed(self, result, **kwargs):
         text = PLAYBOOK_ERROR_TXT.format(playbook=self.playbook, hostname=self.hostname,
@@ -249,18 +249,32 @@ class CallbackModule(CallbackBase):
             'tags': ['ansible', 'ansible_event_failure', self.playbook]
         }
         self.errors += 1
+        self._send_annotations(data)
+
+    def _send_annotations(self, data):
+        uses_panels = False
         if self.dashboard_id:
             data["dashboardId"] = int(self.dashboard_id)
         if self.panel_id:
-            data["panelId"] = int(self.panel_id)
-        self._send_annotation(json.dumps(data))
+            uses_panels = True
+            if ',' in str(self.panel_id):
+                panels = str(self.panel_id).split(',')
+                for p in panels:
+                    data["panelId"] = int(p)
+                    self._send_annotation(data)
+            else:
+                data["panelId"] = int(self.panel_id)
+                self._send_annotation(data)
+        if not uses_panels:
+            self._send_annotation(data)
 
     def _send_annotation(self, annotation):
         try:
-            response = open_url(self.grafana_url, data=annotation, headers=self.headers,
+            response = open_url(self.grafana_url, data=json.dumps(annotation), headers=self.headers,
                                 method="POST",
                                 validate_certs=self.validate_grafana_certs,
                                 url_username=self.grafana_user, url_password=self.grafana_password,
                                 http_agent=self.http_agent, force_basic_auth=self.force_basic_auth)
         except Exception as e:
             self._display.error(u'Could not submit message to Grafana: %s' % to_text(e))
+
