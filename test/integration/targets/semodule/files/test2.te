@@ -1,0 +1,9 @@
+module ansible-test 1.0.1;
+
+require {
+	type proc_net_t;
+	type sshd_t;
+	class file { open read };
+}
+
+allow sshd_t proc_net_t:file { open read}; 

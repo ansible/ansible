@@ -1,0 +1,46 @@
+---
+
+- name: TEST SETUP | install policycoreutils
+  yum:
+    name: 
+      - policycoreutils
+    state: present
+
+# test installing and removing test module
+
+- name: TEST 1 | install test module
+  semodule:
+    te_file: test.te
+  register: test1_mod_install
+
+- assert:
+    that: 
+      - test1_mod_install.version == '1.0'
+      - test1_mod_install.name == 'ansible-test'
+      - test1_mod_install.changed
+
+- name: TEST 1 | remove test module
+  semodule:
+    te_file: test.te
+    state: absent
+  register: test1_mod_remove
+
+- assert:
+    that: 
+      - test1_mod_install.changed
+
+
+# test insatlling and upgrading
+
+- name: TEST 2 | install test module v1.0
+  semodule:
+    te_file: test.te
+
+- name: TEST 2 | test latest with v1.0
+  semodule:
+    te_file: test.te
+
+- name: TEST 2 | install test module v1.0.1
+  semodule:
+    te_file: test2.te
+    state: latest
