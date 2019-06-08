@@ -123,6 +123,7 @@ def enable_identity_dkim_settings(module, client, identity):
     except (BotoCoreError) as e:
         module.fail_json_aws(e, msg='Failed to enable DKIM for {identity}.'.format(identity=identity))
 
+
 def disable_identity_dkim_settings(module, client, identity):
     try:
         if not module.check_mode:
@@ -150,15 +151,24 @@ def main():
     state = module.params.get('state')
     changed = False
 
-    if state == 'enabled':
-        ses_verify_dkim_domain(module, client, identity)
-        enable_identity_dkim_settings(module, client, identity)
-        # TODO: find a way to easily detect changes (updates to identity)
-        changed = True
-    else:
-        disable_identity_dkim_settings(module, client, identity)
-
+    # Get current DKIM attributes to see if they need changing
     attributes = get_identity_dkim_settings(module, client, identity)
+    current_state = attributes['DkimEnabled']
+
+    if state == 'enabled':
+        desired_state = True
+    if state == 'disabled':
+        desired_state = False
+
+    if current_state != desired_state:
+        # Update DKIM settings
+        if state == 'enabled':
+            ses_verify_dkim_domain(module, client, identity)
+            enable_identity_dkim_settings(module, client, identity)
+        else:
+            disable_identity_dkim_settings(module, client, identity)
+        changed = True
+        attributes = get_identity_dkim_settings(module, client, identity)
 
     module.exit_json(changed=changed, dkim_attributes=camel_dict_to_snake_dict(attributes))
 
