@@ -135,7 +135,7 @@ Function Test-DnsClientMatch {
 
     $current_dns = [System.Net.IPAddress[]](
         Get-DnsClientServerAddress -InterfaceAlias $adapter_name | ForEach-Object {
-            $_.ServerAddresses
+            [System.Net.IPAddress]($_.ServerAddresses)
         } | Where-Object {
             (Assert-IPAddress $_) -and ($_.AddressFamily -in $AddressFamilies)
         }
