@@ -1,4 +1,4 @@
-- name: Get resource group facts
+- name: Get resource group info
   azure_rm_resourcegroup_info:
   register: rg
 
@@ -6,7 +6,7 @@
     that:
         - rg.resourcegroups | length >= 1
 
-- name: Get resource group facts
+- name: Get resource group info
   azure_rm_resourcegroup_info:
       name: "{{ resource_group }}"
       list_resources: yes
