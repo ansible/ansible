@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = r'''
@@ -18,6 +18,10 @@ short_description: Gather facts about the Vultr account.
 description:
   - Gather facts about account balance, charges and payments.
 version_added: "2.5"
+deprecated:
+  removed_in: "2.12"
+  why: Transformed into an info module.
+  alternative: Use M(vultr_account_info) instead.
 author: "René Moser (@resmo)"
 extends_documentation_fragment: vultr
 '''
