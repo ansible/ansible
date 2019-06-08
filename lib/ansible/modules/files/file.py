@@ -372,7 +372,8 @@ def initial_diff(path, state, prev_state):
                 'directories': [],
                 'files': [],
             }
-            for base_path, sub_folders, files in os.walk(path):
+            b_path = to_bytes(path, errors='surrogate_or_strict')
+            for base_path, sub_folders, files in os.walk(b_path):
                 for folder in sub_folders:
                     folderpath = os.path.join(base_path, folder)
                     walklist['directories'].append(folderpath)
