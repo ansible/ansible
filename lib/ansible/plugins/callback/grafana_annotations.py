@@ -277,4 +277,3 @@ class CallbackModule(CallbackBase):
                                 http_agent=self.http_agent, force_basic_auth=self.force_basic_auth)
         except Exception as e:
             self._display.error(u'Could not submit message to Grafana: %s' % to_text(e))
-
