@@ -278,7 +278,7 @@ from ansible.module_utils.postgres import (
     PgMembership,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.saslprep import saslprep
 
@@ -391,7 +391,7 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
                 # from RFC5802 https://tools.ietf.org/html/rfc5802#section-3
                 # SaltedPassword  := Hi(Normalize(password), salt, i)
                 # ServerKey       := HMAC(SaltedPassword, "Server Key")
-                normalizedPassword = saslprep(password)
+                normalizedPassword = saslprep(to_text(password))
                 saltedPassword = pbkdf2_hmac('sha256', to_bytes(normalizedPassword), salt, it)
 
                 serverKeyVerifier = hmac.new(saltedPassword, digestmod=sha256)
