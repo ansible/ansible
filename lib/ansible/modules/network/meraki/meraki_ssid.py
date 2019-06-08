@@ -497,7 +497,7 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'ssid': '/networks/{net_id}/ssids'}
-    query_url = {'ssid': '/networks/{net_id}/ssids/'}
+    query_url = {'ssid': '/networks/{net_id}/ssids/{number}'}
     update_url = {'ssid': '/networks/{net_id}/ssids/'}
 
     meraki.url_catalog['get_all'].update(query_urls)
@@ -546,10 +546,10 @@ def main():
     if meraki.params['state'] == 'query':
         if meraki.params['name']:
             ssid_id = get_ssid_number(meraki.params['name'], get_ssids(meraki, net_id))
-            path = meraki.construct_path('get_one', net_id=net_id) + str(ssid_id)
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'number': ssid_id})
             meraki.result['data'] = meraki.request(path, method='GET')
-        elif meraki.params['number']:
-            path = meraki.construct_path('get_one', net_id=net_id) + meraki.params['number']
+        elif meraki.params['number'] is not None:
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'number': meraki.params['number']})
             meraki.result['data'] = meraki.request(path, method='GET')
         else:
             meraki.result['data'] = get_ssids(meraki, net_id)
