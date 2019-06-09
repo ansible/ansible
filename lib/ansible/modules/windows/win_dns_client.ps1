@@ -16,10 +16,16 @@ Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "Addres
     [System.Net.Sockets.AddressFamily]::InterNetworkV6,
     [System.Net.Sockets.AddressFamily]::InterNetwork
 )
+$result = @{changed=$false}
 
+$params = Parse-Args -arguments $args -supports_check_mode $true
 Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "log_path" -Value (
     Get-AnsibleParam $params "log_path"
 )
+$adapter_names = Get-AnsibleParam $params "adapter_names" -Default "*"
+$dns_servers = Get-AnsibleParam $params "dns_servers" -aliases "ipv4_addresses","ip_addresses","addresses" -FailIfEmpty $result
+$check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
+
 
 Function Write-DebugLog {
     Param(
@@ -193,13 +199,6 @@ Function Set-DnsClientAddresses
     }
 }
 
-$result = @{changed=$false}
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$adapter_names = Get-AnsibleParam $params "adapter_names" -Default "*"
-$dns_servers = Get-AnsibleParam $params "dns_servers" -aliases "ipv4_addresses","ip_addresses","addresses" -FailIfEmpty $result
-
 if($dns_servers -is [string]) {
     if($dns_servers.Length -gt 0) {
         $dns_servers = @($dns_servers)
@@ -211,7 +210,6 @@ if($adapter_names -is [string]) {
     $adapter_names = @($adapter_names)
 }
 
-$check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
 
 Try {
 
