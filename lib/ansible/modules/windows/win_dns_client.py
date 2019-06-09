@@ -30,7 +30,6 @@ options:
     type: list
     required: yes
     aliases: [ "ipv4_addresses", "ip_addresses", "addresses" ]
-    version_added: "2.9"
 notes:
   - When setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change will always be registered, since it is not possible to
     detect the difference between a DHCP-sourced server value and one that is statically set.
