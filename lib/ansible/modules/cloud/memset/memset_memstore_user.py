@@ -168,7 +168,10 @@ def create_user(args=None, user=None):
         if args['update_password'] == 'always':
             _set_password = True
 
-        if user['enabled'] != args['enabled']:
+        if user['enabled'] == args['enabled']:
+            if args['check_mode']:
+                return(retvals)
+        else:
             if args['check_mode']:
                 retvals['changed'] = True
                 return(retvals)
@@ -274,7 +277,7 @@ def create_or_delete_user(args=None):
         retvals['msg'] = msg
         return(retvals)
 
-    currentuser = None
+    _user = None
     for user in response.json():
         if user['username'] == args['username']:
             _user = user
