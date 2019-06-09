@@ -64,7 +64,15 @@ options:
   private_network_enabled:
     description:
       - Whether to enable private networking or not.
+      - Mutually exclusive with I(networks).
     type: bool
+  networks:
+    description:
+      - Networks with matching description or ID to be attached to the server.
+      - Mutually exclusive with I(private_network_enabled).
+      - Only considered on creation.
+    type: list
+    version_added: "2.9"
   auto_backup_enabled:
     description:
       - Whether to enable automatic backups or not.
@@ -133,6 +141,17 @@ EXAMPLES = '''
     ssh_key: my_key
     region: Amsterdam
     state: started
+
+- name: create a server with multiple private networks
+  delegate_to: localhost
+  vultr_server:
+    name: "{{ vultr_server_name }}"
+    os: CentOS 7 x64
+    plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    region: Amsterdam
+    networks:
+      - Private Network 1
+      - Private Network 2
 
 - name: ensure a server is present and stopped provisioned using IDs
   delegate_to: localhost
@@ -464,6 +483,22 @@ class AnsibleVultrServer(Vultr):
             id_key='FIREWALLGROUPID'
         )
 
+    def get_networks(self):
+        results = []
+
+        for network in self.module.params.get('networks') or []:
+            result = self.query_resource_by_key(
+                key='description',
+                value=network,
+                resource='network',
+                use_cache=True,
+                id_key='NETWORKID',
+            )
+
+            if result:
+                results.append(result)
+        return results
+
     def get_user_data(self):
         user_data = self.module.params.get('user_data')
         if user_data is not None:
@@ -546,7 +581,6 @@ class AnsibleVultrServer(Vultr):
                 'hostname': self.module.params.get('hostname'),
                 'SSHKEYID': ','.join([ssh_key['SSHKEYID'] for ssh_key in self.get_ssh_keys()]),
                 'enable_ipv6': self.get_yes_or_no('ipv6_enabled'),
-                'enable_private_network': self.get_yes_or_no('private_network_enabled'),
                 'auto_backups': self.get_yes_or_no('auto_backup_enabled'),
                 'notify_activate': self.get_yes_or_no('notify_activate'),
                 'tag': self.module.params.get('tag'),
@@ -554,6 +588,12 @@ class AnsibleVultrServer(Vultr):
                 'user_data': self.get_user_data(),
                 'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
+
+            if self.module.params.get('networks') is not None:
+                data['NETWORKID'] = [n.get('NETWORKID') for n in self.get_networks()]
+            else:
+                data['enable_private_network'] = self.get_yes_or_no('private_network_enabled')
+
             self.api_query(
                 path="/v1/server/create",
                 method="POST",
@@ -892,6 +932,7 @@ def main():
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         private_network_enabled=dict(type='bool'),
+        networks=dict(type='list'),
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(type='str'),
@@ -907,6 +948,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        mutually_exclusive=[
+            ['networks', 'enable_private_network'],
+        ],
     )
 
     vultr_server = AnsibleVultrServer(module)

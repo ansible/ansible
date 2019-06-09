@@ -51,20 +51,41 @@
     - result is failed
     - 'result.msg == "Could not find plans with ID or name: does_not_exist"'
 
+- name: test fail if network does not exist
+  vultr_server:
+    name: "{{ vultr_server_name }}"
+    os: CentOS 6 x64
+    plan: "{{ vultr_server_plan_1 }}"
+    networks: does_not_exist
+    region: Amsterdam
+  register: result
+  ignore_errors: yes
+- name: verify test fail if network does not exist
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "Could not find network with ID or description: does_not_exist"'
+
 - name: setup create ssh keys
   vultr_ssh_key:
     name: "{{ item.name }}"
     ssh_key: "{{ item.key }}"
   loop: "{{ vultr_server_ssh_keys }}"
 
+- name: setup create network
+  vultr_network:
+    name: "{{ item.name }}"
+    cidr: "{{ item.cidr }}"
+    region: Amsterdam
+  loop: "{{ vultr_server_networks }}"
+
 - name: test create server in check mode
   vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_1 }}"
-    ssh_keys:
-      - key1
-      - key2
+    ssh_keys: "{{ vultr_server_ssh_keys | map(attribute='name') | list }}"
+    networks: "{{ vultr_server_networks | map(attribute='name') | list }}"
     region: Amsterdam
     state: started
   register: result
@@ -79,9 +100,8 @@
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_1 }}"
-    ssh_keys:
-      - key1
-      - key2
+    ssh_keys: "{{ vultr_server_ssh_keys | map(attribute='name') | list }}"
+    networks: "{{ vultr_server_networks | map(attribute='name') | list }}"
     region: Amsterdam
     state: started
   register: result
@@ -100,9 +120,8 @@
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: "{{ vultr_server_plan_1 }}"
-    ssh_keys:
-      - key1
-      - key2
+    ssh_keys: "{{ vultr_server_ssh_keys | map(attribute='name') | list }}"
+    networks: "{{ vultr_server_networks | map(attribute='name') | list }}"
     region: Amsterdam
     state: started
   register: result
