@@ -1,5 +1,5 @@
 ---
 # defaults file for aws_ses_identity_dkim
 
-dkim_identity_domain: '{{ resource_prefix }}-email.example.com'
+dkim_identity_domain: '{{ resource_prefix }}.example.com'
 dkim_identity_email: 'address@{{ resource_prefix }}-email.example.com'
