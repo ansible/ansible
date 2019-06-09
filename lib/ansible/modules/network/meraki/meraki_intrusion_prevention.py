@@ -43,6 +43,45 @@ options:
     org_id:
         description:
         - ID of organization associated to a network.
+    mode:
+        description:
+        - Operational mode of Intrusion Prevention system.
+        choices: [ detection, disabled, prevention ]
+        type: str
+    ids_rulesets:
+        description:
+        - Ruleset complexity setting.
+        choices: [ connectivity, balanced, security ]
+        type: str
+    whitelisted_rules:
+        description:
+        - List of IDs related to rules which are whitelisted for the organization.
+        suboptions:
+            rule_id:
+                description:
+                - ID of rule as defined by Snort.
+                type: str
+            message:
+                description:
+                - Description of rule.
+                - This is overwritten by the API.
+                type: str
+    protected_networks:
+        description:
+        - Set included/excluded networks for Intrusion Prevention.
+        suboptions:
+            use_default:
+                description:
+                - Whether to use special IPv4 addresses per RFC 5735.
+                type: bool
+            included_cidr:
+                description:
+                - List of network IP ranges to include in scanning.
+                type: str
+            excluded_cidr:
+                description:
+                - List of network IP ranges to exclude from scanning.
+                type: str
 
 author:
     - Kevin Breit (@kbreit)
@@ -50,20 +89,51 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- name: Set whitelist for organization
+  meraki_intrusion_prevention:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_id: '{{test_org_id}}'
+    whitelisted_rules:
+      - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+        message: Test rule
+  delegate_to: localhost
 
+- name: Query IPS info for organization
+  meraki_intrusion_prevention:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+  delegate_to: localhost
+  register: query_org
+
+- name: Set full ruleset with check mode
+  meraki_intrusion_prevention:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    net_name: '{{test_net_name}} - IPS'
+    mode: prevention
+    ids_rulesets: security
+    protected_networks:
+      use_default: true
+      included_cidr:
+        - 192.0.1.0/24
+      excluded_cidr:
+        - 10.0.1.0/24
+  delegate_to: localhost
+
+- name: Clear rules from organization
+  meraki_intrusion_prevention:
+    auth_key: '{{auth_key}}'
+    state: absent
+    org_name: '{{test_org_name}}'
+    whitelisted_rules:
+      -
+  delegate_to: localhost
 '''
 
 RETURN = r'''
-data:
-    description: Information about the created or manipulated object.
-    returned: info
-    type: complex
-    contains:
-      id:
-        description: Identification string of network.
-        returned: success
-        type: str
-        sample: N_12345
 '''
 
 import os
@@ -81,19 +151,20 @@ param_map = {'whitelisted_rules': 'whitelistedRules',
              'included_cidr': 'includedCidr',
              }
 
+
 def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
 
-    whitelist_arg_spec=dict(rule_id=dict(type='str'),
-                            message=dict(type='str'),
-                            )
+    whitelist_arg_spec = dict(rule_id=dict(type='str'),
+                              message=dict(type='str'),
+                              )
 
-    protected_nets_arg_spec=dict(use_default=dict(type='bool'),
-                                 included_cidr=dict(type='list', element='str'),
-                                 excluded_cidr=dict(type='list', element='str'),
-                                 )
+    protected_nets_arg_spec = dict(use_default=dict(type='bool'),
+                                   included_cidr=dict(type='list', element='str'),
+                                   excluded_cidr=dict(type='list', element='str'),
+                                   )
 
     argument_spec = meraki_argument_spec()
     argument_spec.update(
@@ -126,7 +197,7 @@ def main():
     meraki.url_catalog['query_net'] = query_net_urls
     meraki.url_catalog['set_org'] = set_org_urls
     meraki.url_catalog['set_net'] = set_net_urls
-    
+
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
     if meraki.params['net_name'] and meraki.params['net_id']:
@@ -149,7 +220,7 @@ def main():
     net_id = meraki.params['net_id']
     if net_id is None and meraki.params['net_name']:
         nets = meraki.get_nets(org_id=org_id)
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)        
+        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
 
     # Assemble payload
     if meraki.params['state'] == 'present':
@@ -240,7 +311,6 @@ def main():
         else:
             meraki.result['data'] = original
             meraki.result['changed'] = False
-
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
