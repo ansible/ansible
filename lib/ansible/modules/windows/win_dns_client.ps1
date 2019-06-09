@@ -130,19 +130,12 @@ If(-not $(Get-Command Set-DnsClientServerAddress -ErrorAction SilentlyContinue))
 Function Test-DnsClientMatch {
     Param(
         [string] $adapter_name,
-        [string[]] $dns_servers
+        [System.Net.IPAddress[]] $dns_servers
     )
-    $dns_servers = $dns_servers | Where-Object {
-        (Assert-IPAddress $_) -and (([System.Net.IPAddress]$_).AddressFamily -in $AddressFamilies)
-    } | ForEach-Object {
-        [System.Net.IPAddress]$_
-    }
     Write-DebugLog ("Getting DNS config for adapter {0}" -f $adapter_name)
 
-    $current_dns = [System.Net.IPAddress[]](
-        Get-DnsClientServerAddress -InterfaceAlias $adapter_name | ForEach-Object {
-            [System.Net.IPAddress]($_.ServerAddresses)
-        } | Where-Object {
+    $current_dns = ([System.Net.IPAddress[]](
+        (Get-DnsClientServerAddress -InterfaceAlias $adapter_name).ServerAddresses) | Where-Object {
             (Assert-IPAddress $_) -and ($_.AddressFamily -in $AddressFamilies)
         }
     )
@@ -186,9 +179,8 @@ Function Set-DnsClientAddresses
 {
     Param(
         [string] $adapter_name,
-        [string[]] $dns_servers
+        [System.Net.IPAddress[]] $dns_servers
     )
-    $dns_servers = [System.Net.IPAddress[]]$dns_servers
 
     Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($dns_servers.IPAddressToString -join ", "))
 
