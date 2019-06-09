@@ -28,6 +28,22 @@
         <<: *aws_connection_info
       register: ses_email_identity
 
+    ## DKIM check mode enable test (nothing should change, dry-run)
+
+    - name: Enable DKIM verification on email identity (check-mode)
+      aws_ses_identity_dkim:
+        identity: "{{ dkim_identity_email }}"
+        state: enabled
+        <<: *aws_connection_info
+      check_mode: True
+      register: email_result
+
+    - name: assert results report being unchanged (check-mode)
+      assert:
+        that:
+          - email_result.changed == True
+          # Note, if actually changed, the subsequent enable test will fail
+
     ## DKIM enable test
 
     - name: Enable DKIM verification on domain identity
@@ -86,6 +102,22 @@
           - email_result.changed == False
           - email_result.dkim_attributes.dkim_enabled == True
 
+    ## DKIM check mode disable test (nothing should change, dry-run)
+
+    - name: Disable DKIM verification on email identity (check-mode)
+      aws_ses_identity_dkim:
+        identity: "{{ dkim_identity_email }}"
+        state: disabled
+        <<: *aws_connection_info
+      check_mode: True
+      register: email_result
+
+    - name: assert results report being unchanged (check-mode)
+      assert:
+        that:
+          - email_result.changed == True
+          # Note, if actually changed, the subsequent disable test will fail
+
     ## DKIM disable test
 
     - name: Disable DKIM verification on domain identity
@@ -142,21 +174,6 @@
           - email_result.changed == False
           - email_result.dkim_attributes.dkim_enabled == False
 
-    ## DKIM check mode test (nothing should change, dry-run)
-
-    - name: Enable DKIM verification on email identity (check-mode)
-      aws_ses_identity_dkim:
-        identity: "{{ dkim_identity_email }}"
-        state: disabled
-        <<: *aws_connection_info
-      check_mode: True
-      register: email_result
-
-    - name: assert results being unchanged (check-mode)
-      assert:
-        that:
-          - email_result.changed == False
-          - email_result.dkim_attributes.dkim_enabled == False
 
   always:
     ## ensure cleanup
