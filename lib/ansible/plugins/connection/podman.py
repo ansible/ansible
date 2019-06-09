@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, ensure_connect
 from ansible.utils.display import Display
@@ -98,8 +99,10 @@ class Connection(ConnectionBase):
         """
         super(Connection, self)._connect()
         rc, self._mount_point, stderr = self._podman("mount")
-        self._mount_point = self._mount_point.strip()
         display.vvvvv("MOUNTPOINT %s RC %s STDERR %r" % (self._mount_point, rc, stderr))
+        if rc:
+            raise AnsibleError("Unable to mount filesystem of a container: %r" % stderr)
+        self._mount_point = self._mount_point.strip()
         self._connected = True
 
     @ensure_connect
