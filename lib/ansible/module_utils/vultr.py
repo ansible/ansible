@@ -205,35 +205,42 @@ class Vultr:
         except ValueError as e:
             self.module.fail_json(msg="Could not process response into json: %s" % e)
 
-    def query_resource_by_key(self, key, value, resource='regions', query_by='list', params=None, use_cache=False):
+    def query_resource_by_key(self, key, value, resource='regions', query_by='list', params=None, use_cache=False, id_key=None):
         if not value:
             return {}
 
+        r_list = None
         if use_cache:
-            if resource in self.api_cache:
-                if self.api_cache[resource] and self.api_cache[resource].get(key) == value:
-                    return self.api_cache[resource]
+            r_list = self.api_cache.get(resource)
 
-        r_list = self.api_query(path="/v1/%s/%s" % (resource, query_by), data=params)
+        if not r_list:
+            r_list = self.api_query(path="/v1/%s/%s" % (resource, query_by), data=params)
+            if use_cache:
+                self.api_cache.update({
+                    resource: r_list
+                })
 
         if not r_list:
             return {}
+
         elif isinstance(r_list, list):
             for r_data in r_list:
                 if str(r_data[key]) == str(value):
-                    self.api_cache.update({
-                        resource: r_data
-                    })
+                    return r_data
+                if id_key is not None and to_text(r_data[id_key]) == to_text(value):
                     return r_data
         elif isinstance(r_list, dict):
             for r_id, r_data in r_list.items():
                 if str(r_data[key]) == str(value):
-                    self.api_cache.update({
-                        resource: r_data
-                    })
+                    return r_data
+                if id_key is not None and to_text(r_data[id_key]) == to_text(value):
                     return r_data
 
-        self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
+        if id_key:
+            msg = "Could not find %s with ID or %s: %s" % (resource, key, value)
+        else:
+            msg = "Could not find %s with %s: %s" % (resource, key, value)
+        self.module.fail_json(msg=msg)
 
     @staticmethod
     def normalize_result(resource, schema, remove_missing_keys=True):
