@@ -1,0 +1,2 @@
+minor_changes:
+  - vultr_server - Implemented support for using the ID instead of a name to match a resource, especially useful for region, plan and OS type.
