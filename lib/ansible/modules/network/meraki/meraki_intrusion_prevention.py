@@ -134,6 +134,57 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+data:
+  description: Information about the Threat Protection settings.
+  returned: success
+  type: complex
+  contains:
+    whitelistedRules:
+      description: List of whitelisted IPS rules.
+      returned: success, when organization is queried or modified
+      type: complex
+      contains:
+        ruleId:
+          description: A rule identifier for an IPS rule.
+          returned: success, when organization is queried or modified
+          type: str
+          sample: "meraki:intrusion/snort/GID/01/SID/5805"
+        message:
+          description: Description of rule.
+          returned: success, when organization is queried or modified
+          type: str
+          sample: "MALWARE-OTHER Trackware myway speedbar runtime detection - switch engines"
+    mode:
+      description: Enabled setting of intrusion prevention.
+      returned: success, when network is queried or modified
+      type: str
+      sample: enabled
+    idsRulesets:
+      description: Setting of selected ruleset.
+      returned: success, when network is queried or modified
+      type: str
+      sample: balanced
+    protectedNetworks:
+      description: Networks protected by IPS.
+      returned: success, when network is queried or modified
+      type: complex
+      contains:
+        useDefault:
+          description: Whether to use special IPv4 addresses.
+          returned: success, when network is queried or modified
+          type: bool
+          sample: true
+        includedCidr:
+          description: List of CIDR notiation networks to protect.
+          returned: success, when network is queried or modified
+          type: str
+          sample: 192.0.1.0/24
+        excludedCidr:
+          description: List of CIDR notiation networks to exclude from protection.
+          returned: success, when network is queried or modified
+          type: str
+          sample: 192.0.1.0/24
+
 '''
 
 import os
