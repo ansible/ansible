@@ -263,6 +263,7 @@ status:
 
 import os
 
+from collections.abs import Iterable
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
@@ -341,9 +342,10 @@ def main():
     )
 
     unit = module.params['name']
-    for globpattern in (r"*", r"?", r"["):
-        if globpattern in unit:
-            module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+    if isinstance(unit, Iterable):
+        for globpattern in (r"*", r"?", r"["):
+            if globpattern in unit:
+                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
 
     systemctl = module.get_bin_path('systemctl', True)
 

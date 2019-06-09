@@ -47,4 +47,8 @@
               - 'not systemd_test0.changed'
               - 'systemd_test0.state == "started"'
 
+    - name: ensure daemon_reload does not error systemd module
+      systemd:
+        daemon_reload: true
+
   when: 'systemctl_check.rc == 0'
