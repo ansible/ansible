@@ -185,9 +185,9 @@ Function Set-DnsClientAddresses
     Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($dns_servers.IPAddressToString -join ", "))
 
     If ($dns_servers) {
-        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
-    } Else {
         Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $dns_servers
+    } Else {
+        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
     }
 }
 
