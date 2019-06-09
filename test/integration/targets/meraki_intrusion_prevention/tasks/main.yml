@@ -4,45 +4,17 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  # - name: Test an API key is provided
-  #   fail:
-  #     msg: Please define an API key
-  #   when: auth_key is not defined
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
     
-  # - name: Use an invalid domain
-  #   meraki_vlan:
-  #     auth_key: '{{ auth_key }}'
-  #     host: marrrraki.com
-  #     state: present
-  #     org_name: IntTestOrg
-  #     output_level: debug
-  #   delegate_to: localhost
-  #   register: invalid_domain
-  #   ignore_errors: yes
-    
-  # - name: Disable HTTP
-  #   meraki_vlan:
-  #     auth_key: '{{ auth_key }}'
-  #     use_https: false
-  #     state: query
-  #     org_name: IntTestOrg
-  #     output_level: debug
-  #   delegate_to: localhost
-  #   register: http
-  #   ignore_errors: yes
-
-  # - name: Connection assertions
-  #   assert:
-  #     that:
-  #       - '"Failed to connect to" in invalid_domain.msg'
-  #       - '"http" in http.url'
-
   - name: Create test network
     meraki_network:
       auth_key: '{{auth_key}}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
       type: appliance
     delegate_to: localhost
     register: net
@@ -117,7 +89,7 @@
       auth_key: '{{auth_key}}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
       mode: prevention
     delegate_to: localhost
     check_mode: yes
@@ -133,7 +105,7 @@
       auth_key: '{{auth_key}}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
       mode: prevention
     delegate_to: localhost
     register: mode
@@ -151,7 +123,7 @@
       auth_key: '{{auth_key}}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
       mode: prevention
     delegate_to: localhost
     register: mode_idempotent
@@ -169,7 +141,7 @@
       auth_key: '{{auth_key}}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
       mode: prevention
       ids_rulesets: security
       protected_networks:
@@ -190,14 +162,14 @@
         - full_check is changed
         - full_check.data.mode is defined
 
-  # Need to figure out why this isn't working
-  # Meraki says protectedNetworks isn't supported on the network
+  # Meraki says protectedNetworks isn't supported on layer 3 firewalls
+  # Passthrough mode cannot be set via API
   # - name: Set full ruleset
   #   meraki_intrusion_prevention:
   #     auth_key: '{{auth_key}}'
   #     state: present
   #     org_name: '{{test_org_name}}'
-  #     net_name: '{{test_net_name}}'
+  #     net_name: '{{test_net_name}} - IPS'
   #     mode: detection
   #     ids_rulesets: security
   #     protected_networks:
@@ -217,14 +189,14 @@
   #       - full is changed
   #       - full.data.mode is defined
 
-  # Need to figure out why this isn't working
-  # Meraki says protectedNetworks isn't supported on the network
+  # Meraki says protectedNetworks isn't supported on layer 3 firewalls
+  # Passthrough mode cannot be set via API
   # - name: Set full ruleset with idempotency
   #   meraki_intrusion_prevention:
   #     auth_key: '{{auth_key}}'
   #     state: present
   #     org_name: '{{test_org_name}}'
-  #     net_name: '{{test_net_name}}'
+  #     net_name: '{{test_net_name}} - IPS'
   #     mode: prevention
   #     ids_rulesets: security
   #     protected_networks:
@@ -249,13 +221,55 @@
       auth_key: '{{auth_key}}'
       state: query
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
     delegate_to: localhost
     register: query_net
 
   - assert:
       that:
         - query_net is defined
+
+  - name: Test use_default error with included_cidr
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+      ids_rulesets: security
+      protected_networks:
+        use_default: false
+        excluded_cidr:
+          - 10.0.1.0/24
+    check_mode: yes
+    delegate_to: localhost
+    register: included_missing
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'included_missing.msg == "included_cidr is required when use_default is False."'
+
+  - name: Test use_default error with included_cidr
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+      ids_rulesets: security
+      protected_networks:
+        use_default: false
+        included_cidr:
+          - 10.0.1.0/24
+    check_mode: yes
+    delegate_to: localhost
+    register: excluded_missing
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'excluded_missing.msg == "excluded_cidr is required when use_default is False."'
 
   # #############################################################################
   # # Tear down starts here
@@ -266,25 +280,25 @@
       auth_key: '{{auth_key}}'
       state: absent
       org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
+      net_name: '{{test_net_name}} - IPS'
     delegate_to: localhost
     register: delete_net
 
-  # - name: Clear rules from organization with check mode
-  #   meraki_intrusion_prevention:
-  #     auth_key: '{{auth_key}}'
-  #     state: absent
-  #     org_name: '{{test_org_name}}'
-  #     whitelisted_rules:
-  #       - 
-  #   delegate_to: localhost
-  #   check_mode: yes
-  #   register: cleared
+  - name: Clear rules from organization with check mode
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      whitelisted_rules:
+        - 
+    delegate_to: localhost
+    check_mode: yes
+    register: cleared
 
-  # - assert:
-  #     that:
-  #       - cleared is not changed
-  #       - cleared.data is defined
+  - assert:
+      that:
+        - cleared is changed
+        - cleared.data is defined
 
   - name: Clear rules from organization
     meraki_intrusion_prevention:
@@ -310,3 +324,10 @@
         - del_idempotent is not changed
         - del_idempotent.data is defined
 
+  - name: Delete test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+    delegate_to: localhost

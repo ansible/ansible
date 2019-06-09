@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: meraki_intrustion_prevention
+module: meraki_intrusion_prevention
 short_description: Manage intrustion prevention in the Meraki cloud
 version_added: "2.9"
 description:
@@ -64,36 +64,6 @@ data:
         returned: success
         type: str
         sample: N_12345
-      name:
-        description: Written name of network.
-        returned: success
-        type: str
-        sample: YourNet
-      organizationId:
-        description: Organization ID which owns the network.
-        returned: success
-        type: str
-        sample: 0987654321
-      tags:
-        description: Space delimited tags assigned to network.
-        returned: success
-        type: str
-        sample: " production wireless "
-      timeZone:
-        description: Timezone where network resides.
-        returned: success
-        type: str
-        sample: America/Chicago
-      type:
-        description: Functional type of network.
-        returned: success
-        type: str
-        sample: switch
-      disableMyMerakiCom:
-        description: States whether U(my.meraki.com) and other device portals should be disabled.
-        returned: success
-        type: bool
-        sample: true
 '''
 
 import os
@@ -165,12 +135,13 @@ def main():
         if meraki.params['state'] == 'present':
             if meraki.params['whitelisted_rules'] is None:
                 meraki.fail_json(msg='whitelisted_rules is required when state is present and no network is specified.')
-    # if meraki.params['net_name'] or meraki.params['net_id']:  # Network param check
-    #     if meraki.params['state'] == 'present':
-    #         if meraki.params['protected_networks']['use_default'] is False and meraki.params['protected_networks']['included_cidr'] is None:
-    #             meraki.fail_json(msg="included_cidr is required when use_default is False.")
-    #         if meraki.params['protected_networks']['use_default'] is False and meraki.params['protected_networks']['excluded_cidr'] is None:
-    #             meraki.fail_json(msg="excluded_cidr is required when use_default is False.")
+    if meraki.params['net_name'] or meraki.params['net_id']:  # Network param check
+        if meraki.params['state'] == 'present':
+            if meraki.params['protected_networks'] is not None:
+                if meraki.params['protected_networks']['use_default'] is False and meraki.params['protected_networks']['included_cidr'] is None:
+                    meraki.fail_json(msg="included_cidr is required when use_default is False.")
+                if meraki.params['protected_networks']['use_default'] is False and meraki.params['protected_networks']['excluded_cidr'] is None:
+                    meraki.fail_json(msg="excluded_cidr is required when use_default is False.")
 
     org_id = meraki.params['org_id']
     if not org_id:
@@ -220,7 +191,6 @@ def main():
         path = meraki.construct_path('query_org', org_id=org_id)
         original = meraki.request(path, method='GET')
         if net_id is None:  # Set configuration for organization
-            # meraki.fail_json(msg="Compare", original=original, payload=payload)
             if meraki.is_update_required(original, payload, optional_ignore=['message']):
                 if meraki.module.check_mode is True:
                     original.update(payload)
@@ -228,7 +198,6 @@ def main():
                     meraki.result['changed'] = True
                     meraki.exit_json(**meraki.result)
                 path = meraki.construct_path('set_org', org_id=org_id)
-                # meraki.fail_json(msg="Payload", payload=payload)
                 data = meraki.request(path, method='PUT', payload=json.dumps(payload))
                 if meraki.status == 200:
                     meraki.result['data'] = data
@@ -264,7 +233,6 @@ def main():
                 meraki.result['changed'] = True
                 meraki.exit_json(**meraki.result)
             path = meraki.construct_path('set_org', org_id=org_id)
-            # meraki.fail_json(msg="Output", path=path, payload=payload)
             data = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = data
