@@ -59,13 +59,17 @@ options:
         type: str
         description:
             - A password for the user. Required when the user is present.
-            - I(update_password) must be C(True) for an existing user's password to be updated.
+            - C(update_password) must be C(always) for an existing user's password to be updated after initial
+              creation.
     update_password:
-        default: false
-        type: bool
+        default: on_create
+        type: str
         description:
-            - Change the user's password. The user must already exist.
-            - This value will only be used if the user already exists prior to the task execution.
+            - Set the user's password. By default this always happens on user creation as C(update_password)
+              defaults to C(on_create).
+            - Alternatively, this can be set to C(always) which will ensure the password is set on each task
+              invocation. The underlying API does not expose whether the password has actually been changed, so
+              using C(always) will result in the task always returning changed.
             - This parameter requires C(password) to be set.
 '''
 
@@ -77,16 +81,6 @@ EXAMPLES = '''
     enabled: true
     state: present
     password: mysecretpassword
-    api_key: 5eb86c9196ab03919abcf03857163741
-  delegate_to: localhost
-
-- name: change password for Memstore user
-  memset_memstore_user:
-    username: test
-    memstore: mstestyaa1
-    state: present
-    password: mynewpa$$word
-    update_password: true
     api_key: 5eb86c9196ab03919abcf03857163741
   delegate_to: localhost
 '''
@@ -128,7 +122,7 @@ def api_validation(args=None):
     username_re = r'^[a-z0-9-\_]{1}[a-z0-9-\.\_]{1,49}$'
     errors = dict()
 
-    if args['state'] == 'present' and not args['passsword']:
+    if args['state'] == 'present' and not args['password']:
         errors['password'] = "A password is required when state is present."
     if not re.match(username_re, args['username'].lower()):
         errors['username'] = "Username can only contain numbers, letters, dots, dashes and underscores, and can't start with a dot. Must be 50 chars or less."
@@ -143,9 +137,14 @@ def create_user(args=None, user=None):
     '''
     retvals, payload = dict(), dict()
     retvals['changed'], retvals['failed'] = False, False
+    _set_password = False
 
     if not user:
-        # user doesn't exist, create it.
+        '''
+        User doesn't exist, create it. Creating a user also sets their password for the
+        first time, therefore respecting update_password when it is set to either `on_create`
+        or `always`.
+        '''
         payload['name'], payload['username'], payload['password'], payload['enabled'] = \
             args['memstore'], args['username'], args['password'], args['enabled']
         if args['check_mode']:
@@ -162,8 +161,13 @@ def create_user(args=None, user=None):
             retvals['changed'] = True
             retvals['memset_api'] = response.json()
     else:
-        # User exists, update it. The only user attribute we can change is to
-        # enable or disable.
+        '''
+        User exists, update it. The only user attribute we can change is to enable or disable.
+        The password will be changed if update_password is set to `always`.
+        '''
+        if args['update_password'] == 'always':
+            _set_password = True
+
         if user['enabled'] != args['enabled']:
             if args['check_mode']:
                 retvals['changed'] = True
@@ -185,14 +189,16 @@ def create_user(args=None, user=None):
                 payload['enabled'] = args['enabled']
                 retvals['memset_api'] = payload
 
-        # if update_password is true then we always run a password change which
-        # will always return true (provided it is successful). Memstore's API does
-        # not expose whether the password was changed or not.
-        if args['update_password']:
-            pwd_retvals = update_password(args=args)
-            retvals['password'] = pwd_retvals['password']
-            if pwd_retvals['changed']:
-                retvals['changed'] = True
+    '''
+    If update_password is set to `always` then the task will always submit the current password to the
+    API which does not expose if it has been changed - setting the same password results in a successful
+    operation. Because of this, tasks will always return changed even if the password remains the same.
+    '''
+    if _set_password and not retvals['failed']:
+        pwd_retvals = update_password(args=args)
+        retvals['password'] = pwd_retvals['password']
+        if pwd_retvals['changed']:
+            retvals['changed'] = True
 
     return(retvals)
 
@@ -231,7 +237,7 @@ def update_password(args=None):
     if args['check_mode']:
         # Updating a password will always return changed as the API does not
         # know if the password is actually being changed.
-        retvals['password'] = 'Check mode not suppported when update_password is True.'
+        retvals['password'] = 'Check mode cannot tell if the password will be changed.'
     else:
         payload['name'], payload['username'], payload['password'] = args['memstore'], \
             args['username'], args['password']
@@ -271,22 +277,28 @@ def create_or_delete_user(args=None):
     currentuser = None
     for user in response.json():
         if user['username'] == args['username']:
-            currentuser = user
+            _user = user
             break
 
     if args['state'] == 'present':
         # the user may already exist, however we may also want to update
         # their attributes.
-        retvals = create_user(args=args, user=currentuser)
+        retvals = create_user(args=args, user=_user)
     if args['state'] == 'absent':
         # remove user
-        retvals = delete_user(args=args, user=currentuser)
+        retvals = delete_user(args=args, user=_user)
 
     return(retvals)
 
 
 def main():
     global module
+
+    required_if = [
+        ['state', 'present', ['password']],
+        ['update_password', 'always', ['password']]
+    ]
+
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
@@ -295,10 +307,10 @@ def main():
             password=dict(type='str', no_log=True),
             memstore=dict(required=True, type='str'),
             enabled=dict(default=False, type='bool'),
-            update_password=dict(default=False, type='bool')
+            update_password=dict(default='on_create', type='str')
         ),
         supports_check_mode=True,
-        required_if=[['update_password', True, ['password']]]
+        required_if=required_if
     )
 
     # populate the dict with the user-provided vars.
