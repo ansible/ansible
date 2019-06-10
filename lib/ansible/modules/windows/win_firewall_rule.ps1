@@ -156,7 +156,7 @@ try {
     # the default for enabled in module description is "true", but the actual COM object defaults to "false" when created
     if ($null -ne $enabled) { $new_rule.Enabled = $enabled } else { $new_rule.Enabled = $true }
     if ($null -ne $description) { $new_rule.Description = $description }
-    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName =  [System.Environment]::ExpandEnvironmentVariables($program) }
+    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName =  $program }
     if ($null -ne $service -and $program -ne "any") { $new_rule.ServiceName = $service }
     if ($null -ne $protocol -and $protocol -ne "any") { $new_rule.Protocol = Parse-ProtocolType -protocol $protocol }
     if ($null -ne $localport -and $localport -ne "any") { $new_rule.LocalPorts = $localport }
@@ -182,7 +182,7 @@ try {
     }
 
     $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
-    $userPassedArguments = @($name, $description, $direction, $action, $program, $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security)
+    $userPassedArguments = @($name, $description, $direction, $action, [System.Environment]::ExpandEnvironmentVariables($program), $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security)
 
     if ($state -eq "absent") {
         if ($null -eq $existingRule) {

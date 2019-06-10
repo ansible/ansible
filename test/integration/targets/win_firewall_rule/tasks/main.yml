@@ -411,3 +411,30 @@
   assert:
     that:
     - add_firewall_rule_with_list_profiles.changed == true
+
+# Test for variable expansion in the path
+- name: Add rule with path that needs to be expanded
+  win_firewall_rule:
+    name: VarExpansionTest
+    enabled: yes
+    state: present
+    action: allow
+    direction: in
+    protocol: tcp
+    program: '%SystemRoot%\\system32\\svchost.exe'
+
+- name: Add same rule with path that needs to be expanded
+  win_firewall_rule:
+    name: VarExpansionTest
+    enabled: yes
+    state: present
+    action: allow
+    direction: in
+    protocol: tcp
+    program: '%SystemRoot%\\system32\\svchost.exe'
+  register: add_firewall_rule_with_var_expand_path
+
+- name: Check that creating same firewall rule with expanded vars identified
+  assert:
+    that:
+    - add_firewall_rule_with_var_expand_path.changed == false
