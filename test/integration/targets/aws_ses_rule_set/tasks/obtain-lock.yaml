@@ -85,7 +85,7 @@
   register: lock_attempt_log_group_result
 
 - name: Get Lock Attempt Lock Groups
-  cloudwatchlogs_log_group_facts:
+  cloudwatchlogs_log_group_info:
     log_group_name: "{{ lock_log_group_prefix }}/"
     <<: *aws_connection_info
   register: lock_attempt_log_groups

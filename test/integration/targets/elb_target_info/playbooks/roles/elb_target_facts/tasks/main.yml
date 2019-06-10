@@ -1,10 +1,10 @@
 ---
-  - name: set up elb_target_facts test prerequisites
+  - name: set up elb_target_info test prerequisites
 
     block:
 
     - name:
-      debug: msg="********** Setting up elb_target_facts test dependencies **********"
+      debug: msg="********** Setting up elb_target_info test dependencies **********"
     # ============================================================
 
     - name: set up aws connection info
@@ -213,11 +213,11 @@
 
     # ============================================================
 
-    - debug: msg="********** Running elb_target_facts integration tests **********"
+    - debug: msg="********** Running elb_target_info integration tests **********"
 
     # ============================================================
     - name: gather facts
-      elb_target_facts:
+      elb_target_info:
         instance_id: "{{ ec2.instance_ids[0]}}"
         <<: *aws_connection_info
       register: target_facts
@@ -240,7 +240,7 @@
         <<: *aws_connection_info
 
     - name: gather facts again, including the idle group
-      elb_target_facts:
+      elb_target_info:
         instance_id: "{{ ec2.instance_ids[0]}}"
         <<: *aws_connection_info
       register: target_facts
@@ -254,7 +254,7 @@
         msg: "target facts reflected the addition of the target to the idle group"
 
     - name: gather facts again, this time excluding the idle group
-      elb_target_facts:
+      elb_target_info:
         instance_id: "{{ ec2.instance_ids[0]}}"
         get_unused_target_groups: false
         <<: *aws_connection_info
@@ -279,7 +279,7 @@
         <<: *aws_connection_info
 
     - name: gather facts
-      elb_target_facts:
+      elb_target_info:
         instance_id: "{{ ec2.instance_ids[0] }}"
         get_unused_target_groups: false
         <<: *aws_connection_info
@@ -315,7 +315,7 @@
         - "targets"
 
     - name: wait for all targets to deregister simultaneously
-      elb_target_facts:
+      elb_target_info:
         get_unused_target_groups: false
         instance_id: "{{ ec2.instance_ids[0] }}"
         <<: *aws_connection_info
@@ -340,7 +340,7 @@
     # wait until all groups associated with this instance are 'healthy' or
     # 'unused'
     - name: wait for registration
-      elb_target_facts:
+      elb_target_info:
         get_unused_target_groups: false
         instance_id: "{{ ec2.instance_ids[0] }}"
         <<: *aws_connection_info
@@ -373,7 +373,7 @@
     always:
 
     - name:
-      debug: msg="********** Tearing down elb_target_facts test dependencies **********"
+      debug: msg="********** Tearing down elb_target_info test dependencies **********"
 
     - name: remove ec2 instance
       ec2:

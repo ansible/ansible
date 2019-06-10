@@ -1,12 +1,12 @@
 version: '1.0'
 groupings:
-  aws_acm_facts:
+  aws_acm_info:
   - aws
   aws_api_gateway:
   - aws
   aws_application_scaling_policy:
   - aws
-  aws_az_facts:
+  aws_az_info:
   - aws
   aws_batch_compute_environment:
   - aws
@@ -14,7 +14,7 @@ groupings:
   - aws
   aws_batch_job_queue:
   - aws
-  aws_caller_facts:
+  aws_caller_info:
   - aws
   aws_config_aggregation_authorization:
   - aws
@@ -46,9 +46,9 @@ groupings:
   - aws
   aws_kms:
   - aws
-  aws_kms_facts:
+  aws_kms_info:
   - aws
-  aws_region_facts:
+  aws_region_info:
   - aws
   aws_s3:
   - aws
@@ -60,13 +60,13 @@ groupings:
   - aws
   aws_ses_identity_policy:
   - aws
-  aws_sgw_facts:
+  aws_sgw_info:
   - aws
   aws_ssm_parameter_store:
   - aws
   aws_waf_condition:
   - aws
-  aws_waf_facts:
+  aws_waf_info:
   - aws
   aws_waf_rule:
   - aws
@@ -90,7 +90,7 @@ groupings:
   - aws
   cloudwatchlogs_log_group:
   - aws
-  cloudwatchlogs_log_group_facts:
+  cloudwatchlogs_log_group_info:
   - aws
   cpm_plugconfig:
   - cpm
@@ -240,7 +240,7 @@ groupings:
   - aws
   ecs_taskdefinition:
   - aws
-  ecs_taskdefinition_facts:
+  ecs_taskdefinition_info:
   - aws
   efs:
   - aws
@@ -248,7 +248,7 @@ groupings:
   - aws
   elasticache:
   - aws
-  elasticache_facts:
+  elasticache_info:
   - aws
   elasticache_parameter_group:
   - aws
@@ -258,11 +258,11 @@ groupings:
   - aws
   elb_application_lb:
   - aws
-  elb_application_lb_facts:
+  elb_application_lb_info:
   - aws
   elb_classic_lb:
   - aws
-  elb_classic_lb_facts:
+  elb_classic_lb_info:
   - aws
   elb_instance:
   - aws
@@ -272,7 +272,7 @@ groupings:
   - aws
   elb_target_group:
   - aws
-  elb_target_group_facts:
+  elb_target_group_info:
   - aws
   execute_lambda:
   - aws
@@ -284,15 +284,15 @@ groupings:
   - aws
   iam_managed_policy:
   - aws
-  iam_mfa_device_facts:
+  iam_mfa_device_info:
   - aws
   iam_policy:
   - aws
   iam_role:
   - aws
-  iam_role_facts:
+  iam_role_info:
   - aws
-  iam_server_certificate_facts:
+  iam_server_certificate_info:
   - aws
   iam_user:
   - aws
@@ -314,23 +314,23 @@ groupings:
   - aws
   rds_instance:
   - aws
-  rds_instance_facts:
+  rds_instance_info:
   - aws
   rds_param_group:
   - aws
-  rds_snapshot_facts:
+  rds_snapshot_info:
   - aws
   rds_subnet_group:
   - aws
   redshift:
   - aws
-  redshift_facts:
+  redshift_info:
   - aws
   redshift_subnet_group:
   - aws
   route53:
   - aws
-  route53_facts:
+  route53_info:
   - aws
   route53_health_check:
   - aws
