@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_mysqldatabase_facts
+module: azure_rm_mysqldatabase_info
 version_added: "2.7"
 short_description: Get Azure MySQL Database facts
 description:
@@ -44,13 +44,13 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of MySQL Database
-    azure_rm_mysqldatabase_facts:
+    azure_rm_mysqldatabase_info:
       resource_group: myResourceGroup
       server_name: server_name
       name: database_name
 
   - name: List instances of MySQL Database
-    azure_rm_mysqldatabase_facts:
+    azure_rm_mysqldatabase_info:
       resource_group: myResourceGroup
       server_name: server_name
 '''
@@ -112,7 +112,7 @@ except ImportError:
     pass
 
 
-class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
+class AzureRMMySqlDatabaseInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -135,7 +135,7 @@ class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMySqlDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlDatabaseInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -195,7 +195,7 @@ class AzureRMMySqlDatabaseFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMySqlDatabaseFacts()
+    AzureRMMySqlDatabaseInfo()
 
 
 if __name__ == '__main__':
