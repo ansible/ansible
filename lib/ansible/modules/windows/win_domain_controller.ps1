@@ -29,7 +29,7 @@ Function Write-DebugLog {
     }
 }
 
-$required_features = @("AD-Domain-Services","RSAT-ADDS")
+$required_features = @("AD-Domain-Services","RSAT-AD-PowerShell", "RSAT-ADDS-Tools")
 
 Function Get-MissingFeatures {
     Write-DebugLog "Checking for missing Windows features..."
