@@ -42,7 +42,7 @@
         public: "False"
     register: subnets
 
-  - ec2_vpc_subnet_facts:
+  - ec2_vpc_subnet_info:
       filters:
         vpc-id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
