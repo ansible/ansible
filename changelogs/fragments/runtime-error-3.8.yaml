@@ -1,0 +1,3 @@
+bugfixes:
+  - dellos9_facts - Fix RuntimeError on Python 3.8.
+  - na_ontap_quotas - Fix RuntimeError on Python 3.8.
