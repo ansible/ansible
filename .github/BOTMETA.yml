@@ -71,13 +71,13 @@ files:
   $modules/cloud/amazon/ec2_tag.py: $team_ansible
   $modules/cloud/amazon/ec2_vol.py: $team_ansible
   $modules/cloud/amazon/ec2_vpc_endpoint.py: willthames
-  $modules/cloud/amazon/ec2_vpc_endpoint_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_endpoint_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_igw.py: willthames
-  $modules/cloud/amazon/ec2_vpc_igw_facts.py: willthames
-  $modules/cloud/amazon/ec2_vpc_nat_gateway_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_igw_info.py: willthames
+  $modules/cloud/amazon/ec2_vpc_nat_gateway_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_net.py: $team_ansible
-  $modules/cloud/amazon/ec2_vpc_net_facts.py: whiter
-  $modules/cloud/amazon/ec2_vpc_peering_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_net_info.py: whiter
+  $modules/cloud/amazon/ec2_vpc_peering_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_subnet.py: willthames
   $modules/cloud/amazon/ecs_cluster.py: willthames
   $modules/cloud/amazon/ecs_ecr.py: willthames
