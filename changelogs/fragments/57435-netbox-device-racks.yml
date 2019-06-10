@@ -1,0 +1,2 @@
+bugfixes:
+        - netbox_device - fixed issue where having two racks in Netbox genereted an error when adding device. The issue was casued by using a ``slug`` rather than ``name`` for racks.
