@@ -2,7 +2,7 @@
 
     # ============================================================
     - name: See whether key exists and its current state
-      aws_kms_facts:
+      aws_kms_info:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -30,7 +30,7 @@
           - create_kms.tags['Hello'] == 'World'
 
     - name: find facts about the key
-      aws_kms_facts:
+      aws_kms_info:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -66,7 +66,7 @@
         region: "{{ aws_region }}"
 
     - name: find facts about the key
-      aws_kms_facts:
+      aws_kms_info:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
@@ -86,7 +86,7 @@
         region: "{{ aws_region }}"
 
     - name: find facts about the key
-      aws_kms_facts:
+      aws_kms_info:
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
