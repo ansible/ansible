@@ -10,11 +10,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: rds_instance_facts
+module: rds_instance_info
 version_added: "2.6"
-short_description: obtain facts about one or more RDS instances
+short_description: obtain information about one or more RDS instances
 description:
-  - obtain facts about one or more RDS instances
+  - obtain information about one or more RDS instances
+  - This module was called C(rds_instance_facts) before Ansible 2.9. The usage did not change.
 options:
   db_instance_identifier:
     description:
@@ -38,13 +39,13 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Get facts about an instance
-- rds_instance_facts:
+# Get information about an instance
+- rds_instance_info:
     db_instance_identifier: new-database
-  register: new_database_facts
+  register: new_database_info
 
 # Get all RDS instances
-- rds_instance_facts:
+- rds_instance_info:
 '''
 
 RETURN = '''
@@ -350,7 +351,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def instance_facts(module, conn):
+def instance_info(module, conn):
     instance_name = module.params.get('db_instance_identifier')
     filters = module.params.get('filters')
 
@@ -388,10 +389,12 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+    if module._name == 'rds_instance_facts':
+        module.deprecate("The 'rds_instance_facts' module has been renamed to 'rds_instance_info'", version='2.13')
 
     conn = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
 
-    module.exit_json(**instance_facts(module, conn))
+    module.exit_json(**instance_info(module, conn))
 
 
 if __name__ == '__main__':
