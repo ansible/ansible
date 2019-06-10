@@ -15,12 +15,12 @@ DOCUMENTATION = '''
 ---
 module: rds
 version_added: "1.3"
-short_description: create, delete, or modify an Amazon rds instance
+short_description: create, delete, or modify Amazon rds instances, rds snapshots, and related facts
 description:
-    - Creates, deletes, or modifies rds instances.
+    - Creates, deletes, or modifies rds resources.
     - When creating an instance it can be either a new instance or a read-only replica of an existing instance.
-    - This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely
-      on boto.rds2 (boto >= 2.26.0)
+    - This module has a dependency on python-boto >= 2.5 and will soon be deprecated.
+    - The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely on boto.rds2 (boto >= 2.26.0).
     - Please use boto3 based M(rds_instance) instead.
 options:
   command:
