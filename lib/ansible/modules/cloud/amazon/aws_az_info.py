@@ -9,10 +9,11 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
-module: aws_az_facts
+module: aws_az_info
 short_description: Gather facts about availability zones in AWS.
 description:
     - Gather facts about availability zones in AWS.
+    - This module was called C(aws_az_facts) before Ansible 2.9. The usage did not change.
 version_added: '2.5'
 author: 'Henrique Rodrigues (@Sodki)'
 options:
@@ -34,10 +35,10 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Gather facts about all availability zones
-- aws_az_facts:
+- aws_az_info:
 
 # Gather facts about a single availability zone
-- aws_az_facts:
+- aws_az_info:
     filters:
       zone-name: eu-west-1a
 '''
@@ -87,6 +88,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'aws_acm_facts':
+        module.deprecate("The 'aws_az_facts' module has been renamed to 'aws_az_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
