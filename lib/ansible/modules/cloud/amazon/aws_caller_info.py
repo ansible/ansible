@@ -10,11 +10,12 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: aws_caller_facts
-short_description: Get facts about the user and account being used to make AWS calls.
+module: aws_caller_info
+short_description: Get information about the user and account being used to make AWS calls.
 description:
     - This module returns information about the account and user / role from which the AWS access tokens originate.
     - The primary use of this is to get the account id for templating into ARNs or similar to avoid needing to specify this information in inventory.
+    - This module was called C(aws_caller_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 
 author:
@@ -30,9 +31,9 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Get the current caller identity facts
-  aws_caller_facts:
-  register: caller_facts
+- name: Get the current caller identity information
+  aws_caller_info:
+  register: caller_info
 '''
 
 RETURN = '''
@@ -74,12 +75,14 @@ def main():
         argument_spec={},
         supports_check_mode=True,
     )
+    if module._name == 'aws_caller_facts':
+        module.deprecate("The 'aws_caller_facts' module has been renamed to 'aws_caller_info'", version='2.13')
 
     client = module.client('sts')
 
     try:
-        caller_facts = client.get_caller_identity()
-        caller_facts.pop('ResponseMetadata', None)
+        caller_info = client.get_caller_identity()
+        caller_info.pop('ResponseMetadata', None)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to retrieve caller identity')
 
@@ -91,9 +94,9 @@ def main():
         # see https://docs.aws.amazon.com/cli/latest/reference/iam/list-account-aliases.html#output
         response = iam_client.list_account_aliases()
         if response and response['AccountAliases']:
-            caller_facts['account_alias'] = response['AccountAliases'][0]
+            caller_info['account_alias'] = response['AccountAliases'][0]
         else:
-            caller_facts['account_alias'] = ''
+            caller_info['account_alias'] = ''
     except (BotoCoreError, ClientError) as e:
         # The iam:ListAccountAliases permission is required for this operation to succeed.
         # Lacking this permission is handled gracefully by not returning the account_alias.
@@ -101,7 +104,7 @@ def main():
 
     module.exit_json(
         changed=False,
-        **camel_dict_to_snake_dict(caller_facts))
+        **camel_dict_to_snake_dict(caller_info))
 
 
 if __name__ == '__main__':

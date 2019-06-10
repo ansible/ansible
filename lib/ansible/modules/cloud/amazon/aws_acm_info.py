@@ -7,10 +7,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: aws_acm_facts
-short_description: Retrieve certificate facts from AWS Certificate Manager service
+module: aws_acm_info
+short_description: Retrieve certificate information from AWS Certificate Manager service
 description:
-  - Retrieve facts for ACM certificates
+  - Retrieve information for ACM certificates
+  - This module was called C(aws_acm_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 options:
   domain_name:
@@ -33,14 +34,14 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: obtain all ACM certificates
-  aws_acm_facts:
+  aws_acm_info:
 
-- name: obtain all facts for a single ACM certificate
-  aws_acm_facts:
+- name: obtain all information for a single ACM certificate
+  aws_acm_info:
     domain_name: "*.example_com"
 
 - name: obtain all certificates pending validiation
-  aws_acm_facts:
+  aws_acm_info:
     statuses:
     - PENDING_VALIDATION
 '''
@@ -314,6 +315,8 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'aws_acm_facts':
+        module.deprecate("The 'aws_acm_facts' module has been renamed to 'aws_acm_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required by this module')

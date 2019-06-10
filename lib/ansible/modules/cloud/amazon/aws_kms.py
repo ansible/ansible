@@ -25,7 +25,7 @@ options:
     description: An alias for a key. For safety, even though KMS does not require keys
       to have an alias, this module expects all new keys to be given an alias
       to make them easier to manage. Existing keys without an alias may be
-      referred to by I(key_id). Use M(aws_kms_facts) to find key ids. Required
+      referred to by I(key_id). Use M(aws_kms_info) to find key ids. Required
       if I(key_id) is not given. Note that passing a I(key_id) and I(alias)
       will only cause a new alias to be added, an alias will never be renamed.
       The 'alias/' prefix is optional.

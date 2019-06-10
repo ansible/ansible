@@ -7,10 +7,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: aws_waf_facts
-short_description: Retrieve facts for WAF ACLs, Rule , Conditions and Filters.
+module: aws_waf_info
+short_description: Retrieve information for WAF ACLs, Rule , Conditions and Filters.
 description:
-  - Retrieve facts for WAF ACLs, Rule , Conditions and Filters.
+  - Retrieve information for WAF ACLs, Rule , Conditions and Filters.
+  - This module was called C(aws_waf_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.4"
 requirements: [ boto3 ]
 options:
@@ -33,15 +34,15 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: obtain all WAF facts
-  aws_waf_facts:
+- name: obtain all WAF information
+  aws_waf_info:
 
-- name: obtain all facts for a single WAF
-  aws_waf_facts:
+- name: obtain all information for a single WAF
+  aws_waf_info:
     name: test_waf
 
-- name: obtain all facts for a single WAF Regional
-  aws_waf_facts:
+- name: obtain all information for a single WAF Regional
+  aws_waf_info:
     name: test_waf
     waf_regional: true
 '''
@@ -128,6 +129,8 @@ def main():
         )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'aws_waf_facts':
+        module.deprecate("The 'aws_waf_facts' module has been renamed to 'aws_waf_info'", version='2.13')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
