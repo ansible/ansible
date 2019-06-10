@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlconfiguration
 version_added: "2.8"
-short_description: Manage Azure PostgreSQL Configuration.
+short_description: Manage Azure PostgreSQL Configuration
 description:
     - Update or reset Azure PostgreSQL Configuration setting.
 
@@ -39,8 +39,7 @@ options:
             - Setting value.
     state:
         description:
-            - Assert the state of the PostgreSQL setting. Use C(present) to update setting, or
-              C(absent) to reset to default value.
+            - Assert the state of the PostgreSQL setting. Use C(present) to update setting, or C(absent) to reset to default value.
         default: present
         choices:
             - absent
@@ -50,7 +49,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -66,7 +65,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource ID
+        - Resource ID.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/myServer/confi
