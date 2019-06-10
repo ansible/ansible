@@ -59,7 +59,8 @@ options:
         type: list
       dockerfile:
         description:
-          - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+          - Use with state C(present) and source C(build) to provide an alternate name for the Dockerfile to use when building an image.
+          - This can also include a relative path (relative to I(path)).
         type: str
       http_timeout:
         description:
@@ -142,7 +143,8 @@ options:
     version_added: "2.2"
   dockerfile:
     description:
-      - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+      - Use with state C(present) and source C(build) to provide an alternate name for the Dockerfile to use when building an image.
+      - This can also include a relative path (relative to I(path)).
       - Please use I(build.dockerfile) instead. This option will be removed in Ansible 2.12.
     type: str
     version_added: "2.0"
