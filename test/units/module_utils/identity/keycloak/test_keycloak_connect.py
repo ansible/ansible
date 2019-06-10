@@ -95,11 +95,12 @@ def test_bad_json_returned(mock_bad_json_returned):
             auth_password='admin',
             client_secret=None
         )
-    assert str(raised_error.value) == (
+    # cannot check all the message, different errors message for the value
+    # error in python 2.6, 2.7 and 3.*.
+    assert (
         'API returned invalid JSON when trying to obtain access token from '
         'http://keycloak.url/auth/realms/master/protocol/openid-connect/token: '
-        'Expecting value: line 1 column 17 (char 16)'
-    )
+    ) in str(raised_error.value)
 
 
 def raise_401(url):
