@@ -17,13 +17,13 @@ module: azure_rm_virtualmachinescaleset_info
 
 version_added: "2.9"
 
-short_description: Get Virtual Machine Scale Set information
+short_description: Get Virtual Machine Scale Set facts
 
 description:
-    - Get information for a virtual machine scale set
+    - Get facts for a virtual machine scale set
 
 notes:
-    - This module was called C(azure_rm_virtualmachine_scaleset_info) before Ansible 2.8. The usage did not change.
+    - This module was called C(azure_rm_virtualmachine_scaleset_facts) before Ansible 2.8. The usage did not change.
 
 options:
     name:
@@ -40,7 +40,7 @@ options:
             - Format of the data returned.
             - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
             - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachinescaleset module.
-            - In Ansible 2.5 and lower information are always returned in raw format.
+            - In Ansible 2.5 and lower facts are always returned in raw format.
             - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
         default: 'raw'
         choices:
@@ -50,23 +50,22 @@ options:
 
 extends_documentation_fragment:
     - azure
-
 author:
     - "Sertac Ozercan (@sozercan)"
 '''
 
 EXAMPLES = '''
-    - name: Get information for a virtual machine scale set
+    - name: Get facts for a virtual machine scale set
       azure_rm_virtualmachinescaleset_info:
         resource_group: myResourceGroup
         name: testvmss001
         format: curated
 
-    - name: Get information for all virtual networks
+    - name: Get facts for all virtual networks
       azure_rm_virtualmachinescaleset_info:
         resource_group: myResourceGroup
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_virtualmachinescaleset_info:
         resource_group: myResourceGroup
         tags:
@@ -253,7 +252,7 @@ AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
 class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
-    """Utility class to get virtual machine scale set information"""
+    """Utility class to get virtual machine scale set facts"""
 
     def __init__(self):
 
@@ -284,16 +283,15 @@ class AzureRMVirtualMachineScaleSetInfo(AzureRMModuleBase):
         super(AzureRMVirtualMachineScaleSetInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
-            facts_module=True
-        )
+            facts_module=True)
 
     def exec_module(self, **kwargs):
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        if self.module._name == 'azure_rm_virtualmachine_scaleset_info':
-            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_info' module has been renamed to 'azure_rm_virtualmachinescaleset_info'",
+        if self.module._name == 'azure_rm_virtualmachine_scaleset_facts':
+            self.module.deprecate("The 'azure_rm_virtualmachine_scaleset_facts' module has been renamed to 'azure_rm_virtualmachinescaleset_facts'",
                                   version='2.12')
 
         if self.name and not self.resource_group:
@@ -421,4 +419,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
