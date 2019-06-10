@@ -496,7 +496,7 @@ def main():
     if state == 'present' and not module.params['accounts']:
         module.fail_json(
             msg="Can't create a stack set without choosing at least one account. "
-                "To get the ID of the current account, use the aws_caller_facts module."
+                "To get the ID of the current account, use the aws_caller_info module."
         )
 
     module.params['accounts'] = [to_native(a) for a in module.params['accounts']]
