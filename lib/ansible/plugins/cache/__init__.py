@@ -153,7 +153,10 @@ class BaseFileCacheModule(BaseCacheModule):
                 raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. "
                                    "It has been removed, so you can re-run your command now." % cachefile)
             except (OSError, IOError) as e:
-                display.v("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+                if e.errno == errno.ENOENT:
+                    display.v("'%s' cache plugin tried to read non-existent %s" % (self.plugin_name, cachefile))
+                else:
+                    display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
                 raise KeyError
             except Exception as e:
                 raise AnsibleError("Error while decoding the cache file %s: %s" % (cachefile, to_bytes(e)))
