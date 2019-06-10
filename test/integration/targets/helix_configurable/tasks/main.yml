@@ -1,0 +1,151 @@
+# Test code for the Helix configurable module
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2019, Asif Shaikh (@ripclawffb) <ripclaw_ffb@hotmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Install required lib
+  pip:
+    name: p4python
+
+- name: Set auth.id for any server id
+  helix_configurable:
+    state: present
+    name: auth.id
+    value: master.1
+    p4port: '1666'
+    p4user: bruno
+    p4passwd: ''
+  register: auth_set_configurable
+
+- debug:
+    var: auth_set_configurable
+
+- assert:
+    that:
+      - auth_set_configurable is changed
+
+- name: Set auth.id for any server id (idempotent)
+  helix_configurable:
+    state: present
+    name: auth.id
+    value: master.1
+    p4port: '1666'
+    p4user: bruno
+    p4passwd: ''
+  register: auth_set_configurable_idempotent
+
+- debug:
+    var: auth_set_configurable_idempotent
+
+- assert:
+    that:
+      - auth_set_configurable_idempotent is not changed
+
+- name: Unset auth.id for any server id
+  helix_configurable:
+    state: absent
+    name: auth.id
+    value: master.1
+    p4port: '1666'
+    p4user: bruno
+    p4passwd: ''
+  register: auth_unset_configurable
+
+- debug:
+    var: auth_set_configurable
+
+- assert:
+    that:
+      - auth_set_configurable is changed
+
+- name: Set auth.id for specific server (check mode)
+  helix_configurable:
+    state: present
+    name: auth.id
+    value: master.1
+    serverid: master
+    p4port: '1666'
+    p4user: bruno
+    p4passwd: ''
+  register: auth_set_serverid_configurable
+  check_mode: yes
+
+- debug:
+    var: auth_set_serverid_configurable
+
+- assert:
+    that:
+      - auth_set_serverid_configurable is changed
+
+- name: Set auth.id for specific server
+  helix_configurable:
+    state: present
+    name: auth.id
+    value: master.1
+    serverid: master
+    p4port: '1666'
+    p4user: bruno
+    p4passwd: ''
+  register: auth_set_serverid_configurable
+
+- debug:
+    var: auth_set_serverid_configurable
+
+- assert:
+    that:
+      - auth_set_serverid_configurable is changed
+
+- name: Unset auth.id for specific server id
+  helix_configurable:
+    state: absent
+    name: auth.id
+    value: master.1
+    serverid: master
+    p4port: '1666'
+    p4user: bruno
+    p4passwd: ''
+  register: auth_unset_serverid_configurable
+
+- debug:
+    var: auth_unset_serverid_configurable
+
+- assert:
+    that:
+      - auth_unset_serverid_configurable is changed
+
+- name: Fail when using invalid login
+  helix_configurable:
+    state: present
+    name: auth.id
+    value: master.1
+    p4port: '1666'
+    p4user: bruno1
+    p4passwd: ''
+  register: auth_set_invalid_login
+  ignore_errors: true
+
+- debug:
+    var: auth_set_invalid_login
+
+- assert:
+    that:
+      - auth_set_invalid_login.failed | bool
+
+- name: Fail when using invalid port
+  helix_configurable:
+    state: present
+    name: auth.id
+    value: master.1
+    p4port: '1999'
+    p4user: bruno1
+    p4passwd: ''
+  register: auth_set_invalid_port
+  ignore_errors: true
+
+- debug:
+    var: auth_set_invalid_port
+
+- assert:
+    that:
+      - auth_set_invalid_port.failed | bool
