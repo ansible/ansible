@@ -95,6 +95,9 @@
       - result.changed == true
       - result.queries == ['ANALYZE "{{ test_table }}"']
 
+  - pause:
+      seconds: 2
+
   - name: postgresql_vacuum - check analyze counter
     <<: *task_parameters
     postgresql_query:
@@ -121,6 +124,9 @@
       - result.changed == true
       - result.queries == ['ANALYZE "{{ test_table }}" (id, name)']
 
+  - pause:
+      seconds: 2
+
   - name: postgresql_vacuum - check analyze counter
     <<: *task_parameters
     postgresql_query:
@@ -142,6 +148,9 @@
       that:
       - result.changed == true
       - result.queries == ['ANALYZE']
+
+  - pause:
+      seconds: 2
 
   - name: postgresql_vacuum - check analyze counter
     <<: *task_parameters
@@ -204,6 +213,9 @@
       - result.changed == true
       - result.queries == ['VACUUM "{{ test_table }}"']
 
+  - pause:
+      seconds: 2
+
   - name: postgresql_vacuum - check vacuum count
     <<: *task_parameters
     postgresql_query:
@@ -229,6 +241,9 @@
       - result.changed == true
       - result.queries == ['VACUUM (FREEZE, ANALYZE) "{{ test_table }}" (id)']
 
+  - pause:
+      seconds: 2
+
   - name: postgresql_vacuum - check vacuum count
     <<: *task_parameters
     postgresql_query:
@@ -249,6 +264,9 @@
       that:
       - result.changed == true
       - result.queries == ['VACUUM']
+
+  - pause:
+      seconds: 2
 
   - name: postgresql_vacuum - check vacuum count
     <<: *task_parameters
@@ -328,6 +346,9 @@
       - result.changed == true
       - result.queries == ['VACUUM FULL ANALYZE "{{ test_table }}"']
 
+  - pause:
+      seconds: 2
+
   - name: postgresql_vacuum - check vacuum counter
     <<: *task_parameters
     postgresql_query:
@@ -351,6 +372,9 @@
       that:
       - result.changed == true
       - result.queries == ['VACUUM FULL ANALYZE "{{ test_table }}"']
+
+  - pause:
+      seconds: 2
 
   - name: postgresql_vacuum - check vacuum counter
     <<: *task_parameters
