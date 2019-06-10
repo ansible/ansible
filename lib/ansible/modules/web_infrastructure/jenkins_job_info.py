@@ -15,20 +15,21 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: jenkins_job_facts
-short_description: Get facts about Jenkins jobs
+module: jenkins_job_info
+short_description: Get information about Jenkins jobs
 version_added: "2.5"
 description:
-  - This module can be used to query the facts about which Jenkins jobs which already exists.
+  - This module can be used to query information about which Jenkins jobs which already exists.
+  - This module was called C(jenkins_job_info) before Ansible 2.9. The usage did not change.
 requirements:
   - "python-jenkins >= 0.4.12"
 options:
   name:
     description:
-      - Exact name of the Jenkins job to fetch facts about.
+      - Exact name of the Jenkins job to fetch information about.
   glob:
     description:
-      - A shell glob of Jenkins job names to fetch facts about.
+      - A shell glob of Jenkins job names to fetch information about.
   color:
     description:
       - Only fetch jobs with the given status color.
@@ -60,60 +61,60 @@ author:
 
 EXAMPLES = '''
 # Get all Jenkins jobs using basic auth
-- jenkins_job_facts:
+- jenkins_job_info:
     user: admin
     password: hunter2
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
 # Get all Jenkins jobs using the token
-- jenkins_job_facts:
+- jenkins_job_info:
     user: admin
     token: abcdefghijklmnop
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
-# Get facts about a single job using basic auth
-- jenkins_job_facts:
+# Get info about a single job using basic auth
+- jenkins_job_info:
     name: some-job-name
     user: admin
     password: hunter2
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
-# Get facts about a single job in a folder using basic auth
-- jenkins_job_facts:
+# Get info about a single job in a folder using basic auth
+- jenkins_job_info:
     name: some-folder-name/some-job-name
     user: admin
     password: hunter2
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
-# Get facts about jobs matching a shell glob using basic auth
-- jenkins_job_facts:
+# Get info about jobs matching a shell glob using basic auth
+- jenkins_job_info:
     glob: some-job-*
     user: admin
     password: hunter2
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
-# Get facts about all failing jobs using basic auth
-- jenkins_job_facts:
+# Get info about all failing jobs using basic auth
+- jenkins_job_info:
     color: red
     user: admin
     password: hunter2
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
-# Get facts about passing jobs matching a shell glob using basic auth
-- jenkins_job_facts:
+# Get info about passing jobs matching a shell glob using basic auth
+- jenkins_job_info:
     name: some-job-*
     color: blue
     user: admin
     password: hunter2
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 
-- name: Get the facts from custom URL with token and validate_certs=False
-  jenkins_job_facts:
+- name: Get the info from custom URL with token and validate_certs=False
+  jenkins_job_info:
     user: admin
     token: 126df5c60d66c66e3b75b11104a16a8a
     url: https://jenkins.example.com
     validate_certs: False
-  register: my_jenkins_job_facts
+  register: my_jenkins_job_info
 '''
 
 RETURN = '''
@@ -237,6 +238,8 @@ def main():
         ],
         supports_check_mode=True,
     )
+    if module._name == 'jenkins_job_facts':
+        module.deprecate("The 'jenkins_job_facts' module has been renamed to 'jenkins_job_info'", version='2.13')
 
     test_dependencies(module)
     jobs = list()
