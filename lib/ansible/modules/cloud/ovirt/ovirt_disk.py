@@ -190,9 +190,9 @@ options:
     activate:
         description:
             - I(True) if the disk should be activated.
+            - When creating disk for VM it is set to I(True).
         version_added: "2.8"
         type: bool
-        default: True
 extends_documentation_fragment: ovirt
 '''
 
@@ -664,7 +664,7 @@ def main():
         image_provider=dict(default=None),
         host=dict(default=None),
         wipe_after_delete=dict(type='bool', default=None),
-        activate=dict(default=True, type='bool'),
+        activate=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -710,6 +710,9 @@ def main():
         ret = None
         # First take care of creating the VM, if needed:
         if state in ('present', 'detached', 'attached'):
+            if vm_service is not None and disk is None:
+                #When creating disk for vm activate it.
+                module.params['activate'] = True
             ret = disks_module.create(
                 entity=disk if not force_create else None,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
