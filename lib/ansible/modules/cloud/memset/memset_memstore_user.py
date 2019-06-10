@@ -71,6 +71,7 @@ options:
               invocation. The underlying API does not expose whether the password has actually been changed, so
               using C(always) will result in the task always returning changed.
             - This parameter requires C(password) to be set.
+        choices: [ on_create, always ]
 '''
 
 EXAMPLES = '''
