@@ -159,6 +159,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netconf.netconf import get_capabilities, locked_config, get_config, get
 from ansible.module_utils.network.common.netconf import remove_namespaces
+from ansible.module_utils._text import to_text
 
 try:
     import jxmlease
@@ -235,7 +236,7 @@ def main():
     else:
         response = get(module, filter_spec, execute_lock)
 
-    xml_resp = tostring(response)
+    xml_resp = to_text(tostring(response))
     output = None
 
     if display == 'xml':
@@ -246,7 +247,7 @@ def main():
         except Exception:
             raise ValueError(xml_resp)
     elif display == 'pretty':
-        output = tostring(response, pretty_print=True)
+        output = to_text(tostring(response, pretty_print=True))
 
     result = {
         'stdout': xml_resp,
