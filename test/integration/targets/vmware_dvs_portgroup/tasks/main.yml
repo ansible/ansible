@@ -211,10 +211,10 @@
 - name: create basic portgroup with all security and policy settings enabled
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
     portgroup_name: "basic-some-enabled-updates"
     vlan_id: 0
     num_ports: 32
@@ -230,10 +230,10 @@
 - name: update portgroup port policy settings
   vmware_dvs_portgroup:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    switch_name: "{{ dvswitch1 }}"
     portgroup_name: "basic-some-enabled-updates"
     vlan_id: 0
     num_ports: 32
@@ -270,10 +270,10 @@
 #- name: update portgroup port policy settings again
 #  vmware_dvs_portgroup:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    switch_name: "{{ new_dvs_0001['json'][0] | basename }}"
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    switch_name: "{{ dvswitch1 }}"
 #    portgroup_name: "basic-some-enabled-updates"
 #    vlan_id: 0
 #    num_ports: 32
