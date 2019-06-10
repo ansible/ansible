@@ -27,7 +27,7 @@ version_added: "2.9"
 short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: xuxiaowei0512 (@CloudEngine-Ansible)
 notes:
     - C(state=absent) removes the Eth-Trunk config and interface if it
       already exists. If members to be removed are not explicitly
@@ -134,13 +134,6 @@ EXAMPLES = '''
   hosts: cloudengine
   connection: local
   gather_facts: no
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: "{{ ansible_ssh_port }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      transport: cli
 
   tasks:
   - name: Ensure Eth-Trunk100 is created, add two members, and set to mode lacp-static
