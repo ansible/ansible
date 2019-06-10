@@ -79,7 +79,8 @@ EXAMPLES = '''
         - example-2
         - example-3
 
-# Gather information about any security group with a tag key Name and value Example. The quotes around 'tag:name' are important because of the colon in the value
+# Gather information about any security group with a tag key Name and value Example.
+# The quotes around 'tag:name' are important because of the colon in the value
 - ec2_group_info:
     filters:
       "tag:Name": Example
