@@ -37,7 +37,7 @@ from ansible.module_utils.basic import missing_required_lib
 
 try:
     from pyVim.connect import Disconnect, SmartConnect, SmartConnectNoSSL
-    from pyVmomi import vim
+    from pyVmomi import vim, vmodl
 
     HAS_PYVMOMI = True
 except ImportError:
@@ -395,6 +395,17 @@ class Connection(ConnectionBase):
             processes = self.processManager.ListProcessesInGuest(vm=self.vm, auth=self.vm_auth, pids=[pid])
         except vim.fault.NoPermission as e:
             raise AnsibleError("No Permission Error: %s %s" % (to_native(e.msg), to_native(e.privilegeId)))
+        except vmodl.fault.SystemError as e:
+            # https://pubs.vmware.com/vsphere-6-5/index.jsp?topic=%2Fcom.vmware.wssdk.smssdk.doc%2Fvmodl.fault.SystemError.html
+            # https://github.com/ansible/ansible/issues/57607
+            if e.reason == 'vix error codes = (1, 0).\n':
+                raise AnsibleConnectionFailure(
+                    "Connection failed, Netlogon service stopped or dcpromo in progress. Reason: %s" % (
+                        to_native(e.reason)
+                    )
+                )
+            else:
+                raise AnsibleConnectionFailure("Connection plugin failed. Reason: %s" % (to_native(e.reason)))
         return processes[0]
 
     def _fix_url_for_hosts(self, url):
