@@ -20,10 +20,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_eni_facts
-short_description: Gather facts about ec2 ENI interfaces in AWS
+module: ec2_eni_info
+short_description: Gather information about ec2 ENI interfaces in AWS
 description:
-    - Gather facts about ec2 ENI interfaces in AWS
+    - Gather information about ec2 ENI interfaces in AWS
+    - This module was called C(ec2_eni_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 requirements: [ boto3 ]
@@ -40,11 +41,11 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all ENIs
-- ec2_eni_facts:
+# Gather information about all ENIs
+- ec2_eni_info:
 
-# Gather facts about a particular ENI
-- ec2_eni_facts:
+# Gather information about a particular ENI
+- ec2_eni_info:
     filters:
       network-interface-id: eni-xxxxxxx
 
@@ -264,6 +265,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'ec2_eni_facts':
+        module.deprecate("The 'ec2_eni_facts' module has been renamed to 'ec2_eni_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

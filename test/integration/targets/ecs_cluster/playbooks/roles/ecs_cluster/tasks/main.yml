@@ -124,16 +124,16 @@
       register: setup_sg
 
     - name: find a suitable AMI
-      ec2_ami_facts:
+      ec2_ami_info:
         owner: amazon
         filters:
           description: "Amazon Linux AMI* ECS *"
         <<: *aws_connection_info
-      register: ec2_ami_facts
+      register: ec2_ami_info
 
     - name: set image id fact
       set_fact:
-        ecs_image_id: "{{ (ec2_ami_facts.images|first).image_id }}"
+        ecs_image_id: "{{ (ec2_ami_info.images|first).image_id }}"
 
     - name: provision ec2 instance to create an image
       ec2:
