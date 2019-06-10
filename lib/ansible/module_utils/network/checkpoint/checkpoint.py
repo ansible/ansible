@@ -34,21 +34,6 @@ from ansible.module_utils.connection import Connection
 
 
 checkpoint_argument_spec_for_objects = dict(
-    name=dict(type='str'),
-    uid=dict(type='str'),
-    tags=dict(type='list'),
-    color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
-                                    'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise',
-                                    'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray',
-                                    'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue',
-                                    'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
-                                    'red', 'sienna', 'yellow']),
-    comments=dict(type='str'),
-    details_level=dict(type='str', choices=['uid', 'standard', 'full']),
-    groups=dict(type='list'),
-    ignore_warnings=dict(type='bool'),
-    ignore_errors=dict(type='bool'),
-    new_name=dict(type='str'),
     auto_publish_session=dict(type='bool'),
     wait_for_task=dict(type='bool', default=True),
     state=dict(type='str', required=True, choices=['present', 'absent']),
@@ -56,51 +41,11 @@ checkpoint_argument_spec_for_objects = dict(
 )
 
 checkpoint_argument_spec_for_facts = dict(
-    name=dict(type='str'),
-    uid=dict(type='str'),
-    details_level=dict(type='str', choices=['uid', 'standard', 'full']),
-    limit=dict(type='int'),
-    offset=dict(type='int'),
-    order=dict(type='list'),
-    show_membership=dict(type='bool'),
     version=dict(type='str')
 )
 
 checkpoint_argument_spec_for_commands = dict(
     wait_for_task=dict(type='bool', default=True),
-    version=dict(type='str')
-)
-
-checkpoint_argument_spec_for_TP_objects = dict(
-    name=dict(type='str'),
-    uid=dict(type='str'),
-    comments=dict(type='str'),
-    details_level=dict(type='str', choices=['uid', 'standard', 'full']),
-    ignore_warnings=dict(type='bool'),
-    ignore_errors=dict(type='bool'),
-    new_name=dict(type='str'),
-    auto_publish_session=dict(type='bool'),
-    wait_for_task=dict(type='bool', default=True),
-    state=dict(type='str', required=True, choices=['present', 'absent']),
-    version=dict(type='str')
-)
-
-checkpoint_argument_spec_for_TP_facts = dict(
-    name=dict(type='str'),
-    uid=dict(type='str'),
-    details_level=dict(type='str', choices=['uid', 'standard', 'full']),
-    limit=dict(type='int'),
-    offset=dict(type='int'),
-    order=dict(type='list'),
-    version=dict(type='str')
-)
-
-checkpoint_argument_spec_for_basic_objects = dict(
-    name=dict(type='str'),
-    uid=dict(type='str'),
-    auto_publish_session=dict(type='bool'),
-    wait_for_task=dict(type='bool', default=True),
-    state=dict(type='str', required=True, choices=['present', 'absent']),
     version=dict(type='str')
 )
 

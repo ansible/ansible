@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
+# Ansible module to manage CheckPoint Firewall (c) 2019
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +35,10 @@ description:
 version_added: "2.9"
 author: "Or Soffer (@chkp-orso)"
 options:
+  name:
+    description:
+      - Object name.
+    type: str
   subnet:
     description:
       - IPv4 or IPv6 network address. If both addresses are required use subnet4 and subnet6 fields explicitly.
@@ -48,8 +53,7 @@ options:
     type: str
   mask_length:
     description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
-        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
     type: int
   mask_length4:
     description:
@@ -67,21 +71,65 @@ options:
     description:
       - NAT settings.
     type: dict
+  tags:
+    description:
+      - Collection of tag identifiers.
+    type: list
   broadcast:
     description:
       - Allow broadcast address inclusion.
     type: str
     choices: ['disallow', 'allow']
+  color:
+    description:
+      - Color of the object. Should be one of existing colors.
+    type: str
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
+  comments:
+    description:
+      - Comments string.
+    type: str
+  details_level:
+    description:
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the object to a fully detailed representation of the object.
+    type: str
+    choices: ['uid', 'standard', 'full']
+  groups:
+    description:
+      - Collection of group identifiers.
+    type: list
+  ignore_warnings:
+    description:
+      - Apply changes ignoring warnings.
+    type: bool
+  ignore_errors:
+    description:
+      - Apply changes ignoring errors. You won't be able to publish such a changes. If ignore-warnings flag was omitted - warnings will also be ignored.
+    type: bool
+  uid:
+    description:
+      - Object unique identifier.
+    type: str
+  new_name:
+    description:
+      - New name of the object.
+    type: str
 extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
 - name: Add network object
   cp_network:
-    name: "New Network 1"
-    subnet: "192.0.2.0"
-    subnet_mask : "255.255.255.0"
+    name: New Network 3
+    nat_settings:
+      auto-rule: true
+      hide-behind: ip-address
+      install-on: All
+      ip-address: 192.0.2.1
+      method: static
     state: present
+    subnet: 192.0.2.1
+    subnet_mask: 255.255.255.0
 """
 
 RETURN = """
@@ -97,6 +145,7 @@ from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argume
 
 def main():
     argument_spec = dict(
+        name=dict(type='str'),
         subnet=dict(type='str'),
         subnet4=dict(type='str'),
         subnet6=dict(type='str'),
@@ -105,13 +154,22 @@ def main():
         mask_length6=dict(type='int'),
         subnet_mask=dict(type='str'),
         nat_settings=dict(type='dict'),
-        broadcast=dict(type='str', choices=['disallow', 'allow'])
+        tags=dict(type='list'),
+        broadcast=dict(type='str', choices=['disallow', 'allow']),
+        color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']),
+        comments=dict(type='str'),
+        details_level=dict(type='str', choices=['uid', 'standard', 'full']),
+        groups=dict(type='list'),
+        ignore_warnings=dict(type='bool'),
+        ignore_errors=dict(type='bool'),
+        uid=dict(type='str'),
+        new_name=dict(type='str')
     )
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
                            mutually_exclusive=[['name', 'uid']])
-    api_call_object = "network"
+    api_call_object = 'network'
 
     result = api_call(module, api_call_object)
     module.exit_json(**result)
