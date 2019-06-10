@@ -61,7 +61,7 @@
       - output.changed
 
 - name: List DevTest Lab in a resource group
-  azure_rm_devtestlab_facts:
+  azure_rm_devtestlab_info:
     resource_group: "{{ resource_group }}"
   register: output_lab
 - name: Assert that facts are returned
@@ -78,7 +78,7 @@
       - output_lab.labs[0]['vault_name'] != None
 
 - name: Get DevTest Lab facts
-  azure_rm_devtestlab_facts:
+  azure_rm_devtestlab_info:
     resource_group: "{{ resource_group }}"
     name: "{{ lab_name }}"
   register: output_lab
@@ -263,7 +263,7 @@
       - output.changed
 
 - name: Get DevTest Lab Virtual Network facts
-  azure_rm_devtestlabvirtualnetwork_facts:
+  azure_rm_devtestlabvirtualnetwork_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: "{{ vn_name }}"
@@ -281,7 +281,7 @@
       - output.virtualnetworks[0]['provisioning_state'] != None
 
 - name: List all Virtual Networks in DevTest Lab
-  azure_rm_devtestlabvirtualnetwork_facts:
+  azure_rm_devtestlabvirtualnetwork_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
   register: output
@@ -458,7 +458,7 @@
   when: "github_token | length > 0"
 
 - name: Get Facts of DTL Virtual Machine
-  azure_rm_devtestlabvirtualmachine_facts:
+  azure_rm_devtestlabvirtualmachine_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: "{{ vm_name }}"
@@ -488,7 +488,7 @@
   when: "github_token | length > 0"
 
 - name: List Facts of DTL Virtual Machine
-  azure_rm_devtestlabvirtualmachine_facts:
+  azure_rm_devtestlabvirtualmachine_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
   register: output_vm
@@ -516,7 +516,7 @@
 
 
 - name: List all artifact sources
-  azure_rm_devtestlabartifactsource_facts:
+  azure_rm_devtestlabartifactsource_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
   register: output
@@ -537,7 +537,7 @@
       - output.artifactsources | length >= 2
 
 - name: Get artifacts source facts
-  azure_rm_devtestlabartifactsource_facts:
+  azure_rm_devtestlabartifactsource_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: public repo
@@ -572,7 +572,7 @@
   when: "github_token | length > 0"
 
 - name: List ARM Template facts
-  azure_rm_devtestlabarmtemplate_facts:
+  azure_rm_devtestlabarmtemplate_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     artifact_source_name: "public environment repo"
@@ -591,7 +591,7 @@
       - "output.armtemplates | length > 1"
 
 - name: Get ARM Template facts
-  azure_rm_devtestlabarmtemplate_facts:
+  azure_rm_devtestlabarmtemplate_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     artifact_source_name: "public environment repo"
@@ -613,7 +613,7 @@
 
 
 - name: Get Artifact facts
-  azure_rm_devtestlabartifact_facts:
+  azure_rm_devtestlabartifact_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     artifact_source_name: "public repo"
@@ -635,7 +635,7 @@
       - "output.artifacts | length > 1"
 
 - name: Get Artifact facts
-  azure_rm_devtestlabartifact_facts:
+  azure_rm_devtestlabartifact_info:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     artifact_source_name: "public repo"

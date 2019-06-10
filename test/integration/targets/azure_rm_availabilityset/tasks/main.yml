@@ -100,10 +100,10 @@
       - results.state.tags.checktest1 == 'modified1'
 
 #
-# azure_rm_availabilityset_facts tests
+# azure_rm_availabilityset_info tests
 #
 - name: Get facts for created availability set
-  azure_rm_availabilityset_facts:
+  azure_rm_availabilityset_info:
     name: myavailabilityset2
     resource_group: "{{ resource_group }}"
   register: results

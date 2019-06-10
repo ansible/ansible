@@ -27,7 +27,7 @@
   check_mode: yes
 
 - name: Check there is no Traffic Manager profile created
-  azure_rm_trafficmanagerprofile_facts:
+  azure_rm_trafficmanagerprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ tmname }}"
   register: fact
@@ -61,7 +61,7 @@
       - tm.changed
 
 - name: Gather Traffic Manager profile facts
-  azure_rm_trafficmanagerprofile_facts:
+  azure_rm_trafficmanagerprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ tmname }}"
   register: fact
@@ -142,7 +142,7 @@
       - output.changed
 
 - name: Get endpoint
-  azure_rm_trafficmanagerendpoint_facts:
+  azure_rm_trafficmanagerendpoint_info:
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
   register: facts
@@ -170,7 +170,7 @@
       - output.changed
 
 - name: Get endpoint
-  azure_rm_trafficmanagerendpoint_facts:
+  azure_rm_trafficmanagerendpoint_info:
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
   register: facts
@@ -193,7 +193,7 @@
     target: 4.3.2.1
 
 - name: Get endpoint
-  azure_rm_trafficmanagerendpoint_facts:
+  azure_rm_trafficmanagerendpoint_info:
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
   register: facts
@@ -235,7 +235,7 @@
       - output.changed
 
 - name: Get endpoint
-  azure_rm_trafficmanagerendpoint_facts:
+  azure_rm_trafficmanagerendpoint_info:
     resource_group: "{{ resource_group }}"
     profile_name: "{{ tmname }}"
   register: facts
@@ -253,7 +253,7 @@
   check_mode: yes
 
 - name: Gather Traffic Manager profile facts
-  azure_rm_trafficmanagerprofile_facts:
+  azure_rm_trafficmanagerprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ tmname }}"
   register: fact
@@ -278,7 +278,7 @@
       - output.changed
 
 - name: Get Traffic Manager profile fact
-  azure_rm_trafficmanagerprofile_facts:
+  azure_rm_trafficmanagerprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ tmname }}"
   register: fact

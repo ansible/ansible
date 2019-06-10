@@ -36,9 +36,9 @@
     that:
       output.changed
 
-# enable after webapp_facts merged
+# enable after webapp_info merged
 # - name: get the web app
-#   azure_rm_webapp_facts:
+#   azure_rm_webapp_info:
 #     resource_group: "{{ resource_group }}"
 #     name: "{{ win_app_name }}2"
 #   register: stopped
@@ -60,7 +60,7 @@
   register: output
 
 - name: get web app with resource group and tag
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}3"
     tags:
@@ -91,7 +91,7 @@
     that: output.changed
 
 - name: get web app with name
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
   register: output
@@ -123,7 +123,7 @@
     - output.changed
 
 - name: get web app with name
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
   register: output
@@ -136,7 +136,7 @@
     - output.webapps[0].app_settings['testkey2'] == 'testvalue2'
 
 - name: get web app with return publishing profile
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
     return_publish_profile: true
@@ -333,7 +333,7 @@
     that: output.changed
 
 - name: Get facts with publish profile
-  azure_rm_webapp_facts:
+  azure_rm_webapp_info:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}13"
   no_log: true

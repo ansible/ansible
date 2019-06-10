@@ -39,7 +39,7 @@
       - output.id
 
 - name: Get facts
-  azure_rm_rediscache_facts:
+  azure_rm_rediscache_info:
     resource_group: "{{ resource_group }}"
     name: "{{ redis_name }}"
   register: facts
@@ -77,7 +77,7 @@
  # As such, it is currently unable to accept the update request.  Please try again later."
   block:
   - name: Wait for Redis provisioning to complete
-    azure_rm_rediscache_facts:
+    azure_rm_rediscache_info:
         resource_group: "{{ resource_group }}"
         name: "{{ redis_name }}"
     register: facts
@@ -207,7 +207,7 @@
       - output.id
 
 - name: Get facts
-  azure_rm_rediscache_facts:
+  azure_rm_rediscache_info:
     resource_group: "{{ resource_group }}"
     name: "{{ redis_name }}2"
     return_access_keys: True
@@ -245,7 +245,7 @@
 # a previous update request or is undergoing system maintenance.  As such, it is currently unable to accept the update request.  Please try again later."
   block:
   - name: Wait for Redis provisioning to complete
-    azure_rm_rediscache_facts:
+    azure_rm_rediscache_info:
         resource_group: "{{ resource_group }}"
         name: "{{ redis_name }}2"
     register: facts

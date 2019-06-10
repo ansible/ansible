@@ -35,7 +35,7 @@
 - assert: { that: "{{ output.state.rules | length }} == 2" }
 
 - name: Gather facts by tags
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       tags:
         - testing
@@ -121,7 +121,7 @@
           - output.state.tags.delete == 'on-exit'
 
 - name: Gather facts for one accounts
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       name: "{{ secgroupname }}"
   register: output
@@ -131,7 +131,7 @@
           - azure_securitygroups | length == 1
 
 - name: Gather facts for all accounts
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
   register: output
 
@@ -293,7 +293,7 @@
   with_items: "{{ azure_securitygroups }}"
 
 - name: Should have no security groups remaining
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
   register: output
 
