@@ -54,7 +54,7 @@ options:
     vendor_specific_config:
         description:
             - List of key,value dictionaries for the Vendor Specific Configuration.
-            -'Element attributes are:'
+            - 'Element attributes are:'
             - '- C(key) (str): Key of setting. (default: None)'
             - '- C(value) (str): Value of setting. (default: None)'
         required: False
