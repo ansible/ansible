@@ -21,7 +21,7 @@
   register: ebs_opt_in_vpc
 
 - name: Get ec2 instance facts
-  ec2_instance_facts:
+  ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-optimized-instance-in-vpc"
       "instance-state-name": "running"

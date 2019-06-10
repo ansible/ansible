@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_asg_facts
-short_description: Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
+module: ec2_asg_info
+short_description: Gather information about ec2 Auto Scaling Groups (ASGs) in AWS
 description:
-  - Gather facts about ec2 Auto Scaling Groups (ASGs) in AWS
+  - Gather information about ec2 Auto Scaling Groups (ASGs) in AWS
+  - This module was called C(ec2_asg_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.2"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -41,36 +42,36 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Find all groups
-- ec2_asg_facts:
+- ec2_asg_info:
   register: asgs
 
 # Find a group with matching name/prefix
-- ec2_asg_facts:
+- ec2_asg_info:
     name: public-webserver-asg
   register: asgs
 
 # Find a group with matching tags
-- ec2_asg_facts:
+- ec2_asg_info:
     tags:
       project: webapp
       env: production
   register: asgs
 
 # Find a group with matching name/prefix and tags
-- ec2_asg_facts:
+- ec2_asg_info:
     name: myproject
     tags:
       env: production
   register: asgs
 
 # Fail if no groups are found
-- ec2_asg_facts:
+- ec2_asg_info:
     name: public-webserver-asg
   register: asgs
   failed_when: "{{ asgs.results | length == 0 }}"
 
 # Fail if more than 1 group is found
-- ec2_asg_facts:
+- ec2_asg_info:
     name: public-webserver-asg
   register: asgs
   failed_when: "{{ asgs.results | length > 1 }}"
@@ -395,6 +396,8 @@ def main():
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'ec2_asg_facts':
+        module.deprecate("The 'ec2_asg_facts' module has been renamed to 'ec2_asg_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

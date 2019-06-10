@@ -9,10 +9,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_eip_facts
+module: ec2_eip_info
 short_description: List EC2 EIP details
 description:
     - List details of EC2 Elastic IP addresses.
+    - This module was called C(ec2_eip_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 author: "Brad Macpherson (@iiibrad)"
 options:
@@ -33,11 +34,11 @@ EXAMPLES = '''
 # see the AWS Guide for details.
 
 # List all EIP addresses in the current region.
-- ec2_eip_facts:
+- ec2_eip_info:
   register: regional_eip_addresses
 
 # List all EIP addresses for a VM.
-- ec2_eip_facts:
+- ec2_eip_info:
     filters:
        instance-id: i-123456789
   register: my_vm_eips
@@ -45,7 +46,7 @@ EXAMPLES = '''
 - debug: msg="{{ my_vm_eips.addresses | json_query(\"[?private_ip_address=='10.0.0.5']\") }}"
 
 # List all EIP addresses for several VMs.
-- ec2_eip_facts:
+- ec2_eip_info:
     filters:
        instance-id:
          - i-123456789
@@ -53,13 +54,13 @@ EXAMPLES = '''
   register: my_vms_eips
 
 # List all EIP addresses using the 'Name' tag as a filter.
-- ec2_eip_facts:
+- ec2_eip_info:
     filters:
       tag:Name: www.example.com
   register: my_vms_eips
 
 # List all EIP addresses using the Allocation-id as a filter
-- ec2_eip_facts:
+- ec2_eip_info:
     filters:
       allocation-id: eipalloc-64de1b01
   register: my_vms_eips
@@ -130,6 +131,8 @@ def main():
         ),
         supports_check_mode=True
     )
+    if module._module._name == 'ec2_eip_facts':
+        module._module.deprecate("The 'ec2_eip_facts' module has been renamed to 'ec2_eip_info'", version='2.13')
 
     module.exit_json(changed=False, addresses=get_eips_details(module))
 
