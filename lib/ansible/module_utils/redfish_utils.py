@@ -620,16 +620,21 @@ class RedfishUtils(object):
         return result
 
     def manage_system_power(self, command):
-        result = {}
         key = "Actions"
 
         # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
-        result['ret'] = True
         data = response['data']
         power_state = data["PowerState"]
+
+        if power_state == "On" and command == 'PowerOn':
+            return {'ret': True, 'changed': False}
+
+        if power_state == "Off" and command in ['PowerGracefulShutdown', 'PowerForceOff']:
+            return {'ret': True, 'changed': False}
+
         reset_action = data[key]["#ComputerSystem.Reset"]
         action_uri = reset_action["target"]
         allowable_vals = reset_action.get("ResetType@Redfish.AllowableValues", [])
@@ -657,8 +662,7 @@ class RedfishUtils(object):
         response = self.post_request(self.root_uri + action_uri, payload)
         if response['ret'] is False:
             return response
-        result['ret'] = True
-        return result
+        return {'ret': True, 'changed': True}
 
     def list_users(self):
         result = {}
