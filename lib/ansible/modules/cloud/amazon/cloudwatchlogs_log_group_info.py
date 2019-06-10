@@ -12,12 +12,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: cloudwatchlogs_log_group_facts
-short_description: get facts about log_group in CloudWatchLogs
+module: cloudwatchlogs_log_group_info
+short_description: get information about log_group in CloudWatchLogs
 description: Lists the specified log groups. You can list all your log groups or filter the results by prefix.
 version_added: "2.5"
 author:
     - Willian Ricardo (@willricardo) <willricardo@gmail.com>
+    - This module was called C(cloudwatchlogs_log_group_facts) before Ansible 2.9. The usage did not change.
 requirements: [ botocore, boto3 ]
 options:
     log_group_name:
@@ -30,7 +31,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
-- cloudwatchlogs_log_group_facts:
+- cloudwatchlogs_log_group_info:
     log_group_name: test-log-group
 '''
 
@@ -103,6 +104,8 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'cloudwatchlogs_log_group_facts':
+        module.deprecate("The 'cloudwatchlogs_log_group_facts' module has been renamed to 'cloudwatchlogs_log_group_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
