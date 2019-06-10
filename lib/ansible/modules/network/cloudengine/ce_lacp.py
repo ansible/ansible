@@ -130,7 +130,7 @@ options:
         choices: ['present','absent']
     provider:
         description:
-            - A dict that will be removed.
+            - A dict specified some options about connection  that is not required from version 2.9.
         required: false
 '''
 EXAMPLES = '''
