@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ce_lacp
-version_added: "2.4"
+version_added: "2.9"
 short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
@@ -73,64 +73,55 @@ options:
         description:
             - Lacp dampening unexpected-mac disable.
         required: false
-        default: false
         choices: ['true', 'false']
     system_id:
         description:
             - Link Aggregation Control Protocol System ID,interface Eth-Trunk View.
             - Formate 'X-X-X',X is hex(a,aa,aaa, or aaaa)
         required: false
-        default: false
     timeout_type:
         description:
             - Lacp timeout type,that may be 'Fast' or 'Slow'.
         required: false
-        default: false
+        choices: ['Slow', 'Fast']
     fast_timeout:
         description:
             - When lacp timeout type is 'Fast', user-defined time can be a number(3~90).
         required: false
-        default: false
     mixed_rate_link_enable:
         description:
             - Value of max active linknumber.
         required: false
-        default: false
+        choices: ['true', 'false']
     preempt_delay:
         description:
             - Value of preemption delay time.
         required: false
-        default: false
     collector_delay:
         description:
             - Value of delay time in units of 10 microseconds.
         required: false
-        default: false
     max_active_linknumber:
         description:
             - Max active linknumber in link aggregation group.
         required: false
-        default: false
     select:
         description:
             - Select priority or speed to preempt.
         required: false
-        default: false
+        choices: ['Speed', 'Prority']
     member_if:
         description:
             - The member interface of eth-trunk that is selected is merge priority.
         required: false
-        default: false
     priority:
         description:
             - The priority of eth-trunk member interface,and 'member_if' is need when priority is not none.
         required: false
-        default: false
     global_priority:
         description:
             - Configure lacp priority on system-view.
         required: false
-        default: false
     state:
         description:
             - Manage the state of the resource.
@@ -158,7 +149,6 @@ EXAMPLES = '''
       members: ['10GE1/0/24','10GE1/0/25']
       mode: 'lacp-static'
       state: present
-      provider: '{{ cli }}'
 '''
 
 RETURN = '''
@@ -193,7 +183,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
