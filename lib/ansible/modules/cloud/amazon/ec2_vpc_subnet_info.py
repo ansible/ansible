@@ -20,10 +20,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_subnet_facts
-short_description: Gather facts about ec2 VPC subnets in AWS
+module: ec2_vpc_subnet_info
+short_description: Gather information about ec2 VPC subnets in AWS
 description:
-    - Gather facts about ec2 VPC subnets in AWS
+    - Gather information about ec2 VPC subnets in AWS
+    - This module was called C(ec2_vpc_subnet_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.1"
 author: "Rob White (@wimnat)"
 requirements:
@@ -32,7 +33,7 @@ requirements:
 options:
   subnet_ids:
     description:
-      - A list of subnet IDs to gather facts for.
+      - A list of subnet IDs to gather information for.
     version_added: "2.5"
     aliases: [subnet_id]
   filters:
@@ -47,28 +48,28 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all VPC subnets
-- ec2_vpc_subnet_facts:
+# Gather information about all VPC subnets
+- ec2_vpc_subnet_info:
 
-# Gather facts about a particular VPC subnet using ID
-- ec2_vpc_subnet_facts:
+# Gather information about a particular VPC subnet using ID
+- ec2_vpc_subnet_info:
     subnet_ids: subnet-00112233
 
-# Gather facts about any VPC subnet with a tag key Name and value Example
-- ec2_vpc_subnet_facts:
+# Gather information about any VPC subnet with a tag key Name and value Example
+- ec2_vpc_subnet_info:
     filters:
       "tag:Name": Example
 
-# Gather facts about any VPC subnet within VPC with ID vpc-abcdef00
-- ec2_vpc_subnet_facts:
+# Gather information about any VPC subnet within VPC with ID vpc-abcdef00
+- ec2_vpc_subnet_info:
     filters:
       vpc-id: vpc-abcdef00
 
-# Gather facts about a set of VPC subnets, publicA, publicB and publicC within a
+# Gather information about a set of VPC subnets, publicA, publicB and publicC within a
 # VPC with ID vpc-abcdef00 and then use the jinja map function to return the
 # subnet_ids as a list.
 
-- ec2_vpc_subnet_facts:
+- ec2_vpc_subnet_info:
     filters:
       vpc-id: vpc-abcdef00
       "tag:Name": "{{ item }}"
@@ -76,10 +77,10 @@ EXAMPLES = '''
     - publicA
     - publicB
     - publicC
-  register: subnet_facts
+  register: subnet_info
 
 - set_fact:
-    subnet_ids: "{{ subnet_facts.subnets|map(attribute='id')|list }}"
+    subnet_ids: "{{ subnet_info.subnets|map(attribute='id')|list }}"
 '''
 
 RETURN = '''
@@ -182,7 +183,7 @@ def describe_subnets_with_backoff(connection, subnet_ids, filters):
     Describe Subnets with AWSRetry backoff throttling support.
 
     connection  : boto3 client connection object
-    subnet_ids  : list of subnet ids for which to gather facts
+    subnet_ids  : list of subnet ids for which to gather information
     filters     : additional filters to apply to request
     """
     return connection.describe_subnets(SubnetIds=subnet_ids, Filters=filters)
@@ -231,6 +232,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'ec2_vpc_subnet_facts':
+        module.deprecate("The 'ec2_vpc_subnet_facts' module has been renamed to 'ec2_vpc_subnet_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module')
