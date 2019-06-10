@@ -1,0 +1,12 @@
+minor_changes:
+- The ``ec2_vpc_dhcp_option_facts`` module has been renamed to ``ec2_vpc_dhcp_option_info``.
+- The ``ec2_vpc_endpoint_facts`` module has been renamed to ``ec2_vpc_endpoint_info``.
+- The ``ec2_vpc_igw_facts`` module has been renamed to ``ec2_vpc_igw_info``.
+- The ``ec2_vpc_nacl_facts`` module has been renamed to ``ec2_vpc_nacl_info``.
+- The ``ec2_vpc_nat_gateway_facts`` module has been renamed to ``ec2_vpc_nat_gateway_info``.
+- The ``ec2_vpc_net_facts`` module has been renamed to ``ec2_vpc_net_info``.
+- The ``ec2_vpc_peering_facts`` module has been renamed to ``ec2_vpc_peering_info``.
+- The ``ec2_vpc_route_table_facts`` module has been renamed to ``ec2_vpc_route_table_info``.
+- The ``ec2_vpc_subnet_facts`` module has been renamed to ``ec2_vpc_subnet_info``.
+- The ``ec2_vpc_vgw_facts`` module has been renamed to ``ec2_vpc_vgw_info``.
+- The ``ec2_vpc_vpn_facts`` module has been renamed to ``ec2_vpc_vpn_info``.

@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_dhcp_option_facts
-short_description: Gather facts about dhcp options sets in AWS
+module: ec2_vpc_dhcp_option_info
+short_description: Gather information about dhcp options sets in AWS
 description:
-    - Gather facts about dhcp options sets in AWS
+    - Gather information about dhcp options sets in AWS
+    - This module was called C(ec2_vpc_dhcp_option_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.2"
 requirements: [ boto3 ]
 author: "Nick Aslanidis (@naslanidis)"
@@ -38,26 +39,26 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Gather facts about all DHCP Option sets for an account or profile
-  ec2_vpc_dhcp_option_facts:
+- name: Gather information about all DHCP Option sets for an account or profile
+  ec2_vpc_dhcp_option_info:
     region: ap-southeast-2
     profile: production
-  register: dhcp_facts
+  register: dhcp_info
 
-- name: Gather facts about a filtered list of DHCP Option sets
-  ec2_vpc_dhcp_option_facts:
+- name: Gather information about a filtered list of DHCP Option sets
+  ec2_vpc_dhcp_option_info:
     region: ap-southeast-2
     profile: production
     filters:
         "tag:Name": "abc-123"
-  register: dhcp_facts
+  register: dhcp_info
 
-- name: Gather facts about a specific DHCP Option set by DhcpOptionId
-  ec2_vpc_dhcp_option_facts:
+- name: Gather information about a specific DHCP Option set by DhcpOptionId
+  ec2_vpc_dhcp_option_info:
     region: ap-southeast-2
     profile: production
     DhcpOptionsIds: dopt-123fece2
-  register: dhcp_facts
+  register: dhcp_info
 
 '''
 
@@ -124,6 +125,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'ec2_vpc_dhcp_option_facts':
+        module.deprecate("The 'ec2_vpc_dhcp_option_facts' module has been renamed to 'ec2_vpc_dhcp_option_info'", version='2.13')
 
     # Validate Requirements
     if not HAS_BOTO3:

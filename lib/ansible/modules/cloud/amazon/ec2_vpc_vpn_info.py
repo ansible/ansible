@@ -10,10 +10,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_vpn_facts
-short_description: Gather facts about VPN Connections in AWS.
+module: ec2_vpc_vpn_info
+short_description: Gather information about VPN Connections in AWS.
 description:
-    - Gather facts about VPN Connections in AWS.
+    - Gather information about VPN Connections in AWS.
+    - This module was called C(ec2_vpc_vpn_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 requirements: [ boto3 ]
 author: Madhura Naniwadekar (@Madhura-CSI)
@@ -34,20 +35,20 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # # Note: These examples do not set authentication details, see the AWS Guide for details.
-- name: Gather facts about all vpn connections
-  ec2_vpc_vpn_facts:
+- name: Gather information about all vpn connections
+  ec2_vpc_vpn_info:
 
-- name: Gather facts about a filtered list of vpn connections, based on tags
-  ec2_vpc_vpn_facts:
+- name: Gather information about a filtered list of vpn connections, based on tags
+  ec2_vpc_vpn_info:
     filters:
       "tag:Name": test-connection
-  register: vpn_conn_facts
+  register: vpn_conn_info
 
-- name: Gather facts about vpn connections by specifying connection IDs.
-  ec2_vpc_vpn_facts:
+- name: Gather information about vpn connections by specifying connection IDs.
+  ec2_vpc_vpn_info:
     filters:
       vpn-gateway-id: vgw-cbe66beb
-  register: vpn_conn_facts
+  register: vpn_conn_info
 '''
 
 RETURN = '''
@@ -198,6 +199,8 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               mutually_exclusive=[['vpn_connection_ids', 'filters']],
                               supports_check_mode=True)
+    if module._module._name == 'ec2_vpc_vpn_facts':
+        module._module.deprecate("The 'ec2_vpc_vpn_facts' module has been renamed to 'ec2_vpc_vpn_info'", version='2.13')
 
     connection = module.client('ec2')
 
