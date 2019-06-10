@@ -579,7 +579,7 @@
     register: nat_gateway
 
   - name: show route table facts
-    ec2_vpc_route_table_facts:
+    ec2_vpc_route_table_info:
       filters:
         route-table-id: "{{ create_private_table.route_table.id }}"
       <<: *aws_connection_info
@@ -593,7 +593,7 @@
     register: nat_gateway
 
   - name: show route table facts
-    ec2_vpc_route_table_facts:
+    ec2_vpc_route_table_info:
       filters:
         route-table-id: "{{ create_private_table.route_table.id }}"
       <<: *aws_connection_info
