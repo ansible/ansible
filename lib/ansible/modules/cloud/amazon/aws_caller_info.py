@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: aws_caller_info
-short_description: Get facts about the user and account being used to make AWS calls.
+short_description: Get information about the user and account being used to make AWS calls.
 description:
     - This module returns information about the account and user / role from which the AWS access tokens originate.
     - The primary use of this is to get the account id for templating into ARNs or similar to avoid needing to specify this information in inventory.
@@ -31,7 +31,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Get the current caller identity facts
+- name: Get the current caller identity information
   aws_caller_info:
   register: caller_info
 '''

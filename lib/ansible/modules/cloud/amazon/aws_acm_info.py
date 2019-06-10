@@ -8,9 +8,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: aws_acm_info
-short_description: Retrieve certificate facts from AWS Certificate Manager service
+short_description: Retrieve certificate information from AWS Certificate Manager service
 description:
-  - Retrieve facts for ACM certificates
+  - Retrieve information for ACM certificates
   - This module was called C(aws_acm_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 options:
@@ -36,7 +36,7 @@ EXAMPLES = '''
 - name: obtain all ACM certificates
   aws_acm_info:
 
-- name: obtain all facts for a single ACM certificate
+- name: obtain all information for a single ACM certificate
   aws_acm_info:
     domain_name: "*.example_com"
 

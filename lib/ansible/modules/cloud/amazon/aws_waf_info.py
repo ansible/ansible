@@ -8,9 +8,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: aws_waf_info
-short_description: Retrieve facts for WAF ACLs, Rule , Conditions and Filters.
+short_description: Retrieve information for WAF ACLs, Rule , Conditions and Filters.
 description:
-  - Retrieve facts for WAF ACLs, Rule , Conditions and Filters.
+  - Retrieve information for WAF ACLs, Rule , Conditions and Filters.
   - This module was called C(aws_waf_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.4"
 requirements: [ boto3 ]
@@ -34,14 +34,14 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: obtain all WAF facts
+- name: obtain all WAF information
   aws_waf_info:
 
-- name: obtain all facts for a single WAF
+- name: obtain all information for a single WAF
   aws_waf_info:
     name: test_waf
 
-- name: obtain all facts for a single WAF Regional
+- name: obtain all information for a single WAF Regional
   aws_waf_info:
     name: test_waf
     waf_regional: true

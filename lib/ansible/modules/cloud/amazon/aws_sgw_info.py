@@ -12,9 +12,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: aws_sgw_info
-short_description: Fetch AWS Storage Gateway facts
+short_description: Fetch AWS Storage Gateway information
 description:
-    - Fetch AWS Storage Gateway facts
+    - Fetch AWS Storage Gateway information
     - This module was called C(aws_sgw_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.6"
 requirements: [ boto3 ]
@@ -165,10 +165,10 @@ gateways:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: "Get AWS storage gateway facts"
+- name: "Get AWS storage gateway information"
   aws_sgw_info:
 
-- name: "Get AWS storage gateway facts for region eu-west-3"
+- name: "Get AWS storage gateway information for region eu-west-3"
   aws_sgw_info:
     region: eu-west-3
 '''
@@ -182,7 +182,7 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 
-class SGWFactsManager(object):
+class SGWInformationManager(object):
     def __init__(self, client, module):
         self.client = client
         self.module = module
@@ -352,7 +352,7 @@ def main():
     if client is None:  # this should never happen
         module.fail_json(msg='Unknown error, failed to create storagegateway client, no information from boto.')
 
-    SGWFactsManager(client, module).fetch()
+    SGWInformationManager(client, module).fetch()
 
 
 if __name__ == '__main__':
