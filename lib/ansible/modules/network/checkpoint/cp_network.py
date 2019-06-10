@@ -53,8 +53,8 @@ options:
     type: str
   mask_length:
     description:
-      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields explicitly
-. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
+      - IPv4 or IPv6 network mask length. If both masks are required use mask-length4 and mask-length6 fields
+        explicitly. Instead of IPv4 mask length it is possible to specify IPv4 mask itself in subnet-mask field.
     type: int
   mask_length4:
     description:
@@ -85,18 +85,19 @@ options:
     description:
       - Color of the object. Should be one of existing colors.
     type: str
-    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid', 'dark o
-range', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', '
-gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'magenta', 'purple', 'slate blue',
-'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']
+    choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
+              'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green',
+              'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
+              'sky blue', 'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red',
+              'sienna', 'yellow']
   comments:
     description:
       - Comments string.
     type: str
   details_level:
     description:
-      - The level of detail for some of the fields in the response can vary from showing only the UID value of the objec
-t to a fully detailed representation of the object.
+      - The level of detail for some of the fields in the response can vary from showing only the UID value of the
+        object to a fully detailed representation of the object.
     type: str
     choices: ['uid', 'standard', 'full']
   groups:
@@ -145,10 +146,12 @@ EXAMPLES = """
     subnet : 192.0.0.0
     mask-length : 16
     groups : New Group 1
+    state: present
 
 - name: delete-network
   cp_network:
     name : New Network 2
+    state: absent
 """
 
 RETURN = """
@@ -176,9 +179,11 @@ def main():
         tags=dict(type='list'),
         broadcast=dict(type='str', choices=['disallow', 'allow']),
         color=dict(type='str', choices=['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green',
-'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest gre'
-'en', 'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue', 'mage'
-'nta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange', 'red', 'sienna', 'yellow']),
+                                        'khaki', 'orchid', 'dark orange', 'dark sea green', 'pink', 'turquoise',
+                                        'dark blue', 'firebrick', 'brown', 'forest green', 'gold', 'dark gold', 'gray',
+                                        'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green', 'sky blue',
+                                        'magenta', 'purple', 'slate blue', 'violet red', 'navy blue', 'olive', 'orange',
+                                        'red', 'sienna', 'yellow']),
         comments=dict(type='str'),
         details_level=dict(type='str', choices=['uid', 'standard', 'full']),
         groups=dict(type='list'),
