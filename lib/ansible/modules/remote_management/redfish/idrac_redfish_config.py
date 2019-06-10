@@ -30,28 +30,34 @@ options:
     required: true
     description:
       - List of commands to execute on iDRAC
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of iDRAC
+    type: str
   username:
     required: true
     description:
       - User for authentication with iDRAC
+    type: str
   password:
     required: true
     description:
       - Password for authentication with iDRAC
+    type: str
   manager_attribute_name:
     required: false
     description:
       - name of iDRAC attribute to update
     default: 'null'
+    type: str
   manager_attribute_value:
     required: false
     description:
       - value of iDRAC attribute to update
     default: 'null'
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to iDRAC controller

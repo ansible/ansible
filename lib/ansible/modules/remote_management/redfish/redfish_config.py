@@ -26,34 +26,41 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   bios_attribute_name:
     required: false
     description:
       - name of BIOS attribute to update
     default: 'null'
+    type: str
     version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
       - value of BIOS attribute to update
     default: 'null'
+    type: str
     version_added: "2.8"
   timeout:
     description:
