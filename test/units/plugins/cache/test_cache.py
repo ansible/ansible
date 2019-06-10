@@ -117,6 +117,12 @@ class TestFactCache(unittest.TestCase):
                                     "Unable to load the facts cache plugin.*json.*",
                                     FactCache)
 
+    def test_update_legacy_key_exists(self):
+        self.cache['cache_key'] = {'key': 'value', 'key2': 'value2'}
+        self.cache.update('cache_key', {'key': 'updatedvalue'})
+        assert self.cache['cache_key']['key'] == 'updatedvalue'
+        assert self.cache['cache_key']['key2'] == 'value2'
+
 
 class TestAbstractClass(unittest.TestCase):
 
