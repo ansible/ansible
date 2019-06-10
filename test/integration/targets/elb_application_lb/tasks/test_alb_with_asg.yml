@@ -9,7 +9,7 @@
           region: "{{ aws_region }}"
       no_log: yes
 
-    - ec2_ami_facts:
+    - ec2_ami_info:
         <<: *aws_connection_info
         filters:
           architecture: x86_64

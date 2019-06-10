@@ -108,7 +108,7 @@
       <<: *aws_connection_info
     register: add_another_tag
 
-  - ec2_instance_facts:
+  - ec2_instance_info:
       instance_ids: "{{ add_another_tag.instance_ids }}"
       <<: *aws_connection_info
     register: check_tags
@@ -130,7 +130,7 @@
       vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       instance_type: t2.micro
       <<: *aws_connection_info
-  - ec2_instance_facts:
+  - ec2_instance_info:
       instance_ids: "{{ add_another_tag.instance_ids }}"
       <<: *aws_connection_info
     register: check_tags

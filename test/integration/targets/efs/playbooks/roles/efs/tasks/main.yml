@@ -44,7 +44,7 @@
       register: testing_subnet_b
 
     - name: Get default security group id for vpc
-      ec2_group_facts:
+      ec2_group_info:
         <<: *aws_connection_info
         filters:
           vpc-id: "{{ testing_vpc.vpc.id }}"

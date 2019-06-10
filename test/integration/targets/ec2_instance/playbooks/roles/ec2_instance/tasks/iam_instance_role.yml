@@ -63,7 +63,7 @@
       check_mode: yes
 
     - name: "fact presented ec2 instance"
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-instance-role"
           "instance-state-name": "running"
@@ -71,7 +71,7 @@
       register: presented_instance_fact
 
     - name: "fact checkmode ec2 instance"
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-instance-role-checkmode"
           "instance-state-name": "running"
