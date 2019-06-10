@@ -37,7 +37,7 @@
       check_mode: yes
 
     - name: fact presented ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
           "instance-state-name": "running"
@@ -45,7 +45,7 @@
       register: presented_instance_fact
 
     - name: fact checkmode ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison-checkmode"
           "instance-state-name": "running"
@@ -67,7 +67,7 @@
       check_mode: yes
 
     - name: fact ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
         <<: *aws_connection_info
@@ -86,7 +86,7 @@
         <<: *aws_connection_info
       
     - name: fact stopped ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
         <<: *aws_connection_info
@@ -106,7 +106,7 @@
       check_mode: yes
       
     - name: fact ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
         <<: *aws_connection_info
@@ -125,7 +125,7 @@
         <<: *aws_connection_info
           
     - name: fact ec2 instance.
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
         <<: *aws_connection_info
@@ -145,7 +145,7 @@
       check_mode: yes
 
     - name: fact ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
         <<: *aws_connection_info
@@ -164,7 +164,7 @@
         <<: *aws_connection_info
 
     - name: fact ec2 instance
-      ec2_instance_facts:
+      ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-checkmode-comparison"
         <<: *aws_connection_info

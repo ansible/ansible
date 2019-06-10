@@ -20,10 +20,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_elb_facts
-short_description: Gather facts about EC2 Elastic Load Balancers in AWS
+module: ec2_elb_info
+short_description: Gather information about EC2 Elastic Load Balancers in AWS
 description:
-    - Gather facts about EC2 Elastic Load Balancers in AWS
+    - Gather information about EC2 Elastic Load Balancers in AWS
+    - This module was called C(ec2_elb_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.0"
 author:
   - "Michael Schultz (@mjschultz)"
@@ -31,7 +32,7 @@ author:
 options:
   names:
     description:
-      - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
+      - List of ELB names to gather information about. Pass this option to gather information about a set of ELBs, otherwise, all ELBs are returned.
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
@@ -42,38 +43,38 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 # Output format tries to match ec2_elb_lb module input parameters
 
-# Gather facts about all ELBs
+# Gather information about all ELBs
 - action:
-    module: ec2_elb_facts
-  register: elb_facts
+    module: ec2_elb_info
+  register: elb_info
 
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  loop: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_info.elbs }}"
 
-# Gather facts about a particular ELB
+# Gather information about a particular ELB
 - action:
-    module: ec2_elb_facts
+    module: ec2_elb_info
     names: frontend-prod-elb
-  register: elb_facts
+  register: elb_info
 
 - action:
     module: debug
-    msg: "{{ elb_facts.elbs.0.dns_name }}"
+    msg: "{{ elb_info.elbs.0.dns_name }}"
 
-# Gather facts about a set of ELBs
+# Gather information about a set of ELBs
 - action:
-    module: ec2_elb_facts
+    module: ec2_elb_info
     names:
     - frontend-prod-elb
     - backend-prod-elb
-  register: elb_facts
+  register: elb_info
 
 - action:
     module: debug
     msg: "{{ item.dns_name }}"
-  loop: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_info.elbs }}"
 
 '''
 
@@ -238,6 +239,8 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'ec2_elb_facts':
+        module.deprecate("The 'ec2_elb_facts' module has been renamed to 'ec2_elb_info'", version='2.13')
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -251,14 +254,14 @@ def main():
         elb_information = ElbInformation(
             module, names, region, **aws_connect_params)
 
-        ec2_facts_result = dict(changed=False,
-                                elbs=elb_information.list_elbs())
+        ec2_info_result = dict(changed=False,
+                               elbs=elb_information.list_elbs())
 
     except BotoServerError as err:
         module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
                          exception=traceback.format_exc())
 
-    module.exit_json(**ec2_facts_result)
+    module.exit_json(**ec2_info_result)
 
 
 if __name__ == '__main__':

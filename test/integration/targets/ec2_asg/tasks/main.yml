@@ -415,7 +415,7 @@
       register: asg_job
 
     - name: get ec2_asg facts for 3 minutes
-      ec2_asg_facts:
+      ec2_asg_info:
         name: "{{ resource_prefix }}-asg"
         <<: *aws_connection_info
       register: output
@@ -475,9 +475,9 @@
       poll: 0
       register: asg_job
 
-    # Collect ec2_asg_facts for 3 minutes
-    - name: get ec2_asg facts
-      ec2_asg_facts:
+    # Collect ec2_asg_info for 3 minutes
+    - name: get ec2_asg information
+      ec2_asg_info:
         name: "{{ resource_prefix }}-asg"
         <<: *aws_connection_info
       register: output
