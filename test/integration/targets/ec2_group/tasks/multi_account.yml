@@ -1,5 +1,5 @@
 - block:
-    - aws_caller_facts:
+    - aws_caller_info:
       register: caller_facts
     - name: create a VPC
       ec2_vpc_net:

@@ -9,20 +9,20 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
-module: aws_az_facts
-short_description: Gather facts about availability zones in AWS.
+module: aws_region_info
+short_description: Gather information about AWS regions.
 description:
-    - Gather facts about availability zones in AWS.
+    - Gather information about AWS regions.
+    - This module was called C(aws_region_facts) before Ansible 2.9. The usage did not change.
 version_added: '2.5'
 author: 'Henrique Rodrigues (@Sodki)'
 options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
-        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeAvailabilityZones.html) for
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html) for
         possible filters. Filter names and values are case sensitive. You can also use underscores
         instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
-    required: false
     default: {}
 extends_documentation_fragment:
     - aws
@@ -33,36 +33,26 @@ requirements: [botocore, boto3]
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all availability zones
-- aws_az_facts:
+# Gather information about all regions
+- aws_region_info:
 
-# Gather facts about a single availability zone
-- aws_az_facts:
+# Gather information about a single region
+- aws_region_info:
     filters:
-      zone-name: eu-west-1a
+      region-name: eu-west-1
 '''
 
 RETURN = '''
-availability_zones:
+regions:
     returned: on success
     description: >
-        Availability zones that match the provided filters. Each element consists of a dict with all the information
-        related to that available zone.
+        Regions that match the provided filters. Each element consists of a dict with all the information related
+        to that region.
     type: list
-    sample: "[
-        {
-            'messages': [],
-            'region_name': 'us-west-1',
-            'state': 'available',
-            'zone_name': 'us-west-1b'
-        },
-        {
-            'messages': [],
-            'region_name': 'us-west-1',
-            'state': 'available',
-            'zone_name': 'us-west-1c'
-        }
-    ]"
+    sample: "[{
+        'endpoint': 'ec2.us-west-1.amazonaws.com',
+        'region_name': 'us-west-1'
+    }]"
 '''
 
 
@@ -87,6 +77,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'aws_region_facts':
+        module.deprecate("The 'aws_region_facts' module has been renamed to 'aws_region_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
@@ -105,20 +97,18 @@ def main():
     sanitized_filters = dict((k.replace('_', '-'), v) for k, v in module.params.get('filters').items())
 
     try:
-        availability_zones = connection.describe_availability_zones(
+        regions = connection.describe_regions(
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
     except ClientError as e:
-        module.fail_json(msg="Unable to describe availability zones: {0}".format(to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to describe regions: {0}".format(to_native(e)),
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
     except BotoCoreError as e:
-        module.fail_json(msg="Unable to describe availability zones: {0}".format(to_native(e)),
+        module.fail_json(msg="Unable to describe regions: {0}".format(to_native(e)),
                          exception=traceback.format_exc())
 
-    # Turn the boto3 result into ansible_friendly_snaked_names
-    snaked_availability_zones = [camel_dict_to_snake_dict(az) for az in availability_zones['AvailabilityZones']]
-
-    module.exit_json(availability_zones=snaked_availability_zones)
+    module.exit_json(regions=[camel_dict_to_snake_dict(r) for r in regions['Regions']])
 
 
 if __name__ == '__main__':
