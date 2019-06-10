@@ -19,7 +19,6 @@ rpm-build
 *.iml
 #VSCode stuff..
 .vscode/
-.favorites.json
 # Mac OS X stuff...
 .DS_Store
 # manpage build stuff...
