@@ -102,6 +102,19 @@ Noteworthy module changes
 * The ``aws_region_facts`` module was renamed to :ref:`aws_region_info <aws_region_info_module>`.
 * The ``aws_sgw_facts`` module was renamed to :ref:`aws_sgw_info <aws_sgw_info_module>`.
 * The ``aws_waf_facts`` module was renamed to :ref:`aws_waf_info <aws_waf_info_module>`.
+* The ``cloudwatchlogs_log_group_facts`` module was renamed to :ref:`cloudwatchlogs_log_group_info <cloudwatchlogs_log_group_info_module>`.
+* The ``elasticache_facts`` module was renamed to :ref:`elasticache_info <elasticache_info_module>`.
+* The ``elb_application_lb_facts`` module was renamed to :ref:`elb_application_lb_info <elb_application_lb_info_module>`.
+* The ``elb_classic_lb_facts`` module was renamed to :ref:`elb_classic_lb_info <elb_classic_lb_info_module>`.
+* The ``elb_target_facts`` module was renamed to :ref:`elb_target_info <elb_target_info_module>`.
+* The ``elb_target_group_facts`` module was renamed to :ref:`elb_target_group_info <elb_target_group_info_module>`.
+* The ``iam_mfa_device_facts`` module was renamed to :ref:`iam_mfa_device_info <iam_mfa_device_info_module>`.
+* The ``iam_role_facts`` module was renamed to :ref:`iam_role_info <iam_role_info_module>`.
+* The ``iam_server_certificate_facts`` module was renamed to :ref:`iam_server_certificate_info <iam_server_certificate_info_module>`.
+* The ``rds_instance_facts`` module was renamed to :ref:`rds_instance_info <rds_instance_info_module>`.
+* The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
+* The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
+* The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
 
 
 Plugins

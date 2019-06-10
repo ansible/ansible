@@ -33,7 +33,7 @@
         <<: *aws_connection_info
 
     - name: ensure AWSServiceRoleForECS role exists
-      iam_role_facts:
+      iam_role_info:
         name: AWSServiceRoleForECS
         <<: *aws_connection_info
       register: iam_role_result

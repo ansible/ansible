@@ -10,12 +10,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: rds_snapshot_facts
+module: rds_snapshot_info
 version_added: "2.6"
-short_description: obtain facts about one or more RDS snapshots
+short_description: obtain information about one or more RDS snapshots
 description:
-  - obtain facts about one or more RDS snapshots. These can be for unclustered snapshots or snapshots of clustered DBs (Aurora)
-  - Aurora snapshot facts may be obtained if no identifier parameters are passed or if one of the cluster parameters are passed.
+  - obtain information about one or more RDS snapshots. These can be for unclustered snapshots or snapshots of clustered DBs (Aurora)
+  - Aurora snapshot information may be obtained if no identifier parameters are passed or if one of the cluster parameters are passed.
+  - This module was called C(rds_snapshot_facts) before Ansible 2.9. The usage did not change.
 options:
   db_snapshot_identifier:
     description:
@@ -54,13 +55,13 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Get facts about an snapshot
-- rds_snapshot_facts:
+# Get information about an snapshot
+- rds_snapshot_info:
     db_snapshot_identifier: snapshot_name
-  register: new_database_facts
+  register: new_database_info
 
 # Get all RDS snapshots for an RDS instance
-- rds_snapshot_facts:
+- rds_snapshot_info:
     db_instance_identifier: helloworld-rds-master
 '''
 
@@ -293,7 +294,7 @@ except Exception:
     pass  # caught by imported HAS_BOTO3
 
 
-def common_snapshot_facts(module, conn, method, prefix, params):
+def common_snapshot_info(module, conn, method, prefix, params):
     paginator = conn.get_paginator(method)
     try:
         results = paginator.paginate(**params).build_full_result()['%ss' % prefix]
@@ -312,7 +313,7 @@ def common_snapshot_facts(module, conn, method, prefix, params):
     return [camel_dict_to_snake_dict(snapshot, ignore_list=['Tags']) for snapshot in results]
 
 
-def cluster_snapshot_facts(module, conn):
+def cluster_snapshot_info(module, conn):
     snapshot_name = module.params.get('db_cluster_snapshot_identifier')
     snapshot_type = module.params.get('snapshot_type')
     instance_name = module.params.get('db_cluster_instance_identifier')
@@ -329,10 +330,10 @@ def cluster_snapshot_facts(module, conn):
         elif snapshot_type == 'shared':
             params['IsShared'] = True
 
-    return common_snapshot_facts(module, conn, 'describe_db_cluster_snapshots', 'DBClusterSnapshot', params)
+    return common_snapshot_info(module, conn, 'describe_db_cluster_snapshots', 'DBClusterSnapshot', params)
 
 
-def standalone_snapshot_facts(module, conn):
+def standalone_snapshot_info(module, conn):
     snapshot_name = module.params.get('db_snapshot_identifier')
     snapshot_type = module.params.get('snapshot_type')
     instance_name = module.params.get('db_instance_identifier')
@@ -349,7 +350,7 @@ def standalone_snapshot_facts(module, conn):
         elif snapshot_type == 'shared':
             params['IsShared'] = True
 
-    return common_snapshot_facts(module, conn, 'describe_db_snapshots', 'DBSnapshot', params)
+    return common_snapshot_info(module, conn, 'describe_db_snapshots', 'DBSnapshot', params)
 
 
 def main():
@@ -366,13 +367,15 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[['db_snapshot_identifier', 'db_instance_identifier', 'db_cluster_identifier', 'db_cluster_snapshot_identifier']]
     )
+    if module._name == 'rds_snapshot_facts':
+        module.deprecate("The 'rds_snapshot_facts' module has been renamed to 'rds_snapshot_info'", version='2.13')
 
     conn = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
     results = dict()
     if not module.params['db_cluster_identifier'] and not module.params['db_cluster_snapshot_identifier']:
-        results['snapshots'] = standalone_snapshot_facts(module, conn)
+        results['snapshots'] = standalone_snapshot_info(module, conn)
     if not module.params['db_snapshot_identifier'] and not module.params['db_instance_identifier']:
-        results['cluster_snapshots'] = cluster_snapshot_facts(module, conn)
+        results['cluster_snapshots'] = cluster_snapshot_info(module, conn)
 
     module.exit_json(changed=False, **results)
 

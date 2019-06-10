@@ -87,7 +87,7 @@ files:
   $modules/cloud/amazon/ecs_taskdefinition.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition_facts.py: willthames
   $modules/cloud/amazon/elasticache.py: alachaum
-  $modules/cloud/amazon/elb_target_group_facts.py: willthames
+  $modules/cloud/amazon/elb_target_group_info.py: willthames
   $modules/cloud/amazon/iam.py: $team_ansible
   $modules/cloud/amazon/iam_cert.py: $team_ansible
   $modules/cloud/amazon/iam_group.py: willthames

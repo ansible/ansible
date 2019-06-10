@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: iam_mfa_device_facts
+module: iam_mfa_device_info
 short_description: List the MFA (Multi-Factor Authentication) devices registered for a user
 description:
     - List the MFA (Multi-Factor Authentication) devices registered for a user
+    - This module was called C(iam_mfa_device_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.2"
 author: Victor Costan (@pwnall)
 options:
@@ -49,7 +50,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # List MFA devices (more details: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListMFADevices.html)
-- iam_mfa_device_facts:
+- iam_mfa_device_info:
   register: mfa_devices
 
 # Assume an existing role (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
@@ -96,6 +97,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'iam_mfa_device_facts':
+        module.deprecate("The 'iam_mfa_device_facts' module has been renamed to 'iam_mfa_device_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
