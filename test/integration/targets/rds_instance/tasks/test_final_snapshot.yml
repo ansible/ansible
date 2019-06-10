@@ -48,7 +48,7 @@
             - "result.final_snapshot.db_instance_identifier == '{{ instance_id }}'"
 
       - name: Check that snapshot exists
-        rds_snapshot_facts:
+        rds_snapshot_info:
           db_snapshot_identifier: "{{ instance_id }}"
           <<: *aws_connection_info
         register: result

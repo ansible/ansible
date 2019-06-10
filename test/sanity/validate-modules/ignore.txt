@@ -48,7 +48,7 @@ lib/ansible/modules/cloud/amazon/elasticache.py E326
 lib/ansible/modules/cloud/amazon/elasticache_parameter_group.py E326
 lib/ansible/modules/cloud/amazon/elasticache_subnet_group.py E324
 lib/ansible/modules/cloud/amazon/elb_application_lb.py E324
-lib/ansible/modules/cloud/amazon/elb_classic_lb_facts.py E323
+lib/ansible/modules/cloud/amazon/elb_classic_lb_info.py E323
 lib/ansible/modules/cloud/amazon/elb_instance.py E326
 lib/ansible/modules/cloud/amazon/elb_target.py E327
 lib/ansible/modules/cloud/amazon/elb_target_group.py E324

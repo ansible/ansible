@@ -26,18 +26,18 @@
     register: iam_role_output
     ignore_errors: yes
 
-  # CI does not remove the role and comparing policies has a bug on Python3; fall back to use iam_role_facts
+  # CI does not remove the role and comparing policies has a bug on Python3; fall back to use iam_role_info
   - name: get IAM role
-    iam_role_facts:
+    iam_role_info:
       <<: *aws_connection_info
       name: "test-secrets-manager-role"
     when: iam_role_output is failed
-    register: iam_role_facts
+    register: iam_role_info
 
   - name: set iam_role_output
     set_fact:
-      iam_role_output: "{{ iam_role_facts.iam_roles[0] }}"
-    when: iam_role_facts is defined
+      iam_role_output: "{{ iam_role_info.iam_roles[0] }}"
+    when: iam_role_info is defined
 
   - name: create a temporary directory
     tempfile:
