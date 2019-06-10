@@ -12,17 +12,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_nacl_facts
-short_description: Gather facts about Network ACLs in an AWS VPC
+module: ec2_vpc_nacl_info
+short_description: Gather information about Network ACLs in an AWS VPC
 description:
-    - Gather facts about Network ACLs in an AWS VPC
+    - Gather information about Network ACLs in an AWS VPC
+    - This module was called C(ec2_vpc_nacl_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.2"
 author: "Brad Davidson (@brandond)"
 requirements: [ boto3 ]
 options:
   nacl_ids:
     description:
-      - A list of Network ACL IDs to retrieve facts about.
+      - A list of Network ACL IDs to retrieve information about.
     required: false
     default: []
     aliases: [nacl_id]
@@ -44,16 +45,16 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all Network ACLs:
+# Gather information about all Network ACLs:
 - name: Get All NACLs
   register: all_nacls
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     region: us-west-2
 
 # Retrieve default Network ACLs:
 - name: Get Default NACLs
   register: default_nacls
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
     region: us-west-2
     filters:
       'default': 'true'
@@ -211,6 +212,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'ec2_vpc_nacl_facts':
+        module.deprecate("The 'ec2_vpc_nacl_facts' module has been renamed to 'ec2_vpc_nacl_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
