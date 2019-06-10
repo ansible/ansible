@@ -57,8 +57,11 @@ class CacheModule(BaseFileCacheModule):
     """
 
     def _load(self, filepath):
-        with codecs.open(filepath, 'r', encoding='utf-8') as f:
-            return AnsibleLoader(f).get_single_data()
+        try:
+            with codecs.open(filepath, 'r', encoding='utf-8') as f:
+                return AnsibleLoader(f).get_single_data()
+        except IOError:
+            return None
 
     def _dump(self, value, filepath):
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
