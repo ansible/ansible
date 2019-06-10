@@ -11,6 +11,7 @@ pycrypto >= 2.6 # Need features found in 2.6 and greater
 ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
 idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
+paramiko < 2.5.0 ; python_version >= '2.7' # paramiko 2.5.0 requires cryptography 2.5.0+
 pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
 pytest < 5.0.0 ; python_version == '2.7' # pytest 5.0.0 and later will no longer support python 2.7
 pytest-forked < 1.0.2 ; python_version < '2.7' # pytest-forked 1.0.2 and later require python 2.7 or later
