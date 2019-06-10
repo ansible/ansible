@@ -197,7 +197,7 @@ $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
-$log_path = Get-AnsibleParam $params "log_path" -default $null
+$log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
 
 If ($state -eq "domain") {
