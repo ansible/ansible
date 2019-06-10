@@ -48,10 +48,10 @@ options:
     version_added: "1.4"
   remote_src:
     description:
-      - If False, it will search for src at originating/master machine, if True it will
-        go to the remote/target machine for the src. Default is True.
+      - If False, it will search for src at originating/master machine.
+      - If True it will go to the remote/target machine for the src.
     type: bool
-    default: 'yes'
+    default: 'no'
     version_added: "1.4"
   regexp:
     description:
