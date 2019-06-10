@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_vgw_facts
-short_description: Gather facts about virtual gateways in AWS
+module: ec2_vpc_vgw_info
+short_description: Gather information about virtual gateways in AWS
 description:
-    - Gather facts about virtual gateways in AWS.
+    - Gather information about virtual gateways in AWS.
+    - This module was called C(ec2_vpc_vgw_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.3"
 requirements: [ boto3 ]
 options:
@@ -36,26 +37,26 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Gather facts about all virtual gateways for an account or profile
-  ec2_vpc_vgw_facts:
+- name: Gather information about all virtual gateways for an account or profile
+  ec2_vpc_vgw_info:
     region: ap-southeast-2
     profile: production
-  register: vgw_facts
+  register: vgw_info
 
-- name: Gather facts about a filtered list of Virtual Gateways
-  ec2_vpc_vgw_facts:
+- name: Gather information about a filtered list of Virtual Gateways
+  ec2_vpc_vgw_info:
     region: ap-southeast-2
     profile: production
     filters:
         "tag:Name": "main-virt-gateway"
-  register: vgw_facts
+  register: vgw_info
 
-- name: Gather facts about a specific virtual gateway by VpnGatewayIds
-  ec2_vpc_vgw_facts:
+- name: Gather information about a specific virtual gateway by VpnGatewayIds
+  ec2_vpc_vgw_info:
     region: ap-southeast-2
     profile: production
     vpn_gateway_ids: vgw-c432f6a7
-  register: vgw_facts
+  register: vgw_info
 '''
 
 RETURN = '''
@@ -138,6 +139,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'ec2_vpc_vgw_facts':
+        module.deprecate("The 'ec2_vpc_vgw_facts' module has been renamed to 'ec2_vpc_vgw_info'", version='2.13')
 
     # Validate Requirements
     if not HAS_BOTO3:
