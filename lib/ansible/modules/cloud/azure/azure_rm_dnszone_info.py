@@ -136,7 +136,7 @@ class AzureRMDNSZoneInfo(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='dict')
+            tags=dict(type='list')
         )
 
         # store the results of the module operation
