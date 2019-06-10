@@ -279,6 +279,11 @@ def main():
     if not module.botocore_at_least("1.10.32"):
         module.fail_json(msg="aws_eks_cluster module requires botocore >= 1.10.32")
 
+    if (not module.botocore_at_least("1.12.38")) and
+            module.params.get('state') == 'absent' and
+            module.params.get('wait'):
+        module.fail_json(msg="aws_eks_cluster: wait=yes when state=absent requires botocore >= 1.12.38")
+
     client = module.client('eks')
 
     if module.params.get('state') == 'present':

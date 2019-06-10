@@ -19,7 +19,26 @@
     virtualenv_command: "{{ virtualenv_command }}"
     virtualenv_site_packages: no
 
-- include_tasks: old_version.yml
+- include_tasks: botocore_lt_1.10.1.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+- file:
+    path: "{{ virtualenv }}"
+    state: absent
+
+# Test graceful failures when botocore<1.12.38
+
+- pip:
+    name:
+      - 'botocore>1.10.1,<1.12.38'
+      - boto3
+      - coverage
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: botocore_lt_1.12.38.yml
   vars:
     ansible_python_interpreter: "{{ virtualenv_interpreter }}"
 
