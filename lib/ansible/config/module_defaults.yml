@@ -114,39 +114,39 @@ groupings:
   - aws
   ec2_ami_copy:
   - aws
-  ec2_ami_facts:
+  ec2_ami_info:
   - aws
   ec2_asg:
   - aws
-  ec2_asg_facts:
+  ec2_asg_info:
   - aws
   ec2_asg_lifecycle_hook:
   - aws
   ec2_customer_gateway:
   - aws
-  ec2_customer_gateway_facts:
+  ec2_customer_gateway_info:
   - aws
   ec2_eip:
   - aws
-  ec2_eip_facts:
+  ec2_eip_info:
   - aws
   ec2_elb:
   - aws
-  ec2_elb_facts:
+  ec2_elb_info:
   - aws
   ec2_elb_lb:
   - aws
   ec2_eni:
   - aws
-  ec2_eni_facts:
+  ec2_eni_info:
   - aws
   ec2_group:
   - aws
-  ec2_group_facts:
+  ec2_group_info:
   - aws
   ec2_instance:
   - aws
-  ec2_instance_facts:
+  ec2_instance_info:
   - aws
   ec2_key:
   - aws
@@ -154,7 +154,7 @@ groupings:
   - aws
   ec2_lc:
   - aws
-  ec2_lc_facts:
+  ec2_lc_info:
   - aws
   ec2_lc_find:
   - aws
@@ -162,7 +162,7 @@ groupings:
   - aws
   ec2_placement_group:
   - aws
-  ec2_placement_group_facts:
+  ec2_placement_group_info:
   - aws
   ec2_scaling_policy:
   - aws
@@ -170,13 +170,13 @@ groupings:
   - aws
   ec2_snapshot_copy:
   - aws
-  ec2_snapshot_facts:
+  ec2_snapshot_info:
   - aws
   ec2_tag:
   - aws
   ec2_vol:
   - aws
-  ec2_vol_facts:
+  ec2_vol_info:
   - aws
   ec2_vpc_dhcp_option:
   - aws

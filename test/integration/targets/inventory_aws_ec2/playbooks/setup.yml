@@ -8,7 +8,7 @@
   no_log: yes
 
 - name: get image ID to create an instance
-  ec2_ami_facts:
+  ec2_ami_info:
     filters:
       architecture: x86_64
       owner-id: '125523088429'

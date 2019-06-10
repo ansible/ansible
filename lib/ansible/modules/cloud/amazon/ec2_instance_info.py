@@ -12,10 +12,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_instance_facts
-short_description: Gather facts about ec2 instances in AWS
+module: ec2_instance_info
+short_description: Gather information about ec2 instances in AWS
 description:
-    - Gather facts about ec2 instances in AWS
+    - Gather information about ec2 instances in AWS
+    - This module was called C(ec2_instance_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.4"
 author:
   - Michael Schuett (@michaeljs1990)
@@ -43,26 +44,26 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all instances
-- ec2_instance_facts:
+# Gather information about all instances
+- ec2_instance_info:
 
-# Gather facts about all instances in AZ ap-southeast-2a
-- ec2_instance_facts:
+# Gather information about all instances in AZ ap-southeast-2a
+- ec2_instance_info:
     filters:
       availability-zone: ap-southeast-2a
 
-# Gather facts about a particular instance using ID
-- ec2_instance_facts:
+# Gather information about a particular instance using ID
+- ec2_instance_info:
     instance_ids:
       - i-12345678
 
-# Gather facts about any instance with a tag key Name and value Example
-- ec2_instance_facts:
+# Gather information about any instance with a tag key Name and value Example
+- ec2_instance_info:
     filters:
       "tag:Name": Example
 
-# Gather facts about any instance in states "shutting-down", "stopping", "stopped"
-- ec2_instance_facts:
+# Gather information about any instance in states "shutting-down", "stopping", "stopped"
+- ec2_instance_info:
     filters:
       instance-state-name: [ "shutting-down", "stopping", "stopped" ]
 
@@ -543,6 +544,8 @@ def main():
                            ],
                            supports_check_mode=True
                            )
+    if module._name == 'ec2_instance_facts':
+        module.deprecate("The 'ec2_instance_facts' module has been renamed to 'ec2_instance_information'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

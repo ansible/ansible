@@ -14,10 +14,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_lc_facts
-short_description: Gather facts about AWS Autoscaling Launch Configurations
+module: ec2_lc_info
+short_description: Gather information about AWS Autoscaling Launch Configurations
 description:
-    - Gather facts about AWS Autoscaling Launch Configurations
+    - Gather information about AWS Autoscaling Launch Configurations
+    - This module was called C(ec2_lc_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.3"
 author: "Loïc Latreille (@psykotox)"
 requirements: [ boto3 ]
@@ -52,15 +53,15 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all launch configurations
-- ec2_lc_facts:
+# Gather information about all launch configurations
+- ec2_lc_info:
 
-# Gather facts about launch configuration with name "example"
-- ec2_lc_facts:
+# Gather information about launch configuration with name "example"
+- ec2_lc_info:
     name: example
 
-# Gather facts sorted by created_time from most recent to least recent
-- ec2_lc_facts:
+# Gather information sorted by created_time from most recent to least recent
+- ec2_lc_info:
     sort: created_time
     sort_order: descending
 '''
@@ -213,6 +214,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'ec2_lc_facts':
+        module.deprecate("The 'ec2_lc_facts' module has been renamed to 'ec2_lc_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

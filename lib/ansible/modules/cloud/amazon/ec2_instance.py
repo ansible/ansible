@@ -73,7 +73,7 @@ options:
     type: bool
   image:
     description:
-      - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
+      - An image to use for the instance. The M(ec2_ami_info) module may be used to retrieve images.
         One of I(image) or I(image_id) are required when instance is not already present.
       - Complex object containing I(image.id), I(image.ramdisk), and I(image.kernel).
       - I(image.id) is the AMI ID.

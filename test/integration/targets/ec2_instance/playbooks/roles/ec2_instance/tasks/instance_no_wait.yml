@@ -40,7 +40,7 @@
   check_mode: yes
 
 - name: Facts for ec2 test instance
-  ec2_instance_facts:
+  ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-no-wait"
       "instance-state-name": "running"
@@ -50,7 +50,7 @@
   retries: 10
 
 - name: Facts for checkmode ec2 test instance
-  ec2_instance_facts:
+  ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-no-wait-checkmode"
       "instance-state-name": "running"

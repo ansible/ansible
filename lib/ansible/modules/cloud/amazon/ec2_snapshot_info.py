@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_snapshot_facts
-short_description: Gather facts about ec2 volume snapshots in AWS
+module: ec2_snapshot_info
+short_description: Gather information about ec2 volume snapshots in AWS
 description:
-    - Gather facts about ec2 volume snapshots in AWS
+    - Gather information about ec2 volume snapshots in AWS
+    - This module was called C(ec2_snapshot_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.1"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -57,36 +58,36 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all snapshots, including public ones
-- ec2_snapshot_facts:
+# Gather information about all snapshots, including public ones
+- ec2_snapshot_info:
 
-# Gather facts about all snapshots owned by the account 0123456789
-- ec2_snapshot_facts:
+# Gather information about all snapshots owned by the account 0123456789
+- ec2_snapshot_info:
     filters:
       owner-id: 0123456789
 
 # Or alternatively...
-- ec2_snapshot_facts:
+- ec2_snapshot_info:
     owner_ids:
       - 0123456789
 
-# Gather facts about a particular snapshot using ID
-- ec2_snapshot_facts:
+# Gather information about a particular snapshot using ID
+- ec2_snapshot_info:
     filters:
       snapshot-id: snap-00112233
 
 # Or alternatively...
-- ec2_snapshot_facts:
+- ec2_snapshot_info:
     snapshot_ids:
       - snap-00112233
 
-# Gather facts about any snapshot with a tag key Name and value Example
-- ec2_snapshot_facts:
+# Gather information about any snapshot with a tag key Name and value Example
+- ec2_snapshot_info:
     filters:
       "tag:Name": Example
 
-# Gather facts about any snapshot with an error status
-- ec2_snapshot_facts:
+# Gather information about any snapshot with an error status
+- ec2_snapshot_info:
     filters:
       status: error
 
@@ -230,6 +231,8 @@ def main():
                                ['snapshot_ids', 'owner_ids', 'restorable_by_user_ids', 'filters']
                            ]
                            )
+    if module._name == 'ec2_snapshot_facts':
+        module.deprecate("The 'ec2_snapshot_facts' module has been renamed to 'ec2_snapshot_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

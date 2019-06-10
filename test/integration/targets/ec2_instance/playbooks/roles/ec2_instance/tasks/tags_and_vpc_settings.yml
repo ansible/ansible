@@ -79,7 +79,7 @@
     that: 'not remake_in_test_vpc.instances[0].source_dest_check'
 
 - name: "fact presented ec2 instance"
-  ec2_instance_facts:
+  ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create"
       "instance-state-name": "running"
@@ -87,7 +87,7 @@
   register: presented_instance_fact
 
 - name: "fact checkmode ec2 instance"
-  ec2_instance_facts:
+  ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create-checkmode"
       "instance-state-name": "running"
@@ -113,7 +113,7 @@
     <<: *aws_connection_info
   register: add_another_tag
 
-- ec2_instance_facts:
+- ec2_instance_info:
     instance_ids: "{{ add_another_tag.instance_ids }}"
     <<: *aws_connection_info
   register: check_tags
@@ -135,7 +135,7 @@
     vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
     instance_type: t2.micro
     <<: *aws_connection_info
-- ec2_instance_facts:
+- ec2_instance_info:
     instance_ids: "{{ add_another_tag.instance_ids }}"
     <<: *aws_connection_info
   register: check_tags

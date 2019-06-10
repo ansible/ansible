@@ -9,10 +9,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_placement_group_facts
+module: ec2_placement_group_info
 short_description: List EC2 Placement Group(s) details
 description:
     - List details of EC2 Placement Group(s).
+    - This module was called C(ec2_placement_group_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 author: "Brad Macpherson (@iiibrad)"
 options:
@@ -32,11 +33,11 @@ EXAMPLES = '''
 # see the AWS Guide for details.
 
 # List all placement groups.
-- ec2_placement_group_facts:
+- ec2_placement_group_info:
   register: all_ec2_placement_groups
 
 # List two placement groups.
-- ec2_placement_group_facts:
+- ec2_placement_group_info:
     names:
      - my-cluster
      - my-other-cluster
@@ -117,6 +118,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
+    if module._module._name == 'ec2_placement_group_facts':
+        module._module.deprecate("The 'ec2_placement_group_facts' module has been renamed to 'ec2_placement_group_info'", version='2.13')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(
         module, boto3=True)
