@@ -74,8 +74,8 @@ options:
   log_path:
     description:
     - Write a logfile to disk, useful for debugging this module or connection plugins.
-  type: str
-  version_added: '2.9'
+    type: str
+    version_added: '2.9'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer

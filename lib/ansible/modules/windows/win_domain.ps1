@@ -22,7 +22,7 @@ Function Write-DebugLog {
     Write-Debug $msg
 
     if($log_path) {
-        Add-Content $log_path $msg
+        Add-Content -LiteralPath $log_path $msg
     }
 }
 
@@ -152,7 +152,7 @@ if (-not $forest) {
     $iaf = $null
     try {
         Write-DebugLog ("Install-ADDSForest with: {0}" -f ($install_params | ConvertTo-Json))
-        $iaf = Install-ADDSForest -WarningAction SilentlyContinue @install_params
+        $iaf = Install-ADDSForest @install_params
         Write-DebugLog ("Done Install-ADDSForest: {0}" -f ($iaf | ConvertTo-Json))
     } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
         # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
