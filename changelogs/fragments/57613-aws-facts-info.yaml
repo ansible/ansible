@@ -1,0 +1,8 @@
+minor_changes:
+- The ``aws_acm_facts`` module has been renamed to ``aws_acm_info``.
+- The ``aws_az_facts`` module has been renamed to ``aws_az_info``.
+- The ``aws_caller_facts`` module has been renamed to ``aws_caller_info``.
+- The ``aws_kms_facts`` module has been renamed to ``aws_kms_info``.
+- The ``aws_region_facts`` module has been renamed to ``aws_region_info``.
+- The ``aws_sgw_facts`` module has been renamed to ``aws_sgw_info``.
+- The ``aws_waf_facts`` module has been renamed to ``aws_waf_info``.

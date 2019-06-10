@@ -10,7 +10,7 @@
     no_log: true
 
   - name: retrieve caller facts
-    aws_caller_facts:
+    aws_caller_info:
       <<: *aws_connection_info
     register: test_caller_facts
 
