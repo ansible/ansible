@@ -711,7 +711,7 @@ def main():
         # First take care of creating the VM, if needed:
         if state in ('present', 'detached', 'attached'):
             if vm_service is not None and disk is None:
-                #When creating disk for vm activate it.
+                # When creating disk for vm activate it.
                 module.params['activate'] = True
             ret = disks_module.create(
                 entity=disk if not force_create else None,
