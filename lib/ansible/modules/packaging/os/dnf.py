@@ -285,6 +285,7 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -488,7 +489,7 @@ class DnfModule(YumDnf):
                     results=[],
                 )
 
-            self.module.run_command(['dnf', 'install', '-y', package], check_rc=True)
+            rc, stdout, stderr = self.module.run_command(['dnf', 'install', '-y', package])
             global dnf
             try:
                 import dnf
@@ -499,9 +500,15 @@ class DnfModule(YumDnf):
                 import dnf.util
             except ImportError:
                 self.module.fail_json(
-                    msg="Could not import the dnf python module. "
-                    "Please install `{0}` package.".format(package),
+                    msg="Could not import the dnf python module using {0} ({1}). "
+                        "Please install `{2}` package or ensure you have specified the "
+                        "correct ansible_python_interpreter.".format(sys.executable, sys.version.replace('\n', ''),
+                                                                     package),
                     results=[],
+                    cmd='dnf install -y {0}'.format(package),
+                    rc=rc,
+                    stdout=stdout,
+                    stderr=stderr,
                 )
 
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):

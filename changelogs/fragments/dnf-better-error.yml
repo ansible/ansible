@@ -1,0 +1,2 @@
+minor_changes:
+- dnf - Provide a better error message including python version info when installing python-dnf fails
