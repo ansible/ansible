@@ -24,7 +24,7 @@ def test_normalize_data():
         "rack": "Some rack",
     }
     normalized_data = raw_data.copy()
-    normalized_data["rack"] = "some-rack"
+    normalized_data["rack"] = "Some rack"
 
     assert normalize_data(raw_data) == normalized_data
 
