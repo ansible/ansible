@@ -12,15 +12,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: intersight_facts
-short_description: Gather facts about Intersight
+module: intersight_info
+short_description: Gather information about Intersight
 description:
-- Gathers facts about servers in L(Cisco Intersight,https://intersight.com).
+- Gathers information about servers in L(Cisco Intersight,https://intersight.com).
+- This module was called C(intersight_facts) before Ansible 2.9. The usage did not change.
 extends_documentation_fragment: intersight
 options:
   server_names:
     description:
-    - Server names to retrieve facts from.
+    - Server names to retrieve information from.
     - An empty list will return all servers.
     type: list
     required: yes
@@ -31,8 +32,8 @@ version_added: '2.8'
 '''
 
 EXAMPLES = r'''
-- name: Get facts for all servers
-  intersight_facts:
+- name: Get info for all servers
+  intersight_info:
     api_private_key: ~/Downloads/SecretKey.txt
     api_key_id: 64612d300d0982/64612d300d0b00/64612d300d3650
     server_names:
@@ -41,8 +42,8 @@ EXAMPLES = r'''
   loop: "{{ intersight_servers }}"
   when: intersight_servers is defined
 
-- name: Get facts for servers by name
-  intersight_facts:
+- name: Get info for servers by name
+  intersight_info:
     api_private_key: ~/Downloads/SecretKey.txt
     api_key_id: 64612d300d0982/64612d300d0b00/64612d300d3650
     server_names:
@@ -103,6 +104,8 @@ def main():
         argument_spec,
         supports_check_mode=True,
     )
+    if module._name == 'intersight_facts':
+        module.deprecate("The 'intersight_facts' module has been renamed to 'intersight_info'", version='2.13')
 
     intersight = IntersightModule(module)
 
