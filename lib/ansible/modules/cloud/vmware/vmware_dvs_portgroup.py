@@ -178,6 +178,15 @@ options:
             }
         }
         type: dict
+    vendor_specific_config:
+        description:
+            - List of key,value dictionaries for the Vendor Specific Configuration.
+            -'Element attributes are:'
+            - '- C(key) (str): Key of setting. (default: None)'
+            - '- C(value) (str): Value of setting. (default: None)'
+        required: False
+        version_added: '2.9'
+        type: dict
 
 extends_documentation_fragment: vmware.documentation
 '''
@@ -360,6 +369,10 @@ class VMwareDvsPortgroup(PyVmomi):
 
         # vlan_id
         config.defaultPortConfig.vlan = self._vlan_spec()
+
+        # vendor_specific_config
+        if self.module.params['vendor_specific_config']:
+            config.defaultPortConfig.vendorSpecificConfig = self._vendor_specific_config_spec()
 
         # network_policy
         config.defaultPortConfig.securityPolicy = self._security_policy_spec()
@@ -635,6 +648,15 @@ class VMwareDvsPortgroup(PyVmomi):
 
         return mm_policy
 
+    def _vendor_specific_config_spec(self):
+        spec = vim.dvs.DistributedVirtualPort.VendorSpecificConfig()
+        spec.inherited = False
+        spec.keyValue = list()
+        for item in self.params['vendor_specific_config']:
+            spec.keyValue.append(vim.dvs.KeyedOpaqueBlob(key=item['key'], opaqueData=item['value']))
+
+        return spec
+
 
 def main():
     argument_spec = vmware_argument_spec()
@@ -741,6 +763,15 @@ def main():
                         limit=None,
                         limit_policy=None,
                     ),
+                ),
+            ),
+            vendor_specific_config=dict(
+                type='list',
+                elements='dict',
+                required=False,
+                options=dict(
+                    key=dict(type='str', required=True),
+                    value=dict(type='str', required=True),
                 ),
             ),
         )
