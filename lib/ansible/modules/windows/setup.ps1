@@ -309,7 +309,10 @@ if($gather_subset.Contains('platform')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $domain_suffix = $win32_cs.Domain.Substring($win32_cs.Workgroup.length)
 
-    $domain_suffix = ".$domain_suffix"
+    if( $domain_suffix -ne "")
+    {
+        $domain_suffix = ".$domain_suffix"
+    }
 
     try {
         $ansible_reboot_pending = Get-PendingRebootStatus
@@ -320,7 +323,7 @@ if($gather_subset.Contains('platform')) {
 
     $ansible_facts += @{
         ansible_architecture = $win32_os.OSArchitecture
-        ansible_domain = $domain_suffix.Substring(1)
+        ansible_domain = $domain_suffix
         ansible_fqdn = ($win32_cs.DNSHostname + $domain_suffix)
         ansible_hostname = $win32_cs.DNSHostname
         ansible_netbios_name = $win32_cs.Name
