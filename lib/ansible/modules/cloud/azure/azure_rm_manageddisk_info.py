@@ -1,4 +1,4 @@
-  #!/usr/bin/python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Bruno Medina Bolanos Cacho <bruno.medina@microsoft.com>
@@ -150,7 +150,7 @@ class AzureRMManagedDiskInfo(AzureRMModuleBase):
                 type='str'
             ),
             tags=dict(
-                type='str'
+                type='list'
             ),
         )
         self.results = dict(
