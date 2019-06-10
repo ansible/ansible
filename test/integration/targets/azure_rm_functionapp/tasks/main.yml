@@ -28,7 +28,7 @@
     that: output.changed
 
 - name: list facts for function
-  azure_rm_functionapp_facts:
+  azure_rm_functionapp_info:
     resource_group: '{{ resource_group }}'
     name: "{{ funcapp_name_basic }}"
   register: results

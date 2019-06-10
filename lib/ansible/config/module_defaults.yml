@@ -494,15 +494,15 @@ groupings:
   - azure
   azure_rm_aks:
   - azure
-  azure_rm_aks_facts:
+  azure_rm_aks_info:
   - azure
   azure_rm_appserviceplan:
   - azure
-  azure_rm_appserviceplan_facts:
+  azure_rm_appserviceplan_info:
   - azure
   azure_rm_availabilityset:
   - azure
-  azure_rm_availabilityset_facts:
+  azure_rm_availabilityset_info:
   - azure
   azure_rm_containerinstance:
   - azure
@@ -512,15 +512,15 @@ groupings:
   - azure
   azure_rm_dnsrecordset:
   - azure
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
   - azure
   azure_rm_dnszone:
   - azure
-  azure_rm_dnszone_facts:
+  azure_rm_dnszone_info:
   - azure
   azure_rm_functionapp:
   - azure
-  azure_rm_functionapp_facts:
+  azure_rm_functionapp_info:
   - azure
   azure_rm_image:
   - azure
@@ -532,37 +532,37 @@ groupings:
   - azure
   azure_rm_loadbalancer:
   - azure
-  azure_rm_loadbalancer_facts:
+  azure_rm_loadbalancer_info:
   - azure
   azure_rm_manageddisk:
   - azure
-  azure_rm_manageddisk_facts:
+  azure_rm_manageddisk_info:
   - azure
   azure_rm_mysqldatabase:
   - azure
-  azure_rm_mysqldatabase_facts:
+  azure_rm_mysqldatabase_info:
   - azure
   azure_rm_mysqlserver:
   - azure
-  azure_rm_mysqlserver_facts:
+  azure_rm_mysqlserver_info:
   - azure
   azure_rm_networkinterface:
   - azure
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
   - azure
   azure_rm_postgresqldatabase:
   - azure
-  azure_rm_postgresqldatabase_facts:
+  azure_rm_postgresqldatabase_info:
   - azure
   azure_rm_postgresqlserver:
   - azure
   azure_rm_publicipaddress:
   - azure
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
   - azure
   azure_rm_resource:
   - azure
-  azure_rm_resource_facts:
+  azure_rm_resource_info:
   - azure
   azure_rm_resourcegroup:
   - azure
@@ -570,17 +570,17 @@ groupings:
   - azure
   azure_rm_securitygroup:
   - azure
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
   - azure
   azure_rm_sqldatabase:
   - azure
   azure_rm_sqlserver:
   - azure
-  azure_rm_sqlserver_facts:
+  azure_rm_sqlserver_info:
   - azure
   azure_rm_storageaccount:
   - azure
-  azure_rm_storageaccount_facts:
+  azure_rm_storageaccount_info:
   - azure
   azure_rm_storageblob:
   - azure
@@ -590,17 +590,17 @@ groupings:
   - azure
   azure_rm_virtualmachine_extension:
   - azure
-  azure_rm_virtualmachine_facts:
+  azure_rm_virtualmachine_info:
   - azure
-  azure_rm_virtualmachineimage_facts:
+  azure_rm_virtualmachineimage_info:
   - azure
   azure_rm_virtualmachine_scaleset:
   - azure
-  azure_rm_virtualmachine_scaleset_facts:
+  azure_rm_virtualmachine_scaleset_info:
   - azure
   azure_rm_virtualnetwork:
   - azure
-  azure_rm_virtualnetwork_facts:
+  azure_rm_virtualnetwork_info:
   - azure
   azure_rm_webapp:
   - azure

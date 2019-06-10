@@ -1,5 +1,5 @@
 cloud/azure
 shippable/azure/group2
 destructive
-azure_rm_cdnprofile_facts
+azure_rm_cdnprofile_info
 azure_rm_cdnendpoint

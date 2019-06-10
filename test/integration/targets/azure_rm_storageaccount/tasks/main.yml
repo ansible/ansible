@@ -79,7 +79,7 @@
         - not output.changed
 
  - name: Gather facts by tags
-   azure_rm_storageaccount_facts:
+   azure_rm_storageaccount_info:
        resource_group: "{{ resource_group }}"
        tags:
          - test
@@ -128,7 +128,7 @@
            - "output.state.tags.delete == 'never'"
 
  - name: Gather facts
-   azure_rm_storageaccount_facts:
+   azure_rm_storageaccount_info:
        resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"
        show_connection_string: True
@@ -144,7 +144,7 @@
            - storageaccounts[0].blob_cors
 
  - name: Gather facts
-   azure_rm_storageaccount_facts:
+   azure_rm_storageaccount_info:
        resource_group: "{{ resource_group }}"
 
  - assert:
