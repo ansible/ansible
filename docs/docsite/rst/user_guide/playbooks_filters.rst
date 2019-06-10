@@ -864,17 +864,28 @@ The resulting hash would be::
 
     {'a':1, 'b':3}
 
-The filter also accepts an optional `recursive=True` parameter to not
-only override keys in the first hash, but also recurse into nested
-hashes and merge their keys too
+The filter also accepts an optional `recursive` parameter.
+`recursive='merge_hash'` (or `recursive=True`) not only override keys in the
+first hash, but also recurse into nested hashes and merge their keys too.
 
 .. code-block:: jinja
 
-    {{ {'a':{'foo':1, 'bar':2}, 'b':2} | combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
+    {{ {'a':{'foo':1, 'bar':2}, 'b':2} | combine({'a':{'bar':3, 'baz':4}}, recursive='merge_hash') }}
 
 This would result in::
 
     {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}
+
+`recursive='merge_hash_and_array'` has the same effect as
+`recursive='merge_hash'` but also append lists.
+
+.. code-block:: jinja
+
+    {{ {'a': ['b', 'c']} | combine({'a': ['c']}, recursive='merge_hash_and_array') }}
+
+This would result in::
+
+    {'a': ['b', 'c', 'c']}
 
 The filter can also take multiple arguments to merge::
 

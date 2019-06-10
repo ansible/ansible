@@ -53,7 +53,7 @@ from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
-from ansible.utils.vars import merge_hash
+from ansible.utils.vars import merge_hash, merge_hash_and_array
 
 display = Display()
 
@@ -310,7 +310,12 @@ def combine(*terms, **kwargs):
             raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
 
     if recursive:
-        return reduce(merge_hash, dicts)
+        if recursive is True or recursive == 'merge_hash':
+            return reduce(merge_hash, dicts)
+        elif recursive == 'merge_hash_and_array':
+            return reduce(merge_hash_and_array, dicts)
+        else:
+            raise AnsibleFilterError("'recursive' unknown value '%s'" % recursive)
     else:
         return dict(itertools.chain(*map(iteritems, dicts)))
 
