@@ -14,11 +14,12 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: github_webhook_facts
+module: github_webhook_info
 short_description: Query information about GitHub webhooks
 version_added: "2.8"
 description:
   - "Query information about GitHub webhooks"
+  - This module was called C(github_webhook_facts) before Ansible 2.9. The usage did not change.
 requirements:
   - "PyGithub >= 1.3.5"
 options:
@@ -52,14 +53,14 @@ author:
 
 EXAMPLES = '''
 - name: list hooks for a repository (password auth)
-  github_webhook_facts:
+  github_webhook_info:
     repository: ansible/ansible
     user: "{{ github_user }}"
     password: "{{ github_password }}"
   register: ansible_webhooks
 
 - name: list hooks for a repository on GitHub Enterprise (token auth)
-  github_webhook_facts:
+  github_webhook_info:
     repository: myorg/myrepo
     user: "{{ github_user }}"
     token: "{{ github_user_api_token }}"
@@ -126,6 +127,8 @@ def main():
         mutually_exclusive=(('password', 'token'), ),
         required_one_of=(("password", "token"), ),
         supports_check_mode=True)
+    if module._name == 'github_webhook_facts':
+        module.deprecate("The 'github_webhook_facts' module has been renamed to 'github_webhook_info'", version='2.13')
 
     if not HAS_GITHUB:
         module.fail_json(msg=missing_required_lib('PyGithub'),
