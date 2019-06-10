@@ -106,7 +106,7 @@ $read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -defau
 $site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 
 $state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
-$log_path = Get-AnsibleParam -obj $params -name "log_path" -default $null
+$log_path = Get-AnsibleParam -obj $params -name "log_path"
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 Try {
