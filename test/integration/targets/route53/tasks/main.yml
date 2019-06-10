@@ -161,7 +161,7 @@
         - caa is not failed
         - caa is not changed
   always:
-  - route53_facts:
+  - route53_info:
       query: record_sets
       hosted_zone_id: '{{ z1.zone_id }}'
     register: z1_records

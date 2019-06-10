@@ -13,11 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: redshift_facts
+module: redshift_info
 author: "Jens Carl (@j-carl)"
-short_description: Gather facts about Redshift cluster(s)
+short_description: Gather information about Redshift cluster(s)
 description:
-  - Gather facts about Redshift cluster(s)
+  - Gather information about Redshift cluster(s)
+  - This module was called C(redshift_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.4"
 requirements: [ boto3 ]
 options:
@@ -41,18 +42,18 @@ EXAMPLES = '''
 # Note: These examples do net set authentication details, see the AWS guide for details.
 
 # Find all clusters
-- redshift_facts:
+- redshift_info:
   register: redshift
 
 # Find cluster(s) with matching tags
-- redshift_facts:
+- redshift_info:
     tags:
       env: prd
       stack: monitoring
   register: redshift_tags
 
 # Find cluster(s) with matching name/prefix and tags
-- redshift_facts:
+- redshift_info:
     tags:
       env: dev
       stack: web
@@ -60,7 +61,7 @@ EXAMPLES = '''
   register: redshift_web
 
 # Fail if no cluster(s) is/are found
-- redshift_facts:
+- redshift_info:
     tags:
       env: stg
       stack: db
@@ -340,6 +341,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True
     )
+    if module._name == 'redshift_facts':
+        module.deprecate("The 'redshift_facts' module has been renamed to 'redshift_info'", version='2.13')
 
     cluster_identifier = module.params.get('cluster_identifier')
     cluster_tags = module.params.get('tags')

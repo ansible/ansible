@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: iam_server_certificate_facts
-short_description: Retrieve the facts of a server certificate
+module: iam_server_certificate_info
+short_description: Retrieve the information of a server certificate
 description:
   - Retrieve the attributes of a server certificate
+  - This module was called C(iam_server_certificate_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.2"
 author: "Allen Sanabria (@linuxdynasty)"
 requirements: [boto3, botocore]
@@ -32,12 +33,12 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Retrieve server certificate
-- iam_server_certificate_facts:
+- iam_server_certificate_info:
     name: production-cert
   register: server_cert
 
 # Fail if the server certificate name was not found
-- iam_server_certificate_facts:
+- iam_server_certificate_info:
     name: production-cert
   register: server_cert
   failed_when: "{{ server_cert.results | length == 0 }}"
@@ -150,6 +151,8 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,)
+    if module._name == 'iam_server_certificate_facts':
+        module.deprecate("The 'iam_server_certificate_facts' module has been renamed to 'iam_server_certificate_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

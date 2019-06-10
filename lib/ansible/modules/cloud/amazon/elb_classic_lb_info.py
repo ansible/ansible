@@ -20,10 +20,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: elb_classic_lb_facts
-short_description: Gather facts about EC2 Elastic Load Balancers in AWS
+module: elb_classic_lb_info
+short_description: Gather information about EC2 Elastic Load Balancers in AWS
 description:
-    - Gather facts about EC2 Elastic Load Balancers in AWS
+    - Gather information about EC2 Elastic Load Balancers in AWS
+    - This module was called C(elb_classic_lb_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.0"
 author:
   - "Michael Schultz (@mjschultz)"
@@ -31,7 +32,7 @@ author:
 options:
   names:
     description:
-      - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
+      - List of ELB names to gather information about. Pass this option to gather information about a set of ELBs, otherwise, all ELBs are returned.
     aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment:
     - aws
@@ -45,32 +46,32 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 # Output format tries to match ec2_elb_lb module input parameters
 
-# Gather facts about all ELBs
-- elb_classic_lb_facts:
-  register: elb_facts
+# Gather information about all ELBs
+- elb_classic_lb_info:
+  register: elb_info
 
 - debug:
     msg: "{{ item.dns_name }}"
-  loop: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_info.elbs }}"
 
-# Gather facts about a particular ELB
-- elb_classic_lb_facts:
+# Gather information about a particular ELB
+- elb_classic_lb_info:
     names: frontend-prod-elb
-  register: elb_facts
+  register: elb_info
 
 - debug:
-    msg: "{{ elb_facts.elbs.0.dns_name }}"
+    msg: "{{ elb_info.elbs.0.dns_name }}"
 
-# Gather facts about a set of ELBs
-- elb_classic_lb_facts:
+# Gather information about a set of ELBs
+- elb_classic_lb_info:
     names:
     - frontend-prod-elb
     - backend-prod-elb
-  register: elb_facts
+  register: elb_info
 
 - debug:
     msg: "{{ item.dns_name }}"
-  loop: "{{ elb_facts.elbs }}"
+  loop: "{{ elb_info.elbs }}"
 
 '''
 
@@ -203,6 +204,8 @@ def main():
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
+    if module._name == 'elb_classic_lb_facts':
+        module.deprecate("The 'elb_classic_lb_facts' module has been renamed to 'elb_classic_lb_info'", version='2.13')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = boto3_conn(module, conn_type='client', resource='elb', region=region, endpoint=ec2_url, **aws_connect_params)
@@ -210,7 +213,7 @@ def main():
     try:
         elbs = list_elbs(connection, module.params.get('names'))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, msg="Failed to get load balancer facts.")
+        module.fail_json_aws(e, msg="Failed to get load balancer information.")
 
     module.exit_json(elbs=elbs)
 
