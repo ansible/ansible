@@ -298,10 +298,7 @@ def create_or_delete_user(args=None):
 def main():
     global module
 
-    required_if = [
-        ['state', 'present', ['password']],
-        ['update_password', 'always', ['password']]
-    ]
+    required_if = [['state', 'present', ['password']]]
 
     module = AnsibleModule(
         argument_spec=dict(
