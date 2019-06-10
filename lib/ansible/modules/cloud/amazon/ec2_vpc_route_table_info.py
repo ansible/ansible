@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_route_table_facts
-short_description: Gather facts about ec2 VPC route tables in AWS
+module: ec2_vpc_route_table_info
+short_description: Gather information about ec2 VPC route tables in AWS
 description:
-    - Gather facts about ec2 VPC route tables in AWS
+    - Gather information about ec2 VPC route tables in AWS
+    - This module was called C(ec2_vpc_route_table_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
@@ -32,21 +33,21 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all VPC route tables
-- ec2_vpc_route_table_facts:
+# Gather information about all VPC route tables
+- ec2_vpc_route_table_info:
 
-# Gather facts about a particular VPC route table using route table ID
-- ec2_vpc_route_table_facts:
+# Gather information about a particular VPC route table using route table ID
+- ec2_vpc_route_table_info:
     filters:
       route-table-id: rtb-00112233
 
-# Gather facts about any VPC route table with a tag key Name and value Example
-- ec2_vpc_route_table_facts:
+# Gather information about any VPC route table with a tag key Name and value Example
+- ec2_vpc_route_table_info:
     filters:
       "tag:Name": Example
 
-# Gather facts about any VPC route table within VPC with ID vpc-abcdef00
-- ec2_vpc_route_table_facts:
+# Gather information about any VPC route table within VPC with ID vpc-abcdef00
+- ec2_vpc_route_table_info:
     filters:
       vpc-id: vpc-abcdef00
 
@@ -109,6 +110,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'ec2_vpc_route_table_facts':
+        module.deprecate("The 'ec2_vpc_route_table_facts' module has been renamed to 'ec2_vpc_route_table_info'", version='2.13')
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
