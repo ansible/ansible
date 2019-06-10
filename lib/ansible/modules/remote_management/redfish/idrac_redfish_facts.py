@@ -25,22 +25,27 @@ options:
     required: true
     description:
       - Category to execute on iDRAC controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on iDRAC controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of iDRAC controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with iDRAC controller
+    type: str
   password:
     required: true
     description:
       - Password for authentication with iDRAC controller
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
