@@ -251,21 +251,25 @@ class CallbackModule(CallbackBase):
         self.errors += 1
         self._send_annotations(data)
 
+    def _get_panels(self):
+        panels = list()
+        if self.panel_id:
+            if ',' in str(self.panel_id):
+                panels_input = str(self.panel_id).split(',')
+                for p in panels_input:
+                    panels.append(int(p))
+            else:
+                panels.append(int(self.panel_id))
+        return panels
+
     def _send_annotations(self, data):
-        uses_panels = False
         if self.dashboard_id:
             data["dashboardId"] = int(self.dashboard_id)
         if self.panel_id:
-            uses_panels = True
-            if ',' in str(self.panel_id):
-                panels = str(self.panel_id).split(',')
-                for p in panels:
-                    data["panelId"] = int(p)
-                    self._send_annotation(data)
-            else:
-                data["panelId"] = int(self.panel_id)
+            for panel_id in _get_panels():
+                data["panelId"] = panel_id
                 self._send_annotation(data)
-        if not uses_panels:
+        else:
             self._send_annotation(data)
 
     def _send_annotation(self, annotation):
