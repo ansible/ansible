@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_pg_hba - After splitting fields, merge authentication options back into a single field to prevent losing options beyond the first (https://github.com/ansible/ansible/issues/57505)
