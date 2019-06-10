@@ -43,10 +43,11 @@ options:
   count:
     description:
       Retention count for the snapshots created by the schedule.
-    type: int
+    type: list
   schedule:
     description:
     - schedule to be added inside the policy.
+    type: list
 '''
 EXAMPLES = """
     - name: create Snapshot policy
@@ -55,6 +56,18 @@ EXAMPLES = """
         name: ansible2
         schedule: hourly
         count: 150
+        enabled: True
+        username: "{{ netapp username }}"
+        password: "{{ netapp password }}"
+        hostname: "{{ netapp hostname }}"
+        https: False
+
+    - name: Create Snapshot policy with multiple schedules
+      na_ontap_snapshot_policy:
+        state: present
+        name: ansible2
+        schedule: ['hourly', 'daily', 'weekly', monthly', '5min']
+        count: [1, 2, 3, 4, 5]
         enabled: True
         username: "{{ netapp username }}"
         password: "{{ netapp password }}"
@@ -95,9 +108,10 @@ class NetAppOntapSnapshotPolicy(object):
                        'present', 'absent'], default='present'),
             name=dict(required=True, type="str"),
             enabled=dict(required=False, type="bool"),
-            count=dict(required=False, type="int"),
+            # count is a list of integers
+            count=dict(required=False, type="list", elements="int"),
             comment=dict(required=False, type="str"),
-            schedule=dict(required=False, type="str")
+            schedule=dict(required=False, type="list", elements="str")
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -138,16 +152,30 @@ class NetAppOntapSnapshotPolicy(object):
             self.module.fail_json(msg=to_native(error), exception=traceback.format_exc())
         return None
 
+    def validate_parameters(self):
+        """
+        Validate if each schedule has a count associated
+        :return: None
+        """
+        if len(self.parameters['count']) > 5 or len(self.parameters['schedule']) > 5 or \
+                len(self.parameters['count']) != len(self.parameters['schedule']):
+            self.module.fail_json(msg="Error: A Snapshot policy can have up to a maximum of 5 schedules,"
+                                      "and a count representing maximum number of Snapshot copies for each schedule")
+
     def create_snapshot_policy(self):
         """
         Creates a new snapshot policy
         """
         # set up required variables to create a snapshot policy
+        self.validate_parameters()
         options = {'policy': self.parameters['name'],
                    'enabled': str(self.parameters['enabled']),
-                   'count1': str(self.parameters['count']),
-                   'schedule1': self.parameters['schedule']
                    }
+        # zapi attribute for first schedule is schedule1, second is schedule2 and so on
+        positions = [str(i) for i in range(1, len(self.parameters['schedule']) + 1)]
+        for schedule, count, position in zip(self.parameters['schedule'], self.parameters['count'], positions):
+            options['count' + position] = str(count)
+            options['schedule' + position] = schedule
         snapshot_obj = netapp_utils.zapi.NaElement.create_node_with_children('snapshot-policy-create', **options)
 
         # Set up optional variables to create a snapshot policy

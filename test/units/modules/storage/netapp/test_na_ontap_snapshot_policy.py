@@ -166,6 +166,21 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert not exc.value.args[0]['changed']
 
+    def test_validate_params(self):
+        data = self.set_default_args()
+        data['schedule'] = ['s1', 's2']
+        data['count'] = [1, 2, 3]
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.create_snapshot_policy()
+        msg = 'Error: A Snapshot policy can have up to a maximum of 5 schedules,and a ' \
+              'count representing maximum number of Snapshot copies for each schedule'
+        assert exc.value.args[0]['msg'] == msg
+
     @patch('ansible.modules.storage.netapp.na_ontap_snapshot_policy.NetAppOntapSnapshotPolicy.delete_snapshot_policy')
     def test_successful_delete(self, delete_snapshot):
         ''' deleting snapshot policy and testing idempotency '''
@@ -188,6 +203,37 @@ class TestMyModule(unittest.TestCase):
         with pytest.raises(AnsibleExitJson) as exc:
             my_obj.apply()
         assert not exc.value.args[0]['changed']
+
+    def test_valid_schedule_count(self):
+        ''' validate error when schedule has more than 5 elements '''
+        data = self.set_default_args()
+        data['schedule'] = ['hourly', 'daily', 'weekly', 'monthly', '5min']
+        data['count'] = [1, 2, 3, 4, 5]
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        my_obj.create_snapshot_policy()
+        create_xml = my_obj.server.xml_in
+        assert data['count'][2] == int(create_xml['count3'])
+        assert data['schedule'][4] == create_xml['schedule5']
+
+    def test_invalid_schedule_count(self):
+        ''' validate error when schedule has more than 5 elements '''
+        data = self.set_default_args()
+        data['schedule'] = ['s1', 's2', 's3', 's4', 's5', 's6']
+        data['count'] = [1, 2, 3, 4, 5, 6]
+        set_module_args(data)
+        my_obj = my_module()
+        my_obj.asup_log_for_cserver = Mock(return_value=None)
+        if not self.onbox:
+            my_obj.server = self.server
+        with pytest.raises(AnsibleFailJson) as exc:
+            my_obj.create_snapshot_policy()
+        msg = 'Error: A Snapshot policy can have up to a maximum of 5 schedules,and a ' \
+              'count representing maximum number of Snapshot copies for each schedule'
+        assert exc.value.args[0]['msg'] == msg
 
     def test_if_all_methods_catch_exception(self):
         module_args = {}
