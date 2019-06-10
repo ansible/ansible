@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlserver_facts
 version_added: "2.7"
-short_description: Get Azure PostgreSQL Server facts.
+short_description: Get Azure PostgreSQL Server facts
 description:
     - Get facts of PostgreSQL Server.
 
@@ -37,7 +37,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -54,13 +54,14 @@ EXAMPLES = '''
 
 RETURN = '''
 servers:
-    description: A list of dictionaries containing facts for PostgreSQL servers.
+    description:
+        - A list of dictionaries containing facts for PostgreSQL servers.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/po
@@ -91,13 +92,13 @@ servers:
             contains:
                 name:
                     description:
-                        - The name of the SKU
+                        - The name of the SKU.
                     returned: always
                     type: str
                     sample: GP_Gen4_2
                 tier:
                     description:
-                        - The tier of the particular SKU
+                        - The tier of the particular SKU.
                     returned: always
                     type: str
                     sample: GeneralPurpose
@@ -121,7 +122,7 @@ servers:
             sample: False
         admin_username:
             description:
-                - "The administrator's login name of a server."
+                - The administrator's login name of a server.
             returned: always
             type: str
             sample: serveradmin
@@ -144,7 +145,8 @@ servers:
             type: str
             sample: postgreabdud1223.postgres.database.azure.com
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+                - Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
             sample: { tag1: abc }
 '''
