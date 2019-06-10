@@ -113,6 +113,6 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
       tasks:
       - aws_s3_bucket_facts:
       # now the region is shared between both facts modules
-      - ec2_ami_facts:
+      - ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'

@@ -125,7 +125,7 @@
     # ============================================================
 
     - name: gather facts about the image created
-      ec2_ami_facts:
+      ec2_ami_info:
         image_ids: '{{ ec2_ami_image_id }}'
         <<: *aws_connection_info
       register: ami_facts_result
