@@ -157,44 +157,16 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
 
 DISABLE_PAGE_SKIPPING_VER = 96000
-
-
-def exec_sql(obj, query, ddl=False, add_to_executed=True):
-    """Execute SQL.
-
-    Auxiliary function for PostgreSQL user classes.
-
-    Returns a query result if possible or True/False if ddl=True arg was passed.
-    It necessary for statements that don't return any result (like DDL queries).
-
-    args:
-        obj (obj) -- must be an object of a user class.
-            The object must have module (AnsibleModule class object) and
-            cursor (psycopg cursor object) attributes
-        query (str) -- SQL query to execute
-        ddl (bool) -- must return True or False instead of rows (typical for DDL queries)
-            (default False)
-        add_to_executed (bool) -- append the query to obj.executed_queries attribute
-    """
-    try:
-        obj.cursor.execute(query)
-
-        if add_to_executed:
-            obj.executed_queries.append(query)
-
-        if not ddl:
-            res = obj.cursor.fetchall()
-            return res
-        return True
-    except Exception as e:
-        obj.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-    return False
 
 
 class Vacuum(object):
