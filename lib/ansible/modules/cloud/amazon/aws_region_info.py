@@ -9,10 +9,11 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
-module: aws_region_facts
+module: aws_region_info
 short_description: Gather facts about AWS regions.
 description:
     - Gather facts about AWS regions.
+    - This module was called C(aws_region_facts) before Ansible 2.9. The usage did not change.
 version_added: '2.5'
 author: 'Henrique Rodrigues (@Sodki)'
 options:
@@ -33,10 +34,10 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Gather facts about all regions
-- aws_region_facts:
+- aws_region_info:
 
 # Gather facts about a single region
-- aws_region_facts:
+- aws_region_info:
     filters:
       region-name: eu-west-1
 '''
@@ -76,6 +77,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+    if module._name == 'aws_region_facts':
+        module.deprecate("The 'aws_region_facts' module has been renamed to 'aws_region_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
