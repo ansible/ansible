@@ -310,7 +310,7 @@ def main():
             password=dict(type='str', no_log=True),
             memstore=dict(required=True, type='str'),
             enabled=dict(default=False, type='bool'),
-            update_password=dict(default='on_create', type='str')
+            update_password=dict(default='on_create', choices=['on_create', 'always'], type='str')
         ),
         supports_check_mode=True,
         required_if=required_if
