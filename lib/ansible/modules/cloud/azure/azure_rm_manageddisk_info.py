@@ -1,4 +1,4 @@
-#!/usr/bin/python
+  #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Bruno Medina Bolanos Cacho <bruno.medina@microsoft.com>
@@ -15,17 +15,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: azure_rm_manageddisk_info
-
 version_added: "2.9"
-
-short_description: Get managed disk information
-
+short_description: Get managed disk facts
 description:
-    - Get information for a specific managed disk or all managed disks.
-
+    - Get facts for a specific managed disk or all managed disks.
 notes:
-    - This module was called M(azure_rm_managed_disk_info) before Ansible 2.8. The usage did not change.
-
+    - This module was called M(azure_rm_managed_disk_facts) before Ansible 2.8. The usage did not change.
 options:
     name:
         description:
@@ -40,25 +35,21 @@ options:
             - Limit results by providing a list of tags.
             - Format tags as 'key' or 'key:value'.
         type: list
-
 extends_documentation_fragment:
     - azure
     - azure_tags
-
 author:
     - Bruno Medina (@brusMX)
 '''
 
 EXAMPLES = r'''
-- name: Get information for one managed disk
+- name: Get facts for one managed disk
   azure_rm_manageddisk_info:
     name: Testing
     resource_group: myResourceGroup
-
-- name: Get information for all managed disks
+- name: Get facts for all managed disks
   azure_rm_manageddisk_info:
-
-- name: Get information by tags
+- name: Get facts by tags
   azure_rm_manageddisk_info:
     tags:
     - testing
@@ -148,7 +139,7 @@ def managed_disk_to_dict(managed_disk):
 
 
 class AzureRMManagedDiskInfo(AzureRMModuleBase):
-    """Utility class to get managed disk information"""
+    """Utility class to get managed disk facts"""
 
     def __init__(self):
         self.module_arg_spec = dict(

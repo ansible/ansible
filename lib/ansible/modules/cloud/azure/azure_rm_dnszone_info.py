@@ -15,14 +15,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_dnszone_info
-
 version_added: "2.9"
-
-short_description: Get DNS zone information
-
+short_description: Get DNS zone facts
 description:
-    - Get information for a specific DNS zone or all DNS zones within a resource group.
-
+    - Get facts for a specific DNS zone or all DNS zones within a resource group.
 options:
     resource_group:
         description:
@@ -33,27 +29,22 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-
 extends_documentation_fragment:
     - azure
     - azure_tags
-
 author:
     - Obezimnaka Boms (@ozboms)
-
 '''
 
 EXAMPLES = '''
-- name: Get information for one zone
+- name: Get facts for one zone
   azure_rm_dnszone_info:
     resource_group: myResourceGroup
     name: foobar22
-
-- name: Get information for all zones in a resource group
+- name: Get facts for all zones in a resource group
   azure_rm_dnszone_info:
     resource_group: myResourceGroup
-
-- name: Get information by tags
+- name: Get facts by tags
   azure_rm_dnszone_info:
     tags:
       - testing
@@ -171,7 +162,7 @@ class AzureRMDNSZoneInfo(AzureRMModuleBase):
         results = []
         # list the conditions and what to return based on user input
         if self.name is not None:
-            # if there is a name, information about that specific zone
+            # if there is a name, facts about that specific zone
             results = self.get_item()
         elif self.resource_group:
             # all the zones listed in that specific resource group
