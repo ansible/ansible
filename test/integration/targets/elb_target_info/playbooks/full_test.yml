@@ -3,4 +3,4 @@
   environment: "{{ ansible_test.environment }}"
 
   roles:
-    - elb_target_facts
+    - elb_target_info

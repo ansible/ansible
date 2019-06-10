@@ -12,10 +12,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: elb_application_lb_facts
-short_description: Gather facts about application ELBs in AWS
+module: elb_application_lb_info
+short_description: Gather information about application ELBs in AWS
 description:
-    - Gather facts about application ELBs in AWS
+    - Gather information about application ELBs in AWS
+    - This module was called C(elb_application_lb_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.4"
 requirements: [ boto3 ]
 author: Rob White (@wimnat)
@@ -37,26 +38,26 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all target groups
-- elb_application_lb_facts:
+# Gather information about all target groups
+- elb_application_lb_info:
 
-# Gather facts about the target group attached to a particular ELB
-- elb_application_lb_facts:
+# Gather information about the target group attached to a particular ELB
+- elb_application_lb_info:
     load_balancer_arns:
       - "arn:aws:elasticloadbalancing:ap-southeast-2:001122334455:loadbalancer/app/my-elb/aabbccddeeff"
 
-# Gather facts about a target groups named 'tg1' and 'tg2'
-- elb_application_lb_facts:
+# Gather information about a target groups named 'tg1' and 'tg2'
+- elb_application_lb_info:
     names:
       - elb1
       - elb2
 
-# Gather facts about specific ALB
-- elb_application_lb_facts:
+# Gather information about specific ALB
+- elb_application_lb_info:
     names: "alb-name"
     region: "aws-region"
-  register: alb_facts
-- debug: var=alb_facts
+  register: alb_info
+- debug: var=alb_info
 '''
 
 RETURN = '''
@@ -268,6 +269,8 @@ def main():
                            mutually_exclusive=[['load_balancer_arns', 'names']],
                            supports_check_mode=True
                            )
+    if module._name == 'elb_application_lb_facts':
+        module.deprecate("The 'elb_application_lb_facts' module has been renamed to 'elb_application_lb_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

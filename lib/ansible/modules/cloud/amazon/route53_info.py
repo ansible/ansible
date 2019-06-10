@@ -12,10 +12,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-module: route53_facts
+module: route53_info
 short_description: Retrieves route53 details using AWS methods
 description:
     - Gets various details related to Route53 zone, record set or health check details.
+    - This module was called C(route53_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.0"
 options:
   query:
@@ -126,19 +127,19 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Simple example of listing all hosted zones
 - name: List all hosted zones
-  route53_facts:
+  route53_info:
     query: hosted_zone
   register: hosted_zones
 
 # Getting a count of hosted zones
 - name: Return a count of all hosted zones
-  route53_facts:
+  route53_info:
     query: hosted_zone
     hosted_zone_method: count
   register: hosted_zone_count
 
 - name: List the first 20 resource record sets in a given hosted zone
-  route53_facts:
+  route53_info:
     profile: account_name
     query: record_sets
     hosted_zone_id: ZZZ1111112222
@@ -146,37 +147,37 @@ EXAMPLES = '''
   register: record_sets
 
 - name: List first 20 health checks
-  route53_facts:
+  route53_info:
     query: health_check
     health_check_method: list
     max_items: 20
   register: health_checks
 
 - name: Get health check last failure_reason
-  route53_facts:
+  route53_info:
     query: health_check
     health_check_method: failure_reason
     health_check_id: 00000000-1111-2222-3333-12345678abcd
   register: health_check_failure_reason
 
 - name: Retrieve reusable delegation set details
-  route53_facts:
+  route53_info:
     query: reusable_delegation_set
     delegation_set_id: delegation id
   register: delegation_sets
 
 - name: setup of example for using next_marker
-  route53_facts:
+  route53_info:
     query: hosted_zone
     max_items: 1
-  register: first_facts
+  register: first_info
 
 - name: example for using next_marker
-  route53_facts:
+  route53_info:
     query: hosted_zone
-    next_marker: "{{ first_facts.NextMarker }}"
+    next_marker: "{{ first_info.NextMarker }}"
     max_items: 1
-  when: "{{ 'NextMarker' in first_facts }}"
+  when: "{{ 'NextMarker' in first_info }}"
 
 - name: retrieve host entries starting with host1.workshop.test.io
   block:
@@ -186,7 +187,7 @@ EXAMPLES = '''
       register: AWSINFO
 
     - name: grab Route53 record information
-      route53_facts:
+      route53_info:
         type: A
         query: record_sets
         hosted_zone_id: "{{ AWSINFO.zone_id }}"
@@ -437,6 +438,8 @@ def main():
             ['hosted_zone_method', 'health_check_method'],
         ],
     )
+    if module._name == 'route53_facts':
+        module.deprecate("The 'route53_facts' module has been renamed to 'route53_info'", version='2.13')
 
     # Validate Requirements
     if not (HAS_BOTO or HAS_BOTO3):

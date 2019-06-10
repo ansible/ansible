@@ -10,18 +10,19 @@ ANSIBLE_METADATA = {"metadata_version": "1.1",
 
 DOCUMENTATION = """
 ---
-module: elb_target_facts
+module: elb_target_info
 short_description: Gathers which target groups a target is associated with.
 description:
   - This module will search through every target group in a region to find
     which ones have registered a given instance ID or IP.
+  - This module was called C(elb_target_facts) before Ansible 2.9. The usage did not change.
 
 version_added: "2.7"
 author: "Yaakov Kuperman (@yaakov-github)"
 options:
   instance_id:
     description:
-      - What instance ID to get facts for.
+      - What instance ID to get information for.
     type: str
     required: true
   get_unused_target_groups:
@@ -46,14 +47,14 @@ EXAMPLES = """
 
   - name: Get initial list of target groups
     delegate_to: localhost
-    elb_target_facts:
+    elb_target_info:
       instance_id: "{{ ansible_ec2_instance_id }}"
       region: "{{ ansible_ec2_placement_region }}"
-    register: target_facts
+    register: target_info
 
   - name: save fact for later
     set_fact:
-      original_tgs: "{{ target_facts.instance_target_groups }}"
+      original_tgs: "{{ target_info.instance_target_groups }}"
 
   - name: Deregister instance from all target groups
     delegate_to: localhost
@@ -75,12 +76,12 @@ EXAMPLES = """
 
   - name: wait for all targets to deregister simultaneously
     delegate_to: localhost
-    elb_target_facts:
+    elb_target_info:
       get_unused_target_groups: false
       instance_id: "{{ ansible_ec2_instance_id }}"
       region: "{{ ansible_ec2_placement_region }}"
-    register: target_facts
-    until: (target_facts.instance_target_groups | length) == 0
+    register: target_info
+    until: (target_info.instance_target_groups | length) == 0
     retries: 60
     delay: 10
 
@@ -100,12 +101,12 @@ EXAMPLES = """
   # wait until all groups associated with this instance are 'healthy' or
   # 'unused'
   - name: wait for registration
-    elb_target_facts:
+    elb_target_info:
       get_unused_target_groups: false
       instance_id: "{{ ansible_ec2_instance_id }}"
       region: "{{ ansible_ec2_placement_region }}"
-    register: target_facts
-    until: (target_facts.instance_target_groups |
+    register: target_info
+    until: (target_info.instance_target_groups |
             map(attribute='targets') |
             flatten |
             map(attribute='target_health') |
@@ -129,7 +130,7 @@ EXAMPLES = """
              Port={{target.target_port}}{%if target.target_az%},AvailabilityZone={{target.target_az}}
              {%endif%}
              {%endfor%}
-    loop: "{{target_facts.instance_target_groups}}"
+    loop: "{{target_info.instance_target_groups}}"
 
 """
 
@@ -256,7 +257,7 @@ class TargetGroup(object):
         return list(self.targets)
 
 
-class TargetFactsGatherer(object):
+class TargetInfoGatherer(object):
 
     def __init__(self, module, instance_id, get_unused_target_groups):
         self.module = module
@@ -416,14 +417,16 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+    if module._name == 'elb_target_facts':
+        module.deprecate("The 'elb_target_facts' module has been renamed to 'elb_target_info'", version='2.13')
 
     instance_id = module.params["instance_id"]
     get_unused_target_groups = module.params["get_unused_target_groups"]
 
-    tg_gatherer = TargetFactsGatherer(module,
-                                      instance_id,
-                                      get_unused_target_groups
-                                      )
+    tg_gatherer = TargetInfoGatherer(module,
+                                     instance_id,
+                                     get_unused_target_groups
+                                     )
 
     instance_target_groups = [each.to_dict() for each in tg_gatherer.tgs]
 
