@@ -128,6 +128,10 @@ options:
         required: false
         default: present
         choices: ['present','absent']
+    provider:
+        description:
+            - A dict that will be removed.
+        required: false
 '''
 EXAMPLES = '''
 - name: eth_trunk module test
