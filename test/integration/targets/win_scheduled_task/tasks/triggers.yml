@@ -246,7 +246,7 @@
     - path: cmd.exe
     triggers:
     - type: monthlydow
-      start_boundary: '2000-01-01T00:00:01'
+      start_boundary: '2000-01-01T00:00:01+03:00'
       weeks_of_month: 1,2
       days_of_week: [ "monday", "wednesday" ]
   register: trigger_monthlydow
@@ -265,7 +265,7 @@
     - trigger_monthlydow_result.triggers|count == 1
     - trigger_monthlydow_result.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
     - trigger_monthlydow_result.triggers[0].enabled == True
-    - trigger_monthlydow_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - trigger_monthlydow_result.triggers[0].start_boundary == "1999-12-31T21:00:01+00:00"
     - trigger_monthlydow_result.triggers[0].end_boundary == None
     - trigger_monthlydow_result.triggers[0].weeks_of_month == "1,2"
     - trigger_monthlydow_result.triggers[0].days_of_week == "monday,wednesday"
@@ -780,40 +780,6 @@
     - remove_triggers_result_check.triggers[0].enabled == False
     - remove_triggers_result_check.triggers[0].start_boundary == None
     - remove_triggers_result_check.triggers[0].end_boundary == None
-
-# Check timezone in start_boundry
-- name: create monthly dow trigger - timezoned
-  win_scheduled_task:
-    name: '{{test_scheduled_task_name}}'
-    state: present
-    actions:
-    - path: cmd.exe
-    triggers:
-    - type: monthlydow
-      start_boundary: '2000-01-01T00:00:01+03:00'
-      weeks_of_month: 1,2
-      days_of_week: [ "monday", "wednesday" ]
-  register: trigger_monthlydow_timezonde
-
-- name: get result of create monthly dow trigger - timezoned
-  win_scheduled_task_stat:
-    path: \
-    name: '{{test_scheduled_task_name}}'
-  register: trigger_monthlydow_timezonde_result
-
-- name: assert results of create monthly dow trigger - timezoned
-  assert:
-    that:
-    - trigger_monthlydow_timezonde is changed
-    - trigger_monthlydow_timezonde_result.task_exists == True
-    - trigger_monthlydow_timezonde_result.triggers|count == 1
-    - trigger_monthlydow_timezonde_result.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
-    - trigger_monthlydow_timezonde_result.triggers[0].enabled == True
-    - trigger_monthlydow_timezonde_result.triggers[0].start_boundary == "2000-01-01T00:00:01+03:00"
-    - trigger_monthlydow_timezonde_result.triggers[0].end_boundary == None
-    - trigger_monthlydow_timezonde_result.triggers[0].weeks_of_month == "1,2"
-    - trigger_monthlydow_timezonde_result.triggers[0].days_of_week == "monday,wednesday"
-
 
 - name: remove all triggers
   win_scheduled_task:
