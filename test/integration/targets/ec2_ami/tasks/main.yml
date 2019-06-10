@@ -353,7 +353,7 @@
           - "'image_id' not in result"
 
     - name: ensure the snapshot still exists
-      ec2_snapshot_facts:
+      ec2_snapshot_info:
         snapshot_ids:
           - '{{ ec2_ami_snapshot }}'
         <<: *aws_connection_info
