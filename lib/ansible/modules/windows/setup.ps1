@@ -323,7 +323,7 @@ if($gather_subset.Contains('platform')) {
 
     $ansible_facts += @{
         ansible_architecture = $win32_os.OSArchitecture
-        ansible_domain = $domain_suffix
+        ansible_domain = $domain_suffix.Substring(1)
         ansible_fqdn = ($win32_cs.DNSHostname + $domain_suffix)
         ansible_hostname = $win32_cs.DNSHostname
         ansible_netbios_name = $win32_cs.Name
