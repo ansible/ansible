@@ -27,47 +27,57 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   id:
     required: false
     description:
       - ID of user to add/delete/modify
+    type: str
     version_added: "2.8"
   new_username:
     required: false
     description:
       - name of user to add/delete/modify
+    type: str
     version_added: "2.8"
   new_password:
     required: false
     description:
       - password of user to add/delete/modify
+    type: str
     version_added: "2.8"
   roleid:
     required: false
     description:
       - role of user to add/delete/modify
+    type: str
     version_added: "2.8"
   bootdevice:
     required: false
     description:
       - bootdevice when setting boot configuration
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
@@ -78,11 +88,13 @@ options:
     required: false
     description:
       - UEFI target when bootdevice is "UefiTarget"
+    type: str
     version_added: "2.9"
   boot_next:
     required: false
     description:
       - BootNext target when bootdevice is "UefiBootNext"
+    type: str
     version_added: "2.9"
 
 author: "Jose Delarosa (@jose-delarosa)"
