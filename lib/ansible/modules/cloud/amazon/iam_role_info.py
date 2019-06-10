@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: iam_role_facts
+module: iam_role_info
 short_description: Gather information on IAM roles
 description:
     - Gathers information about IAM roles
+    - This module was called C(iam_role_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 requirements: [ boto3 ]
 author:
@@ -39,15 +40,15 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # find all existing IAM roles
-- iam_role_facts:
+- iam_role_info:
   register: result
 
 # describe a single role
-- iam_role_facts:
+- iam_role_info:
     name: MyIAMRole
 
 # describe all roles matching a path prefix
-- iam_role_facts:
+- iam_role_info:
     path_prefix: /application/path
 '''
 
@@ -235,6 +236,8 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
                               mutually_exclusive=[['name', 'path_prefix']])
+    if module._name == 'iam_role_facts':
+        module.deprecate("The 'iam_role_facts' module has been renamed to 'iam_role_info'", version='2.13')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     client = boto3_conn(module, conn_type='client', resource='iam',
