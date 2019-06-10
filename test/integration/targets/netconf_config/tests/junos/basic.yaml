@@ -27,10 +27,21 @@
     that:
       - "result.changed == false"
 
-- name: configure syslog file replace
+- name: replace default operation fail
   netconf_config:
     content: "{{ syslog_config_replace }}"
     default_operation: 'replace'
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'Missing mandatory statement' in result.msg"
+
+- name: replace syslog config with operation key in content
+  netconf_config:
+    content: "{{ syslog_config_replace }}"
   register: result
 
 - assert:
@@ -55,7 +66,7 @@
 - name: save config
   netconf_config:
     backup: yes
-    register: result
+  register: result
 
 - assert:
     that:
