@@ -10,10 +10,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_ami_facts
+module: ec2_ami_info
 version_added: '2.5'
-short_description: Gather facts about ec2 AMIs
-description: Gather facts about ec2 AMIs
+short_description: Gather information about ec2 AMIs
+description:
+  - Gather information about ec2 AMIs
+  - This module was called C(ec2_ami_facts) before Ansible 2.9. The usage did not change.
 author:
   - Prasad Katti (@prasadkatti)
 requirements: [ boto3 ]
@@ -49,22 +51,22 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: gather facts about an AMI using ami-id
-  ec2_ami_facts:
+- name: gather information about an AMI using ami-id
+  ec2_ami_info:
     image_ids: ami-5b488823
 
-- name: gather facts about all AMIs with tag key Name and value webapp
-  ec2_ami_facts:
+- name: gather information about all AMIs with tag key Name and value webapp
+  ec2_ami_info:
     filters:
       "tag:Name": webapp
 
-- name: gather facts about an AMI with 'AMI Name' equal to foobar
-  ec2_ami_facts:
+- name: gather information about an AMI with 'AMI Name' equal to foobar
+  ec2_ami_info:
     filters:
       name: foobar
 
-- name: gather facts about Ubuntu 17.04 AMIs published by Canonical (099720109477)
-  ec2_ami_facts:
+- name: gather information about Ubuntu 17.04 AMIs published by Canonical (099720109477)
+  ec2_ami_info:
     owners: 099720109477
     filters:
       name: "ubuntu/images/ubuntu-zesty-17.04-*"
@@ -252,6 +254,8 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._module._name == 'ec2_ami_facts':
+        module._module.deprecate("The 'ec2_ami_facts' module has been renamed to 'ec2_ami_info'", version='2.13')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 

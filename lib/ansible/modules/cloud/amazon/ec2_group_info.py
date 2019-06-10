@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_group_facts
-short_description: Gather facts about ec2 security groups in AWS.
+module: ec2_group_info
+short_description: Gather information about ec2 security groups in AWS.
 description:
-    - Gather facts about ec2 security groups in AWS.
+    - Gather information about ec2 security groups in AWS.
+    - This module was called C(ec2_group_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.3"
 requirements: [ boto3 ]
 author:
@@ -41,45 +42,46 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all security groups
-- ec2_group_facts:
+# Gather information about all security groups
+- ec2_group_info:
 
-# Gather facts about all security groups in a specific VPC
-- ec2_group_facts:
+# Gather information about all security groups in a specific VPC
+- ec2_group_info:
     filters:
       vpc-id: vpc-12345678
 
-# Gather facts about all security groups in a specific VPC
-- ec2_group_facts:
+# Gather information about all security groups in a specific VPC
+- ec2_group_info:
     filters:
       vpc-id: vpc-12345678
 
-# Gather facts about a security group
-- ec2_group_facts:
+# Gather information about a security group
+- ec2_group_info:
     filters:
       group-name: example-1
 
-# Gather facts about a security group by id
-- ec2_group_facts:
+# Gather information about a security group by id
+- ec2_group_info:
     filters:
       group-id: sg-12345678
 
-# Gather facts about a security group with multiple filters, also mixing the use of underscores as filter keys
-- ec2_group_facts:
+# Gather information about a security group with multiple filters, also mixing the use of underscores as filter keys
+- ec2_group_info:
     filters:
       group_id: sg-12345678
       vpc-id: vpc-12345678
 
-# Gather facts about various security groups
-- ec2_group_facts:
+# Gather information about various security groups
+- ec2_group_info:
     filters:
       group-name:
         - example-1
         - example-2
         - example-3
 
-# Gather facts about any security group with a tag key Name and value Example. The quotes around 'tag:name' are important because of the colon in the value
-- ec2_group_facts:
+# Gather information about any security group with a tag key Name and value Example.
+# The quotes around 'tag:name' are important because of the colon in the value
+- ec2_group_info:
     filters:
       "tag:Name": Example
 '''
@@ -115,6 +117,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'ec2_group_facts':
+        module.deprecate("The 'ec2_group_facts' module has been renamed to 'ec2_group_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

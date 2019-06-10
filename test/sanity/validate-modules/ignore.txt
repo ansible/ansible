@@ -24,7 +24,7 @@ lib/ansible/modules/cloud/amazon/ec2_asg_lifecycle_hook.py E327
 lib/ansible/modules/cloud/amazon/ec2_eip.py E322
 lib/ansible/modules/cloud/amazon/ec2_eip.py E324
 lib/ansible/modules/cloud/amazon/ec2_elb.py E326
-lib/ansible/modules/cloud/amazon/ec2_elb_facts.py E323
+lib/ansible/modules/cloud/amazon/ec2_elb_info.py E323
 lib/ansible/modules/cloud/amazon/ec2_group.py E322
 lib/ansible/modules/cloud/amazon/ec2_instance.py E324
 lib/ansible/modules/cloud/amazon/ec2_lc.py E322

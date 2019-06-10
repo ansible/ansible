@@ -115,7 +115,7 @@
       retries: 10
 
     - name: remove ENIs
-      ec2_eni_facts:
+      ec2_eni_info:
         filters:
           vpc-id: "{{ testing_vpc.vpc.id }}"
         <<: *aws_connection_info

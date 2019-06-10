@@ -8,10 +8,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: ec2_customer_gateway_facts
-short_description: Gather facts about customer gateways in AWS
+module: ec2_customer_gateway_info
+short_description: Gather information about customer gateways in AWS
 description:
-    - Gather facts about customer gateways in AWS
+    - Gather information about customer gateways in AWS
+    - This module was called C(ec2_customer_gateway_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 requirements: [ boto3 ]
 author: Madhura Naniwadekar (@Madhura-CSI)
@@ -31,24 +32,24 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Gather facts about all customer gateways
-  ec2_customer_gateway_facts:
+- name: Gather information about all customer gateways
+  ec2_customer_gateway_info:
 
-- name: Gather facts about a filtered list of customer gateways, based on tags
-  ec2_customer_gateway_facts:
+- name: Gather information about a filtered list of customer gateways, based on tags
+  ec2_customer_gateway_info:
     region: ap-southeast-2
     filters:
       "tag:Name": test-customer-gateway
       "tag:AltName": test-customer-gateway-alt
-  register: cust_gw_facts
+  register: cust_gw_info
 
-- name: Gather facts about a specific customer gateway by specifying customer gateway ID
-  ec2_customer_gateway_facts:
+- name: Gather information about a specific customer gateway by specifying customer gateway ID
+  ec2_customer_gateway_info:
     region: ap-southeast-2
     customer_gateway_ids:
       - 'cgw-48841a09'
       - 'cgw-fec021ce'
-  register: cust_gw_facts
+  register: cust_gw_info
 '''
 
 RETURN = '''
@@ -123,6 +124,8 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               mutually_exclusive=[['customer_gateway_ids', 'filters']],
                               supports_check_mode=True)
+    if module._module._name == 'ec2_customer_gateway_facts':
+        module._module.deprecate("The 'ec2_customer_gateway_facts' module has been renamed to 'ec2_customer_gateway_info'", version='2.13')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
