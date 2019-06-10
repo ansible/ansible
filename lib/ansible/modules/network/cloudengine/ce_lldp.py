@@ -35,49 +35,40 @@ options:
         description:
             - Set global LLDP enable state.
         required: false
-        default: disabled
         choices: ['enabled', 'disabled']
     mdnstatus:
         description:
             - Set global MDN enable state.
         required: false
-        default: disabled
         choices: ['rxOnly', 'disabled']
     interval:
         description:
             - Frequency at which LLDP advertisements are sent (in seconds).
         required: false
-        default: 30
     hold_multiplier:
         description:
             - Time multiplier for device information in neighbor devices.
         required: false
-        default: 4
     restart_delay:
         description:
             - Specifies the delay time of the interface LLDP module from disabled state to re enable.
         required: false
-        default: 2
     transmit_delay:
         description:
             - Delay time for sending LLDP messages.
         required: false
-        default: 2
     notification_interval:
         description:
             - Suppression time for sending LLDP alarm.
         required: false
-        default: 5
     fast_count:
         description:
             - The number of LLDP messages sent to the neighbor nodes by the specified device.
         required: false
-        default: 4
     mdn_notification_interval:
         description:
             - Delay time for sending MDN neighbor information change alarm.
         required: false
-        default: 5
     management_address:
         description:
             - The management IP address of LLDP.
@@ -92,7 +83,7 @@ options:
         description:
             - Manage the state of the resource.
         required: false
-        default: absent
+        default: present
         choices: ['present','absent']
     provider:
         description:
