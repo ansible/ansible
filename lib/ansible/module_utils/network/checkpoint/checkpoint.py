@@ -209,7 +209,6 @@ def api_call(module, api_call_object):
     return result
 
 
-# will be deprecated in 1.9.2019
 checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
                                 policy_package=dict(type='str', default='standard'),
                                 auto_install_policy=dict(type='bool', default=True),
@@ -217,7 +216,6 @@ checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=T
                                 )
 
 
-# will be deprecated in 1.9.2019
 def publish(connection, uid=None):
     payload = None
 
@@ -227,7 +225,6 @@ def publish(connection, uid=None):
     connection.send_request('/web_api/publish', payload)
 
 
-# will be deprecated in 1.9.2019
 def discard(connection, uid=None):
     payload = None
 
@@ -237,7 +234,6 @@ def discard(connection, uid=None):
     connection.send_request('/web_api/discard', payload)
 
 
-# will be deprecated in 1.9.2019
 def install_policy(connection, policy_package, targets):
     payload = {'policy-package': policy_package,
                'targets': targets}
