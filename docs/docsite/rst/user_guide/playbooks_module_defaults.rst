@@ -72,7 +72,7 @@ Setting a default AWS region for specific EC2-related modules::
           region: '{{ my_region }}'
         ec2_instance_info:
           region: '{{ my_region }}'
-        ec2_vpc_net_facts:
+        ec2_vpc_net_info:
           region: '{{ my_region }}'
 
 .. _module_defaults_groups:

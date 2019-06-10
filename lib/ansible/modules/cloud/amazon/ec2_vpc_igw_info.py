@@ -13,10 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_igw_facts
-short_description: Gather facts about internet gateways in AWS
+module: ec2_vpc_igw_info
+short_description: Gather information about internet gateways in AWS
 description:
-    - Gather facts about internet gateways in AWS.
+    - Gather information about internet gateways in AWS.
+    - This module was called C(ec2_vpc_igw_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.3"
 requirements: [ boto3 ]
 author: "Nick Aslanidis (@naslanidis)"
@@ -36,26 +37,26 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Gather facts about all Internet Gateways for an account or profile
-  ec2_vpc_igw_facts:
+- name: Gather information about all Internet Gateways for an account or profile
+  ec2_vpc_igw_info:
     region: ap-southeast-2
     profile: production
-  register: igw_facts
+  register: igw_info
 
-- name: Gather facts about a filtered list of Internet Gateways
-  ec2_vpc_igw_facts:
+- name: Gather information about a filtered list of Internet Gateways
+  ec2_vpc_igw_info:
     region: ap-southeast-2
     profile: production
     filters:
         "tag:Name": "igw-123"
-  register: igw_facts
+  register: igw_info
 
-- name: Gather facts about a specific internet gateway by InternetGatewayId
-  ec2_vpc_igw_facts:
+- name: Gather information about a specific internet gateway by InternetGatewayId
+  ec2_vpc_igw_info:
     region: ap-southeast-2
     profile: production
     internet_gateway_ids: igw-c1231234
-  register: igw_facts
+  register: igw_info
 '''
 
 RETURN = '''
@@ -132,6 +133,8 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'ec2_vpc_igw_facts':
+        module.deprecate("The 'ec2_vpc_igw_facts' module has been renamed to 'ec2_vpc_igw_info'", version='2.13')
 
     # Validate Requirements
     if not HAS_BOTO3:

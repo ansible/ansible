@@ -20,10 +20,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ec2_vpc_net_facts
-short_description: Gather facts about ec2 VPCs in AWS
+module: ec2_vpc_net_info
+short_description: Gather information about ec2 VPCs in AWS
 description:
-    - Gather facts about ec2 VPCs in AWS
+    - Gather information about ec2 VPCs in AWS
+    - This module was called C(ec2_vpc_net_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.1"
 author: "Rob White (@wimnat)"
 requirements:
@@ -46,15 +47,15 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all VPCs
-- ec2_vpc_net_facts:
+# Gather information about all VPCs
+- ec2_vpc_net_info:
 
-# Gather facts about a particular VPC using VPC ID
-- ec2_vpc_net_facts:
+# Gather information about a particular VPC using VPC ID
+- ec2_vpc_net_info:
     vpc_ids: vpc-00112233
 
-# Gather facts about any VPC with a tag key Name and value Example
-- ec2_vpc_net_facts:
+# Gather information about any VPC with a tag key Name and value Example
+- ec2_vpc_net_info:
     filters:
       "tag:Name": Example
 
@@ -272,6 +273,8 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'ec2_vpc_net_facts':
+        module.deprecate("The 'ec2_vpc_net_facts' module has been renamed to 'ec2_vpc_net_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')

@@ -180,49 +180,49 @@ groupings:
   - aws
   ec2_vpc_dhcp_option:
   - aws
-  ec2_vpc_dhcp_option_facts:
+  ec2_vpc_dhcp_option_info:
   - aws
   ec2_vpc_egress_igw:
   - aws
   ec2_vpc_endpoint:
   - aws
-  ec2_vpc_endpoint_facts:
+  ec2_vpc_endpoint_info:
   - aws
   ec2_vpc_igw:
   - aws
-  ec2_vpc_igw_facts:
+  ec2_vpc_igw_info:
   - aws
   ec2_vpc_nacl:
   - aws
-  ec2_vpc_nacl_facts:
+  ec2_vpc_nacl_info:
   - aws
   ec2_vpc_nat_gateway:
   - aws
-  ec2_vpc_nat_gateway_facts:
+  ec2_vpc_nat_gateway_info:
   - aws
   ec2_vpc_net:
   - aws
-  ec2_vpc_net_facts:
+  ec2_vpc_net_info:
   - aws
   ec2_vpc_peer:
   - aws
-  ec2_vpc_peering_facts:
+  ec2_vpc_peering_info:
   - aws
   ec2_vpc_route_table:
   - aws
-  ec2_vpc_route_table_facts:
+  ec2_vpc_route_table_info:
   - aws
   ec2_vpc_subnet:
   - aws
-  ec2_vpc_subnet_facts:
+  ec2_vpc_subnet_info:
   - aws
   ec2_vpc_vgw:
   - aws
-  ec2_vpc_vgw_facts:
+  ec2_vpc_vgw_info:
   - aws
   ec2_vpc_vpn:
   - aws
-  ec2_vpc_vpn_facts:
+  ec2_vpc_vpn_info:
   - aws
   ec2_win_password:
   - aws
