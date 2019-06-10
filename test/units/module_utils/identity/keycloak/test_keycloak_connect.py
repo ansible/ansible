@@ -49,7 +49,7 @@ def create_wrapper(text_as_string):
 @pytest.fixture()
 def mock_good_connection(mocker):
     token_response = {
-        'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"access_token": "alongtoken"}'),}
+        'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"access_token": "alongtoken"}'), }
     return mocker.patch(
         'ansible.module_utils.identity.keycloak.keycloak.open_url',
         side_effect=build_mocked_request(count(), token_response),
@@ -66,7 +66,7 @@ def test_connect_to_keycloak(mock_good_connection):
         auth_username='admin',
         auth_password='admin',
         client_secret=None
-        )
+    )
     assert keycloak_header.header == {
         'Authorization': 'Bearer alongtoken',
         'Content-Type': 'application/json'
@@ -76,7 +76,7 @@ def test_connect_to_keycloak(mock_good_connection):
 @pytest.fixture()
 def mock_bad_json_returned(mocker):
     token_response = {
-        'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"access_token":'),}
+        'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"access_token":'), }
     return mocker.patch(
         'ansible.module_utils.identity.keycloak.keycloak.open_url',
         side_effect=build_mocked_request(count(), token_response),
@@ -142,7 +142,7 @@ def test_error_returned(mock_401_returned):
 @pytest.fixture()
 def mock_json_without_token_returned(mocker):
     token_response = {
-        'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"not_token": "It is not a token"}'),}
+        'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"not_token": "It is not a token"}'), }
     return mocker.patch(
         'ansible.module_utils.identity.keycloak.keycloak.open_url',
         side_effect=build_mocked_request(count(), token_response),
