@@ -134,6 +134,14 @@ class KubeVirtRawModule(KubernetesRawModule):
         merging_dicts can be a dict or a list or tuple of dicts.  In the latter case, the
         dictionaries at the front of the list have higher precedence over the ones at the end.
         """
+        def _deepupdate(D, E):
+            for k in E:
+                if isinstance(E[k], dict) and isinstance(D.get(k), dict):
+                    D[k] = _deepupdate(D[k], E[k])
+                else:
+                    D[k] = E[k]
+            return D
+
         if not merging_dicts:
             merging_dicts = ({},)
 
@@ -142,9 +150,9 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         new_dict = {}
         for d in reversed(merging_dicts):
-            new_dict.update(d)
+            _deepupdate(new_dict, d)
 
-        new_dict.update(base_dict)
+        _deepupdate(new_dict, base_dict)
 
         return new_dict
 
