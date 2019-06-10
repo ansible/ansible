@@ -383,6 +383,9 @@ class Connection(NetworkConnectionBase):
         handled = False
         command_prompt_matched = False
         matched_prompt_window = window_count = 0
+        stdout_prompt_matched = False
+        previous_stderr_prompt_matched = False
+        previous_errored_response = ""
 
         cache_socket_timeout = self._ssh_shell.gettimeout()
         command_timeout = self.get_option('persistent_command_timeout')
@@ -439,7 +442,8 @@ class Connection(NetworkConnectionBase):
                 if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
                     raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
-            if self._find_prompt(window):
+            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) = self._find_prompt(window, previous_stderr_prompt_matched, previous_errored_response)
+            if stdout_prompt_matched:
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 self._command_response = self._sanitize(resp, command)
@@ -549,40 +553,47 @@ class Connection(NetworkConnectionBase):
                 cleaned.append(line)
         return b'\n'.join(cleaned).strip()
 
-    def _find_prompt(self, response):
+    def _find_prompt(self, response, previous_stderr_prompt_matched, previous_errored_response):
         '''Searches the buffered response for a matching command prompt
+           return list for searching results: 
+           (stdout_prompt_matched, stderr_prompt_macthed, errored_response)
+           stdout_prompt_matched indicates if exepcted command ending prompt is found
+           stderr_prompt_macthed indicates the first error key word is found
+           errored_response stores error command output when stderr_prompt_macthed is True
+           and stores current response when stderr_prompt_macthed is False
         '''
-        errored_response = None
-        is_error_message = False
-        for regex in self._terminal.terminal_stderr_re:
-            if regex.search(response):
-                is_error_message = True
+        stderr_prompt_matched = False
+        stdout_prompt_matched = False
 
-                # Check if error response ends with command prompt if not
-                # receive it buffered prompt
-                for regex in self._terminal.terminal_stdout_re:
-                    match = regex.search(response)
-                    if match:
-                        errored_response = response
-                        self._matched_pattern = regex.pattern
-                        self._matched_prompt = match.group()
-                        self._log_messages("matched error regex '%s' from response '%s'" % (self._matched_pattern, errored_response))
-                        break
+        if not previous_stderr_prompt_matched:
+            for regex in self._terminal.terminal_stderr_re:
+                if regex.search(response):
+                    is_error_message = True
+                    stderr_prompt_matched = True
+                    break
 
-        if not is_error_message:
-            for regex in self._terminal.terminal_stdout_re:
-                match = regex.search(response)
-                if match:
-                    self._matched_pattern = regex.pattern
-                    self._matched_prompt = match.group()
-                    self._log_messages("matched cli prompt '%s' with regex '%s' from response '%s'" % (self._matched_prompt, self._matched_pattern, response))
-                    if not errored_response:
-                        return True
+        for regex in self._terminal.terminal_stdout_re:
+            match = regex.search(response)
+            if match:
+                self._matched_pattern = regex.pattern
+                self._matched_prompt = match.group()
+                stdout_prompt_matched = True
+                break
 
-        if errored_response:
-            raise AnsibleConnectionFailure(errored_response)
-
-        return False
+        if stdout_prompt_matched:
+            if previous_stderr_prompt_matched:
+                raise AnsibleConnectionFailure(previous_errored_response)
+            elif stderr_prompt_matched:
+                raise AnsibleConnectionFailure(response)
+            else:
+                return True, False, ""
+        else:
+            if previous_stderr_prompt_matched:
+                return False, True, previous_errored_response
+            elif stderr_prompt_matched:
+                return False, True, response
+            else:
+                return False, False, ""
 
     def _validate_timeout_value(self, timeout, timer_name):
         if timeout < 0:
