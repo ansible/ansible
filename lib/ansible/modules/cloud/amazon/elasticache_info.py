@@ -7,10 +7,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: elasticache_facts
-short_description: Retrieve facts for AWS Elasticache clusters
+module: elasticache_info
+short_description: Retrieve information for AWS Elasticache clusters
 description:
-  - Retrieve facts from AWS Elasticache clusters
+  - Retrieve information from AWS Elasticache clusters
+  - This module was called C(elasticache_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 options:
   name:
@@ -25,11 +26,11 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: obtain all Elasticache facts
-  elasticache_facts:
+- name: obtain all Elasticache information
+  elasticache_info:
 
-- name: obtain all facts for a single Elasticache cluster
-  elasticache_facts:
+- name: obtain all information for a single Elasticache cluster
+  elasticache_info:
     name: test_elasticache
 '''
 
@@ -297,6 +298,8 @@ def main():
         )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    if module._name == 'elasticache_facts':
+        module.deprecate("The 'elasticache_facts' module has been renamed to 'elasticache_info'", version='2.13')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     client = boto3_conn(module, conn_type='client', resource='elasticache',
