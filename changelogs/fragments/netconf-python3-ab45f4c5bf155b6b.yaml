@@ -1,0 +1,2 @@
+bugfixes:
+  - netconf - Make netconf_get python3 compatible.
