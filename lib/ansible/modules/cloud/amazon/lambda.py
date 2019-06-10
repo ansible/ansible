@@ -138,7 +138,7 @@ EXAMPLES = '''
         key1: "1"
         key2: "2"
 
-# To remove previously added tags pass a empty dict
+# To remove previously added tags pass an empty dict
 - name: remove tags
   lambda:
     name: 'Lambda function'
