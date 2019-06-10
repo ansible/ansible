@@ -71,6 +71,11 @@ options:
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
+  log_path:
+    description:
+    - Write a logfile to disk, useful for debugging this module or connection plugins.
+  type: str
+  version_added: '2.9'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer
