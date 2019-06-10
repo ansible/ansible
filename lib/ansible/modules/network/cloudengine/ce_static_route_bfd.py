@@ -117,7 +117,7 @@ options:
         required: false
         choices: ['present','absent']
         default: present
-    provider: 
+    provider:
         description:
             - Specify parameters that are used to connect host.
             - Tis parameter is unnecessary and will be removed.
@@ -213,7 +213,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

@@ -118,7 +118,7 @@ options:
     source_ip:
         description:
             - Log source ip address, IPv4 or IPv6 type. The value is a string of 0 to 255.
-              The value can be an valid IPv4 or IPv6 address.
+            - The value can be an valid IPv4 or IPv6 address.
     state:
         description:
             - Specify desired state of the resource.
