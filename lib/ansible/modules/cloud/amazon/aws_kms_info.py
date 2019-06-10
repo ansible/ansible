@@ -20,10 +20,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: aws_kms_facts
-short_description: Gather facts about AWS KMS keys
+module: aws_kms_info
+short_description: Gather information about AWS KMS keys
 description:
-    - Gather facts about AWS KMS keys including tags and grants
+    - Gather information about AWS KMS keys including tags and grants
+    - This module was called C(aws_kms_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 author: "Will Thames (@willthames)"
 options:
@@ -45,16 +46,16 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Gather facts about all KMS keys
-- aws_kms_facts:
+# Gather information about all KMS keys
+- aws_kms_info:
 
-# Gather facts about all keys with a Name tag
-- aws_kms_facts:
+# Gather information about all keys with a Name tag
+- aws_kms_info:
     filters:
       tag-key: Name
 
-# Gather facts about all keys with a specific name
-- aws_kms_facts:
+# Gather information about all keys with a specific name
+- aws_kms_info:
     filters:
       "tag:Name": Example
 '''
@@ -384,7 +385,7 @@ def get_key_details(connection, module, key_id, tokens=None):
     return result
 
 
-def get_kms_facts(connection, module):
+def get_kms_info(connection, module):
     try:
         keys = get_kms_keys_with_backoff(connection)['Keys']
     except botocore.exceptions.ClientError as e:
@@ -406,6 +407,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+    if module._name == 'aws_kms_facts':
+        module.deprecate("The 'aws_kms_facts' module has been renamed to 'aws_kms_info'", version='2.13')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')
@@ -417,7 +420,7 @@ def main():
     else:
         module.fail_json(msg="region must be specified")
 
-    all_keys = get_kms_facts(connection, module)
+    all_keys = get_kms_info(connection, module)
     module.exit_json(keys=[key for key in all_keys if key_matches_filters(key, module.params['filters'])])
 
 
