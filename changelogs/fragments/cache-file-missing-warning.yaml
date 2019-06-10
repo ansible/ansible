@@ -1,2 +1,2 @@
 minor_changes:
- - cache: do not show warning when cache file does not (yet) exist
+ - cache - do not show warning when cache file does not (yet) exist
