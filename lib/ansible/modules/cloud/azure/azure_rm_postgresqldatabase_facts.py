@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqldatabase_facts
 version_added: "2.7"
-short_description: Get Azure PostgreSQL Database facts.
+short_description: Get Azure PostgreSQL Database facts
 description:
     - Get facts of PostgreSQL Database.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,13 +57,14 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dict results where the key is the name of the PostgreSQL Database and the values are the facts for that PostgreSQL Database.
+    description:
+        - A list of dict results where the key is the name of the PostgreSQL Database and the values are the facts for that PostgreSQL Database.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/testser
