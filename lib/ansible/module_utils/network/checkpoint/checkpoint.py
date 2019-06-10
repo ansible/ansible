@@ -154,25 +154,6 @@ def api_command(module, command):
     return result
 
 
-# handle api call facts
-def api_call_facts(module, api_call_object, api_call_object_plural_version):
-    payload = get_payload_from_parameters(module)
-    connection = Connection(module._socket_path)
-    # if user insert a specific version, we add it to the url
-    version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
-
-    # if there is neither name nor uid, the API command will be in plural version (e.g. show-hosts instead of show-host)
-    if payload.get("name") is None and payload.get("uid") is None:
-        api_call_object = api_call_object_plural_version
-
-    code, response = send_request(connection, version, 'show-' + api_call_object, payload)
-    if code != 200:
-        module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
-
-    result = {api_call_object: response}
-    return result
-
-
 # handle api call
 def api_call(module, api_call_object):
     payload = get_payload_from_parameters(module)
@@ -226,3 +207,39 @@ def api_call(module, api_call_object):
 
     result['checkpoint_session_uid'] = connection.get_session_uid()
     return result
+
+
+# will be deprecated in 1.9.2019
+checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
+                                policy_package=dict(type='str', default='standard'),
+                                auto_install_policy=dict(type='bool', default=True),
+                                targets=dict(type='list')
+                                )
+
+
+# will be deprecated in 1.9.2019
+def publish(connection, uid=None):
+    payload = None
+
+    if uid:
+        payload = {'uid': uid}
+
+    connection.send_request('/web_api/publish', payload)
+
+
+# will be deprecated in 1.9.2019
+def discard(connection, uid=None):
+    payload = None
+
+    if uid:
+        payload = {'uid': uid}
+
+    connection.send_request('/web_api/discard', payload)
+
+
+# will be deprecated in 1.9.2019
+def install_policy(connection, policy_package, targets):
+    payload = {'policy-package': policy_package,
+               'targets': targets}
+
+    connection.send_request('/web_api/install-policy', payload)
