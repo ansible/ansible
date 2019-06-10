@@ -85,7 +85,7 @@ class TestFtdInstall(object):
 
         result = ex.value.args[0]
         assert result['failed']
-        assert "Firepower-kick library is required to run this module" in result['msg']
+        assert "Firepower-kickstart library is required to run this module" in result['msg']
 
     def test_module_should_fail_when_platform_is_not_supported(self, config_resource_mock):
         config_resource_mock.execute_operation.return_value = {'platformModel': 'nonSupportedModel'}
