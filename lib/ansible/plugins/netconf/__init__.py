@@ -225,20 +225,7 @@ class NetconfBase(AnsiblePlugin):
             raise ValueError('rpc_command value must be provided')
 
         resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
-
-        if isinstance(resp, NCElement):
-            # In case xml reply is transformed or namespace is removed in
-            # ncclient device specific handler return modified xml response
-            result = resp.data_xml
-        elif hasattr(resp, 'data_ele') and resp.data_ele:
-            # if data node is present in xml response return the xml string
-            # with data node as root
-            result = resp.data_xml
-        else:
-            # return raw xml string received from host with rpc-reply as the root node
-            result = resp.xml
-
-        return result
+        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
     @ensure_connected
     def lock(self, target="candidate"):
