@@ -76,6 +76,28 @@ options:
       - Specify the local-as number for the eBGP neighbor.
         Valid values are String or Integer in ASPLAIN or ASDOT notation,
         or 'default', which means not to configure it.
+  local_as_no_prepend:
+    description:
+      - To configure a route to appear as a member of a second autonomous system (AS)
+        in addition to the real AS of the device, use the local-as command.
+        no-prepend - (Optional) Specfies not to prepend the local autonomous system number
+                      to any routes received from the eBGP neighbor.
+        type: boolean
+  local_as_replace_as:
+    description:
+      - To configure a route to appear as a member of a second autonomous system (AS)
+        in addition to the real AS of the device, use the local-as command.
+        replace-as - (Optional) Specifies to prepend only the local-as number to updates
+                       to eBGP neighbor.
+        type: boolean
+  local_as_dual_as:
+    description:
+      - To configure a route to appear as a member of a second autonomous system (AS)
+        in addition to the real AS of the device, use the local-as command.
+        dual-as    - (Optional) configures the eBGP neighbor to establish a peering
+                      session using the real autonomous system number (from the
+                      local BGP routing process) or by using the autonomous-system number.
+        type: boolean
   log_neighbor_changes:
     description:
       - Specify whether or not to enable log messages for neighbor
@@ -184,7 +206,7 @@ BOOL_PARAMS = [
     'dynamic_capability',
     'low_memory_exempt',
     'suppress_4_byte_as',
-    'transport_passive_only',
+    'transport_passive_only'
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
@@ -194,6 +216,9 @@ PARAM_TO_COMMAND_KEYMAP = {
     'dynamic_capability': 'dynamic-capability',
     'ebgp_multihop': 'ebgp-multihop',
     'local_as': 'local-as',
+    'local_as_no_prepend': 'local-as',
+    'local_as_replace_as': 'local-as',
+    'local_as_dual_as': 'local-as',
     'log_neighbor_changes': 'log-neighbor-changes',
     'low_memory_exempt': 'low-memory exempt',
     'maximum_peers': 'maximum-peers',
@@ -214,7 +239,10 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'shutdown': False,
     'dynamic_capability': True,
     'timers_keepalive': 60,
-    'timers_holdtime': 180
+    'timers_holdtime': 180,
+    'local_as_no_prepend': 'no-prepend',
+    'local_as_replace_as': 'replace-as',
+    'local_as_dual_as': 'dual-as',
 }
 
 
@@ -228,6 +256,19 @@ def get_value(arg, config):
         value = True
         if has_no_command:
             value = False
+    elif command == 'local-as':
+        value = ''
+        if has_command_val:
+            if arg == 'local_as_no_prepend':
+                value = 'no-prepend' in has_command_val.group('value')
+            elif arg == 'local_as_replace_as':
+                value = 'replace-as' in has_command_val.group('value')
+            elif arg == 'local_as_dual_as':
+                value = 'dual-as' in has_command_val.group('value')
+            elif arg == 'local_as':
+                split_value = has_command_val.group('value').split()
+                value = split_value[0]
+
     elif arg in BOOL_PARAMS:
         value = False
         if has_command:
@@ -307,9 +348,23 @@ def state_present(module, existing, proposed, candidate):
     commands = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
-
+    attribute_string = ''
     for key, value in proposed_commands.items():
-        if value is True:
+        if key == "local-as":
+            # If local_as arg is passed to module execution -- build command string
+            if module.params['local_as'] is not None:
+                local_as_attributes = ['local_as_no_prepend', 'local_as_replace_as', 'local_as_dual_as']
+                attribute_string = ' '.join([PARAM_TO_DEFAULT_KEYMAP.get(x) for x in local_as_attributes if module.params[x] is True])
+                command = 'local-as {0} {1}'.format(module.params['local_as'], attribute_string).strip()
+                # this will loop for each local_as_attribute -- only append one time.
+                if command not in commands:
+                    commands.append(command)
+            # If local_as arg is NOT passed to module execution -- only remove if it existed originally
+            elif module.params['local_as'] is None and existing.get('local_as'):
+                command = 'no local-as {0}'.format(existing.get('local_as'))
+                if command not in commands:
+                    commands.append(command)
+        elif value is True:
             commands.append(key)
         elif value is False:
             commands.append('no {0}'.format(key))
@@ -366,7 +421,7 @@ def state_present(module, existing, proposed, candidate):
         parents.append('neighbor {0}'.format(module.params['neighbor']))
 
         # make sure that local-as is the last command in the list.
-        local_as_command = 'local-as {0}'.format(module.params['local_as'])
+        local_as_command = 'local-as {0} {1}'.format(module.params['local_as'], attribute_string).strip()
         if local_as_command in commands:
             commands.remove(local_as_command)
             commands.append(local_as_command)
@@ -394,6 +449,9 @@ def main():
         dynamic_capability=dict(required=False, type='bool'),
         ebgp_multihop=dict(required=False, type='str'),
         local_as=dict(required=False, type='str'),
+        local_as_no_prepend=dict(required=False, type='bool', default=False),
+        local_as_replace_as=dict(required=False, type='bool', default=False),
+        local_as_dual_as=dict(required=False, type='bool', default=False),
         log_neighbor_changes=dict(required=False, type='str', choices=['enable', 'disable', 'inherit']),
         low_memory_exempt=dict(required=False, type='bool'),
         maximum_peers=dict(required=False, type='str'),
