@@ -279,7 +279,8 @@ def main():
                 pipeline_dict['version'] = module.params['version']
 
             pipeline_result = update_pipeline(client=client_conn, pipeline_dict=pipeline_dict, module=module)
-            changed = True
+            if pipeline_result['pipeline'] != found_code_pipeline['pipeline']:
+                changed = True
         else:
             pipeline_result = create_pipeline(
                 client=client_conn,

@@ -16,7 +16,7 @@
           region: "{{ aws_region }}"
       no_log: yes
 
-    - name: create IAM role needed for CodePipeline
+    - name: create IAM role needed for CodePipeline test
       iam_role:
         name: "ansible-test-sts-{{ resource_prefix }}-codepipeline-service-role"
         description: Role with permissions for CodePipeline actions.
@@ -27,7 +27,7 @@
 
     - name: Pause a few seconds to ensure IAM role is available to next task
       pause:
-        seconds: 5
+        seconds: 8
 
     # ================== integration test ==========================================
 
@@ -72,7 +72,9 @@
 
     - assert:
         that:
-          - "output.pipeline.stages|length > 1"
+          - output.changed == True
+          - output.pipeline.name == "{{ resource_prefix }}-test-pipeline"
+          - output.pipeline.stages|length > 1
 
     - name: idempotence check rerunning same CodePipeline task
       aws_codepipeline:
@@ -115,21 +117,34 @@
 
     - assert:
         that:
-          - "rerun_test_output.pipeline == output.pipeline"
+          - output.changed == False
+          - rerun_test_output.pipeline == output.pipeline
 
     - name: delete CodePipeline again
       aws_codepipeline:
         name: "{{ output.project.name }}"
         state: absent
         <<: *aws_connection_info
-      async: 300
+      register: absent_test_output
+
+    - assert:
+        that:
+          - absent_test_output.changed == True
 
   # ==================== cleanup =======================
 
   always:
 
-    - name: deleta IAM role needed for CodePipeline test
+    - name: delete test CodePipeline
+      aws_codepipeline:
+        name: "{{ output.project.name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: delete IAM role needed for CodePipeline test
       iam_role:
         name: "{{ resource_prefix }}-codepipeline-service-role"
         state: absent
         <<: *aws_connection_info
+      ignore_errors: true
