@@ -1,2 +1,5 @@
 ---
 # defaults file for aws_codepipeline
+
+codepipeline_name: "{{ resource_prefix }}-test-codepipeline"
+codepipeline_service_role_name: "{{ resource_prefix }}-codepipeline-test-service-role"
