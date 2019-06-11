@@ -114,8 +114,14 @@ class ElbInformation(object):
 
     def _get_tags(self, elbname):
         params = {'LoadBalancerNames.member.1': elbname}
-        elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
-        return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
+        try:
+            elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
+            return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
+        except BotoServerError as err:
+            # race condition when LB has just been removed and its tags disappear
+            if err.error_code == "LoadBalancerNotFound":
+                return dict()
+            raise
 
     @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def _get_elb_connection(self):
