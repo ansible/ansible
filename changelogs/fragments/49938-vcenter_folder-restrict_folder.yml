@@ -1,0 +1,2 @@
+minor_changes:
+- Restrict vcenter_folder to vCenter only, since folder creation api is not supported on ESXi hostsystem (https://github.com/ansible/ansible/issues/49938).
