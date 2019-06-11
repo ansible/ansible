@@ -746,7 +746,7 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
         if ($trigger.ContainsKey($property_name)) {
             $date_value = $trigger.$property_name
             try {
-                $date = Get-Date -Date $date_value -Format s
+                $date = Get-Date -Date $date_value -Format "yyyy-MM-dd'T'HH:mm:ssK"
                 # make sure we convert it to the full string format
                 $trigger.$property_name = $date.ToString()
             } catch [System.Management.Automation.ParameterBindingException] {
