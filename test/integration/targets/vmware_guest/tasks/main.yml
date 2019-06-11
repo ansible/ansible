@@ -25,7 +25,6 @@
     - include: create_nw_d1_c1_f0.yml
     - include: delete_vm.yml
     - include: non_existent_vm_ops.yml
-    - include: network_connected.yml
   always:
     - name: Remove VM
       vmware_guest:
@@ -64,6 +63,7 @@
     - include: network_with_device.yml
     - include: disk_mode_d1_c1_f0.yml
     - include: linked_clone_d1_c1_f0.yml
+    - include: network_connected.yml
   always:
     - name: Remove VM
       vmware_guest:
@@ -80,6 +80,7 @@
         - network_with_device
         - new_vm_no_nw_type
         - vApp-Test
+        - network_connected
 
 - import_role:
     name: prepare_vmware_tests

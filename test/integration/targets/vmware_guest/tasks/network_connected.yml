@@ -2,53 +2,19 @@
 # Copyright: (c) 2018, Maximilian Prahl-Kamps <maximilian.prahl-kamps@fkie.fraunhofer.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-
-- debug: var=vmlist
-
-- set_fact:
-   vm1: "{{ vmlist['json'][0] }}"
-
-- debug: var=vm1
-
 - name: disconnect network
   vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ vm1 }}"
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ f0 }}"
+    name: "network_connected"
     networks:
       - name: 'VM Network'
         connected: false
-    state: poweredoff
-    folder: "{{ vm1 | dirname }}"
   register: disconnect_network
   ignore_errors: yes
 
@@ -57,24 +23,21 @@
 - name: assert that changes were made and no errors occured
   assert:
     that:
-#        - "disconnect_network.changed"
         - "not disconnect_network.failed"
-
-- debug: var=vm1
 
 - name: disconnect network again
   vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ vm1 }}"
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ f0 }}"
+    name: "network_connected"
     networks:
       - name: 'VM Network'
         connected: false
-    state: poweredoff
-    folder: "{{ vm1 | dirname }}"
   register: disconnect_network
   ignore_errors: yes
 
@@ -88,17 +51,17 @@
 
 - name: connect network
   vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ vm1 }}"
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ f0 }}"
+    name: "network_connected"
     networks:
       - name: 'VM Network'
         connected: true
-    state: poweredoff
-    folder: "{{ vm1 | dirname }}"
   register: connect_network
   ignore_errors: yes
 
@@ -112,17 +75,17 @@
 
 - name: connect network again
   vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ vm1 }}"
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ f0 }}"
+    name: "network_connected"
     networks:
       - name: 'VM Network'
         connected: true
-    state: poweredoff
-    folder: "{{ vm1 | dirname }}"
   register: connect_network
   ignore_errors: yes
 
