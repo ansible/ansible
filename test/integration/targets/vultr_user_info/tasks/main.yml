@@ -1,0 +1,34 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# Copyright (c) 2019, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Create the user
+  vultr_user:
+    name: '{{ user_name }}'
+    email: '{{ user_email }}'
+    password: '{{ user_password }}'
+    acls: '{{ user_acls }}'
+
+- name: test get vultr user info in check mode
+  vultr_user_info:
+  register: result
+  check_mode: yes
+
+- name: verify test get vultr user info in check mode
+  assert:
+    that:
+    - result.vultr_user_info|selectattr('name','equalto','{{ user_name }}') | list | count == 1
+
+- name: test get vultr user info
+  vultr_user_info:
+  register: result
+
+- name: verify test get vultr user info
+  assert:
+    that:
+    - result.vultr_user_info|selectattr('name','equalto','{{ user_name }}') | list | count == 1
+
+- name: Delete the user
+  vultr_user:
+    name: '{{ user_name }}'
+    state: absent
