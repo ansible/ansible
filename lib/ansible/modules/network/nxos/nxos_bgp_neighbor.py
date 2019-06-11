@@ -89,12 +89,14 @@ options:
         to any routes received from the eBGP neighbor.
     type: bool
     default: False
+    version_added: "2.9"
   local_as_replace_as:
     description:
       - (Optional) Specifies to prepend only the local-as number to updates
         to eBGP neighbor.
     type: bool
     default: False
+    version_added: "2.9"
   local_as_dual_as:
     description:
       - (Optional) configures the eBGP neighbor to establish a peering
@@ -102,6 +104,7 @@ options:
         local BGP routing process) or by using the autonomous-system number.
     type: bool
     default: False
+    version_added: "2.9"
   log_neighbor_changes:
     description:
       - Specify whether or not to enable log messages for neighbor
