@@ -42,7 +42,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    name: {{ vm1 }}
+    name: "{{ vm1 }}"
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
     networks:
       - name: 'VM Network'
@@ -68,7 +68,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    name: {{ vm1 }}
+    name: "{{ vm1 }}"
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
     networks:
       - name: 'VM Network'
@@ -92,7 +92,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    name: {{ vm1 }}
+    name: "{{ vm1 }}"
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
     networks:
       - name: 'VM Network'
@@ -116,7 +116,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    name: {{ vm1 }}
+    name: "{{ vm1 }}"
     datacenter: "{{ (vm1 | basename).split('_')[0] }}"
     networks:
       - name: 'VM Network'
