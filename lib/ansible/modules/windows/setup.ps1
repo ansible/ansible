@@ -307,7 +307,13 @@ if($gather_subset.Contains('memory')) {
 if($gather_subset.Contains('platform')) {
     $win32_cs = Get-LazyCimInstance Win32_ComputerSystem
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
-    $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
+    $domain_suffix = $win32_cs.Domain.Substring($win32_cs.Workgroup.length)
+    $fqdn = $win32_cs.DNSHostname
+
+    if( $domain_suffix -ne "")
+    {
+        $fqdn = $win32_cs.DNSHostname + "." + $domain_suffix
+    }
 
     try {
         $ansible_reboot_pending = Get-PendingRebootStatus
@@ -318,11 +324,12 @@ if($gather_subset.Contains('platform')) {
 
     $ansible_facts += @{
         ansible_architecture = $win32_os.OSArchitecture
-        ansible_domain = $ip_props.DomainName
-        ansible_fqdn = ($ip_props.Hostname + "." + $ip_props.DomainName)
-        ansible_hostname = $env:COMPUTERNAME
+        ansible_domain = $domain_suffix
+        ansible_fqdn = $fqdn
+        ansible_hostname = $win32_cs.DNSHostname
+        ansible_netbios_name = $win32_cs.Name
         ansible_kernel = $osversion.Version.ToString()
-        ansible_nodename = ($ip_props.HostName + "." + $ip_props.DomainName)
+        ansible_nodename = $fqdn
         ansible_machine_id = Get-MachineSid
         ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
         ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
