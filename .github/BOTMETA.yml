@@ -1078,6 +1078,9 @@ files:
 # plugins/connection
   $plugins/connection/:
     support: core
+  $plugins/connection/buildah.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/docker.py:
     <<: *docker
     support: community
@@ -1101,6 +1104,9 @@ files:
   $plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/podman.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/psrp.py: *windows_core
   $plugins/connection/saltstack.py:
     support: community
