@@ -11,13 +11,13 @@ deal with.
 This design allows Ansible to deal with heterogeneous environments, that is, when a host or group of hosts have different 'connection' information than the others and should always be accessed in this way.
 You are not required to use the variables, but most people do out of convenience and then can get confused by their 'high precedence' and how to override them.
 
-In general the precedence is simple, when things are defined at the same level, 'last wins', as per the levels
+In general the precedence is simple, the higher precedence overwrites the lower ones, when things are defined in the same precedence category, 'last defined' wins and overwrites previous definitions.
 this is the most general list, from least to most:
 
- Configuration
-- Command Line options
- Playbooks
- Connection variables
+   Configuration
+   Command Line options
+   Playbooks
+   Connection variables
 
 Some of these entries are not self evident and others also have their own internal levels and precedence, see them expanded below.
 
@@ -29,12 +29,11 @@ Configuration
 
 This mainly reffers to 2 things, 'the ansible configuration file' and environment variables. The internal precedence is as follows (from least to most):
 
-- configuration file (only first found used, they don't merge)
-
-  -  "value of ANSIBLE_CONFIG"
-   - `./ansible.cfg`
-   - `~/.ansible.cfg`
-   - `/etc/ansible/ansible.cfg`
+   configuration file (only first found used, they don't merge)
+   "value of ANSIBLE_CONFIG"
+   `./ansible.cfg`
+   `~/.ansible.cfg`
+   `/etc/ansible/ansible.cfg`
 
 - environment variable (this just follows normal shell precedence, last time defined overwrites previous values)
 
