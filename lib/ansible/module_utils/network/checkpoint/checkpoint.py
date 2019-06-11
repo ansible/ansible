@@ -169,9 +169,22 @@ def api_call(module, api_call_object):
     result = {'changed': False}
 
     if module.params['state'] == 'present':
-        if equals_code == 200:
-            if not equals_response['equals']:
-                code, response = send_request(connection, version, 'set-' + api_call_object, payload)
+        if not module.check_mode:
+            if equals_code == 200:
+                if not equals_response['equals']:
+                    code, response = send_request(connection, version, 'set-' + api_call_object, payload)
+                    if code != 200:
+                        module.fail_json(msg=response)
+
+                    handle_publish(module, connection, version)
+
+                    result['changed'] = True
+                    result[api_call_object] = response
+                else:
+                    # objects are equals and there is no need for set request
+                    pass
+            elif equals_code == 404:
+                code, response = send_request(connection, version, 'add-' + api_call_object, payload)
                 if code != 200:
                     module.fail_json(msg=response)
 
@@ -179,31 +192,19 @@ def api_call(module, api_call_object):
 
                 result['changed'] = True
                 result[api_call_object] = response
-            else:
-                # objects are equals and there is no need for set request
+    elif module.params['state'] == 'absent':
+        if not module.check_mode:
+            if equals_code == 200:
+                code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
+                if code != 200:
+                    module.fail_json(msg=response)
+
+                handle_publish(module, connection, version)
+
+                result['changed'] = True
+            elif equals_code == 404:
+                # no need to delete because object dose not exist
                 pass
-        elif equals_code == 404:
-            code, response = send_request(connection, version, 'add-' + api_call_object, payload)
-            if code != 200:
-                module.fail_json(msg=response)
-
-            handle_publish(module, connection, version)
-
-            result['changed'] = True
-            result[api_call_object] = response
-    else:
-        # state == absent
-        if equals_code == 200:
-            code, response = send_request(connection, version, 'delete-' + api_call_object, payload)
-            if code != 200:
-                module.fail_json(msg=response)
-
-            handle_publish(module, connection, version)
-
-            result['changed'] = True
-        elif equals_code == 404:
-            # no need to delete because object dose not exist
-            pass
 
     result['checkpoint_session_uid'] = connection.get_session_uid()
     return result
