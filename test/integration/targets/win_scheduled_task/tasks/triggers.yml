@@ -321,7 +321,7 @@
     - create_trigger_repetition_result_check.triggers|count == 1
     - create_trigger_repetition_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
     - create_trigger_repetition_result_check.triggers[0].enabled == True
-    - create_trigger_repetition_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - create_trigger_repetition_result_check.triggers[0].start_boundary == "1999-12-31T21:00:01+00:00"
     - create_trigger_repetition_result_check.triggers[0].end_boundary == None
     - create_trigger_repetition_result_check.triggers[0].weeks_of_month == "1,2"
     - create_trigger_repetition_result_check.triggers[0].days_of_week == "monday,wednesday"
