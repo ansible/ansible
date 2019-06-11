@@ -304,6 +304,42 @@
 
   - assert: *false
 
+  - name: "Configure BGP Neighbor Local AS"
+    nxos_bgp_neighbor: &configure_local_as
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      local_as: 65523
+      local_as_no_prepend: True
+      local_as_replace_as: True
+      local_as_dual_as: False
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_local_as
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_neighbor: *removenp
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *removenp
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
   rescue:
   - name: "Cleanup BGP"
     nxos_bgp_neighbor: *remove

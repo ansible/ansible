@@ -57,3 +57,23 @@ class TestNxosBgpNeighborModule(TestNxosModule):
     def test_nxos_bgp_neighbor_remove_private_as_changed(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.4', remove_private_as='replace-as'))
         self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.4', 'remove-private-as replace-as'])
+
+    # Idempotence
+    def test_nxos_bgp_neighbor_local_as_no_prepend_replace_as(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.6', local_as='65523', local_as_no_prepend=True, local_as_replace_as=True))
+        self.execute_module(changed=False, commands=[])
+
+    # Remote all Local AS Attributes
+    def test_nxos_bgp_neighbor_local_as_remove(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.6'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.6', 'no local-as 65523'])
+
+    # Remove Subset of Local AS Attributes (ie. reapply without extras)
+    def test_nxos_bgp_neighbor_local_as_changed(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.6', local_as='65523'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.6', 'local-as 65523'])
+
+    # Add Additional Extras
+    def test_nxos_bgp_neighbor_local_as_no_prepend_dual_as_changed(self):
+        set_module_args(dict(asn=65535, neighbor='3.3.3.6', local_as='65523', local_as_no_prepend=True, local_as_replace_as=True, local_as_dual_as=True))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.6', 'local-as 65523 no-prepend replace-as dual-as'])
