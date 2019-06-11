@@ -278,7 +278,7 @@
     - path: cmd.exe
     triggers:
     - type: monthlydow
-      start_boundary: '2000-01-01T00:00:01'
+      start_boundary: '2000-01-01T00:00:01+03:00'
       weeks_of_month: 1,2
       days_of_week: [ "monday", "wednesday" ]
   register: trigger_monthlydow_again
