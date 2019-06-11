@@ -1,0 +1,2 @@
+bugfixes:
+  - ftd_configuration - fix a bug with response parsing when the server returns a list of objects
