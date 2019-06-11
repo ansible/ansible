@@ -150,7 +150,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -192,36 +196,21 @@ class PgSlot(object):
         elif kind == 'logical':
             query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (self.name, output_plugin)
 
-        self.changed = self.__exec_sql(query, ddl=True)
+        self.changed = exec_sql(self, query, ddl=True)
 
     def drop(self):
         if not self.exists:
             return False
 
         query = "SELECT pg_drop_replication_slot('%s')" % self.name
-        self.changed = self.__exec_sql(query, ddl=True)
+        self.changed = exec_sql(self, query, ddl=True)
 
     def __slot_exists(self):
         query = "SELECT slot_type FROM pg_replication_slots WHERE slot_name = '%s'" % self.name
-        res = self.__exec_sql(query, add_to_executed=False)
+        res = exec_sql(self, query, add_to_executed=False)
         if res:
             self.exists = True
             self.kind = res[0][0]
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
 
 
 # ===========================================

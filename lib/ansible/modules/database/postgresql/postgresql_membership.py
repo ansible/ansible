@@ -144,7 +144,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -173,7 +177,7 @@ class PgMembership(object):
 
                 query = "GRANT %s TO %s" % ((pg_quote_identifier(group, 'role'),
                                             (pg_quote_identifier(role, 'role'))))
-                self.changed = self.__exec_sql(query, ddl=True)
+                self.changed = exec_sql(self, query, ddl=True)
 
                 if self.changed:
                     self.granted[group].append(role)
@@ -191,7 +195,7 @@ class PgMembership(object):
 
                 query = "REVOKE %s FROM %s" % ((pg_quote_identifier(group, 'role'),
                                                (pg_quote_identifier(role, 'role'))))
-                self.changed = self.__exec_sql(query, ddl=True)
+                self.changed = exec_sql(self, query, ddl=True)
 
                 if self.changed:
                     self.revoked[group].append(role)
@@ -206,7 +210,7 @@ class PgMembership(object):
                  "FROM pg_catalog.pg_roles r "
                  "WHERE r.rolname = '%s'" % dst_role)
 
-        res = self.__exec_sql(query, add_to_executed=False)
+        res = exec_sql(self, query, add_to_executed=False)
         membership = []
         if res:
             membership = res[0][0]
@@ -252,22 +256,7 @@ class PgMembership(object):
         self.target_roles = [r for r in self.target_roles if r not in self.non_existent_roles]
 
     def __role_exists(self, role):
-        return self.__exec_sql("SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
+        return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
 
 
 # ===========================================
