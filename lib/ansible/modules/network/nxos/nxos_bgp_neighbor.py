@@ -78,26 +78,23 @@ options:
         or 'default', which means not to configure it.
   local_as_no_prepend:
     description:
-      - To configure a route to appear as a member of a second autonomous system (AS)
-        in addition to the real AS of the device, use the local-as command.
-        no-prepend - (Optional) Specfies not to prepend the local autonomous system number
-                      to any routes received from the eBGP neighbor.
-        type: boolean
+      - (Optional) Specfies not to prepend the local autonomous system number
+        to any routes received from the eBGP neighbor.
+    type: bool
+    default: False
   local_as_replace_as:
     description:
-      - To configure a route to appear as a member of a second autonomous system (AS)
-        in addition to the real AS of the device, use the local-as command.
-        replace-as - (Optional) Specifies to prepend only the local-as number to updates
-                       to eBGP neighbor.
-        type: boolean
+      - (Optional) Specifies to prepend only the local-as number to updates
+        to eBGP neighbor.
+    type: bool
+    default: False
   local_as_dual_as:
     description:
-      - To configure a route to appear as a member of a second autonomous system (AS)
-        in addition to the real AS of the device, use the local-as command.
-        dual-as    - (Optional) configures the eBGP neighbor to establish a peering
-                      session using the real autonomous system number (from the
-                      local BGP routing process) or by using the autonomous-system number.
-        type: boolean
+      - (Optional) configures the eBGP neighbor to establish a peering
+        session using the real autonomous system number (from the
+        local BGP routing process) or by using the autonomous-system number.
+    type: bool
+    default: False
   log_neighbor_changes:
     description:
       - Specify whether or not to enable log messages for neighbor
