@@ -73,7 +73,7 @@
     - assert:
         that:
           - output.changed == True
-          - output.pipeline.name == "{{ resource_prefix }}-test-pipeline"
+          - output.pipeline.name == "{{ codepipeline_name  }}"
           - output.pipeline.stages|length > 1
 
     - name: idempotence check rerunning same CodePipeline task
@@ -123,6 +123,9 @@
     - name: Test deletion of CodePipeline
       aws_codepipeline:
         name: "{{ codepipeline_name }}"
+        role_arn: ''
+        artifact_store: {}
+        stages: []
         state: absent
         <<: *aws_connection_info
       register: absent_test_output
@@ -138,6 +141,9 @@
     - name: Cleanup - delete test CodePipeline
       aws_codepipeline:
         name: "{{ codepipeline_name }}"
+        role_arn: ''
+        artifact_store: {}
+        stages: []
         state: absent
         <<: *aws_connection_info
       ignore_errors: true
