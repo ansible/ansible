@@ -106,7 +106,6 @@ class HttpApi(HttpApiBase):
         """
         return exc
 
-
     def send_request(self, **message_kwargs):
         """
         Responsible for actual sending of data to the connection httpapi base plugin.
