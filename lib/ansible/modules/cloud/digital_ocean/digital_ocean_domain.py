@@ -38,6 +38,7 @@ options:
     description:
      - An 'A' record for '@' ($ORIGIN) will be created with the value 'ip'.  'ip' is an IP version 4 address.
   ttl:
+    version_added: "2.9"
     description:
      - TTL of the DNS record. Defaults to 1800 (30 minutes).
 extends_documentation_fragment: digital_ocean.documentation
