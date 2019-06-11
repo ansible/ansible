@@ -1078,6 +1078,9 @@ files:
 # plugins/connection
   $plugins/connection/:
     support: core
+  $plugins/connection/buildah.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/docker.py:
     <<: *docker
     support: community
