@@ -441,8 +441,10 @@ class Connection(NetworkConnectionBase):
                 # value of answer is wrong, report this as error.
                 if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
                     raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
-            
-            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) = self._find_prompt(window, previous_stderr_prompt_matched, previous_errored_response)
+
+            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) = \
+            self._find_prompt(window, previous_stderr_prompt_matched, previous_errored_response)
+
             if stdout_prompt_matched:
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
@@ -553,7 +555,7 @@ class Connection(NetworkConnectionBase):
                 cleaned.append(line)
         return b'\n'.join(cleaned).strip()
 
-  def _find_prompt(self, response, previous_stderr_prompt_matched, previous_errored_response):
+    def _find_prompt(self, response, previous_stderr_prompt_matched, previous_errored_response):
         '''Searches the buffered response for a matching command prompt
            return list for searching results: 
            (stdout_prompt_matched, stderr_prompt_macthed, errored_response)
