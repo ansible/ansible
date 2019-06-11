@@ -458,7 +458,7 @@ system keyring.
 Speeding Up Vault Operations
 ````````````````````````````
 
-If there are many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, cryptography package needs to be installed:
+If you have many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, install the cryptography package:
 
 .. code-block:: bash
 
