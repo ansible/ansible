@@ -35,7 +35,6 @@ minor_changes:
 - The ``azure_rm_mysqldatabase_facts`` module has been renamed to ``azure_rm_mysqldatabase_info``.
 - The ``azure_rm_mysqlfirewallrule_facts`` module has been renamed to ``azure_rm_mysqlfirewallrule_info``.
 - The ``azure_rm_mysqlserver_facts`` module has been renamed to ``azure_rm_mysqlserver_info``.
-- The ``azure_rm_networkinterface_facts`` module has been renamed to ``azure_rm_networkinterface_info``.
 - The ``azure_rm_postgresqlconfiguration_facts`` module has been renamed to ``azure_rm_postgresqlconfiguration_info``.
 - The ``azure_rm_postgresqldatabase_facts`` module has been renamed to ``azure_rm_postgresqldatabase_info``.
 - The ``azure_rm_postgresqlfirewallrule_facts`` module has been renamed to ``azure_rm_postgresqlfirewallrule_info``.

@@ -174,7 +174,6 @@ Noteworthy module changes
 * The ``azure_rm_mysqldatabase_facts`` module was renamed to :ref:`azure_rm_mysqldatabase_info <azure_rm_mysqldatabase_info_module>`.
 * The ``azure_rm_mysqlfirewallrule_facts`` module was renamed to :ref:`azure_rm_mysqlfirewallrule_info <azure_rm_mysqlfirewallrule_info_module>`.
 * The ``azure_rm_mysqlserver_facts`` module was renamed to :ref:`azure_rm_mysqlserver_info <azure_rm_mysqlserver_info_module>`.
-* The ``azure_rm_networkinterface_facts`` module was renamed to :ref:`azure_rm_networkinterface_info <azure_rm_networkinterface_info_module>`.
 * The ``azure_rm_postgresqlconfiguration_facts`` module was renamed to :ref:`azure_rm_postgresqlconfiguration_info <azure_rm_postgresqlconfiguration_info_module>`.
 * The ``azure_rm_postgresqldatabase_facts`` module was renamed to :ref:`azure_rm_postgresqldatabase_info <azure_rm_postgresqldatabase_info_module>`.
 * The ``azure_rm_postgresqlfirewallrule_facts`` module was renamed to :ref:`azure_rm_postgresqlfirewallrule_info <azure_rm_postgresqlfirewallrule_info_module>`.

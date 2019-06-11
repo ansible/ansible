@@ -16,14 +16,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_networkinterface_info
+module: azure_rm_networkinterface_facts
 
-version_added: "2.9"
+version_added: "2.1"
 
-short_description: Get network interface information.
+short_description: Get network interface facts.
 
 description:
-    - Get information for a specific network interface or all network interfaces within a resource group.
+    - Get facts for a specific network interface or all network interfaces within a resource group.
 
 options:
     name:
@@ -46,17 +46,17 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one network interface
-      azure_rm_networkinterface_info:
+    - name: Get facts for one network interface
+      azure_rm_networkinterface_facts:
         resource_group: myResourceGroup
         name: nic001
 
     - name: Get network interfaces within a resource group
-      azure_rm_networkinterface_info:
+      azure_rm_networkinterface_facts:
         resource_group: myResourceGroup
 
     - name: Get network interfaces by tag
-      azure_rm_networkinterface_info:
+      azure_rm_networkinterface_facts:
         resource_group: myResourceGroup
         tags:
           - testing
@@ -256,7 +256,7 @@ def nic_to_dict(nic):
     )
 
 
-class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
+class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
     def __init__(self):
 
@@ -275,9 +275,10 @@ class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
         self.resource_group = None
         self.tags = None
 
-        super(AzureRMNetworkInterfaceInfo, self).__init__(self.module_arg_spec,
-                                                          supports_tags=False,
-                                                          facts_module=True)
+        super(AzureRMNetworkInterfaceFacts, self).__init__(self.module_arg_spec,
+                                                           supports_tags=False,
+                                                           facts_module=True
+                                                           )
 
     def exec_module(self, **kwargs):
 
@@ -334,7 +335,7 @@ class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
 
 
 def main():
-    AzureRMNetworkInterfaceInfo()
+    AzureRMNetworkInterfaceFacts()
 
 
 if __name__ == '__main__':
