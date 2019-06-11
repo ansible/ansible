@@ -57,7 +57,7 @@
 - name: assert that changes were made and no errors occured
   assert:
     that:
-        - "disconnect_network.changed"
+#        - "disconnect_network.changed"
         - "not disconnect_network.failed"
 
 - debug: var=vm1
