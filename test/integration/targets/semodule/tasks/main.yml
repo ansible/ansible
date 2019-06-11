@@ -1,46 +1,99 @@
----
-
-- name: TEST SETUP | install policycoreutils
+- name: TEST SETUP | install module requirements
   yum:
     name: 
       - policycoreutils
+      - selinux-policy-targeted
+      - policycoreutils-python
+      - checkpolicy
     state: present
 
-# test installing and removing test module
+    # test installing and removing test module
 
 - name: TEST 1 | install test module
   semodule:
-    te_file: test.te
+    src: test.te
   register: test1_mod_install
+
+- name: TEST 1 | verify installed
+  shell: semodule -l
+  register: semodule_out
 
 - assert:
     that: 
       - test1_mod_install.version == '1.0'
-      - test1_mod_install.name == 'ansible-test'
+      - test1_mod_install.name == 'ansible-semodule-test'
       - test1_mod_install.changed
+      - "'ansible-semodule-test' in semodule_out.stdout"
+
+- name: TEST 1 | double install test
+  semodule:
+    src: test.te
+  register: test1_mod_install2
+
+- assert:
+    that:
+      - not test1_mod_install2.changed
 
 - name: TEST 1 | remove test module
   semodule:
-    te_file: test.te
+    src: test.te
     state: absent
   register: test1_mod_remove
+
+- name: TEST 1 | verify removed
+  shell: semodule -l
+  register: semodule_out
 
 - assert:
     that: 
       - test1_mod_install.changed
+      - "'ansible-semodule-test' not in semodule_out.stdout"
 
 
-# test insatlling and upgrading
+    # test installing and upgrading
 
 - name: TEST 2 | install test module v1.0
   semodule:
-    te_file: test.te
+    src: test.te
 
 - name: TEST 2 | test latest with v1.0
   semodule:
-    te_file: test.te
+    src: test.te
+    state: latest
+  register: test2_10_upgrade
+
+- assert:
+    that:
+      - not test2_10_upgrade.changed
 
 - name: TEST 2 | install test module v1.0.1
   semodule:
-    te_file: test2.te
+    src: test2.te
     state: latest
+  register: test2_upgrade
+
+- name: TEST 2 | verify upgrade
+  shell: semodule -l | grep ansible-semodule-test
+  register: semodule_out
+
+- assert:
+    that:
+      - test2_upgrade.changed
+      - test2_upgrade.version == '1.0.1'
+      - "'1.0.1' in semodule_out.stdout"
+
+- name: TEST 2 | test with version 1.0
+  semodule:
+    src: test.te
+    state: latest
+  register: test2_10_older
+
+- name: TEST 2 | verify version 1.0.1 still installed
+  shell: semodule -l | grep ansible-semodule-test
+  register: semodule_out
+
+- assert:
+    that:
+      - not test2_10_older.changed
+      - test2_10_older.version == '1.0.1'
+      - "'1.0.1' in semodule_out.stdout"
