@@ -185,7 +185,7 @@ pipeline:
 import traceback
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_policies
 
 
 try:
@@ -279,8 +279,9 @@ def main():
                 pipeline_dict['version'] = module.params['version']
 
             pipeline_result = update_pipeline(client=client_conn, pipeline_dict=pipeline_dict, module=module)
-            # NOTE: can't be made idempotent without comparing deeply nested dicts and lists which are arbitrarily sorted
-            changed = True
+
+            if compare_policies(found_code_pipeline['pipeline'], pipeline_result['pipeline']):
+                changed = True
         else:
             pipeline_result = create_pipeline(
                 client=client_conn,
