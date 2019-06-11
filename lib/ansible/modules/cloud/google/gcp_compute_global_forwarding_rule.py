@@ -100,6 +100,7 @@ options:
       global forwarding rules cannot be used for INTERNAL load balancing.'
     - 'Some valid choices include: "INTERNAL_SELF_MANAGED", "EXTERNAL"'
     required: false
+    default: EXTERNAL
   name:
     description:
     - Name of the resource; provided by the client when the resource is created. The
@@ -348,7 +349,7 @@ def main():
             ip_address=dict(type='str'),
             ip_protocol=dict(type='str'),
             ip_version=dict(type='str'),
-            load_balancing_scheme=dict(type='str'),
+            load_balancing_scheme=dict(default='EXTERNAL', type='str'),
             name=dict(required=True, type='str'),
             network=dict(type='dict'),
             port_range=dict(type='str'),
