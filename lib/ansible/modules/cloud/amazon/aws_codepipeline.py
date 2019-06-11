@@ -279,8 +279,8 @@ def main():
                 pipeline_dict['version'] = module.params['version']
 
             pipeline_result = update_pipeline(client=client_conn, pipeline_dict=pipeline_dict, module=module)
-            if pipeline_result['pipeline'] != found_code_pipeline['pipeline']:
-                changed = True
+            # NOTE: can't be made idempotent without comparing deeply nested dicts and lists which are arbitrarily sorted
+            changed = True
         else:
             pipeline_result = create_pipeline(
                 client=client_conn,
