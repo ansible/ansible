@@ -428,7 +428,7 @@ class RedfishUtils(object):
         return self.aggregate(func, self.manager_uris, 'manager_uri')
 
     def aggregate_systems(self, func):
-        return self.aggregate(func, self.systems_uris, 'systems_uri')
+        return self.aggregate(func, self.systems_uris, 'system_uri')
 
     def get_storage_controller_inventory(self, systems_uri):
         result = {}
