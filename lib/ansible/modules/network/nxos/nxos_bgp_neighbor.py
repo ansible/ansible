@@ -175,6 +175,8 @@ EXAMPLES = '''
     asn: 65535
     neighbor: 192.0.2.3
     local_as: 20
+    local_as_no_prepend: true
+    local_as_replace_as: true
     remote_as: 30
     description: "just a description"
     update_source: Ethernet1/3
@@ -188,7 +190,7 @@ commands:
   type: list
   sample: ["router bgp 65535", "neighbor 192.0.2.3",
            "remote-as 30", "update-source Ethernet1/3",
-           "description just a description", "local-as 20"]
+           "description just a description", "local-as 20 no-prepend replace-as"]
 '''
 
 import re
