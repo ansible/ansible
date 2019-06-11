@@ -1,5 +1,7 @@
 :orphan:
 
+.. _playbooks_filters_ipaddr:
+
 ipaddr filter
 `````````````
 
