@@ -341,9 +341,10 @@ def main():
     )
 
     unit = module.params['name']
-    for globpattern in (r"*", r"?", r"["):
-        if globpattern in unit:
-            module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+    if unit is not None:
+        for globpattern in (r"*", r"?", r"["):
+            if globpattern in unit:
+                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
 
     systemctl = module.get_bin_path('systemctl', True)
 
