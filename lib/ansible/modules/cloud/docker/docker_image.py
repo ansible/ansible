@@ -38,6 +38,7 @@ options:
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+      - This can also include a relative path (relative to I(path)).
     required: false
     version_added: "2.0"
   force:
