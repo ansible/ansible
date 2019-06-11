@@ -14,7 +14,9 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     required: True
-    choices: ['present', 'absent']
+    choices:
+      - 'present'
+      - 'absent'
   auto_publish_session:
     description:
       - Publish the current session if changes have been performed
@@ -24,7 +26,7 @@ options:
     description:
       - Wait for the task to end. Such as publish task.
     type: bool
-    default: true
+    default: True
   version:
     description:
       - Version of checkpoint. If not given one, the latest version taken.

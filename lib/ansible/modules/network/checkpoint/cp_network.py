@@ -80,11 +80,12 @@ options:
     description:
       - Allow broadcast address inclusion.
     type: str
-    choices: ['disallow', 'allow']
+    choices:
+      - disallow
+      - allow
   color:
     description:
       - Color of the object. Should be one of existing colors.
-    type: str
     choices: ['aquamarine', 'black', 'blue', 'crete blue', 'burlywood', 'cyan', 'dark green', 'khaki', 'orchid',
               'dark orange', 'dark sea green', 'pink', 'turquoise', 'dark blue', 'firebrick', 'brown', 'forest green',
               'gold', 'dark gold', 'gray', 'dark gray', 'light green', 'lemon chiffon', 'coral', 'sea green',
@@ -99,7 +100,7 @@ options:
       - The level of detail for some of the fields in the response can vary from showing only the UID value of the
         object to a fully detailed representation of the object.
     type: str
-    choices: ['uid', 'standard', 'full']
+    choices: [uid, standard, full]
   groups:
     description:
       - Collection of group identifiers.

@@ -13,7 +13,7 @@ options:
     description:
       - Wait for the task to end. Such as publish task.
     type: bool
-    default: true
+    default: True
   version:
     description:
       - Version of checkpoint. If not given one, the latest version taken.
