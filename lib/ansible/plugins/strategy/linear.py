@@ -205,6 +205,14 @@ class StrategyModule(StrategyBase):
         # iterate over each task, while there is one left to run
         result = self._tqm.RUN_OK
         work_to_do = True
+
+        if Templar(None).is_template(iterator._play.hosts):
+            _pattern = 'all'
+        else:
+            _pattern = iterator._play.hosts or 'all'
+        self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
+        self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)]
+
         while work_to_do and not self._tqm._terminated:
 
             try:
@@ -275,7 +283,7 @@ class StrategyModule(StrategyBase):
                                 break
 
                         display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task, hosts=self._hosts_cache, hosts_all=self._hosts_cache_all)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -358,7 +366,9 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=new_block._parent
+                                    task=new_block._parent,
+                                    hosts=self._hosts_cache,
+                                    hosts_all=self._hosts_cache_all,
                                 )
                                 display.debug("filtering new block on tags")
                                 final_block = new_block.filter_tagged_tasks(task_vars)

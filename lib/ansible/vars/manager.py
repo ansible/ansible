@@ -141,7 +141,7 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
-    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
+    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True, hosts=None, hosts_all=None):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -170,6 +170,8 @@ class VariableManager:
             task=task,
             include_hostvars=include_hostvars,
             include_delegate_to=include_delegate_to,
+            hosts=hosts,
+            hosts_all=hosts_all,
         )
 
         # default for all cases
@@ -426,7 +428,7 @@ class VariableManager:
         display.debug("done with get_vars()")
         return all_vars
 
-    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to):
+    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to, hosts=None, hosts_all=None):
         '''
         Returns a dictionary of so-called "magic" variables in Ansible,
         which are special variables we set internally for use.
@@ -470,9 +472,14 @@ class VariableManager:
                 else:
                     pattern = play.hosts or 'all'
                 # add the list of hosts in the play, as adjusted for limit/filters
-                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
+                if not hosts_all:
+                    hosts_all = [h.name for h in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
+                if not hosts:
+                    hosts = [h.name for h in self._inventory.get_hosts()]
+
+                variables['ansible_play_hosts_all'] = hosts_all[:]
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
-                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
+                variables['ansible_play_batch'] = [x for x in hosts if x not in play._removed_hosts]
 
                 # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
                 # however this would take work in the templating engine, so for now we'll add both

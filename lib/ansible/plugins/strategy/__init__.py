@@ -227,8 +227,9 @@ class StrategyBase:
         # This should be safe, as everything should be ITERATING_COMPLETE by
         # this point, though the strategy may not advance the hosts itself.
 
-        inv_hosts = self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)
-        [iterator.get_next_task_for_host(host) for host in inv_hosts if host.name not in self._tqm._unreachable_hosts]
+        for host in self._hosts_cache:
+            if host not in self._tqm._unreachable_hosts:
+                iterator.get_next_task_for_host(self._inventory.hosts[host])
 
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
@@ -257,20 +258,20 @@ class StrategyBase:
         else:
             return self._tqm.RUN_OK
 
-    def get_hosts_remaining(self, play):
-        return [host for host in self._inventory.get_hosts(play.hosts)
-                if host.name not in self._tqm._failed_hosts and host.name not in self._tqm._unreachable_hosts]
+    def get_hosts_remaining(self, play, hosts=None):
+        return [host for host in hosts
+                if host not in self._tqm._failed_hosts and host not in self._tqm._unreachable_hosts]
 
-    def get_failed_hosts(self, play):
-        return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
+    def get_failed_hosts(self, play, hosts=None):
+        return [host for host in hosts if host in self._tqm._failed_hosts]
 
     def add_tqm_variables(self, vars, play):
         '''
         Base class method to add extra variables/information to the list of task
         vars sent through the executor engine regarding the task queue manager state.
         '''
-        vars['ansible_current_hosts'] = [h.name for h in self.get_hosts_remaining(play)]
-        vars['ansible_failed_hosts'] = [h.name for h in self.get_failed_hosts(play)]
+        vars['ansible_current_hosts'] = self.get_hosts_remaining(play, hosts=self._hosts_cache)
+        vars['ansible_failed_hosts'] = self.get_failed_hosts(play, hosts=self._hosts_cache)
 
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
@@ -334,7 +335,7 @@ class StrategyBase:
 
     def get_task_hosts(self, iterator, task_host, task):
         if task.run_once:
-            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+            host_list = [host for host in self._host_cache if host.name not in self._tqm._unreachable_hosts]
         else:
             host_list = [task_host]
         return host_list
@@ -702,8 +703,11 @@ class StrategyBase:
 
             # Check if host in inventory, add if not
             if host_name not in self._inventory.hosts:
-                self._inventory.add_host(host_name, 'all')
-            new_host = self._inventory.hosts.get(host_name)
+                new_host = self._inventory.add_host(host_name, 'all')
+                self._hosts_cache.append(host_name)
+                self._hosts_cache_all.append(host_name)
+            else:
+                new_host = self._inventory.hosts.get(host_name)
 
             # Set/update the vars for this host
             new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
@@ -1007,6 +1011,14 @@ class StrategyBase:
             if task.when:
                 self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
+            self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts)]
+
+            if Templar(None).is_template(iterator._play.hosts):
+                _pattern = 'all'
+            else:
+                _pattern = iterator._play.hosts or 'all'
+            self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
+
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
@@ -1096,9 +1108,9 @@ class StrategyBase:
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
 
         hosts_left = []
-        for host in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order):
-            if host.name not in self._tqm._unreachable_hosts:
-                hosts_left.append(host)
+        for host in self._hosts_cache:
+            if host not in self._tqm._unreachable_hosts:
+                hosts_left.append(self._inventory.hosts[host])
         return hosts_left
 
     def update_active_connections(self, results):
