@@ -553,12 +553,12 @@ EXAMPLES = '''
 
 - name: Power On
   azure_rm_virtualmachine:
-    resource_group:
+    resource_group: myResourceGroup
     name: testvm002
 
 - name: Restart
   azure_rm_virtualmachine:
-    resource_group:
+    resource_group: myResourceGroup
     name: testvm002
     restarted: yes
 
