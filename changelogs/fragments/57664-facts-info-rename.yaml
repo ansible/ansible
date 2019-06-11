@@ -42,7 +42,6 @@ minor_changes:
 - The ``azure_rm_publicipaddress_facts`` module has been renamed to ``azure_rm_publicipaddress_info``.
 - The ``azure_rm_rediscache_facts`` module has been renamed to ``azure_rm_rediscache_info``.
 - The ``azure_rm_resource_facts`` module has been renamed to ``azure_rm_resource_info``.
-- The ``azure_rm_resourcegroup_facts`` module has been renamed to ``azure_rm_resourcegroup_info``.
 - The ``azure_rm_roleassignment_facts`` module has been renamed to ``azure_rm_roleassignment_info``.
 - The ``azure_rm_roledefinition_facts`` module has been renamed to ``azure_rm_roledefinition_info``.
 - The ``azure_rm_routetable_facts`` module has been renamed to ``azure_rm_routetable_info``.

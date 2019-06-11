@@ -262,7 +262,7 @@
           - output.state.network_security_group.name == 'nic00401'
 
 - name: Gather facts for security group nic00401
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       name: nic00401
   register: output
@@ -289,7 +289,7 @@
           - output.state.network_security_group.name == 'nic00501'
 
 - name: Gather facts for security group nic00501
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       name: nic00501
   register: output
