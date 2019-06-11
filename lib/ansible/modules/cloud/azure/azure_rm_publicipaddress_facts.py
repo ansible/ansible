@@ -175,7 +175,7 @@ publicipaddresses:
                 - A unique read-only string that changes whenever the resource is updated.
             returned: always
             type: str
-            sample: "W/\"1905ee13-7623-45b1-bc6b-4a12b2fb9d15\""
+            sample: "W/'1905ee13-7623-45b1-bc6b-4a12b2fb9d15'"
         sku:
             description:
                 - The public IP address SKU.

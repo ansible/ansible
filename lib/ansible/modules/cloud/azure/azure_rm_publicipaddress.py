@@ -143,7 +143,7 @@ state:
                 - A unique read-only string that changes whenever the resource is updated.
             returns: always
             type: str
-            sample: "W/\"1905ee13-7623-45b1-bc6b-4a12b2fb9d15\""
+            sample: "W/'1905ee13-7623-45b1-bc6b-4a12b2fb9d15'"
         idle_timeout_in_minutes:
             description:
                 - The idle timeout of the public IP address.
