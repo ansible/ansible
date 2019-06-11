@@ -20,11 +20,12 @@ module: azure_rm_publicipaddress
 
 version_added: "2.1"
 
-short_description: Manage Azure Public IP Addresses.
+short_description: Manage Azure Public IP Addresses
 
 description:
-    - Create, update and delete a Public IP address. Allows setting and updating the address allocation method and
-      domain name label. Use the azure_rm_networkinterface module to associate a Public IP with a network interface.
+    - Create, update and delete a Public IP address.
+    - Allows setting and updating the address allocation method and domain name label.
+    - Use the M(azure_rm_networkinterface) module to associate a Public IP with a network interface.
 
 options:
     resource_group:
@@ -33,8 +34,8 @@ options:
         required: true
     allocation_method:
         description:
-            - Control whether the assigned Public IP remains permanently assigned to the object. If not
-              set to 'Static', the IP address my changed anytime an associated virtual machine is power cycled.
+            - Control whether the assigned Public IP remains permanently assigned to the object.
+            - If not set to C(Static), the IP address my changed anytime an associated virtual machine is power cycled.
         choices:
             - dynamic
             - static
@@ -43,8 +44,8 @@ options:
         default: dynamic
     domain_name:
         description:
-            - The customizable portion of the FQDN assigned to public IP address. This is an explicit setting. If
-              no value is provided, any existing value will be removed on an existing public IP.
+            - The customizable portion of the FQDN assigned to public IP address. This is an explicit setting.
+            - If no value is provided, any existing value will be removed on an existing public IP.
         aliases:
             - domain_name_label
     name:
@@ -53,15 +54,14 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the Public IP. Use C(present) to create or update a and
-              C(absent) to delete.
+            - Assert the state of the Public IP. Use C(present) to create or update a and C(absent) to delete.
         default: present
         choices:
             - absent
             - present
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     sku:
         description:
             - The public IP address SKU.
@@ -70,22 +70,24 @@ options:
             - standard
             - Basic
             - Standard
-        version_added: 2.6
+        version_added: "2.6"
     ip_tags:
         description:
             - List of IpTag associated with the public IP address.
             - Each element should contain type:value pair.
         suboptions:
             type:
-                description: Sets the ip_tags type.
+                description:
+                    - Sets the ip_tags type.
             value:
-                description: Sets the ip_tags value.
-        version_added: 2.8
+                description:
+                    - Sets the ip_tags value.
+        version_added: "2.8"
     idle_timeout:
         description:
             - Idle timeout in minutes.
         type: int
-        version_added: 2.8
+        version_added: "2.8"
     version:
         description:
             - The public IP address version.
@@ -93,15 +95,15 @@ options:
             - ipv4
             - ipv6
         default: ipv4
-        version_added: 2.8
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = '''
@@ -121,21 +123,90 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Facts about the current state of the object.
+    description:
+        - Facts about the current state of the object.
     returned: always
-    type: dict
-    sample: {
-        "dns_settings": {},
-        "etag": '"/"a5e56955-12df-445a-bda4-dc129d22c12f"',
-        "idle_timeout_in_minutes": 4,
-        "ip_address": "52.160.103.93",
-        "location": "westus",
-        "name": "publicip002",
-        "provisioning_state": "Succeeded",
-        "public_ip_allocation_method": "static",
-        "tags": {},
-        "type": "Microsoft.Network/publicIPAddresses"
-    }
+    type: complex
+    contains:
+        dns_settings:
+            description:
+                - The FQDN of the DNS record associated with the public IP address.
+            returns: always
+            type: dict
+            sample: {
+            "domain_name_label": "ansible-b57dc95985712e45eb8b9c2e",
+            "fqdn": "ansible-b57dc95985712e45eb8b9c2e.eastus.cloudapp.azure.com",
+            "reverse_fqdn": null
+        }
+        etag:
+            description:
+                - A unique read-only string that changes whenever the resource is updated.
+            returns: always
+            type: str
+            sample: "W/\"1905ee13-7623-45b1-bc6b-4a12b2fb9d15\""
+        idle_timeout_in_minutes:
+            description:
+                - The idle timeout of the public IP address.
+            returns: always
+            type: int
+            sample: 4
+        ip_address:
+            description:
+                - The Public IP Prefix this Public IP Address should be allocated from.
+            returns: always
+            type: str
+            sample: 52.160.103.93
+        location:
+            description:
+                - Resource location.
+            returns: always
+            type: str
+            example: eastus
+        name:
+            description:
+                - Name of the Public IP Address.
+            returns: always
+            type: str
+            example: publicip002
+        provisioning_state:
+            description:
+                - The provisioning state of the Public IP resource.
+            returns: always
+            type: str
+            example: Succeeded
+        public_ip_allocation_method:
+            description:
+                - The public IP allocation method.
+             returns: always
+             type: str
+             sample: static
+        public_ip_address_version:
+             description:
+                 - The public IP address version.
+             returns: always
+             type: str
+             sample: ipv4
+        sku:
+            description:
+                - The public IP address SKU.
+            returned: always
+            type: str
+            sample: Basic
+        tags:
+            description:
+                - The resource tags.
+            returns: always
+            type: dict
+            sample: {
+                "delete": "on-exit",
+                "testing": "testing"
+                }
+        type:
+            description:
+                - Type of the resource.
+            returns: always
+            type: str
+            sample: "Microsoft.Network/publicIPAddresses"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
