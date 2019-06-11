@@ -442,8 +442,8 @@ class Connection(NetworkConnectionBase):
                 if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
                     raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
-            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) =\
-            self._find_prompt(window, previous_stderr_prompt_matched, previous_errored_response)
+            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) = \
+             self._find_prompt(window, previous_stderr_prompt_matched, previous_errored_response)
 
             if stdout_prompt_matched:
                 self._last_response = recv.getvalue()
