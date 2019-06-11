@@ -602,7 +602,7 @@ address. For example, to get the IP address itself from a CIDR, you can use::
   {{ '192.0.2.1/24' | ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
-in :doc:`playbooks_filters_ipaddr`.
+in :ref:`playbooks_filters_ipaddr`.
 
 .. _network_filters:
 
@@ -803,6 +803,38 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
     </rpc-reply>
 
 .. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
+
+Network VLAN filters
+````````````````````
+
+.. versionadded:: 2.8
+
+Use the ``vlan_parser`` filter to manipulate an unsorted list of VLAN integers into a
+sorted string list of integers according to IOS-like VLAN list rules. This list has the following properties:
+
+* Vlans are listed in ascending order.
+* Three or more consecutive VLANs are listed with a dash.
+* The first line of the list can be first_line_len characters long.
+* Subsequent list lines can be other_line_len characters.
+
+To sort a VLAN list::
+
+    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
+
+This example renders the folllowing sorted list::
+
+    ['100,1688,3002-3005,3999']
+
+
+Another example Jinja template::
+
+    {% set parsed_vlans = vlans | vlan_parser %}
+    switchport trunk allowed vlan {{ parsed_vlans[0] }}
+    {% for i in range (1, parsed_vlans | count) %}
+    switchport trunk allowed vlan add {{ parsed_vlans[i] }}
+
+This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface. You can store an exhaustive raw list of the exact VLANs required for an interface and then compare that to the parsed IOS output that would actually be generated for the configuration.
+
 
 .. _hash_filters:
 
@@ -1332,8 +1364,8 @@ type of a variable::
 Computer Theory Assertions
 ```````````````````````````
 
-The ``human_readable`` and ``human_to_bytes`` functions let you test your 
-playbooks to make sure you are using the right size format in your tasks - that 
+The ``human_readable`` and ``human_to_bytes`` functions let you test your
+playbooks to make sure you are using the right size format in your tasks - that
 you're providing Byte format to computers and human-readable format to people.
 
 Human Readable
@@ -1396,17 +1428,17 @@ to be added to core so everyone can make use of them.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
