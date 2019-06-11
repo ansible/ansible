@@ -175,8 +175,8 @@ EXAMPLES = '''
     asn: 65535
     neighbor: 192.0.2.3
     local_as: 20
-    local_as_no_prepend: true
-    local_as_replace_as: true
+    local_as_no_prepend: True
+    local_as_replace_as: True
     remote_as: 30
     description: "just a description"
     update_source: Ethernet1/3
