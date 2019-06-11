@@ -91,6 +91,7 @@ options:
       end with "/", the directory itself with all contents is copied.
     - If path is a file and dest ends with "\", the file is copied to the
       folder with the same filename.
+    - Not required if using C(content)
     type: path
     required: yes
 notes:
@@ -164,7 +165,8 @@ EXAMPLES = r'''
     ansible_become_password: pass
     # The tmp dir must be set when using win_copy as another user
     # This ensures the become user will have permissions for the operation
-    ansible_remote_tmp: '%temp%'
+    # Make sure to specify a folder both the ansible_user and the become_user have access to (i.e not %TEMP% which is user specific and requires Admin)
+    ansible_remote_tmp: 'c:\tmp'
 '''
 
 RETURN = r'''
