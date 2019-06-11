@@ -1,0 +1,2 @@
+bugfixes:
+  - Update lib/ansible/plugins/action/ce.py.Add some modules names that modules use network_cli to connect remote hosts when connection type is 'local'
