@@ -86,6 +86,30 @@ class GalaxyCLI(CLI):
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
 
+        # Define the actions for the collection object type
+        collection = type_parser.add_parser('collection',
+                                            parents=[common],
+                                            help='Manage an Ansible Galaxy collection.')
+
+        collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
+        collection_parser.required = True
+
+        self.add_init_parser(collection_parser, [common, force])
+        self.add_login_parser(collection_parser, [common])
+
+        build_parser = collection_parser.add_parser(
+            'build', help='Build an Ansible collection artifact that can be published to Ansible Galaxy.',
+            parents=[common, force])
+        build_parser.set_defaults(func=self.execute_build)
+        build_parser.add_argument(
+            'args', metavar='collection', nargs='*', default=('./',),
+            help='Path to the collection(s) directory to build. This should be the directory that contains the '
+                 'galaxy.yml file. The default is the current working directory.')
+
+        build_parser.add_argument(
+            '--output-path', dest='output_path', default='./',
+            help='The path in which the collection is built to. The default is the current working directory.')
+
         # Define the actions for the role object type
         role = type_parser.add_parser('role',
                                       parents=[common],
@@ -162,30 +186,6 @@ class GalaxyCLI(CLI):
         setup_parser.add_argument('github_user', help='GitHub username')
         setup_parser.add_argument('github_repo', help='GitHub repository')
         setup_parser.add_argument('secret', help='Secret')
-
-        # Define the actions for the collection object type
-        collection = type_parser.add_parser('collection',
-                                            parents=[common],
-                                            help='Manage an Ansible Galaxy collection.')
-
-        collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
-        collection_parser.required = True
-
-        self.add_init_parser(collection_parser, [common, force])
-        self.add_login_parser(collection_parser, [common])
-
-        build_parser = collection_parser.add_parser(
-            'build', help='Build an Ansible Collection artifact that can be published to Ansible Galaxy.',
-            parents=[common, force])
-        build_parser.set_defaults(func=self.execute_build)
-        build_parser.add_argument(
-            'args', metavar='collection', nargs='*', default=('./',),
-            help='Path to the collection(s) directory to build, this should be the directory that contains the '
-                 'galaxy.yml file. The default is the current working directory.')
-
-        build_parser.add_argument(
-            '--output-path', dest='output_path', default='./',
-            help='The path in which the collection is built to. The default is the current working directory.')
 
     def add_init_parser(self, parser, parents):
         galaxy_type = parser.dest
@@ -319,7 +319,7 @@ class GalaxyCLI(CLI):
 
     def execute_init(self):
         """
-        creates the skeleton framework of a role or collection that complies with the galaxy metadata format.
+        Creates the skeleton framework of a role or collection that complies with the Galaxy metadata format.
         """
 
         galaxy_type = context.CLIARGS['type']
@@ -358,7 +358,7 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("- the path %s already exists, but is a file - aborting" % obj_path)
             elif not force:
                 raise AnsibleError("- the directory %s already exists."
-                                   "you can use --force to re-initialize this directory,\n"
+                                   "You can use --force to re-initialize this directory,\n"
                                    "however it will reset any main.yml files that may have\n"
                                    "been modified there already." % obj_path)
 

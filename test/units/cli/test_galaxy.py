@@ -602,16 +602,16 @@ class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
 
 
 def test_invalid_skeleton_path():
-    with pytest.raises(AnsibleError) as err:
+    expected = "- the skeleton path '/fake/path' does not exist, cannot init collection"
+    with pytest.raises(AnsibleError, match=expected):
         gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', 'my.collection', '--collection-skeleton',
                              '/fake/path'])
         gc.run()
-    assert str(err.value) == "- the skeleton path '/fake/path' does not exist, cannot init collection"
 
 
 @pytest.mark.parametrize("name", ["invalid", "hypen-ns.collection", "ns.hyphen-collection", "ns.collection.weird"])
 def test_invalid_collection_name(name):
-    with pytest.raises(AnsibleError) as err:
+    expected = "Invalid collection name, must be in the format <namespace>.<collection>"
+    with pytest.raises(AnsibleError, match=expected):
         gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', name])
         gc.run()
-    assert str(err.value) == "Invalid collection name, must be in the format <namespace>.<collection>"

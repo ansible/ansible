@@ -153,7 +153,7 @@ def _build_files_manifest(collection_path):
             else:
                 if item == 'galaxy.yml':
                     continue
-                elif any([fnmatch.fnmatch(item, pattern) for pattern in ignore_files]):
+                elif any(fnmatch.fnmatch(item, pattern) for pattern in ignore_files):
                     display.vvv("Skipping %s for collection build" % abs_path)
                     continue
 
@@ -204,7 +204,7 @@ def _build_manifest(namespace, name, version, authors, tags, description, licens
         'license_file': None,  # TODO: thaumos to verify the need for license_file and readme
         'readme': None,
         'dependencies': dependencies,
-        'file_manifest': {
+        'file_manifest_file': {
             'name': 'FILES.json',
             'chksum_type': 'sha256',
             'chksum_sha256': None,  # Filled out in _build_collection_tar
@@ -216,7 +216,7 @@ def _build_manifest(namespace, name, version, authors, tags, description, licens
 
 def _build_collection_tar(collection_path, tar_path, collection_manifest, file_manifest):
     files_manifest_json = to_bytes(json.dumps(file_manifest), errors='surrogate_or_strict')
-    collection_manifest['file_manifest']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
+    collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest), errors='surrogate_or_strict')
 
     tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
