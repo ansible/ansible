@@ -24,6 +24,7 @@ REQUIREMENTS = [
 ]
 
 from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.semodule as semodule
 import os
 
 
@@ -51,7 +52,7 @@ def check_mode_exit(module, changed, policy_name, policy_version):
 def ensure(module, policy_def):
     changed = False
     apply_te_file(module, policy_def)
-    end_pol = module_info(policy_def['name'], get_semodule_info(module))
+    end_pol = semodule.parse_pol_info(policy_def['name'], get_semodule_info(module))
     changed = True
     module.exit_json(changed=changed, name=end_pol['name'], version=end_pol['version'])
 
@@ -67,12 +68,6 @@ def apply_te_file(module, policy_def):
     semodule_out = module.run_command(['semodule', '-i', policy_def['name']+'.pp'])
     check_run_fail(semodule_out, module)
 
-
-def get_te_info(module):
-    with open(module.params['src'], 'r') as te_file:
-        return te_file.read().split('\n')[0].strip(';').split(' ')
-
-
 def check_requirements(module):
     if os.getuid() != 0:
         module.fail_json(msg='This module can only be run elevated')
@@ -80,7 +75,6 @@ def check_requirements(module):
         rc, stdout, stderr = module.run_command(['which', req])
         if rc != 0 :
             module.fail_json(msg='missing the {name} utility which is required to run this module'.format(name=req))
-
 
 def main():
     module = AnsibleModule(
@@ -91,12 +85,8 @@ def main():
         supports_check_mode=True
     )
     check_requirements(module)
-    # module mysemanage 1.0;
-    intro_line = get_te_info(module)
-    #module.fail_json(msg=intro_line)
-    policy_def = {}
-    policy_def['name'] = intro_line[1]
-    policy_def['version'] = intro_line[2]
+    te_info = semodule.read_te_file(module.params['src'])
+    policy_def = semodule.parse_module_info(te_info) 
     ensure(module, policy_def)
 
 if __name__ == '__main__':
