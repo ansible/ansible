@@ -37,6 +37,9 @@ options:
   ip:
     description:
      - An 'A' record for '@' ($ORIGIN) will be created with the value 'ip'.  'ip' is an IP version 4 address.
+  ttl:
+    description:
+     - TTL of the DNS record. Defaults to 1800 (30 minutes).
 extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Environment variables DO_OAUTH_TOKEN can be used for the oauth_token.
@@ -72,6 +75,7 @@ EXAMPLES = '''
     state: present
     name: "{{ test_droplet.droplet.name }}.my.domain"
     ip: "{{ test_droplet.droplet.ip_address }}"
+    ttl: 600
 
 '''
 
@@ -87,6 +91,7 @@ class DoManager(DigitalOceanHelper, object):
         self.domain_name = module.params.get('name', None)
         self.domain_ip = module.params.get('ip', None)
         self.domain_id = module.params.get('id', None)
+        self.domain_ttl = module.params.get('ttl', 1800)
 
     @staticmethod
     def jsonify(response):
@@ -108,7 +113,7 @@ class DoManager(DigitalOceanHelper, object):
         return False
 
     def add(self):
-        params = {'name': self.domain_name, 'ip_address': self.domain_ip}
+        params = {'name': self.domain_name, 'ip_address': self.domain_ip, 'ttl': self.domain_ttl}
         resp = self.post('domains/', data=params)
         status = resp.status_code
         json = resp.json
@@ -136,7 +141,8 @@ class DoManager(DigitalOceanHelper, object):
 
     def edit_domain_record(self, record):
         params = {'name': '@',
-                  'data': self.module.params.get('ip')}
+                  'data': self.module.params.get('ip'),
+                  'ttl': self.module.params.get('ttl')}
         resp = self.put('domains/%s/records/%s' % (self.domain_name, record['id']), data=params)
         status, json = self.jsonify(resp)
 
@@ -145,7 +151,8 @@ class DoManager(DigitalOceanHelper, object):
     def create_domain_record(self):
         params = {'name': '@',
                   'type': 'A',
-                  'data': self.module.params.get('ip')}
+                  'data': self.module.params.get('ip'),
+                  'ttl': self.module.params.get('ttl')}
 
         resp = self.post('domains/%s/records' % (self.domain_name), data=params)
         status, json = self.jsonify(resp)
@@ -200,7 +207,8 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
         name=dict(type='str'),
         id=dict(aliases=['droplet_id'], type='int'),
-        ip=dict(type='str')
+        ip=dict(type='str'),
+        ttl=dict(type='str')
     )
 
     module = AnsibleModule(
