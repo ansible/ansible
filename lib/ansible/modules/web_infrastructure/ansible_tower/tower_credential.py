@@ -165,10 +165,14 @@ EXAMPLES = '''
     ssh_key_data: "{{ lookup('file', '/tmp/id_rsa') }}"
     ssh_key_unlock: "passphrase"
 
+- name: Fetch private key
+  slurp:
+    src: '$HOME/.ssh/aws-private.pem'
+  register: aws_ssh_key
 - name: Add Credential Into Tower
   tower_credential:
     name: Workshop Credential
-    ssh_key_data: "{{ lookup('file', '/home/' ~ {{ansible_user}} ~ '/.ssh/aws-private.pem') }}"
+    ssh_key_data: "{{ aws_ssh_key['content'] | b64decode }}"
     kind: ssh
     organization: Default
     tower_username: admin
@@ -311,7 +315,7 @@ def main():
                 data = module.params.get('ssh_key_data')
                 if os.path.exists(data):
                     module.deprecate(
-                        msg='ssh_key_data should be a string, not a path to a file. Use lookup(\'file\', \'/path/to/file\') instead',
+                        msg='ssh_key_data should be a string, not a path to a file.',
                         version="2.12"
                     )
                     if os.path.isdir(data):
