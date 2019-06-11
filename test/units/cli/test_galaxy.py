@@ -452,153 +452,108 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         self.assertEquals(self.role_skeleton_path, context.CLIARGS['role_skeleton'], msg='Skeleton path was not parsed properly from the command line')
 
 
-class ValidCollectionTests(object):
+@pytest.fixture()
+def collection_skeleton(request):
+    name, skeleton_path = request.param
 
-    expected_collection_dirs = ('docs', 'plugins', 'roles')
+    galaxy_args = ['ansible-galaxy', 'collection', 'init', '-c']
 
-    @classmethod
-    def setUpCollection(cls, collection_name, galaxy_args=None, skeleton_path=None):
-        if galaxy_args is None:
-            galaxy_args = []
+    if skeleton_path is not None:
+        galaxy_args += ['--collection-skeleton', skeleton_path]
 
-        if skeleton_path is not None:
-            cls.collection_skeleton_path = skeleton_path
-            galaxy_args += ['--collection-skeleton', skeleton_path]
+    test_dir = tempfile.mkdtemp()
+    if not os.path.isdir(test_dir):
+        os.makedirs(test_dir)
+    galaxy_args += ['--init-path', test_dir, name]
 
-        # Make temp directory for testing
-        cls.test_dir = tempfile.mkdtemp()
-        if not os.path.isdir(cls.test_dir):
-            os.makedirs(cls.test_dir)
+    gc = GalaxyCLI(args=galaxy_args)
+    gc.run()
 
-        cls.namespace_name, cls.collection_name = collection_name.split('.', 1)
-        cls.collection_dir = os.path.join(cls.test_dir, cls.namespace_name, cls.collection_name)
+    namespace_name, collection_name = name.split('.', 1)
+    collection_dir = os.path.join(test_dir, namespace_name, collection_name)
+    yield collection_dir
 
-        # create role using default skeleton
-        gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', '-c'] + galaxy_args + ['--init-path', cls.test_dir, collection_name])
-        gc.run()
-        cls.gc = gc
-
-        if skeleton_path is None:
-            cls.collection_skeleton_path = gc.galaxy.default_role_skeleton_path
-
-    @classmethod
-    def tearDownClass(cls):
-        if os.path.isdir(cls.test_dir):
-            shutil.rmtree(cls.test_dir)
-
-    def test_galaxy_yml(self):
-        self.assertTrue(os.path.exists(os.path.join(self.collection_dir, 'galaxy.yml')))
-        with open(os.path.join(self.collection_dir, 'galaxy.yml'), 'r') as galaxy_meta:
-            metadata = yaml.safe_load(galaxy_meta)
-
-        for item in ['namespace', 'name', 'version', 'authors', 'description', 'license', 'tags', 'dependencies',
-                     'repository', 'documentation', 'homepage', 'issues']:
-            self.assertIn(item, metadata, msg='unable to find {0}'.format(item))
-
-    def test_collection_dirs(self):
-        for d in self.expected_collection_dirs:
-            self.assertTrue(os.path.isdir(os.path.join(self.collection_dir, d)),
-                            msg="Expected collection subdirectory {0} doesn't exist".format(d))
+    if os.path.isdir(test_dir):
+        shutil.rmtree(test_dir)
 
 
-class TestGalaxyCollectionInitDefault(unittest.TestCase, ValidCollectionTests):
+@pytest.mark.parametrize('collection_skeleton', [
+    ('ansible_test.my_collection', None),
+], indirect=True)
+def test_collection_default(collection_skeleton):
+    meta_path = os.path.join(collection_skeleton, 'galaxy.yml')
+    assert os.path.exists(meta_path)
 
-    @classmethod
-    def setUpClass(cls):
-        cls.setUpCollection('ansible_test.my_collection')
+    with open(meta_path, 'r') as galaxy_meta:
+        metadata = yaml.safe_load(galaxy_meta)
 
-    def test_galaxy_yml_contents(self):
-        with open(os.path.join(self.collection_dir, 'galaxy.yml'), 'r') as galaxy_meta:
-            metadata = yaml.safe_load(galaxy_meta)
+    for item in ['namespace', 'name', 'version', 'authors', 'description', 'license', 'tags', 'dependencies',
+                 'repository', 'documentation', 'homepage', 'issues']:
+        assert item in metadata, 'unable to find {0}'.format(item)
 
-        self.assertEquals(metadata.get('namespace', ''), 'ansible_test',
-                          msg='namespace was not set properly in metadata')
-        self.assertEquals(metadata.get('name', ''), 'my_collection', msg='name was not set properly in metadata')
-        self.assertEquals(metadata.get('authors', []), ['your name <example@domain.com>'],
-                          msg='authors was not set properly in metadata')
-        self.assertEquals(metadata.get('description', ''), 'your description',
-                          msg='description was not set properly in metadata')
-        self.assertEquals(metadata.get('license', ''), 'license (GPL-2.0-or-later, MIT, etc)',
-                          msg='license was not set properly in metadata')
-        self.assertEquals(metadata.get('tags', None), [], msg='tags was not set properly in metadata')
-        self.assertEquals(metadata.get('dependencies', None), {}, msg='dependencies was not set properly in metadata')
-        self.assertEquals(metadata.get('repository', ''), 'http://example.com/repository',
-                          msg='repository was not set properly in metadata')
-        self.assertEquals(metadata.get('documentation', ''), 'http://docs.example.com',
-                          msg='documentation was not set properly in metadata')
-        self.assertEquals(metadata.get('homepage', ''), 'http://example.com',
-                          msg='homepage was not set properly in metadata')
-        self.assertEquals(metadata.get('issues', ''), 'http://example.com/issue/tracker',
-                          msg='issues was not set properly in metadata')
+    assert metadata.get('namespace', '') == 'ansible_test'
+    assert metadata.get('name', '') == 'my_collection'
+    assert metadata.get('authors', []) == ['your name <example@domain.com>']
+    assert metadata.get('description', '') == 'your description'
+    assert metadata.get('license', '') == 'license (GPL-2.0-or-later, MIT, etc)'
+    assert metadata.get('tags', None) == []
+    assert metadata.get('dependencies', None) == {}
+    assert metadata.get('documentation', '') == 'http://docs.example.com'
+    assert metadata.get('repository', '') == 'http://example.com/repository'
+    assert metadata.get('homepage', '') == 'http://example.com'
+    assert metadata.get('issues', '') == 'http://example.com/issue/tracker'
+
+    for d in ['docs', 'plugins', 'roles']:
+        assert os.path.isdir(os.path.join(collection_skeleton, d)), \
+            "Expected collection subdirectory {0} doesn't exist".format(d)
 
 
-class TestGalaxyCollectionInitSkeleton(unittest.TestCase, ValidCollectionTests):
+@pytest.mark.parametrize('collection_skeleton', [
+    ('ansible_test.delete_me_skeleton', os.path.join(os.path.split(__file__)[0], 'test_data', 'collection_skeleton')),
+], indirect=True)
+def test_collection_skeleton(collection_skeleton):
+    meta_path = os.path.join(collection_skeleton, 'galaxy.yml')
+    assert os.path.exists(meta_path)
 
-    @classmethod
-    def setUpClass(cls):
-        collection_skeleton_path = os.path.join(os.path.split(__file__)[0], 'test_data', 'collection_skeleton')
-        cls.setUpCollection('ansible_test.delete_me_skeleton', skeleton_path=collection_skeleton_path)
+    with open(meta_path, 'r') as galaxy_meta:
+        metadata = yaml.safe_load(galaxy_meta)
 
-    def test_galaxy_yml(self):
-        self.assertTrue(os.path.exists(os.path.join(self.collection_dir, 'galaxy.yml')))
-        with open(os.path.join(self.collection_dir, 'galaxy.yml'), 'r') as galaxy_meta:
-            metadata = yaml.safe_load(galaxy_meta)
+    for item in ['namespace', 'name', 'version', 'authors']:
+        assert item in metadata, 'unable to find {0}'.format(item)
 
-        for item in ['namespace', 'name', 'version', 'authors']:
-            self.assertIn(item, metadata, msg='unable to find {0}'.format(item))
+    assert metadata.get('namespace', '') == 'ansible_test'
+    assert metadata.get('name', '') == 'delete_me_skeleton'
+    assert metadata.get('authors', []) == ['Ansible Cow <acow@bovineuniversity.edu>',
+                                           'Tu Cow <tucow@bovineuniversity.edu>']
+    assert metadata.get('version', '') == '0.1.0'
 
-    def test_galaxy_yml_contents(self):
-        with open(os.path.join(self.collection_dir, 'galaxy.yml'), 'r') as galaxy_meta:
-            metadata = yaml.safe_load(galaxy_meta)
+    assert os.path.exists(os.path.join(collection_skeleton, 'README.md'))
 
-        self.assertEquals(metadata.get('namespace', ''), 'ansible_test',
-                          msg='namespace was not set properly in metadata')
-        self.assertEquals(metadata.get('name', ''), 'delete_me_skeleton', msg='name was not set properly in metadata')
-        self.assertEquals(metadata.get('version', ''), '0.1.0', msg='version was not set properly in metadata')
-        self.assertEquals(metadata.get('authors', []),
-                          ['Ansible Cow <acow@bovineuniversity.edu>', 'Tu Cow <tucow@bovineuniversity.edu>'],
-                          msg='authors was not set properly in metadata')
+    # Test empty directories exist and are empty
+    for empty_dir in ['plugins/action', 'plugins/filter', 'plugins/inventory', 'plugins/lookup',
+                      'plugins/module_utils', 'plugins/modules']:
 
-    def test_empty_files_dir(self):
-        for empty_dir in ['plugins/action', 'plugins/filter', 'plugins/inventory', 'plugins/lookup',
-                          'plugins/module_utils', 'plugins/modules']:
-            empty_dir = os.path.join(self.collection_dir, empty_dir)
+        assert os.path.isdir(os.path.join(collection_skeleton, empty_dir))
+        assert os.listdir(os.path.join(collection_skeleton, empty_dir)) == []
 
-            self.assertTrue(os.path.isdir(empty_dir))
-            self.assertListEqual(os.listdir(empty_dir), [],
-                                 msg='we expect the directory to be empty, is ignore working?')
+    # Test files that don't end with .j2 were not templated
+    doc_file = os.path.join(collection_skeleton, 'docs', 'My Collection.md')
+    assert os.path.exists(doc_file)
+    with open(doc_file, 'r') as f:
+        doc_contents = f.read()
+    assert doc_contents.strip() == 'Welcome to my test collection doc for {{ namespace }}.'
 
-    def test_template_ignore_non_j2_extension(self):
-        test_file = os.path.join(self.collection_dir, 'docs', 'My Collection.md')
-        self.assertTrue(os.path.exists(test_file), msg="The 'docs/My Collection.md' file doesn't seem to exist")
-        with open(test_file, 'r') as f:
+    # Test files that end with .j2 but are in the templates directory were not templated
+    for template_dir in ['playbooks/templates', 'playbooks/templates/subfolder',
+                         'roles/common/templates', 'roles/common/templates/subfolder']:
+        test_conf_j2 = os.path.join(collection_skeleton, template_dir, 'test.conf.j2')
+        assert os.path.exists(test_conf_j2)
+
+        with open(test_conf_j2, 'r') as f:
             contents = f.read()
-        expected_contents = 'Welcome to my test collection doc for {{ namespace }}.'
-        self.assertEqual(expected_contents, contents.strip(),
-                         msg="'docs/My Collection.md' does not contain what it should, is it being rendered?")
+        expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
 
-    def test_template_ignore_jinja(self):
-        for template_dir in ['playbooks/templates', 'playbooks/templates/subfolder',
-                             'roles/common/templates', 'roles/common/templates/subfolder']:
-            test_conf_j2 = os.path.join(self.collection_dir, template_dir, 'test.conf.j2')
-            self.assertTrue(
-                os.path.exists(test_conf_j2),
-                msg="The {0} template doesn't seem to exist, is it being rendered as test.conf?".format(test_conf_j2)
-            )
-
-            with open(test_conf_j2, 'r') as f:
-                contents = f.read()
-            expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
-            self.assertEqual(expected_contents, contents.strip(),
-                             msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
-
-    def test_skeleton_option(self):
-        self.assertEquals(self.collection_skeleton_path, context.CLIARGS['collection_skeleton'],
-                          msg='Skeleton path was not parsed properly from the command line')
-
-    def test_readme(self):
-        readme_path = os.path.join(self.collection_dir, 'README.md')
-        self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
+        assert expected_contents == contents.strip()
 
 
 def test_invalid_skeleton_path():

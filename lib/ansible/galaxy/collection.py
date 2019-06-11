@@ -108,6 +108,10 @@ def _get_galaxy_yml(galaxy_yml_path):
         if optional_dict not in galaxy_yml:
             galaxy_yml[optional_dict] = {}
 
+    # license is a builtin var in Python, to avoid confusion we just rename it to license_ids
+    galaxy_yml['license_ids'] = galaxy_yml['license']
+    del galaxy_yml['license']
+
     return galaxy_yml
 
 
@@ -172,7 +176,7 @@ def _build_files_manifest(collection_path):
     return manifest
 
 
-def _build_manifest(namespace, name, version, authors, tags, description, license, dependencies, **kwargs):
+def _build_manifest(namespace, name, version, authors, tags, description, license_ids, dependencies, **kwargs):
 
     def _parse_author_info(author):
         email = None
@@ -191,7 +195,9 @@ def _build_manifest(namespace, name, version, authors, tags, description, licens
         }
     authors = [_parse_author_info(info) for info in authors]
 
-    dependencies = {name: {'version': version} for name, version in dependencies.items()}
+    deps = {}
+    for name, version in dependencies.items():
+        deps[name] = {'version': version}
 
     manifest = {
         'format': MANIFEST_FORMAT,
@@ -200,10 +206,10 @@ def _build_manifest(namespace, name, version, authors, tags, description, licens
         'authors': authors,
         'keywords': tags,
         'description': description,
-        'license': license,
+        'license': license_ids,
         'license_file': None,  # TODO: thaumos to verify the need for license_file and readme
         'readme': None,
-        'dependencies': dependencies,
+        'dependencies': deps,
         'file_manifest_file': {
             'name': 'FILES.json',
             'chksum_type': 'sha256',
