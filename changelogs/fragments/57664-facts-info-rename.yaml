@@ -7,7 +7,6 @@ minor_changes:
 - The ``azure_rm_availabilityset_facts`` module has been renamed to ``azure_rm_availabilityset_info``.
 - The ``azure_rm_cdnendpoint_facts`` module has been renamed to ``azure_rm_cdnendpoint_info``.
 - The ``azure_rm_cdnprofile_facts`` module has been renamed to ``azure_rm_cdnprofile_info``.
-- The ``azure_rm_containerinstance_facts`` module has been renamed to ``azure_rm_containerinstance_info``.
 - The ``azure_rm_containerregistry_facts`` module has been renamed to ``azure_rm_containerregistry_info``.
 - The ``azure_rm_cosmosdbaccount_facts`` module has been renamed to ``azure_rm_cosmosdbaccount_info``.
 - The ``azure_rm_deployment_facts`` module has been renamed to ``azure_rm_deployment_info``.

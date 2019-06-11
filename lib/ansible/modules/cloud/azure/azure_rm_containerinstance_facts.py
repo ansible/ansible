@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_containerinstance_info
-version_added: "2.9"
-short_description: Get Azure Container Instance information
+module: azure_rm_containerinstance_facts
+version_added: "2.8"
+short_description: Get Azure Container Instance facts
 description:
-    - Get information of Container Instance.
+    - Get facts of Container Instance.
 
 options:
     resource_group:
@@ -42,13 +42,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get specific Container Instance information
-    azure_rm_containerinstance_info:
+  - name: Get specific Container Instance facts
+    azure_rm_containerinstance_facts:
       resource_group: myResourceGroup
       name: myContainer
 
   - name: List Container Instances in a specified resource group name
-    azure_rm_containerinstance_info:
+    azure_rm_containerinstance_facts:
       resource_group: myResourceGroup
 '''
 
@@ -184,7 +184,7 @@ except ImportError:
     pass
 
 
-class AzureRMContainerInstanceInfo(AzureRMModuleBase):
+class AzureRMContainerInstanceFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -206,7 +206,7 @@ class AzureRMContainerInstanceInfo(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        super(AzureRMContainerInstanceInfo, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMContainerInstanceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -228,7 +228,7 @@ class AzureRMContainerInstanceInfo(AzureRMModuleBase):
                                                                           container_group_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Container Instances.')
+            self.log('Could not get facts for Container Instances.')
 
         if response is not None and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
@@ -242,7 +242,7 @@ class AzureRMContainerInstanceInfo(AzureRMModuleBase):
             response = self.containerinstance_client.container_groups.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not list information for Container Instances.')
+            self.fail('Could not list facts for Container Instances.')
 
         if response is not None:
             for item in response:
@@ -258,7 +258,7 @@ class AzureRMContainerInstanceInfo(AzureRMModuleBase):
             response = self.containerinstance_client.container_groups.list()
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not list information for Container Instances.')
+            self.fail('Could not list facts for Container Instances.')
 
         if response is not None:
             for item in response:
@@ -308,7 +308,7 @@ class AzureRMContainerInstanceInfo(AzureRMModuleBase):
 
 
 def main():
-    AzureRMContainerInstanceInfo()
+    AzureRMContainerInstanceFacts()
 
 
 if __name__ == '__main__':
