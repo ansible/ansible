@@ -14,6 +14,9 @@
       - size: 3mb
         type: thin
         autoselect_datastore: yes
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -42,6 +45,9 @@
       - size: 3mb
         type: thin
         autoselect_datastore: yes
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -71,6 +77,9 @@
       - size: 3mb
         type: thin
         autoselect_datastore: yes
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -100,6 +109,9 @@
       - size: 3mb
         type: thin
         autoselect_datastore: yes
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
