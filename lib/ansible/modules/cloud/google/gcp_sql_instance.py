@@ -196,6 +196,23 @@ options:
     - The user settings.
     required: false
     suboptions:
+      database_flags:
+        description:
+        - The database flags passed to the instance at startup.
+        required: false
+        version_added: 2.9
+        suboptions:
+          name:
+            description:
+            - The name of the flag. These flags are passed at instance startup, so
+              include both server options and system variables for MySQL. Flags should
+              be specified with underscores, not hyphens.
+            required: false
+          value:
+            description:
+            - The value of the flag. Booleans should be set to on for true and off
+              for false. This field must be omitted if the flag doesn't take a value.
+            required: false
       ip_configuration:
         description:
         - The settings for IP Management. This allows to enable or disable the instance
@@ -488,6 +505,25 @@ settings:
   returned: success
   type: complex
   contains:
+    databaseFlags:
+      description:
+      - The database flags passed to the instance at startup.
+      returned: success
+      type: complex
+      contains:
+        name:
+          description:
+          - The name of the flag. These flags are passed at instance startup, so include
+            both server options and system variables for MySQL. Flags should be specified
+            with underscores, not hyphens.
+          returned: success
+          type: str
+        value:
+          description:
+          - The value of the flag. Booleans should be set to on for true and off for
+            false. This field must be omitted if the flag doesn't take a value.
+          returned: success
+          type: str
     ipConfiguration:
       description:
       - The settings for IP Management. This allows to enable or disable the instance
@@ -631,6 +667,7 @@ def main():
             settings=dict(
                 type='dict',
                 options=dict(
+                    database_flags=dict(type='list', elements='dict', options=dict(name=dict(type='str'), value=dict(type='str'))),
                     ip_configuration=dict(
                         type='dict',
                         options=dict(
@@ -956,6 +993,7 @@ class InstanceSettings(object):
     def to_request(self):
         return remove_nones_from_dict(
             {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get('database_flags', []), self.module).to_request(),
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
                 u'tier': self.request.get('tier'),
                 u'availabilityType': self.request.get('availability_type'),
@@ -966,12 +1004,40 @@ class InstanceSettings(object):
     def from_response(self):
         return remove_nones_from_dict(
             {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get(u'databaseFlags', []), self.module).from_response(),
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
                 u'tier': self.request.get(u'tier'),
                 u'availabilityType': self.request.get(u'availabilityType'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
             }
         )
+
+
+class InstanceDatabaseflagsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name'), u'value': item.get('value')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'value': item.get(u'value')})
 
 
 class InstanceIpconfiguration(object):
