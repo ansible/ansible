@@ -2142,6 +2142,14 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified Manager NetworkProtocol services"}
 
+    @staticmethod
+    def to_singular(resource_name):
+        if resource_name.endswith('ies'):
+            resource_name = resource_name[:-3] + 'y'
+        elif resource_name.endswith('s'):
+            resource_name = resource_name[:-1]
+        return resource_name
+
     def get_health_resource(self, subsystem, uri, health, expanded):
         status = 'Status'
 
@@ -2161,12 +2169,12 @@ class RedfishUtils(object):
                 if r.get('ret'):
                     p = r.get('data')
                     if p:
-                        e = {subsystem.lower() + '_uri': u,
+                        e = {self.to_singular(subsystem.lower()) + '_uri': u,
                              status: p.get(status,
                                            "Status not available")}
                         health[subsystem].append(e)
         else:  # non-collections case
-            e = {subsystem.lower() + '_uri': uri,
+            e = {self.to_singular(subsystem.lower()) + '_uri': uri,
                  status: d.get(status,
                                "Status not available")}
             health[subsystem].append(e)
