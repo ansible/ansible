@@ -1,6 +1,8 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
-# (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# Copyright (c) 2019, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -12,23 +14,25 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vultr_user_facts
-short_description: Gather facts about the Vultr user available.
+module: vultr_user_info
+short_description: Get infos about the Vultr user available.
 description:
-  - Gather facts about users available in Vultr.
-version_added: "2.7"
-author: "Yanis Guenane (@Spredzy)"
+  - Get infos about users available in Vultr.
+version_added: "2.9"
+author:
+  - "Yanis Guenane (@Spredzy)"
+  - "René Moser (@resmo)"
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = r'''
-- name: Gather Vultr user facts
-  local_action:
-    module: vultr_user_facts
+- name: Get Vultr user infos
+  vultr_user_info:
+  register: result
 
-- name: Print the gathered facts
+- name: Print the infos
   debug:
-    var: ansible_facts.vultr_user_facts
+    var: result.vultr_user_info
 '''
 
 RETURN = r'''
@@ -58,20 +62,41 @@ vultr_api:
       returned: success
       type: str
       sample: "https://api.vultr.com"
-vultr_user_facts:
-  description: Response from Vultr API
-  returned: success
+vultr_user_info:
+  description: Response from Vultr API as list
+  returned: available
   type: complex
   contains:
-    "vultr_user_facts": [
-      {
-        "acls": [],
-        "api_enabled": "yes",
-        "email": "mytestuser@example.com",
-        "id": "a235b4f45e87f",
-        "name": "mytestuser"
-      }
-    ]
+    id:
+      description: ID of the user.
+      returned: success
+      type: str
+      sample: 5904bc6ed9234
+    api_key:
+      description: API key of the user.
+      returned: only after resource was created
+      type: str
+      sample: 567E6K567E6K567E6K567E6K567E6K
+    name:
+      description: Name of the user.
+      returned: success
+      type: str
+      sample: john
+    email:
+      description: Email of the user.
+      returned: success
+      type: str
+      sample: "john@exmaple.com"
+    api_enabled:
+      description: Whether the API is enabled or not.
+      returned: success
+      type: bool
+      sample: true
+    acls:
+      description: List of ACLs of the user.
+      returned: success
+      type: list
+      sample: [ manage_users, support, upgrade ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -81,10 +106,10 @@ from ansible.module_utils.vultr import (
 )
 
 
-class AnsibleVultrUserFacts(Vultr):
+class AnsibleVultrUserInfo(Vultr):
 
     def __init__(self, module):
-        super(AnsibleVultrUserFacts, self).__init__(module, "vultr_user_facts")
+        super(AnsibleVultrUserInfo, self).__init__(module, "vultr_user_info")
 
         self.returns = {
             "USERID": dict(key='id'),
@@ -106,12 +131,9 @@ def main():
         supports_check_mode=True,
     )
 
-    user_facts = AnsibleVultrUserFacts(module)
-    result = user_facts.get_result(user_facts.get_regions())
-    ansible_facts = {
-        'vultr_user_facts': result['vultr_user_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts, **result)
+    user_info = AnsibleVultrUserInfo(module)
+    result = user_info.get_result(user_info.get_regions())
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
