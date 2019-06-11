@@ -1,14 +1,19 @@
-# Test code for the vmware_guest module.
+# Test code for the vmware_guest module (network connected).
 # Copyright: (c) 2018, Maximilian Prahl-Kamps <maximilian.prahl-kamps@fkie.fraunhofer.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: disconnect network
+- name: Create VM with disconnected network
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: False
     datacenter: "{{ dc1 }}"
+    guest_id: centos64Guest
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -20,10 +25,10 @@
 
 - debug: var=disconnect_network
 
-- name: assert that changes were made and no errors occured
+- name: assert no errors occured
   assert:
     that:
-        - "not disconnect_network.failed"
+      - "not disconnect_network.failed"
 
 - name: disconnect network again
   vmware_guest:
@@ -32,6 +37,11 @@
     password: "{{ vcenter_password }}"
     validate_certs: False
     datacenter: "{{ dc1 }}"
+    guest_id: centos64Guest
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -46,8 +56,8 @@
 - name: assert that no changes were made and no errors occured
   assert:
     that:
-        - "not disconnect_network.changed"
-        - "not disconnect_network.failed"
+      - "not disconnect_network.changed"
+      - "not disconnect_network.failed"
 
 - name: connect network
   vmware_guest:
@@ -56,6 +66,11 @@
     password: "{{ vcenter_password }}"
     validate_certs: False
     datacenter: "{{ dc1 }}"
+    guest_id: centos64Guest
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -67,11 +82,11 @@
 
 - debug: var=connect_network
 
-- name: assert that no errors occured
+- name: assert that no errors occured and network state changed
   assert:
     that:
-        - "connect_network.changed"
-        - "not connect_network.failed"
+      - "connect_network.changed"
+      - "not connect_network.failed"
 
 - name: connect network again
   vmware_guest:
@@ -80,6 +95,11 @@
     password: "{{ vcenter_password }}"
     validate_certs: False
     datacenter: "{{ dc1 }}"
+    guest_id: centos64Guest
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
     state: poweredoff
     folder: "{{ f0 }}"
     name: "network_connected"
@@ -91,8 +111,8 @@
 
 - debug: var=connect_network
 
-- name: assert that no errors occured
+- name: assert that no errors occured and network state did not change
   assert:
     that:
-        - "not connect_network.changed"
-        - "not connect_network.failed"
+      - "not connect_network.changed"
+      - "not connect_network.failed"
