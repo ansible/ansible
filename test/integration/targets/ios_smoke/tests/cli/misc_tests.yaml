@@ -27,6 +27,7 @@
     - show running-config all
   vars:
     ansible_command_timeout: 1
+    ansible_buffer_read_timeout: 2
   ignore_errors: True
   register: result
   when: ansible_connection == 'network_cli'
@@ -34,7 +35,7 @@
 - assert:
     that:
       - 'result.failed == true'
-      - "'command timeout triggered' in result.msg"
+      - "'timeout value 1 seconds reached' in result.msg"
   when: ansible_connection == 'network_cli'
 
 - debug: msg="END ios_smoke cli/misc_tests.yaml on connection={{ ansible_connection }}"
