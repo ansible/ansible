@@ -1,4 +1,4 @@
-module ansible-test 1.0;
+module ansible-semodule-test 1.0;
 
 require {
 	type proc_net_t;
@@ -6,4 +6,4 @@ require {
 	class file { open read };
 }
 
-allow sshd_t proc_net_t:file { open read}; 
+allow sshd_t proc_net_t:file { open read};
