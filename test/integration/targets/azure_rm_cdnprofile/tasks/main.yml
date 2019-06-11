@@ -17,7 +17,7 @@
   check_mode: yes
 
 - name: Check there is no CDN profile created
-  azure_rm_cdnprofile_facts:
+  azure_rm_cdnprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
@@ -43,7 +43,7 @@
       - output.id != ''
 
 - name: Gather CDN profile facts
-  azure_rm_cdnprofile_facts:
+  azure_rm_cdnprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
@@ -96,7 +96,7 @@
   check_mode: yes
 
 - name: Gather CDN profile facts
-  azure_rm_cdnprofile_facts:
+  azure_rm_cdnprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact
@@ -144,7 +144,7 @@
       - output.id
 
 - name: Get facts of a Azure CDN endpoint
-  azure_rm_cdnendpoint_facts:
+  azure_rm_cdnendpoint_info:
       resource_group: "{{ resource_group }}"
       name: "{{ endpointname }}"
       profile_name: "{{ cdnprofilename }}"
@@ -265,7 +265,7 @@
       - output.changed
 
 - name: Get CDN profile fact
-  azure_rm_cdnprofile_facts:
+  azure_rm_cdnprofile_info:
       resource_group: "{{ resource_group }}"
       name: "{{ cdnprofilename }}"
   register: fact

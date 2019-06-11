@@ -44,7 +44,7 @@
       - not output.changed
 
 - name: Get facts of the table
-  azure_rm_routetable_facts:
+  azure_rm_routetable_info:
     name: "{{ name }}"
     resource_group: "{{ resource_group }}"
   register: output
@@ -110,7 +110,7 @@
       - output.changed
 
 - name: Get facts of the table
-  azure_rm_routetable_facts:
+  azure_rm_routetable_info:
     name: "{{ name }}"
     resource_group: "{{ resource_group }}"
   register: output

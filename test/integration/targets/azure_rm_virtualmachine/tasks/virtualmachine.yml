@@ -32,7 +32,7 @@
         - "'diagnosticsProfile' not in azure_vm.properties or not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled"
 
 - name: Get facts for virtual machine without boot diagnostics disabled
-  azure_rm_virtualmachine_facts:
+  azure_rm_virtualmachine_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name1 }}"
   register: output
@@ -60,7 +60,7 @@
       - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
 
 - name: Get facts for virtual machine with boot diagnostics enabled
-  azure_rm_virtualmachine_facts:
+  azure_rm_virtualmachine_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name1 }}"
   register: output
@@ -245,7 +245,7 @@
   register: output
 
 - name: NIC should be gone
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name1 }}"
   register: output
@@ -254,7 +254,7 @@
       that: azure_networkinterfaces | length == 0
 
 - name: PIP should be gone
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name1 }}"
   register: output
@@ -366,7 +366,7 @@
         - azure_vm.properties.storageProfile.osDisk.name == 'testosdiskxx'
 
 - name: Retrieve vms facts (filtering by name)
-  azure_rm_virtualmachine_facts:
+  azure_rm_virtualmachine_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name2 }}"
   register: results
@@ -382,7 +382,7 @@
       - results.vms[0].power_state != None
 
 - name: Retrieve facts by tags
-  azure_rm_virtualmachine_facts:
+  azure_rm_virtualmachine_info:
     tags:
       - abc:def
   register: results
@@ -424,7 +424,7 @@
       generalized: yes
 
 - name: Gather facts and check if machine is generalized
-  azure_rm_virtualmachine_facts:
+  azure_rm_virtualmachine_info:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name2 }}"
   register: generalized_output
@@ -554,19 +554,19 @@
     state: absent
 
 - name: Query NIC
-  azure_rm_networkinterface_facts:
+  azure_rm_networkinterface_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name3 }}01"
   register: output_nic
       
 - name: Query NSG
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name3 }}01"
   register: output_nsg
 
 - name: Query PIP
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name3 }}01"
   register: output_pip

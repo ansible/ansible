@@ -82,7 +82,7 @@
     var: output
 
 - name: Gather facts postgresql Server
-  azure_rm_postgresqlserver_facts:
+  azure_rm_postgresqlserver_info:
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}
   register: output
@@ -122,7 +122,7 @@
       ccc: ddd
 
 - name: Gather facts PostgreSQL Server
-  azure_rm_postgresqlserver_facts:
+  azure_rm_postgresqlserver_info:
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}second
   register: output 
@@ -144,7 +144,7 @@
       - output.servers[0]['tags']['ccc'] == 'ddd'
 
 - name: Gather facts PostgreSQL Server
-  azure_rm_postgresqlserver_facts:
+  azure_rm_postgresqlserver_info:
     resource_group: "{{ resource_group }}"
   register: output
 - name: Assert that facts are returned
@@ -251,7 +251,7 @@
     name: testdatabase2
 
 - name: Gather facts PostgreSQL Database
-  azure_rm_postgresqldatabase_facts:
+  azure_rm_postgresqldatabase_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: testdatabase
@@ -267,7 +267,7 @@
       - output.databases[0]['collation'] != None
 
 - name: Gather facts PostgreSQL Database
-  azure_rm_postgresqldatabase_facts:
+  azure_rm_postgresqldatabase_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
   register: output
@@ -374,7 +374,7 @@
     end_ip_address: 172.28.10.138
 
 - name: Gather facts PostgreSQL Firewall Rule
-  azure_rm_postgresqlfirewallrule_facts:
+  azure_rm_postgresqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: firewallrule{{ rpfx }}
@@ -391,7 +391,7 @@
       - "output.rules | length == 1"
 
 - name: Gather facts PostgreSQL Firewall Rule
-  azure_rm_postgresqlfirewallrule_facts:
+  azure_rm_postgresqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
   register: output
@@ -455,7 +455,7 @@
     state: absent
 
 - name: Gather facts PostgreSQL Firewall Rule
-  azure_rm_postgresqlfirewallrule_facts:
+  azure_rm_postgresqlfirewallrule_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: firewallrule{{ rpfx }}
@@ -531,7 +531,7 @@
       - not output.changed
 
 - name: Gather facts PostgreSQL Configuration
-  azure_rm_postgresqlconfiguration_facts:
+  azure_rm_postgresqlconfiguration_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: deadlock_timeout
@@ -548,7 +548,7 @@
       - output.settings | length == 1
 
 - name: Gather facts PostgreSQL Configuration
-  azure_rm_postgresqlconfiguration_facts:
+  azure_rm_postgresqlconfiguration_info:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
   register: output
