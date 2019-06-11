@@ -39,7 +39,6 @@ short_description: HttpApi Plugin for Fortinet FortiOS Appliance or VM
 description:
   - This HttpApi plugin provides methods to connect to Fortinet FortiOS Appliance or VM via REST API
 version_added: "2.9"
-
 """
 
 from ansible.plugins.httpapi import HttpApiBase
