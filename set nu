@@ -1,0 +1,185 @@
+[1mdiff --git a/lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py b/lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py[m
+[1mindex 6108af6..bd165ed 100644[m
+[1m--- a/lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py[m
+[1m+++ b/lib/ansible/modules/cloud/azure/azure_rm_networkinterface.py[m
+[36m@@ -71,7 +71,7 @@[m [moptions:[m
+         description:[m
+             - Determines any rules to be added to a default security group.[m
+             - When creating a network interface, if no security group name is provided, a default security group will be created.[m
+[31m-            - If the I(os_type=Windows), a rule will be added allowing RDP access.[m
+[32m+[m[32m            - If the I(os_type=Windows), a rule allowing RDP access will be added.[m
+             - If the I(os_type=Linux), a rule allowing SSH access will be added.[m
+         choices:[m
+             - Windows[m
+[36m@@ -84,8 +84,8 @@[m [moptions:[m
+     private_ip_allocation_method:[m
+         description:[m
+             - (Deprecate) Specify whether or not the assigned IP address is permanent.[m
+[31m-            - When creating a network interface specifying a value of C(Static) requires that a I(private_ip_address) value be provided.[m
+[31m-            - You can update the allocation method to C(Static) after a dynamic private ip address has been assigned.[m
+[32m+[m[32m            - When creating a network interface, if you specify I(private_ip_address=Static), you must provide a value for I(private_ip_address).[m
+[32m+[m[32m            - You can update the allocation method to C(Static) after a dynamic private IP address has been assigned.[m
+             - This option will be deprecated in 2.9, use I(ip_configurations) instead.[m
+         default: Dynamic[m
+         choices:[m
+[36m@@ -94,7 +94,7 @@[m [moptions:[m
+     public_ip:[m
+         description:[m
+             - (Deprecate) When creating a network interface, if no public IP address name is provided a default public IP address will be created.[m
+[31m-            - Set to C(false), if you do not want a public IP address automatically created.[m
+[32m+[m[32m            - Set to C(false) if you do not want a public IP address automatically created.[m
+             - This option will be deprecated in 2.9, use I(ip_configurations) instead.[m
+         type: bool[m
+         default: 'yes'[m
+[36m@@ -107,7 +107,7 @@[m [moptions:[m
+             - public_ip_name[m
+     public_ip_allocation_method:[m
+         description:[m
+[31m-            - (Deprecate) If a public_ip_address_name is not provided, a default public IP address will be created.[m
+[32m+[m[32m            - (Deprecate) If a I(public_ip_address_name) is not provided, a default public IP address will be created.[m
+             - The allocation method determines whether or not the public IP address assigned to the network interface is permanent.[m
+             - This option will be deprecated in 2.9, use I(ip_configurations) instead.[m
+         choices:[m
+[36m@@ -116,32 +116,32 @@[m [moptions:[m
+         default: Dynamic[m
+     ip_configurations:[m
+         description:[m
+[31m-            - List of ip configuration if contains mutilple configuration, should contain configuration object include[m
+[32m+[m[32m            - List of IP configuration if contains multiple configuration, should contain configuration object include[m
+               field I(private_ip_address), I(private_ip_allocation_method), I(public_ip_address_name), I(public_ip), I(public_ip_allocation_method), I(name).[m
+         suboptions:[m
+             name:[m
+                 description:[m
+[31m-                    - Name of the ip configuration.[m
+[32m+[m[32m                    - Name of the IP configuration.[m
+                 required: true[m
+             private_ip_address:[m
+                 description:[m
+[31m-                    - Private ip address for the ip configuration.[m
+[32m+[m[32m                    - Private IP address for the IP configuration.[m
+             private_ip_allocation_method:[m
+                 description:[m
+[31m-                    - Private ip allocation method.[m
+[32m+[m[32m                    - Private IP allocation method.[m
+                 choices:[m
+                     - Dynamic[m
+                     - Static[m
+                 default: Dynamic[m
+             public_ip_address_name:[m
+                 description:[m
+[31m-                    - Name of the public ip address. None for disable ip address.[m
+[32m+[m[32m                    - Name of the public IP address. None for disable IP address.[m
+                 aliases:[m
+                     - public_ip_address[m
+                     - public_ip_name[m
+             public_ip_allocation_method:[m
+                 description:[m
+[31m-                    - Public ip allocation method.[m
+[32m+[m[32m                    - Public IP allocation method.[m
+                 choices:[m
+                     - Dynamic[m
+                     - Static[m
+[36m@@ -154,7 +154,7 @@[m [moptions:[m
+                 version_added: "2.6"[m
+             primary:[m
+                 description:[m
+[31m-                    - Whether the ip configuration is the primary one in the list.[m
+[32m+[m[32m                    - Whether the IP configuration is the primary one in the list.[m
+                 type: bool[m
+                 default: 'no'[m
+             application_security_groups:[m
+[36m@@ -202,7 +202,7 @@[m [moptions:[m
+     dns_servers:[m
+         description:[m
+             - Which DNS servers should the NIC lookup.[m
+[31m-            - List of IP's.[m
+[32m+[m[32m            - List of IP address.[m
+         type: list[m
+         version_added: "2.7"[m
+ extends_documentation_fragment:[m
+[36m@@ -368,12 +368,12 @@[m [mstate:[m
+             sample: true[m
+         ip_configurations:[m
+             description:[m
+[31m-                - List of ip configuration  if contains mutilple configuration.[m
+[32m+[m[32m                - List of IP configuration  if contains mutilple configuration.[m
+             type: complex[m
+             contains:[m
+                 name:[m
+                     description:[m
+[31m-                        - Name of the ip configuration.[m
+[32m+[m[32m                        - Name of the IP configuration.[m
+                     type: str[m
+                     sample: default[m
+                 load_balancer_backend_address_pools:[m
+[36m@@ -382,17 +382,17 @@[m [mstate:[m
+                     type: list[m
+                 private_ip_address:[m
+                     description:[m
+[31m-                        - Private ip address for the ip configuration.[m
+[32m+[m[32m                        - Private IP address for the IP configuration.[m
+                     type: str[m
+                     sample: "10.1.0.10"[m
+                 private_ip_allocation_method:[m
+                     description:[m
+[31m-                        - Private ip allocation method.[m
+[32m+[m[32m                        - Private IP allocation method.[m
+                     type: str[m
+                     sample: "Static"[m
+                 public_ip_address:[m
+                     description:[m
+[31m-                        - Name of the public ip address. None for disable ip address.[m
+[32m+[m[32m                        - Name of the public IP address. None for disable IP address.[m
+                     type: dict[m
+                     sample: {[m
+                         "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresse[m
+[1mdiff --git a/lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py b/lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py[m
+[1mindex 3bb2e11..4b284c5 100644[m
+[1m--- a/lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py[m
+[1m+++ b/lib/ansible/modules/cloud/azure/azure_rm_networkinterface_facts.py[m
+[36m@@ -135,29 +135,29 @@[m [mnetworkinterfaces:[m
+                 - Tags of the network interface.[m
+         ip_configurations:[m
+             description:[m
+[31m-                - List of ip configuration if contains mutilple configuration.[m
+[32m+[m[32m                - List of IP configuration if contains mutilple configuration.[m
+             contains:[m
+                 name:[m
+                     description:[m
+[31m-                        - Name of the ip configuration.[m
+[32m+[m[32m                        - Name of the IP configuration.[m
+                 private_ip_address:[m
+                     description:[m
+[31m-                        - Private ip address for the ip configuration.[m
+[32m+[m[32m                        - Private IP address for the IP configuration.[m
+                 private_ip_allocation_method:[m
+                     description:[m
+[31m-                        - Private ip allocation method.[m
+[32m+[m[32m                        - Private IP allocation method.[m
+                 public_ip_address:[m
+                     description:[m
+[31m-                        - Name of the public ip address. None for disable ip address.[m
+[32m+[m[32m                        - Name of the public IP address. None for disable IP address.[m
+                 public_ip_allocation_method:[m
+                     description:[m
+[31m-                        - Public ip allocation method.[m
+[32m+[m[32m                        - Public IP allocation method.[m
+                 load_balancer_backend_address_pools:[m
+                     description:[m
+                         - List of an existing load-balancer backend address pool id to associate with the network interface.[m
+                 primary:[m
+                     description:[m
+[31m-                        - Whether the ip configuration is the primary one in the list.[m
+[32m+[m[32m                        - Whether the IP configuration is the primary one in the list.[m
+                 application_security_groups:[m
+                     description:[m
+                         - List of Application security groups.[m
+[36m@@ -178,7 +178,7 @@[m [mnetworkinterfaces:[m
+         dns_servers:[m
+             description:[m
+                 - Which DNS servers should the NIC lookup.[m
+[31m-                - List of IP's.[m
+[32m+[m[32m                - List of IP address.[m
+         mac_address:[m
+             description:[m
+                 - The MAC address of the network interface.[m

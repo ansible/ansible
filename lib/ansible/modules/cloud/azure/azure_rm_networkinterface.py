@@ -71,7 +71,7 @@ options:
         description:
             - Determines any rules to be added to a default security group.
             - When creating a network interface, if no security group name is provided, a default security group will be created.
-            - If the I(os_type=Windows), a rule will be added allowing RDP access.
+            - If the I(os_type=Windows), a rule allowing RDP access will be added.
             - If the I(os_type=Linux), a rule allowing SSH access will be added.
         choices:
             - Windows
@@ -84,8 +84,8 @@ options:
     private_ip_allocation_method:
         description:
             - (Deprecate) Specify whether or not the assigned IP address is permanent.
-            - When creating a network interface specifying a value of C(Static) requires that a I(private_ip_address) value be provided.
-            - You can update the allocation method to C(Static) after a dynamic private ip address has been assigned.
+            - When creating a network interface, if you specify I(private_ip_address=Static), you must provide a value for I(private_ip_address).
+            - You can update the allocation method to C(Static) after a dynamic private IP address has been assigned.
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         default: Dynamic
         choices:
@@ -94,7 +94,7 @@ options:
     public_ip:
         description:
             - (Deprecate) When creating a network interface, if no public IP address name is provided a default public IP address will be created.
-            - Set to C(false), if you do not want a public IP address automatically created.
+            - Set to C(false) if you do not want a public IP address automatically created.
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         type: bool
         default: 'yes'
@@ -107,7 +107,7 @@ options:
             - public_ip_name
     public_ip_allocation_method:
         description:
-            - (Deprecate) If a public_ip_address_name is not provided, a default public IP address will be created.
+            - (Deprecate) If a I(public_ip_address_name) is not provided, a default public IP address will be created.
             - The allocation method determines whether or not the public IP address assigned to the network interface is permanent.
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
         choices:
@@ -116,32 +116,32 @@ options:
         default: Dynamic
     ip_configurations:
         description:
-            - List of ip configuration if contains mutilple configuration, should contain configuration object include
+            - List of IP configuration if contains multiple configuration, should contain configuration object include
               field I(private_ip_address), I(private_ip_allocation_method), I(public_ip_address_name), I(public_ip), I(public_ip_allocation_method), I(name).
         suboptions:
             name:
                 description:
-                    - Name of the ip configuration.
+                    - Name of the IP configuration.
                 required: true
             private_ip_address:
                 description:
-                    - Private ip address for the ip configuration.
+                    - Private IP address for the IP configuration.
             private_ip_allocation_method:
                 description:
-                    - Private ip allocation method.
+                    - Private IP allocation method.
                 choices:
                     - Dynamic
                     - Static
                 default: Dynamic
             public_ip_address_name:
                 description:
-                    - Name of the public ip address. None for disable ip address.
+                    - Name of the public IP address. None for disable IP address.
                 aliases:
                     - public_ip_address
                     - public_ip_name
             public_ip_allocation_method:
                 description:
-                    - Public ip allocation method.
+                    - Public IP allocation method.
                 choices:
                     - Dynamic
                     - Static
@@ -154,7 +154,7 @@ options:
                 version_added: "2.6"
             primary:
                 description:
-                    - Whether the ip configuration is the primary one in the list.
+                    - Whether the IP configuration is the primary one in the list.
                 type: bool
                 default: 'no'
             application_security_groups:
@@ -202,7 +202,7 @@ options:
     dns_servers:
         description:
             - Which DNS servers should the NIC lookup.
-            - List of IP's.
+            - List of IP address.
         type: list
         version_added: "2.7"
 extends_documentation_fragment:
@@ -368,12 +368,12 @@ state:
             sample: true
         ip_configurations:
             description:
-                - List of ip configuration  if contains mutilple configuration.
+                - List of IP configuration  if contains mutilple configuration.
             type: complex
             contains:
                 name:
                     description:
-                        - Name of the ip configuration.
+                        - Name of the IP configuration.
                     type: str
                     sample: default
                 load_balancer_backend_address_pools:
@@ -382,17 +382,17 @@ state:
                     type: list
                 private_ip_address:
                     description:
-                        - Private ip address for the ip configuration.
+                        - Private IP address for the IP configuration.
                     type: str
                     sample: "10.1.0.10"
                 private_ip_allocation_method:
                     description:
-                        - Private ip allocation method.
+                        - Private IP allocation method.
                     type: str
                     sample: "Static"
                 public_ip_address:
                     description:
-                        - Name of the public ip address. None for disable ip address.
+                        - Name of the public IP address. None for disable IP address.
                     type: dict
                     sample: {
                         "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresse

@@ -135,29 +135,29 @@ networkinterfaces:
                 - Tags of the network interface.
         ip_configurations:
             description:
-                - List of ip configuration if contains mutilple configuration.
+                - List of IP configuration if contains mutilple configuration.
             contains:
                 name:
                     description:
-                        - Name of the ip configuration.
+                        - Name of the IP configuration.
                 private_ip_address:
                     description:
-                        - Private ip address for the ip configuration.
+                        - Private IP address for the IP configuration.
                 private_ip_allocation_method:
                     description:
-                        - Private ip allocation method.
+                        - Private IP allocation method.
                 public_ip_address:
                     description:
-                        - Name of the public ip address. None for disable ip address.
+                        - Name of the public IP address. None for disable IP address.
                 public_ip_allocation_method:
                     description:
-                        - Public ip allocation method.
+                        - Public IP allocation method.
                 load_balancer_backend_address_pools:
                     description:
                         - List of an existing load-balancer backend address pool id to associate with the network interface.
                 primary:
                     description:
-                        - Whether the ip configuration is the primary one in the list.
+                        - Whether the IP configuration is the primary one in the list.
                 application_security_groups:
                     description:
                         - List of Application security groups.
@@ -178,7 +178,7 @@ networkinterfaces:
         dns_servers:
             description:
                 - Which DNS servers should the NIC lookup.
-                - List of IP's.
+                - List of IP address.
         mac_address:
             description:
                 - The MAC address of the network interface.
