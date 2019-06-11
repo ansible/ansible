@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix when creating disk for vm its not activated (https://github.com/ansible/ansible/issues/57412)
