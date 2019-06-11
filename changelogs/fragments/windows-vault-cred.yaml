@@ -1,0 +1,3 @@
+bugfixes:
+- winrm - Fix bug when trying to use an inline vault string as ``ansible_user`` or ``ansible_password``
+- psrp - Fix bug when trying to use an inline vault string as ``ansible_user`` or ``ansible_password``

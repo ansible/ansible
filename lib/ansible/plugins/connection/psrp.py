@@ -30,6 +30,13 @@ options:
     vars:
     - name: ansible_user
     - name: ansible_psrp_user
+  password:
+    description:
+    - Authentication password for the C(remote_user). Can be supplied as CLI option.
+    vars:
+    - name: ansible_password
+    - name: ansible_psrp_pass
+    - name: ansible_psrp_password
   port:
     description:
     - The port for PSRP to connect on the remote target.
@@ -582,8 +589,15 @@ if ($bytes_read -gt 0) {
         self._become_pass = self._play_context.become_pass
 
         self._psrp_host = self.get_option('remote_addr')
+
         self._psrp_user = self.get_option('remote_user')
-        self._psrp_pass = self._play_context.password
+        if self._psrp_user is not None:
+            # In case of an in-line vault string we want to convert to a text string
+            self._psrp_user = to_text(self._psrp_user)
+
+        self._psrp_pass = self.get_option('password')
+        if self._psrp_pass is not None:
+            self._psrp_pass = to_text(self._psrp_pass)
 
         protocol = self.get_option('protocol')
         port = self.get_option('port')

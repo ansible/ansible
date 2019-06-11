@@ -34,6 +34,12 @@ DOCUMENTATION = """
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+      password:
+          description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+          vars:
+              - name: ansible_password
+              - name: ansible_winrm_pass
+              - name: ansible_winrm_password
       port:
         description:
             - port for winrm to connect on remote target
@@ -204,8 +210,15 @@ class Connection(ConnectionBase):
         # after setting individual options. This is called by _connect before
         # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
-        self._winrm_user = self.get_option('remote_user')
-        self._winrm_pass = self._play_context.password
+
+        self._winrm_user = to_text(self.get_option('remote_user'))
+        if self._winrm_user is not None:
+            # In case of an in-line vault string we want to convert to a text string
+            self._winrm_user = to_text(self._winrm_user)
+
+        self._winrm_pass = self.get_option('password')
+        if self._winrm_pass is not None:
+            self._winrm_pass = to_text(self._winrm_pass)
 
         self._winrm_port = self.get_option('port')
 
