@@ -71,7 +71,7 @@ options:
       non_existence:
         description:
         - Specifies the mechanism used to provide authenticated denial-of-existence
-          responses. Output only while state is not OFF. .
+          responses.
         - 'Some valid choices include: "nsec", "nsec3"'
         required: false
       state:
@@ -82,7 +82,8 @@ options:
       default_key_specs:
         description:
         - Specifies parameters that will be used for generating initial DnsKeys for
-          this ManagedZone. Output only while state is not OFF .
+          this ManagedZone. If you provide a spec for keySigning or zoneSigning, you
+          must also provide one for the other.
         required: false
         suboptions:
           algorithm:
@@ -196,7 +197,7 @@ dnssecConfig:
     nonExistence:
       description:
       - Specifies the mechanism used to provide authenticated denial-of-existence
-        responses. Output only while state is not OFF. .
+        responses.
       returned: success
       type: str
     state:
@@ -207,7 +208,8 @@ dnssecConfig:
     defaultKeySpecs:
       description:
       - Specifies parameters that will be used for generating initial DnsKeys for
-        this ManagedZone. Output only while state is not OFF .
+        this ManagedZone. If you provide a spec for keySigning or zoneSigning, you
+        must also provide one for the other.
       returned: success
       type: complex
       contains:
