@@ -228,7 +228,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -248,7 +252,6 @@ class Index(object):
         2. Add possibility to change tablespace
         3. Add list called executed_queries (executed_query should be left too)
         4. Use self.module instead of passing arguments to the methods whenever possible
-        5. Remove self.__exec_sql and use module_utils.postgres.exec_sql instead
 
     Args:
         module (AnsibleModule) -- object of AnsibleModule class
@@ -311,7 +314,7 @@ class Index(object):
                  "ON c.oid = pi.indexrelid "
                  "WHERE i.indexname = '%s'" % self.name)
 
-        res = self.__exec_sql(query)
+        res = exec_sql(self, query, add_to_executed=False)
         if res:
             self.exists = True
             self.info = dict(
@@ -377,7 +380,7 @@ class Index(object):
 
         self.executed_query = query
 
-        if self.__exec_sql(query, ddl=True):
+        if exec_sql(self, query, ddl=True, add_to_executed=False):
             return True
 
         return False
@@ -415,22 +418,8 @@ class Index(object):
 
         self.executed_query = query
 
-        if self.__exec_sql(query, ddl=True):
+        if exec_sql(self, query, ddl=True, add_to_executed=False):
             return True
-
-        return False
-
-    def __exec_sql(self, query, ddl=False):
-        try:
-            self.cursor.execute(query)
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
 
         return False
 
