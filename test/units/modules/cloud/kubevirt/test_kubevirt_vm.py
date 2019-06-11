@@ -10,8 +10,8 @@ from ansible.module_utils.k8s.raw import KubernetesRawModule
 
 from ansible.modules.cloud.kubevirt import kubevirt_vm as mymodule
 
-openshiftdynamic = pytest.importorskip("openshift.dynamic", minversion="0.6.2")
-helpexceptions = pytest.importorskip("openshift.helper.exceptions", minversion="0.6.2")
+openshiftdynamic = pytest.importorskip("openshift.dynamic")
+helpexceptions = pytest.importorskip("openshift.helper.exceptions")
 
 KIND = 'VirtulMachine'
 RESOURCE_DEFAULT_ARGS = {'api_version': 'v1', 'group': 'kubevirt.io',
@@ -56,7 +56,7 @@ def fail_json(*args, **kwargs):
 
 
 @pytest.fixture(autouse=True)
-def setup_mixtures(self, monkeypatch):
+def setup_mixtures(monkeypatch):
     monkeypatch.setattr(
         KubernetesRawModule, "exit_json", exit_json)
     monkeypatch.setattr(
@@ -74,7 +74,7 @@ def setup_mixtures(self, monkeypatch):
     K8sAnsibleMixin.find_resource = MagicMock()
 
 
-def test_vm_multus_creation(self):
+def test_vm_multus_creation():
     args = dict(
         state='present', name='testvm',
         namespace='vms', api_version='v1',
@@ -98,7 +98,7 @@ def test_vm_multus_creation(self):
 
 
 @pytest.mark.parametrize("_wait", (False, True))
-def test_resource_absent(self, _wait):
+def test_resource_absent(_wait):
     # Desired state:
     args = dict(
         state='absent', name='testvmi',
@@ -118,7 +118,7 @@ def test_resource_absent(self, _wait):
 
 
 @patch('openshift.watch.Watch')
-def test_stream_creation(self, mock_watch):
+def test_stream_creation(mock_watch):
     # Desired state:
     args = dict(
         state='running', name='testvmi', namespace='vms',
@@ -130,24 +130,3 @@ def test_stream_creation(self, mock_watch):
     mock_watch.side_effect = helpexceptions.KubernetesException("Test", value=42)
     with pytest.raises(AnsibleFailJson):
         mymodule.KubeVirtVM().execute_module()
-
-
-def test_simple_merge_dicts(self):
-    dict1 = {'labels': {'label1': 'value'}}
-    dict2 = {'labels': {'label2': 'value'}}
-    dict3 = json.dumps({'labels': {'label1': 'value', 'label2': 'value'}}, sort_keys=True)
-    assert dict3 == json.dumps(dict(mymodule.KubeVirtVM.merge_dicts(dict1, dict2)), sort_keys=True)
-
-
-def test_simple_multi_merge_dicts(self):
-    dict1 = {'labels': {'label1': 'value', 'label3': 'value'}}
-    dict2 = {'labels': {'label2': 'value'}}
-    dict3 = json.dumps({'labels': {'label1': 'value', 'label2': 'value', 'label3': 'value'}}, sort_keys=True)
-    assert dict3 == json.dumps(dict(mymodule.KubeVirtVM.merge_dicts(dict1, dict2)), sort_keys=True)
-
-
-def test_double_nested_merge_dicts(self):
-    dict1 = {'metadata': {'labels': {'label1': 'value', 'label3': 'value'}}}
-    dict2 = {'metadata': {'labels': {'label2': 'value'}}}
-    dict3 = json.dumps({'metadata': {'labels': {'label1': 'value', 'label2': 'value', 'label3': 'value'}}}, sort_keys=True)
-    assert dict3 == json.dumps(dict(mymodule.KubeVirtVM.merge_dicts(dict1, dict2)), sort_keys=True)
