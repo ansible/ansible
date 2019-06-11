@@ -53,9 +53,6 @@ class HttpApi(HttpApiBase):
     def __init__(self, connection):
         super(HttpApi, self).__init__(connection)
 
-        self._connection = connection
-        self._become = False
-        self._become_pass = ''
         self._ccsrftoken = ''
 
     def set_become(self, become_context):
@@ -84,21 +81,22 @@ class HttpApi(HttpApiBase):
         Get cookies and obtain value for csrftoken that will be used on next requests
         :param response: Response given by the server.
         :param response_text Unused_input.
-        :return: Dictionary containing cookies
+        :return: Dictionary containing headers
         """
 
-        cookies = {}
+        headers = {}
 
         for attr, val in response.getheaders():
             if attr == 'Set-Cookie' and 'APSCOOKIE_' in val:
-                cookies['Cookie'] = val
+                headers['Cookie'] = val
 
             elif attr == 'Set-Cookie' and 'ccsrftoken=' in val:
                 csrftoken_search = re.search('\"(.*)\"', val)
                 if csrftoken_search:
                     self._ccsrftoken = csrftoken_search.group(1)
+                    headers['x-csrftoken'] = self._ccsrftoken
 
-        return cookies
+        return headers
 
     def handle_httperror(self, exc):
         """
@@ -107,6 +105,7 @@ class HttpApi(HttpApiBase):
         :return: exc
         """
         return exc
+
 
     def send_request(self, **message_kwargs):
         """
@@ -130,7 +129,7 @@ class HttpApi(HttpApiBase):
             headers['Content-Type'] = 'application/json'
 
         try:
-            response, response_data = self._connection.send(url, data, headers=headers, method=method)
+            response, response_data = self.connection.send(url, data, headers=headers, method=method)
 
             return response.status, to_text(response_data.getvalue())
         except Exception as err:
