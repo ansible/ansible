@@ -173,7 +173,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -216,14 +220,14 @@ class PgTablespace(object):
         """Get tablespace information."""
 
         # Check that spcoptions exists:
-        opt = self.__exec_sql("SELECT 1 FROM information_schema.columns "
-                              "WHERE table_name = 'pg_tablespace' "
-                              "AND column_name = 'spcoptions'", add_to_executed=False)
+        opt = exec_sql(self, "SELECT 1 FROM information_schema.columns "
+                             "WHERE table_name = 'pg_tablespace' "
+                             "AND column_name = 'spcoptions'", add_to_executed=False)
 
         # For 9.1 version and earlier:
-        location = self.__exec_sql("SELECT 1 FROM information_schema.columns "
-                                   "WHERE table_name = 'pg_tablespace' "
-                                   "AND column_name = 'spclocation'", add_to_executed=False)
+        location = exec_sql(self, "SELECT 1 FROM information_schema.columns "
+                                  "WHERE table_name = 'pg_tablespace' "
+                                  "AND column_name = 'spclocation'", add_to_executed=False)
         if location:
             location = 'spclocation'
         else:
@@ -243,7 +247,7 @@ class PgTablespace(object):
                      "ON t.spcowner = r.oid "
                      "WHERE t.spcname = '%s'" % (location, self.name))
 
-        res = self.__exec_sql(query, add_to_executed=False)
+        res = exec_sql(self, query, add_to_executed=False)
 
         if not res:
             self.exists = False
@@ -273,7 +277,7 @@ class PgTablespace(object):
         """
 
         query = ("CREATE TABLESPACE %s LOCATION '%s'" % (pg_quote_identifier(self.name, 'database'), location))
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def drop(self):
         """Drop tablespace.
@@ -281,7 +285,7 @@ class PgTablespace(object):
         Return True if success, otherwise, return False.
         """
 
-        return self.__exec_sql("DROP TABLESPACE %s" % pg_quote_identifier(self.name, 'database'), ddl=True)
+        return exec_sql(self, "DROP TABLESPACE %s" % pg_quote_identifier(self.name, 'database'), ddl=True)
 
     def set_owner(self, new_owner):
         """Set tablespace owner.
@@ -296,7 +300,7 @@ class PgTablespace(object):
             return False
 
         query = "ALTER TABLESPACE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'database'), new_owner)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def rename(self, newname):
         """Rename tablespace.
@@ -309,7 +313,7 @@ class PgTablespace(object):
 
         query = "ALTER TABLESPACE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'database'), newname)
         self.new_name = newname
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def set_settings(self, new_settings):
         """Set tablespace settings (options).
@@ -349,7 +353,7 @@ class PgTablespace(object):
         """
 
         query = "ALTER TABLESPACE %s RESET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def __set_setting(self, setting):
         """Set tablespace setting.
@@ -361,33 +365,7 @@ class PgTablespace(object):
         """
 
         query = "ALTER TABLESPACE %s SET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
-        return self.__exec_sql(query, ddl=True)
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        """Execute SQL query.
-
-        Return a query result if possible or True/False if ddl=True arg was passed.
-        It's necessary for statements that don't return any result (like DDL queries).
-
-        args:
-            query (str) -- SQL query to execute
-            ddl (bool) -- must return True or False instead of rows (typical for DDL queries)
-            add_to_executed (bool) -- append the query to self.executed_queries list
-        """
-
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
+        return exec_sql(self, query, ddl=True)
 
 
 # ===========================================
