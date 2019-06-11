@@ -253,6 +253,8 @@ resources:
       - The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
         checking this BackendService. Currently at most one health check can be specified,
         and a health check is required.
+      - For internal load balancing, a URL to a HealthCheck resource must be specified
+        instead.
       returned: success
       type: list
     id:
@@ -290,8 +292,8 @@ resources:
       description:
       - Indicates whether the backend service will be used with internal or external
         load balancing. A backend service created for one type of load balancing cannot
-        be used with the other. Must be `EXTERNAL` for a global backend service. Defaults
-        to `EXTERNAL`.
+        be used with the other. Must be `EXTERNAL` or `INTERNAL_SELF_MANAGED` for
+        a global backend service. Defaults to `EXTERNAL`.
       returned: success
       type: str
     name:
