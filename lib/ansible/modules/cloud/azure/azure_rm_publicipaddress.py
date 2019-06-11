@@ -175,8 +175,8 @@ state:
             type: str
             example: Succeeded
         public_ip_allocation_method:
-            description:
-                - The public IP allocation method.
+             description:
+                 - The public IP allocation method.
              returns: always
              type: str
              sample: static
