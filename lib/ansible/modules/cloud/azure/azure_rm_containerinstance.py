@@ -401,7 +401,11 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.results['id'] = response['id']
             self.results['provisioning_state'] = response['provisioning_state']
-            self.results['ip_address'] = response['ip_address']['ip'] if 'ip_address' in response else ''
+            try:
+                print response['ip_address'] if 'ip_address' in response
+            except:
+                print (response['ip_address'] if 'ip_address' in response)
+            self.results['ip_address'] = response['ip_address']['ip'] if 'ip_address' in response and 'ip' in response['ip_address'] else ''
 
             self.log("Creation / Update done")
 
