@@ -211,7 +211,7 @@ class Connection(ConnectionBase):
         # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
 
-        self._winrm_user = to_text(self.get_option('remote_user'))
+        self._winrm_user = self.get_option('remote_user')
         if self._winrm_user is not None:
             # In case of an in-line vault string we want to convert to a text string
             self._winrm_user = to_text(self._winrm_user)
