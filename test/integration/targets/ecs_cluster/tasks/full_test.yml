@@ -136,17 +136,17 @@
         ecs_image_id: "{{ (ec2_ami_info.images|first).image_id }}"
 
     - name: provision ec2 instance to create an image
-      ec2:
+      ec2_instance:
         key_name: '{{ ec2_keypair|default(setup_key.key.name) }}'
         instance_type: t2.micro
         state: present
-        image: '{{ ecs_image_id }}'
+        image_id: '{{ ecs_image_id }}'
         wait: yes
         user_data: "{{ user_data }}"
-        instance_profile_name: ecsInstanceRole
-        instance_tags:
+        instance_role: ecsInstanceRole
+        tags:
           Name: '{{ resource_prefix }}_ecs_agent'
-        group_id: '{{ setup_sg.group_id }}'
+        security_group: '{{ setup_sg.group_id }}'
         vpc_subnet_id: '{{ setup_subnet.results[0].subnet.id }}'
         <<: *aws_connection_info
       register: setup_instance
@@ -1036,7 +1036,7 @@
       ignore_errors: yes
 
     - name: remove setup ec2 instance
-      ec2:
+      ec2_instance:
         instance_ids: '{{ setup_instance.instance_ids }}'
         state: absent
         wait: yes
