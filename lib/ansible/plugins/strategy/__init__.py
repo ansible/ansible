@@ -346,19 +346,12 @@ class StrategyBase:
         if task.run_once:
             host_list = [host for host in self._hosts_cache if host not in self._tqm._unreachable_hosts]
         else:
-            host_list = [task_host]
+            host_list = [task_host.name]
         return host_list
 
     def get_delegated_hosts(self, result, task):
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
-        if host_name is not None:
-            actual_host = self._inventory.get_host(host_name)
-            if actual_host is None:
-                actual_host = Host(name=host_name)
-        else:
-            actual_host = Host(name=task.delegate_to)
-
-        return [actual_host]
+        return [host_name or task.delegate_to]
 
     def get_handler_templar(self, handler_task, iterator):
         handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)

@@ -629,19 +629,19 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
         try:
-            host_cache = self._fact_cache[host.name]
-        except KeyError:
+            host_cache = self._fact_cache[host]
+        except KeyError as e:
             # We get to set this as new
             host_cache = facts
         else:
             if not isinstance(host_cache, MutableMapping):
                 raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
-                                ' a {1}'.format(host.name, type(host_cache)))
+                                ' a {1}'.format(host, type(host_cache)))
             # Update the existing facts
             host_cache.update(facts)
 
         # Save the facts back to the backing store
-        self._fact_cache[host.name] = host_cache
+        self._fact_cache[host] = host_cache
 
     def set_nonpersistent_facts(self, host, facts):
         '''
@@ -652,9 +652,9 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
         try:
-            self._nonpersistent_fact_cache[host.name].update(facts)
+            self._nonpersistent_fact_cache[host].update(facts)
         except KeyError:
-            self._nonpersistent_fact_cache[host.name] = facts
+            self._nonpersistent_fact_cache[host] = facts
 
     def set_host_variable(self, host, varname, value):
         '''
