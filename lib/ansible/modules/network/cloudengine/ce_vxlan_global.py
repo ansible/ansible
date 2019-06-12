@@ -123,23 +123,10 @@ changed:
 '''
 
 import re
-from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, get_nc_config
+from ansible.module_utils.network.cloudengine.ce import load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
-
-
-CE_NC_GET_BRIDGE_DOMAIN = """
-    <filter type="subtree">
-      <evc xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-        <bds>
-          <bd>
-            <bdId></bdId>
-          </bd>
-        </bds>
-      </evc>
-    </filter>
-"""
+from ansible.module_utils.connection import exec_command
 
 
 def is_config_exist(cmp_cfg, test_cfg):
@@ -206,13 +193,29 @@ class VxlanGlobal(object):
         if not self.module.check_mode:
             load_config(self.module, commands)
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_current_config(self):
         """get current configuration"""
 
         flags = list()
         exp = " include-default | include vxlan|assign | exclude undo"
         flags.append(exp)
-        return get_config(self.module, flags)
+        return self.get_config(flags)
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
@@ -228,27 +231,15 @@ class VxlanGlobal(object):
 
     def get_bd_list(self):
         """get bridge domain list"""
-
+        flags = list()
         bd_info = list()
-        conf_str = CE_NC_GET_BRIDGE_DOMAIN
-        xml_str = get_nc_config(self.module, conf_str)
-        if "<data/>" in xml_str:
+        exp = " include-default | include bridge-domain | exclude undo"
+        flags.append(exp)
+        bd_str = self.get_config(flags)
+        if not bd_str:
             return bd_info
-
-        xml_str = xml_str.replace('\r', '').replace('\n', '').\
-            replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
-            replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
-
-        # get bridge domain info
-        root = ElementTree.fromstring(xml_str)
-        bds = root.findall("data/evc/bds/bd/bdId")
-        if not bds:
-            return bd_info
-
-        for bridge_domain in bds:
-            if bridge_domain.tag == "bdId":
-                bd_info.append(bridge_domain.text)
-
+        bd_num = re.findall(r'bridge-domain\s*([0-9]+)', bd_str)
+        bd_info.append(bd_num)
         return bd_info
 
     def config_bridge_domain(self):
