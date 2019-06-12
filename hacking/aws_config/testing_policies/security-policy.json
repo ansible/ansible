@@ -5,6 +5,7 @@
             "Action": [
                 "iam:GetGroup",
                 "iam:GetInstanceProfile",
+                "iam:CreateInstanceProfile",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
                 "iam:GetRole",
