@@ -1,0 +1,3 @@
+bugfixes:
+- Fixes the IOS_NTP integration TC failure, where TC was failing coz of missing configuration which needed to be
+  set before firing the TC. - https://github.com/ansible/ansible/pull/57481.
