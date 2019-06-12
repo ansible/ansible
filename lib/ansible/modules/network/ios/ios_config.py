@@ -392,7 +392,10 @@ def get_running_config(module, current_config=None, flags=None):
 def save_config(module, result):
     result['changed'] = True
     if not module.check_mode:
-        run_commands(module, 'copy running-config startup-config\r')
+        try:
+            get_connection(module).send_command(command='copy running-config startup-config\r', prompt="Overwrite the previous NVRAM configuration\?\[confirm\]", answer="\n")
+        except ConnectionError as exc:
+            module.fail_json(msg=to_text(exc))
     else:
         module.warn('Skipping command `copy running-config startup-config` '
                     'due to check_mode.  Configuration not copied to '
