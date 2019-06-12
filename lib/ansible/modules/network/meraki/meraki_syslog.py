@@ -148,44 +148,8 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
-
-
-def is_net_valid(meraki, net_name, data):
-    for n in data:
-        if n['name'] == net_name:
-            return True
-    return False
-
-
-def construct_tags(tags):
-    ''' Assumes tags are a comma separated list '''
-    if tags is not None:
-        tags = tags.replace(' ', '')
-        tags = tags.split(',')
-        tag_list = str()
-        for t in tags:
-            tag_list = tag_list + " " + t
-        tag_list = tag_list + " "
-        return tag_list
-    return None
-
-# This code was used but relying on API and/or server_arg_spec instead
-# def validate_roles(meraki, data):
-#     ''' Validates whether provided rules are valid '''
-#     valid_roles = ['WIRELESS EVENT LOG',
-#                    'APPLIANCE EVENT LOG',
-#                    'SWITCH EVENT LOG',
-#                    'AIR MARSHAL EVENTS',
-#                    'FLOWS',
-#                    'URLS',
-#                    'IDS ALERTS',
-#                    'SECURITY EVENTS']
-#     for server in data['servers']:
-#         for role in server['roles']:
-#             if role.upper() not in valid_roles:
-#                 # meraki.fail_json(msg="Heck yes")
-#                 meraki.fail_json(msg='{0} is not a valid Syslog role.'.format(role))
 
 
 def main():
@@ -218,7 +182,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
 
     meraki = MerakiModule(module, function='syslog')
@@ -231,7 +195,7 @@ def main():
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id parameters are required')
     if meraki.params['state'] != 'query':
-        if not meraki.params['net_name'] or meraki.params['net_id']:
+        if not meraki.params['net_name'] and not meraki.params['net_id']:
             meraki.fail_json(msg='net_name or net_id is required for present or absent states')
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
@@ -239,8 +203,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    if module.check_mode:
-        return meraki.result
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -248,8 +210,10 @@ def main():
     org_id = meraki.params['org_id']
     if not org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    nets = meraki.get_nets(org_id=org_id)
-    net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+    net_id = meraki.params['net_id']
+    if net_id is None:
+        nets = meraki.get_nets(org_id=org_id)
+        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
 
     if meraki.params['state'] == 'query':
         path = meraki.construct_path('query_update', net_id=net_id)
@@ -265,7 +229,6 @@ def main():
         for server in payload['servers']:
             if server['port']:
                 server['port'] = str(server['port'])
-
         path = meraki.construct_path('query_update', net_id=net_id)
         r = meraki.request(path, method='GET')
         if meraki.status == 200:
@@ -273,12 +236,23 @@ def main():
             original['servers'] = r
 
         if meraki.is_update_required(original, payload):
+            if meraki.module.check_mode is True:
+                diff = recursive_diff(original, payload)
+                original.update(payload)
+                meraki.result['diff'] = {'before': diff[0],
+                                         'after': diff[1]}
+                meraki.result['data'] = original
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('query_update', net_id=net_id)
             r = meraki.request(path, method='PUT', payload=json.dumps(payload))
             if meraki.status == 200:
                 meraki.result['data'] = r
                 meraki.result['changed'] = True
         else:
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = original
+                meraki.exit_json(**meraki.result)
             meraki.result['data'] = original
 
     # in the event of a successful module execution, you will want to
