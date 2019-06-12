@@ -26,7 +26,7 @@ description:
 options:
     resource_group:
         description:
-            - The resource group to search for the desired Azure Cache for Redis
+            - The resource group to search for the desired Azure Cache for Redis.
         required: True
     name:
         description:
@@ -44,7 +44,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu (@yungezz)"
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
@@ -66,7 +66,8 @@ EXAMPLES = '''
 
 RETURN = '''
 rediscaches:
-    description: List of Azure Cache for Redis instances.
+    description:
+        - List of Azure Cache for Redis instances.
     returned: always
     type: complex
     contains:
@@ -90,84 +91,100 @@ rediscaches:
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
         provisioning_state:
             description:
-                - Provisioning state of the redis cahe
+                - Provisioning state of the Redis cahe.
             returned: always
             type: str
             sample: Creating
         location:
             description:
                 - Location of the Azure Cache for Redis.
+            returned: always
             type: str
             sample: WestUS
         enable_non_ssl_port:
             description:
                 - Specifies whether the non-ssl Redis server port (6379) is enabled.
+            returned: always
             type: bool
             sample: false
         sku:
             description:
-                - Dict of sku information.
+                - Dict of SKU information.
+            returned: always
             type: dict
             contains:
                 name:
-                    description: Name of the sku.
+                    description:
+                        - Name of the SKU.
                     returned: always
                     type: str
                     sample: standard
                 size:
-                    description: Size of the Azure Cache for Redis.
+                    description:
+                        - Size of the Azure Cache for Redis.
                     returned: always
                     type: str
                     sample: C1
         static_ip:
             description:
                 - Static IP address.
+            returned: always
             type: str
             sample: 10.75.0.11
         subnet:
             description:
                 - The full resource ID of a subnet in a virtual network to deploy the Azure Cache for Redis in.
+            returned: always
             type: str
             sample:
                 - "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/Microsoft.Network/VirtualNetworks/myVirtualNetwo
                    rk/subnets/mySubnet"
         configuration:
             description:
-                - Dict of redis configuration.
+                - Dict of Redis configuration.
+            returned: always
             type: dict
             sample: maxmeory_reserved
         host_name:
             description:
                 - Redis host name.
+            returned: always
             type: str
             sample: testRedis.redis.cache.windows.net
         shard_count:
             description:
                 - The number of shards on a Premium Cluster Cache.
+            returned: always
             type: int
             sample: 1
         tenant_settings:
             description:
                 - Dict of tenant settings.
+            returned: always
             type: dict
+            sample: { "key1": "value1" }
         tags:
             description:
-                - List of tags.
-            type: list
-            sample:
-                - foo
+                - Resource tags.
+            returned: always
+            type: dict
+            sample: { "key1": "value1" }
         access_keys:
             description:
                 - Azure Cache for Redis access keys.
             type: dict
-            returned: when C(return_access_keys) is true.
+            returned: when I(return_access_keys=true)
             contains:
                 primary:
-                    description: The current primary key that clients can use to authenticate the redis cahce.
+                    description:
+                        - The current primary key that clients can use to authenticate the Redis cahce.
+                    returned: always
                     type: str
                     sample: X2xXXxx7xxxxxx5xxxx0xxxxx75xxxxxxxxXXXxxxxx=
                 secondary:
-                    description: The current secondary key that clients can use to authenticate the redis cahce.
+                    description:
+                        - The current secondary key that clients can use to authenticate the Redis cahce.
+                    returned: always
                     type: str
                     sample: X2xXXxx7xxxxxx5xxxx0xxxxx75xxxxxxxxXXXxxxxx=
 '''
