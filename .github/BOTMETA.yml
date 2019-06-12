@@ -999,7 +999,7 @@ files:
     maintainers: $team_networking
     labels: networking
 ###############################
-# plugins/cache
+# plugins/become
   $plugins/become/:
     support: core
 ###############################
