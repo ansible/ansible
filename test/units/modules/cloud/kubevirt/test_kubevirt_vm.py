@@ -76,7 +76,7 @@ def setup_mixtures(monkeypatch):
     KubeVirtRawModule.find_supported_resource = MagicMock()
 
 
-def test_vm_multus_creation():
+def test_create_vm_with_multus():
     # Desired state:
     args = dict(
         state='present', name='testvm',
@@ -90,19 +90,21 @@ def test_vm_multus_creation():
     set_module_args(args)
 
     # State as "returned" by the "k8s cluster":
-    openshiftdynamic.Resource.get.return_value = None
     resource_args = dict(kind=KIND, **RESOURCE_DEFAULT_ARGS)
     KubeVirtRawModule.find_supported_resource.return_value = openshiftdynamic.Resource(**resource_args)
+    openshiftdynamic.Resource.get.return_value = None  # Object doesn't exist in the cluster
 
-    # Actual test:
+    # Run code:
     with pytest.raises(AnsibleExitJson) as result:
         mymodule.KubeVirtVM().execute_module()
+
+    # Verify result:
     assert result.value['changed']
     assert result.value['method'] == 'create'
 
 
 @pytest.mark.parametrize("_wait", (False, True))
-def test_resource_absent(_wait):
+def test_vm_is_absent(_wait):
     # Desired state:
     args = dict(
         state='absent', name='testvmi',
@@ -112,12 +114,16 @@ def test_resource_absent(_wait):
     set_module_args(args)
 
     # State as "returned" by the "k8s cluster":
-    openshiftdynamic.Resource.get.return_value = None
     resource_args = dict(kind=KIND, **RESOURCE_DEFAULT_ARGS)
     KubeVirtRawModule.find_supported_resource.return_value = openshiftdynamic.Resource(**resource_args)
+    openshiftdynamic.Resource.get.return_value = None  # Object doesn't exist in the cluster
 
-    # Actual test:
+    # Run code:
     with pytest.raises(AnsibleExitJson) as result:
         mymodule.KubeVirtVM().execute_module()
-    assert result.value['method'] == 'delete'
+
+    # Verify result:
     assert not result.value['kubevirt_vm']
+    assert result.value['method'] == 'delete'
+    # Note: nothing actually gets deleted, as we mock that there's not object in the cluster present,
+    #       so if the method changes to something other than 'delete' at some point, that's fine
