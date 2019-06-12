@@ -1,0 +1,2 @@
+minor_changes:
+    - gcp_compute - Added additional environment variables to the `gcp_compute` inventory plugin to align with the rest of the `gcp_*` modules.
