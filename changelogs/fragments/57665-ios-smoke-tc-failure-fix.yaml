@@ -1,0 +1,2 @@
+bugfixes:
+- Fixes the IOS_SMOKE integration TC failure - https://github.com/ansible/ansible/pull/57665.
