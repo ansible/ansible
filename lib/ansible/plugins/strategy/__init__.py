@@ -207,6 +207,12 @@ class StrategyBase:
         # play completion
         self._active_connections = dict()
 
+        # Caches for get_host calls, to avoid calling excessively
+        # These values should be set at the top of the ``run`` method of each
+        # strategy plugin
+        self._hosts_cache = []
+        self._hosts_cache_all = []
+
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
     def cleanup(self):
@@ -338,7 +344,7 @@ class StrategyBase:
 
     def get_task_hosts(self, iterator, task_host, task):
         if task.run_once:
-            host_list = [host for host in self._host_cache if host.name not in self._tqm._unreachable_hosts]
+            host_list = [host for host in self._hosts_cache if host not in self._tqm._unreachable_hosts]
         else:
             host_list = [task_host]
         return host_list
