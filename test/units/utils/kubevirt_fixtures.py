@@ -58,7 +58,10 @@ def base_fixture(monkeypatch):
     openshift.dynamic.Resource.create = MagicMock()
     openshift.dynamic.Resource.delete = MagicMock()
     openshift.dynamic.Resource.patch = MagicMock()
+    openshift.dynamic.Resource.search = MagicMock()
     # Globally mock some methods, since all tests will use this
+    KubernetesRawModule.patch_resource = MagicMock()
+    KubernetesRawModule.patch_resource.return_value = ({}, None)
     K8sAnsibleMixin.get_api_client = MagicMock()
     K8sAnsibleMixin.get_api_client.return_value = None
     K8sAnsibleMixin.find_resource = MagicMock()
