@@ -484,7 +484,7 @@ def decode_request(response, module):
 
 
 def encode_request(request, module):
-    request['topic'] = '/'.join(['projects', module.params['project'], 'topics', request['topic']])
+    request['topic'] = '/'.join(['projects', module.params['project'], 'topics', replace_resource_dict(request['topic'], 'name')])
     request['name'] = '/'.join(['projects', module.params['project'], 'subscriptions', module.params['name']])
 
     return request

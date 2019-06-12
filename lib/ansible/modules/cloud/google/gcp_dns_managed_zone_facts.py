@@ -87,7 +87,7 @@ resources:
         nonExistence:
           description:
           - Specifies the mechanism used to provide authenticated denial-of-existence
-            responses. Output only while state is not OFF. .
+            responses.
           returned: success
           type: str
         state:
@@ -98,7 +98,8 @@ resources:
         defaultKeySpecs:
           description:
           - Specifies parameters that will be used for generating initial DnsKeys
-            for this ManagedZone. Output only while state is not OFF .
+            for this ManagedZone. If you provide a spec for keySigning or zoneSigning,
+            you must also provide one for the other.
           returned: success
           type: complex
           contains:

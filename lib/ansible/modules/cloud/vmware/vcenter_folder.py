@@ -19,6 +19,7 @@ module: vcenter_folder
 short_description: Manage folders on given datacenter
 description:
 - This module can be used to create, delete, move and rename folder on then given datacenter.
+- This module is only supported for vCenter.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -330,6 +331,9 @@ def main():
         module.fail_json(msg="Failed to manage folder as folder_name can only contain 80 characters.")
 
     vcenter_folder_mgr = VmwareFolderManager(module)
+    if not vcenter_folder_mgr.is_vcenter():
+        module.fail_json(msg="Module vcenter_folder is meant for vCenter, hostname %s "
+                             "is not vCenter server." % module.params.get('hostname'))
     vcenter_folder_mgr.ensure()
 
 

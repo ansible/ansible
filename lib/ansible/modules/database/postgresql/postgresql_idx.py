@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Andrey Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# Copyright: (c) 2018-2019, Andrey Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -114,20 +114,10 @@ options:
 notes:
 - The index building process can affect database performance.
 - To avoid table locks on production databases, use I(concurrent=yes) (default behavior).
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-
-requirements:
-- psycopg2
 
 author:
 - Andrew Klychkov (@Andersson007)
+
 extends_documentation_fragment: postgres
 '''
 
@@ -238,7 +228,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -250,6 +244,31 @@ VALID_IDX_TYPES = ('BTREE', 'HASH', 'GIST', 'SPGIST', 'GIN', 'BRIN')
 #
 
 class Index(object):
+
+    """Class for working with PostgreSQL indexes.
+
+    TODO:
+        1. Add possibility to change ownership
+        2. Add possibility to change tablespace
+        3. Add list called executed_queries (executed_query should be left too)
+        4. Use self.module instead of passing arguments to the methods whenever possible
+
+    Args:
+        module (AnsibleModule) -- object of AnsibleModule class
+        cursor (cursor) -- cursor object of psycopg2 library
+        schema (str) -- name of the index schema
+        name (str) -- name of the index
+
+    Attrs:
+        module (AnsibleModule) -- object of AnsibleModule class
+        cursor (cursor) -- cursor object of psycopg2 library
+        schema (str) -- name of the index schema
+        name (str) -- name of the index
+        exists (bool) -- flag the index exists in the DB or not
+        info (dict) -- dict that contents information about the index
+        executed_query (str) -- executed query
+    """
+
     def __init__(self, module, cursor, schema, name):
         self.name = name
         if schema:
@@ -272,16 +291,20 @@ class Index(object):
         self.executed_query = ''
 
     def get_info(self):
+        """Refresh index info.
+
+        Return self.info dict.
         """
-        Getter to refresh and return table info
-        """
+
         self.__exists_in_db()
         return self.info
 
     def __exists_in_db(self):
+        """Check index existence, collect info, add it to self.info dict.
+
+        Return True if the index exists, otherwise, return False.
         """
-        Check index and collect info
-        """
+
         query = ("SELECT i.schemaname, i.tablename, i.tablespace, "
                  "pi.indisvalid, c.reloptions "
                  "FROM pg_catalog.pg_indexes AS i "
@@ -291,7 +314,7 @@ class Index(object):
                  "ON c.oid = pi.indexrelid "
                  "WHERE i.indexname = '%s'" % self.name)
 
-        res = self.__exec_sql(query)
+        res = exec_sql(self, query, add_to_executed=False)
         if res:
             self.exists = True
             self.info = dict(
@@ -310,11 +333,20 @@ class Index(object):
             return False
 
     def create(self, tblname, idxtype, columns, cond, tblspace, storage_params, concurrent=True):
+        """Create PostgreSQL index.
+
+        Return True if success, otherwise, return False.
+
+        Args:
+            tblname (str) -- name of a table for the index
+            idxtype (str) -- type of the index like BTREE, BRIN, etc
+            columns (str) -- string of comma-separated columns that need to be covered by index
+            tblspace (str) -- tablespace for storing the index
+            storage_params (str) -- string of comma-separated storage parameters
+
+        Kwargs:
+            concurrent (bool) -- build index in concurrent mode, default True
         """
-        Create PostgreSQL index.
-        """
-        # To change existing index we should write
-        # 'postgresql_alter_table' standalone module.
 
         if self.exists:
             return False
@@ -348,14 +380,23 @@ class Index(object):
 
         self.executed_query = query
 
-        if self.__exec_sql(query, ddl=True):
+        if exec_sql(self, query, ddl=True, add_to_executed=False):
             return True
 
         return False
 
     def drop(self, schema, cascade=False, concurrent=True):
-        """
-        Drop PostgreSQL index.
+        """Drop PostgreSQL index.
+
+        Return True if success, otherwise, return False.
+
+        Args:
+            schema (str) -- name of the index schema
+
+        Kwargs:
+            cascade (bool) -- automatically drop objects that depend on the index,
+                default False
+            concurrent (bool) -- build index in concurrent mode, default True
         """
 
         changed = False
@@ -377,22 +418,8 @@ class Index(object):
 
         self.executed_query = query
 
-        if self.__exec_sql(query, ddl=True):
+        if exec_sql(self, query, ddl=True, add_to_executed=False):
             return True
-
-        return False
-
-    def __exec_sql(self, query, ddl=False):
-        try:
-            self.cursor.execute(query)
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
 
         return False
 
