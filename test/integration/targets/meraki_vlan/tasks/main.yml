@@ -68,6 +68,27 @@
       enable_vlans: yes
     delegate_to: localhost
 
+  - name: Create VLAN in check mode
+    meraki_vlan:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      vlan_id: 2
+      name: TestVLAN
+      subnet: 192.168.250.0/24
+      appliance_ip: 192.168.250.1
+    delegate_to: localhost
+    register: create_vlan_check
+    check_mode: yes
+
+  - debug:
+      var: create_vlan_check
+
+  - assert:
+      that:
+        - create_vlan_check is changed
+
   - name: Create VLAN
     meraki_vlan:
       auth_key: '{{auth_key}}'
@@ -89,23 +110,35 @@
         - create_vlan.data.id == 2
         - create_vlan.changed == True
 
-  - name: Create VLAN in template configuration
+  - name: Update VLAN with check mode
     meraki_vlan:
       auth_key: '{{auth_key}}'
       state: present
       org_name: '{{test_org_name}}'
-      net_name: '{{test_template_name}}'
+      net_name: '{{test_net_name}}'
       vlan_id: 2
       name: TestVLAN
       subnet: 192.168.250.0/24
-      appliance_ip: 192.168.250.1
+      appliance_ip: 192.168.250.2
+      fixed_ip_assignments:
+        - mac: "13:37:de:ad:be:ef"
+          ip: 192.168.250.10
+          name: fixed_ip
+      reserved_ip_range:
+        - start: 192.168.250.10
+          end: 192.168.250.20
+          comment: reserved_range
+      dns_nameservers: opendns
     delegate_to: localhost
-    register: create_vlan_template
+    register: update_vlan_check
+    check_mode: yes
+
+  - debug:
+      var: update_vlan_check
 
   - assert:
       that:
-        - create_vlan_template.data.id == 2
-        - create_vlan_template.changed == True
+        - update_vlan_check is changed
 
   - name: Update VLAN
     meraki_vlan:
@@ -136,6 +169,36 @@
       that:
         - update_vlan.data.applianceIp == '192.168.250.2'
         - update_vlan.changed == True
+
+  - name: Update VLAN with idempotency and check mode
+    meraki_vlan:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      vlan_id: 2
+      name: TestVLAN
+      subnet: 192.168.250.0/24
+      appliance_ip: 192.168.250.2
+      fixed_ip_assignments:
+        - mac: "13:37:de:ad:be:ef"
+          ip: 192.168.250.10
+          name: fixed_ip
+      reserved_ip_range:
+        - start: 192.168.250.10
+          end: 192.168.250.20
+          comment: reserved_range
+      dns_nameservers: opendns
+    delegate_to: localhost
+    register: update_vlan_idempotent_check
+    check_mode: yes
+
+  - debug:
+      var: update_vlan_idempotent_check
+
+  - assert:
+      that:
+        - update_vlan_idempotent_check is not changed
 
   - name: Update VLAN with idempotency
     meraki_vlan:
@@ -336,6 +399,21 @@
   #############################################################################
   # Tear down starts here
   #############################################################################
+  - name: Delete VLAN with check mode
+    meraki_vlan:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      vlan_id: 2
+    delegate_to: localhost
+    register: delete_vlan_check
+    check_mode: yes
+
+  - assert:
+      that:
+        delete_vlan_check is changed
+
   - name: Delete VLAN
     meraki_vlan:
       auth_key: '{{auth_key}}'
@@ -349,15 +427,10 @@
   - debug:
       msg: '{{delete_vlan}}'
 
-  - name: Delete VLAN using template ID
-    meraki_vlan:
+  - name: Delete test network
+    meraki_network:
       auth_key: '{{auth_key}}'
       state: absent
       org_name: '{{test_org_name}}'
-      net_id: '{{test_template_id}}'
-      vlan_id: 2
+      net_name: '{{test_net_name}}'
     delegate_to: localhost
-    register: delete_vlan_template
-
-  - debug:
-      msg: '{{delete_vlan_template}}'
