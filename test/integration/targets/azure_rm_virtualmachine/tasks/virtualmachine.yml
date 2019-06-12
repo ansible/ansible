@@ -245,7 +245,7 @@
   register: output
 
 - name: NIC should be gone
-  azure_rm_networkinterface_info:
+  azure_rm_networkinterface_facts:
       resource_group: "{{ resource_group }}"
       name: "{{ vm_name1 }}"
   register: output
@@ -554,7 +554,7 @@
     state: absent
 
 - name: Query NIC
-  azure_rm_networkinterface_info:
+  azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name3 }}01"
   register: output_nic
