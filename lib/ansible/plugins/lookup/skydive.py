@@ -44,7 +44,7 @@ EXAMPLES = r"""
 
 - name: return all the skydive metdata having parameter Name
   set_fact:
-    skydive: |
+    skydive: >-
         {{ lookup('skydive', filter={'query': "G.V().Has('Name')"},
                       provider={'endpoint': 'localhost:8082', 'username': 'admin', 'password': 'password'}) }}
 """
