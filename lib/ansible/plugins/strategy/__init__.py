@@ -229,7 +229,10 @@ class StrategyBase:
 
         for host in self._hosts_cache:
             if host not in self._tqm._unreachable_hosts:
-                iterator.get_next_task_for_host(self._inventory.hosts[host])
+                try:
+                    iterator.get_next_task_for_host(self._inventory.hosts[host])
+                except KeyError:
+                    iterator.get_next_task_for_host(self._inventory.get_host(host))
 
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
@@ -1110,7 +1113,10 @@ class StrategyBase:
         hosts_left = []
         for host in self._hosts_cache:
             if host not in self._tqm._unreachable_hosts:
-                hosts_left.append(self._inventory.hosts[host])
+                try:
+                    hosts_left.append(self._inventory.hosts[host])
+                except KeyError:
+                    hosts_left.append(self._inventory.get_host(host))
         return hosts_left
 
     def update_active_connections(self, results):
