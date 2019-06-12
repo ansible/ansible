@@ -1,0 +1,2 @@
+bugfixes:
+  - lvg - Fixed warning shown when using default value for pesize about conversion from int to str.
