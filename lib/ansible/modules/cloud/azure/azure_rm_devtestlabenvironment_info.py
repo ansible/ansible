@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabenvironment_info
 version_added: "2.9"
-short_description: Get Azure Environment information
+short_description: Get Azure Environment facts
 description:
-    - Get information of Azure Environment.
+    - Get facts of Azure Environment.
 
 options:
     resource_group:
@@ -61,7 +61,7 @@ EXAMPLES = '''
 RETURN = '''
 environments:
     description:
-        - A list of dictionaries containing information for Environment.
+        - A list of dictionaries containing facts for Environment.
     returned: always
     type: complex
     contains:
@@ -186,7 +186,7 @@ class AzureRMDtlEnvironmentInfo(AzureRMModuleBase):
                                                          name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Environment.')
+            self.log('Could not get facts for Environment.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -202,7 +202,7 @@ class AzureRMDtlEnvironmentInfo(AzureRMModuleBase):
                                                           user_name=self.user_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Environment.')
+            self.log('Could not get facts for Environment.')
 
         if response is not None:
             for item in response:

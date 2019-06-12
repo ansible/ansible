@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualmachine_info
 version_added: "2.9"
-short_description: Get Azure DevTest Lab Virtual Machine information
+short_description: Get Azure DevTest Lab Virtual Machine facts
 description:
-    - Get information of Azure DevTest Lab Virtual Machine.
+    - Get facts of Azure DevTest Lab Virtual Machine.
 
 options:
     resource_group:
@@ -56,7 +56,7 @@ EXAMPLES = '''
 RETURN = '''
 virtualmachines:
     description:
-        - A list of dictionaries containing information for DevTest Lab Virtual Machine.
+        - A list of dictionaries containing facts for DevTest Lab Virtual Machine.
     returned: always
     type: complex
     contains:
@@ -264,7 +264,7 @@ class AzureRMDtlVirtualMachineInfo(AzureRMModuleBase):
                                                              name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Virtual Machine.')
+            self.fail('Could not get facts for Virtual Machine.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -279,7 +279,7 @@ class AzureRMDtlVirtualMachineInfo(AzureRMModuleBase):
                                                               lab_name=self.lab_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Virtual Machine.')
+            self.fail('Could not get facts for Virtual Machine.')
 
         if response is not None:
             for item in response:

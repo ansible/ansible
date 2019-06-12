@@ -18,10 +18,10 @@ module: azure_rm_rediscache_info
 
 version_added: "2.9"
 
-short_description: Get Azure Cache for Redis instance information
+short_description: Get Azure Cache for Redis instance facts
 
 description:
-    - Get information for Azure Cache for Redis instance.
+    - Get facts for Azure Cache for Redis instance.
 
 options:
     resource_group:
@@ -186,7 +186,7 @@ import re
 
 
 class AzureRMRedisCacheInfo(AzureRMModuleBase):
-    """Utility class to get Azure Cache for Redis information"""
+    """Utility class to get Azure Cache for Redis facts"""
 
     def __init__(self):
 

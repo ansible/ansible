@@ -18,10 +18,10 @@ module: azure_rm_cdnendpoint_info
 
 version_added: "2.9"
 
-short_description: Get Azure CDN endpoint information
+short_description: Get Azure CDN endpoint facts
 
 description:
-    - Get information for a specific Azure CDN endpoint or all Azure CDN endpoints.
+    - Get facts for a specific Azure CDN endpoint or all Azure CDN endpoints.
 
 options:
     resource_group:
@@ -48,12 +48,12 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information for all endpoints in CDN profile
+  - name: Get facts for all endpoints in CDN profile
     azure_rm_cdnendpoint_info:
       resource_group: myResourceGroup
       profile_name: myCDNProfile
 
-  - name: Get information of specific CDN endpoint
+  - name: Get facts of specific CDN endpoint
     azure_rm_cdnendpoint_info:
       resource_group: myResourceGroup
       profile_name: myCDNProfile
@@ -181,7 +181,7 @@ AZURE_OBJECT_CLASS = 'endpoints'
 
 
 class AzureRMCdnEndpointInfo(AzureRMModuleBase):
-    """Utility class to get Azure Azure CDN endpoint information"""
+    """Utility class to get Azure Azure CDN endpoint facts"""
 
     def __init__(self):
 

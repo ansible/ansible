@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule_info
 version_added: "2.9"
-short_description: Get Azure SQL Firewall Rule information.
+short_description: Get Azure SQL Firewall Rule facts.
 description:
-    - Get information of SQL Firewall Rule.
+    - Get facts of SQL Firewall Rule.
 
 options:
     resource_group:
@@ -57,7 +57,7 @@ EXAMPLES = '''
 
 RETURN = '''
 rules:
-    description: A list of dict results containing the information for matching SQL firewall rules.
+    description: A list of dict results containing the facts for matching SQL firewall rules.
     returned: always
     type: complex
     contains:
@@ -149,7 +149,7 @@ class AzureRMSqlFirewallRuleInfo(AzureRMModuleBase):
 
     def get(self):
         '''
-        Gets information of the specified SQL Firewall Rule.
+        Gets facts of the specified SQL Firewall Rule.
 
         :return: deserialized SQL Firewall Ruleinstance state dictionary
         '''
@@ -161,7 +161,7 @@ class AzureRMSqlFirewallRuleInfo(AzureRMModuleBase):
                                                           firewall_rule_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for FirewallRules.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -170,7 +170,7 @@ class AzureRMSqlFirewallRuleInfo(AzureRMModuleBase):
 
     def list_by_server(self):
         '''
-        Gets information of the specified SQL Firewall Rule.
+        Gets facts of the specified SQL Firewall Rule.
 
         :return: deserialized SQL Firewall Ruleinstance state dictionary
         '''
@@ -181,7 +181,7 @@ class AzureRMSqlFirewallRuleInfo(AzureRMModuleBase):
                                                                      server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for FirewallRules.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             for item in response:

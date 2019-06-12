@@ -20,10 +20,10 @@ module: azure_rm_publicipaddress_info
 
 version_added: "2.9"
 
-short_description: Get public IP information.
+short_description: Get public IP facts.
 
 description:
-    - Get information for a specific public IP or all public IPs within a resource group.
+    - Get facts for a specific public IP or all public IPs within a resource group.
 
 options:
     name:
@@ -45,12 +45,12 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one Public IP
+    - name: Get facts for one Public IP
       azure_rm_publicipaddress_info:
         resource_group: myResourceGroup
         name: publicip001
 
-    - name: Get information for all Public IPs within a resource groups
+    - name: Get facts for all Public IPs within a resource groups
       azure_rm_publicipaddress_info:
         resource_group: myResourceGroup
 '''

@@ -19,10 +19,10 @@ module: azure_rm_loadbalancer_info
 
 version_added: "2.9"
 
-short_description: Get load balancer information
+short_description: Get load balancer facts
 
 description:
-    - Get information for a specific load balancer or all load balancers.
+    - Get facts for a specific load balancer or all load balancers.
 
 options:
     name:
@@ -43,19 +43,19 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one load balancer
+    - name: Get facts for one load balancer
       azure_rm_loadbalancer_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get information for all load balancers
+    - name: Get facts for all load balancers
       azure_rm_loadbalancer_info:
 
-    - name: Get information for all load balancers in a specific resource group
+    - name: Get facts for all load balancers in a specific resource group
       azure_rm_loadbalancer_info:
         resource_group: myResourceGroup
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_loadbalancer_info:
         tags:
           - testing
@@ -82,7 +82,7 @@ AZURE_OBJECT_CLASS = 'LoadBalancer'
 
 
 class AzureRMLoadBalancerInfo(AzureRMModuleBase):
-    """Utility class to get load balancer information"""
+    """Utility class to get load balancer facts"""
 
     def __init__(self):
 

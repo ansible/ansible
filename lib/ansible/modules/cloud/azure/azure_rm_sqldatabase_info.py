@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase_info
 version_added: "2.9"
-short_description: Get Azure SQL Database information.
+short_description: Get Azure SQL Database facts.
 description:
-    - Get information of Azure SQL Database.
+    - Get facts of Azure SQL Database.
 
 options:
     resource_group:
@@ -69,7 +69,7 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing information for SQL Database.
+    description: A list of dictionaries containing facts for SQL Database.
     returned: always
     type: complex
     contains:
@@ -215,7 +215,7 @@ class AzureRMSqlDatabaseInfo(AzureRMModuleBase):
                                                      database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Databases.')
+            self.log('Could not get facts for Databases.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_item(response))
@@ -231,7 +231,7 @@ class AzureRMSqlDatabaseInfo(AzureRMModuleBase):
                                                                       elastic_pool_name=self.elastic_pool_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Databases.')
+            self.fail('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
@@ -248,7 +248,7 @@ class AzureRMSqlDatabaseInfo(AzureRMModuleBase):
                                                                 server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Databases.')
+            self.fail('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:

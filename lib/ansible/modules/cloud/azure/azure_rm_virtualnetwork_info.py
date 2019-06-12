@@ -20,10 +20,10 @@ module: azure_rm_virtualnetwork_info
 
 version_added: "2.9"
 
-short_description: Get virtual network information.
+short_description: Get virtual network facts.
 
 description:
-    - Get information for a specific virtual network or all virtual networks within a resource group.
+    - Get facts for a specific virtual network or all virtual networks within a resource group.
 
 options:
     name:
@@ -46,16 +46,16 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one virtual network
+    - name: Get facts for one virtual network
       azure_rm_virtualnetwork_info:
         resource_group: myResourceGroup
         name: secgroup001
 
-    - name: Get information for all virtual networks
+    - name: Get facts for all virtual networks
       azure_rm_virtualnetwork_info:
         resource_group: myResourceGroup
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_virtualnetwork_info:
         tags:
           - testing

@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_autoscale_info
 version_added: "2.9"
-short_description: Get Azure Auto Scale Setting information
+short_description: Get Azure Auto Scale Setting facts
 description:
-    - Get information of Auto Scale Setting.
+    - Get facts of Auto Scale Setting.
 
 options:
     resource_group:
@@ -244,7 +244,7 @@ class AzureRMAutoScaleInfo(AzureRMModuleBase):
             instance = self.monitor_client.autoscale_settings.get(self.resource_group, self.name)
             result = [auto_scale_to_dict(instance)]
         except Exception as ex:
-            self.log('Could not get information for autoscale {0} - {1}.'.format(self.name, str(ex)))
+            self.log('Could not get facts for autoscale {0} - {1}.'.format(self.name, str(ex)))
         return result
 
     def list_by_resource_group(self):
@@ -253,7 +253,7 @@ class AzureRMAutoScaleInfo(AzureRMModuleBase):
             response = self.monitor_client.autoscale_settings.list_by_resource_group(self.resource_group)
             results = [auto_scale_to_dict(item) for item in response if self.has_tags(item.tags, self.tags)]
         except Exception as ex:
-            self.log('Could not get information for autoscale {0} - {1}.'.format(self.name, str(ex)))
+            self.log('Could not get facts for autoscale {0} - {1}.'.format(self.name, str(ex)))
         return results
 
 

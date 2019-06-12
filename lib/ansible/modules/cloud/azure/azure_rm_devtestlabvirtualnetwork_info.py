@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualnetwork_info
 version_added: "2.9"
-short_description: Get Azure DevTest Lab Virtual Network information
+short_description: Get Azure DevTest Lab Virtual Network facts
 description:
-    - Get information of Azure DevTest Lab Virtual Network.
+    - Get facts of Azure DevTest Lab Virtual Network.
 
 options:
     resource_group:
@@ -59,7 +59,7 @@ EXAMPLES = '''
 RETURN = '''
 virtualnetworks:
     description:
-        - A list of dictionaries containing information for DevTest Lab Virtual Network.
+        - A list of dictionaries containing facts for DevTest Lab Virtual Network.
     returned: always
     type: complex
     contains:
@@ -184,7 +184,7 @@ class AzureRMDevTestLabVirtualNetworkInfo(AzureRMModuleBase):
                                                              name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Virtual Network.')
+            self.fail('Could not get facts for Virtual Network.')
 
         if response:
             results.append(self.format_response(response))

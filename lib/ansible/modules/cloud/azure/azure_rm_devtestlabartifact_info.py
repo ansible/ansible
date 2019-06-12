@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifact_info
 version_added: "2.9"
-short_description: Get Azure DevTest Lab Artifact information
+short_description: Get Azure DevTest Lab Artifact facts
 description:
-    - Get information of Azure DevTest Lab Artifact.
+    - Get facts of Azure DevTest Lab Artifact.
 
 options:
     resource_group:
@@ -58,7 +58,7 @@ EXAMPLES = '''
 RETURN = '''
 artifacts:
     description:
-        - A list of dictionaries containing information for DevTest Lab Artifact.
+        - A list of dictionaries containing facts for DevTest Lab Artifact.
     returned: always
     type: complex
     contains:
@@ -196,7 +196,7 @@ class AzureRMArtifactInfo(AzureRMModuleBase):
                                                       name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Artifact.')
+            self.log('Could not get facts for Artifact.')
 
         if response:
             results.append(self.format_response(response))
@@ -212,7 +212,7 @@ class AzureRMArtifactInfo(AzureRMModuleBase):
                                                        artifact_source_name=self.artifact_source_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Artifact.')
+            self.log('Could not get facts for Artifact.')
 
         if response is not None:
             for item in response:

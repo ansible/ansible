@@ -18,10 +18,10 @@ module: azure_rm_aks_info
 
 version_added: "2.9"
 
-short_description: Get Azure Kubernetes Service information
+short_description: Get Azure Kubernetes Service facts
 
 description:
-    - Get information for a specific Azure Kubernetes Service or all Azure Kubernetes Services.
+    - Get facts for a specific Azure Kubernetes Service or all Azure Kubernetes Services.
 
 options:
     name:
@@ -50,15 +50,15 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one Azure Kubernetes Service
+    - name: Get facts for one Azure Kubernetes Service
       azure_rm_aks_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get information for all Azure Kubernetes Services
+    - name: Get facts for all Azure Kubernetes Services
       azure_rm_aks_info:
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_aks_info:
         tags:
           - testing
@@ -84,7 +84,7 @@ AZURE_OBJECT_CLASS = 'managedClusters'
 
 
 class AzureRMManagedClusterInfo(AzureRMModuleBase):
-    """Utility class to get Azure Kubernetes Service information"""
+    """Utility class to get Azure Kubernetes Service facts"""
 
     def __init__(self):
 

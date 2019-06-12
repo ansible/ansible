@@ -21,10 +21,10 @@ module: azure_rm_virtualmachine_info
 
 version_added: "2.9"
 
-short_description: Get virtual machine information.
+short_description: Get virtual machine facts.
 
 description:
-  - Get information for one or all virtual machines in a resource group.
+  - Get facts for one or all virtual machines in a resource group.
 
 options:
     resource_group:
@@ -47,16 +47,16 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information for all virtual machines of a resource group
+  - name: Get facts for all virtual machines of a resource group
     azure_rm_virtualmachine_info:
       resource_group: myResourceGroup
 
-  - name: Get information by name
+  - name: Get facts by name
     azure_rm_virtualmachine_info:
       resource_group: myResourceGroup
       name: myVm
 
-  - name: Get information by tags
+  - name: Get facts by tags
     azure_rm_virtualmachine_info:
       resource_group: myResourceGroup
       tags:

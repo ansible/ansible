@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetextension_info
 version_added: "2.9"
-short_description: Get Azure Virtual Machine Scale Set Extension information.
+short_description: Get Azure Virtual Machine Scale Set Extension facts.
 description:
-    - Get information of Azure Virtual Machine Scale Set Extension.
+    - Get facts of Azure Virtual Machine Scale Set Extension.
 
 options:
     resource_group:
@@ -43,7 +43,7 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information on specific Virtual Machine Scale Set Extension
+  - name: Get facts on specific Virtual Machine Scale Set Extension
     azure_rm_virtualmachineextension_info:
       resource_group: myResourceGroup
       vmss_name: myvmss
@@ -57,7 +57,7 @@ EXAMPLES = '''
 
 RETURN = '''
 extensions:
-    description: A list of dictionaries containing information for Virtual Machine Extension.
+    description: A list of dictionaries containing facts for Virtual Machine Extension.
     returned: always
     type: complex
     contains:
@@ -173,7 +173,7 @@ class AzureRMVirtualMachineScaleSetExtensionInfo(AzureRMModuleBase):
                                                                                     vmss_extension_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Virtual Machine Extension.')
+            self.log('Could not get facts for Virtual Machine Extension.')
 
         if response:
             results.append(self.format_response(response))
@@ -188,7 +188,7 @@ class AzureRMVirtualMachineScaleSetExtensionInfo(AzureRMModuleBase):
                                                                                      vm_scale_set_name=self.vmss_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Virtual Machine Extension.')
+            self.log('Could not get facts for Virtual Machine Extension.')
 
         if response is not None:
             for item in response:

@@ -18,9 +18,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbfirewallrule_info
 version_added: "2.9"
-short_description: Get Azure MariaDB Firewall Rule information
+short_description: Get Azure MariaDB Firewall Rule facts
 description:
-    - Get information of Azure MariaDB Firewall Rule.
+    - Get facts of Azure MariaDB Firewall Rule.
 
 options:
     resource_group:
@@ -60,7 +60,7 @@ EXAMPLES = '''
 RETURN = '''
 rules:
     description:
-        - A list of dictionaries containing information for MariaDB Firewall Rule.
+        - A list of dictionaries containing facts for MariaDB Firewall Rule.
     returned: always
     type: complex
     contains:
@@ -156,7 +156,7 @@ class AzureRMMariaDbFirewallRuleInfo(AzureRMModuleBase):
                                                            firewall_rule_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for FirewallRules.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -171,7 +171,7 @@ class AzureRMMariaDbFirewallRuleInfo(AzureRMModuleBase):
                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for FirewallRules.')
+            self.log('Could not get facts for FirewallRules.')
 
         if response is not None:
             for item in response:

@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_deployment_info
 version_added: "2.9"
-short_description: Get Azure Deployment information
+short_description: Get Azure Deployment facts
 description:
-    - Get information of Azure Deployment.
+    - Get facts of Azure Deployment.
 
 options:
     resource_group:
@@ -48,7 +48,7 @@ EXAMPLES = '''
 RETURN = '''
 deployments:
     description:
-        - A list of dictionaries containing information for deployments.
+        - A list of dictionaries containing facts for deployments.
     returned: always
     type: complex
     contains:
@@ -171,7 +171,7 @@ class AzureRMDeploymentInfo(AzureRMModuleBase):
             response = self.rm_client.deployments.get(self.resource_group, deployment_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Deployment.')
+            self.log('Could not get facts for Deployment.')
 
         if response:
             results.append(self.format_response(response))
@@ -185,7 +185,7 @@ class AzureRMDeploymentInfo(AzureRMModuleBase):
             response = self.rm_client.deployments.list(self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Deployment.')
+            self.log('Could not get facts for Deployment.')
 
         if response is not None:
             for item in response:

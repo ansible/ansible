@@ -16,7 +16,7 @@ module: azure_rm_image_info
 
 version_added: "2.9"
 
-short_description: Get information about azure custom images
+short_description: Get facts about azure custom images
 
 description:
     - List azure custom images. The images can be listed where scope of listing can be based on subscription, resource group, name or tags.

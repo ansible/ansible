@@ -20,10 +20,10 @@ module: azure_rm_storageaccount_info
 
 version_added: "2.9"
 
-short_description: Get storage account information.
+short_description: Get storage account facts.
 
 description:
-    - Get information for one storage account or all storage accounts within a resource group.
+    - Get facts for one storage account or all storage accounts within a resource group.
 
 options:
     name:
@@ -61,16 +61,16 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one account
+    - name: Get facts for one account
       azure_rm_storageaccount_info:
         resource_group: myResourceGroup
         name: clh0002
 
-    - name: Get information for all accounts in a resource group
+    - name: Get facts for all accounts in a resource group
       azure_rm_storageaccount_info:
         resource_group: myResourceGroup
 
-    - name: Get information for all accounts by tags
+    - name: Get facts for all accounts by tags
       azure_rm_storageaccount_Info:
         tags:
           - testing

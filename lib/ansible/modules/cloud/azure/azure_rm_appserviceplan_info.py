@@ -19,10 +19,10 @@ module: azure_rm_appserviceplan_info
 
 version_added: "2.9"
 
-short_description: Get azure app service plan informaation
+short_description: Get azure app service plan facts
 
 description:
-    - Get informaation for a specific app service plan or all app service plans in a resource group, or all app service plan in current subscription.
+    - Get facts for a specific app service plan or all app service plans in a resource group, or all app service plan in current subscription.
 
 options:
     name:
@@ -43,7 +43,7 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for app service plan by name
+    - name: Get facts for app service plan by name
       azure_rm_appserviceplan_info:
         resource_group: myResourceGroup
         name: myAppServicePlan
@@ -52,7 +52,7 @@ EXAMPLES = '''
       azure_rm_webapp_info:
         resource_group: myResourceGroup
 
-    - name: Get information for app service plan with tags
+    - name: Get facts for app service plan with tags
       azure_rm_appserviceplan_info:
         tags:
           - testtag

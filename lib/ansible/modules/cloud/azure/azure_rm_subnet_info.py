@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_subnet_info
 version_added: "2.9"
-short_description: Get Azure Subnet information.
+short_description: Get Azure Subnet facts.
 description:
-    - Get information of Azure Subnet.
+    - Get facts of Azure Subnet.
 
 options:
     resource_group:
@@ -43,13 +43,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information of specific subnet
+  - name: Get facts of specific subnet
     azure_rm_subnet_info:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
       name: mySubnet
 
-  - name: List information for all subnets in virtual network
+  - name: List facts for all subnets in virtual network
     azure_rm_subnet_info:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 RETURN = '''
 subnets:
-    description: A list of dictionaries containing information for subnet.
+    description: A list of dictionaries containing facts for subnet.
     returned: always
     type: complex
     contains:
@@ -190,7 +190,7 @@ class AzureRMSubnetInfo(AzureRMModuleBase):
                                                        subnet_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Subnet.')
+            self.fail('Could not get facts for Subnet.')
 
         if response is not None:
             results.append(self.format_response(response))
@@ -205,7 +205,7 @@ class AzureRMSubnetInfo(AzureRMModuleBase):
                                                        virtual_network_name=self.virtual_network_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Subnet.')
+            self.fail('Could not get facts for Subnet.')
 
         if response is not None:
             for item in response:

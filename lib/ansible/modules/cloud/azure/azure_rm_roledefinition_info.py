@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roledefinition_info
 version_added: "2.9"
-short_description: Get Azure Role Definition information.
+short_description: Get Azure Role Definition facts.
 description:
-    - Get information of Azure Role Definition.
+    - Get facts of Azure Role Definition.
 
 options:
     scope:
@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 RETURN = '''
 roledefinitions:
-    description: A list of Role Definition information.
+    description: A list of Role Definition facts.
     returned: always
     type: complex
     contains:

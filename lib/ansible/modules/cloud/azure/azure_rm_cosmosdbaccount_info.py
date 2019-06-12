@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cosmosdbaccount_info
 version_added: "2.9"
-short_description: Get Azure Cosmos DB Account information
+short_description: Get Azure Cosmos DB Account facts
 description:
-    - Get information of Azure Cosmos DB Account.
+    - Get facts of Azure Cosmos DB Account.
 
 options:
     resource_group:
@@ -64,7 +64,7 @@ EXAMPLES = '''
 
 RETURN = '''
 accounts:
-    description: A list of dictionaries containing information for Database Account.
+    description: A list of dictionaries containing facts for Database Account.
     returned: always
     type: complex
     contains:
@@ -411,7 +411,7 @@ class AzureRMCosmosDBAccountInfo(AzureRMModuleBase):
                                                               account_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Database Account.')
+            self.log('Could not get facts for Database Account.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -425,7 +425,7 @@ class AzureRMCosmosDBAccountInfo(AzureRMModuleBase):
             response = self.mgmt_client.database_accounts.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Database Account.')
+            self.log('Could not get facts for Database Account.')
 
         if response is not None:
             for item in response:
@@ -441,7 +441,7 @@ class AzureRMCosmosDBAccountInfo(AzureRMModuleBase):
             response = self.mgmt_client.database_accounts.list()
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Database Account.')
+            self.log('Could not get facts for Database Account.')
 
         if response is not None:
             for item in response:

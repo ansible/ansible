@@ -19,10 +19,10 @@ module: azure_rm_webapp_info
 
 version_added: "2.9"
 
-short_description: Get azure web app information.
+short_description: Get azure web app facts.
 
 description:
-    - Get information for a specific web app or all web app in a resource group, or all web app in current subscription.
+    - Get facts for a specific web app or all web app in a resource group, or all web app in current subscription.
 
 options:
     name:
@@ -48,16 +48,16 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for web app by name
+    - name: Get facts for web app by name
       azure_rm_webapp_info:
         resource_group: myResourceGroup
         name: winwebapp1
 
-    - name: Get information for web apps in resource group
+    - name: Get facts for web apps in resource group
       azure_rm_webapp_info:
         resource_group: myResourceGroup
 
-    - name: Get information for web apps with tags
+    - name: Get facts for web apps with tags
       azure_rm_webapp_info:
         tags:
           - testtag

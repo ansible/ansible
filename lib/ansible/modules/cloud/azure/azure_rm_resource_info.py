@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_resource_info
 version_added: "2.9"
-short_description: Generic information of Azure resources.
+short_description: Generic facts of Azure resources.
 description:
-  - Obtain information of any resource using Azure REST API.
+  - Obtain facts of any resource using Azure REST API.
   - This module gives access to resources that are not supported via Ansible modules.
   - Refer to https://docs.microsoft.com/en-us/rest/api/ regarding details related to specific resource REST API.
 

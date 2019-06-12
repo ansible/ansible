@@ -18,10 +18,10 @@ module: azure_rm_trafficmanagerendpoint_info
 
 version_added: "2.9"
 
-short_description: Get Azure Traffic Manager endpoint information
+short_description: Get Azure Traffic Manager endpoint facts
 
 description:
-    - Get information for a specific Traffic Manager endpoints or all endpoints  in a Traffic Manager profile
+    - Get facts for a specific Traffic Manager endpoints or all endpoints  in a Traffic Manager profile
 
 options:
     name:
@@ -52,7 +52,7 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get endpoints information of a Traffic Manager profile
+    - name: Get endpoints facts of a Traffic Manager profile
       azure_rm_trafficmanagerendpoint_info:
         resource_group: myResourceGroup
         profile_name: Testing
@@ -176,7 +176,7 @@ def serialize_endpoint(endpoint, resource_group):
 
 
 class AzureRMTrafficManagerEndpointInfo(AzureRMModuleBase):
-    """Utility class to get Azure Traffic Manager Endpoint information"""
+    """Utility class to get Azure Traffic Manager Endpoint facts"""
 
     def __init__(self):
 

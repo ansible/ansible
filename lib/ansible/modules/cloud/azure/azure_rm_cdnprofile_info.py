@@ -18,10 +18,10 @@ module: azure_rm_cdnprofile_info
 
 version_added: "2.9"
 
-short_description: Get Azure CDN profile information
+short_description: Get Azure CDN profile facts
 
 description:
-    - Get information for a specific Azure CDN profile or all CDN profiles.
+    - Get facts for a specific Azure CDN profile or all CDN profiles.
 
 options:
     name:
@@ -43,15 +43,15 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one CDN profile
+    - name: Get facts for one CDN profile
       azure_rm_cdnprofile_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get information for all CDN profiles
+    - name: Get facts for all CDN profiles
       azure_rm_cdnprofile_info:
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_cdnprofile_info:
         tags:
           - Environment:Test
@@ -130,7 +130,7 @@ AZURE_OBJECT_CLASS = 'profiles'
 
 
 class AzureRMCdnprofileInfo(AzureRMModuleBase):
-    """Utility class to get Azure CDN profile information"""
+    """Utility class to get Azure CDN profile facts"""
 
     def __init__(self):
 

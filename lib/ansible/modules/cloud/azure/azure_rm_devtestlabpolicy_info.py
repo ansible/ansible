@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabpolicy_info
 version_added: "2.9"
-short_description: Get Azure DTL Policy information
+short_description: Get Azure DTL Policy facts
 description:
-    - Get information of Azure DTL Policy.
+    - Get facts of Azure DTL Policy.
 
 options:
     resource_group:
@@ -61,7 +61,7 @@ EXAMPLES = '''
 RETURN = '''
 policies:
     description:
-        - A list of dictionaries containing information for Policy.
+        - A list of dictionaries containing facts for Policy.
     returned: always
     type: complex
     contains:
@@ -185,7 +185,7 @@ class AzureRMDtlPolicyInfo(AzureRMModuleBase):
                                                      name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Policy.')
+            self.log('Could not get facts for Policy.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -201,7 +201,7 @@ class AzureRMDtlPolicyInfo(AzureRMModuleBase):
                                                       policy_set_name=self.policy_set_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Policy.')
+            self.log('Could not get facts for Policy.')
 
         if response is not None:
             for item in response:

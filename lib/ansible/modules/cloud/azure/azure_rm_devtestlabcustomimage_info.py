@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabcustomimage_info
 version_added: "2.9"
-short_description: Get Azure DevTest Lab Custom Image information
+short_description: Get Azure DevTest Lab Custom Image facts
 description:
-    - Get information of Azure Azure DevTest Lab Custom Image.
+    - Get facts of Azure Azure DevTest Lab Custom Image.
 
 options:
     resource_group:
@@ -62,7 +62,7 @@ EXAMPLES = '''
 RETURN = '''
 custom_images:
     description:
-        - A list of dictionaries containing information for Custom Image.
+        - A list of dictionaries containing facts for Custom Image.
     returned: always
     type: complex
     contains:
@@ -175,7 +175,7 @@ class AzureRMDtlCustomImageInfo(AzureRMModuleBase):
                                                           name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Custom Image.')
+            self.log('Could not get facts for Custom Image.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -190,7 +190,7 @@ class AzureRMDtlCustomImageInfo(AzureRMModuleBase):
                                                            lab_name=self.lab_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Custom Image.')
+            self.log('Could not get facts for Custom Image.')
 
         if response is not None:
             for item in response:

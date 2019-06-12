@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_hdinsightcluster_info
 version_added: "2.9"
-short_description: Get Azure HDInsight Cluster information
+short_description: Get Azure HDInsight Cluster facts
 description:
-    - Get information of Azure HDInsight Cluster.
+    - Get facts of Azure HDInsight Cluster.
 
 options:
     resource_group:
@@ -54,7 +54,7 @@ EXAMPLES = '''
 RETURN = '''
 clusters:
     description:
-        - A list of dictionaries containing information for HDInsight Cluster.
+        - A list of dictionaries containing facts for HDInsight Cluster.
     returned: always
     type: complex
     contains:
@@ -239,7 +239,7 @@ class AzureRMHDInsightclusterInfo(AzureRMModuleBase):
                                                      cluster_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for HDInsight Cluster.')
+            self.log('Could not get facts for HDInsight Cluster.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -253,7 +253,7 @@ class AzureRMHDInsightclusterInfo(AzureRMModuleBase):
             response = self.mgmt_client.clusters.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for HDInsight Cluster.')
+            self.log('Could not get facts for HDInsight Cluster.')
 
         if response is not None:
             for item in response:
@@ -269,7 +269,7 @@ class AzureRMHDInsightclusterInfo(AzureRMModuleBase):
             response = self.mgmt_client.clusters.list()
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for HDInsight Cluster.')
+            self.log('Could not get facts for HDInsight Cluster.')
 
         if response is not None:
             for item in response:

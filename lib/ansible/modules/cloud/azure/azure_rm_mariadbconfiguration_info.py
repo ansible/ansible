@@ -18,9 +18,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbconfiguration_info
 version_added: "2.9"
-short_description: Get Azure MariaDB Configuration information
+short_description: Get Azure MariaDB Configuration facts
 description:
-    - Get information of Azure MariaDB Configuration.
+    - Get facts of Azure MariaDB Configuration.
 
 options:
     resource_group:
@@ -147,7 +147,7 @@ class AzureRMMariaDbConfigurationInfo(AzureRMModuleBase):
 
     def get(self):
         '''
-        Gets information of the specified MariaDB Configuration.
+        Gets facts of the specified MariaDB Configuration.
 
         :return: deserialized MariaDB Configurationinstance state dictionary
         '''
@@ -159,7 +159,7 @@ class AzureRMMariaDbConfigurationInfo(AzureRMModuleBase):
                                                            configuration_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Configurations.')
+            self.log('Could not get facts for Configurations.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -168,7 +168,7 @@ class AzureRMMariaDbConfigurationInfo(AzureRMModuleBase):
 
     def list_by_server(self):
         '''
-        Gets information of the specified MariaDB Configuration.
+        Gets facts of the specified MariaDB Configuration.
 
         :return: deserialized MariaDB Configurationinstance state dictionary
         '''
@@ -179,7 +179,7 @@ class AzureRMMariaDbConfigurationInfo(AzureRMModuleBase):
                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Configurations.')
+            self.log('Could not get facts for Configurations.')
 
         if response is not None:
             for item in response:

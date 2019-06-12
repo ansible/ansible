@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabarmtemplate_info
 version_added: "2.9"
-short_description: Get Azure DevTest Lab ARM Template information
+short_description: Get Azure DevTest Lab ARM Template facts
 description:
-    - Get information of Azure DevTest Lab ARM Template.
+    - Get facts of Azure DevTest Lab ARM Template.
 
 options:
     resource_group:
@@ -47,7 +47,7 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information on DevTest Lab ARM Template
+  - name: Get facts on DevTest Lab ARM Template
     azure_rm_devtestlabarmtemplate_info:
       resource_group: myResourceGroup
       lab_name: myLab
@@ -58,7 +58,7 @@ EXAMPLES = '''
 RETURN = '''
 arm_templates:
     description:
-        - A list of dictionaries containing information for DevTest Lab ARM Template.
+        - A list of dictionaries containing facts for DevTest Lab ARM Template.
     returned: always
     type: complex
     contains:
@@ -170,7 +170,7 @@ class AzureRMDtlArmTemplateInfo(AzureRMModuleBase):
                                                            artifact_source_name=self.artifact_source_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for DTL ARM Template.')
+            self.fail('Could not get facts for DTL ARM Template.')
 
         if response is not None:
             for item in response:
@@ -188,7 +188,7 @@ class AzureRMDtlArmTemplateInfo(AzureRMModuleBase):
                                                           name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for DTL ARM Template.')
+            self.fail('Could not get facts for DTL ARM Template.')
 
         if response:
             results.append(self.format_response(response))

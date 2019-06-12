@@ -18,9 +18,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbdatabase_info
 version_added: "2.9"
-short_description: Get Azure MariaDB Database information
+short_description: Get Azure MariaDB Database facts
 description:
-    - Get information of MariaDB Database.
+    - Get facts of MariaDB Database.
 
 options:
     resource_group:
@@ -60,7 +60,7 @@ EXAMPLES = '''
 RETURN = '''
 databases:
     description:
-        - A list of dictionaries containing information for MariaDB Databases.
+        - A list of dictionaries containing facts for MariaDB Databases.
     returned: always
     type: complex
     contains:
@@ -161,7 +161,7 @@ class AzureRMMariaDbDatabaseInfo(AzureRMModuleBase):
                                                          database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Databases.')
+            self.log('Could not get facts for Databases.')
 
         if response is not None:
             results.append(self.format_item(response))

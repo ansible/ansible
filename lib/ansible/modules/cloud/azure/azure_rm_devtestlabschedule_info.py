@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabschedule_info
 version_added: "2.9"
-short_description: Get Azure Schedule information
+short_description: Get Azure Schedule facts
 description:
-    - Get information of Azure Schedule.
+    - Get facts of Azure Schedule.
 
 options:
     resource_group:
@@ -56,7 +56,7 @@ EXAMPLES = '''
 RETURN = '''
 schedules:
     description:
-        - A list of dictionaries containing information for Schedule.
+        - A list of dictionaries containing facts for Schedule.
     returned: always
     type: complex
     contains:
@@ -168,7 +168,7 @@ class AzureRMDtlScheduleInfo(AzureRMModuleBase):
                                                       name=_snake_to_camel(self.name))
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Schedule.')
+            self.log('Could not get facts for Schedule.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -183,7 +183,7 @@ class AzureRMDtlScheduleInfo(AzureRMModuleBase):
                                                        lab_name=self.lab_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Schedule.')
+            self.log('Could not get facts for Schedule.')
 
         if response is not None:
             for item in response:

@@ -17,10 +17,10 @@ module: azure_rm_availabilityset_info
 
 version_added: "2.9"
 
-short_description: Get Azure Availability Set information
+short_description: Get Azure Availability Set facts
 
 description:
-    - Get information for a specific availability set or all availability sets.
+    - Get facts for a specific availability set or all availability sets.
 
 options:
     name:
@@ -41,12 +41,12 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one availability set
+    - name: Get facts for one availability set
       azure_rm_availabilityset_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get information for all availability sets in a specific resource group
+    - name: Get facts for all availability sets in a specific resource group
       azure_rm_availabilityset_info:
         resource_group: myResourceGroup
 
@@ -117,7 +117,7 @@ AZURE_OBJECT_CLASS = 'AvailabilitySet'
 
 
 class AzureRMAvailabilitySetInfo(AzureRMModuleBase):
-    """Utility class to get availability set information"""
+    """Utility class to get availability set facts"""
 
     def __init__(self):
 

@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roleassignment_info
 version_added: "2.9"
-short_description: Gets Azure Role Assignment information.
+short_description: Gets Azure Role Assignment facts.
 description:
-    - Gets information of Azure Role Assignment.
+    - Gets facts of Azure Role Assignment.
 
 options:
     scope:

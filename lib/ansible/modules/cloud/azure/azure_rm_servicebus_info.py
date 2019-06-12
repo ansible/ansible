@@ -19,10 +19,10 @@ module: azure_rm_servicebus_info
 
 version_added: "2.9"
 
-short_description: Get servicebus information.
+short_description: Get servicebus facts.
 
 description:
-    - Get information for a specific servicebus or all servicebus in a resource group or subscription.
+    - Get facts for a specific servicebus or all servicebus in a resource group or subscription.
 
 options:
     name:
@@ -56,7 +56,7 @@ options:
         description:
             - Whether to show the SAS policies.
             - Not support when C(type) is C(subscription).
-            - Note if enable this option, the information module will raise two more HTTP call for each resources, need more network overhead.
+            - Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
         type: bool
 extends_documentation_fragment:
     - azure

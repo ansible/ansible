@@ -19,10 +19,10 @@ module: azure_rm_routetable_info
 
 version_added: "2.9"
 
-short_description: Get route table information.
+short_description: Get route table facts.
 
 description:
-    - Get information for a specific route table or all route table in a resource group or subscription.
+    - Get facts for a specific route table or all route table in a resource group or subscription.
 
 options:
     name:
@@ -44,16 +44,16 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one route table
+    - name: Get facts for one route table
       azure_rm_routetable_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get information for all route tables
+    - name: Get facts for all route tables
       azure_rm_routetable_info:
         resource_group: myResourceGroup
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_routetable_info:
         tags:
           - testing

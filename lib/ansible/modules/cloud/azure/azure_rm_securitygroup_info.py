@@ -20,10 +20,10 @@ module: azure_rm_securitygroup_info
 
 version_added: "2.9"
 
-short_description: Get security group information.
+short_description: Get security group facts.
 
 description:
-    - Get information for a specific security group or all security groups within a resource group.
+    - Get facts for a specific security group or all security groups within a resource group.
 
 options:
     name:
@@ -47,12 +47,12 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one security group
+    - name: Get facts for one security group
       azure_rm_securitygroup_info:
         resource_group: myResourceGroup
         name: secgroup001
 
-    - name: Get information for all security groups
+    - name: Get facts for all security groups
       azure_rm_securitygroup_info:
         resource_group: myResourceGroup
 

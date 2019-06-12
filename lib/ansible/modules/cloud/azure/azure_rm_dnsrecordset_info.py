@@ -17,10 +17,10 @@ module: azure_rm_dnsrecordset_info
 
 version_added: "2.9"
 
-short_description: Get DNS Record Set information
+short_description: Get DNS Record Set facts
 
 description:
-    - Get information for a specific DNS Record Set in a Zone, or a specific type in all Zones or in one Zone etc.
+    - Get facts for a specific DNS Record Set in a Zone, or a specific type in all Zones or in one Zone etc.
 
 options:
     relative_name:
@@ -50,13 +50,13 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Get information for one Record Set
+- name: Get facts for one Record Set
   azure_rm_dnsrecordset_info:
     resource_group: myResourceGroup
     zone_name: example.com
     relative_name: server10
     record_type: A
-- name: Get information for all Type A Record Sets in a Zone
+- name: Get facts for all Type A Record Sets in a Zone
   azure_rm_dnsrecordset_info:
     resource_group: myResourceGroup
     zone_name: example.com

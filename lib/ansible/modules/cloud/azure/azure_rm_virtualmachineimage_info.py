@@ -20,10 +20,10 @@ module: azure_rm_virtualmachineimage_info
 
 version_added: "2.9"
 
-short_description: Get virtual machine image information.
+short_description: Get virtual machine image facts.
 
 description:
-    - Get information for virtual machine images.
+    - Get facts for virtual machine images.
 
 options:
     location:
@@ -54,7 +54,7 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for a specific image
+    - name: Get facts for a specific image
       azure_rm_virtualmachineimage_info:
         location: eastus
         publisher: OpenLogic

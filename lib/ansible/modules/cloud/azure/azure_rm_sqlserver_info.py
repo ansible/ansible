@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlserver_info
 version_added: "2.9"
-short_description: Get SQL Server information.
+short_description: Get SQL Server facts.
 description:
-    - Get information of SQL Server.
+    - Get facts of SQL Server.
 
 options:
     resource_group:
@@ -52,7 +52,7 @@ EXAMPLES = '''
 
 RETURN = '''
 servers:
-    description: A list of dict results where the key is the name of the SQL Server and the values are the information for that SQL Server.
+    description: A list of dict results where the key is the name of the SQL Server and the values are the facts for that SQL Server.
     returned: always
     type: complex
     contains:
@@ -155,7 +155,7 @@ class AzureRMSqlServerInfo(AzureRMModuleBase):
 
     def get(self):
         '''
-        Gets information of the specified SQL Server.
+        Gets facts of the specified SQL Server.
 
         :return: deserialized SQL Serverinstance state dictionary
         '''
@@ -166,7 +166,7 @@ class AzureRMSqlServerInfo(AzureRMModuleBase):
                                                    server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Servers.')
+            self.log('Could not get facts for Servers.')
 
         if response is not None:
             results[response.name] = response.as_dict()
@@ -175,7 +175,7 @@ class AzureRMSqlServerInfo(AzureRMModuleBase):
 
     def list_by_resource_group(self):
         '''
-        Gets information of the specified SQL Server.
+        Gets facts of the specified SQL Server.
 
         :return: deserialized SQL Serverinstance state dictionary
         '''
@@ -185,7 +185,7 @@ class AzureRMSqlServerInfo(AzureRMModuleBase):
             response = self.sql_client.servers.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Servers.')
+            self.log('Could not get facts for Servers.')
 
         if response is not None:
             for item in response:

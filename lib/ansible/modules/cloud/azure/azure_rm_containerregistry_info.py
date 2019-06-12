@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_containerregistry_info
 version_added: "2.9"
-short_description: Get Azure Container Registry information
+short_description: Get Azure Container Registry facts
 description:
-    - Get information for Container Registry.
+    - Get facts for Container Registry.
 
 options:
     resource_group:
@@ -60,7 +60,7 @@ EXAMPLES = '''
 RETURN = '''
 registries:
     description:
-        - A list of dictionaries containing information for registries.
+        - A list of dictionaries containing facts for registries.
     returned: always
     type: complex
     contains:
@@ -199,7 +199,7 @@ class AzureRMContainerRegistryInfo(AzureRMModuleBase):
                                                                     registry_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Registries.')
+            self.log('Could not get facts for Registries.')
 
         if response is not None:
             if self.has_tags(response.tags, self.tags):
@@ -214,7 +214,7 @@ class AzureRMContainerRegistryInfo(AzureRMModuleBase):
             response = self.containerregistry_client.registries.list()
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Registries.')
+            self.fail('Could not get facts for Registries.')
 
         if response is not None:
             for item in response:
@@ -229,7 +229,7 @@ class AzureRMContainerRegistryInfo(AzureRMModuleBase):
             response = self.containerregistry_client.registries.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.fail('Could not get information for Registries.')
+            self.fail('Could not get facts for Registries.')
 
         if response is not None:
             for item in response:

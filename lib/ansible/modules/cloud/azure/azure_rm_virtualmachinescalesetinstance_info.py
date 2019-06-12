@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetinstance_info
 version_added: "2.9"
-short_description: Get Azure Virtual Machine Scale Set Instance information.
+short_description: Get Azure Virtual Machine Scale Set Instance facts.
 description:
-    - Get information of Azure Virtual Machine Scale Set VMs.
+    - Get facts of Azure Virtual Machine Scale Set VMs.
 
 options:
     resource_group:
@@ -54,7 +54,7 @@ EXAMPLES = '''
 
 RETURN = '''
 instances:
-    description: A list of dictionaries containing information for Virtual Machine Scale Set VM.
+    description: A list of dictionaries containing facts for Virtual Machine Scale Set VM.
     returned: always
     type: complex
     contains:
@@ -171,7 +171,7 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
                                                                           instance_id=self.instance_id)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get information for Virtual Machine Scale Set VM.')
+            self.log('Could not get facts for Virtual Machine Scale Set VM.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
@@ -185,7 +185,7 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
                                                                         virtual_machine_scale_set_name=self.vmss_name)
             self.log("Response : {0}".format(items))
         except CloudError as e:
-            self.log('Could not get information for Virtual Machine ScaleSet VM.')
+            self.log('Could not get facts for Virtual Machine ScaleSet VM.')
 
         results = []
         for item in items:

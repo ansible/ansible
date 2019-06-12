@@ -18,10 +18,10 @@ module: azure_rm_trafficmanagerprofile_info
 
 version_added: "2.9"
 
-short_description: Get Azure Traffic Manager profile information
+short_description: Get Azure Traffic Manager profile facts
 
 description:
-    - Get information for a Azure specific Traffic Manager profile or all Traffic Manager profiles.
+    - Get facts for a Azure specific Traffic Manager profile or all Traffic Manager profiles.
 
 options:
     name:
@@ -43,15 +43,15 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one Traffic Manager profile
+    - name: Get facts for one Traffic Manager profile
       azure_rm_trafficmanager_info:
         name: Testing
         resource_group: myResourceGroup
 
-    - name: Get information for all Traffic Manager profiles
+    - name: Get facts for all Traffic Manager profiles
       azure_rm_trafficmanager_info:
 
-    - name: Get information by tags
+    - name: Get facts by tags
       azure_rm_trafficmanager_info:
         tags:
           - Environment:Test
@@ -242,7 +242,7 @@ def serialize_endpoint(endpoint):
 
 
 class AzureRMTrafficManagerProfileInfo(AzureRMModuleBase):
-    """Utility class to get Azure Traffic Manager profile information"""
+    """Utility class to get Azure Traffic Manager profile facts"""
 
     def __init__(self):
 

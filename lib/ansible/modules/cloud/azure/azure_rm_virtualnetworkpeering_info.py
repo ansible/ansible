@@ -15,9 +15,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualnetworkpeering_info
 version_added: "2.9"
-short_description: Get information of Azure Virtual Network Peering.
+short_description: Get facts of Azure Virtual Network Peering.
 description:
-    - Get information of Azure Virtual Network Peering.
+    - Get facts of Azure Virtual Network Peering.
 
 options:
     resource_group:
@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 RETURN = '''
 vnetpeerings:
-    description: A list of Virtual Network Peering information.
+    description: A list of Virtual Network Peering facts.
     returned: always
     type: complex
     contains:

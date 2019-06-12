@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_functionapp_info
 version_added: "2.9"
-short_description: Get Azure Function App information
+short_description: Get Azure Function App facts
 description:
-    - Get information for one Azure Function App or all Function Apps within a resource group.
+    - Get facts for one Azure Function App or all Function Apps within a resource group.
 options:
     name:
         description:
@@ -41,16 +41,16 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get information for one Function App
+    - name: Get facts for one Function App
       azure_rm_functionapp_info:
         resource_group: myResourceGroup
         name: myfunctionapp
 
-    - name: Get information for all Function Apps in a resource group
+    - name: Get facts for all Function Apps in a resource group
       azure_rm_functionapp_info:
         resource_group: myResourceGroup
 
-    - name: Get information for all Function Apps by tags
+    - name: Get facts for all Function Apps by tags
       azure_rm_functionapp_info:
         tags:
           - testing
