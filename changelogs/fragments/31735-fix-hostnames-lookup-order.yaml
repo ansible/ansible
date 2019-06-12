@@ -1,0 +1,2 @@
+bugfixes:
+  - inventory_hostnames lookup - use the same order for the returned hosts as the inventory manager
