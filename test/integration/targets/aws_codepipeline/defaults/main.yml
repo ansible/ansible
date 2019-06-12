@@ -1,0 +1,5 @@
+---
+# defaults file for aws_codepipeline
+
+codepipeline_name: "{{ resource_prefix }}-test-codepipeline"
+codepipeline_service_role_name: "ansible-test-sts-{{ resource_prefix }}-codepipeline-role"
