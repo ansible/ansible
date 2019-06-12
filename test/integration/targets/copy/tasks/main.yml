@@ -61,6 +61,19 @@
     - import_tasks: acls.yml
       when: ansible_system == 'Linux'
 
+    # https://github.com/ansible/ansible/issues/57618
+    - name: Test diff contents
+      copy:
+        content: 'Ansible managed\n'
+        dest: "{{ local_temp_dir }}/file.txt"
+      diff: yes
+      register: diff_output
+
+    - assert:
+        that:
+          - 'diff_output.diff[0].before == ""'
+          - '"Ansible managed" in diff_output.diff[0].after'
+
   always:
     - name: Cleaning
       file:
