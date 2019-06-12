@@ -49,7 +49,7 @@ except Exception:
     # need to take charge of calling it.
     pass
 
-from ansible.errors import AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
@@ -77,7 +77,7 @@ def results_thread_main(pm):
             pass
 
 
-__all__ = ['ProcessModel',]
+__all__ = ['ProcessModel', ]
 
 
 class ProcessModel(ProcessModelBase):
@@ -94,7 +94,7 @@ class ProcessModel(ProcessModelBase):
         try:
             self._worker_results_q = multiprocessing.Queue()
         except OSError as e:
-            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
+            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_text(e))
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))

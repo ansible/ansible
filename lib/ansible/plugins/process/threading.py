@@ -75,7 +75,7 @@ class ProcessModel(ProcessModelBase):
         try:
             data = self._job_queue.popleft()
             self._tqm.send_callback('v2_runner_on_start', data[0], data[1])
-        except:
+        except Exception as e:
             pass
         finally:
             pass
@@ -174,7 +174,7 @@ def run_worker(pm, shared_loader_obj):
                         dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
                         task_fields=c_task.dump_attrs(),
                     ))
-                except:
+                except Exception as inner_e:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 

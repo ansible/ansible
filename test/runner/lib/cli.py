@@ -192,7 +192,6 @@ def parse_args():
                         choices=process_models + ['auto'],
                         help='override default process model for ansible commands')
 
-
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
     test.add_argument('include',

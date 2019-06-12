@@ -11,6 +11,7 @@ import os
 import os.path
 import re
 import tempfile
+import threading
 
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
@@ -54,6 +55,7 @@ class DataLoader:
         self._basedir = '.'
         self._FILE_CACHE = dict()
         self._tempfiles = set()
+        self._tempfiles_lock = threading.Lock()
 
         # initialize the vault stuff with an empty password
         # TODO: replace with a ref to something that can get the password
@@ -62,6 +64,20 @@ class DataLoader:
         self._vaults = {}
         self._vault = VaultLib()
         self.set_vault_secrets(None)
+
+    def __getstate__(self):
+        return {
+            'basedir': self._basedir,
+            'FILE_CACHE': self._FILE_CACHE,
+            'tempfiles': self._tempfiles,
+            'vaults': self._vaults,
+        }
+
+    def __setstate__(self, data):
+        self._basedir = data['basedir']
+        self._FILE_CACHE = data['FILE_CACHE']
+        self._tempfiles = set(data['tempfiles'])
+        self._vaults = data['vaults']
 
     # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
     def set_vault_secrets(self, vault_secrets):
@@ -367,7 +383,11 @@ class DataLoader:
                         data = self._vault.decrypt(data, filename=real_path)
                         # Make a temp file
                         real_path = self._create_content_tempfile(data)
-                        self._tempfiles.add(real_path)
+                        try:
+                            self._tempfiles_lock.acquire()
+                            self._tempfiles.add(real_path)
+                        finally:
+                            self._tempfiles_lock.release()
 
             return real_path
 
@@ -380,16 +400,25 @@ class DataLoader:
         get_real_file. file_path must be the path returned from a
         previous call to get_real_file.
         """
-        if file_path in self._tempfiles:
-            os.unlink(file_path)
-            self._tempfiles.remove(file_path)
+        try:
+            self._tempfiles_lock.acquire()
+            if file_path in self._tempfiles:
+                os.unlink(file_path)
+                self._tempfiles.remove(file_path)
+        finally:
+            self._tempfiles_lock.release()
 
     def cleanup_all_tmp_files(self):
-        for f in self._tempfiles:
-            try:
-                self.cleanup_tmp_file(f)
-            except Exception as e:
-                display.warning("Unable to cleanup temp files: %s" % to_text(e))
+        try:
+            self._tempfiles_lock.acquire()
+            for f in self._tempfiles:
+                try:
+                    os.unlink(f)
+                except Exception as e:
+                    display.warning("Unable to cleanup temp files: %s" % to_text(e))
+        finally:
+            self._tempfiles.clear()
+            self._tempfiles_lock.release()
 
     def find_vars_files(self, path, name, extensions=None, allow_dir=True):
         """

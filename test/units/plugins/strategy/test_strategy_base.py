@@ -27,7 +27,7 @@ from ansible import constants as C
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.process.forking import WorkerProcess
+from ansible.plugins.process.forking import WorkerProcess
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
@@ -298,7 +298,7 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_inventory = MagicMock()
         mock_inventory._hosts_cache = dict()
-        mock_inventory.hosts.return_value = mock_host
+        mock_inventory.hosts.return_value = {"test01": mock_host}
         mock_inventory.get_host.side_effect = _get_host
         mock_inventory.get_group.side_effect = _get_group
         mock_inventory.clear_pattern_cache.return_value = None
@@ -339,7 +339,7 @@ class TestStrategyBase(unittest.TestCase):
         }
 
         strategy_base._queued_task_cache = deepcopy(mock_queued_task_cache)
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         results = strategy_base._wait_on_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], task_result)
@@ -347,7 +347,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data='{"failed":true}')
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -363,7 +363,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_iterator.is_failed.return_value = False
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data='{"unreachable": true}')
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -377,7 +377,7 @@ class TestStrategyBase(unittest.TestCase):
         del mock_tqm._unreachable_hosts['test01']
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data='{"skipped": true}')
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -389,7 +389,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_host=dict(host_name='newhost01', new_groups=['foo'])))
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         queue_items.append(TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_host=dict(host_name='newhost01', new_groups=['foo']))))
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -400,7 +400,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_group=dict(group_name='foo')))
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         queue_items.append(TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(add_group=dict(group_name='foo'))))
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -411,7 +411,7 @@ class TestStrategyBase(unittest.TestCase):
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
         task_result = TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(changed=True, _ansible_notify=['test handler']))
-        mock_process_manager.get_result.return_value = task_result
+        mock_process_manager.get_result.side_effect = [task_result, None]
         queue_items.append(TaskResult(host=mock_host.name, task=mock_task._uuid, return_data=dict(changed=True, _ansible_notify=['test handler'])))
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1

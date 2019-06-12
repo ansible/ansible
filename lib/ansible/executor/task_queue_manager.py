@@ -105,6 +105,18 @@ class TaskQueueManager:
 
     def _initialize_processes(self, num):
         self._terminated = False
+        # load the process manager class and instantiate it
+        if self._process_manager is None:
+            try:
+                pm_class = process_loader.get(C.DEFAULT_PROCESS_MODEL, class_only=True)
+            except Exception as e:
+                display.warning(
+                    'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
+                )
+                pm_class = process_loader.get('forking', class_only=True)
+
+            self._process_manager = pm_class(self)
+
         self._process_manager.initialize_workers(num)
 
     def load_callbacks(self):
@@ -207,17 +219,6 @@ class TaskQueueManager:
             start_at_done=self._start_at_done,
         )
 
-        # load the process manager class and instantiate it
-        try:
-            pm_class = process_loader.get(C.DEFAULT_PROCESS_MODEL, class_only=True)
-        except:
-            display.warning(
-                'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
-            )
-            pm_class = process_loader.get('forking', class_only=True)
-
-        self._process_manager = pm_class(self)
-
         # adjust to # of workers to configured forks or size of batch, whatever is lower
         self._initialize_processes(min(self._forks, iterator.batch_size))
 
@@ -251,17 +252,12 @@ class TaskQueueManager:
                 self._failed_hosts[host_name] = True
         finally:
             strategy.cleanup()
-            self._cleanup_processes()
 
         return play_return
 
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
-
-    def _cleanup_processes(self):
-        if self._process_manager is not None:
-            self._process_manager.cleanup()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -277,6 +273,8 @@ class TaskQueueManager:
 
     def terminate(self):
         self._terminated = True
+        if self._process_manager is not None:
+            self._process_manager.cleanup()
 
     def has_dead_workers(self):
 
