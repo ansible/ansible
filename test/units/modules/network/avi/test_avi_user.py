@@ -3,7 +3,7 @@ import json
 from units.compat import unittest
 from units.compat.mock import Mock
 from units.modules.utils import set_module_args
-from ansible.modules.network.avi import avi_user as avi_user
+from ansible.modules.network.avi import avi_user
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 with open(fixture_path + '/avi_user.json') as json_file:
