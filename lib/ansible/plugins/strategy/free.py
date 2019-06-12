@@ -82,6 +82,13 @@ class StrategyModule(StrategyBase):
         # start with all workers being counted as being free
         workers_free = len(self._workers)
 
+        if Templar(None).is_template(iterator._play.hosts):
+            _pattern = 'all'
+        else:
+            _pattern = iterator._play.hosts or 'all'
+        self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
+        self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)]
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
