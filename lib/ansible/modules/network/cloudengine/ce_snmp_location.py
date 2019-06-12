@@ -101,7 +101,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import exec_command, load_config, ce_argument_spec
 
 
 class SnmpLocation(object):
@@ -141,6 +141,22 @@ class SnmpLocation(object):
             self.module.fail_json(
                 msg='Error: The len of location is 0.')
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_proposed(self):
         """ Get proposed state """
 
@@ -178,7 +194,7 @@ class SnmpLocation(object):
         regular = "| include snmp | include location"
         flags = list()
         flags.append(regular)
-        tmp_cfg = get_config(self.module, flags)
+        tmp_cfg = self.get_config(flags)
 
         return tmp_cfg
 
