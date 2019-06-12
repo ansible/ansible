@@ -43,6 +43,43 @@ options:
     avi_credentials:
         description:
             - Avi Credentials dictionary which can be used in lieu of enumerating Avi Controller login details.
+        suboptions:
+            controller:
+                description:
+                  - Avi controller IP or SQDN
+            username:
+                description:
+                  - Avi controller username
+            password:
+                description:
+                  - Avi controller password
+            api_version:
+                description:
+                  - Avi controller version
+                default: 16.4.4
+            tenant:
+                description:
+                  - Avi controller tenant
+                default: admin
+            tenant_uuid:
+                description:
+                  - Avi controller tenant UUID
+            port:
+                description:
+                  - Avi controller port
+            token:
+                description:
+                  - Avi controller API token
+            timeout:
+                description:
+                  - Avi controller request timeout
+                default: 300
+            session_id:
+                description:
+                  - Avi controller API session id to reuse existing session with csrftoken
+            csrftoken:
+                description:
+                  - Avi controller API csrftoken to reuse existing session with session id
         type: dict
         version_added: "2.5"
     api_context:
@@ -56,6 +93,7 @@ options:
             - It disables avi session information to be cached as a fact.
         type: bool
         version_added: "2.6"
+
 notes:
   - For more information on using Ansible to manage Avi Network devices see U(https://www.ansible.com/ansible-avi-networks).
 '''
