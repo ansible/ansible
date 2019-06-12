@@ -58,8 +58,8 @@ minor_changes:
 - The ``azure_rm_virtualmachineextension_facts`` module has been renamed to ``azure_rm_virtualmachineextension_info``.
 - The ``azure_rm_virtualmachineimage_facts`` module has been renamed to ``azure_rm_virtualmachineimage_info``.
 - The ``azure_rm_virtualmachinescaleset_facts`` module has been renamed to ``azure_rm_virtualmachinescaleset_info``.
-- The ``azure_rm_virtualmachinescaleset_facts`` module has been renamed to ``azure_rm_virtualmachinescaleset_info``.
 - The ``azure_rm_virtualmachinescalesetextension_facts`` module has been renamed to ``azure_rm_virtualmachinescalesetextension_info``.
 - The ``azure_rm_virtualmachinescalesetinstance_facts`` module has been renamed to ``azure_rm_virtualmachinescalesetinstance_info``.
 - The ``azure_rm_virtualnetwork_facts`` module has been renamed to ``azure_rm_virtualnetwork_info``.
+- The ``azure_rm_virtualnetworkpeering_facts`` module has been renamed to ``azure_rm_virtualnetworkpeering_info``.
 - The ``azure_rm_webapp_facts`` module has been renamed to ``azure_rm_webapp_info``.
