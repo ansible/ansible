@@ -377,7 +377,6 @@ class MerakiModule(object):
         else:
             if 'data' in self.result:
                 try:
-                    # self.fail_json(msg="here", converted=self.convert_camel_to_snake(self.result['data']))
                     self.result['data'] = self.convert_camel_to_snake(self.result['data'])
                 except (KeyError, AttributeError):
                     pass
