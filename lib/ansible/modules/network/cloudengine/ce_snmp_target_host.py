@@ -148,7 +148,7 @@ updates:
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, \
-    ce_argument_spec, get_config, load_config, check_ip_addr
+    ce_argument_spec, load_config, check_ip_addr
 
 # get snmp version
 CE_GET_SNMP_VERSION = """
@@ -230,6 +230,29 @@ CE_DELETE_SNMP_TARGET_HOST_TAIL = """
       </snmp>
     </config>
 """
+
+# get snmp listen port
+CE_GET_SNMP_PORT = """
+    <filter type="subtree">
+      <snmp xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+        <systemCfg>
+          <snmpListenPort></snmpListenPort>
+        </systemCfg>
+      </snmp>
+    </filter>
+"""
+
+# merge snmp listen port
+CE_MERGE_SNMP_PORT = """
+    <config>
+      <snmp xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+        <systemCfg operation="merge">
+          <snmpListenPort>%s</snmpListenPort>
+        </systemCfg>
+      </snmp>
+    </config>
+"""
+
 
 INTERFACE_TYPE = ['ethernet', 'eth-trunk', 'tunnel', 'null', 'loopback',
                   'vlanif', '100ge', '40ge', 'mtunnel', '10ge', 'ge', 'meth', 'vbdif', 'nve']
@@ -406,7 +429,7 @@ class SnmpTargetHost(object):
 
                 root = ElementTree.fromstring(xml_str)
                 target_host_info = root.findall(
-                    "data/snmp/targetHosts/targetHost")
+                    "snmp/targetHosts/targetHost")
                 if target_host_info:
                     for tmp in target_host_info:
                         tmp_dict = dict()
@@ -470,7 +493,7 @@ class SnmpTargetHost(object):
                                 same_flag = False
 
                         if "interface-name" in tmp.keys():
-                            if tmp["interface-name"] != self.interface_name:
+                            if tmp["interface-name"].lower() != self.interface_name.lower():
                                 same_flag = False
 
                         if same_flag:
@@ -509,7 +532,7 @@ class SnmpTargetHost(object):
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
             root = ElementTree.fromstring(xml_str)
-            version_info = root.find("data/snmp/engine")
+            version_info = root.find("snmp/engine")
             if version_info:
                 for site in version_info:
                     if site.tag in ["version"]:
@@ -517,15 +540,24 @@ class SnmpTargetHost(object):
 
         return version
 
-    def cli_get_connect_port(self):
-        """ Get connect port by cli """
+    def xml_get_connect_port(self):
+        """ Get connect port by xml """
+        tmp_cfg = None
+        conf_str = CE_GET_SNMP_PORT
+        recv_xml = self.netconf_get_config(conf_str=conf_str)
+        if "<data/>" in recv_xml:
+            pass
+        else:
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
+                replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
+                replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
-        regular = "| include snmp | include snmp-agent udp-port"
-        flags = list()
-        flags.append(regular)
-        tmp_cfg = get_config(self.module, flags)
+            root = ElementTree.fromstring(xml_str)
+            snmp_port_info = root.findall("snmp/systemCfg/snmpListenPort")
 
-        return tmp_cfg
+            if snmp_port_info:
+                tmp_cfg = snmp_port_info[0].text
+            return tmp_cfg
 
     def get_proposed(self):
         """ Get proposed state """
@@ -569,11 +601,10 @@ class SnmpTargetHost(object):
                 self.existing["version"] = version
 
         if self.connect_port:
-            tmp_cfg = self.cli_get_connect_port()
+            tmp_cfg = self.xml_get_connect_port()
             if tmp_cfg:
-                temp_data = tmp_cfg.split(r"udp-port ")
-                self.cur_cli_cfg["connect port"] = temp_data[1]
-                self.existing["connect port"] = temp_data[1]
+                self.cur_cli_cfg["connect port"] = tmp_cfg
+                self.existing["connect port"] = tmp_cfg
 
         if self.host_name:
             self.existing["target host info"] = self.cur_netconf_cfg[
@@ -588,10 +619,9 @@ class SnmpTargetHost(object):
                 self.end_state["version"] = version
 
         if self.connect_port:
-            tmp_cfg = self.cli_get_connect_port()
+            tmp_cfg = self.xml_get_connect_port()
             if tmp_cfg:
-                temp_data = tmp_cfg.split(r"udp-port ")
-                self.end_state["connect port"] = temp_data[1]
+                self.end_state["connect port"] = tmp_cfg
 
         if self.host_name:
             self.end_state["target host info"] = self.end_netconf_cfg[
@@ -640,8 +670,8 @@ class SnmpTargetHost(object):
             self.cli_load_config(cmds)
             self.changed = True
 
-    def config_connect_port_cli(self):
-        """ Config connect port by cli """
+    def config_connect_port_xml(self):
+        """ Config connect port by xml """
 
         if "connect port" in self.cur_cli_cfg.keys():
             if self.cur_cli_cfg["connect port"] == self.connect_port:
@@ -653,7 +683,8 @@ class SnmpTargetHost(object):
                 cmds.append(cmd)
 
                 self.updates_cmd.append(cmd)
-                self.cli_load_config(cmds)
+                conf_str = CE_MERGE_SNMP_PORT % self.connect_port
+                self.netconf_set_config(conf_str=conf_str)
                 self.changed = True
         else:
             cmd = "snmp-agent udp-port %s" % self.connect_port
@@ -662,7 +693,8 @@ class SnmpTargetHost(object):
             cmds.append(cmd)
 
             self.updates_cmd.append(cmd)
-            self.cli_load_config(cmds)
+            conf_str = CE_MERGE_SNMP_PORT % self.connect_port
+            self.netconf_set_config(conf_str=conf_str)
             self.changed = True
 
     def undo_config_connect_port_cli(self):
@@ -678,7 +710,9 @@ class SnmpTargetHost(object):
                 cmds.append(cmd)
 
                 self.updates_cmd.append(cmd)
-                self.cli_load_config(cmds)
+                connect_port = "161"
+                conf_str = CE_MERGE_SNMP_PORT % connect_port
+                self.netconf_set_config(conf_str=conf_str)
                 self.changed = True
 
     def merge_snmp_target_host(self):
@@ -843,7 +877,7 @@ class SnmpTargetHost(object):
                 if self.version != self.cur_cli_cfg["version"]:
                     self.merge_snmp_version()
             if self.connect_port:
-                self.config_connect_port_cli()
+                self.config_connect_port_xml()
             if self.cur_netconf_cfg["need_cfg"]:
                 self.merge_snmp_target_host()
 
