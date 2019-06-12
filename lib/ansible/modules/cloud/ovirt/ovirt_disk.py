@@ -190,6 +190,7 @@ options:
     activate:
         description:
             - I(True) if the disk should be activated.
+            - When creating disk of virtual machine it is set to I(True).
         version_added: "2.8"
         type: bool
 extends_documentation_fragment: ovirt
@@ -709,6 +710,9 @@ def main():
         ret = None
         # First take care of creating the VM, if needed:
         if state in ('present', 'detached', 'attached'):
+            # Always activate disk when its being created
+            if vm_service is not None and disk is None:
+                module.params['activate'] = True
             ret = disks_module.create(
                 entity=disk if not force_create else None,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
