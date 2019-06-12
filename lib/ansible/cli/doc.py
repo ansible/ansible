@@ -26,9 +26,9 @@ from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
+from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
-
 display = Display()
 
 
@@ -53,6 +53,7 @@ class DocCLI(CLI):
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
         opt_help.add_module_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
         self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
@@ -88,7 +89,11 @@ class DocCLI(CLI):
         else:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
-        # add to plugin path from command line
+        # add to plugin paths from command line
+        basedir = context.CLIARGS['basedir']
+        if basedir:
+            set_collection_playbook_paths(basedir)
+            loader.add_directory(basedir, with_subdir=True)
         if context.CLIARGS['module_path']:
             for path in context.CLIARGS['module_path']:
                 if path:
