@@ -86,7 +86,7 @@ options:
     description:
       - Toggles use_srv_records flag
     type: bool
-    version_added: "2.8"
+    version_added: "2.9"
   summarize:
     description:
       - Whether to print a transaction summary.
