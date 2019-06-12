@@ -1,5 +1,5 @@
 ---
-# tasks file for aws_acm_facts
+# tasks file for aws_acm_info
 
 - name: set up aws connection info
   set_fact:
@@ -19,8 +19,8 @@
 # but for now we don't have one.
 
 - block:
-    - name: Get all ACM certificate facts
-      aws_acm_facts:
+    - name: Get all ACM certificate infos
+      aws_acm_infos:
         <<: *aws_connection_info
       register: result
 
@@ -30,8 +30,8 @@
           - result.certificates is defined
           - result.certificates|length > 0
 
-    - name: Get ACM certificate facts by ARN id
-      aws_acm_facts:
+    - name: Get ACM certificate infos by ARN id
+      aws_acm_infos:
         certificate_arn: '{{ acm_arn }}'
         <<: *aws_connection_info
       register: result
@@ -42,8 +42,8 @@
           - result.certificates is defined
           - result.certificates.0.certificate_arn == acm_arn
 
-    - name: Get ACM certificate facts by domain name
-      aws_acm_facts:
+    - name: Get ACM certificate infos by domain name
+      aws_acm_infos:
         domain_name: '{{ acm_domain }}'
         <<: *aws_connection_info
       register: result
