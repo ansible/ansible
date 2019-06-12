@@ -1104,7 +1104,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
-            if peek_result.get('state') == 'absent':
+            if peek_result.get('state') in (None, 'absent'):
                 diff['before'] = u''
             elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1
