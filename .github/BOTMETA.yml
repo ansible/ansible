@@ -707,7 +707,8 @@ files:
       - clustering
       - k8s
   $module_utils/identity/keycloak/:
-    maintainers: eikef
+     maintainers: eikef
+     support: community
   $module_utils/kubevirt.py: *kubevirt
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
