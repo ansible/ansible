@@ -48,22 +48,33 @@ DOCUMENTATION = '''
                 - The type of credential used.
             required: True
             choices: ['application', 'serviceaccount', 'machineaccount']
+            env:
+                - name: GCP_AUTH_KIND
+                  version_added: "2.8"
         scopes:
             description: list of authentication scopes
             type: list
             default: ['https://www.googleapis.com/auth/compute']
+            env:
+                - name: GCP_SCOPES
+                  version_added: "2.8"
         service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
             required: True
             type: path
             env:
+                - name: GCP_SERVICE_ACCOUNT_FILE
+                  version_added: "2.8"
                 - name: GCE_CREDENTIALS_FILE_PATH
                   version_added: "2.8"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
                   and the user does not wish to use the default email.
+            env:
+                - name: GCP_SERVICE_ACCOUNT_EMAIL
+                  version_added: "2.8"
         vars_prefix:
             description: prefix to apply to host variables, does not include facts nor params
             default: ''
