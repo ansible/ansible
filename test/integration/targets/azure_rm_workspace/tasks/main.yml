@@ -15,7 +15,7 @@
           - output.changed
 
 - name: Get workspace
-  azure_rm_loganalyticsworkspace_facts:
+  azure_rm_loganalyticsworkspace_info:
       name: "{{ name }}"
       resource_group: "{{ resource_group }}"
   register: facts
@@ -49,7 +49,7 @@
         - not output.changed
 
 - name: Get workspace
-  azure_rm_loganalyticsworkspace_facts:
+  azure_rm_loganalyticsworkspace_info:
       name: "{{ name }}"
       resource_group: "{{ resource_group }}"
   register: facts
@@ -86,7 +86,7 @@
           - output.changed
 
 - name: Get workspace
-  azure_rm_loganalyticsworkspace_facts:
+  azure_rm_loganalyticsworkspace_info:
       name: "{{ name }}"
       resource_group: "{{ resource_group }}"
   register: facts
@@ -107,7 +107,7 @@
           - output.changed
 
 - name: Get workspace
-  azure_rm_loganalyticsworkspace_facts:
+  azure_rm_loganalyticsworkspace_info:
       name: "{{ name }}"
       resource_group: "{{ resource_group }}"
   register: facts

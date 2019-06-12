@@ -49,7 +49,7 @@
     address_prefix_cidr: "10.1.0.0/24"
 
 - name: Gather facts by name, tags
-  azure_rm_virtualnetwork_facts:
+  azure_rm_virtualnetwork_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vnetname }}"
     tags:
@@ -65,7 +65,7 @@
       - "facts.virtualnetworks[0].subnets | length == 1"
 
 - name: Gather facts by resource group, tags
-  azure_rm_virtualnetwork_facts:
+  azure_rm_virtualnetwork_info:
     resource_group: "{{ resource_group }}"
     tags:
       - testing
@@ -74,7 +74,7 @@
     that: "azure_virtualnetworks | length >= 1"
 
 - name: Gather facts by tags
-  azure_rm_virtualnetwork_facts:
+  azure_rm_virtualnetwork_info:
     tags:
       - testing
 
@@ -163,7 +163,7 @@
     that: output.state['dns_servers'] is undefined
 
 - name: Gather facts
-  azure_rm_virtualnetwork_facts:
+  azure_rm_virtualnetwork_info:
     resource_group: "{{ resource_group }}"
     name: "{{ vnetname }}"
   register: facts

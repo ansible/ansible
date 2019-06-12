@@ -57,7 +57,7 @@
     that: output.changed
 
 - name: Try to get information about account
-  azure_rm_resource_facts:
+  azure_rm_resource_info:
     api_version: '2018-02-01'
     resource_group: "{{ resource_group }}"
     provider: network
@@ -73,7 +73,7 @@
       - output.response | length == 1
 
 - name: Try to query a list
-  azure_rm_resource_facts:
+  azure_rm_resource_info:
     api_version: '2018-02-01'
     resource_group: "{{ resource_group }}"
     provider: network
@@ -87,7 +87,7 @@
       - output.response | length >= 1
 
 - name: Try to query a list - same without API version
-  azure_rm_resource_facts:
+  azure_rm_resource_info:
     resource_group: "{{ resource_group }}"
     provider: network
     resource_type: networksecuritygroups
@@ -100,7 +100,7 @@
       - output.response | length >= 1
 
 - name: Query all the resources in the resource group
-  azure_rm_resource_facts:
+  azure_rm_resource_info:
     resource_group: "{{ resource_group }}"
     resource_type: resources
   register: output

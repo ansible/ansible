@@ -56,7 +56,7 @@
           - output.state.tags.delete == 'never'
 
 - name: Gather facts, filtering by tag
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
       resource_group: "{{ resource_group }}"
       tags:
           - testing
@@ -79,7 +79,7 @@
           - output.state.tags | length == 0
 
 - name: Gather facts for a public ip
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
   register: pip
@@ -92,7 +92,7 @@
       - pip.publicipaddresses[0].dns_settings.domain_name_label == domain_name
 
 - name: Gather facts for all public ips
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
       resource_group: "{{ resource_group }}"
 
 - assert:
@@ -105,7 +105,7 @@
       state:  absent
 
 - name: Gather facts for a public ip
-  azure_rm_publicipaddress_facts:
+  azure_rm_publicipaddress_info:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
 
