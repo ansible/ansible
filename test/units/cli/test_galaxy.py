@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ansible
+import json
 import os
 import pytest
 import shutil
@@ -30,11 +31,17 @@ import yaml
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
-from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import PY3
+from ansible.errors import AnsibleError
 from ansible.utils import context_objects as co
 from units.compat import unittest
 from units.compat.mock import call, patch
+
+
+@pytest.fixture(autouse='function')
+def reset_cli_args():
+    co.GlobalCLIArgs._Singleton__instance = None
+    yield
+    co.GlobalCLIArgs._Singleton__instance = None
 
 
 class TestGalaxy(unittest.TestCase):
@@ -556,6 +563,29 @@ def test_collection_skeleton(collection_skeleton):
         assert expected_contents == contents.strip()
 
 
+@pytest.fixture()
+def collection_build(collection_skeleton, reset_cli_args):
+    output_dir = tempfile.mkdtemp()
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+
+    # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
+    # args, we reset the original args once it is done.
+    orig_cli_args = co.GlobalCLIArgs._Singleton__instance
+    try:
+        co.GlobalCLIArgs._Singleton__instance = None
+        galaxy_args = ['ansible-galaxy', 'collection', 'build', collection_skeleton, '--output-path', output_dir]
+        gc = GalaxyCLI(args=galaxy_args)
+        gc.run()
+
+        yield output_dir
+    finally:
+        co.GlobalCLIArgs._Singleton__instance = orig_cli_args
+
+    if os.path.isdir(output_dir):
+        shutil.rmtree(output_dir)
+
+
 def test_invalid_skeleton_path():
     expected = "- the skeleton path '/fake/path' does not exist, cannot init collection"
     with pytest.raises(AnsibleError, match=expected):
@@ -570,3 +600,118 @@ def test_invalid_collection_name(name):
     with pytest.raises(AnsibleError, match=expected):
         gc = GalaxyCLI(args=['ansible-galaxy', 'collection', 'init', name])
         gc.run()
+
+
+@pytest.mark.parametrize('collection_skeleton', [
+    ('ansible_test.build_collection', None),
+], indirect=True)
+def test_collection_build(collection_build):
+    tar_path = os.path.join(collection_build, 'ansible_test-build_collection-1.0.0.tar.gz')
+    assert os.path.exists(tar_path)
+    assert tarfile.is_tarfile(tar_path)
+
+    tar = tarfile.open(tar_path)
+    try:
+        tar_members = tar.getmembers()
+
+        assert len(tar_members) == 6
+        assert tar_members[0].name == 'MANIFEST.json'
+        assert tar_members[1].name == 'FILES.json'
+        assert tar_members[2].name == 'roles'
+        assert tar_members[3].name == 'docs'
+        assert tar_members[4].name == 'plugins'
+        assert tar_members[5].name == 'plugins/README.md'
+
+        # Verify the uid and gid is 0 and the correct perms are set
+        for member in tar_members:
+            assert member.gid == 0
+            assert member.gname == ''
+            assert member.uid == 0
+            assert member.uname == ''
+            if member.isdir():
+                assert member.mode == 0o0755
+            else:
+                assert member.mode == 0o0644
+
+        manifest_file = tar.extractfile(tar_members[0])
+        try:
+            manifest = json.loads(manifest_file.read())
+        finally:
+            manifest_file.close()
+
+        assert sorted(list(manifest.keys())) == ['collection_info', 'file_manifest_file', 'format']
+        coll_info = manifest['collection_info']
+        file_manifest = manifest['file_manifest_file']
+        assert manifest['format'] == 1
+
+        assert sorted(list(coll_info.keys())) == [
+            'authors', 'dependencies', 'description', 'documentation', 'homepage', 'issues', 'license',
+            'license_file', 'name', 'namespace', 'readme', 'repository', 'tags', 'version'
+        ]
+
+        assert coll_info['namespace'] == 'ansible_test'
+        assert coll_info['name'] == 'build_collection'
+        assert coll_info['version'] == '1.0.0'
+        assert coll_info['authors'] == ['your name <example@domain.com>']
+        assert coll_info['readme'] == 'README.md'
+        assert coll_info['tags'] == []
+        assert coll_info['description'] == 'your description'
+        assert coll_info['license'] == ['license (GPL-2.0-or-later, MIT, etc)']
+        assert coll_info['license_file'] is None
+        assert coll_info['dependencies'] == {}
+        assert coll_info['repository'] == 'http://example.com/repository'
+        assert coll_info['documentation'] == 'http://docs.example.com'
+        assert coll_info['homepage'] == 'http://example.com'
+        assert coll_info['issues'] == 'http://example.com/issue/tracker'
+
+        assert sorted(list(file_manifest.keys())) == ['chksum_sha256', 'chksum_type', 'format', 'ftype', 'name']
+        assert file_manifest['name'] == 'FILES.json'
+        assert file_manifest['ftype'] == 'file'
+        assert file_manifest['chksum_type'] == 'sha256'
+        assert file_manifest['chksum_sha256'] is not None  # Order of keys makes it hard to verify the checksum
+        assert file_manifest['format'] == 1
+
+        files_file = tar.extractfile(tar_members[1])
+        try:
+            files = json.loads(files_file.read())
+        finally:
+            files_file.close()
+
+        assert list(files.keys()) == ['files', 'format']
+        assert len(files['files']) == 5
+        assert files['format'] == 1
+
+        for file_entry in files['files']:
+            assert sorted(list(file_entry.keys())) == ['chksum_sha256', 'chksum_type', 'format', 'ftype', 'name']
+
+        assert files['files'][0]['name'] == '.'
+        assert files['files'][0]['ftype'] == 'dir'
+        assert files['files'][0]['chksum_type'] is None
+        assert files['files'][0]['chksum_sha256'] is None
+        assert files['files'][0]['format'] == 1
+
+        assert files['files'][1]['name'] == 'roles'
+        assert files['files'][1]['ftype'] == 'dir'
+        assert files['files'][1]['chksum_type'] is None
+        assert files['files'][1]['chksum_sha256'] is None
+        assert files['files'][1]['format'] == 1
+
+        assert files['files'][2]['name'] == 'docs'
+        assert files['files'][2]['ftype'] == 'dir'
+        assert files['files'][2]['chksum_type'] is None
+        assert files['files'][2]['chksum_sha256'] is None
+        assert files['files'][2]['format'] == 1
+
+        assert files['files'][3]['name'] == 'plugins'
+        assert files['files'][3]['ftype'] == 'dir'
+        assert files['files'][3]['chksum_type'] is None
+        assert files['files'][3]['chksum_sha256'] is None
+        assert files['files'][3]['format'] == 1
+
+        assert files['files'][4]['name'] == 'plugins/README.md'
+        assert files['files'][4]['ftype'] == 'file'
+        assert files['files'][4]['chksum_type'] == 'sha256'
+        assert files['files'][4]['chksum_sha256'] == '5be7ec7b71096d56e1cc48311b6a2266b77b5fdb9d1985b5bc625787b1e857c5'
+        assert files['files'][4]['format'] == 1
+    finally:
+        tar.close()

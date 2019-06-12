@@ -20,7 +20,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection
+from ansible.galaxy.collection import build_collection, publish_collection
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
@@ -94,9 +94,6 @@ class GalaxyCLI(CLI):
         collection_parser = collection.add_subparsers(metavar='ACTION', dest='collection')
         collection_parser.required = True
 
-        self.add_init_parser(collection_parser, [common, force])
-        self.add_login_parser(collection_parser, [common])
-
         build_parser = collection_parser.add_parser(
             'build', help='Build an Ansible collection artifact that can be published to Ansible Galaxy.',
             parents=[common, force])
@@ -109,6 +106,23 @@ class GalaxyCLI(CLI):
         build_parser.add_argument(
             '--output-path', dest='output_path', default='./',
             help='The path in which the collection is built to. The default is the current working directory.')
+
+        self.add_init_parser(collection_parser, [common, force])
+        self.add_login_parser(collection_parser, [common])
+
+        publish_parser = collection_parser.add_parser(
+            'publish', help='Publish a collection artifact to Ansible Galaxy.',
+            parents=[common])
+        publish_parser.set_defaults(func=self.execute_publish)
+        publish_parser.add_argument(
+            'args', metavar='collection', help='The path to the collection tarball to publish.')
+        publish_parser.add_argument(
+            '--api-key', dest='api_key',
+            help='The Ansible Galaxy API key which can be found at https://galaxy.ansible.com/me/preferences. '
+                 'You can also use ansible-galaxy login to retrieve this key.')
+        publish_parser.add_argument(
+            '--no-wait', dest='wait', action='store_false', default=True,
+            help="Don't wait for import validation results.")
 
         # Define the actions for the role object type
         role = type_parser.add_parser('role',
@@ -217,7 +231,7 @@ class GalaxyCLI(CLI):
         login_parser = parser.add_parser('login',
                                          parents=parents,
                                          help="Login to api.github.com server in order to use ansible-galaxy <TYPE> "
-                                              "sub command such as 'import', 'delete' and 'setup'")
+                                              "sub command such as 'import', 'delete', 'publish', and 'setup'")
         login_parser.set_defaults(func=self.execute_login)
         login_parser.add_argument('--github-token',
                                   dest='token',
@@ -659,6 +673,22 @@ class GalaxyCLI(CLI):
             if not path_found:
                 raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
         return 0
+
+    def execute_publish(self):
+        """
+        Published a collection into Ansible Galaxy.
+        """
+        api_key = context.CLIARGS['api_key']
+        if not api_key:
+            api_key = GalaxyToken().get()
+        api_server = to_native(context.CLIARGS['api_server'])
+        collection_path = os.path.expanduser(os.path.expandvars(context.CLIARGS['args']))
+        if not os.path.isabs(collection_path):
+            collection_path = os.path.abspath(collection_path)
+        ignore_certs = context.CLIARGS['ignore_certs']
+        wait = context.CLIARGS['wait']
+
+        publish_collection(collection_path, api_server, api_key, ignore_certs, wait)
 
     def execute_search(self):
         ''' searches for roles on the Ansible Galaxy server'''
