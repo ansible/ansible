@@ -1,2 +1,2 @@
 bugfixes:
-  - Instead of building the Redfish Power URI from assumptions about URI structure, assemble from @odata.id information in the Chassis resource (https://github.com/ansible/ansible/issues/56137).
+  - Redfish - Instead of building the Power URI from assumptions about URI structure, assemble from @odata.id information in the Chassis resource (https://github.com/ansible/ansible/issues/56137).
