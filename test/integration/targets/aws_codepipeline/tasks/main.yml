@@ -117,7 +117,7 @@
 
     - assert:
         that:
-          - absent_test_output.changed == False
+          - rerun_test_output.changed == False
           - rerun_test_output.pipeline == output.pipeline
 
     - name: Test deletion of CodePipeline
@@ -133,6 +133,7 @@
     - assert:
         that:
           - absent_test_output.changed == True
+          - absent_test_output.pipeline is undefined
 
   # ==================== cleanup =======================
 
