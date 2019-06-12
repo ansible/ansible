@@ -33,7 +33,7 @@ DOCUMENTATION = '''
         filters:
           description: >
             A list of filter value pairs. Available filters are listed here
-            U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/list).
+            U(https://cloud.google.com/compute/docs/reference/rest/v1/instances/aggregatedList).
             Each additional filter in the list will act be added as an AND condition
             (filter1 and filter2)
           type: list
@@ -139,7 +139,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'gcp_compute'
 
-    _instances = r"https://www.googleapis.com/compute/v1/projects/%s/zones/%s/instances"
+    _instances = r"https://www.googleapis.com/compute/v1/projects/%s/aggregated/instances"
 
     def __init__(self):
         super(InventoryModule, self).__init__()
@@ -180,18 +180,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         response = self.auth_session.get(link, params={'filter': query})
         return self._return_if_object(self.fake_module, response)
-
-    def _get_zones(self, project, config_data):
-        '''
-            :param config_data: dict of info from inventory file
-            :return an array of zones that this project has access to
-        '''
-        link = "https://www.googleapis.com/compute/v1/projects/%s/zones" % project
-        zones = []
-        zones_response = self.fetch_list(config_data, link, '')
-        for item in zones_response['items']:
-            zones.append(item['name'])
-        return zones
 
     def _get_query_options(self, filters):
         '''
@@ -238,7 +226,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if navigate_hash(result, ['error', 'errors']):
             module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-        if result['kind'] != 'compute#instanceList' and result['kind'] != 'compute#zoneList':
+        if result['kind'] != 'compute#instanceAggregatedList' and result['kind'] != 'compute#zoneList':
             module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
         return result
@@ -471,16 +459,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             for project in params['projects']:
                 cached_data[project] = {}
                 params['project'] = project
-                if not params['zones']:
-                    zones = self._get_zones(project, params)
-                else:
-                    zones = params['zones']
-                for zone in zones:
-                    link = self._instances % (project, zone)
-                    params['zone'] = zone
-                    resp = self.fetch_list(params, link, query)
-                    self._add_hosts(resp.get('items'), config_data, project_disks=project_disks)
-                    cached_data[project][zone] = resp.get('items')
+                zones = params['zones']
+                # Fetch all instances
+                link = self._instances % project
+                resp = self.fetch_list(params, link, query)
+                for key, value in resp.get('items').items():
+                    if 'instances' in value:
+                        # Key is in format: "zones/europe-west1-b"
+                        zone = key[6:]
+                        if not zones or zone in zones:
+                            self._add_hosts(value['instances'], config_data, project_disks=project_disks)
+                            cached_data[project][zone] = value['instances']
 
         if cache_needs_update:
             self._cache[cache_key] = cached_data
