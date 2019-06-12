@@ -64,7 +64,7 @@ vultr_api:
       type: str
       sample: "https://api.vultr.com"
 vultr_ssh_key_info:
-  description: Response from Vultr API
+  description: Response from Vultr API as list
   returned: success
   type: complex
   contains:
