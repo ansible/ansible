@@ -1,7 +1,7 @@
 ---
 # tasks file for aws_codepipeline
 
-- name: Run aws_codebuild integration tests.
+- name: Run aws_codebuild module integration tests
 
   block:
 
