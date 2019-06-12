@@ -401,7 +401,7 @@ class AzureRMContainerInstance(AzureRMModuleBase):
 
             self.results['id'] = response['id']
             self.results['provisioning_state'] = response['provisioning_state']
-            self.results['ip_address'] = response['ip_address']['ip'] if 'ip_address' in response and 'ip' in response['ip_address'] else ''
+            self.results['ip_address'] = response['ip_address']['ip'] if 'ip_address' in response else ''
 
             self.log("Creation / Update done")
 

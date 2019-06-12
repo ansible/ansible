@@ -47,7 +47,7 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get facts on DevTest Lab ARM Template
+  - name: Get information on DevTest Lab ARM Template
     azure_rm_devtestlabarmtemplate_info:
       resource_group: myResourceGroup
       lab_name: myLab

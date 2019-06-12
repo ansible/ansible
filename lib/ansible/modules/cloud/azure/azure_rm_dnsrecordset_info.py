@@ -198,7 +198,7 @@ class AzureRMRecordSetInfo(AzureRMModuleBase):
         if not self.top or self.top <= 0:
             self.top = None
 
-        # create conditionals to catch errors when calling record information
+        # create conditionals to catch errors when calling record facts
         if self.relative_name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name or record type.")
         if self.relative_name and not self.zone_name:
@@ -207,7 +207,7 @@ class AzureRMRecordSetInfo(AzureRMModuleBase):
         results = []
         # list the conditions for what to return based on input
         if self.relative_name is not None:
-            # if there is a name listed, they want only information about that specific Record Set itself
+            # if there is a name listed, they want only facts about that specific Record Set itself
             results = self.get_item()
         elif self.record_type:
             # else, they just want all the record sets of a specific type
