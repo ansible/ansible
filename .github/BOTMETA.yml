@@ -1000,6 +1000,10 @@ files:
     labels: networking
 ###############################
 # plugins/cache
+  $plugins/become/:
+    support: core
+###############################
+# plugins/cache
   $plugins/cache/__init__.py:
     support: core
   $plugins/cache/base.py:
