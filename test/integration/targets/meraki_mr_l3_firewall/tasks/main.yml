@@ -82,11 +82,19 @@
 # Tear down starts here
 ############################################################################
   always:
-  - name: Delete wireless network
+  - name: Delete wireless SSID
     meraki_ssid:
       auth_key: '{{ auth_key }}'
       state: absent
       org_name: '{{test_org_name}}'
       net_id: '{{net}}'
       number: 1
+    delegate_to: localhost
+
+  - name: Delete wireless network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_id: '{{net}}'
     delegate_to: localhost
