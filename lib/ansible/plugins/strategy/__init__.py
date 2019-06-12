@@ -706,11 +706,10 @@ class StrategyBase:
 
             # Check if host in inventory, add if not
             if host_name not in self._inventory.hosts:
-                new_host = self._inventory.add_host(host_name, 'all')
+                self._inventory.add_host(host_name, 'all')
                 self._hosts_cache.append(host_name)
                 self._hosts_cache_all.append(host_name)
-            else:
-                new_host = self._inventory.hosts.get(host_name)
+            new_host = self._inventory.hosts.get(host_name)
 
             # Set/update the vars for this host
             new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
