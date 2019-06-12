@@ -46,12 +46,15 @@ options:
     name:
         description:
             - Full name of the user.
+        required: true
     obj_username:
         description:
             - Name that the user will supply when signing into Avi Vantage, such as jdoe or jdoe@avinetworks.com.
+        required: true
     obj_password:
         description:
             - You may either enter a case-sensitive password in this field for the new or existing user.
+        required: true
     email:
         description:
             - Email address of the user. This field is used when a user loses their password and requests to have it reset. See Password Recovery.
