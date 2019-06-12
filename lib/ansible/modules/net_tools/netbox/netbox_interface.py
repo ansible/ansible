@@ -22,6 +22,7 @@ notes:
   - This should be ran with connection C(local) and hosts C(localhost)
 author:
   - Mikhail Yohman (@FragmentedPacket)
+  - Alvaro Arriola (@axarriola)
 requirements:
   - pynetbox
 version_added: "2.8"
@@ -42,9 +43,18 @@ options:
     suboptions:
       device:
         description:
-          - Name of the device the interface will be associated with (case-sensitive)
+          - |
+            Name of the device the interface will be associated with (case-sensitive). 
+            Required when app parameter is not specified or is set as "dcim".
         required: true
         type: str
+      virtual_machine:
+        description:
+          - |
+            Name of the virtual machine the interface will be associated with (case-sensitive).
+            Required when app parameter is set to "virtualization".
+        type: str
+        version_added: "2.9"
       name:
         description:
           - Name of the interface to be created
