@@ -999,6 +999,10 @@ files:
     maintainers: $team_networking
     labels: networking
 ###############################
+# plugins/become
+  $plugins/become/:
+    support: core
+###############################
 # plugins/cache
   $plugins/cache/__init__.py:
     support: core
