@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "gcp_compute - Speed up dynamic invetory up to 30x."
