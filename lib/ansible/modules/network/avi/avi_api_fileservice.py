@@ -109,6 +109,50 @@ except ImportError:
     HAS_AVI = False
 
 
+def upload_file(module, api, file_path, tenant, tenant_uuid, timeout):
+    if not os.path.exists(file_path):
+        return module.fail_json(msg=('File not found : %s' % file_path))
+    file_name = os.path.basename(file_path)
+    # Handle special case of upgrade controller using .pkg file which will be uploaded to upgrade_pkgs directory
+    if file_name.lower().endswith('.pkg'):
+        uri = 'controller://upgrade_pkgs'
+        path = 'fileservice/uploads'
+    else:
+        uri = 'controller://%s' % module.params.get('path', '').split('?')[0]
+    changed = False
+    file_uri = 'fileservice?uri=%s' % uri
+    rsp = api.post(file_uri, tenant=tenant, tenant_uuid=tenant_uuid,
+                   timeout=timeout)
+    with open(file_path, "rb") as f:
+        f_data = {"file": (file_name, f, "application/octet-stream"),
+                  "uri": uri}
+        m = MultipartEncoder(fields=f_data)
+        headers = {'Content-Type': m.content_type}
+        rsp = api.post(path, data=m, headers=headers,
+                       verify=False)
+        if rsp.status_code > 300:
+            return module.fail_json(msg='Fail to upload file: %s' %
+                                        rsp.text)
+        else:
+            return module.exit_json(
+                changed=True, msg="File uploaded successfully")
+
+
+def download_file(module, api, file_path, path, params, force_mode):
+    # Removing existing file.
+    if force_mode and os.path.exists(file_path):
+        os.remove(file_path)
+    rsp = api.get(path, params=params, stream=True)
+    if rsp.status_code > 300:
+        return module.fail_json(msg='Fail to download file: %s' % rsp.text)
+    with open(file_path, 'wb') as f:
+        for chunk in rsp.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+    return module.exit_json(msg='File downloaded successfully',
+                            changed=True)
+
+
 def main():
     argument_specs = dict(
         force_mode=dict(type='bool', default=True),
@@ -153,46 +197,10 @@ def main():
     force_mode = module.params['force_mode']
 
     if upload:
-        if not os.path.exists(file_path):
-            return module.fail_json(msg=('File not found : %s' % file_path))
-        file_name = os.path.basename(file_path)
-        # Handle special case of upgrade controller using .pkg file which will be uploaded to upgrade_pkgs directory
-        if file_name.lower().endswith('.pkg'):
-            uri = 'controller://upgrade_pkgs'
-            path = 'fileservice/uploads'
-        else:
-            uri = 'controller://%s' % module.params.get('path', '').split('?')[0]
-        changed = False
-        file_uri = 'fileservice?uri=%s' % uri
-        rsp = api.post(file_uri, tenant=tenant, tenant_uuid=tenant_uuid,
-                       timeout=timeout)
-        with open(file_path, "rb") as f:
-            f_data = {"file": (file_name, f, "application/octet-stream"),
-                      "uri": uri}
-            m = MultipartEncoder(fields=f_data)
-            headers = {'Content-Type': m.content_type}
-            rsp = api.post(path, data=m, headers=headers,
-                           verify=False)
-            if rsp.status_code > 300:
-                return module.fail_json(msg='Fail to upload file: %s' %
-                                        rsp.text)
-            else:
-                return module.exit_json(
-                    changed=True, msg="File uploaded successfully")
+        upload_file(module, api, file_path, tenant, tenant_uuid, timeout)
 
     elif not upload:
-        # Removing existing file.
-        if force_mode and os.path.exists(file_path):
-            os.remove(file_path)
-        rsp = api.get(path, params=params, stream=True)
-        if rsp.status_code > 300:
-            return module.fail_json(msg='Fail to download file: %s' % rsp.text)
-        with open(file_path, 'wb') as f:
-            for chunk in rsp.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-        return module.exit_json(msg='File downloaded successfully',
-                                changed=True)
+        download_file(module, api, file_path, path, params, force_mode)
 
 
 if __name__ == '__main__':
