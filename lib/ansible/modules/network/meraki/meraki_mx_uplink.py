@@ -28,6 +28,14 @@ options:
       - Specifies whether object should be queried, created/modified, or removed.
       choices: [absent, present, query]
       default: query
+    org_name:
+        description:
+        - Name of organization associated to a network.
+        type: str
+    org_id:
+        description:
+        - ID of organization associated to a network.
+        type: str
     net_name:
       description:
       - Name of network which VLAN is in or should be in.
@@ -35,145 +43,153 @@ options:
     net_id:
       description:
       - ID of network which VLAN is in or should be in.
-    vlan_id:
+    wan1:
       description:
-      - ID number of VLAN.
-      - ID should be between 1-4096.
+      - Configuration of WAN1 uplink
+      type: dict
+      suboptions:
+        bandwidth_limits:
+          description:
+          - Structure for configuring bandwidth limits
+          type: dict
+          suboptions:
+            limit_up:
+              description:
+              - Maximum upload speed for interface
+              type: int
+            limit_down:
+              description:
+              - Maximum download speed for interface
+              type: int
+    wan2:
+      description:
+      - Configuration of WAN2 uplink
+      type: dict
+      suboptions:
+        bandwidth_limits:
+          description:
+          - Structure for configuring bandwidth limits
+          type: dict
+          suboptions:
+            limit_up:
+              description:
+              - Maximum upload speed for interface
+              type: int
+            limit_down:
+              description:
+              - Maximum download speed for interface
+              type: int
+    cellular:
+      description:
+      - Configuration of cellular uplink
+      type: dict
+      suboptions:
+        bandwidth_limits:
+          description:
+          - Structure for configuring bandwidth limits
+          type: dict
+          suboptions:
+            limit_up:
+              description:
+              - Maximum upload speed for interface
+              type: int
+            limit_down:
+              description:
+              - Maximum download speed for interface
+              type: int
 author:
 - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
+- name: Set MX uplink settings
+  meraki_mx_uplink:
+    auth_key: '{{auth_key}}'
+    state: present
+    org_name: '{{test_org_name}}'
+    net_name: '{{test_net_name}} - Uplink'
+    wan1:
+      bandwidth_limits:
+        limit_down: 1000000
+        limit_up: 1000
+    cellular:
+      bandwidth_limits:
+        limit_down: 0
+        limit_up: 0
+  delegate_to: localhost
+
+- name: Query MX uplink settings
+  meraki_mx_uplink:
+    auth_key: '{{auth_key}}'
+    state: query
+    org_name: '{{test_org_name}}'
+    net_name: '{{test_net_name}} - Uplink'
+  delegate_to: localhost
 
 '''
 
 RETURN = r'''
 
-response:
+data:
   description: Information about the organization which was created or modified
   returned: success
   type: complex
   contains:
-    applianceIp:
-      description: IP address of Meraki appliance in the VLAN
-      returned: success
-      type: str
-      sample: 192.0.1.1
-    dnsnamservers:
-      description: IP address or Meraki defined DNS servers which VLAN should use by default
-      returned: success
-      type: str
-      sample: upstream_dns
-    fixedIpAssignments:
-      description: List of MAC addresses which have IP addresses assigned.
+    wan1:
+      description: WAN1 interface
       returned: success
       type: complex
       contains:
-        macaddress:
-          description: MAC address which has IP address assigned to it. Key value is the actual MAC address.
+        bandwidth_limits:
+          description: Structure for uplink bandwidth limits
           returned: success
           type: complex
           contains:
-            ip:
-              description: IP address which is assigned to the MAC address.
+            limit_up:
+              description: Upload bandwidth limit
               returned: success
-              type: str
-              sample: 192.0.1.4
-            name:
-              description: Descriptive name for binding.
+              type: int
+            limit_down:
+              description: Download bandwidth limit
               returned: success
-              type: str
-              sample: fixed_ip
-    reservedIpRanges:
-      description: List of IP address ranges which are reserved for static assignment.
+              type: int
+    wan2:
+      description: WAN2 interface
       returned: success
       type: complex
       contains:
-        comment:
-          description: Description for IP address reservation.
+        bandwidth_limits:
+          description: Structure for uplink bandwidth limits
           returned: success
-          type: str
-          sample: reserved_range
-        end:
-          description: Last IP address in reservation range.
-          returned: success
-          type: str
-          sample: 192.0.1.10
-        start:
-          description: First IP address in reservation range.
-          returned: success
-          type: str
-          sample: 192.0.1.5
-    id:
-      description: VLAN ID number.
-      returned: success
-      type: int
-      sample: 2
-    name:
-      description: Descriptive name of VLAN.
-      returned: success
-      type: str
-      sample: TestVLAN
-    networkId:
-      description: ID number of Meraki network which VLAN is associated to.
-      returned: success
-      type: str
-      sample: N_12345
-    subnet:
-      description: CIDR notation IP subnet of VLAN.
-      returned: success
-      type: str
-      sample: "192.0.1.0/24"
-    dhcpHandling:
-      description: Status of DHCP server on VLAN.
-      returned: success
-      type: str
-      sample: Run a DHCP server
-    dhcpLeaseTime:
-      description: DHCP lease time when server is active.
-      returned: success
-      type: str
-      sample: 1 day
-    dhcpBootOptionsEnabled:
-      description: Whether DHCP boot options are enabled.
-      returned: success
-      type: bool
-      sample: no
-    dhcpBootNextServer:
-      description: DHCP boot option to direct boot clients to the server to load the boot file from.
-      returned: success
-      type: str
-      sample: 192.0.1.2
-    dhcpBootFilename:
-      description: Filename for boot file.
-      returned: success
-      type: str
-      sample: boot.txt
-    dhcpOptions:
-      description: DHCP options.
+          type: complex
+          contains:
+            limit_up:
+              description: Upload bandwidth limit
+              returned: success
+              type: int
+            limit_down:
+              description: Download bandwidth limit
+              returned: success
+              type: int
+    cellular:
+      description: cellular interface
       returned: success
       type: complex
       contains:
-        code:
-          description:
-            - Code for DHCP option.
-            - Integer between 2 and 254.
+        bandwidth_limits:
+          description: Structure for uplink bandwidth limits
           returned: success
-          type: int
-          sample: 43
-        type:
-          description:
-            - Type for DHCP option.
-            - Choices are C(text), C(ip), C(hex), C(integer).
-          returned: success
-          type: str
-          sample: text
-        value:
-          description: Value for the DHCP option.
-          returned: success
-          type: str
-          sample: 192.0.1.2
+          type: complex
+          contains:
+            limit_up:
+              description: Upload bandwidth limit
+              returned: success
+              type: int
+            limit_down:
+              description: Download bandwidth limit
+              returned: success
+              type: int
 '''
 
 import os
@@ -292,7 +308,8 @@ def main():
                         payload['bandwidthLimits'][interface]['limitDown'] = None
         if meraki.is_update_required(original, payload):
             if meraki.module.check_mode is True:
-                diff = recursive_diff(clean_custom_format(meraki_struct_to_custom_format(original)), clean_custom_format(meraki_struct_to_custom_format(payload)))
+                diff = recursive_diff(clean_custom_format(meraki_struct_to_custom_format(original)),
+                                      clean_custom_format(meraki_struct_to_custom_format(payload)))
                 original.update(payload)
                 meraki.result['data'] = clean_custom_format(meraki_struct_to_custom_format(original))
                 meraki.result['diff'] = {'before': diff[0],
