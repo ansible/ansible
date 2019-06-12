@@ -1,0 +1,3 @@
+bugfixes:
+- win_chocolatey - Install the specific Chocolatey version if the ``version`` option is set.
+- win_chocolatey - Better support detecting multiple packages installed at different versions on newer Chocolatey releases
