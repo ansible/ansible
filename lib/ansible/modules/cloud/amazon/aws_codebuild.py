@@ -283,8 +283,6 @@ project:
       sample: 2018-04-17T16:56:03.245000+02:00
 '''
 
-import traceback
-from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule, get_boto3_client_method_parameters
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
 
