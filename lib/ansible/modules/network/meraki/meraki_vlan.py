@@ -259,9 +259,9 @@ response:
           sample: 192.0.1.2
 '''
 
-import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -372,12 +372,16 @@ def main():
                    'subnet': meraki.params['subnet'],
                    'applianceIp': meraki.params['appliance_ip'],
                    }
-        if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']) is False:
+        if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']) is False:  # Create new VLAN
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('create', net_id=net_id)
             response = meraki.request(path, method='POST', payload=json.dumps(payload))
             meraki.result['changed'] = True
             meraki.result['data'] = response
-        else:
+        else:  # Update existing VLAN
             path = meraki.construct_path('get_one', net_id=net_id, custom={'vlan_id': meraki.params['vlan_id']})
             original = meraki.request(path, method='GET')
             if meraki.params['dns_nameservers']:
@@ -393,30 +397,34 @@ def main():
                 payload['vpnNatSubnet'] = meraki.params['vpn_nat_subnet']
             ignored = ['networkId']
             if meraki.is_update_required(original, payload, optional_ignore=ignored):
+                meraki.result['diff'] = dict()
+                diff = recursive_diff(original, payload)
+                meraki.result['diff']['before'] = diff[0]
+                meraki.result['diff']['after'] = diff[1]
+                if meraki.module.check_mode is True:
+                    original.update(payload)
+                    meraki.result['changed'] = True
+                    meraki.result['data'] = original
+                    meraki.exit_json(**meraki.result)
                 path = meraki.construct_path('update', net_id=net_id) + str(meraki.params['vlan_id'])
                 response = meraki.request(path, method='PUT', payload=json.dumps(payload))
                 meraki.result['changed'] = True
                 meraki.result['data'] = response
             else:
+                if meraki.module.check_mode is True:
+                    meraki.result['data'] = original
+                    meraki.exit_json(**meraki.result)
                 meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']):
+            if meraki.module.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])
             response = meraki.request(path, 'DELETE')
             meraki.result['changed'] = True
             meraki.result['data'] = response
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
-
-    # execute checks for argument completeness
-
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
