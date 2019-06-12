@@ -53,8 +53,8 @@ options:
     description:
     - Control if the volume group exists.
     type: str
-    choices: [ "absent", "present" ]
-    default: "present"
+    choices: [ absent, present ]
+    default: present
   force:
     description:
     - If C(yes), allows to remove volume group with logical volumes.
