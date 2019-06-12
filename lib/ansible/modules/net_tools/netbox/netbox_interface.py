@@ -44,7 +44,7 @@ options:
       device:
         description:
           - |
-            Name of the device the interface will be associated with (case-sensitive). 
+            Name of the device the interface will be associated with (case-sensitive).
             Required when app parameter is not specified or is set as "dcim".
         required: true
         type: str
