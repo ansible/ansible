@@ -1195,8 +1195,7 @@ class RedfishUtils(object):
             result['ret'] = True
             data = response['data']
             if key in data:
-                response = self.get_request(self.root_uri + chassis_uri +
-                                            "/" + key)
+                response = self.get_request(self.root_uri + data[key]['@odata.id'])
                 data = response['data']
                 if 'PowerControl' in data:
                     if len(data['PowerControl']) > 0:
