@@ -40,7 +40,7 @@ To avoid such behaviour and generate long lines it is possible to use ``width`` 
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying Python functions.
+While it would be nicer to use a construction like ``float("inf")`` instead of a hardcoded number, unfortunately the filter doesn't support proxying Python functions.
 Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
 
 
@@ -114,7 +114,10 @@ Omitting Parameters
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
-      file: dest={{ item.path }} state=touch mode={{ item.mode | default(omit) }}
+      file:
+        dest: "{{ item.path }}"
+        state: touch
+        mode: "{{ item.mode | default(omit) }}"
       loop:
         - path: /tmp/foo
         - path: /tmp/bar
@@ -124,9 +127,9 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
-.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
-      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (Python null) value will cause the
-      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+.. note:: If you are "chaining" additional filters after the ``default(omit)`` filter, you should instead do something like this:
+      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the
+      later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to
       the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
