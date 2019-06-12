@@ -182,7 +182,9 @@ pipeline:
       type: int
 '''
 
+import copy
 import traceback
+
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_policies
@@ -270,7 +272,7 @@ def main():
 
     if state == 'present':
         if 'pipeline' in found_code_pipeline:
-            pipeline_dict = found_code_pipeline['pipeline']
+            pipeline_dict = copy.deepcopy(found_code_pipeline['pipeline'])
             # Update dictionary with provided module params:
             pipeline_dict['roleArn'] = module.params['role_arn']
             pipeline_dict['artifactStore'] = module.params['artifact_store']
