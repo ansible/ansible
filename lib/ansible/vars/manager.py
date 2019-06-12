@@ -660,10 +660,9 @@ class VariableManager:
         '''
         Sets a value in the vars_cache for a host.
         '''
-        host_name = host.get_name()
-        if host_name not in self._vars_cache:
-            self._vars_cache[host_name] = dict()
-        if varname in self._vars_cache[host_name] and isinstance(self._vars_cache[host_name][varname], MutableMapping) and isinstance(value, MutableMapping):
-            self._vars_cache[host_name] = combine_vars(self._vars_cache[host_name], {varname: value})
+        if host not in self._vars_cache:
+            self._vars_cache[host] = dict()
+        if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
+            self._vars_cache[host] = combine_vars(self._vars_cache[host], {varname: value})
         else:
-            self._vars_cache[host_name][varname] = value
+            self._vars_cache[host][varname] = value
