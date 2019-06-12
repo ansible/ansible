@@ -8,10 +8,10 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=sanity/1
-    - env: T=sanity/2
-    - env: T=sanity/3
-    - env: T=sanity/4
+    - env: T=rhel/8.0/1 S=dev
+    - env: T=rhel/8.0/2 S=dev
+    - env: T=rhel/8.0/3 S=dev
+    - env: T=rhel/8.0/4 S=dev
 
     - env: T=units/2.6
     - env: T=units/2.7
@@ -170,6 +170,7 @@ matrix:
 
     - env: T=hcloud/2.7/1
     - env: T=hcloud/3.6/1
+
 branches:
   except:
     - "*-patch-*"
