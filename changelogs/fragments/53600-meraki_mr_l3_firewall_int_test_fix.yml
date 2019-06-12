@@ -1,0 +1,2 @@
+minor_changes:
+  - meraki_mr_l3_firewall - Integration test now uses net_id in some tests for improved code coverage.
