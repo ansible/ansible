@@ -1,0 +1,2 @@
+bugfixes:
+  - option is marked as required but specifies a default.(https://github.com/ansible/ansible/pull/57257)
