@@ -196,6 +196,16 @@ EXAMPLES = r'''
     owner: foo
     group: foo
 
+- name: Remove file (delete file)
+  file:
+    path: /etc/foo
+    state: absent
+
+- name: Recursively remove directory
+  file:
+    path: /etc/foo
+    state: absent
+
 '''
 RETURN = r'''
 
