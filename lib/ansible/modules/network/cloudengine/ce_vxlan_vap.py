@@ -703,9 +703,6 @@ class VxlanVap(object):
 
     def config_vap_vlan(self):
         """configure a VLAN as a service access point"""
-        #
-        # if not self.vap_info:
-        #     self.module.fail_json(msg="Error: Bridge domain %s does not exist." % self.bridge_domain_id)
 
         xml_str = ""
         if self.state == "present":
