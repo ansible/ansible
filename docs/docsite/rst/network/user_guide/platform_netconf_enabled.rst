@@ -110,7 +110,7 @@ You can either specify the private key used in the SSH config file:
 
   IdentityFile "/absolute/path/to/private-key.pem"
 
-Or you can use an ssh-agent
+Or you can use an ssh-agent.
 
 ansible_network_os auto-detection
 ---------------------------------
