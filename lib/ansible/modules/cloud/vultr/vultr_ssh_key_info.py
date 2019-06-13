@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# (c) 2019, René Moser <mail@renemoser.net>
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,23 +15,25 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vultr_ssh_key_facts
-short_description: Gather facts about the Vultr SSH keys available.
+module: vultr_ssh_key_info
+short_description: Get infos about the Vultr SSH keys available.
 description:
-  - Gather facts about SSH keys available.
-version_added: "2.7"
-author: "Yanis Guenane (@Spredzy)"
+  - Get infos about SSH keys available.
+version_added: "2.9"
+author:
+  - "Yanis Guenane (@Spredzy)"
+  - "René Moser (@resmo)"
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = r'''
-- name: Gather Vultr SSH keys facts
-  local_action:
-    module: vultr_ssh_key_facts
+- name: Get Vultr SSH keys infos
+  vultr_ssh_key_info:
+  register: result
 
-- name: Print the gathered facts
+- name: Print the infos
   debug:
-    var: ansible_facts.vultr_ssh_key_facts
+    var: result.vultr_ssh_key_info
 '''
 
 RETURN = r'''
@@ -59,19 +63,31 @@ vultr_api:
       returned: success
       type: str
       sample: "https://api.vultr.com"
-ansible_facts:
-  description: Response from Vultr API
+vultr_ssh_key_info:
+  description: Response from Vultr API as list
   returned: success
   type: complex
   contains:
-    "vultr_ssh_key_facts": [
-      {
-        "date_created": "2018-02-24 15:04:01",
-        "id": "5abf426403479",
-        "name": "me@home",
-        "ssh_key": "ssh-rsa AAAAB3Nz...NnPz me@home"
-      }
-    ]
+    id:
+      description: ID of the ssh key
+      returned: success
+      type: str
+      sample: 5904bc6ed9234
+    name:
+      description: Name of the ssh key
+      returned: success
+      type: str
+      sample: my ssh key
+    date_created:
+      description: Date the ssh key was created
+      returned: success
+      type: str
+      sample: "2017-08-26 12:47:48"
+    ssh_key:
+      description: SSH public key
+      returned: success
+      type: str
+      sample: "ssh-rsa AA... someother@example.com"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -81,10 +97,10 @@ from ansible.module_utils.vultr import (
 )
 
 
-class AnsibleVultrSSHKeyFacts(Vultr):
+class AnsibleVultrSSHKeyInfo(Vultr):
 
     def __init__(self, module):
-        super(AnsibleVultrSSHKeyFacts, self).__init__(module, "vultr_ssh_key_facts")
+        super(AnsibleVultrSSHKeyInfo, self).__init__(module, "vultr_ssh_key_info")
 
         self.returns = {
             'SSHKEYID': dict(key='id'),
@@ -112,12 +128,9 @@ def main():
         supports_check_mode=True,
     )
 
-    sshkey_facts = AnsibleVultrSSHKeyFacts(module)
-    result = sshkey_facts.get_result(parse_keys_list(sshkey_facts.get_sshkeys()))
-    ansible_facts = {
-        'vultr_ssh_key_facts': result['vultr_ssh_key_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts, **result)
+    sshkey_info = AnsibleVultrSSHKeyInfo(module)
+    result = sshkey_info.get_result(parse_keys_list(sshkey_info.get_sshkeys()))
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
