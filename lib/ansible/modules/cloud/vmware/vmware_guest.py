@@ -463,7 +463,7 @@ EXAMPLES = r'''
       - 192.168.1.1
       - 192.168.1.2
     - vlan: 1234
-      type: dhcp
+      type: static
     customization:
       autologon: yes
       dns_servers:
