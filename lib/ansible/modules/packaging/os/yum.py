@@ -187,7 +187,7 @@ options:
     description:
       - Amount of time to wait for the yum lockfile to be freed.
     required: false
-    default: 0
+    default: 30
     type: int
     version_added: "2.8"
   install_weak_deps:
