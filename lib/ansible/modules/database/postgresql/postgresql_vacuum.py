@@ -194,7 +194,6 @@ class Vacuum():
         """
         Check the table or columns that need to be vacuumed/analyzed exist.
         """
-
         if '.' in self.module.params['table']:
             tmp = self.module.params['table'].split('.')
             table_schema = tmp[-2]
@@ -228,7 +227,6 @@ class Vacuum():
 
     def do_vacuum(self):
         """Do VACUUM."""
-
         self.query_frag.append('VACUUM')
 
         if (self.module.params.get('freeze') or
@@ -251,14 +249,12 @@ class Vacuum():
 
     def do_analyze(self):
         """Do ANALYZE."""
-
         self.query_frag.append('ANALYZE')
 
         self.__do_rest_of_task()
 
     def do_full_vacuum(self):
         """Do VACUUM FULL."""
-
         self.query_frag.append('VACUUM FULL')
 
         if self.module.params.get('analyze'):
@@ -273,7 +269,6 @@ class Vacuum():
         Complete query fragments list self.query_frag if needed and make SQL query.
         If check_mode, change self.changed and return None, otherwise, execute SQL.
         """
-
         if self.module.params.get('table'):
             self.query_frag.append('%s' % pg_quote_identifier(self.module.params['table'], 'table'))
 
