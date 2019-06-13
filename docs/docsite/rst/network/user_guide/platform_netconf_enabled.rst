@@ -84,7 +84,7 @@ Example NETCONF Task with configurable variables
      vars:
        ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
 
-Note: For netconf connection plugin configurable variables .. _Refer: https://docs.ansible.com/ansible/latest/plugins/connection/netconf.html
+Note: For netconf connection plugin configurable variables see :ref:`netconf <netconf_connection>`.
 
 Bastion/Jumphost Configuration
 ------------------------------
