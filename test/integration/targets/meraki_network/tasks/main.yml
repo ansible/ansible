@@ -198,7 +198,7 @@
 
   - assert:
       that:
-        - disable_remote_status.data.disableRemoteStatusPage == False
+        - disable_remote_status.data.disable_remote_status_page == False
 
   - name: Disable remote status page
     meraki_network:
@@ -215,7 +215,7 @@
 
   - assert:
       that:
-        - enable_remote_status.data.disableRemoteStatusPage == True
+        - enable_remote_status.data.disable_remote_status_page == True
 
   - name: Test status pages are mutually exclusive when on
     meraki_network:
@@ -300,15 +300,15 @@
     assert:
       that:
         - create_net_combined.data.type == 'combined'
-        - create_net_combined.data.disableMyMerakiCom == True
-        - enable_meraki_com.data.disableMyMerakiCom == False
+        - create_net_combined.data.disable_my_meraki_com == True
+        - enable_meraki_com.data.disable_my_meraki_com == False
         - '"org_name or org_id parameters are required" in create_net_no_org.msg'
         - '"IntTestNetworkAppliance" in create_net_appliance_no_tz.data.name'
         - create_net_appliance_no_tz.changed == True
         - '"IntTestNetworkSwitch" in create_net_switch.data.name'
         - '"IntTestNetworkSwitchOrgID" in create_net_switch_org_id.data.name'
         - '"IntTestNetworkWireless" in create_net_wireless.data.name'
-        - create_net_wireless.data.disableMyMerakiCom == True
+        - create_net_wireless.data.disable_my_meraki_com == True
         - create_net_wireless_idempotent.changed == False
         - create_net_wireless_idempotent.data is defined
         - '"first_tag" in create_net_tag.data.tags'
