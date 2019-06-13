@@ -138,6 +138,50 @@ options:
           for more information about preemptible VM instances.'
         required: false
         type: bool
+      accelerators:
+        description:
+        - A list of hardware accelerators to be attached to each node.
+        required: false
+        version_added: 2.9
+        suboptions:
+          accelerator_count:
+            description:
+            - The number of the accelerator cards exposed to an instance.
+            required: false
+          accelerator_type:
+            description:
+            - The accelerator type resource name.
+            required: false
+      disk_type:
+        description:
+        - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
+          If unspecified, the default disk type is 'pd-standard' .
+        required: false
+        version_added: 2.9
+      min_cpu_platform:
+        description:
+        - Minimum CPU platform to be used by this instance. The instance may be scheduled
+          on the specified or newer CPU platform .
+        required: false
+        version_added: 2.9
+      taints:
+        description:
+        - List of kubernetes taints to be applied to each node.
+        required: false
+        version_added: 2.9
+        suboptions:
+          key:
+            description:
+            - Key for taint.
+            required: false
+          value:
+            description:
+            - Value for taint.
+            required: false
+          effect:
+            description:
+            - Effect for taint.
+            required: false
   initial_node_count:
     description:
     - The initial node count for the pool. You must ensure that your Compute Engine
@@ -194,6 +238,29 @@ options:
         - Specifies the Auto Upgrade knobs for the node pool.
         required: false
         suboptions: {}
+  max_pods_constraint:
+    description:
+    - The constraint on the maximum number of pods that can be run simultaneously
+      on a node in the node pool.
+    required: false
+    version_added: 2.9
+    suboptions:
+      max_pods_per_node:
+        description:
+        - Constraint enforced on the max num of pods per node.
+        required: false
+  conditions:
+    description:
+    - Which conditions caused the current node pool state.
+    required: false
+    version_added: 2.9
+    suboptions:
+      code:
+        description:
+        - Machine-friendly representation of the condition.
+        - 'Some valid choices include: "UNKNOWN", "GCE_STOCKOUT", "GKE_SERVICE_ACCOUNT_DELETED",
+          "GCE_QUOTA_EXCEEDED", "SET_BY_OPERATOR"'
+        required: false
   cluster:
     description:
     - The cluster this node pool belongs to.
@@ -337,6 +404,55 @@ config:
         for more information about preemptible VM instances.'
       returned: success
       type: bool
+    accelerators:
+      description:
+      - A list of hardware accelerators to be attached to each node.
+      returned: success
+      type: complex
+      contains:
+        acceleratorCount:
+          description:
+          - The number of the accelerator cards exposed to an instance.
+          returned: success
+          type: int
+        acceleratorType:
+          description:
+          - The accelerator type resource name.
+          returned: success
+          type: str
+    diskType:
+      description:
+      - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd') If
+        unspecified, the default disk type is 'pd-standard' .
+      returned: success
+      type: str
+    minCpuPlatform:
+      description:
+      - Minimum CPU platform to be used by this instance. The instance may be scheduled
+        on the specified or newer CPU platform .
+      returned: success
+      type: str
+    taints:
+      description:
+      - List of kubernetes taints to be applied to each node.
+      returned: success
+      type: complex
+      contains:
+        key:
+          description:
+          - Key for taint.
+          returned: success
+          type: str
+        value:
+          description:
+          - Value for taint.
+          returned: success
+          type: str
+        effect:
+          description:
+          - Effect for taint.
+          returned: success
+          type: str
 initialNodeCount:
   description:
   - The initial node count for the pool. You must ensure that your Compute Engine
@@ -344,6 +460,16 @@ initialNodeCount:
     available firewall and routes quota.
   returned: success
   type: int
+status:
+  description:
+  - Status of nodes in this pool instance.
+  returned: success
+  type: str
+statusMessage:
+  description:
+  - Additional information about the current status of this node pool instance.
+  returned: success
+  type: str
 version:
   description:
   - The version of the Kubernetes of this node.
@@ -410,6 +536,34 @@ management:
             of the upgrade.
           returned: success
           type: str
+maxPodsConstraint:
+  description:
+  - The constraint on the maximum number of pods that can be run simultaneously on
+    a node in the node pool.
+  returned: success
+  type: complex
+  contains:
+    maxPodsPerNode:
+      description:
+      - Constraint enforced on the max num of pods per node.
+      returned: success
+      type: int
+conditions:
+  description:
+  - Which conditions caused the current node pool state.
+  returned: success
+  type: complex
+  contains:
+    code:
+      description:
+      - Machine-friendly representation of the condition.
+      returned: success
+      type: str
+podIpv4CidrSize:
+  description:
+  - The pod CIDR block size per node in this node pool.
+  returned: success
+  type: int
 cluster:
   description:
   - The cluster this node pool belongs to.
@@ -455,6 +609,10 @@ def main():
                     local_ssd_count=dict(type='int'),
                     tags=dict(type='list', elements='str'),
                     preemptible=dict(type='bool'),
+                    accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
+                    disk_type=dict(type='str'),
+                    min_cpu_platform=dict(type='str'),
+                    taints=dict(type='list', elements='dict', options=dict(key=dict(type='str'), value=dict(type='str'), effect=dict(type='str'))),
                 ),
             ),
             initial_node_count=dict(required=True, type='int'),
@@ -463,6 +621,8 @@ def main():
             management=dict(
                 type='dict', options=dict(auto_upgrade=dict(type='bool'), auto_repair=dict(type='bool'), upgrade_options=dict(type='dict', options=dict()))
             ),
+            max_pods_constraint=dict(type='dict', options=dict(max_pods_per_node=dict(type='int'))),
+            conditions=dict(type='list', elements='dict', options=dict(code=dict(type='str'))),
             cluster=dict(required=True, type='dict'),
             location=dict(required=True, type='str', aliases=['region', 'zone']),
         )
@@ -521,6 +681,8 @@ def resource_to_request(module):
         u'version': module.params.get('version'),
         u'autoscaling': NodePoolAutoscaling(module.params.get('autoscaling', {}), module).to_request(),
         u'management': NodePoolManagement(module.params.get('management', {}), module).to_request(),
+        u'maxPodsConstraint': NodePoolMaxpodsconstraint(module.params.get('max_pods_constraint', {}), module).to_request(),
+        u'conditions': NodePoolConditionsArray(module.params.get('conditions', []), module).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -597,9 +759,14 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'config': NodePoolConfig(response.get(u'config', {}), module).from_response(),
         u'initialNodeCount': module.params.get('initial_node_count'),
+        u'status': response.get(u'status'),
+        u'statusMessage': response.get(u'statusMessage'),
         u'version': module.params.get('version'),
         u'autoscaling': NodePoolAutoscaling(response.get(u'autoscaling', {}), module).from_response(),
         u'management': NodePoolManagement(response.get(u'management', {}), module).from_response(),
+        u'maxPodsConstraint': NodePoolMaxpodsconstraint(response.get(u'maxPodsConstraint', {}), module).from_response(),
+        u'conditions': NodePoolConditionsArray(response.get(u'conditions', []), module).from_response(),
+        u'podIpv4CidrSize': response.get(u'podIpv4CidrSize'),
     }
 
 
@@ -673,6 +840,10 @@ class NodePoolConfig(object):
                 u'localSsdCount': self.request.get('local_ssd_count'),
                 u'tags': self.request.get('tags'),
                 u'preemptible': self.request.get('preemptible'),
+                u'accelerators': NodePoolAcceleratorsArray(self.request.get('accelerators', []), self.module).to_request(),
+                u'diskType': self.request.get('disk_type'),
+                u'minCpuPlatform': self.request.get('min_cpu_platform'),
+                u'taints': NodePoolTaintsArray(self.request.get('taints', []), self.module).to_request(),
             }
         )
 
@@ -689,8 +860,66 @@ class NodePoolConfig(object):
                 u'localSsdCount': self.request.get(u'localSsdCount'),
                 u'tags': self.request.get(u'tags'),
                 u'preemptible': self.request.get(u'preemptible'),
+                u'accelerators': NodePoolAcceleratorsArray(self.request.get(u'accelerators', []), self.module).from_response(),
+                u'diskType': self.request.get(u'diskType'),
+                u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
+                u'taints': NodePoolTaintsArray(self.request.get(u'taints', []), self.module).from_response(),
             }
         )
+
+
+class NodePoolAcceleratorsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'acceleratorCount': item.get('accelerator_count'), u'acceleratorType': item.get('accelerator_type')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'acceleratorCount': item.get(u'acceleratorCount'), u'acceleratorType': item.get(u'acceleratorType')})
+
+
+class NodePoolTaintsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'key': item.get('key'), u'value': item.get('value'), u'effect': item.get('effect')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'key': item.get(u'key'), u'value': item.get(u'value'), u'effect': item.get(u'effect')})
 
 
 class NodePoolAutoscaling(object):
@@ -752,6 +981,48 @@ class NodePoolUpgradeoptions(object):
 
     def from_response(self):
         return remove_nones_from_dict({})
+
+
+class NodePoolMaxpodsconstraint(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'maxPodsPerNode': self.request.get('max_pods_per_node')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'maxPodsPerNode': self.request.get(u'maxPodsPerNode')})
+
+
+class NodePoolConditionsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'code': item.get('code')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'code': item.get(u'code')})
 
 
 if __name__ == '__main__':
