@@ -45,7 +45,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
-from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -60,21 +60,10 @@ class StrategySentinel:
     pass
 
 
-# TODO: this should probably be in the plugins/__init__.py, with
-#       a smarter mechanism to set all of the attributes based on
-#       the loaders created there
-class SharedPluginLoaderObj:
+def SharedPluginLoaderObj():
+    '''This only exists for backwards compat, do not use.
     '''
-    A simple object to make pass the various plugin loaders to
-    the forked processes over the queue easier
-    '''
-    def __init__(self):
-        self.action_loader = action_loader
-        self.connection_loader = connection_loader
-        self.filter_loader = filter_loader
-        self.test_loader = test_loader
-        self.lookup_loader = lookup_loader
-        self.module_loader = module_loader
+    return plugin_loader
 
 
 _sentinel = StrategySentinel()
@@ -268,8 +257,8 @@ class StrategyBase:
             return self._tqm.RUN_OK
 
     def get_hosts_remaining(self, play, hosts=None):
-        return [host for host in hosts
-                if host not in self._tqm._failed_hosts and host not in self._tqm._unreachable_hosts]
+        ignore = set(self._tqm._failed_hosts).union(self._tqm._unreachable_hosts)
+        return [host for host in hosts if host not in ignore]
 
     def get_failed_hosts(self, play, hosts=None):
         return [host for host in hosts if host in self._tqm._failed_hosts]
@@ -304,11 +293,6 @@ class StrategyBase:
 
         # and then queue the new task
         try:
-
-            # create a dummy object with plugin loaders set as an easier
-            # way to share them with the forked processes
-            shared_loader_obj = SharedPluginLoaderObj()
-
             queued = False
             starting_worker = self._cur_worker
             while True:
@@ -321,7 +305,7 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
+                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
@@ -883,7 +867,7 @@ class StrategyBase:
 
         bypass_host_loop = False
         try:
-            action = action_loader.get(handler.action, class_only=True)
+            action = plugin_loader.action_loader.get(handler.action, class_only=True)
             if getattr(action, 'BYPASS_HOST_LOOP', False):
                 bypass_host_loop = True
         except KeyError:
@@ -1080,7 +1064,7 @@ class StrategyBase:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]
             else:
-                connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+                connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
                 play_context.set_attributes_from_plugin(connection)
 
             if connection:
