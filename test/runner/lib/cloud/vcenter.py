@@ -102,6 +102,7 @@ class VcenterProvider(CloudProvider):
 
         self._set_cloud_config('vmware_test_platform', self.vmware_test_platform)
         if self._use_static_config():
+            self._set_cloud_config('vmware_test_platform', 'static')
             self._setup_static()
         elif self.vmware_test_platform == 'worldstream':
             self._setup_dynamic_baremetal()
@@ -250,7 +251,7 @@ class VcenterEnvironment(CloudEnvironment):
         :rtype: CloudEnvironmentConfig
         """
         vmware_test_platform = self._get_cloud_config('vmware_test_platform')
-        if vmware_test_platform == 'worldstream':
+        if vmware_test_platform in ('worldstream', 'static'):
             parser = ConfigParser()
             parser.read(self.config_path)
 
