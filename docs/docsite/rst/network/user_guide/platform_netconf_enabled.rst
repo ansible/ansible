@@ -88,7 +88,7 @@ Note: For netconf connection plugin configurable variables see :ref:`netconf <ne
 
 Bastion/Jumphost Configuration
 ------------------------------
-To use a jump host to connect to a netconf enabled device you must set the ANSIBLE_NETCONF_SSH_CONFIG environment variable.
+To use a jump host to connect to a NETCONF enabled device you must set the ``ANSIBLE_NETCONF_SSH_CONFIG`` environment variable.
 
 ANSIBLE_NETCONF_SSH_CONFIG can be set to either:
   - 1 or TRUE (to trigger the use of the default ssh config file ~/.ssh/config)
