@@ -76,7 +76,6 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a object
   gcp_storage_object:
-    name: ansible-storage-module
     action: download
     bucket: ansible-bucket
     src: modules.zip
