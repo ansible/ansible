@@ -46,7 +46,7 @@
 
 - assert:
     that: 
-      - test1_mod_install.changed
+      - test1_mod_remove.changed
       - "'ansible-semodule-test' not in semodule_out.stdout"
 
 
@@ -97,3 +97,91 @@
       - not test2_10_older.changed
       - test2_10_older.version == '1.0.1'
       - "'1.0.1' in semodule_out.stdout"
+
+- name: TEST 2 | cleanup
+  semodule:
+    src: test.te
+    state: absent
+
+# test 3 test force stuff
+
+- name: TEST 3 | install test module v1.0
+  semodule:
+    src: test.te
+
+- name: TEST 3 | force install modulev1.0.1
+  semodule:
+    src: test2.te
+    force: true
+  register: test3_force_install
+
+- name: TEST 3 | verify version 1.0.1 force installed
+  shell: semodule -l | grep ansible-semodule-test
+  register: semodule_out
+
+- assert:
+    that:
+      - test3_force_install.changed
+      - test3_force_install.version == '1.0.1'
+      - "'1.0.1' in semodule_out.stdout"
+
+- name: TEST 3 | cleanup
+  semodule:
+    src: test.te
+    state: absent
+
+# test check mode
+
+- name: TEST 4 | check mode
+  semodule:
+    src: test.te
+  check_mode: true
+  register: test4_check_mode_install
+
+- name: TEST 4 | verify .te not installed
+  shell: semodule -l
+  register: semodule_out
+
+- assert:
+    that:
+      - test4_check_mode_install.changed
+      - test4_check_mode_install.version == '1.0'
+      - "'ansible-semodule-test' not in semodule_out.stdout"
+
+- name: TEST 4 | install for latest check mode test
+  semodule:
+    src: test.te
+
+- name: TEST 4 | check mode upgrade
+  semodule:
+    src: test2.te
+    state: latest
+  check_mode: true
+  register: test4_check_mode_upgrade
+
+- name: TEST 4 | verify upgrade
+  shell: semodule -l | grep ansible-semodule-test
+  register: semodule_out
+
+- assert:
+    that:
+      - test4_check_mode_upgrade.changed
+      - test4_check_mode_upgrade.version == '1.0.1'
+      - "'ansible-semodule-test\t1.0' in semodule_out.stdout_lines"
+
+- name: TEST 4 | check mode remove
+  semodule:
+    src: test2.te
+    state: absent
+  check_mode: true
+  register: test4_check_mode_remove
+
+- name: TEST 4 | verify remove
+  shell: semodule -l
+  register: semodule_out
+
+- assert:
+    that:
+      - test4_check_mode_remove.changed
+      - test4_check_mode_remove.version == '1.0'
+      - "'ansible-semodule-test' in semodule_out.stdout"

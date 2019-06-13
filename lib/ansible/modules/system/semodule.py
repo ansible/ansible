@@ -43,12 +43,6 @@ def module_info(name, semodule_info):
             cur_pol['name'] ,cur_pol['version'] = line.split('\t')
     return cur_pol
 
-
-def check_mode_exit(module, changed, policy_name, policy_version):
-    if module.check_mode:
-        module.exit_json(changed=changed, name=policy_name, version=policy_version)
-
-
 def ensure(module, policy_def):
     changed = False
     apply_te_file(module, policy_def)
@@ -80,6 +74,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             src=dict(type='path', required=True),
+            force=dict(type='bool', required=False),
             state=dict(type='str', default='present', choices=['present', 'latest', 'absent'])
         ),
         supports_check_mode=True
