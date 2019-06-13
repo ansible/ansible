@@ -17,7 +17,7 @@ class ActionModule(ActionBase):
         else:
             return False, 'same'
 
-    def _module_exist_(self, name, semodule_info):
+    def _module_exist(self, name, semodule_info):
         if name in semodule_info:
             return True
         return False
@@ -32,6 +32,15 @@ class ActionModule(ActionBase):
         result = self._low_level_execute_command('semodule -r {module}'.format(module=name))
         if result['rc'] != 0:
             AnsibleError('failed to remove policy')
+
+    def _check_mode(self, changed, policy_def, result):
+        if self._play_context.check_mode:
+            result['changed'] = changed
+            result['version'] = policy_def['version']
+            result['name'] = policy_def['name']
+            #self._remove_tmp_path(self._connection._shell.tmpdir)
+            return result
+        return None
 
     def _copy_te_file(self, file, dest, task_vars):
         local_checksum = checksum(file)
@@ -48,6 +57,7 @@ class ActionModule(ActionBase):
         new_module_args = self._task.args.copy()
         state = self._task.args.get('state', 'present')
         file_name = self._task.args.get('src', None)
+        force = self._task.args.get('force', None)
         tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
         try:
             te_file = self._find_needle('files', file_name)
@@ -59,12 +69,15 @@ class ActionModule(ActionBase):
         policy_def = semodule.parse_module_info(semodule.read_te_file(te_file))
         semodule_info = self._get_semodule_info()
         cur_pol = None
-        if self._module_exist_(policy_def['name'], semodule_info):
+        if self._module_exist(policy_def['name'], semodule_info):
             cur_pol = semodule.parse_pol_info(policy_def['name'], semodule_info)
         if state == 'latest':
-            if cur_pol:
+            if cur_pol or force:
                 ver_check = self._check_policy_version(policy_def['version'], cur_pol['version'])
-                if ver_check[1] == 'newer':
+                if ver_check[1] == 'newer' or force:
+                    check_res = self._check_mode(True, policy_def, result)
+                    if check_res:
+                        return check_res
                     self._copy_te_file(te_file, tmp_src, task_vars)
                     new_module_args.update(dict(src=tmp_src))
                     module_return = self._execute_module(module_name='semodule', module_args=new_module_args, task_vars=task_vars)
@@ -73,13 +86,21 @@ class ActionModule(ActionBase):
                     result['version'] = cur_pol['version']
                     result['name'] = cur_pol['name']
         elif state == 'present':
-            if not cur_pol:
+            if not cur_pol or force:
+                check_res = self._check_mode(True, policy_def, result)
+                if check_res:
+                    return check_res
                 self._copy_te_file(te_file, tmp_src, task_vars)
                 new_module_args.update(dict(src=tmp_src))
                 module_return = self._execute_module(module_name='semodule', module_args=new_module_args, task_vars=task_vars)
                 result.update(module_return)
+        # no need to copy extra files over to target
+        # when we can remove it from here
         elif state == 'absent':
             if cur_pol:
+                check_res = self._check_mode(True, cur_pol, result)
+                if check_res:
+                    return check_res
                 self._remove_module(policy_def['name'])
                 result['changed'] = True
                 result['name'] = cur_pol['name']
