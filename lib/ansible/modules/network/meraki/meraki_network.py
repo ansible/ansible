@@ -154,7 +154,7 @@ data:
         returned: success
         type: str
         sample: YourNet
-      organizationId:
+      organization_id:
         description: Organization ID which owns the network.
         returned: success
         type: str
@@ -164,7 +164,7 @@ data:
         returned: success
         type: str
         sample: " production wireless "
-      timeZone:
+      time_zone:
         description: Timezone where network resides.
         returned: success
         type: str
@@ -174,7 +174,7 @@ data:
         returned: success
         type: str
         sample: switch
-      disableMyMerakiCom:
+      disable_my_meraki_com:
         description: States whether U(my.meraki.com) and other device portals should be disabled.
         returned: success
         type: bool
