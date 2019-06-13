@@ -803,7 +803,10 @@
 
 # Test postgresql_vacuum module.
 - include: postgresql_vacuum.yml
-  when: postgres_version_resp.stdout is version('10', '>=')
+  when: postgres_version_resp.stdout is version('9.4', '>=') and
+        ansible_distribution == 'RedHat' or
+        ansible_distribution == 'CentOS' or
+        ansible_distribution == 'Ubuntu'
 
 # Test postgresql_set
 - include: postgresql_set.yml
