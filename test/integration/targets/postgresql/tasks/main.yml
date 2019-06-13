@@ -803,7 +803,8 @@
 
 # Test postgresql_vacuum module.
 - include: postgresql_vacuum.yml
-  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '18.04'
+  when: (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '18.04') or
+        (ansible_distribution == 'Fedora' and ansible_distribution_version == '29')
 
 # Test postgresql_set
 - include: postgresql_set.yml
