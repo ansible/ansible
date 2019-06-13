@@ -91,7 +91,7 @@ Bastion/Jumphost Configuration
 To use a jump host to connect to a NETCONF enabled device you must set the ``ANSIBLE_NETCONF_SSH_CONFIG`` environment variable.
 
 ``ANSIBLE_NETCONF_SSH_CONFIG`` can be set to either:
-  - 1 or TRUE (to trigger the use of the default ssh config file ~/.ssh/config)
+  - 1 or TRUE (to trigger the use of the default SSH config file ~/.ssh/config)
   - The absolute path to a custom ssh config file.
 
 The ssh config file should look something like: 
