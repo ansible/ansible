@@ -162,14 +162,12 @@ from ansible.module_utils.postgres import (
     exec_sql,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
 
 DISABLE_PAGE_SKIPPING_VER = 96000
 
 
-class Vacuum(object):
+class Vacuum():
 
     """Implements VACUUM [FULL] and/or ANALYZE PostgreSQL command behavior.
 
@@ -198,9 +196,9 @@ class Vacuum(object):
         """
 
         if '.' in self.module.params['table']:
-            t = self.module.params['table'].split('.')
-            table_schema = t[-2]
-            table_name = t[-1]
+            tmp = self.module.params['table'].split('.')
+            table_schema = tmp[-2]
+            table_name = tmp[-1]
         else:
             table_schema = 'public'
             table_name = self.module.params['table']
@@ -267,6 +265,7 @@ class Vacuum(object):
             self.query_frag.append('ANALYZE')
 
         self.__do_rest_of_task()
+        return None
 
     def __do_rest_of_task(self):
         """Do the rest of the task for all public methods.
