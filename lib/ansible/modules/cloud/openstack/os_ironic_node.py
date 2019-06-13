@@ -125,18 +125,6 @@ def _choose_id_value(module):
     return None
 
 
-# TODO(TheJulia): Change this over to use the machine patch method
-# in shade once it is available.
-def _prepare_instance_info_patch(instance_info):
-    patch = []
-    patch.append({
-        'op': 'replace',
-        'path': '/instance_info',
-        'value': instance_info
-    })
-    return patch
-
-
 def _is_true(value):
     true_values = [True, 'yes', 'Yes', 'True', 'true', 'present', 'on']
     if value in true_values:
@@ -306,8 +294,7 @@ def main():
             # deployment specific. Perhaps consider adding rebuild
             # support, although there is a known desire to remove
             # rebuild support from Ironic at some point in the future.
-            patch = _prepare_instance_info_patch(instance_info)
-            cloud.set_node_instance_info(uuid, patch)
+            cloud.update_machine(uuid, instance_info=instance_info)
             cloud.validate_node(uuid)
             if not wait:
                 cloud.activate_node(uuid, module.params['config_drive'])
@@ -322,7 +309,7 @@ def main():
 
         elif _is_false(module.params['state']):
             if node['provision_state'] not in "deleted":
-                cloud.purge_node_instance_info(uuid)
+                cloud.update_machine(uuid, instance_info={})
                 if not wait:
                     cloud.deactivate_node(uuid)
                 else:
