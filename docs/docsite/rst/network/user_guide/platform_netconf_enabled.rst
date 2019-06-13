@@ -94,7 +94,7 @@ To use a jump host to connect to a NETCONF enabled device you must set the ``ANS
   - 1 or TRUE (to trigger the use of the default SSH config file ~/.ssh/config)
   - The absolute path to a custom SSH config file.
 
-The ssh config file should look something like: 
+The SSH config file should look something like: 
 
 .. code-block:: ini
 
