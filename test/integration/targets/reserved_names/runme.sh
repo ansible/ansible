@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 set -eux
 
@@ -10,7 +10,7 @@ ansible -m debug -e 'name=attribute' localhost "$@" 2>&1|grep 'Found variable us
 ansible -m debug -e 'loop_with=private_attribute' localhost 2>&1|grep 'Found variable using reserved name: loop_with'
 
 # find right number of warnings
-[ $(ansible-playbook defined_warnings.yml "$@" 2>&1 |grep -c 'Found variable using reserved name:') -eq 3 ]
+[ $(ansible-playbook defined_warnings.yml "$@" 2>&1 |grep -c "Found variable using reserved name:") -eq 3 ]
 
 export ANSIBLE_RESERVED_VAR_NAMES='error'
 # these should fail in error
