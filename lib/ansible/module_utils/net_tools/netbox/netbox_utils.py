@@ -100,6 +100,8 @@ NO_DEFAULT_ID = set(
 
 DEVICE_STATUS = dict(offline=0, active=1, planned=2, staged=3, failed=4, inventory=5)
 
+VM_STATUS = dict(offline=0, active=1, staged=3)
+
 IP_ADDRESS_STATUS = dict(active=1, reserved=2, deprecated=3, dhcp=5)
 
 IP_ADDRESS_ROLE = dict(
