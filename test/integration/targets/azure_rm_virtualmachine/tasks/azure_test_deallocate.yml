@@ -1,0 +1,90 @@
+- include_tasks: setup.yml
+
+- name: Create minimal VM with defaults
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    admin_username: "testuser"
+    admin_password: "Pass123$$$abx!"
+    vm_size: Standard_A0
+    virtual_network: "{{ network_name }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: vm_output
+
+- name: Restart the virtual machine
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    restarted: yes
+    vm_size: Standard_A0
+  register: restart_result
+
+- name: Ensue VM was restarted
+  assert:
+    that:
+      - "azure_vm.powerstate in ['starting', 'running']"
+      - restart_result is changed
+
+- name: Deallocate the virtual machine
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    allocated: no
+    vm_size: Standard_A0
+  register: deallocate_result
+
+- name: Ensure VM was deallocated
+  assert:
+    that:
+      - azure_vm.powerstate == 'deallocated'
+      - deallocate_result is changed
+
+- name: Start the virtual machine
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    vm_size: Standard_A0
+  register: start_result
+
+- name: Ensure VM was started
+  assert:
+    that:
+      - "azure_vm.powerstate in ['starting', 'running']"
+      - start_result is changed
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+    remove_on_absent: all_autocreated
+
+- name: Destroy subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    virtual_network: "{{ network_name }}"
+    name: "{{ subnet_name }}"
+    state: absent
+
+- name: Destroy virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ network_name }}"
+    state: absent
+
+- name: Destroy availability set
+  azure_rm_availabilityset:
+    resource_group: "{{ resource_group }}"
+    name: "{{ availability_set }}"
+    state: absent
+
+- name: Destroy storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    force_delete_nonempty: yes
+    state: absent
