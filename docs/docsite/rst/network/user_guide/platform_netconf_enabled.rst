@@ -96,7 +96,7 @@ ANSIBLE_NETCONF_SSH_CONFIG can be set to either:
 
 The ssh config file should look something like: 
 
-.. code-block::
+.. code-block:: sourcecode
 
   Host *
     proxycommand ssh -o StrictHostKeyChecking=no -W %h:%p jumphost-username@jumphost.fqdn.com
@@ -106,7 +106,7 @@ Authentication for the jump host must use key based authentication.
 
 You can either specify the private key used in the ssh config file 
 
-.. code-block::
+.. code-block:: sourcecode
 
   IdentityFile "/absolute/path/to/private-key.pem"
 
