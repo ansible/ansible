@@ -84,6 +84,39 @@ Example NETCONF Task with configurable variables
      vars:
        ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
 
-Note: For nectonf connection plugin configurable variables .. _Refer: https://docs.ansible.com/ansible/latest/plugins/connection/netconf.html
+Note: For netconf connection plugin configurable variables .. _Refer: https://docs.ansible.com/ansible/latest/plugins/connection/netconf.html
+
+Bastion/Jumphost Configuration
+------------------------------
+To use a jump host to connect to a netconf enabled device you must set the ANSIBLE_NETCONF_SSH_CONFIG environment variable.
+
+ANSIBLE_NETCONF_SSH_CONFIG can be set to either:
+  - 1 or TRUE (to trigger the use of the default ssh config file ~/.ssh/config)
+  - The absolute path to a custom ssh config file.
+
+The ssh config file should look something like: 
+
+.. code-block::
+
+  Host *
+    proxycommand ssh -o StrictHostKeyChecking=no -W %h:%p jumphost-username@jumphost.fqdn.com
+    StrictHostKeyChecking no
+
+Authentication for the jump host must use key based authentication.
+
+You can either specify the private key used in the ssh config file 
+
+.. code-block::
+
+  IdentityFile "/absolute/path/to/private-key.pem"
+
+Or you can use an ssh-agent
+
+ansible_network_os auto-detection
+---------------------------------
+
+If ansible_network_os is not specified for a host, then ansible will attempt to automatically detect what network_os plugin to use.
+
+ansible_network_os auto-detection can also be triggered by using auto as the ansible_network_os. (Note: Previously default was used instead of auto)
 
 .. include:: shared_snippets/SSH_warning.txt
