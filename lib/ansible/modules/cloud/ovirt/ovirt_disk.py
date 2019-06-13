@@ -613,6 +613,23 @@ def searchable_attributes(module):
     return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
+def get_vm_service(connection, module):
+    if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and module.params['state'] != 'absent':
+        vms_service = connection.system_service().vms_service()
+
+        # If `vm_id` isn't specified, find VM by name:
+        vm_id = module.params['vm_id']
+        if vm_id is None:
+            vm_id = get_id_by_name(vms_service, module.params['vm_name'])
+
+        if vm_id is None:
+            module.fail_json(
+                msg="VM don't exists, please create it first."
+            )
+
+        return vms_service.vm_service(vm_id)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
