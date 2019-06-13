@@ -165,9 +165,9 @@ response:
                             description:
                                 - Specifies whether extension operations should be allowed on the virtual machine.
                                 - This may only be set to False when no extentions are present on the virtual machine.
-                             type: bool
-                             returned: always
-                             sample: true
+                            type: bool
+                            returned: always
+                            sample: true
                         computerName:
                             description:
                                 - Specifies the host OS name of the virtual machine.
@@ -264,10 +264,10 @@ response:
                                    "createOption": "FromImage",
                                    "diskSizeGB": 30,
                                    "managedDisk": {
-                                                  "id": "/subscriptions/xxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/disks/myVM_disk1_df39a11c49e84116b55b823c6233985f",
+                                                  "id": "/subscriptions/xxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Compute/disks/myVM_disk1_xxx",
                                                   "storageAccountType": "Premium_LRS"
                                                    },
-                                   "name": "myVM_disk1_df39a11c49e84116b55b823c6233985f",
+                                   "name": "myVM_disk1_xxx",
                                    "osType": "Linux"
                                    }
         type:

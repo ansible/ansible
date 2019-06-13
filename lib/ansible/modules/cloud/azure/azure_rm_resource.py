@@ -70,6 +70,7 @@ options:
             - PUT
             - POST
             - HEAD
+            - PATCH
             - DELETE
             - MERGE
         default: "PUT"
