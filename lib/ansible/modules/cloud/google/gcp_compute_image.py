@@ -617,7 +617,7 @@ def response_to_hash(module, response):
 def license_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1//projects/.*/global/licenses/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1//projects/.*/global/licenses/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1//projects/{project}/global/licenses/%s".format(**params) % name
     return name
