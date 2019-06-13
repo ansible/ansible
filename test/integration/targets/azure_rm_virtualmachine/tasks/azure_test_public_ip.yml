@@ -1,0 +1,311 @@
+- include_tasks: setup.yml
+
+- name: Create public ip
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: "{{ public_ip_name }}"
+
+- name: Create security group
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: "{{ security_group }}"
+    purge_rules: yes
+    rules:
+      - name: ALLOW_SSH
+        protocol: Tcp
+        destination_port_range: 22
+        access: Allow
+        priority: 100
+        direction: Inbound
+
+      - name: ALLOW_HTTP
+        protocol: Tcp
+        destination_port_range: 80
+        access: Allow
+        priority: 110
+        direction: Inbound
+
+- name: Create network interface
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "{{ interface_name }}"
+    virtual_network: "{{ network_name }}"
+    subnet: "{{ subnet_name }}"
+    public_ip_name: "{{ public_ip_name }}"
+    security_group: "{{ security_group }}"
+
+- name: Create virtual machine with a single NIC and no boot diagnostics
+  register: output
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    vm_size: Standard_A0
+    storage_account: "{{ storage_account }}"
+    storage_container: "{{ vm_name }}"
+    storage_blob: "{{ vm_name }}.vhd"
+    admin_username: adminuser
+    admin_password: Password123!
+    short_hostname: testvm
+    os_type: Linux
+    network_interfaces: "{{ interface_name }}"
+    availability_set: "{{ availability_set }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+    custom_data: |
+      #!/bin/sh
+      echo "custom_data was executed" > /tmp/custom_data.txt
+
+- name: Ensure VM was created properly
+  assert:
+    that:
+      - azure_vm.properties.provisioningState == 'Succeeded'
+      - azure_vm.properties.availabilitySet.id
+      # initial response from creation has no diagnosticsProfile
+      # if you run it again however, there is one in the response
+      # so we handle both cases
+      - "'diagnosticsProfile' not in azure_vm.properties or not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled"
+
+- name: Get facts for virtual machine without boot diagnostics disabled
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+  register: vm_facts_no_boot_diag_result
+
+- name: Ensure VM facts are correct
+  assert:
+    that:
+      - vm_facts_no_boot_diag_result.vms != []
+      - not vm_facts_no_boot_diag_result.vms[0].boot_diagnostics.enabled
+      - not vm_facts_no_boot_diag_result.vms[0].boot_diagnostics.storage_uri
+
+- name: Enable boot diagnostics on an existing VM for the first time without specifying a storage account
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    boot_diagnostics:
+      enabled: yes
+      # without specifying storage_account you get a new default storage account for the VM
+
+- name: Ensure VM properties are correct
+  assert:
+    that:
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
+
+- name: Get facts for virtual machine with boot diagnostics enabled
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+  register: vm_facts_boot_diag_result
+
+- name: Ensure VM facts were returned
+  assert:
+    that:
+      - vm_facts_boot_diag_result.vms != []
+      - vm_facts_boot_diag_result.vms[0].boot_diagnostics.enabled
+      - vm_facts_boot_diag_result.vms[0].boot_diagnostics.storage_uri is defined
+      - vm_facts_boot_diag_result.vms[0].boot_diagnostics.console_screenshot_uri is defined
+      - vm_facts_boot_diag_result.vms[0].boot_diagnostics.serial_console_log_uri is defined
+
+- name: Change the boot diagnostics storage account while enabled
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    boot_diagnostics:
+      enabled: yes
+      storage_account: "{{ storage_account }}"
+  ignore_errors: yes
+
+- name: Disable boot diagnostics and change the storage account at the same time
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      boot_diagnostics:
+        enabled: no
+        storage_account: "{{ storage_account }}"
+
+- name: Ensure boot diagnostics was disabled
+  assert:
+    that:
+      - not azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+
+- name: Re-enable boot diagnostics on an existing VM where it was previously configured
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      boot_diagnostics:
+        enabled: yes
+  register: reenable_boot_diag_result
+
+- name: Ensure boot diagnostics was reenabled
+  assert:
+    that:
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.enabled
+      - azure_vm.properties.diagnosticsProfile.bootDiagnostics.storageUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.consoleScreenshotBlobUri is defined
+      - azure_vm.properties.instanceView.bootDiagnostics.serialConsoleLogBlobUri is defined
+
+# - add_host:
+#     name: new_azure_vm
+#     ansible_host: '{{ reenable_boot_diag_result.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}'
+#     ansible_connection: paramiko  # not guaranteed to have sshpass...
+#     ansible_user: adminuser
+#     ansible_password: Password123!
+#     ansible_host_key_checking: no
+
+# - name: wait for SSH port to be open
+#   wait_for:
+#     host: '{{ hostvars["new_azure_vm"].ansible_host }}'
+#     port: 22
+#     timeout: 60
+#     state: started
+
+# # TODO: figure out how to make this work under ansible-test with the coverage injector
+# - block:
+#     - name: wait for host to answer on SSH
+#      delegate_to: new_azure_vm
+#      wait_for_connection:
+
+#     - name: get content from custom_data script
+#      raw: cat /tmp/custom_data.txt
+#      register: custom_data_content
+
+#    - name: assert contents
+#      assert:
+#        that: custom_data_content.stdout | regex_search('custom_data was executed')
+#   delegate_to: new_azure_vm
+
+# # TODO: figure out how to make this work under ansible-test with the coverage injector
+# - name: wait for file/content created by custom_data script
+#   delegate_to: new_azure_vm
+#   vars:
+#     ansible_python_interpreter: python
+#   wait_for:
+#     path: /tmp/custom_data.txt
+#     search_regex: ^custom_data was executed$
+#     timeout: 20
+
+- name: Should be idempotent with a single NIC
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    vm_size: Standard_A0
+    storage_account: "{{ storage_account }}"
+    storage_container: "{{ vm_name }}"
+    storage_blob: "{{ vm_name }}.vhd"
+    admin_username: adminuser
+    admin_password: Password123!
+    short_hostname: testvm
+    os_type: Linux
+    network_interfaces: "{{ interface_name }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: single_nic_result
+
+- name: Ensure nothing changed
+  assert:
+    that: single_nic_result is not changed
+
+- name: Resize VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    vm_size: Standard_A1
+    storage_account: "{{ storage_account }}"
+    storage_container: "{{ vm_name }}"
+    storage_blob: "{{ vm_name }}.vhd"
+    admin_username: adminuser
+    admin_password: Password123!
+    short_hostname: testvm
+    os_type: Linux
+    network_interfaces: "{{ interface_name }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: resize_result
+
+- name: Esure VM was resized
+  assert:
+    that:
+      - resize_result is changed
+      - resize_result.ansible_facts.azure_vm.properties.hardwareProfile.vmSize == "Standard_A1"
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    state: absent
+    vm_size: Standard_A0
+
+- name: NIC should be gone
+  azure_rm_networkinterface_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ interface_name }}"
+
+- name: Ensure NIC was removed
+  assert:
+    that: azure_networkinterfaces | length == 0
+
+- name: Public IP should be gone
+  azure_rm_publicipaddress_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ public_ip_name }}"
+
+- name: Ensure public IP was removed
+  assert:
+    that: azure_publicipaddresses | length == 0
+
+- name: Destroy NIC
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "{{ interface_name }}"
+    state: absent
+
+- name: Destroy security group
+  azure_rm_securitygroup:
+    resource_group: "{{ resource_group }}"
+    name: "{{ security_group }}"
+    state: absent
+
+- name: Destroy subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    virtual_network: "{{ network_name }}"
+    name: "{{ subnet_name }}"
+    state: absent
+
+- name: Destroy virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ network_name }}"
+    state: absent
+
+- name: Destroy public ip
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    name: "{{ public_ip_name }}"
+    state: absent
+
+- name: Destroy availability set
+  azure_rm_availabilityset:
+    resource_group: "{{ resource_group }}"
+    name: "{{ availability_set }}"
+    state: absent
+
+- name: Destroy storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    force_delete_nonempty: true
+    state: absent
