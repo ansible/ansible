@@ -527,7 +527,7 @@ def response_to_hash(module, response):
 def zone_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/zones/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/zones/%s".format(**params) % name
     return name
@@ -536,7 +536,7 @@ def zone_selflink(name, params):
 def region_disk_type_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/{region}/diskTypes/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*/diskTypes/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/diskTypes/%s".format(**params) % name
     return name
