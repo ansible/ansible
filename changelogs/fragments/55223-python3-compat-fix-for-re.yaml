@@ -1,0 +1,2 @@
+bugfixes:
+- Fix python3 compat issue with network/common/config.py - https://github.com/ansible/ansible/pull/55223
