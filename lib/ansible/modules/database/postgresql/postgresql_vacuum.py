@@ -197,18 +197,36 @@ class Vacuum(object):
         Check the table or columns that need to be vacuumed/analyzed exist.
         """
 
-        query_frag = ['SELECT']
-        if self.module.params.get('columns'):
-            query_frag.append(','.join(self.module.params['columns']))
+        if '.' in self.module.params['table']:
+            t = self.module.params['table'].split('.')
+            table_schema = t[-2]
+            table_name = t[-1]
         else:
-            query_frag.append('*')
+            table_schema = 'public'
+            table_name = self.module.params['table']
 
-        query_frag.append('FROM %s LIMIT 1' % pg_quote_identifier(self.module.params['table'], 'table'))
+        query = ("SELECT 1 FROM information_schema.tables "
+                 "WHERE table_schema = '%s' "
+                 "AND table_name = '%s'" % (table_schema, table_name))
 
-        if exec_sql(self, ' '.join(query_frag), ddl=True, add_to_executed=False):
-            return True
+        if not exec_sql(self, query, add_to_executed=False):
+            msg = 'table %s in schema %s does not exist' % (table_name, table_schema)
+            self.module.fail_json(msg=msg)
 
-        return None
+        if self.module.params.get('columns'):
+            for column in self.module.params['columns']:
+                query = ("SELECT 1 FROM information_schema.columns "
+                         "WHERE table_schema = '%s' "
+                         "AND table_name = '%s' "
+                         "AND column_name = '%s'" % (table_schema, table_name, column))
+
+                if not exec_sql(self, query, add_to_executed=False):
+                    msg = ('column %s in table %s.%s '
+                           'does not exist' % (column, table_schema, table_name))
+                    self.module.fail_json(msg=msg)
+
+        # If all objects exists, return True
+        return True
 
     def do_vacuum(self):
         """Do VACUUM."""
