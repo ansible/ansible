@@ -313,7 +313,7 @@ class Connection(NetworkConnectionBase):
 
         if self._network_os == 'auto':
             # Network os not discovered. Set it to default
-            self.queue_message('vvv', 'Unable do discover network_os. Falling back to default.')
+            self.queue_message('vvv', 'Unable to discover network_os. Falling back to default.')
             self._network_os = 'default'
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
