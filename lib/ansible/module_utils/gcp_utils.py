@@ -49,6 +49,10 @@ def remove_nones_from_dict(obj):
         value = obj[key]
         if value is not None and value != {} and value != []:
             new_obj[key] = value
+
+    # Blank dictionaries should return None or GCP API may complain.
+    if not new_obj:
+        return None
     return new_obj
 
 
@@ -76,12 +80,7 @@ class GcpSession(object):
     def get(self, url, body=None, **kwargs):
         kwargs.update({'json': body, 'headers': self._headers()})
         try:
-            # Ignore the google-auth library warning for user credentials. More
-            # details: https://github.com/googleapis/google-auth-library-python/issues/271
-            import warnings
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", "Your application has authenticated using end user credentials")
-                return self.session().get(url, **kwargs)
+            return self.session().get(url, **kwargs)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
