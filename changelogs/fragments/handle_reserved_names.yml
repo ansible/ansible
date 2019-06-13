@@ -1,0 +1,4 @@
+bugfixes:
+    - expand reserved name detection to all vars, not just play vars to at least warn against conflicts.
+      Also, add a toggle for users to be able to choose how to handle these cases, default to warn.
+      And add lookup, query and q to 'reserved names' that playbook authors should avoid.
