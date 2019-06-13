@@ -91,7 +91,7 @@ rediscaches:
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
         provisioning_state:
             description:
-                - Provisioning state of the Redis cahe.
+                - Provisioning state of the Redis cache.
             returned: always
             type: str
             sample: Creating
