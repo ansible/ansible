@@ -129,10 +129,18 @@ class Connection(ConnectionBase):
         display.debug("done with local.exec_command()")
         return (p.returncode, stdout, stderr)
 
+    def _ensure_abs(self, path):
+        if not os.path.isabs(path):
+            path = os.path.normpath(os.path.join(self.cwd, path))
+        return path
+
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
         super(Connection, self).put_file(in_path, out_path)
+
+        in_path = self._ensure_abs(in_path)
+        out_path = self._ensure_abs(out_path)
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
