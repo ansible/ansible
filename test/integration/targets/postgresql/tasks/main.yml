@@ -803,7 +803,7 @@
 
 # Test postgresql_vacuum module.
 - include: postgresql_vacuum.yml
-  when: postgres_version_resp.stdout is version('9.6', '>=')
+  when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test postgresql_set
 - include: postgresql_set.yml
