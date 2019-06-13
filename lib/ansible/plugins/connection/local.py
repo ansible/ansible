@@ -130,7 +130,7 @@ class Connection(ConnectionBase):
         return (p.returncode, stdout, stderr)
 
     def _ensure_abs(self, path):
-        if not os.path.isabs(path):
+        if not os.path.isabs(path) and self.cwd is not None:
             path = os.path.normpath(os.path.join(self.cwd, path))
         return path
 
