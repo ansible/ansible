@@ -44,7 +44,7 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
-        configured (or set to auto), then ansible will attempt to guess the
+        configured (or set to C(auto)), then Ansible will attempt to guess the
         correct network_os to use.
         If it can not guess a network_os correctly it will use default.
     vars:
