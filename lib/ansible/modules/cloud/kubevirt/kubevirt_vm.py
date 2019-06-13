@@ -194,8 +194,17 @@ EXAMPLES = '''
               path: /disk/fedora.qcow2
           disk:
             bus: virtio
+      node_affinity:
+        soft:
+          - weight: 1
+            term:
+              match_expressions:
+                - key: security
+                  operator: In
+                  values:
+                    - S2
 
-- name: Create virtual machine with datavolume
+- name: Create virtual machine with datavolume and specify node affinity
   kubevirt_vm:
     name: myvm
     namespace: default
@@ -209,6 +218,14 @@ EXAMPLES = '''
           accessModes:
             - ReadWriteOnce
           storage: 5Gi
+    node_affinity:
+      hard:
+        - term:
+            match_expressions:
+              - key: security
+                operator: In
+                values:
+                  - S1
 
 - name: Remove virtual machine 'myvm'
   kubevirt_vm:

@@ -41,6 +41,9 @@ VM_SPEC_DEF_ARG_SPEC = {
     'cpu_limit': {'type': 'int'},
     'cpu_shares': {'type': 'int'},
     'cpu_features': {'type': 'list'},
+    'affinity': {'type': 'dict'},
+    'anti_affinity': {'type': 'dict'},
+    'node_affinity': {'type': 'dict'},
 }
 # And other common args go here:
 VM_COMMON_ARG_SPEC = {
@@ -323,6 +326,9 @@ class KubeVirtRawModule(KubernetesRawModule):
         tablets = params.get('tablets')
         cpu_shares = params.get('cpu_shares')
         cpu_limit = params.get('cpu_limit')
+        node_affinity = params.get('node_affinity')
+        vm_affinity = params.get('affinity')
+        vm_anti_affinity = params.get('anti_affinity')
         template_spec = template['spec']
 
         # Merge additional flat parameters:
@@ -369,6 +375,48 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         if headless is not None:
             template_spec['domain']['devices']['autoattachGraphicsDevice'] = not headless
+
+        if vm_affinity or vm_anti_affinity:
+            vms_affinity = vm_affinity or vm_anti_affinity
+            affinity_name = 'podAffinity' if vm_affinity else 'podAntiAffinity'
+            for affinity in vms_affinity.get('soft', []):
+                if not template_spec['affinity'][affinity_name]['preferredDuringSchedulingIgnoredDuringExecution']:
+                    template_spec['affinity'][affinity_name]['preferredDuringSchedulingIgnoredDuringExecution'] = []
+                template_spec['affinity'][affinity_name]['preferredDuringSchedulingIgnoredDuringExecution'].append({
+                    'weight': affinity.get('weight'),
+                    'podAffinityTerm': {
+                        'labelSelector': {
+                            'matchExpressions': affinity.get('term').get('match_expressions'),
+                        },
+                        'topologyKey': affinity.get('topology_key'),
+                    },
+                })
+            for affinity in vms_affinity.get('hard', []):
+                if not template_spec['affinity'][affinity_name]['requiredDuringSchedulingIgnoredDuringExecution']:
+                    template_spec['affinity'][affinity_name]['requiredDuringSchedulingIgnoredDuringExecution'] = []
+                template_spec['affinity'][affinity_name]['requiredDuringSchedulingIgnoredDuringExecution'].append({
+                    'labelSelector': {
+                        'matchExpressions': affinity.get('term').get('match_expressions'),
+                    },
+                    'topologyKey': affinity.get('topology_key'),
+                })
+
+        if node_affinity:
+            for affinity in node_affinity.get('soft', []):
+                if not template_spec['affinity']['nodeAffinity']['preferredDuringSchedulingIgnoredDuringExecution']:
+                    template_spec['affinity']['nodeAffinity']['preferredDuringSchedulingIgnoredDuringExecution'] = []
+                template_spec['affinity']['nodeAffinity']['preferredDuringSchedulingIgnoredDuringExecution'].append({
+                    'weight': affinity.get('weight'),
+                    'preference': {
+                        'matchExpressions': affinity.get('term').get('match_expressions'),
+                    }
+                })
+            for affinity in node_affinity.get('hard', []):
+                if not template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms']:
+                    template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'] = []
+                template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'].append({
+                    'matchExpressions': affinity.get('term').get('match_expressions'),
+                })
 
         # Define disks
         self._define_disks(disks, template_spec, defaults)
