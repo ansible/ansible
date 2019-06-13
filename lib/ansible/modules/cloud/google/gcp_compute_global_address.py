@@ -309,7 +309,7 @@ def response_to_hash(module, response):
 def region_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
     return name
