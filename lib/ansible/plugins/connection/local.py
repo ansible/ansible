@@ -39,6 +39,11 @@ class Connection(ConnectionBase):
     transport = 'local'
     has_pipelining = True
 
+    def __init__(self, *args, **kwargs):
+
+        super(Connection, self).__init__(*args, **kwargs)
+        self.cwd = None
+
     def _connect(self):
         ''' connect to the local host; nothing to do here '''
 
@@ -76,7 +81,8 @@ class Connection(ConnectionBase):
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, (text_type, binary_type)),
-            executable=executable,  # cwd=...
+            executable=executable,
+            cwd=self.cwd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
