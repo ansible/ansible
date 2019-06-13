@@ -51,7 +51,7 @@ def get_distribution_version():
     '''
     version = None
     if platform.system() == 'Linux':
-        version = distro.version()
+        version = distro.version(best=True)
     return version
 
 
