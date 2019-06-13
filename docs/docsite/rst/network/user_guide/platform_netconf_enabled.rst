@@ -104,7 +104,7 @@ The ssh config file should look something like:
 
 Authentication for the jump host must use key based authentication.
 
-You can either specify the private key used in the ssh config file 
+You can either specify the private key used in the SSH config file:
 
 .. code-block:: ini
 
