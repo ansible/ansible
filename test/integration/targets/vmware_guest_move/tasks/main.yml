@@ -46,7 +46,8 @@
 
 
 # Testcase 0002: Move vm and get OK status (Already Moved)
-- name: Move VM (OK)
+- &vm_move
+  name: Move VM (OK)
   vmware_guest_move:
     validate_certs: false
     hostname: "{{ vcsim }}"
@@ -71,3 +72,19 @@
 - name: Difference
   debug:
     var: vms_diff.json | difference(vms.json)
+
+- name: Make sure changes are done
+  assert:
+    that:
+      - vm_facts_0001.changed
+      - not vm_facts_0002.changed
+
+- <<: *vm_move
+  name: Move VM in check mode
+  check_mode: yes
+  register: vm_move_0003
+
+- name: Make sure changes are not made in check mode
+  assert:
+    that:
+    - vm_move_0003.changed
