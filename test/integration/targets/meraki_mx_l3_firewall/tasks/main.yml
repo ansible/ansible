@@ -81,7 +81,7 @@
   - assert:
       that:
         - create_one.data|length == 2
-        - create_one.data.0.destCidr == '192.0.1.1/32'
+        - create_one.data.0.dest_cidr == '192.0.1.1/32'
         - create_one.data.0.protocol == 'tcp'
         - create_one.data.0.policy == 'deny'
         - create_one.changed == True
@@ -165,7 +165,7 @@
 
   - assert:
       that:
-        - query.data.1.syslogEnabled == True
+        - query.data.1.syslog_enabled == True
         - default_syslog.changed == True
 
   - name: Disable syslog for default rule
@@ -207,7 +207,7 @@
 
   - assert:
       that:
-        - query.data.1.syslogEnabled == False
+        - query.data.1.syslog_enabled == False
         - disable_syslog.changed == True
 
   always:

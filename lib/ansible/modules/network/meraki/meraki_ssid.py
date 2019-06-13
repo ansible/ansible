@@ -294,17 +294,17 @@ data:
             returned: success
             type: bool
             sample: true
-        splashPage:
+        splash_page:
             description: Splash page to show when user authenticates.
             returned: success
             type: str
             sample: Click-through splash page
-        ssidAdminAccessible:
+        ssid_admin_accessible:
             description: Whether SSID is administratively accessible.
             returned: success
             type: bool
             sample: true
-        authMode:
+        auth_mode:
             description: Authentication method.
             returned: success
             type: str
@@ -314,37 +314,37 @@ data:
             returned: success
             type: str
             sample: SecretWiFiPass
-        encryptionMode:
+        encryption_mode:
             description: Wireless traffic encryption method.
             returned: success
             type: str
             sample: wpa
-        wpaEncryptionMode:
+        wpa_encryption_mode:
             description: Enabled WPA versions.
             returned: success
             type: str
             sample: WPA2 only
-        ipAssignmentMode:
+        ip_assignment_mode:
             description: Wireless client IP assignment method.
             returned: success
             type: str
             sample: NAT mode
-        minBitrate:
+        min_bitrate:
             description: Minimum bitrate a wireless client can connect at.
             returned: success
             type: int
             sample: 11
-        bandSelection:
+        band_selection:
             description: Wireless RF frequency wireless network will be broadcast on.
             returned: success
             type: str
             sample: 5 GHz band only
-        perClientBandwidthLimitUp:
+        per_client_bandwidth_limit_up:
             description: Maximum upload bandwidth a client can use.
             returned: success
             type: int
             sample: 1000
-        perClientBandwidthLimitDown:
+        per_client_bandwidth_limit_down:
             description: Maximum download bandwidth a client can use.
             returned: success
             type: int
