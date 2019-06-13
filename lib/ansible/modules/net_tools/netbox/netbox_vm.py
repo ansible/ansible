@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: netbox_vm
-short_description: Create, update or delete devices within Netbox
+short_description: Create, update or delete virtual machines within Netbox
 description:
-  - Creates, updates or removes devices from Netbox
+  - Creates, updates or removes virtual machines from Netbox
 notes:
   - Tags should be defined as a YAML list
   - This should be ran with connection C(local) and hosts C(localhost)
@@ -39,21 +39,21 @@ options:
     required: true
   data:
     description:
-      - Defines the device configuration
+      - Defines the virtual machine configuration
     suboptions:
       name:
         description:
-          - The name of the VM
+          - The name of the virtual machine
         required: true
       role:
         description:
-          - Required if I(state=present) and the device does not exist yet
+          - Required if I(state=present) and the virtual machine does not exist yet
       tenant:
         description:
-          - The tenant that the device will be assigned to
+          - The tenant that the virtual machine will be assigned to
       platform:
         description:
-          - The platform of the device
+          - The platform of the virtual machine
       primary_ip:
         description:
           - Primary IP of the VM
@@ -74,23 +74,20 @@ options:
           - Disk size in GB
       status:
         description:
-          - The status of the device
+          - The status of the virtual machine
         choices:
           - Active
           - Offline
-          - Planned
           - Staged
-          - Failed
-          - Inventory
       cluster:
         description:
-          - Cluster that the device will be assigned to
+          - Cluster that the virtual machine will be assigned to
       comments:
         description:
-          - Comments that may include additional information in regards to the device
+          - Comments that may include additional information in regards to the virtual machine
       tags:
         description:
-          - Any tags that the device may need to be associated with
+          - Any tags that the virtual machine may need to be associated with
       custom_fields:
         description:
           - must exist in Netbox
@@ -114,52 +111,37 @@ EXAMPLES = r'''
   gather_facts: False
 
   tasks:
-    - name: Create device within Netbox with only required information
-      netbox_device:
+    - name: Create VM within Netbox with only required information
+      netbox_vm:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test Device
-          device_type: C9410R
-          device_role: Core Switch
+          name: Test VM
+          cluster: cluster1
           site: Main
         state: present
 
-    - name: Delete device within netbox
-      netbox_device:
+    - name: Delete VM within netbox
+      netbox_vm:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test Device
+          name: Test VM
         state: absent
 
-    - name: Create device with tags
-      netbox_device:
+    - name: Update the vcpus and memory of an existing VM
+      netbox_vm:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Another Test Device
-          device_type: C9410R
-          device_role: Core Switch
-          site: Main
-          tags:
-            - Schnozzberry
-        state: present
-
-    - name: Update the rack and position of an existing device
-      netbox_device:
-        netbox_url: http://netbox.local
-        netbox_token: thisIsMyToken
-        data:
-          name: Test Device
-          rack: Test Rack
-          position: 10
-          face: Front
+          name: Test VM
+          memory: 32000
+          vcpus: 8
         state: present
 '''
 
 RETURN = r'''
-device:
+virtual_machine:
   description: Serialized object as created or already existent within Netbox
   returned: success (when I(state=present))
   type: dict
@@ -179,7 +161,7 @@ from ansible.module_utils.net_tools.netbox.netbox_utils import (
     create_netbox_object,
     delete_netbox_object,
     update_netbox_object,
-    DEVICE_STATUS,
+    VM_STATUS,
     FACE_ID
 )
 
@@ -212,9 +194,9 @@ def main():
     if not HAS_PYNETBOX:
         module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
 
-    # Fail if device name or cluster is not given
+    # Fail if VM name or cluster is not given
     if not module.params["data"].get("name") or not module.params["data"].get("cluster"):
-        module.fail_json(msg="missing device name/cluster")
+        module.fail_json(msg="missing VM name/cluster")
 
     # Assign variables to be used with module
     app = 'virtualization'
@@ -239,9 +221,9 @@ def main():
     norm_data = normalize_data(data)
     try:
         if 'present' in state:
-            result = ensure_device_present(nb, nb_endpoint, norm_data)
+            result = ensure_vm_present(nb, nb_endpoint, norm_data)
         else:
-            result = ensure_device_absent(nb_endpoint, norm_data)
+            result = ensure_vm_absent(nb_endpoint, norm_data)
         return module.exit_json(**result)
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
@@ -251,56 +233,54 @@ def main():
 
 def _find_ids(nb, data):
     if data.get("status"):
-        data["status"] = DEVICE_STATUS.get(data["status"].lower())
-    if data.get("face"):
-        data["face"] = FACE_ID.get(data["face"].lower())
+        data["status"] = VM_STATUS.get(data["status"].lower())
     return find_ids(nb, data)
 
 
-def ensure_device_present(nb, nb_endpoint, normalized_data):
+def ensure_vm_present(nb, nb_endpoint, normalized_data):
     '''
-    :returns dict(device, msg, changed, diff): dictionary resulting of the request,
-        where `device` is the serialized device fetched or newly created in
+    :returns dict(virtual_machine, msg, changed, diff): dictionary resulting of the request,
+        where `virtual_machine` is the serialized VM fetched or newly created in
         Netbox
     '''
     data = _find_ids(nb, normalized_data)
-    nb_device = nb_endpoint.get(name=data["name"])
+    nb_vm = nb_endpoint.get(name=data["name"])
     result = {}
-    if not nb_device:
-        device, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
-        msg = "Device %s created" % (data["name"])
+    if not nb_vm:
+        vm, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
+        msg = "VM %s created" % (data["name"])
         changed = True
         result["diff"] = diff
     else:
-        device, diff = update_netbox_object(nb_device, data, module.check_mode)
-        if device is False:
+        vm, diff = update_netbox_object(nb_vm, data, module.check_mode)
+        if vm is False:
             module.fail_json(
-                msg="Request failed, couldn't update device: %s" % data["name"]
+                msg="Request failed, couldn't update VM: %s" % data["name"]
             )
         if diff:
-            msg = "Device %s updated" % (data["name"])
+            msg = "VM %s updated" % (data["name"])
             changed = True
             result["diff"] = diff
         else:
-            msg = "Device %s already exists" % (data["name"])
+            msg = "VM %s already exists" % (data["name"])
             changed = False
-    result.update({"device": device, "changed": changed, "msg": msg})
+    result.update({"virtual_machine": vm, "changed": changed, "msg": msg})
     return result
 
 
-def ensure_device_absent(nb_endpoint, data):
+def ensure_vm_absent(nb_endpoint, data):
     '''
     :returns dict(msg, changed, diff)
     '''
-    nb_device = nb_endpoint.get(name=data["name"])
+    nb_vm = nb_endpoint.get(name=data["name"])
     result = {}
-    if nb_device:
-        dummy, diff = delete_netbox_object(nb_device, module.check_mode)
-        msg = 'Device %s deleted' % (data["name"])
+    if nb_vm:
+        dummy, diff = delete_netbox_object(nb_vm, module.check_mode)
+        msg = 'VM %s deleted' % (data["name"])
         changed = True
         result["diff"] = diff
     else:
-        msg = 'Device %s already absent' % (data["name"])
+        msg = 'VM %s already absent' % (data["name"])
         changed = False
 
     result.update({"changed": changed, "msg": msg})
