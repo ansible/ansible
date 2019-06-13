@@ -17,91 +17,97 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_resource
 version_added: "2.6"
-short_description: Create any Azure resource.
+short_description: Create any Azure resource
 description:
-  - Create, update or delete any Azure resource using Azure REST API.
-  - This module gives access to resources that are not supported via Ansible modules.
-  - Refer to https://docs.microsoft.com/en-us/rest/api/ regarding details related to specific resource REST API.
+    - Create, update or delete any Azure resource using Azure REST API.
+    - This module gives access to resources that are not supported via Ansible modules.
+    - Refer to U(https://docs.microsoft.com/en-us/rest/api/) regarding details related to specific resource REST API.
 
 options:
-  url:
-    description:
-      - Azure RM Resource URL.
-  api_version:
-    description:
-      - Specific API version to be used.
-  provider:
-    description:
-      - Provider type.
-      - Required if URL is not specified.
-  resource_group:
-    description:
-      - Resource group to be used.
-      - Required if URL is not specified.
-  resource_type:
-    description:
-      - Resource type.
-      - Required if URL is not specified.
-  resource_name:
-    description:
-      - Resource name.
-      - Required if URL Is not specified.
-  subresource:
-    description:
-      - List of subresources
-    suboptions:
-      namespace:
+    url:
         description:
-          - Subresource namespace
-      type:
+            - Azure RM Resource URL.
+    api_version:
         description:
-          - Subresource type
-      name:
+            - Specific API version to be used.
+    provider:
         description:
-          - Subresource name
-  body:
-    description:
-      - The body of the http request/response to the web service.
-  method:
-    description:
-      - The HTTP method of the request or response. It MUST be uppercase.
-    choices: [ "GET", "PUT", "POST", "HEAD", "PATCH", "DELETE", "MERGE" ]
-    default: "PUT"
-  status_code:
-    description:
-      - A valid, numeric, HTTP status code that signifies success of the
-        request. Can also be comma separated list of status codes.
-    default: [ 200, 201, 202 ]
-  idempotency:
-    description:
-      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
-    default: no
-    type: bool
-  polling_timeout:
-    description:
-      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
-    default: 0
-    type: int
-    version_added: "2.8"
-  polling_interval:
-    description:
-      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
-    default: 60
-    type: int
-    version_added: "2.8"
-  state:
-    description:
-      - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
-    default: present
-    choices:
-        - absent
-        - present
+            - Provider type.
+            - Required if URL is not specified.
+    resource_group:
+        description:
+            - Resource group to be used.
+            - Required if URL is not specified.
+    resource_type:
+        description:
+            - Resource type.
+            - Required if URL is not specified.
+    resource_name:
+        description:
+            - Resource name.
+            - Required if URL Is not specified.
+    subresource:
+        description:
+            - List of subresources.
+        suboptions:
+            namespace:
+                description:
+                    - Subresource namespace.
+            type:
+                description:
+                    - Subresource type.
+            name:
+                description:
+                    - Subresource name.
+    body:
+        description:
+            - The body of the HTTP request/response to the web service.
+    method:
+        description:
+            - The HTTP method of the request or response. It must be uppercase.
+        choices:
+            - GET
+            - PUT
+            - POST
+            - HEAD
+            - DELETE
+            - MERGE
+        default: "PUT"
+    status_code:
+        description:
+            - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
+        type: list
+        default: [ 200, 201, 202 ]
+    idempotency:
+        description:
+            - If enabled, idempotency check will be done by using I(method=GET) first and then comparing with I(body).
+        default: no
+        type: bool
+    polling_timeout:
+        description:
+            - If enabled, idempotency check will be done by using I(method=GET) first and then comparing with I(body).
+        default: 0
+        type: int
+        version_added: "2.8"
+    polling_interval:
+        description:
+            - If enabled, idempotency check will be done by using I(method=GET) first and then comparing with I(body).
+        default: 60
+        type: int
+        version_added: "2.8"
+    state:
+        description:
+            - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
-  - azure
+    - azure
 
 author:
-  - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -118,9 +124,91 @@ EXAMPLES = '''
 
 RETURN = '''
 response:
-    description: Response specific to resource type.
+    description:
+        - Response specific to resource type.
     returned: always
-    type: dict
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            type: str
+            returned: always
+            sample: "/subscriptions/xxxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Storage/storageAccounts/staccb57dc95183"
+        kind:
+            description:
+                - The kind of storage.
+            type: str
+            returned: always
+            sample: Storage
+        location:
+            description:
+                - The resource location, defaults to location of the resource group.
+            type: str
+            returned: always
+            sample: eastus
+        name:
+            description:
+                The storage account name.
+            type: str
+            returned: always
+            sample: staccb57dc95183
+        properties:
+            description:
+                - The storage account's related properties.
+            type: dict
+            returned: always
+            sample: {
+                    "creationTime": "2019-06-13T06:34:33.0996676Z",
+                    "encryption": {
+                                  "keySource": "Microsoft.Storage",
+                                  "services": {
+                                              "blob": {
+                                              "enabled": true,
+                                              "lastEnabledTime": "2019-06-13T06:34:33.1934074Z"
+                                                      },
+                                              "file": {
+                                                      "enabled": true,
+                                                      "lastEnabledTime": "2019-06-13T06:34:33.1934074Z"
+                                                      }
+                                               }
+                                  },
+                    "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow",
+                    "ipRules": [],
+                    "virtualNetworkRules": []
+                                   },
+                    "primaryEndpoints": {
+                    "blob": "https://staccb57dc95183.blob.core.windows.net/",
+                    "file": "https://staccb57dc95183.file.core.windows.net/",
+                    "queue": "https://staccb57dc95183.queue.core.windows.net/",
+                    "table": "https://staccb57dc95183.table.core.windows.net/"
+                                       },
+                    "primaryLocation": "eastus",
+                    "provisioningState": "Succeeded",
+                    "secondaryLocation": "westus",
+                    "statusOfPrimary": "available",
+                    "statusOfSecondary": "available",
+                    "supportsHttpsTrafficOnly": false
+                    }
+        sku:
+            description:
+                - The storage account SKU.
+            type: dict
+            returned: always
+            sample: {
+                    "name": "Standard_GRS",
+                    "tier": "Standard"
+                    }
+        tags:
+            decription:
+                - Resource tags.
+            type: dict
+            returned: always
+            sample: { 'key1': 'value1' }
+        "type": "Microsoft.Storage/storageAccounts"
+
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
