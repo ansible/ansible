@@ -222,26 +222,26 @@ response:
                             sample:
                                 - {
                                   "caching": "None",
-                                 "createOption": "Attach",
-                                 "diskSizeGB": 1023,
-                                 "lun": 2,
-                                 "managedDisk": {
+                                  "createOption": "Attach",
+                                  "diskSizeGB": 1023,
+                                  "lun": 2,
+                                  "managedDisk": {
                                                 "id": "/subscriptions/xxxx....xxxx/resourceGroups/V-XISURG/providers/Microsoft.Compute/disks/testdisk2",
                                                  "storageAccountType": "StandardSSD_LRS"
                                                 },
-                                 "name": "testdisk2"
-                                 }
-                               - {
-                                 "caching": "None",
-                                 "createOption": "Attach",
-                                 "diskSizeGB": 1023,
-                                 "lun": 1,
-                                 "managedDisk": {
+                                  "name": "testdisk2"
+                                   }
+                                - {
+                                  "caching": "None",
+                                  "createOption": "Attach",
+                                  "diskSizeGB": 1023,
+                                  "lun": 1,
+                                  "managedDisk": {
                                                 "id": "/subscriptions/xxxx...xxxx/resourceGroups/V-XISURG/providers/Microsoft.Compute/disks/testdisk3",
                                                 "storageAccountType": "StandardSSD_LRS"
                                                 },
-                                 "name": "testdisk3"
-                                 }
+                                  "name": "testdisk3"
+                                  }
 
                         imageReference:
                             description:
