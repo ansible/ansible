@@ -442,7 +442,7 @@ class Templar:
         self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
                                          ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    def _get_filters(self, builtin_filters):
+    def _get_filters(self):
         '''
         Returns filter plugins, after loading and caching them if need be
         '''
@@ -775,7 +775,7 @@ class Templar:
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
             # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters(myenv.filters))
+            myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
