@@ -46,7 +46,7 @@ options:
         used to load a device specific netconf plugin.  If this option is not
         configured (or set to C(auto)), then Ansible will attempt to guess the
         correct network_os to use.
-        If it can not guess a network_os correctly it will use default.
+        If it can not guess a network_os correctly it will use C(default).
     vars:
       - name: ansible_network_os
   remote_user:
