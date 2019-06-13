@@ -117,6 +117,6 @@ ansible_network_os auto-detection
 
 If ``ansible_network_os`` is not specified for a host, then Ansible will attempt to automatically detect what ``network_os`` plugin to use.
 
-ansible_network_os auto-detection can also be triggered by using auto as the ansible_network_os. (Note: Previously default was used instead of auto)
+``ansible_network_os`` auto-detection can also be triggered by using ``auto`` as the ``ansible_network_os``. (Note: Previously ``default`` was used instead of ``auto``).
 
 .. include:: shared_snippets/SSH_warning.txt
