@@ -802,9 +802,8 @@
   when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
 
 # Test postgresql_vacuum module.
-# Local integration tests on excluded OS pass well.
 - include: postgresql_vacuum.yml
-  when: postgres_version_resp.stdout is version('9.4', '>=') and ansible_distribution != 'FreeBSD' and (ansible_distribution != 'Ubuntu' and ansible_distribution_major_version != 16)
+  when: postgres_version_resp.stdout is version('9.6', '>=')
 
 # Test postgresql_set
 - include: postgresql_set.yml
