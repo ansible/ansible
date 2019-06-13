@@ -192,7 +192,7 @@ data:
             returned: success
             type: bool
             sample: true
-        poeEnabled:
+        poe_enabled:
             description: Power Over Ethernet enabled state of port.
             returned: success
             type: bool
@@ -207,32 +207,32 @@ data:
             returned: success
             type: int
             sample: 10
-        voiceVlan:
+        voice_vlan:
             description: VLAN assigned to port with voice VLAN enabled devices.
             returned: success
             type: int
             sample: 20
-        isolationEnabled:
+        isolation_enabled:
             description: Port isolation status of port.
             returned: success
             type: bool
             sample: true
-        rstpEnabled:
+        rstp_enabled:
             description: Enabled or disabled state of Rapid Spanning Tree Protocol (RSTP)
             returned: success
             type: bool
             sample: true
-        stpGuard:
+        stp_guard:
             description: State of STP guard
             returned: success
             type: str
             sample: "Root Guard"
-        accessPolicyNumber:
+        access_policy_number:
             description: Number of assigned access policy. Only applicable to access ports.
             returned: success
             type: int
             sample: 1234
-        linkNegotiation:
+        link_negotiation:
             description: Link speed for the port.
             returned: success
             type: str
