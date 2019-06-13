@@ -205,23 +205,23 @@ response:
                     description:
                         - Specifies the VM unique ID whic is a 128-bits identifier that is encoded and stored in all Azure laaS VMs SMBIOS.
                         - It can be read using platform BIOS commands.
-                     type: str
-                     returned: always
-                     sample: "eb86d9bb-6725-4787-a487-2e497d5b340c"
-               storageProfile:
-                   description:
-                       - Specifies the storae account type for the managed disk.
-                   type: complex
-                   returned: always
-                   contains:
-                       dataDisks:
-                           description:
-                               - Specifies the parameters that are used to add a data disk to virtual machine.
-                           type: list
-                           returned: always
-                           sample:
-                               - {
-                                 "caching": "None",
+                    type: str
+                    returned: always
+                    sample: "eb86d9bb-6725-4787-a487-2e497d5b340c"
+                storageProfile:
+                    description:
+                        - Specifies the storae account type for the managed disk.
+                    type: complex
+                    returned: always
+                    contains:
+                        dataDisks:
+                            description:
+                                - Specifies the parameters that are used to add a data disk to virtual machine.
+                            type: list
+                            returned: always
+                            sample:
+                                - {
+                                  "caching": "None",
                                  "createOption": "Attach",
                                  "diskSizeGB": 1023,
                                  "lun": 2,
@@ -243,23 +243,23 @@ response:
                                  "name": "testdisk3"
                                  }
 
-                       imageReference:
-                           description:
-                               - Specifies information about the image to use.
-                           type: dict
-                           returned: always
-                           sample: {
+                        imageReference:
+                            description:
+                                - Specifies information about the image to use.
+                            type: dict
+                            returned: always
+                            sample: {
                                    "offer": "UbuntuServer",
                                    "publisher": "Canonical",
                                    "sku": "18.04-LTS",
                                    "version": "latest"
                                    }
-                       osDisk:
-                           description:
-                               - Specifies information about the operating system disk used by the virtual machine.
-                           type: dict
-                           returned: always
-                           sample: {
+                        osDisk:
+                            description:
+                                - Specifies information about the operating system disk used by the virtual machine.
+                            type: dict
+                            returned: always
+                            sample: {
                                    "caching": "ReadWrite",
                                    "createOption": "FromImage",
                                    "diskSizeGB": 30,
