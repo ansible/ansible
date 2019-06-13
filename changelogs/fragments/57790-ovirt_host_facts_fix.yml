@@ -1,0 +1,2 @@
+bugfixes:
+  - Don't return nested information in ovirt_host_facts when fetch_nested is false
