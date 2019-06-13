@@ -51,7 +51,7 @@ options:
     default: present
     description:
       - "If set to C(present) and the group doesn't exists then the group will be created."
-      - "If set to C(absent) and the group exists then the groupwill be deleted."
+      - "If set to C(absent) and the group exists then the group will be deleted."
     required: true
   vms:
     description:
@@ -94,7 +94,7 @@ EXAMPLES = r'''
       - DC0_C0_H0
       - DC0_C0_H1
       - DC0_C0_H2
-    state: absent
+    state: present
 
 - name: "Delete DRS Host group"
   delegate_to: localhost
