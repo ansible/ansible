@@ -1,0 +1,131 @@
+- include_tasks: setup.yml
+
+- name: Create virtual network in secondary resource group
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group_secondary }}"
+    name: "{{ network_name ~ '-2' }}"
+    address_prefixes: "{{ secondary_network }}"
+  register: create_virt_net_result
+
+- name: Create subnet in secondary resource group
+  azure_rm_subnet:
+    resource_group: "{{ resource_group_secondary }}"
+    name: "{{ subnet_name ~ '-2' }}"
+    address_prefix: "{{ secondary_subnet }}"
+    virtual_network: "{{ network_name ~ '-2' }}"
+
+- name: Create NICs for dual NIC VM in secondary resource group
+  azure_rm_networkinterface:
+    resource_group: "{{ item.resource_group }}"
+    name: "{{ item.name }}"
+    virtual_network: "{{ network_name ~ '-2' }}"
+    subnet: "{{ subnet_name ~ '-2' }}"
+  loop: "{{ nic_list }}"
+
+- name: Create virtual machine with two NICs
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"  # Should this be resource_group_secondary?
+    name: "{{ vm_name }}"
+    vm_size: Standard_A0
+    storage_account: "{{ storage_account }}"
+    storage_container: "{{ vm_name }}"
+    storage_blob: "{{ vm_name }}.vhd"
+    admin_username: adminuser
+    admin_password: Password123!
+    short_hostname: testvm
+    os_type: Linux
+    os_disk_size_gb: 64
+    os_disk_name: testosdiskxx
+    network_interfaces: "{{ nic_list }}"
+    availability_set: "{{ availability_set }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+    tags:
+      abc: def
+
+- name: Ensure VM was created properly
+  assert:
+    that:
+      - azure_vm.properties.availabilitySet.id
+      - azure_vm.properties.storageProfile.osDisk.name == 'testosdiskxx'
+
+- name: Retrieve VM facts (filtering by name)
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"  # Should this be resource_group_secondary?
+    name: "{{ vm_name }}"
+  register: vm_facts_results
+
+- name: Ensure facts module returned the second VM
+  assert:
+    that:
+      - vm_facts_results.vms | length == 1
+      - vm_facts_results.vms[0].name == "{{ vm_name }}"
+      - vm_facts_results.vms[0].location
+      - vm_facts_results.vms[0].admin_username == 'adminuser'
+      - vm_facts_results.vms[0].resource_group == "{{ resource_group }}"
+      - vm_facts_results.vms[0].power_state != None
+
+- name: Retrieve facts by tags
+  azure_rm_virtualmachine_facts:
+    tags:
+      - abc:def
+  register: facts_by_tags_results
+
+- name: Assert that facts module returned the second VM
+  assert:
+    that:
+      - facts_by_tags_results.vms | length >= 1
+
+- name: Should be idempotent with a dual NICs
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"  # Should this be resource_group_secondary?
+    name: "{{ vm_name }}"
+    vm_size: Standard_A0
+    storage_account: "{{ storage_account }}"
+    storage_container: "{{ vm_name }}"
+    storage_blob: "{{ vm_name }}.vhd"
+    admin_username: adminuser
+    admin_password: Password123!
+    short_hostname: testvm
+    os_type: Linux
+    os_disk_size_gb: 64
+    network_interfaces: "{{ nic_list }}"
+    availability_set: "{{ availability_set }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: dual_nics_result
+
+- name: Ensure nothing changed
+  assert:
+    that: dual_nics_result is not changed
+
+- name: Generalize VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"  # Should this be resource_group_secondary?
+    name: "{{ vm_name }}"
+    generalized: yes
+
+- name: Gather facts and check if machine is generalized
+  azure_rm_virtualmachine_facts:
+    resource_group: "{{ resource_group }}"  # Should this be resource_group_secondary?
+    name: "{{ vm_name }}"
+  register: generalized_output
+
+- name: Ensure power state is generalized
+  assert:
+    that: generalized_output.vms[0].power_state == 'generalized'
+
+- name: Delete dual NIC VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"  # Should this be resource_group_secondary?
+    name: "{{ vm_name }}"
+    state: absent
+    vm_size: Standard_A0
+  async: 5000
+  poll: 0
