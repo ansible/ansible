@@ -46,7 +46,7 @@ yumdnf_argument_spec = dict(
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
-        lock_timeout=dict(type='int', default=0),
+        lock_timeout=dict(type='int', default=30),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
     mutually_exclusive=[['name', 'list']],
