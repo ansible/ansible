@@ -192,7 +192,7 @@ class Default(FactsBase):
 
     COMMANDS = ['show version',
                 'show switch virtual'
-                ]
+    ]
 
     def populate(self):
         super(Default, self).populate()
@@ -209,7 +209,7 @@ class Default(FactsBase):
             self.facts['vss'] = self.parse_vss(data)
 
     def parse_iostype(self, data):
-        match = re.search(r'\S+(X86_64_LINUX_IOSD-UNIVERSALK9-M)(\S+)', data)
+        match = re.search(r'(\ IOS-XE\ )', data)
         if match:
             return "IOS-XE"
         else:
