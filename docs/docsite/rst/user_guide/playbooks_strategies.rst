@@ -16,7 +16,7 @@ the play as fast as it can.::
       tasks:
       ...
 
-Strategy can be changed per play, or globally in ```ansible.cfg```, under the ```defaults``` stanza::
+Strategy can be changed per play, or globally in ``ansible.cfg``, under the ``defaults`` stanza::
 
     [defaults]
     strategy = free
