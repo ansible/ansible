@@ -138,7 +138,7 @@ response:
   returned: success
   type: complex
   contains:
-    applianceIp:
+    appliance_ip:
       description: IP address of Meraki appliance in the VLAN
       returned: success
       type: str
@@ -148,7 +148,7 @@ response:
       returned: success
       type: str
       sample: upstream_dns
-    fixedIpAssignments:
+    fixed_ip_assignments:
       description: List of MAC addresses which have IP addresses assigned.
       returned: success
       type: complex
@@ -168,7 +168,7 @@ response:
               returned: success
               type: str
               sample: fixed_ip
-    reservedIpRanges:
+    reserved_ip_ranges:
       description: List of IP address ranges which are reserved for static assignment.
       returned: success
       type: complex
@@ -208,32 +208,32 @@ response:
       returned: success
       type: str
       sample: "192.0.1.0/24"
-    dhcpHandling:
+    dhcp_handling:
       description: Status of DHCP server on VLAN.
       returned: success
       type: str
       sample: Run a DHCP server
-    dhcpLeaseTime:
+    dhcp_lease_time:
       description: DHCP lease time when server is active.
       returned: success
       type: str
       sample: 1 day
-    dhcpBootOptionsEnabled:
+    dhcp_boot_options_enabled:
       description: Whether DHCP boot options are enabled.
       returned: success
       type: bool
       sample: no
-    dhcpBootNextServer:
+    dhcp_boot_next_server:
       description: DHCP boot option to direct boot clients to the server to load the boot file from.
       returned: success
       type: str
       sample: 192.0.1.2
-    dhcpBootFilename:
+    dhcp_boot_filename:
       description: Filename for boot file.
       returned: success
       type: str
       sample: boot.txt
-    dhcpOptions:
+    dhcp_options:
       description: DHCP options.
       returned: success
       type: complex

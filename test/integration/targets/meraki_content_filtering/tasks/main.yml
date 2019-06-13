@@ -49,7 +49,7 @@
 
   - assert:
       that:
-        - single_allowed_check.data.allowedUrlPatterns | length == 1
+        - single_allowed_check.data.allowed_url_patterns | length == 1
         - single_allowed_check is changed
 
   - name: Set single allowed URL pattern
@@ -64,7 +64,7 @@
 
   - assert:
       that:
-        - single_allowed.data.allowedUrlPatterns | length == 1
+        - single_allowed.data.allowed_url_patterns | length == 1
 
   - name: Set single allowed URL pattern for idempotency with check mode
     meraki_content_filtering:
@@ -83,6 +83,7 @@
   - assert:
       that:
         - single_allowed_idempotent_check is not changed
+        - single_allowed.data.allowed_url_patterns | length == 1
 
   - name: Set single allowed URL pattern for idempotency
     meraki_content_filtering:
@@ -117,7 +118,7 @@
 
   - assert:
       that:
-        - single_blocked.data.blockedUrlPatterns | length == 1
+        - single_blocked.data.blocked_url_patterns | length == 1
 
   - name: Set two allowed URL pattern
     meraki_content_filtering:
@@ -136,7 +137,7 @@
   - assert:
       that:
         - two_allowed.changed == True
-        - two_allowed.data.allowedUrlPatterns | length == 2
+        - two_allowed.data.allowed_url_patterns | length == 2
 
   - name: Set blocked URL category
     meraki_content_filtering:
@@ -155,8 +156,8 @@
   - assert:
       that:
         - blocked_category.changed == True
-        - blocked_category.data.blockedUrlCategories | length == 1
-        - blocked_category.data.urlCategoryListSize == "fullList"
+        - blocked_category.data.blocked_url_categories | length == 1
+        - blocked_category.data.url_category_list_size == "fullList"
 
   - name: Set blocked URL category with top sites
     meraki_content_filtering:
@@ -175,8 +176,8 @@
   - assert:
       that:
         - blocked_category.changed == True
-        - blocked_category.data.blockedUrlCategories | length == 1
-        - blocked_category.data.urlCategoryListSize == "topSites"
+        - blocked_category.data.blocked_url_categories | length == 1
+        - blocked_category.data.url_category_list_size == "topSites"
 
   always:
     - name: Reset policies
