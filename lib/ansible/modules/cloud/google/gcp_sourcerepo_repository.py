@@ -62,7 +62,7 @@ notes:
 EXAMPLES = '''
 - name: create a repository
   gcp_sourcerepo_repository:
-    name: projects/test_project/repos/test_object
+    name: test_object
     project: test_project
     auth_kind: serviceaccount
     service_account_file: "/tmp/auth.pem"
@@ -95,6 +95,7 @@ size:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
+import re
 
 ################################################################################
 # Main
@@ -152,7 +153,7 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {u'name': module.params.get('name')}
+    request = {u'name': name_partial_to_full(module.params.get('name'), module.params)}
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -167,7 +168,7 @@ def fetch_resource(module, link, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://sourcerepo.googleapis.com/v1/{name}".format(**module.params)
+    return "https://sourcerepo.googleapis.com/v1/projects/{project}/repos/{name}".format(**module.params)
 
 
 def collection(module):
@@ -216,7 +217,19 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': module.params.get('name'), u'url': response.get(u'url'), u'size': response.get(u'size')}
+    return {u'name': name_partial_to_full(module.params.get('name'), module.params), u'url': response.get(u'url'), u'size': response.get(u'size')}
+
+
+def name_partial_to_full(name, params):
+    if name is None:
+        return
+
+    url = r"projects/.*/repos/.*"
+
+    if not re.match(url, name):
+        name = "projects/{project}/repos/{name}".format(**params)
+
+    return name
 
 
 if __name__ == '__main__':
