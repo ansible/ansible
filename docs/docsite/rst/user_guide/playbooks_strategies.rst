@@ -6,7 +6,7 @@ Strategies
 Strategies are a way to control play execution. By default, plays run with a  ``linear`` strategy, in which all hosts will run each task before any host starts the next task, using the number of forks (default 5) to parallelize.
 
 The ``serial`` directive can 'batch' this behaviour to a subset of the hosts, which then run to
-completion of the play before the next 'batch' starts.
+completion of the play before the next 'batch' starts. Please note that ```serial``` is not a third strategy, but directive/option of the ```linear``` strategy.
 
 A second ``strategy`` ships with Ansible - ``free`` - which allows each host to run until the end of
 the play as fast as it can.::
@@ -16,6 +16,10 @@ the play as fast as it can.::
       tasks:
       ...
 
+Strategy can be changed per play, or globally in ```ansible.cfg```, under the ```defaults``` stanza::
+
+    [defaults]
+    strategy = free
 
 Strategy Plugins
 `````````````````
