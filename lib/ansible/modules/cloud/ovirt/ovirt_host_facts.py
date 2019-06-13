@@ -79,11 +79,11 @@ from ansible.module_utils.ovirt import (
 )
 
 
-def get_filtered_hosts(cluster_version, hosts):
+def get_filtered_hosts(cluster_version, hosts, connection):
     # Filtering by cluster version returns only those which have same cluster version as input
     filtered_hosts = []
     for host in hosts:
-        cluster = host.cluster
+        cluster = connection.follow_link(host.cluster)
         cluster_version_host = str(cluster.version.major) + '.' + str(cluster.version.minor)
         if cluster_version_host == cluster_version:
             filtered_hosts.append(host)
@@ -106,12 +106,11 @@ def main():
         hosts_service = connection.system_service().hosts_service()
         hosts = hosts_service.list(
             search=module.params['pattern'],
-            all_content=module.params['all_content'],
-            follow='cluster',
+            all_content=module.params['all_content']
         )
         cluster_version = module.params.get('cluster_version')
         if cluster_version is not None:
-            hosts = get_filtered_hosts(cluster_version, hosts)
+            hosts = get_filtered_hosts(cluster_version, hosts, connection)
         module.exit_json(
             changed=False,
             ansible_facts=dict(
