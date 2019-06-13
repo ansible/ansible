@@ -1664,6 +1664,21 @@ PYTHON_MODULE_RLIMIT_NOFILE:
   vars:
   - {name: ansible_python_module_rlimit_nofile}
   version_added: '2.8'
+RESERVED_VAR_NAMES:
+  name: reserved var names
+  default: warn
+  description: What should happen when a variable is defined with a reserved name
+  version_added: '2.9'
+  choices:
+    warn: issue a warning
+    error: raise a fatal error
+    ignore: do nothing
+  type: string
+  env:
+    - name: ANSIBLE_RESERVED_VAR_NAMES
+  ini:
+    - section: defaults
+      key: reserved_var_names
 RETRY_FILES_ENABLED:
   name: Retry files
   default: False

@@ -1,0 +1,2 @@
+bugfixes:
+    - add lookup, query and q to 'reserved names' that playbook authors should avoid.

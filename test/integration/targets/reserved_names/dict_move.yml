@@ -1,0 +1,9 @@
+- hosts: localhost
+  name: make lookup a dict and fail!
+  tasks:
+    - name: Debug ENV Vars
+      debug:
+        msg: "Username is {{ lookup('env', 'VMWARE_USER') }}, host is {{ lookup('env', 'VMWARE_HOST') }}"
+      vars:
+        lookup:
+            a: 'b'

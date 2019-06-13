@@ -39,13 +39,13 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
-from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.fact_cache import FactCache
 
 display = Display()
 
@@ -422,6 +422,10 @@ class VariableManager:
         if task or play:
             # has to be copy, otherwise recursive ref
             all_vars['vars'] = all_vars.copy()
+
+        # avoid circular imports
+        from ansible.vars.reserved import handle_reserved_vars
+        handle_reserved_vars(all_vars)
 
         display.debug("done with get_vars()")
         return all_vars
