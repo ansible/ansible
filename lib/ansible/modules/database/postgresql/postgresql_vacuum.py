@@ -175,11 +175,11 @@ class Vacuum(object):
 
     args:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
 
     attrs:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
         changed (bool) --  something was changed after execution or not
         executed_queries (list) -- executed queries
         query_frag (list) -- list for making SQL query
