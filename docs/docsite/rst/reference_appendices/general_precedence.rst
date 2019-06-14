@@ -11,7 +11,7 @@ deal with.
 This design allows Ansible to deal with heterogeneous environments, that is, when a host or group of hosts have different 'connection' information than the others and should always be accessed in this way.
 You are not required to use the variables, but most people do out of convenience and then can get confused by their 'high precedence' and how to override them.
 
-In general the precedence is simple, the higher precedence overwrites the lower ones, when things are defined in the same precedence category, 'last defined' wins and overwrites previous definitions.
+In general the precedence is simple - the higher precedence overwrites the lower ones. When things are defined in the same precedence category, 'last defined' wins and overwrites previous definitions.
 this is the most general list, from least to most:
 
    Configuration
