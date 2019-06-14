@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roleassignment
 version_added: "2.8"
-short_description: Manage Azure Role Assignment.
+short_description: Manage Azure Role Assignment
 description:
     - Create and delete instance of Azure Role Assignment.
 
@@ -37,23 +37,23 @@ options:
     scope:
         description:
             - The scope of the role assignment to create.
-            - For example, use /subscriptions/{subscription-id}/ for subscription,
-            - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group,
+            - For example, use /subscriptions/{subscription-id}/ for subscription.
+            - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group.
             - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for resource.
     state:
       description:
-        - Assert the state of the role assignment.
-        - Use 'present' to create or update a role assignment and 'absent' to delete it.
+          - Assert the state of the role assignment.
+          - Use C(present) to create or update a role assignment and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -75,11 +75,11 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Id of current role assignment.
+    description:
+        - Id of current role assignment.
     returned: always
     type: str
-    sample:
-      "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 '''
 
 import uuid

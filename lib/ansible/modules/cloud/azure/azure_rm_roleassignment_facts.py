@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roleassignment_facts
 version_added: "2.8"
-short_description: Gets Azure Role Assignment facts.
+short_description: Gets Azure Role Assignment facts
 description:
     - Gets facts of Azure Role Assignment.
 
@@ -25,9 +25,9 @@ options:
     scope:
         description:
             - The scope that the role assignment applies to.
-            - For example, use /subscriptions/{subscription-id}/ for a subscription,
-            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group,
-            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource
+            - For example, use /subscriptions/{subscription-id}/ for a subscription.
+            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group.
+            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource.
     name:
         description:
             - Name of role assignment.
@@ -44,7 +44,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -60,7 +60,8 @@ EXAMPLES = '''
 
 RETURN = '''
 roleassignments:
-    description: List of role assignments.
+    description:
+        - List of role assignments.
     returned: always
     type: complex
     contains:
