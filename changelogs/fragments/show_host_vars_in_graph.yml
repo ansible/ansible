@@ -1,0 +1,2 @@
+bugfixes:
+  - show host_vars in ansible-inventory's --graph option.

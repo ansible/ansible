@@ -130,7 +130,6 @@ class InventoryCLI(CLI):
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
 
             myvars = self._get_host_variables(host=hosts[0])
-            self._remove_internal(myvars)
 
             # FIXME: should we template first?
             results = self.dump(myvars)
@@ -222,21 +221,22 @@ class InventoryCLI(CLI):
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
 
-        return res
+        return self._remove_internal(res)
 
     def _get_host_variables(self, host):
 
         if context.CLIARGS['export']:
+            # only get vars defined directly host
             hostvars = host.get_vars()
 
-            # FIXME: add switch to skip vars plugins
-            # add vars plugin info
+            # FIXME: add switch to skip vars plugins, add vars plugin info
             for inventory_dir in self.inventory._sources:
                 hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
         else:
+            # get all vars flattened by host, but skip magic hostvars
             hostvars = self.vm.get_vars(host=host, include_hostvars=False)
 
-        return hostvars
+        return self._remove_internal(hostvars)
 
     def _get_group(self, gname):
         group = self.inventory.groups.get(gname)
@@ -249,6 +249,8 @@ class InventoryCLI(CLI):
             if internal in dump:
                 del dump[internal]
 
+        return dump
+
     @staticmethod
     def _remove_empty(dump):
         # remove empty keys
@@ -259,7 +261,6 @@ class InventoryCLI(CLI):
     @staticmethod
     def _show_vars(dump, depth):
         result = []
-        InventoryCLI._remove_internal(dump)
         if context.CLIARGS['show_vars']:
             for (name, val) in sorted(dump.items()):
                 result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
@@ -281,7 +282,7 @@ class InventoryCLI(CLI):
         if group.name != 'all':
             for host in sorted(group.hosts, key=attrgetter('name')):
                 result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(host.get_vars(), depth + 1))
+                result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
 
         result.extend(self._show_vars(self._get_group_variables(group), depth))
 
@@ -327,7 +328,6 @@ class InventoryCLI(CLI):
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
-                self._remove_internal(hvars)
                 results['_meta']['hostvars'][host.name] = hvars
 
         return results
@@ -356,7 +356,6 @@ class InventoryCLI(CLI):
                     if h.name not in seen:  # avoid defining host vars more than once
                         seen.append(h.name)
                         myvars = self._get_host_variables(host=h)
-                        self._remove_internal(myvars)
                     results[group.name]['hosts'][h.name] = myvars
 
             if context.CLIARGS['export']:
@@ -391,7 +390,6 @@ class InventoryCLI(CLI):
                     if host.name not in seen:
                         seen.add(host.name)
                         host_vars = self._get_host_variables(host=host)
-                        self._remove_internal(host_vars)
                     else:
                         host_vars = {}
                     try:
