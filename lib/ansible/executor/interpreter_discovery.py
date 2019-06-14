@@ -65,7 +65,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         shell_bootstrap = "echo PLATFORM; uname; echo FOUND; {0}; echo ENDFOUND".format('; '.join(command_list))
 
         # FUTURE: in most cases we probably don't want to use become, but maybe sometimes we do?
-        res = action._low_level_execute_command(shell_bootstrap, sudoable=False)
+        res = action._low_level_execute_command(shell_bootstrap, sudoable=False, exec_timeout=action._utility_exec_timeout)
 
         raw_stdout = res.get('stdout', u'')
 
@@ -93,7 +93,8 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
         # FUTURE: respect pipelining setting instead of just if the connection supports it?
         if action._connection.has_pipelining:
-            res = action._low_level_execute_command(found_interpreters[0], sudoable=False, in_data=platform_script)
+            res = action._low_level_execute_command(found_interpreters[0], sudoable=False, in_data=platform_script,
+                                                    exec_timeout=action._utility_exec_timeout)
         else:
             # FUTURE: implement on-disk case (via script action or ?)
             raise NotImplementedError('pipelining support required for extended interpreter discovery')

@@ -1734,6 +1734,15 @@ USE_PERSISTENT_CONNECTIONS:
   ini:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
+UTILITY_COMMAND_EXEC_TIMEOUT:
+  name: Utility command exec timeout (sec)
+  default: 10
+  description: Execution timeout (in seconds) to use for internal target utility commands
+               (eg, path expansion, directory create/delete, interpreter discovery)
+  ini:
+  - {key: utility_command_exec_timeout, section: defaults}
+  type: int
+  version_added: "2.9"
 VARIABLE_PRECEDENCE:
   name: Group variable precedence
   default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']

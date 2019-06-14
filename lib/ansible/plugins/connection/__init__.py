@@ -55,6 +55,7 @@ class ConnectionBase(AnsiblePlugin):
     # persistent connection framework or not
     supports_persistence = False
     force_persistence = False
+    supports_exec_timeout = False
 
     default_user = None
 

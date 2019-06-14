@@ -445,6 +445,7 @@ class Connection(ConnectionBase):
 
     transport = 'ssh'
     has_pipelining = True
+    supports_exec_timeout = True
 
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)
@@ -756,10 +757,12 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
-    def _bare_run(self, cmd, in_data, sudoable=True, checkrc=True):
+    def _bare_run(self, cmd, in_data, sudoable=True, checkrc=True, exec_timeout=None):
         '''
         Starts the command and communicates with it until it ends.
         '''
+        if not exec_timeout:
+            exec_timeout = float('inf')
 
         # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
         display_cmd = list(map(shlex_quote, map(to_text, cmd)))
@@ -872,9 +875,13 @@ class Connection(ConnectionBase):
 
         # If we can send initial data without waiting for anything, we do so
         # before we start polling
-        if states[state] == 'ready_to_send' and in_data:
-            self._send_initial_data(stdin, in_data, p)
+        if states[state] == 'ready_to_send':
+            if in_data:
+                self._send_initial_data(stdin, in_data, p)
+            # whether or not we had data, we're now waiting for exit
             state += 1
+
+        time_elapsed = 0
 
         try:
             while True:
@@ -884,6 +891,7 @@ class Connection(ConnectionBase):
                 # We pay attention to timeouts only while negotiating a prompt.
 
                 if not events:
+                    time_elapsed += timeout
                     # We timed out
                     if state <= states.index('awaiting_escalation'):
                         # If the process has already exited, then it's not really a
@@ -892,6 +900,9 @@ class Connection(ConnectionBase):
                             break
                         self._terminate_process(p)
                         raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                    elif state == states.index('awaiting_exit') and time_elapsed >= exec_timeout:
+                        self._terminate_process(p)
+                        raise AnsibleError("Timed out (%ds) waiting for command execution." % exec_timeout)
 
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
@@ -1043,10 +1054,10 @@ class Connection(ConnectionBase):
         return (p.returncode, b_stdout, b_stderr)
 
     @_ssh_retry
-    def _run(self, cmd, in_data, sudoable=True, checkrc=True):
+    def _run(self, cmd, in_data, sudoable=True, checkrc=True, exec_timeout=None):
         """Wrapper around _bare_run that retries the connection
         """
-        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
+        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc, exec_timeout=exec_timeout)
 
     @_ssh_retry
     def _file_transport_command(self, in_path, out_path, sftp_action):
@@ -1149,9 +1160,8 @@ class Connection(ConnectionBase):
     #
     # Main public methods
     #
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd, in_data=None, sudoable=True, exec_timeout=None):
         ''' run a command on the remote host '''
-
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
@@ -1185,7 +1195,7 @@ class Connection(ConnectionBase):
             args = (ssh_executable, self.host, cmd)
 
         cmd = self._build_command(*args)
-        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
+        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable, exec_timeout=exec_timeout)
 
         # When running on Windows, stderr may contain CLIXML encoded output
         if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):

@@ -31,6 +31,7 @@ from ansible.release import __version__
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
+from threading import Timer
 
 display = Display()
 
@@ -64,6 +65,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._discovered_interpreter = False
         self._discovery_deprecation_warnings = []
         self._discovery_warnings = []
+
+        self._utility_exec_timeout = C.config.get_config_value('UTILITY_COMMAND_EXEC_TIMEOUT')
 
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
@@ -135,7 +138,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _remote_file_exists(self, path):
         cmd = self._connection._shell.exists(path)
-        result = self._low_level_execute_command(cmd=cmd, sudoable=True)
+        result = self._low_level_execute_command(cmd=cmd, sudoable=True, exec_timeout=self._utility_exec_timeout)
         if result['rc'] == 0:
             return True
         return False
@@ -339,7 +342,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
         cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
-        result = self._low_level_execute_command(cmd, sudoable=False)
+        result = self._low_level_execute_command(cmd, sudoable=False, exec_timeout=self._utility_exec_timeout)
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -398,7 +401,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
-            tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False)
+            tmp_rm_res = self._low_level_execute_command(cmd, sudoable=False, exec_timeout=self._utility_exec_timeout)
 
             if tmp_rm_res.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
@@ -541,7 +544,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Issue a remote chmod command
         '''
         cmd = self._connection._shell.chmod(paths, mode)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, exec_timeout=self._utility_exec_timeout)
         return res
 
     def _remote_chown(self, paths, user, sudoable=False):
@@ -549,7 +552,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Issue a remote chown command
         '''
         cmd = self._connection._shell.chown(paths, user)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, exec_timeout=self._utility_exec_timeout)
         return res
 
     def _remote_set_user_facl(self, paths, user, mode, sudoable=False):
@@ -557,7 +560,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Issue a remote call to setfacl
         '''
         cmd = self._connection._shell.set_user_facl(paths, user, mode)
-        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, exec_timeout=self._utility_exec_timeout)
         return res
 
     def _execute_remote_stat(self, path, all_vars, follow, tmp=None, checksum=True):
@@ -655,7 +658,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
-        data = self._low_level_execute_command(cmd, sudoable=False)
+        data = self._low_level_execute_command(cmd, sudoable=False, exec_timeout=self._utility_exec_timeout)
 
         try:
             initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -666,7 +669,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Something went wrong trying to expand the path remotely. Try using pwd, if not, return
             # the original string
             cmd = self._connection._shell.pwd()
-            pwd = self._low_level_execute_command(cmd, sudoable=False).get('stdout', '').strip()
+            pwd = self._low_level_execute_command(cmd, sudoable=False, exec_timeout=self._utility_exec_timeout).get('stdout', '').strip()
             if pwd:
                 expanded = pwd
             else:
@@ -1009,7 +1012,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         return data
 
     # FIXME: move to connection base
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None,
+                                   encoding_errors='surrogate_then_replace', chdir=None, exec_timeout=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -1023,6 +1027,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
         :kwarg chdir: cd into this directory before executing the command.
+        :kwarg exec_timeout: Maximum elapsed time (in seconds) before assuming
+            the command has timed out. The default value of None implies
+            infinite execution time. The default timeout behavior for connections
+            that do not expose a 'supports_exec_timeout' attribute whose value is True
+            is merely to display a warning that the command has timed out. Connections
+            that directly support the exec_timeout kwarg on their 'exec_command' method
+            may perform whatever timeout behavior is appropriate (eg, some combination of
+            terminating the remote command, closing/resetting a connection), but should
+            ultimately raise an error.
         '''
 
         display.debug("_low_level_execute_command(): starting")
@@ -1056,7 +1069,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._connection.transport == 'local':
             self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
 
-        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        exec_cmd_optional_args = {}
+        legacy_exec_timeout_timer = None
+
+        if exec_timeout:
+            if hasattr(self._connection, 'supports_exec_timeout') and self._connection.supports_exec_timeout:
+                exec_cmd_optional_args['exec_timeout'] = exec_timeout
+            else:
+                # TODO: use > of connection timeout or command timeout for the legacy timer?
+                timeout_msg = "Command on host {0} timed out after {1}s, but connection {2} does not support " \
+                              "cancellation. This host may be unresponsive."\
+                    .format(self._play_context.remote_addr, exec_timeout, self._connection.transport)
+                legacy_exec_timeout_timer = Timer(exec_timeout, lambda: display.warning(timeout_msg))
+                legacy_exec_timeout_timer.start()
+
+        try:
+            rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable, **exec_cmd_optional_args)
+        finally:
+            if legacy_exec_timeout_timer:
+                legacy_exec_timeout_timer.cancel()
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
