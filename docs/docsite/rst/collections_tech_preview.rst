@@ -7,7 +7,7 @@ Collections are a distribution format for Ansible content. They can be used to
 package and distribute playbooks, roles, modules, and plugins.
 You will be able to publish and use collections via `Ansible's Galaxy repository <http://galaxy.ansible.com>`_.
 
-.. note::
+.. important::
     This is a Tech-Preview feature and is only supported by Ansible 2.8 (or greater).
     Future Galaxy or Ansible releases may introduce breaking changes.
 
