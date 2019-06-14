@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# Copyright: (c) 2019, Philip Bove <phil@bove.online>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
     'metdata_version': 1.1,
@@ -6,15 +8,69 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-# TODO: write
 DOCUMENTATION = '''
-
+---
+module: semodule
+short_description: Manage selinux policy modules
+description:
+  - Use this module to manage selinux policy modules from Type Enforcement files
+version_added: "2.9"
+options:
+  src:
+    description:
+      - File name of Type Enforcement file to apply to system
+    type: path
+  state:
+    description:
+      - State of policy module in system
+    type: str
+    choices: ["present", "absent", "latest"]
+    default: "present"
+  force:
+    description:
+      - Force operation to happen even if uneeded
+    choices: [True, False]
+    default: False
+    type: bool
+requirements:
+  - policycoreutils
+  - checkpolicy
+author:
+  - Philip Bove (@bandit145)
 '''
 
 EXAMPLES = '''
+# install policy module from type enforcement file
+- semodule:
+    src: policy.te
+
+# force install policy module even if already existing on target system
+- semodule:
+    src: policy.te
+    force: true
+
+# remove policy module
+- semodule:
+    src: policy.te
+    state: absent
+
+# update existing module
+- semodule:
+    src: policyv2.te
+    state: latest
 '''
 
 RETURN = '''
+version:
+  description: Returns version of affected policy
+  returned: If state absent, the version of the removed module. If state present version of just applied module
+  type: str
+  sample: 1.2.3
+name:
+  description: Returns name of affected policy
+  returned: If state absent, the name of the removed module. If state present name of just applied module
+  type: str
+  sample: my-policy
 '''
 
 REQUIREMENTS = [
@@ -33,15 +89,6 @@ def get_semodule_info(module):
     if rc != 0:
         module.fail_json(msg='semodule command failed')
     return stdout
-
-#selinux module info
-def module_info(name, semodule_info):
-    cur_pol = {}
-    semodule_list = semodule_info.split('\n')
-    for line in semodule_list:
-        if name in line:
-            cur_pol['name'] ,cur_pol['version'] = line.split('\t')
-    return cur_pol
 
 def ensure(module, policy_def):
     changed = False
