@@ -345,8 +345,8 @@ def get_config_diff(module, running=None, candidate=None):
         return response
     elif is_netconf(module):
         if running and candidate:
-            running_data = running.split("\n", 1)[1].rsplit("\n", 1)[0]
-            candidate_data = candidate.split("\n", 1)[1].rsplit("\n", 1)[0]
+            running_data = running.split("\n", 1)[-1].rsplit("\n", 1)[0]
+            candidate_data = candidate.split("\n", 1)[-1].rsplit("\n", 1)[0]
             if running_data != candidate_data:
                 d = Differ()
                 diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
