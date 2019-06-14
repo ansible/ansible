@@ -39,3 +39,5 @@
           - templated_name is defined
           - non_templated_listener is defined
           - templated_listener is undefined
+
+    - include_role: name=test_templating_in_handlers
