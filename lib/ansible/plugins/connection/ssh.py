@@ -321,23 +321,23 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
     if command == b'sshpass':
         # Error 5 is invalid/incorrect password. Raise an exception to prevent retries from locking the account.
         if return_tuple[0] == 5:
-            msg = 'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
+            msg = u'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
             if remaining_retries <= 0:
-                msg = 'Invalid/incorrect password:'
+                msg = u'Invalid/incorrect password:'
             if no_log:
-                msg = '{0} <error censored due to no log>'.format(msg)
+                msg = u'{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2].rstrip()))
+                msg = u'{0} {1}'.format(msg, to_text(return_tuple[2], errors='surrogate_then_replace').rstrip())
             raise AnsibleAuthenticationFailure(msg)
 
         # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
         # No exception is raised, so the connection is retried.
         elif return_tuple[0] in [1, 2, 3, 4, 6]:
-            msg = 'sshpass error:'
+            msg = u'sshpass error:'
             if no_log:
-                msg = '{0} <error censored due to no log>'.format(msg)
+                msg = u'{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2].rstrip()))
+                msg = u'{0} {1}'.format(msg, to_text(return_tuple[2], errors='surrogate_then_replace').rstrip())
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
@@ -347,20 +347,20 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
                 break
 
         if SSH_ERROR:
-            msg = "Failed to connect to the host via ssh:"
+            msg = u"Failed to connect to the host via ssh:"
             if no_log:
-                msg = '{0} <error censored due to no log>'.format(msg)
+                msg = u'{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+                msg = u'{0} {1}'.format(msg, to_text(return_tuple[2], errors='surrogate_then_replace').rstrip())
             raise AnsibleConnectionFailure(msg)
 
     # For other errors, no execption is raised so the connection is retried and we only log the messages
     if 1 <= return_tuple[0] <= 254:
-        msg = "Failed to connect to the host via ssh:"
+        msg = u"Failed to connect to the host via ssh:"
         if no_log:
-            msg = '{0} <error censored due to no log>'.format(msg)
+            msg = u'{0} <error censored due to no log>'.format(msg)
         else:
-            msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+            msg = u'{0} {1}'.format(msg, to_text(return_tuple[2], errors='surrogate_then_replace').rstrip())
         display.vvv(msg, host=host)
 
 
@@ -379,7 +379,7 @@ def _ssh_retry(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
-        cmd_summary = "%s..." % args[0]
+        cmd_summary = u"%s..." % to_text(args[0], errors='surrogate_then_replace')
         for attempt in range(remaining_tries):
             cmd = args[0]
             if attempt != 0 and self._play_context.password and isinstance(cmd, list):
@@ -391,7 +391,7 @@ def _ssh_retry(func):
                 try:
                     return_tuple = func(self, *args, **kwargs)
                     if self._play_context.no_log:
-                        display.vvv('rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
+                        display.vvv(u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
                     else:
                         display.vvv(return_tuple, host=self.host)
                     # 0 = success
@@ -427,9 +427,10 @@ def _ssh_retry(func):
                         pause = 30
 
                     if isinstance(e, AnsibleConnectionFailure):
-                        msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt + 1, cmd_summary, pause)
+                        msg = u"ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt + 1, cmd_summary, pause)
                     else:
-                        msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt + 1, e, cmd_summary, pause)
+                        msg = (u"ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), "
+                               u"pausing for %d seconds" % (attempt + 1, to_text(e, errors='surrogate_then_replace'), cmd_summary, pause))
 
                     display.vv(msg, host=self.host)
 
@@ -681,7 +682,7 @@ class Connection(ConnectionBase):
         just hang forever waiting for more commands.)
         '''
 
-        display.debug('Sending initial data')
+        display.debug(u'Sending initial data')
 
         try:
             fh.write(to_bytes(in_data))
@@ -697,7 +698,7 @@ class Connection(ConnectionBase):
                     'over ssh: %s' % (self.host, to_native(e)), orig_exc=e
                 )
 
-        display.debug('Sent initial data (%d bytes)' % len(in_data))
+        display.debug(u'Sent initial data (%d bytes)' % len(in_data))
 
     # Used by _run() to kill processes on failures
     @staticmethod
@@ -722,23 +723,23 @@ class Connection(ConnectionBase):
 
         output = []
         for b_line in b_chunk.splitlines(True):
-            display_line = to_text(b_line).rstrip('\r\n')
+            display_line = to_text(b_line, errors='surrogate_then_replace').rstrip('\r\n')
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
             if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
-                display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
             elif self.become.success and self.become.check_success(b_line):
-                display.debug("become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
             elif sudoable and self.become.check_incorrect_password(b_line):
-                display.debug("become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_error'] = True
             elif sudoable and self.become.check_missing_password(b_line):
-                display.debug("become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_nopasswd_error'] = True
 
             if not suppress_output:
@@ -762,8 +763,8 @@ class Connection(ConnectionBase):
         '''
 
         # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
-        display_cmd = list(map(shlex_quote, map(to_text, cmd)))
-        display.vvv(u'SSH: EXEC {0}'.format(u' '.join(display_cmd)), host=self.host)
+        display_cmd = u' '.join(shlex_quote(to_text(c, errors='surrogate_then_replace')) for c in cmd)
+        display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
         # to use a pseudo-tty (ssh will have been invoked with -tt). If we are
@@ -835,12 +836,12 @@ class Connection(ConnectionBase):
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
-                display.debug(u'Initial state: %s: %s' % (states[state], prompt))
-            elif self._play_context.become and self._play_context.success_key:
+                display.debug(u'Initial state: %s: %s' % (states[state], to_text(prompt, errors='surrogate_then_replace')))
+            elif self._play_context.become and self.become.success:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
                 state = states.index('awaiting_escalation')
-                display.debug(u'Initial state: %s: %s' % (states[state], self._play_context.success_key))
+                display.debug(u'Initial state: %s: %s' % (states[state], to_text(self.become.success, errors='surrogate_then_replace')))
 
         # We store accumulated stdout and stderr output from the process here,
         # but strip any privilege escalation prompt/confirmation lines first.
@@ -911,14 +912,14 @@ class Connection(ConnectionBase):
                             # not going to arrive until the persisted connection closes.
                             timeout = 1
                         b_tmp_stdout += b_chunk
-                        display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
+                        display.debug(u"stdout chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk, errors='surrogate_then_replace')))
                     elif key.fileobj == p.stderr:
                         b_chunk = p.stderr.read()
                         if b_chunk == b'':
                             # stderr has been closed, stop watching it
                             selector.unregister(p.stderr)
                         b_tmp_stderr += b_chunk
-                        display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk)))
+                        display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, to_text(b_chunk, errors='surrogate_then_replace')))
 
                 # We examine the output line-by-line until we have negotiated any
                 # privilege escalation prompt and subsequent success/error message.
@@ -945,7 +946,7 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_prompt':
                     if self._flags['become_prompt']:
-                        display.debug('Sending become_password in response to prompt')
+                        display.debug(u'Sending become_password in response to prompt')
                         stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
                         # On python3 stdin is a BufferedWriter, and we don't have a guarantee
                         # that the write will happen without a flush
@@ -960,23 +961,23 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
-                        display.vvv('Escalation succeeded')
+                        display.vvv(u'Escalation succeeded')
                         self._flags['become_success'] = False
                         state += 1
                     elif self._flags['become_error']:
-                        display.vvv('Escalation failed')
+                        display.vvv(u'Escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
                         raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
                     elif self._flags['become_nopasswd_error']:
-                        display.vvv('Escalation requires password')
+                        display.vvv(u'Escalation requires password')
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
                         raise AnsibleError('Missing %s password' % self._play_context.become_method)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
-                        display.vvv('Escalation prompt repeated')
+                        display.vvv(u'Escalation prompt repeated')
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
                         raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
@@ -1126,9 +1127,9 @@ class Connection(ConnectionBase):
             else:
                 # If not in smart mode, the data will be printed by the raise below
                 if len(methods) > 1:
-                    display.warning('%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
-                    display.debug('%s' % to_text(stdout))
-                    display.debug('%s' % to_text(stderr))
+                    display.warning(u'%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
+                    display.debug(u'%s' % to_text(stdout, errors='surrogate_then_replace'))
+                    display.debug(u'%s' % to_text(stderr, errors='surrogate_then_replace'))
 
         if returncode == 255:
             raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
@@ -1237,12 +1238,12 @@ class Connection(ConnectionBase):
             run_reset = True
 
         if run_reset:
-            display.vvv(u'sending stop: %s' % cmd)
+            display.vvv(u'sending stop: %s' % to_text(cmd, errors='surrogate_then_replace'))
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:
-                display.warning("Failed to reset connection:%s" % stderr)
+                display.warning(u"Failed to reset connection:%s" % to_text(stderr, errors='surrogate_then_replace'))
 
         self.close()
 
