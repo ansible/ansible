@@ -91,9 +91,8 @@ options:
       end with "/", the directory itself with all contents is copied.
     - If path is a file and dest ends with "\", the file is copied to the
       folder with the same filename.
-    - Not required if using C(content)
+    - Required unless using C(content).
     type: path
-    required: yes
 notes:
 - Currently win_copy does not support copying symbolic links from both local to
   remote and remote to remote.
