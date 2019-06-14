@@ -45,33 +45,33 @@ def load_additional_regular_setting(all_eres, all_pres):
     try:
         config_file = C.ERIC_ECCLI_ADDITIONAL_RE_FILE
         if config_file:
-           with open(config_file, "r") as file:
-            lines = file.readlines()
-            for line in lines:
-                line = line.strip('\n')
-                li = line.strip()
-                if li == '[ERE]':
-                    mode = 1
-                elif li == '[PRE]':
-                    mode = 2
-                else:
-                    if li and (li.startswith("#") is False):
-                        if python_version == 3:
-                            new_re = re.compile(bytes(line, 'ascii'))
-                        else:
-                            new_re = re.compile(line)
-                        if mode == 1:
-                            if ((new_re in new_eres) is False):
-                                if ((new_re in all_eres) is False):
-                                    new_eres.append(new_re)
-                        elif mode == 2:
-                            if ((new_re in new_pres) is False):
-                                if ((new_re in all_pres) is False):
-                                    new_pres.append(new_re)
-                        else:
-                            display.vvvv(u'Regular expression loading skipping:%s' % line)
-            all_eres.extend(new_eres)
-            all_pres.extend(new_pres)
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+                for line in lines:
+                    line = line.strip('\n')
+                    li = line.strip()
+                    if li == '[ERE]':
+                        mode = 1
+                    elif li == '[PRE]':
+                        mode = 2
+                    else:
+                        if li and (li.startswith("#") is False):
+                            if python_version == 3:
+                                new_re = re.compile(bytes(line, 'ascii'))
+                            else:
+                                new_re = re.compile(line)
+                            if mode == 1:
+                                if ((new_re in new_eres) is False):
+                                    if ((new_re in all_eres) is False):
+                                        new_eres.append(new_re)
+                            elif mode == 2:
+                                if ((new_re in new_pres) is False):
+                                    if ((new_re in all_pres) is False):
+                                        new_pres.append(new_re)
+                            else:
+                                display.vvvv(u'Regular expression loading skipping:%s' % line)
+                all_eres.extend(new_eres)
+                all_pres.extend(new_pres)
     except Exception as e:
         raise AnsibleConnectionFailure('Regular expression loading error:%s' % to_text(e))
 

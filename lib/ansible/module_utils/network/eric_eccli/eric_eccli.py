@@ -29,10 +29,6 @@ eric_eccli_top_spec = {
 eric_eccli_argument_spec.update(eric_eccli_top_spec)
 
 
-def get_provider_argspec():
-    return eric_eccli_provider_spec
-
-
 def get_connection(module):
     if hasattr(module, '_eric_eccli_connection'):
         return module._eric_eccli_connection
@@ -56,6 +52,7 @@ def get_capabilities(module):
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._eric_eccli_capabilities = json.loads(capabilities)
     return module._eric_eccli_capabilities
+
 
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)

@@ -197,7 +197,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-   # check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
