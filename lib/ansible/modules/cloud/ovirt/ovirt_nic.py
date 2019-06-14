@@ -255,7 +255,16 @@ def main():
             for vnic in connection.system_service().vnic_profiles_service().list():
                 if vnic.name == profile and vnic.network.id == network.id:
                     entitynics_module.vnic_id = vnic.id
-
+        else:
+            cluster_name = get_link_name(connection, cluster_id)
+            dcs_service = connection.system_service().data_centers_service()
+            dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
+            networks_service = dcs_service.service(dc.id).networks_service()
+            networks = networks_service.list()
+            if len(networks) == 1:
+                network = networks[0]
+                if network.vnic_profiles:
+                    entitynics_module.vnic_id = network.vnic_profiles.id
         # Handle appropriate action:
         state = module.params['state']
         if state == 'present':
