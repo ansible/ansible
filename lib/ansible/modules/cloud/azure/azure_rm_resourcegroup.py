@@ -99,7 +99,7 @@ state:
             description:
                 - Azure location for the resource group.
             returned: always
-            type; str
+            type: str
             sample: westus
         name:
             description:
