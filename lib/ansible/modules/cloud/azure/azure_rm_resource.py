@@ -208,7 +208,12 @@ response:
             type: dict
             returned: always
             sample: { 'key1': 'value1' }
-        "type": "Microsoft.Storage/storageAccounts"
+        type:
+            description:
+                - The resource type.
+            type: str
+            returned: always
+            sample: "Microsoft.Storage/storageAccounts"
 
 '''
 
