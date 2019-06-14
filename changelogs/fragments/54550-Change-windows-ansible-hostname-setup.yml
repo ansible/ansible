@@ -1,0 +1,2 @@
+bugfixes:
+  - "setup.ps1 - Support non NETBIOS compliant hostnames (https://github.com/ansible/ansible/issues/54550)"

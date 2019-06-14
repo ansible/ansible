@@ -9,8 +9,6 @@ Set-StrictMode -Version 2
 
 $ErrorActionPreference = "Stop"
 
-$log_path = $null
-
 Function Write-DebugLog {
     Param(
     [string]$msg
@@ -212,9 +210,6 @@ Else { # workgroup
         Fail-Json @{} "workgroup_name is required when state is 'workgroup'"
     }
 }
-
-
-$global:log_path = $log_path
 
 Try {
 

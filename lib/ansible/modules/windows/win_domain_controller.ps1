@@ -10,8 +10,6 @@ Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 $ConfirmPreference = "None"
 
-$log_path = $null
-
 Function Write-DebugLog {
     Param(
         [string]$msg
@@ -110,8 +108,6 @@ $site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failif
 $state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
 $log_path = Get-AnsibleParam -obj $params -name "log_path"
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
-
-$global:log_path = $log_path
 
 Try {
     # ensure target OS support; < 2012 doesn't have cmdlet support for DC promotion

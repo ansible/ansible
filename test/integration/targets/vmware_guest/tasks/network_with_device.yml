@@ -34,7 +34,7 @@
     that:
       - "vm_result.changed"
 
-- name: Deploy VM {{ vm1 | basename }} again
+- name: Deploy VM again
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"

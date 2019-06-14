@@ -65,7 +65,8 @@ options:
       be used in lieu of a "nodePool" object, since this configuration (along with
       the "nodeConfig") will be used to create a "NodePool" object with an auto-generated
       name. Do not use this and a nodePool at the same time.
-    required: true
+    - This field has been deprecated. Please use nodePool.initial_node_count instead.
+    required: false
   node_config:
     description:
     - Parameters used in creating the cluster's nodes.
@@ -155,6 +156,55 @@ options:
           for more information about preemptible VM instances.'
         required: false
         type: bool
+      accelerators:
+        description:
+        - A list of hardware accelerators to be attached to each node. See U(https://cloud.google.com/compute/docs/gpus)
+          for more information about support for GPUs.
+        required: false
+        version_added: 2.9
+        suboptions:
+          accelerator_count:
+            description:
+            - The number of accelerator cards exposed to an instance.
+            required: false
+          accelerator_type:
+            description:
+            - The accelerator type resource name.
+            required: false
+      disk_type:
+        description:
+        - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
+          If unspecified, the default disk type is 'pd-standard' .
+        required: false
+        version_added: 2.9
+      min_cpu_platform:
+        description:
+        - Minimum CPU platform to be used by this instance. The instance may be scheduled
+          on the specified or newer CPU platform.
+        required: false
+        version_added: 2.9
+      taints:
+        description:
+        - List of kubernetes taints to be applied to each node.
+        - 'For more information, including usage and the valid values, see: U(https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
+          .'
+        required: false
+        version_added: 2.9
+        suboptions:
+          key:
+            description:
+            - Key for taint.
+            required: false
+          value:
+            description:
+            - Value for taint.
+            required: false
+          effect:
+            description:
+            - Effect for taint.
+            - 'Some valid choices include: "EFFECT_UNSPECIFIED", "NO_SCHEDULE", "PREFER_NO_SCHEDULE",
+              "NO_EXECUTE"'
+            required: false
   master_auth:
     description:
     - The authentication information for accessing the master endpoint.
@@ -170,6 +220,19 @@ options:
           Because the master endpoint is open to the Internet, you should create a
           strong password.
         required: false
+      client_certificate_config:
+        description:
+        - Configuration for client certificate authentication on the cluster. For
+          clusters before v1.12, if no configuration is specified, a client certificate
+          is issued.
+        required: false
+        version_added: 2.9
+        suboptions:
+          issue_client_certificate:
+            description:
+            - Issue a client certificate.
+            required: false
+            type: bool
   logging_service:
     description:
     - 'The logging service the cluster should use to write logs. Currently available
@@ -255,10 +318,90 @@ options:
               which is also used by the Cloud Monitoring service.
             required: false
             type: bool
+      network_policy_config:
+        description:
+        - Configuration for NetworkPolicy. This only tracks whether the addon is enabled
+          or not on the Master, it does not track whether network policy is enabled
+          for the nodes.
+        required: false
+        version_added: 2.9
+        suboptions:
+          disabled:
+            description:
+            - Whether NetworkPolicy is enabled for this cluster.
+            required: false
+            type: bool
   subnetwork:
     description:
     - The name of the Google Compute Engine subnetwork to which the cluster is connected.
     required: false
+  locations:
+    description:
+    - The list of Google Compute Engine zones in which the cluster's nodes should
+      be located.
+    required: false
+    aliases:
+    - nodeLocations
+    version_added: 2.9
+  resource_labels:
+    description:
+    - The resource labels for the cluster to use to annotate any related Google Compute
+      Engine resources.
+    required: false
+    version_added: 2.9
+  legacy_abac:
+    description:
+    - Configuration for the legacy ABAC authorization mode.
+    required: false
+    version_added: 2.9
+    suboptions:
+      enabled:
+        description:
+        - Whether the ABAC authorizer is enabled for this cluster. When enabled, identities
+          in the system, including service accounts, nodes, and controllers, will
+          have statically granted permissions beyond those provided by the RBAC configuration
+          or IAM.
+        required: false
+        type: bool
+  network_policy:
+    description:
+    - Configuration options for the NetworkPolicy feature.
+    required: false
+    version_added: 2.9
+    suboptions:
+      provider:
+        description:
+        - The selected network policy provider.
+        - 'Some valid choices include: "PROVIDER_UNSPECIFIED", "CALICO"'
+        required: false
+      enabled:
+        description:
+        - Whether network policy is enabled on the cluster.
+        required: false
+        type: bool
+  default_max_pods_constraint:
+    description:
+    - The default constraint on the maximum number of pods that can be run simultaneously
+      on a node in the node pool of this cluster.
+    - Only honored if cluster created with IP Alias support.
+    required: false
+    version_added: 2.9
+    suboptions:
+      max_pods_per_node:
+        description:
+        - Constraint enforced on the max num of pods per node.
+        required: false
+  enable_tpu:
+    description:
+    - Enable the ability to use Cloud TPUs in this cluster.
+    required: false
+    type: bool
+    version_added: 2.9
+  tpu_ipv4_cidr_block:
+    description:
+    - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
+    required: false
+    version_added: 2.9
   location:
     description:
     - The location where the cluster is deployed.
@@ -308,6 +451,7 @@ initialNodeCount:
     be used in lieu of a "nodePool" object, since this configuration (along with the
     "nodeConfig") will be used to create a "NodePool" object with an auto-generated
     name. Do not use this and a nodePool at the same time.
+  - This field has been deprecated. Please use nodePool.initial_node_count instead.
   returned: success
   type: int
 nodeConfig:
@@ -408,6 +552,58 @@ nodeConfig:
         for more information about preemptible VM instances.'
       returned: success
       type: bool
+    accelerators:
+      description:
+      - A list of hardware accelerators to be attached to each node. See U(https://cloud.google.com/compute/docs/gpus)
+        for more information about support for GPUs.
+      returned: success
+      type: complex
+      contains:
+        acceleratorCount:
+          description:
+          - The number of accelerator cards exposed to an instance.
+          returned: success
+          type: str
+        acceleratorType:
+          description:
+          - The accelerator type resource name.
+          returned: success
+          type: str
+    diskType:
+      description:
+      - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd') If
+        unspecified, the default disk type is 'pd-standard' .
+      returned: success
+      type: str
+    minCpuPlatform:
+      description:
+      - Minimum CPU platform to be used by this instance. The instance may be scheduled
+        on the specified or newer CPU platform.
+      returned: success
+      type: str
+    taints:
+      description:
+      - List of kubernetes taints to be applied to each node.
+      - 'For more information, including usage and the valid values, see: U(https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
+        .'
+      returned: success
+      type: complex
+      contains:
+        key:
+          description:
+          - Key for taint.
+          returned: success
+          type: str
+        value:
+          description:
+          - Value for taint.
+          returned: success
+          type: str
+        effect:
+          description:
+          - Effect for taint.
+          returned: success
+          type: str
 masterAuth:
   description:
   - The authentication information for accessing the master endpoint.
@@ -426,6 +622,18 @@ masterAuth:
         password.
       returned: success
       type: str
+    clientCertificateConfig:
+      description:
+      - Configuration for client certificate authentication on the cluster. For clusters
+        before v1.12, if no configuration is specified, a client certificate is issued.
+      returned: success
+      type: complex
+      contains:
+        issueClientCertificate:
+          description:
+          - Issue a client certificate.
+          returned: success
+          type: bool
     clusterCaCertificate:
       description:
       - Base64-encoded public certificate that is the root of trust for the cluster.
@@ -544,11 +752,84 @@ addonsConfig:
             which is also used by the Cloud Monitoring service.
           returned: success
           type: bool
+    networkPolicyConfig:
+      description:
+      - Configuration for NetworkPolicy. This only tracks whether the addon is enabled
+        or not on the Master, it does not track whether network policy is enabled
+        for the nodes.
+      returned: success
+      type: complex
+      contains:
+        disabled:
+          description:
+          - Whether NetworkPolicy is enabled for this cluster.
+          returned: success
+          type: bool
 subnetwork:
   description:
   - The name of the Google Compute Engine subnetwork to which the cluster is connected.
   returned: success
   type: str
+locations:
+  description:
+  - The list of Google Compute Engine zones in which the cluster's nodes should be
+    located.
+  returned: success
+  type: list
+resourceLabels:
+  description:
+  - The resource labels for the cluster to use to annotate any related Google Compute
+    Engine resources.
+  returned: success
+  type: dict
+labelFingerprint:
+  description:
+  - The fingerprint of the set of labels for this cluster.
+  returned: success
+  type: str
+legacyAbac:
+  description:
+  - Configuration for the legacy ABAC authorization mode.
+  returned: success
+  type: complex
+  contains:
+    enabled:
+      description:
+      - Whether the ABAC authorizer is enabled for this cluster. When enabled, identities
+        in the system, including service accounts, nodes, and controllers, will have
+        statically granted permissions beyond those provided by the RBAC configuration
+        or IAM.
+      returned: success
+      type: bool
+networkPolicy:
+  description:
+  - Configuration options for the NetworkPolicy feature.
+  returned: success
+  type: complex
+  contains:
+    provider:
+      description:
+      - The selected network policy provider.
+      returned: success
+      type: str
+    enabled:
+      description:
+      - Whether network policy is enabled on the cluster.
+      returned: success
+      type: bool
+defaultMaxPodsConstraint:
+  description:
+  - The default constraint on the maximum number of pods that can be run simultaneously
+    on a node in the node pool of this cluster.
+  - Only honored if cluster created with IP Alias support.
+  returned: success
+  type: complex
+  contains:
+    maxPodsPerNode:
+      description:
+      - Constraint enforced on the max num of pods per node.
+      returned: success
+      type: str
 endpoint:
   description:
   - The IP address of this cluster's master endpoint.
@@ -579,6 +860,16 @@ createTime:
   - The time the cluster was created, in RFC3339 text format.
   returned: success
   type: str
+status:
+  description:
+  - The current status of this cluster.
+  returned: success
+  type: str
+statusMessage:
+  description:
+  - Additional information about the current status of this cluster, if available.
+  returned: success
+  type: str
 nodeIpv4CidrSize:
   description:
   - The size of the address space on each node for hosting containers.
@@ -602,6 +893,32 @@ expireTime:
   - The time the cluster will be automatically deleted in RFC3339 text format.
   returned: success
   type: str
+enableTpu:
+  description:
+  - Enable the ability to use Cloud TPUs in this cluster.
+  returned: success
+  type: bool
+tpuIpv4CidrBlock:
+  description:
+  - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
+  returned: success
+  type: str
+conditions:
+  description:
+  - Which conditions caused the current cluster state.
+  returned: success
+  type: complex
+  contains:
+    code:
+      description:
+      - Machine-friendly representation of the condition.
+      returned: success
+      type: str
+    message:
+      description:
+      - Human-friendly representation of the condition.
+      returned: success
+      type: str
 location:
   description:
   - The location where the cluster is deployed.
@@ -630,7 +947,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
             description=dict(type='str'),
-            initial_node_count=dict(required=True, type='int'),
+            initial_node_count=dict(type='int'),
             node_config=dict(
                 type='dict',
                 options=dict(
@@ -644,9 +961,20 @@ def main():
                     local_ssd_count=dict(type='int'),
                     tags=dict(type='list', elements='str'),
                     preemptible=dict(type='bool'),
+                    accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='str'), accelerator_type=dict(type='str'))),
+                    disk_type=dict(type='str'),
+                    min_cpu_platform=dict(type='str'),
+                    taints=dict(type='list', elements='dict', options=dict(key=dict(type='str'), value=dict(type='str'), effect=dict(type='str'))),
                 ),
             ),
-            master_auth=dict(type='dict', options=dict(username=dict(type='str'), password=dict(type='str'))),
+            master_auth=dict(
+                type='dict',
+                options=dict(
+                    username=dict(type='str'),
+                    password=dict(type='str'),
+                    client_certificate_config=dict(type='dict', options=dict(issue_client_certificate=dict(type='bool'))),
+                ),
+            ),
             logging_service=dict(type='str'),
             monitoring_service=dict(type='str'),
             network=dict(type='str'),
@@ -660,9 +988,17 @@ def main():
                 options=dict(
                     http_load_balancing=dict(type='dict', options=dict(disabled=dict(type='bool'))),
                     horizontal_pod_autoscaling=dict(type='dict', options=dict(disabled=dict(type='bool'))),
+                    network_policy_config=dict(type='dict', options=dict(disabled=dict(type='bool'))),
                 ),
             ),
             subnetwork=dict(type='str'),
+            locations=dict(type='list', elements='str', aliases=['nodeLocations']),
+            resource_labels=dict(type='dict'),
+            legacy_abac=dict(type='dict', options=dict(enabled=dict(type='bool'))),
+            network_policy=dict(type='dict', options=dict(provider=dict(type='str'), enabled=dict(type='bool'))),
+            default_max_pods_constraint=dict(type='dict', options=dict(max_pods_per_node=dict(type='str'))),
+            enable_tpu=dict(type='bool'),
+            tpu_ipv4_cidr_block=dict(type='str'),
             location=dict(required=True, type='str', aliases=['zone']),
         )
     )
@@ -688,6 +1024,7 @@ def main():
     else:
         if state == 'present':
             fetch = create(module, collection(module))
+            delete_default_node_pool(module)
             changed = True
         else:
             fetch = {}
@@ -726,6 +1063,13 @@ def resource_to_request(module):
         u'clusterIpv4Cidr': module.params.get('cluster_ipv4_cidr'),
         u'addonsConfig': ClusterAddonsconfig(module.params.get('addons_config', {}), module).to_request(),
         u'subnetwork': module.params.get('subnetwork'),
+        u'locations': module.params.get('locations'),
+        u'resourceLabels': module.params.get('resource_labels'),
+        u'legacyAbac': ClusterLegacyabac(module.params.get('legacy_abac', {}), module).to_request(),
+        u'networkPolicy': ClusterNetworkpolicy(module.params.get('network_policy', {}), module).to_request(),
+        u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(module.params.get('default_max_pods_constraint', {}), module).to_request(),
+        u'enableTpu': module.params.get('enable_tpu'),
+        u'tpuIpv4CidrBlock': module.params.get('tpu_ipv4_cidr_block'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -804,15 +1148,26 @@ def response_to_hash(module, response):
         u'clusterIpv4Cidr': response.get(u'clusterIpv4Cidr'),
         u'addonsConfig': ClusterAddonsconfig(response.get(u'addonsConfig', {}), module).from_response(),
         u'subnetwork': response.get(u'subnetwork'),
+        u'locations': response.get(u'locations'),
+        u'resourceLabels': response.get(u'resourceLabels'),
+        u'labelFingerprint': response.get(u'labelFingerprint'),
+        u'legacyAbac': ClusterLegacyabac(response.get(u'legacyAbac', {}), module).from_response(),
+        u'networkPolicy': ClusterNetworkpolicy(response.get(u'networkPolicy', {}), module).from_response(),
+        u'defaultMaxPodsConstraint': ClusterDefaultmaxpodsconstraint(response.get(u'defaultMaxPodsConstraint', {}), module).from_response(),
         u'endpoint': response.get(u'endpoint'),
         u'initialClusterVersion': response.get(u'initialClusterVersion'),
         u'currentMasterVersion': response.get(u'currentMasterVersion'),
         u'currentNodeVersion': response.get(u'currentNodeVersion'),
         u'createTime': response.get(u'createTime'),
+        u'status': response.get(u'status'),
+        u'statusMessage': response.get(u'statusMessage'),
         u'nodeIpv4CidrSize': response.get(u'nodeIpv4CidrSize'),
         u'servicesIpv4Cidr': response.get(u'servicesIpv4Cidr'),
         u'currentNodeCount': response.get(u'currentNodeCount'),
         u'expireTime': response.get(u'expireTime'),
+        u'enableTpu': response.get(u'enableTpu'),
+        u'tpuIpv4CidrBlock': response.get(u'tpuIpv4CidrBlock'),
+        u'conditions': ClusterConditionsArray(response.get(u'conditions', []), module).from_response(),
     }
 
 
@@ -865,6 +1220,17 @@ def encode_request(resource_request, module):
     return {'cluster': resource_request}
 
 
+# Deletes the default node pool on default creation.
+def delete_default_node_pool(module):
+    auth = GcpSession(module, 'container')
+    link = "https://container.googleapis.com/v1/projects/%s/locations/%s/clusters/%s/nodePools/default-pool" % (
+        module.params['project'],
+        module.params['location'],
+        module.params['name'],
+    )
+    return wait_for_operation(module, auth.delete(link))
+
+
 class ClusterNodeconfig(object):
     def __init__(self, request, module):
         self.module = module
@@ -886,6 +1252,10 @@ class ClusterNodeconfig(object):
                 u'localSsdCount': self.request.get('local_ssd_count'),
                 u'tags': self.request.get('tags'),
                 u'preemptible': self.request.get('preemptible'),
+                u'accelerators': ClusterAcceleratorsArray(self.request.get('accelerators', []), self.module).to_request(),
+                u'diskType': self.request.get('disk_type'),
+                u'minCpuPlatform': self.request.get('min_cpu_platform'),
+                u'taints': ClusterTaintsArray(self.request.get('taints', []), self.module).to_request(),
             }
         )
 
@@ -902,8 +1272,66 @@ class ClusterNodeconfig(object):
                 u'localSsdCount': self.request.get(u'localSsdCount'),
                 u'tags': self.request.get(u'tags'),
                 u'preemptible': self.request.get(u'preemptible'),
+                u'accelerators': ClusterAcceleratorsArray(self.request.get(u'accelerators', []), self.module).from_response(),
+                u'diskType': self.request.get(u'diskType'),
+                u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
+                u'taints': ClusterTaintsArray(self.request.get(u'taints', []), self.module).from_response(),
             }
         )
+
+
+class ClusterAcceleratorsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'acceleratorCount': item.get('accelerator_count'), u'acceleratorType': item.get('accelerator_type')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'acceleratorCount': item.get(u'acceleratorCount'), u'acceleratorType': item.get(u'acceleratorType')})
+
+
+class ClusterTaintsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'key': item.get('key'), u'value': item.get('value'), u'effect': item.get('effect')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'key': item.get(u'key'), u'value': item.get(u'value'), u'effect': item.get(u'effect')})
 
 
 class ClusterMasterauth(object):
@@ -915,10 +1343,37 @@ class ClusterMasterauth(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'username': self.request.get('username'), u'password': self.request.get('password')})
+        return remove_nones_from_dict(
+            {
+                u'username': self.request.get('username'),
+                u'password': self.request.get('password'),
+                u'clientCertificateConfig': ClusterClientcertificateconfig(self.request.get('client_certificate_config', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'username': self.request.get(u'username'), u'password': self.request.get(u'password')})
+        return remove_nones_from_dict(
+            {
+                u'username': self.request.get(u'username'),
+                u'password': self.request.get(u'password'),
+                u'clientCertificateConfig': ClusterClientcertificateconfig(self.request.get(u'clientCertificateConfig', {}), self.module).from_response(),
+            }
+        )
+
+
+class ClusterClientcertificateconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'issueClientCertificate': self.request.get('issue_client_certificate')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'issueClientCertificate': self.request.get(u'issueClientCertificate')})
 
 
 class ClusterPrivateclusterconfig(object):
@@ -961,6 +1416,7 @@ class ClusterAddonsconfig(object):
             {
                 u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get('http_load_balancing', {}), self.module).to_request(),
                 u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request(),
+                u'networkPolicyConfig': ClusterNetworkpolicyconfig(self.request.get('network_policy_config', {}), self.module).to_request(),
             }
         )
 
@@ -969,6 +1425,7 @@ class ClusterAddonsconfig(object):
             {
                 u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
                 u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response(),
+                u'networkPolicyConfig': ClusterNetworkpolicyconfig(self.request.get(u'networkPolicyConfig', {}), self.module).from_response(),
             }
         )
 
@@ -1001,6 +1458,93 @@ class ClusterHorizontalpodautoscaling(object):
 
     def from_response(self):
         return remove_nones_from_dict({u'disabled': self.request.get(u'disabled')})
+
+
+class ClusterNetworkpolicyconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'disabled': self.request.get('disabled')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'disabled': self.request.get(u'disabled')})
+
+
+class ClusterLegacyabac(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'enabled': self.request.get('enabled')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'enabled': self.request.get(u'enabled')})
+
+
+class ClusterNetworkpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'provider': self.request.get('provider'), u'enabled': self.request.get('enabled')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'provider': self.request.get(u'provider'), u'enabled': self.request.get(u'enabled')})
+
+
+class ClusterDefaultmaxpodsconstraint(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'maxPodsPerNode': self.request.get('max_pods_per_node')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'maxPodsPerNode': self.request.get(u'maxPodsPerNode')})
+
+
+class ClusterConditionsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'code': item.get('code'), u'message': item.get('message')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'code': item.get(u'code'), u'message': item.get(u'message')})
 
 
 if __name__ == '__main__':

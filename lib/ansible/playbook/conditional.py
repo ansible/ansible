@@ -172,7 +172,7 @@ class Conditional:
                         )
             try:
                 e = templar.environment.overlay()
-                e.filters.update(templar._get_filters(e.filters))
+                e.filters.update(templar._get_filters())
                 e.tests.update(templar._get_tests())
 
                 res = e._parse(conditional, None, None)

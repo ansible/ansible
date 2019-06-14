@@ -319,7 +319,7 @@ class GalaxyCLI(CLI):
     def execute_install(self):
         """
         uses the args list of roles to be installed, unless -f was specified. The list of roles
-        can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
+        can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
         """
         role_file = context.CLIARGS['role_file']
 

@@ -22,7 +22,7 @@
       with_items: "{{ esxi_hosts }}"
     - assert:
         that:
-          - "facts_from_esxi.results[0].datastores|length == 2"
+          - "facts_from_esxi.results[0].datastores|selectattr('type', 'equalto', 'NFS')|list|length == 2"
 
 - name: get list of facts about datastores
   vmware_datastore_facts:
@@ -47,8 +47,8 @@
 
     - assert:
         that:
-          - "facts_from_vcenter_with_dc_filter.datastores|length == 2"
-          - "facts_from_vcenter_with_no_filter.datastores|length == 2"
+          - "facts_from_vcenter_with_dc_filter.datastores|selectattr('type', 'equalto', 'NFS')|list|length == 2"
+          - "facts_from_vcenter_with_no_filter.datastores|selectattr('type', 'equalto', 'NFS')|list|length == 2"
           - "facts_from_vcenter_with_no_filter.datastores[0]['capacity'] is defined"
 
 # Testcase 0002: Get a full list of datastores in a cluster
