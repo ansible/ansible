@@ -45,6 +45,13 @@ options:
     description:
       - Description of the security group. Required when C(state) is C(present).
     required: false
+  diff:
+    description:
+      -  Add diff mode support with and without check mode. This feature is preview and may change when a common framework is adopted for AWS modules.
+    required: false
+    default: 'False'
+    choices: [ "True", "False" ]
+    version_added: "2.7"
   vpc_id:
     description:
       - ID of the VPC to create the group in.
