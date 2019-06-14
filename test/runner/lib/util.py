@@ -19,6 +19,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 
 from struct import unpack, pack
@@ -151,6 +152,11 @@ def get_python_path(args, interpreter):
     :type interpreter: str
     :rtype: str
     """
+    # When the python interpreter is already named "python" its directory can simply be added to the path.
+    # Using another level of indirection is only required when the interpreter has a different name.
+    if os.path.basename(interpreter) == 'python':
+        return os.path.dirname(interpreter)
+
     python_path = PYTHON_PATHS.get(interpreter)
 
     if python_path:
@@ -165,9 +171,38 @@ def get_python_path(args, interpreter):
         return os.path.join(root_temp_dir, ''.join((prefix, 'temp', suffix)))
 
     python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
+    injected_interpreter = os.path.join(python_path, 'python')
+
+    # A symlink is faster than the execv wrapper, but isn't compatible with virtual environments.
+    # Attempt to detect when it is safe to use a symlink by checking the real path of the interpreter.
+    use_symlink = os.path.dirname(os.path.realpath(interpreter)) == os.path.dirname(interpreter)
+
+    if use_symlink:
+        display.info('Injecting "%s" as a symlink to the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
+
+        os.symlink(interpreter, injected_interpreter)
+    else:
+        display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
+
+        code = textwrap.dedent('''
+        #!%s
+
+        from __future__ import absolute_import
+
+        from os import execv
+        from sys import argv
+
+        python = '%s'
+
+        execv(python, [python] + argv[1:])
+        ''' % (interpreter, interpreter)).lstrip()
+
+        with open(injected_interpreter, 'w') as python_fd:
+            python_fd.write(code)
+
+        os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
     os.chmod(python_path, MODE_DIRECTORY)
-    os.symlink(interpreter, os.path.join(python_path, 'python'))
 
     if not PYTHON_PATHS:
         atexit.register(cleanup_python_paths)
