@@ -3,12 +3,10 @@
 
 #
 # Dell EMC OpenManage Ansible Modules
-# Version 1.0
-# Copyright (C) 2018 Dell Inc.
+# Version 2.0
+# Copyright (C) 2018-2019 Dell Inc. or its subsidiaries. All Rights Reserved.
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# All rights reserved. Dell, EMC, and other trademarks are trademarks of Dell Inc. or its subsidiaries.
-# Other trademarks may be trademarks of their respective owners.
 #
 
 
@@ -43,6 +41,7 @@ options:
         description: iDRAC user password.
         type: str
         required: True
+        aliases: ['idrac_pwd']
     idrac_port:
         description: iDRAC port.
         type: int
@@ -58,6 +57,7 @@ options:
     share_password:
         description: Network share user password. This option is mandatory for CIFS Network Share.
         type: str
+        aliases: ['share_pwd']
     share_mnt:
         description: Local mount path of the network share with read-write permission for ansible user.
             This option is mandatory for Network Share.
@@ -181,12 +181,12 @@ def main():
         argument_spec={
             "idrac_ip": {"required": True, "type": 'str'},
             "idrac_user": {"required": True, "type": 'str'},
-            "idrac_password": {"required": True, "type": 'str', "no_log": True},
+            "idrac_password": {"required": True, "type": 'str', "aliases": ['idrac_pwd'], "no_log": True},
             "idrac_port": {"required": False, "default": 443, "type": 'int'},
 
             "share_name": {"required": True, "type": 'str'},
             "share_user": {"required": False, "type": 'str'},
-            "share_password": {"required": False, "type": 'str', "no_log": True},
+            "share_password": {"required": False, "type": 'str', "aliases": ['share_pwd'], "no_log": True},
             "share_mnt": {"required": True, "type": 'str'},
 
             "catalog_file_name": {"required": False, "type": 'str', "default": "Catalog.xml"},
