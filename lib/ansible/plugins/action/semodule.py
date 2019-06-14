@@ -1,3 +1,9 @@
+# Copyright: (c) 2019, Philip Bove <phil@bove.online>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.plugins.action import ActionBase
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
@@ -5,11 +11,12 @@ import ansible.module_utils.semodule as semodule
 from ansible.utils.hashing import checksum
 import traceback
 
+
 class ActionModule(ActionBase):
 
     def _check_policy_version(self, new_version, cur_version):
-        version_list = [ int(x) for x in new_version.split('.') ]
-        cur_version_list = [ int(x) for x in cur_version.split('.') ]
+        version_list = [int(x) for x in new_version.split('.')]
+        cur_version_list = [int(x) for x in cur_version.split('.')]
         if version_list < cur_version_list:
             return True, 'older'
         elif version_list > cur_version_list:
@@ -38,7 +45,6 @@ class ActionModule(ActionBase):
             result['changed'] = changed
             result['version'] = policy_def['version']
             result['name'] = policy_def['name']
-            #self._remove_tmp_path(self._connection._shell.tmpdir)
             return result
         return None
 
@@ -66,7 +72,10 @@ class ActionModule(ActionBase):
             result['msg'] = to_text(error)
             result['exception'] = traceback.format_exc()
             return result
-        policy_def = semodule.parse_module_info(semodule.read_te_file(te_file))
+        try:
+            policy_def = semodule.parse_module_info(semodule.read_te_file(te_file))
+        except IndexError:
+            AnsibleError('Module is missing module definition line')
         semodule_info = self._get_semodule_info()
         cur_pol = None
         if self._module_exist(policy_def['name'], semodule_info):

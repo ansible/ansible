@@ -14,6 +14,9 @@
     src: test.te
   register: test1_mod_install
 
+- debug:
+    var: test1_mod_install
+
 - name: TEST 1 | verify installed
   shell: semodule -l
   register: semodule_out
