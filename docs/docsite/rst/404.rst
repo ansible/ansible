@@ -4,9 +4,9 @@
 Oops!
 *****
 
-The page you're looking for doesn't exist in this version of the Ansible documentation.
+This page does not exist in this version of the Ansible documentation.
 
 .. image:: images/cow.png
    :alt: Cowsay 404
 
-Return to the :ref:`index page for this version <ansible_documentation>` or use the navigation at left for other options.
+Return to the :ref:`nearest table of contents in this version <ansible_documentation>` or use the navigation at left to explore our latest release.
