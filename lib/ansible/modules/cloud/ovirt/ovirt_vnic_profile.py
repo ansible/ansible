@@ -167,27 +167,31 @@ class EntityVnicPorfileModule(BaseModule):
         nf_service = self._connection.system_service().network_filters_service()
         return get_id_by_name(nf_service, self.param('network_filter')) if self.param('network_filter') else None
 
+    def __get_network_filter(self):
+        network_filter = None
+        if self.param('network_filter'):
+            network_filter = otypes.NetworkFilter(id=self.__get_network_filter_id())
+        elif self.param('network_filter') == "" or self.param('pass_through') == 'enabled':
+            network_filter = otypes.NetworkFilter()
+        return network_filter
+
     def build_entity(self):
         return otypes.VnicProfile(
             name=self.param('name'),
             network=otypes.Network(id=self.__get_network_id()),
-            description=self.param('description')
-            if self.param('description') else None,
-            port_mirroring=self.param('port_mirroring'),
-            pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through')))
-            if self.param('pass_through') else None,
-            migratable=self.param('migratable'),
+            description=self.param('description') if self.param('description') else None,
+            port_mirroring=self.param('port_mirroring') if self.param('port_mirroring') else None,
+            pass_through=otypes.VnicPassThrough(mode=otypes.VnicPassThroughMode(self.param('pass_through'))) if self.param('pass_through') else None,
+            migratable=self.param('migratable') if self.param('migratable') else None,
             custom_properties=[
                 otypes.CustomProperty(
                     name=cp.get('name'),
                     regexp=cp.get('regexp'),
                     value=str(cp.get('value')),
                 ) for cp in self.param('custom_properties') if cp
-            ] if self.param('custom_properties') is not None else None,
-            qos=otypes.Qos(id=self.__get_qos_id())
-            if self.param('qos') else None,
-            network_filter=otypes.NetworkFilter(id=self.__get_network_filter_id())
-            if self.param('network_filter') is not None else None
+            ] if self.param('custom_properties') else None,
+            qos=otypes.Qos(id=self.__get_qos_id()) if self.param('qos') else None,
+            network_filter=self.__get_network_filter()
         )
 
     def update_check(self, entity):
@@ -203,7 +207,7 @@ class EntityVnicPorfileModule(BaseModule):
         return (
             check_custom_properties() and
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
-            equal(self.param('pass_through'), entity.pass_through.mode.name) and
+            equal(self.param('pass_through'), getattr(entity.pass_through.mode, 'name', None)) and
             equal(self.param('description'), entity.description) and
             equal(self.param('network_filter'), getattr(entity.network_filter, 'name', None)) and
             equal(self.param('qos'), getattr(entity.qos, 'name', None)) and
@@ -243,11 +247,25 @@ def main():
             service=vnic_services,
         )
         state = module.params['state']
-        if state == 'present':
-            ret = entitynics_module.create()
-        elif state == 'absent':
-            ret = entitynics_module.remove()
+        force_create = True
+        entity = None
 
+        vnic_profiles = vnic_services.list()
+        network_id = get_id_by_name(connection.system_service().networks_service(), module.params['network'])
+        for vnic in vnic_profiles:
+            if vnic.name == module.params['name'] and (network_id == vnic.network.id or module.params['network'] == 'ovirtmgmt'):
+                entity = vnic
+                force_create = False
+
+        if state == 'present':
+            if entity is not None and entity.pass_through == 'disabled' and module.params.get('pass_through') == 'enabled':
+                module.params['port_mirroring'] = False
+            ret = entitynics_module.create(entity=entity, force_create=force_create)
+        elif state == 'absent':
+            if entity is not None:
+                ret = entitynics_module.remove(entity=entity)
+            else:
+                raise Exception("Vnic profile '%s' was not found." % module.params['name'])
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
