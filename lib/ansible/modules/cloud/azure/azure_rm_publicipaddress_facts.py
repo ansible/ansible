@@ -20,7 +20,7 @@ module: azure_rm_publicipaddress_facts
 
 version_added: "2.1"
 
-short_description: Get public IP facts.
+short_description: Get public IP facts
 
 description:
     - Get facts for a specific public IP or all public IPs within a resource group.
@@ -40,8 +40,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = '''
@@ -77,7 +77,7 @@ azure_publicipaddresses:
     }]
 publicipaddresses:
     description:
-        - List of publicipaddress
+        - List of publicipaddress.
         - Contains the detail which matches azure_rm_publicipaddress parameters.
         - Returned when the format parameter set to curated.
     returned: always
@@ -88,74 +88,100 @@ publicipaddresses:
                 - Resource ID.
             returned: always
             type: str
+            sample: /subscriptions/xxx---xxxxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/publicIPAddresses/pipb57dc95224
         name:
             description:
-                - Name of the public ip address.
+                - Name of the public IP address.
             returned: always
             type: str
+            sample: pipb57dc95224
         type:
             description:
                 - Resource type.
             returned: always
             type: str
+            sample: "Microsoft.Network/publicIPAddresses"
         location:
             description:
                 - Resource location.
             returned: always
             type: str
+            sample: eastus
         tags:
             description:
                 - Resource tags.
             returned: always
-            type: complex
+            type: dict
+            sample: {
+                    "delete": "on-exit",
+                    "testing": "testing"
+                    }
         allocation_method:
             description:
                 - The public IP allocation method.
-                - Possible values are 'static' and 'dynamic'.
+                - Possible values are C(static) and C(dynamic).
             returned: always
             type: str
+            sample: static
         version:
             description:
                 - The public IP address version.
-                - Possible values are 'ipv4' and 'ipv6'.
+                - Possible values are C(ipv4) and C(ipv6).
             returned: always
             type: str
+            sample: ipv4
         dns_settings:
             description:
                 - The FQDN of the DNS record associated with the public IP address.
             returned: always
-            type: complex
+            type: dict
+            sample: {
+                    "domain_name_label": "ansible-b57dc95985712e45eb8b9c2e",
+                    "fqdn": "ansible-b57dc95985712e45eb8b9c2e.eastus.cloudapp.azure.com",
+                    "reverse_fqdn": null
+                    }
         ip_tags:
             description:
                 - The list of tags associated with the public IP address.
             returned: always
-            type: complex
+            type: list
+            sample: [
+                    {
+                        "type": "FirstPartyUsage",
+                        "value": "Storage"
+                    }
+                    ]
         ip_address:
             description:
                 - The Public IP Prefix this Public IP Address should be allocated from.
             returned: always
             type: str
+            sample: 40.121.144.14
         idle_timeout:
             description:
                 - The idle timeout of the public IP address.
             returned: always
             type: int
+            sample: 4
         provisioning_state:
             description:
-                - he provisioning state of the PublicIP resource.
-                - Possible values are 'Updating', 'Deleting', and 'Failed'.
+                - The provisioning state of the PublicIP resource.
+                - Possible values is C(Succeeded).
             returned: always
             type: str
+            sample: Succeeded
         etag:
             description:
                 - A unique read-only string that changes whenever the resource is updated.
             returned: always
             type: str
+            sample: "W/'1905ee13-7623-45b1-bc6b-4a12b2fb9d15'"
         sku:
             description:
                 - The public IP address SKU.
             returned: always
             type: str
+            sample: Basic
 '''
 try:
     from msrestazure.azure_exceptions import CloudError
