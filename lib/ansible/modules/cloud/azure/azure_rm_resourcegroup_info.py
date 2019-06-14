@@ -20,7 +20,7 @@ module: azure_rm_resourcegroup_info
 
 version_added: "2.1"
 
-short_description: Get resource group facts.
+short_description: Get resource group facts
 
 description:
     - Get facts for a specific resource group or all resource groups.
@@ -35,15 +35,15 @@ options:
     list_resources:
         description:
             - List all resources under the resource group.
-            - Note this will cost network overhead for each resource group. Suggest use this when C(name) set.
-        version_added: 2.8
+            - Note this will cost network overhead for each resource group. Suggest use this when I(name) set.
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -68,55 +68,64 @@ EXAMPLES = '''
 '''
 RETURN = '''
 azure_resourcegroups:
-    description: List of resource group dicts.
+    description:
+        - List of resource group dicts.
     returned: always
     type: list
     contains:
         id:
             description:
                 - Resource id.
+            returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup"
         name:
             description:
                 - Resource group name.
+            returned: always
             type: str
             sample: foo
         tags:
             description:
                 - Tags assigned to resource group.
+            returned: always
             type: dict
             sample: { "tag": "value" }
         resources:
             description:
                 - List of resources under the resource group.
-                - Only shows when C(list_resources) set to C(True).
+            returned: when I(list_resources=yes).
             type: list
             contains:
                 id:
                     description:
                         - Resource id.
+                    returned: always
                     type: str
                     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMa
                              chines/myVirtualMachine"
                 name:
                     description:
                         - Resource name.
+                    returned: always
                     type: str
                     sample: myVirtualMachine
                 location:
                     description:
                         - Resource region.
+                    returned: always
                     type: str
                     sample: eastus
                 type:
                     description:
                         - Resource type.
+                    returned: always
                     type: str
                     sample: "Microsoft.Compute/virtualMachines"
                 tags:
                     description:
                         - Tags to assign to the managed disk.
+                    returned: always
                     type: dict
                     sample: { "tag": "value" }
 '''
