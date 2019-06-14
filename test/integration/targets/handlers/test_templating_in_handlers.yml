@@ -10,7 +10,7 @@
   handlers:
     - name: name1
       set_fact:
-        non_templated_name: False
+        non_templated_name: True
     - name: "{{ handler2 }}"
       set_fact:
         templated_name: True
