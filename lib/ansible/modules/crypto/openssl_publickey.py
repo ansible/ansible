@@ -22,7 +22,8 @@ description:
     - Keys are generated in PEM format.
     - This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
 requirements:
-    - python-pyOpenSSL
+    - pyOpenSSL
+    - cryptography (if I(format) is C(OpenSSL))
 author:
 - Yanis Guenane (@Spredzy)
 options:
