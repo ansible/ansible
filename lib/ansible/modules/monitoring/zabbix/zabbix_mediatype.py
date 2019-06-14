@@ -224,7 +224,7 @@ EXAMPLES = '''
 '''
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
 
     HAS_ZABBIX_API = True
 except ImportError:
