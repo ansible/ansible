@@ -29,15 +29,15 @@ def test_module_exist():
     assert semodule_action._module_exist('usermanage', SEMODULE_OUTPUT)
     assert not semodule_action._module_exist('notreal', SEMODULE_OUTPUT)
 
-@pytest.mark.parametrize('new_ver,old_ver,change,change_reason',[
-            ('1.2.3','1.0.0.0',True,'newer'),
+@pytest.mark.parametrize('new_ver,old_ver,change,change_reason', [
+            ('1.2.3', '1.0.0.0', True, 'newer'),
             ('1.2','2', True, 'older'),
-            ('2','1.6',True, 'newer'),
-            ('1.2','1.2', False, 'same')
+            ('2','1.6', True, 'newer'),
+            ('1.2', '1.2', False, 'same')
         ]
     )
 def test_check_policy_version(new_ver, old_ver, change, change_reason):
     semodule_action = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
-    result = semodule_action._check_policy_version(new_ver,old_ver)
+    result = semodule_action._check_policy_version(new_ver, old_ver)
     assert result[0] == change
     assert result[1] == change_reason
