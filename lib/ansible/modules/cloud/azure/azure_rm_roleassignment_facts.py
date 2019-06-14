@@ -97,7 +97,7 @@ roleassignments:
             sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         scope:
             description:
-                - The role assignment scope
+                - The role assignment scope.
             type: str
             returned: always
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx

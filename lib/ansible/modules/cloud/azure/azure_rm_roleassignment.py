@@ -41,13 +41,13 @@ options:
             - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group.
             - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for resource.
     state:
-      description:
-          - Assert the state of the role assignment.
-          - Use C(present) to create or update a role assignment and C(absent) to delete it.
-      default: present
-      choices:
-          - absent
-          - present
+        description:
+            - Assert the state of the role assignment.
+            - Use C(present) to create or update a role assignment and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
