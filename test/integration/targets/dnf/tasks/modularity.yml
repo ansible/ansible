@@ -6,7 +6,7 @@
 
 - name: set package for Fedora
   set_fact:
-    astream_name: '@ninja:master/default'
+    astream_name: '@ripgrep:master/default'
   when: ansible_distribution == 'Fedora'
 
 - name: install "{{ astream_name }}" module
