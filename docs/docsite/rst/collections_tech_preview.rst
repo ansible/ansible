@@ -5,6 +5,8 @@
 Collections
 ===========
 
+.. contents::
+   :local:
 Collections are a distribution format for Ansible content. They can be used to
 package and distribute playbooks, roles, modules, and plugins.
 You will be able to publish and use collections through `Ansible's Galaxy repository <http://galaxy.ansible.com>`_.
