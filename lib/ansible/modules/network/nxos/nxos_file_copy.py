@@ -116,6 +116,7 @@ options:
   vrf:
     description:
       - The VRF used to pull the file. Useful when no vrf management is defined
+    version_added: "2.9"
 '''
 
 EXAMPLES = '''
