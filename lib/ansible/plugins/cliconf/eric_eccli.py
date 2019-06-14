@@ -25,7 +25,7 @@ author: Ericsson IPOS OAM team
 cliconf: eccli
 short_description: Use eccli cliconf to run command on Ericsson ECCLI platform
 description:
-  - This eccli plugin provides low level abstraction apis for
+  - This eccli plugin provides low level abstraction APIs for
     sending and receiving CLI commands from Ericsson ECCLI network devices.
 version_added: "2.9"
 """
@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['run_commands']
+        result['rpc'] = ['get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging', 'run_commands']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)

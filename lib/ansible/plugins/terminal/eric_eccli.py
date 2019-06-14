@@ -21,13 +21,13 @@ __metaclass__ = type
 
 import json
 import re
-import platform
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
 from ansible.utils.display import Display
+from ansible.module_utils.six import PY3
 
 display = Display()
 
@@ -37,7 +37,7 @@ def load_additional_regular_setting(all_eres, all_pres):
     new_pres = []
     mode = 0
     file = None
-    if platform.python_version().startswith('3'):
+    if PY3:
         python_version = 3
     else:
         python_version = 2
@@ -45,7 +45,7 @@ def load_additional_regular_setting(all_eres, all_pres):
     try:
         config_file = C.ERIC_ECCLI_ADDITIONAL_RE_FILE
         if config_file:
-            file = open(config_file, "r")
+           with open(config_file, "r") as file:
             lines = file.readlines()
             for line in lines:
                 line = line.strip('\n')
@@ -74,9 +74,6 @@ def load_additional_regular_setting(all_eres, all_pres):
             all_pres.extend(new_pres)
     except Exception as e:
         raise AnsibleConnectionFailure('Regular expression loading error:%s' % to_text(e))
-    finally:
-        if file in locals():
-            file.close()
 
 
 class TerminalModule(TerminalBase):
