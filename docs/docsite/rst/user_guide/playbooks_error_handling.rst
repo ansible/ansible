@@ -152,7 +152,7 @@ Aborting the play
 
 Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
 
-The ``any_errors_fatal`` play option will end the play when any tasks results in an error, causing an immediate execution of the play::
+The ``any_errors_fatal`` play option will end the play when any tasks results in an error and stop execution of the play::
 
      - hosts: somehosts
        any_errors_fatal: true
