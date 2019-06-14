@@ -1,0 +1,2 @@
+bugfixes:
+ - netbox - Fix missing implementation of `groups` option (https://github.com/ansible/ansible/issues/57688)
