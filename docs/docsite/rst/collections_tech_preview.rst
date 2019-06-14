@@ -8,7 +8,7 @@ package and distribute playbooks, roles, modules, and plugins.
 You will be able to publish and use collections via `Ansible's Galaxy repository <http://galaxy.ansible.com>`_.
 
 .. important::
-    This is a Tech-Preview feature and is only supported by Ansible 2.8 (or greater).
+    This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing  and should not be deployed in a production environment.
     Future Galaxy or Ansible releases may introduce breaking changes.
 
 
