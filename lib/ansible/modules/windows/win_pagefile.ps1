@@ -95,8 +95,11 @@ if ($state -eq "absent") {
         Fail-Json $result "Unable to access '${drive}:' drive"
     }
 
+    $curPagefile = Get-Pagefile $fullPath
     # Set pagefile
-    if ($null -eq (Get-Pagefile $fullPath)) {
+    if (($null -eq $curPagefile) -or 
+        ($curPagefile.InitialSize -ne $initialSize) -or 
+        ($curPagefile.maximumSize -ne $maximumSize)) {
         try {
             $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
         } catch {
