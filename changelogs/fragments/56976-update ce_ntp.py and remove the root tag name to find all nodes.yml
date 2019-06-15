@@ -1,0 +1,2 @@
+minor_changes:
+  - update ce_ntp.py and remove the root tag name to find all nodes(https://github.com/ansible/ansible/pull/56976).
