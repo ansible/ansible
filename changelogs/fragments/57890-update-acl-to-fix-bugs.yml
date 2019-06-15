@@ -1,0 +1,6 @@
+bugfixes:
+  - update acl to fix bugs.(https://github.com/ansible/ansible/pull/57268)
+  - ce_acl - tag named data of a xpath is unnecessay for old sotfware version to find a element from xml tree, but element can not be found with 'data' tag for new version, so remove.
+  - ce_acl_advance - remove 'data' tag, and fix a bug that the 'changed' of result is not correct.
+  - ce_acl_interface - do not used 'get_config' to show specific configuration, and use display command directly.
+
