@@ -181,9 +181,8 @@ options:
   only_transfers_as_changes:
     description:
       - Only files really transfered are considered as changes. Changing of permissions, ownership or times is NOT considered a change
-      - sets "checksum: yes"
     type: bool
-    default: 0
+    default: no
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
@@ -414,7 +413,7 @@ def main():
             verify_host=dict(type='bool', default=False),
             mode=dict(type='str', default='push', choices=['pull', 'push']),
             link_dest=dict(type='list'),
-            only_transfers_as_changes=dict(type=bool, default=False)
+            only_transfers_as_changes=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
     )
