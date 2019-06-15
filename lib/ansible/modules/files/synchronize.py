@@ -183,6 +183,7 @@ options:
       - Only files really transfered are considered as changes. Changing of permissions, ownership or times is NOT considered a change
     type: bool
     default: no
+    version_added: "2.9"
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
@@ -454,7 +455,7 @@ def main():
     link_dest = module.params['link_dest']
     only_transfers_as_changes = module.params['only_transfers_as_changes']
     if only_transfers_as_changes:
-      checksum = True
+        checksum = True
 
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
