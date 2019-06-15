@@ -129,8 +129,8 @@ def install(module, tserver):
     installed_release = next(r_matches, None)
     if installed_release:
         if installed_release.chart.metadata.version != chart['version']:
-            tserver.update_release(chartb.get_helm_chart(), False,
-                                   namespace, name=name, values=values)
+            tserver.update_release(chartb.get_helm_chart(), namespace,
+                                   dry_run=False, name=name, values=values)
             changed = True
     else:
         tserver.install_release(chartb.get_helm_chart(), namespace,
