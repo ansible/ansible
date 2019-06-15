@@ -23,7 +23,7 @@ description:
     - This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
 requirements:
     - pyOpenSSL
-    - cryptography (if I(format) is C(OpenSSL))
+    - cryptography (if I(format) is C(OpenSSH))
 author:
 - Yanis Guenane (@Spredzy)
 options:
