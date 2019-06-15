@@ -96,6 +96,7 @@ if ($state -eq "absent") {
     }
 
     $curPagefile = Get-Pagefile $fullPath
+    $CurPageFileSystemManaged = (Get-CimInstance -ClassName win32_Pagefile -Property 'System' -Filter "name='$fullPath'").System
     # Set pagefile
     if ($null -eq $curPagefile) {
         try {
@@ -130,7 +131,7 @@ if ($state -eq "absent") {
             }
         }
         $result.changed = $true
-    }elseif ((-not $check_mode) -and -not ($systemManaged -or $curPagefile.System) -and 
+    }elseif ((-not $check_mode) -and -not ($systemManaged -or $CurPageFileSystemManaged) -and 
         (($curPagefile.InitialSize -ne $initialSize) -or 
          ($curPagefile.maximumSize -ne $maximumSize)))
     {
