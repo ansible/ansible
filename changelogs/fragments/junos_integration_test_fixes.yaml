@@ -4,3 +4,6 @@ bugfixes:
 - Fix junos integration zuul CI failures (https://github.com/ansible/ansible/pull/57309).
 - Fix in netconf plugin when data element is empty in xml response (https://github.com/ansible/ansible/pull/57981).
 - Fixes netconf_config single parameter bug (https://github.com/ansible/ansible/pull/56138).
+- Remove pause logic form junos_netconf tests (https://github.com/ansible/ansible/pull/57966).
+- Use wait_for over pause for junos tests (https://github.com/ansible/ansible/pull/57073).
+- Fix iosxr netconf integration test (https://github.com/ansible/ansible/pull/57882).
