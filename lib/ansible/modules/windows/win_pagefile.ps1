@@ -130,7 +130,7 @@ if ($state -eq "absent") {
             }
         }
         $result.changed = $true
-    }elseif (-not ($systemManaged -or $check_mode) -and 
+    }elseif ((-not $check_mode) -and -not ($systemManaged -or $curPagefile.System) -and 
         (($curPagefile.InitialSize -ne $initialSize) -or 
          ($curPagefile.maximumSize -ne $maximumSize)))
     {
