@@ -22,7 +22,7 @@ from datetime import timedelta
 from distutils.version import LooseVersion
 
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -309,9 +309,11 @@ class AnsibleDockerClient(Client):
 
         if not HAS_DOCKER_PY:
             if NEEDS_DOCKER_PY2:
-                msg = "Failed to import docker (Docker SDK for Python) - %s. Try `pip install docker`."
+                msg = missing_required_lib("Docker SDK for Python: docker")
+                msg = msg + ", for example via `pip install docker`. The error was: %s"
             else:
-                msg = "Failed to import docker or docker-py (Docker SDK for Python) - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)."
+                msg = missing_required_lib("Docker SDK for Python: docker (Python >= 2.7) or docker-py (Python 2.6)")
+                msg = msg + ", for example via `pip install docker` or `pip install docker-py` (Python 2.6). The error was: %s"
             self.fail(msg % HAS_DOCKER_ERROR)
 
         if self.docker_py_version < LooseVersion(min_docker_version):
