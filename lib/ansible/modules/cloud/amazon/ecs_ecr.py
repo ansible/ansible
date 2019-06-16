@@ -382,7 +382,7 @@ def run(ecr, params):
                         ecr.put_lifecycle_policy(registry_id, name,
                                                  lifecycle_policy_text)
                         result['changed'] = True
-                except:
+                except Exception:
                     # Some failure w/ the policy. It's helpful to know what the
                     # policy is.
                     result['lifecycle_policy'] = lifecycle_policy_text
