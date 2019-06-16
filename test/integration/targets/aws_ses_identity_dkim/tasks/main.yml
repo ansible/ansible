@@ -82,6 +82,8 @@
         state: enabled
         <<: *aws_connection_info
       register: domain_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: enabled
 
     - name: assert no change (itempotence)
       assert:
@@ -95,6 +97,8 @@
         state: enabled
         <<: *aws_connection_info
       register: email_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: enabled
 
     - name: assert no change (idempotence)
       assert:
@@ -111,6 +115,8 @@
         <<: *aws_connection_info
       check_mode: True
       register: email_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: enabled
 
     - name: assert results report being unchanged (check-mode)
       assert:
@@ -126,6 +132,8 @@
         state: disabled
         <<: *aws_connection_info
       register: domain_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: enabled
 
     - name: assert result changed
       assert:
@@ -139,6 +147,8 @@
         state: disabled
         <<: *aws_connection_info
       register: email_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: enabled
 
     - name: assert result changed
       assert:
@@ -154,6 +164,8 @@
         state: disabled
         <<: *aws_connection_info
       register: domain_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: disabled
 
     - name: assert result changed
       assert:
@@ -167,6 +179,8 @@
         state: disabled
         <<: *aws_connection_info
       register: email_result
+      environment:
+        TEST_ONLY_FORCE_INITIAL_STATE: disabled
 
     - name: assert result changed
       assert:

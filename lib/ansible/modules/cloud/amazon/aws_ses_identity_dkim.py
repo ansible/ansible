@@ -90,6 +90,7 @@ dkim_attributes:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 
+import os
 import time
 
 try:
@@ -191,7 +192,15 @@ def main():
     state_check = _get_state_check(state)
 
     # Get current DKIM attributes to see if they need changing
-    attributes = get_identity_dkim_settings(module, client, identity, _get_state_check('any'))
+    # Note that the get_identity_dkim_settings seems to take a long time to consistently return the
+    # updated result. So to make the tests reliable we force a wait here till we get to the expected
+    # state. Simply waiting for the correct return on change isn't sufficient since the old state seems
+    # to still be randomly returned for some time.
+    #
+    # This should only present a problem when rapidly switching back and forth as we do in tests, so
+    # this should not cause failures in real usage.
+    attributes = get_identity_dkim_settings(module, client, identity,
+                                            _get_state_check(os.environ.get('TEST_ONLY_FORCE_INITIAL_STATE', 'any')))
     current_state = attributes['DkimEnabled']
 
     if not state_check(attributes):
