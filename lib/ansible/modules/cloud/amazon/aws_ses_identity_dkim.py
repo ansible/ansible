@@ -90,20 +90,40 @@ dkim_attributes:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 
+import time
+
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 
-def get_identity_dkim_settings(module, client, identity):
-    try:
-        response = client.get_identity_dkim_attributes(Identities=[identity])
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to retrieve identity DKIM settings for {identity}'.format(identity=identity))
-    dkim_attributes = response['DkimAttributes']
+def _get_state_check(state):
+    if state == 'enabled':
+        return lambda attributes: attributes['DkimEnabled'] and attributes['DkimTokens']
+    elif state == 'disabled':
+        return lambda attributes: not attributes['DkimEnabled']
+    elif state == 'any':
+        return lambda attributes: True
+    else:
+        raise RuntimeError('Unknown state ' + state)
 
-    return dkim_attributes[identity]
+
+def get_identity_dkim_settings(module, client, identity, wait_for, retries=10, retry_delay=10):
+    for retry in range(1, retries + 1):
+        try:
+            response = client.get_identity_dkim_attributes(Identities=[identity])
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to retrieve identity DKIM settings for {identity}'.format(identity=identity))
+        dkim_attributes = response['DkimAttributes'][identity]
+
+        # get_identity_dkim_attributes seems to take some time to consistently return the updated status
+        # so when we've changed the state we loop until we get the state we're expecting.
+        if wait_for(dkim_attributes):
+            break
+        time.sleep(retry_delay)
+
+    return dkim_attributes
 
 
 def ses_verify_dkim_domain(module, client, identity):
@@ -116,20 +136,37 @@ def ses_verify_dkim_domain(module, client, identity):
         module.fail_json_aws(e, msg='Failed to start DKIM verification for {domain}.'.format(domain=domain))
 
 
-def enable_identity_dkim_settings(module, client, identity):
-    try:
-        if not module.check_mode:
-            return client.set_identity_dkim_enabled(DkimEnabled=True, Identity=identity)
-    except (BotoCoreError) as e:
-        module.fail_json_aws(e, msg='Failed to enable DKIM for {identity}.'.format(identity=identity))
-
-
-def disable_identity_dkim_settings(module, client, identity):
-    try:
-        if not module.check_mode:
-            return client.set_identity_dkim_enabled(DkimEnabled=False, Identity=identity)
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to disable DKIM settings for {identity}'.format(identity=identity))
+def set_identity_dkim_enabled(module, client, identity, enabled, retries=10, retry_delay=10):
+    if enabled:
+        operation = 'enable'
+    else:
+        operation = 'disable'
+    for retry in range(1, retries + 1):
+        try:
+            if not module.check_mode:
+                return client.set_identity_dkim_enabled(DkimEnabled=enabled, Identity=identity)
+        except (BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Failed to {operation} DKIM for {identity}.'.format(
+                operation=operation,
+                identity=identity,
+            ))
+        except (ClientError) as e:
+            error = e.response.get('Error', {})
+            error_code = error.get('Code',  'Unknown')
+            error_message = error.get('Message',  'Unknown')
+            # verify_dkim_domain seems to take some time to replicate the status consistently to
+            # other parts of the SES API. So if we get this specific client error we retry after
+            # a delay  so that we correctly enable or disable DKIM.
+            # Note we need this even when disabling since this seems to fail tests sometimes even
+            # after having succeeded once. It seems that we get inconsistent failures for some time
+            # until the domain verification attempt is fully propagated.
+            if (retry >= retries or
+                    not (error_code == 'InvalidParameterValue' and 'not verified for DKIM signing' in error_message)):
+                module.fail_json_aws(e, msg='Failed to {operation} DKIM for {identity}.'.format(
+                    operation=operation,
+                    identity=identity,
+                ))
+            time.sleep(retry_delay)
 
 
 def main():
@@ -151,24 +188,22 @@ def main():
     state = module.params.get('state')
     changed = False
 
+    state_check = _get_state_check(state)
+
     # Get current DKIM attributes to see if they need changing
-    attributes = get_identity_dkim_settings(module, client, identity)
+    attributes = get_identity_dkim_settings(module, client, identity, _get_state_check('any'))
     current_state = attributes['DkimEnabled']
 
-    if state == 'enabled':
-        desired_state = True
-    if state == 'disabled':
-        desired_state = False
-
-    if current_state != desired_state:
+    if not state_check(attributes):
         # Update DKIM settings
         if state == 'enabled':
             ses_verify_dkim_domain(module, client, identity)
-            enable_identity_dkim_settings(module, client, identity)
-        else:
-            disable_identity_dkim_settings(module, client, identity)
+        set_identity_dkim_enabled(module, client, identity, state == 'enabled')
         changed = True
-        attributes = get_identity_dkim_settings(module, client, identity)
+        wait_for = state_check
+        if module.check_mode:
+            wait_for = _get_state_check('any')
+        attributes = get_identity_dkim_settings(module, client, identity, wait_for)
 
     module.exit_json(changed=changed, dkim_attributes=camel_dict_to_snake_dict(attributes))
 
