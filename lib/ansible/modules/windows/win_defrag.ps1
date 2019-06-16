@@ -45,7 +45,7 @@ if ($include_volumes) {
         }
     }
 } else {
-    $arguments += "/C"
+    $arguments += [String]::Join(' ',((Get-CimInstance -Class Win32_Volume -Filter "(drivetype=3 OR drivetype=2)" -Property DriveLetter).DriveLetter))
 }
 
 if ($exclude_volumes) {

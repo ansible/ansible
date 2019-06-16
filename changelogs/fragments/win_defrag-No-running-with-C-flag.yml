@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_defrag: not running on all drives using /C (https://github.com/ansible/ansible/issues/48660)"
