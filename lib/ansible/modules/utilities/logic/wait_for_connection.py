@@ -19,7 +19,7 @@ description:
 - Waits for a total of C(timeout) seconds.
 - Retries the transport connection after a timeout of C(connect_timeout).
 - Tests the transport connection every C(sleep) seconds.
-- This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+- This module makes use of internal ansible transport (and configuration) and the ping/win_ping or raw module to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
 version_added: '2.3'
 options:
@@ -43,6 +43,18 @@ options:
     - Maximum number of seconds to wait for.
     type: int
     default: 600
+  raw_cmd:
+    description:
+    - the command use to test end-to-end connectivity, it's exit code must be 0 (eg. `/bin/true`, `systemctl is-system-running`).
+    - if unset the module use ping/win_ping to test end-to-end functioning.
+    type: str
+    default: null
+    version_added: '2.9'
+  raw_executable:
+    description:
+    - C(executable) parameter to pass to raw module (if used).
+    type: str
+    version_added: '2.9'
 notes:
 - This module is also supported for Windows targets.
 seealso:
@@ -61,6 +73,12 @@ EXAMPLES = r'''
   wait_for_connection:
     delay: 60
     timeout: 300
+
+- name: Wait for the machine to be reachable, and the boot process to finish (machine may not have python installed)
+  wait_for_connection:
+    # beware, if a service fail during boot, this command will always fail, so the machine will never be considered `ready`
+    raw_cmd: /bin/systemctl is-system-running
+    delay: 30
 
 # Wake desktops, wait for them to become ready and continue playbook
 - hosts: all

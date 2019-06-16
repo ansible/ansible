@@ -35,12 +35,14 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout'))
+    _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout', 'raw_cmd', 'raw_executable'))
 
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_DELAY = 0
     DEFAULT_SLEEP = 1
     DEFAULT_TIMEOUT = 600
+    DEFAULT_RAW_CMD = None
+    DEFAULT_RAW_EXECUTABLE = False
 
     def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
@@ -68,6 +70,8 @@ class ActionModule(ActionBase):
         delay = int(self._task.args.get('delay', self.DEFAULT_DELAY))
         sleep = int(self._task.args.get('sleep', self.DEFAULT_SLEEP))
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
+        raw_cmd = self._task.args.get('raw_cmd', self.DEFAULT_RAW_CMD)
+        raw_executable = self._task.args.get('raw_executable', self.DEFAULT_RAW_EXECUTABLE)
 
         if self._play_context.check_mode:
             display.vvv("wait_for_connection: skipping for check_mode")
@@ -95,6 +99,32 @@ class ActionModule(ActionBase):
             if ping_result['ping'] != 'pong':
                 raise Exception('ping test failed')
 
+        def raw_module_test(connect_timeout):
+            ''' Test raw module, if available '''
+            display.vvv("wait_for_connection: attempting raw module test")
+            # call connection reset between runs if it's there
+            try:
+                self._connection.reset()
+            except AttributeError:
+                pass
+
+            raw_task = self._task.copy()
+            raw_task.args = {'_raw_params': raw_cmd,
+                             'executable': raw_executable}
+            raw_action = self._shared_loader_obj.action_loader.get('raw',
+                                                                   task=raw_task,
+                                                                   connection=self._connection,
+                                                                   play_context=self._play_context,
+                                                                   loader=self._loader,
+                                                                   templar=self._templar,
+                                                                   shared_loader_obj=self._shared_loader_obj)
+
+            raw_result = raw_action.run(task_vars=task_vars)
+
+            # Test module output
+            if raw_result.get('failed'):
+                raise Exception('raw test failed')
+
         start = datetime.now()
 
         if delay:
@@ -105,8 +135,13 @@ class ActionModule(ActionBase):
             if hasattr(self._connection, 'transport_test'):
                 self.do_until_success_or_timeout(self._connection.transport_test, timeout, connect_timeout, what_desc="connection port up", sleep=sleep)
 
-            # Use the ping module test to determine end-to-end connectivity
-            self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test success", sleep=sleep)
+            # if there is a raw_cmd, run test using the 'raw' module
+            # else use the 'ping' module
+            if raw_cmd:
+                self.do_until_success_or_timeout(raw_module_test, timeout, connect_timeout, what_desc="raw module test success", sleep=sleep)
+                result['changed'] = True
+            else:
+                self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test success", sleep=sleep)
 
         except TimedOutException as e:
             result['failed'] = True
