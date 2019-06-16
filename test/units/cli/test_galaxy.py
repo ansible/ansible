@@ -33,6 +33,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text
 from ansible.utils import context_objects as co
 from units.compat import unittest
 from units.compat.mock import call, patch
@@ -624,7 +625,7 @@ def test_collection_build(collection_build):
 
         manifest_file = tar.extractfile(tar_members[0])
         try:
-            manifest = json.loads(manifest_file.read())
+            manifest = json.loads(to_text(manifest_file.read()))
         finally:
             manifest_file.close()
 
@@ -658,7 +659,7 @@ def test_collection_build(collection_build):
 
         files_file = tar.extractfile(tar_members[1])
         try:
-            files = json.loads(files_file.read())
+            files = json.loads(to_text(files_file.read()))
         finally:
             files_file.close()
 
