@@ -31,6 +31,7 @@ options:
       - Runs only tests in Describe blocks with specified Tags values.
       - Accepts multiple comma seperated.
     type: str
+    version_added: '2.9'
   version:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
