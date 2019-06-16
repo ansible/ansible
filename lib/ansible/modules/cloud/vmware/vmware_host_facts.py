@@ -38,6 +38,13 @@ options:
     - Host facts about the specified ESXi server will be returned.
     - By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
     version_added: 2.8
+  show_tag:
+    description:
+    - Tags related to Host are shown if set to C(True).
+    default: False
+    type: bool
+    required: False
+    version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -57,6 +64,16 @@ EXAMPLES = r'''
     password: "{{ vcenter_pass }}"
     esxi_hostname: "{{ esxi_hostname }}"
   register: host_facts
+  delegate_to: localhost
+
+- name: Gather vmware host facts from vCenter with tag information
+  vmware_host_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    show_tag: True
+  register: host_facts_tag
   delegate_to: localhost
 
 - name: Get VSAN Cluster UUID from host facts
@@ -117,6 +134,15 @@ ansible_facts:
         "vsan_cluster_uuid": null,
         "vsan_node_uuid": null,
         "vsan_health": "unknown",
+        "tags": [
+            {
+                "category_id": "urn:vmomi:InventoryServiceCategory:8eb81431-b20d-49f5-af7b-126853aa1189:GLOBAL",
+                "category_name": "host_category_0001",
+                "description": "",
+                "id": "urn:vmomi:InventoryServiceTag:e9398232-46fd-461a-bf84-06128e182a4a:GLOBAL",
+                "name": "host_tag_0001"
+            }
+        ],
     }
 '''
 
@@ -126,6 +152,12 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_obj
 
 try:
     from pyVmomi import vim
+except ImportError:
+    pass
+
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
+try:
+    from com.vmware.vapi.std_client import DynamicID
 except ImportError:
     pass
 
@@ -156,6 +188,8 @@ class VMwareHostFactManager(PyVmomi):
         ansible_facts.update(self.get_system_facts())
         ansible_facts.update(self.get_vsan_facts())
         ansible_facts.update(self.get_cluster_facts())
+        if self.params.get('show_tag'):
+            ansible_facts.update(self.get_tag_facts())
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
 
     def get_cluster_facts(self):
@@ -245,11 +279,44 @@ class VMwareHostFactManager(PyVmomi):
         }
         return facts
 
+    def get_tag_facts(self):
+        vmware_client = VmwareRestClient(self.module)
+
+        host_dynamic_obj = DynamicID(type='HostSystem', id=self.host._moId)
+        self.tag_service = vmware_client.api_client.tagging.Tag
+        self.tag_association_svc = vmware_client.api_client.tagging.TagAssociation
+        self.category_service = vmware_client.api_client.tagging.Category
+        facts = {
+            'tags': self.get_tags_for_object(host_dynamic_obj)
+        }
+        return facts
+
+    def get_tags_for_object(self, dobj):
+        """
+        Return tags associated with an object
+        Args:
+            dobj: Dynamic object
+        Returns: List of tags associated with the given object
+        """
+        tag_ids = self.tag_association_svc.list_attached_tags(dobj)
+        tags = []
+        for tag_id in tag_ids:
+            tag_obj = self.tag_service.get(tag_id)
+            tags.append({
+                'id': tag_obj.id,
+                'category_name': self.category_service.get(tag_obj.category_id).name,
+                'name': tag_obj.name,
+                'description': tag_obj.description,
+                'category_id': tag_obj.category_id,
+            })
+        return tags
+
 
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         esxi_hostname=dict(type='str', required=False),
+        show_tag=dict(type='bool', default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
