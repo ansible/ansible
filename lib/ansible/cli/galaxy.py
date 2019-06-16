@@ -115,7 +115,7 @@ class GalaxyCLI(CLI):
             parents=[common])
         publish_parser.set_defaults(func=self.execute_publish)
         publish_parser.add_argument(
-            'args', metavar='collection', help='The path to the collection tarball to publish.')
+            'args', metavar='collection_path', help='The path to the collection tarball to publish.')
         publish_parser.add_argument(
             '--api-key', dest='api_key',
             help='The Ansible Galaxy API key which can be found at https://galaxy.ansible.com/me/preferences. '

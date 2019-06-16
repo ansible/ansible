@@ -14,6 +14,7 @@ import time
 import uuid
 import yaml
 
+from contextlib import contextmanager
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
@@ -109,15 +110,26 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
                            % (err.status, message, code))
 
     display.vvv("Collection has been pushed to Galaxy server")
+    import_uri = resp['task']
     if wait:
-        _wait_import(resp['task'], key, validate_certs)
+        _wait_import(import_uri, key, validate_certs)
+    else:
+        display.display("Not waiting until import has completed dur to --no-wait not being set. Import task results "
+                        "can be found at %s" % import_uri)
 
     display.display("Collection has been successfully publish to the Galaxy server")
 
 
+@contextmanager
+def open_tarfile(path):
+    tfile = tarfile.open(path, mode='w:gz')
+    yield tfile
+    tfile.close()
+
+
 def _get_galaxy_yml(galaxy_yml_path):
     mandatory_keys = frozenset(['namespace', 'name', 'version', 'authors', 'readme'])
-    optional_strings = ('description', 'repository', 'documentation', 'homepage', 'issues')
+    optional_strings = ('description', 'repository', 'documentation', 'homepage', 'issues', 'license_file')
     optional_lists = ('license', 'tags', 'authors')  # authors isn't optional but this will ensure it is list
     optional_dicts = ('dependencies',)
     all_keys = frozenset(list(mandatory_keys) + list(optional_strings) + list(optional_lists) + list(optional_dicts))
@@ -234,8 +246,8 @@ def _build_files_manifest(collection_path):
     return manifest
 
 
-def _build_manifest(namespace, name, version, authors, readme, tags, description, license_ids, dependencies,
-                    repository, documentation, homepage, issues, **kwargs):
+def _build_manifest(namespace, name, version, authors, readme, tags, description, license_ids, license_file,
+                    dependencies, repository, documentation, homepage, issues, **kwargs):
 
     manifest = {
         'collection_info': {
@@ -246,10 +258,8 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
             'readme': readme,
             'tags': tags,
             'description': description,
-            # TODO: Either license or license_file needs to be set, need to verify with alikins how Mazer distinguishes
-            # the 2 options.
             'license': license_ids,
-            'license_file': None,
+            'license_file': license_file,
             'dependencies': dependencies,
             'repository': repository,
             'documentation': documentation,
@@ -277,39 +287,37 @@ def _build_collection_tar(collection_path, tar_path, collection_manifest, file_m
     tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
     try:
         tar_filepath = os.path.join(tempdir, os.path.basename(tar_path))
-        tar_file = tarfile.open(tar_filepath, mode='w:gz')
 
-        # Add the MANIFEST.json and FILES.json file to the archive
-        for name, b in [('MANIFEST.json', collection_manifest_json), ('FILES.json', files_manifest_json)]:
-            b_io = BytesIO(b)
-            tar_info = tarfile.TarInfo(name)
-            tar_info.size = len(b)
-            tar_info.mtime = time.time()
-            tar_info.mode = 0o0644
-            tar_file.addfile(tarinfo=tar_info, fileobj=b_io)
+        with open_tarfile(tar_filepath) as tar_file:
+            # Add the MANIFEST.json and FILES.json file to the archive
+            for name, b in [('MANIFEST.json', collection_manifest_json), ('FILES.json', files_manifest_json)]:
+                b_io = BytesIO(b)
+                tar_info = tarfile.TarInfo(name)
+                tar_info.size = len(b)
+                tar_info.mtime = time.time()
+                tar_info.mode = 0o0644
+                tar_file.addfile(tarinfo=tar_info, fileobj=b_io)
 
-        for file_info in file_manifest['files']:
-            if file_info['name'] == '.':
-                continue
+            for file_info in file_manifest['files']:
+                if file_info['name'] == '.':
+                    continue
 
-            filename = to_text(file_info['name'], errors='surrogate_or_strict')
-            src_path = os.path.join(to_text(collection_path, errors='surrogate_or_strict'), filename)
+                filename = to_text(file_info['name'], errors='surrogate_or_strict')
+                src_path = os.path.join(to_text(collection_path, errors='surrogate_or_strict'), filename)
 
-            if os.path.islink(src_path) and os.path.isfile(src_path):
-                src_path = os.path.realpath(src_path)
+                if os.path.islink(src_path) and os.path.isfile(src_path):
+                    src_path = os.path.realpath(src_path)
 
-            def reset_stat(tarinfo):
-                if tarinfo.issym() or tarinfo.islnk():
-                    return None
+                def reset_stat(tarinfo):
+                    if tarinfo.issym() or tarinfo.islnk():
+                        return None
 
-                tarinfo.mode = 0o0755 if tarinfo.isdir() else 0o0644
-                tarinfo.uid = tarinfo.gid = 0
-                tarinfo.uname = tarinfo.gname = ''
-                return tarinfo
+                    tarinfo.mode = 0o0755 if tarinfo.isdir() else 0o0644
+                    tarinfo.uid = tarinfo.gid = 0
+                    tarinfo.uname = tarinfo.gname = ''
+                    return tarinfo
 
-            tar_file.add(src_path, arcname=filename, recursive=False, filter=reset_stat)
-
-        tar_file.close()
+                tar_file.add(src_path, arcname=filename, recursive=False, filter=reset_stat)
 
         shutil.copy(tar_filepath, tar_path)
         collection_name = "%s.%s" % (collection_manifest['collection_info']['namespace'],
@@ -349,9 +357,8 @@ def _wait_import(task_url, key, validate_certs):
     if key:
         headers['Authorization'] = "Token %s" % key
 
-    task_id = [e for e in task_url.split('/') if e][-1]
     wait = 2
-    display.vvv('Waiting until galaxy import task %s has completed' % task_id)
+    display.vvv('Waiting until galaxy import task %s has completed' % task_url)
 
     while True:
         resp = json.load(open_url(task_url, headers=headers, method='GET', validate_certs=validate_certs))

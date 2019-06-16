@@ -70,8 +70,8 @@ def test_defaults_galaxy_yml():
         actual = collection._get_galaxy_yml(galaxy_yml.name)
 
     assert sorted(list(actual.keys())) == [
-        'authors', 'dependencies', 'description', 'documentation', 'homepage', 'issues', 'license_ids', 'name',
-        'namespace', 'readme', 'repository', 'tags', 'version',
+        'authors', 'dependencies', 'description', 'documentation', 'homepage', 'issues', 'license_file', 'license_ids',
+        'name', 'namespace', 'readme', 'repository', 'tags', 'version',
     ]
 
     assert actual['namespace'] == 'namespace'
