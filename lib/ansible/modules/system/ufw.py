@@ -321,12 +321,12 @@ def main():
             to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
             to_port=dict(type='str', aliases=['port']),
             proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp', 'gre', 'igmp']),
-            app=dict(type='str', aliases=['name']),
+            name=dict(type='str', aliases=['app']),
             comment=dict(type='str'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['app', 'proto', 'logging'],
+            ['name', 'proto', 'logging'],
         ],
         required_one_of=([command_keys]),
         required_by=dict(
@@ -524,7 +524,7 @@ def main():
 
             for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),
                                     ('to_ip', "to %s"), ('to_port', "port %s"),
-                                    ('proto', "proto %s"), ('app', "app '%s'")]:
+                                    ('proto', "proto %s"), ('name', "app '%s'")]:
                 value = params[key]
                 cmd.append([value, template % (value)])
 
