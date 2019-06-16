@@ -116,6 +116,7 @@ public_key:
 '''
 
 import os
+import stat
 import errno
 
 from ansible.module_utils.basic import AnsibleModule
@@ -216,7 +217,7 @@ class Keypair(object):
                             msg='%s seems not to be write-able. If you want this module to (re)generate the '
                                 'keypair anyways please specify the force parameter.' % (self.path))
                     else:
-                        os.remove(self.path)
+                        os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
                         return False
                 else:
                     module.fail_json(msg='%s is a directory. Please specify a path to a file.' % (self.path))
