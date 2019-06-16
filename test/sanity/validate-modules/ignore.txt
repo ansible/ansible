@@ -631,7 +631,6 @@ lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py E338
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py E326
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py E337
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py E338
-lib/ansible/modules/cloud/docker/docker_network.py E337
 lib/ansible/modules/cloud/google/_gcdns_record.py E337
 lib/ansible/modules/cloud/google/_gcdns_zone.py E337
 lib/ansible/modules/cloud/google/gce_eip.py E322
