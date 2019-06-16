@@ -119,7 +119,7 @@ Test if a list contains a value
 .. versionadded:: 2.8
 
 Ansible includes a ``contains`` test which operates similarly, but in reverse of the Jinja2 provided ``in`` test.
-This is designed with the ability to allow use of ``contains`` with filters such as ``map`` and ``selectattr``::
+This is designed with the ability to allow use of ``contains`` with filters such as ``select`` or ``reject`` and ``selectattr`` or ``rejectattr``::
 
     vars:
       lacp_groups:
