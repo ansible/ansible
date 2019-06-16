@@ -200,4 +200,7 @@
       with_items:
         - '{{ dkim_identity_domain }}'
         - '{{ dkim_identity_email }}'
+        # DKIM verifictation for emails registers the domain
+        # as an identity too so must be cleaned up.
+        - '{{ dkim_identity_email_domain }}'
       ignore_errors: yes
