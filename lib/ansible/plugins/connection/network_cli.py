@@ -442,8 +442,8 @@ class Connection(NetworkConnectionBase):
                 if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check, check_all):
                     raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
-            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) = self._find_prompt(window, 
-                                                                                                                   previous_stderr_prompt_matched, 
+            (stdout_prompt_matched, previous_stderr_prompt_matched, previous_errored_response) = self._find_prompt(window,
+                                                                                                                   previous_stderr_prompt_matched,
                                                                                                                    previous_errored_response)
             if stdout_prompt_matched:
                 self._last_response = recv.getvalue()
@@ -557,7 +557,7 @@ class Connection(NetworkConnectionBase):
 
     def _find_prompt(self, response, previous_stderr_prompt_matched, previous_errored_response):
         '''Searches the buffered response for a matching command prompt
-           return list for searching results: 
+           return list for searching results:
            (stdout_prompt_matched, stderr_prompt_macthed, errored_response)
            stdout_prompt_matched indicates if exepcted command ending prompt is found
            stderr_prompt_macthed indicates the first error key word is found
@@ -597,7 +597,7 @@ class Connection(NetworkConnectionBase):
                 return False, True, response
             else:
                 return False, False, ""
-    
+ 
     def _validate_timeout_value(self, timeout, timer_name):
         if timeout < 0:
             raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than or equal to zero." % (timer_name, timeout))
