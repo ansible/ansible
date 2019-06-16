@@ -1,2 +1,2 @@
 minor_changes:
-- '``contains`` jinja2 test - Add a ``contains`` jinja2 test designed for use in ``map`` and ``selectattr`` filters (https://github.com/ansible/ansible/pull/45798)'
+- '``contains`` jinja2 test - Add a ``contains`` jinja2 test designed for use in ``select`` or ``reject`` and ``selectattr`` or ``rejectattr`` filters (https://github.com/ansible/ansible/pull/45798)'
