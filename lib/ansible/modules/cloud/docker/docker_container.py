@@ -942,6 +942,7 @@ container:
 import os
 import re
 import shlex
+import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils.common.text.formatters import human_to_bytes
@@ -964,7 +965,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException, APIError, NotFound
 except Exception:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -3011,8 +3012,11 @@ def main():
             version='2.12'
         )
 
-    cm = ContainerManager(client)
-    client.module.exit_json(**sanitize_result(cm.results))
+    try:
+        cm = ContainerManager(client)
+        client.module.exit_json(**sanitize_result(cm.results))
+    except DockerException as e:
+        client.fail('Unhandled docker error: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
