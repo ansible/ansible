@@ -17,7 +17,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import platform
 import re
+import sys
 from datetime import timedelta
 from distutils.version import LooseVersion
 
@@ -303,9 +305,9 @@ class AnsibleDockerClient(Client):
             self.fail("Cannot have both the docker-py and docker python modules (old and new version of Docker "
                       "SDK for Python) installed together as they use the same namespace and cause a corrupt "
                       "installation. Please uninstall both packages, and re-install only the docker-py or docker "
-                      "python module. It is recommended to install the docker module if no support for Python 2.6 "
-                      "is required. Please note that simply uninstalling one of the modules can leave the other "
-                      "module in a broken state.")
+                      "python module (for %s's Python %s). It is recommended to install the docker module if no "
+                      "support for Python 2.6 is required. Please note that simply uninstalling one of the modules "
+                      "can leave the other module in a broken state." % (platform.node(), sys.executable))
 
         if not HAS_DOCKER_PY:
             if NEEDS_DOCKER_PY2:
@@ -317,7 +319,7 @@ class AnsibleDockerClient(Client):
             self.fail(msg % HAS_DOCKER_ERROR)
 
         if self.docker_py_version < LooseVersion(min_docker_version):
-            msg = "Error: Docker SDK for Python version is %s. Minimum version required is %s. "
+            msg = "Error: Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s."
             if not NEEDS_DOCKER_PY2:
                 # The minimal required version is < 2.0 (and the current version as well).
                 # Advertise docker (instead of docker-py) for non-Python-2.6 users.
@@ -326,7 +328,7 @@ class AnsibleDockerClient(Client):
                 msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
             else:
                 msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-            self.fail(msg % (docker_version, min_docker_version))
+            self.fail(msg % (docker_version, platform.node(), sys.executable, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -479,14 +481,14 @@ class AnsibleDockerClient(Client):
                         msg = 'Docker API version is %s. Minimum version required is %s to %s.'
                         msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
                     elif not support_docker_py:
-                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s. "
+                        msg = "Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s to %s. "
                         if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
                             msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
                         elif self.docker_py_version < LooseVersion('2.0.0'):
                             msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
                         else:
                             msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-                        msg = msg % (docker_version, data['docker_py_version'], usg)
+                        msg = msg % (docker_version, platform.node(), sys.executable, data['docker_py_version'], usg)
                     else:
                         # should not happen
                         msg = 'Cannot %s with your configuration.' % (usg, )
