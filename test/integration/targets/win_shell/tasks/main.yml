@@ -269,7 +269,7 @@
     - no_profile is changed
     - no_profile.cmd == "[System.Environment]::CommandLine"
     - no_profile.rc == 0
-    - no_profile.stdout is match ('^powershell.exe -noninteractive -encodedcommand')
+    - no_profile.stdout is match ('^"powershell.exe" -noninteractive -encodedcommand')
 
 - name: execute powershell with no_profile
   win_shell: '[System.Environment]::CommandLine'
@@ -284,4 +284,33 @@
     - no_profile is changed
     - no_profile.cmd == "[System.Environment]::CommandLine"
     - no_profile.rc == 0
-    - no_profile.stdout is match ('^powershell.exe -noprofile -noninteractive -encodedcommand')
+    - no_profile.stdout is match ('^"powershell.exe" -noprofile -noninteractive -encodedcommand')
+
+- name: create symbolic link with space in the path
+  win_command: cmd.exe /c mklink /d "C:\ansible test link" C:\Windows\System32\WindowsPowerShell\v1.0
+  args:
+    creates: C:\ansible test link
+
+- block:
+  - name: run with space in the executable path
+    win_shell: '[System.Environment]::CommandLine'
+    args:
+      executable: C:\ansible test link\powershell
+    register: space_exe
+
+  - debug:
+      var: space_exe.stdout|trim
+
+  - name: assert run with space in the executable path
+    assert:
+      that:
+      - space_exe is successful
+      - space_exe is changed
+      - space_exe.cmd == '[System.Environment]::CommandLine'
+      - space_exe.rc == 0
+      - space_exe.stdout|trim == '"C:\\ansible test link\\powershell.exe" /c [System.Environment]::CommandLine'
+  always:
+  - name: remove test symbolic link
+    win_file:
+      path: C:\ansible test link
+      state: absent

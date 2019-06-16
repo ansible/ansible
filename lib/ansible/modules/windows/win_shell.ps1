@@ -93,7 +93,7 @@ Else {
     $exec_args = "/c $raw_command_line"
 }
 
-$command = "$exec_application $exec_args"
+$command = "`"$exec_application`" $exec_args"
 $run_command_arg = @{
     command = $command
 }

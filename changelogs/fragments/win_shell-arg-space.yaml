@@ -1,0 +1,2 @@
+bugfixes:
+- win_shell - Fix bug when setting ``args.executable`` to a pace with a space
