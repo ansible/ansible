@@ -4,7 +4,7 @@
       - name: set the two regions for the source DB and the replica
         set_fact:
           region_src: "{{ aws_region }}"
-          region_dest: "us-east-2"
+          region_dest: "{{ aws_region }}"
 
       - name: set up aws connection info
         set_fact:
