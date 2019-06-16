@@ -29,7 +29,7 @@ options:
   tags:
     description:
       - Runs only tests in Describe blocks with specified Tags values.
-      - Accepts multiple comma seperated.
+      - Accepts multiple comma seperated tags.
     type: str
     version_added: '2.9'
   version:
