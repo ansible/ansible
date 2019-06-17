@@ -35,7 +35,6 @@ requirements: [ 'botocore', 'boto3' ]
 extends_documentation_fragment:
     - aws
     - ec2
-
 '''
 
 EXAMPLES = '''
@@ -115,10 +114,13 @@ def _get_state_check(state):
 def get_identity_dkim_settings(module, client, identity, wait_for, retries=10, retry_delay=10):
     for retry in range(1, retries + 1):
         try:
-            response = client.get_identity_dkim_attributes(Identities=[identity])
+            if not module.check_mode:
+                response = client.get_identity_dkim_attributes(Identities=[identity])
+                dkim_attributes = response['DkimAttributes'][identity]
+            else:
+                dkim_attributes = {}
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to retrieve identity DKIM settings for {identity}'.format(identity=identity))
-        dkim_attributes = response['DkimAttributes'][identity]
 
         # get_identity_dkim_attributes seems to take some time to consistently return the updated status
         # so when we've changed the state we loop until we get the state we're expecting.
