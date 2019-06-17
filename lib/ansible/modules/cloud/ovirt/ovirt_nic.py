@@ -44,9 +44,11 @@ options:
         description:
             - Logical network to which the VM network interface should use,
               by default Empty network is used if network is not specified.
+            - When not specified and you have only one network and one profile it will automatically select it.
     profile:
         description:
             - Virtual network interface profile to be attached to VM network interface.
+            - When not specified and you have only one network and one profile it will automatically select it.
     interface:
         description:
             - "Type of the network interface. For example e1000, pci_passthrough, rtl8139, rtl8139_virtio, spapr_vlan or virtio."
@@ -182,6 +184,14 @@ class EntityNicsModule(BaseModule):
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
             )
 
+def get_vnics(networks_service, networks, connection):
+    resp = []
+    network = networks_service.network_service(networks[0].id).get()
+    vnic_services = connection.system_service().vnic_profiles_service()
+    for vnic in vnic_services.list():
+        if vnic.network.id == network.id:
+            resp.append(vnic)
+    return resp
 
 def main():
     argument_spec = ovirt_full_argument_spec(
@@ -235,11 +245,11 @@ def main():
 
         # Find vNIC id of the network interface (if any):
         profile = module.params.get('profile')
+        cluster_name = get_link_name(connection, cluster_id)
+        dcs_service = connection.system_service().data_centers_service()
+        dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
+        networks_service = dcs_service.service(dc.id).networks_service()
         if profile and module.params['network']:
-            cluster_name = get_link_name(connection, cluster_id)
-            dcs_service = connection.system_service().data_centers_service()
-            dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
-            networks_service = dcs_service.service(dc.id).networks_service()
             network = next(
                 (n for n in networks_service.list()
                  if n.name == module.params['network']),
@@ -256,15 +266,11 @@ def main():
                 if vnic.name == profile and vnic.network.id == network.id:
                     entitynics_module.vnic_id = vnic.id
         else:
-            cluster_name = get_link_name(connection, cluster_id)
-            dcs_service = connection.system_service().data_centers_service()
-            dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
-            networks_service = dcs_service.service(dc.id).networks_service()
+            # When not specified which vnic use ovirtmgmt/ovirtmgmt
             networks = networks_service.list()
-            if len(networks) == 1:
-                network = networks[0]
-                if network.vnic_profiles:
-                    entitynics_module.vnic_id = network.vnic_profiles.id
+            vnics = get_vnics(networks_service, networks, connection)
+            if len(networks) == 1 and len(vnics) == 1:
+                entitynics_module.vnic_id = vnics[0].id
         # Handle appropriate action:
         state = module.params['state']
         if state == 'present':
