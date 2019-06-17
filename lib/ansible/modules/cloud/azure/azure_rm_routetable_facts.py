@@ -33,7 +33,7 @@ options:
             - Limit results in a specific resource group.
     tags:
         description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key: value'.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -89,7 +89,7 @@ tags:
         - Tags of the route table.
     returned: success
     type: dict
-    sample: { 'key1': 'value1', 'key2': 'value2'}
+    sample: { 'key1':'value1', 'key2':'value2'}
 routes:
     description:
         - Current routes of the route table.
