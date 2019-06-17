@@ -97,7 +97,7 @@ EXAMPLES = r'''
     override: yes
     state: present
 
-- name: Set C pagefile, don't override if input matches current configuration
+- name: Set C pagefile, don't override if input matches current configuration.
   win_pagefile:
     drive: C
     initial_size: 1024
