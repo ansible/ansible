@@ -205,8 +205,6 @@ def main():
     # this should not cause failures in real usage.
     attributes = get_identity_dkim_settings(module, client, identity,
                                             _get_state_check(os.environ.get('TEST_ONLY_FORCE_INITIAL_STATE', 'any')))
-    current_state = attributes['DkimEnabled']
-
     if not state_check(attributes):
         # Update DKIM settings
         if state == 'enabled':
