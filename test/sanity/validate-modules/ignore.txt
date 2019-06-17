@@ -3708,7 +3708,6 @@ lib/ansible/modules/system/syspatch.py E337
 lib/ansible/modules/system/systemd.py E336
 lib/ansible/modules/system/systemd.py E337
 lib/ansible/modules/system/sysvinit.py E337
-lib/ansible/modules/system/ufw.py E337
 lib/ansible/modules/system/user.py E210
 lib/ansible/modules/system/user.py E324
 lib/ansible/modules/system/user.py E327
