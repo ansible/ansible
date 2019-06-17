@@ -236,8 +236,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if navigate_hash(result, ['error', 'errors']):
             module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-        if result['kind'] != 'compute#instanceAggregatedList' and result['kind'] != 'compute#zoneList':
-            module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
         return result
 
@@ -259,6 +257,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         network['network'] = self._format_network_info(network['network'])
                     if 'subnetwork' in network:
                         network['subnetwork'] = self._format_network_info(network['subnetwork'])
+
+            if 'metadata' in host:
+                # If no metadata, 'items' will be blank.
+                # We want the metadata hash overriden anyways for consistency.
+                host['metadata'] = self._format_metadata(host['metadata'].get('items', {}))
 
             host['project'] = host['selfLink'].split('/')[6]
             host['image'] = self._get_image(host, project_disks)
@@ -299,6 +302,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'name': split[-1],
             'selfLink': address
         }
+
+    def _format_metadata(self, metadata):
+        '''
+            :param metadata: A list of dicts where each dict has keys "key" and "value"
+            :return a dict with key/value pairs for each in list.
+        '''
+        new_metadata = {}
+        print(metadata)
+        for pair in metadata:
+            new_metadata[pair["key"]] = pair["value"]
+        return new_metadata
 
     def _get_hostname(self, item):
         '''
