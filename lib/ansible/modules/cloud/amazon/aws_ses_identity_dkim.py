@@ -23,12 +23,14 @@ options:
         description:
             - The SES identity you would like to enable DKIM for.
             - This should be the email address or domain identifying an existing SES identity
+        type: str
         required: true
     state:
         description:
             - Enable or disable DKIM on the identity
         default: enabled
         choices: [ 'enabled', 'disabled']
+        type: str
 requirements: [ 'botocore', 'boto3' ]
 extends_documentation_fragment:
     - aws
@@ -153,8 +155,8 @@ def set_identity_dkim_enabled(module, client, identity, enabled, retries=10, ret
             ))
         except (ClientError) as e:
             error = e.response.get('Error', {})
-            error_code = error.get('Code',  'Unknown')
-            error_message = error.get('Message',  'Unknown')
+            error_code = error.get('Code', 'Unknown')
+            error_message = error.get('Message', 'Unknown')
             # verify_dkim_domain seems to take some time to replicate the status consistently to
             # other parts of the SES API. So if we get this specific client error we retry after
             # a delay  so that we correctly enable or disable DKIM.
