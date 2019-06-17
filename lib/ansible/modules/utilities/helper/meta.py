@@ -44,6 +44,7 @@ notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
     - C(clear_facts) will remove the persistent facts from M(set_fact) using C(cacheable=True),
       but not the current host variable it creates for the current run.
+    - Looping on meta tasks is not supported.
     - This module is also supported for Windows targets.
 seealso:
 - module: assert
