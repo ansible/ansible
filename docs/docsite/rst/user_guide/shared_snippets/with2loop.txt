@@ -121,6 +121,8 @@ with_dict
 
 Starting in ``2.9`` ``loop`` supports iterating over dictionaries directly.
 
+.. code-block:: yaml+jinja
+
     - name: with_dict -> loop
       debug:
         msg: "{{ item.key }} - {{ item.value }}"
