@@ -56,7 +56,7 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ vm1_facts.instance.hw_folder | dirname }}"
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
     switch_name: dvSwitch
     uplink_quantity: 2
     discovery_proto: lldp
@@ -85,7 +85,7 @@
     password: "{{ vcenter_password }}"
     name: new_vm_pg
     guest_id: centos64Guest
-    datacenter: "{{ vm1_facts.instance.hw_folder | dirname }}"
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
     disk:
       - size: 3mb
         type: thin
@@ -115,7 +115,7 @@
     password: "{{ vcsim_instance['json']['password'] }}"
     name: new_vm_pg
     guest_id: centos64Guest
-    datacenter: "{{ vm1_facts.instance.hw_folder | dirname }}"
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
     disk:
       - size: 3mb
         type: thin
