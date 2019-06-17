@@ -84,16 +84,17 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
 
 .. note:: the above example requires the lsb_release package on the target host in order to return the 'lsb major_release' fact.
 
-Variables defined in the playbooks or inventory can also be used.  An example may be the execution of a task based on a variable's boolean value::
+Variables defined in the playbooks or inventory can also be used, just make sure to apply the `|bool` filter to non boolean variables (ex: string variables with content like 'yes', 'on', '1', 'true').  An example may be the execution of a task based on a variable's boolean value::
 
     vars:
       epic: true
+      monumental: "yes"
 
 Then a conditional execution might look like::
 
     tasks:
         - shell: echo "This certainly is epic!"
-          when: epic
+          when: epic or monumental|bool
 
 or::
 
