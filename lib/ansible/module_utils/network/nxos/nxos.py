@@ -1107,7 +1107,7 @@ class NxosCmdRef:
                 self.build_cmd_set(playval, existing, k)
 
         # Remove any duplicate commands before returning.
-        return OrderedDict.fromkeys(proposed).keys()
+        return sorted(set(proposed), key=lambda x: proposed.index(x))
 
 
 def nxosCmdRef_import_check():
