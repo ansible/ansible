@@ -108,6 +108,14 @@
         that:
           - 'result.changed == false'
 
+    - name: create route-policy as prerequisite for BGP configuration
+      iosxr_config:
+        lines:
+        - no route-policy RMAP_1
+        - route-policy RMAP_1
+        - exit
+      register: result
+
     - name: Configure networks under address family
       iosxr_bgp: &af_net
         operation: merge
@@ -228,7 +236,11 @@
     - assert:
         that:
           - 'result.changed == false'
-  
+
+    - name: delete route-policy configures as prerequisite for BGP configuration (teardown)
+      iosxr_config:
+        lines: no route-policy RMAP_1
+
   when: facts['ansible_facts']['ansible_net_version'].split('[')[0] == '6.1.3'
 
 - debug: msg="END iosxr cli/iosxr_bgp.yaml on connection={{ ansible_connection }}"
