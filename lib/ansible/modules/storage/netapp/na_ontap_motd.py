@@ -21,7 +21,8 @@ extends_documentation_fragment:
     - netapp.na_ontap
 short_description: Setup motd
 description:
-    - This module allows you to manipulate motd
+    - This module allows you to manipulate motd for a vserver
+    - It also allows to manipulate motd at the cluster level by using the cluster vserver (cserver)
 version_added: "2.7"
 requirements:
     - netapp_lib
@@ -73,7 +74,7 @@ EXAMPLES = '''
 
 - name: Remove Cluster-Level MOTD
   na_ontap_motd:
-    vserver: ansible
+    vserver: my_ontap_cluster
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
