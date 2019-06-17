@@ -359,6 +359,7 @@ def main():
                                                                      module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
+    out, err = '', ''
     if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
         # checks out to decide if changes were made during execution
