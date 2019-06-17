@@ -1440,7 +1440,6 @@ lib/ansible/modules/commands/command.py E322
 lib/ansible/modules/commands/command.py E323
 lib/ansible/modules/commands/command.py E338
 lib/ansible/modules/commands/expect.py E338
-lib/ansible/modules/crypto/openssl_certificate_info.py E337
 lib/ansible/modules/database/influxdb/influxdb_database.py E324
 lib/ansible/modules/database/influxdb/influxdb_database.py E337
 lib/ansible/modules/database/influxdb/influxdb_query.py E324
