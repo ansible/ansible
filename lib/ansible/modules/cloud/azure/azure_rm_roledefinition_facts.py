@@ -88,7 +88,7 @@ roledefinitions:
                 - List of assignable scope of this definition.
             returned: always
             type: list
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup"
+            sample: [ "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup" ]
         permissions:
             description:
                 - List of Role Definition peremissions.
@@ -99,25 +99,25 @@ roledefinitions:
                         - List of allowed actions.
                     returned: always
                     type: list
-                    sample: Microsoft.Compute/virtualMachines/read
+                    sample: [ 'Microsoft.Compute/virtualMachines/read' ]
                 not_actions:
                     description:
                         - List of denied actions.
                     returned: always
                     type: list
-                    sample: Microsoft.Compute/virtualMachines/write
+                    sample: [ 'Microsoft.Compute/virtualMachines/write' ]
                 data_actions:
                     description:
                         - List of allowed data actions.
                     returned: always
                     type: list
-                    sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read
+                    sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read' ]
                 not_data_actions:
                     description:
                         - List of denied actions.
                     returned: always
                     type: list
-                    sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write
+                    sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write' ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
