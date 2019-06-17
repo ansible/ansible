@@ -203,5 +203,5 @@
     - headers is changed
     - headers.status_code == 200
     - (headers_actual.content | b64decode | from_json).headers.Testing == '123'
-    - (headers_actual.content | b64decode | from_json).headers.'User-Agent' == 'badAgent'
+    - (headers_actual.content | b64decode | from_json).headers.User-Agent == 'badAgent'
     - (headers_actual.content | b64decode | from_json).headers.accept == 'text/html'
