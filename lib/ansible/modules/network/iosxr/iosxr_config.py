@@ -236,7 +236,7 @@ time:
 """
 import re
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config, get_connection
@@ -251,7 +251,7 @@ def copy_file_to_node(module):
     """
     src = '/tmp/ansible_config.txt'
     file = open(src, 'wb')
-    file.write(module.params['src'])
+    file.write(to_bytes(module.params['src'], errors='surrogate_or_strict'))
     file.close()
 
     dst = '/harddisk:/ansible_config.txt'
