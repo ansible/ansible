@@ -47,7 +47,7 @@ options:
     profile:
         description:
             - Virtual network interface profile to be attached to VM network interface.
-            - When not specified and you have only one network and one profile it will automatically select it.
+            - When not specified and network has only single profile it will be auto-selected, otherwise you must specify profile.
     interface:
         description:
             - "Type of the network interface. For example e1000, pci_passthrough, rtl8139, rtl8139_virtio, spapr_vlan or virtio."
