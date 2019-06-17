@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_get_url - Fix handling of restricted headers as per (https://github.com/ansible/ansible/issues/57880)"
