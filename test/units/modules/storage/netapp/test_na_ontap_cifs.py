@@ -76,10 +76,10 @@ class MockONTAPConnection(object):
             'share-name': 'test',
             'path': '/test',
             'vscan-fileop-profile': 'standard',
-            'share-properties': {'cifs-share-properties': 'browsable',
-                                 'cifs-share-properties': 'oplocks'},
-            'symlink-properties': {'cifs-share-symlink-properties': 'enable',
-                                   'cifs-share-symlink-properties': 'read_only'},
+            'share-properties': [{'cifs-share-properties': 'browsable'},
+                                 {'cifs-share-properties': 'oplocks'}],
+            'symlink-properties': [{'cifs-share-symlink-properties': 'enable'},
+                                   {'cifs-share-symlink-properties': 'read_only'}],
         }}}
         xml.translate_struct(data)
         print(xml.to_string())
