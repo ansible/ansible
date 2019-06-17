@@ -36,6 +36,7 @@ RETURN = """
 
 from ansible.inventory.manager import split_host_pattern, order_patterns
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.helpers import deduplicate_list
 
 
 class LookupModule(LookupBase):
@@ -70,4 +71,4 @@ class LookupModule(LookupBase):
                     host_list.extend(that)
 
         # return unique list
-        return list(set(host_list))
+        return deduplicate_list(host_list)
