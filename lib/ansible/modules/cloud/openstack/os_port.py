@@ -162,6 +162,7 @@ EXAMPLES = '''
       password: admin
       project_name: admin
     name: port1
+    network: foo
     vnic_type: direct
 '''
 
