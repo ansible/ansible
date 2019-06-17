@@ -1236,6 +1236,50 @@ files:
 # plugins/lookup
   $plugins/lookup/__init__.py:
     support: core
+  $plugins/lookup/config.py:
+    support: core
+  $plugins/lookup/dict.py:
+    support: core
+  $plugins/lookup/env.py:
+    support: core
+  $plugins/lookup/file.py:
+    support: core
+  $plugins/lookup/fileglob.py:
+    support: core
+  $plugins/lookup/first_found.py:
+    support: core
+  $plugins/lookup/indexed_items.py:
+    support: core
+  $plugins/lookup/inventory_hostnames.py:
+    support: core
+  $plugins/lookup/items.py:
+    support: core
+  $plugins/lookup/lines.py:
+    support: core
+  $plugins/lookup/list.py:
+    support: core
+  $plugins/lookup/nested.py:
+    support: core
+  $plugins/lookup/password.py:
+    support: core
+  $plugins/lookup/pipe.py:
+    support: core
+  $plugins/lookup/random_choice.py:
+    support: core
+  $plugins/lookup/sequence.py:
+    support: core
+  $plugins/lookup/subelements.py:
+    support: core
+  $plugins/lookup/template.py:
+    support: core
+  $plugins/lookup/together.py:
+    support: core
+  $plugins/lookup/url.py:
+    support: core
+  $plugins/lookup/varnames.py:
+    support: core
+  $plugins/lookup/vars.py:
+    support: core
   $plugins/lookup/aws:
     labels:
       - aws
