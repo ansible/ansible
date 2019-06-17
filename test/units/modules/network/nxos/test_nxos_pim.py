@@ -48,7 +48,7 @@ class TestNxosPimModule(TestNxosModule):
     def test_nxos_pim_1(self):
         # Add/ Modify
         self.get_config.return_value = load_fixture('nxos_pim', 'config.cfg')
-        set_module_args(dict(bfd=True, ssm_range='233.0.0.0/8'))
+        set_module_args(dict(ssm_range='233.0.0.0/8'))
         self.execute_module(changed=True, commands=[
             'ip pim ssm range 233.0.0.0/8',
         ])
@@ -56,17 +56,21 @@ class TestNxosPimModule(TestNxosModule):
     def test_nxos_pim_2(self):
         # Remove existing values
         self.get_config.return_value = load_fixture('nxos_pim', 'config.cfg')
-        set_module_args(dict(bfd=False, ssm_range='none'))
+        set_module_args(dict(bfd='disable', ssm_range='none'))
         self.execute_module(changed=True, commands=[
             'no ip pim bfd',
             'ip pim ssm range none',
         ])
 
     def test_nxos_pim_3(self):
-        # bfd None -> true
+        # bfd None (disable)-> enable
         self.get_config.return_value = None
-        set_module_args(dict(bfd=True))
+        set_module_args(dict(bfd='enable'))
         self.execute_module(changed=True, commands=['ip pim bfd'])
+
+        # bfd None (disable) -> disable
+        set_module_args(dict(bfd='disable'))
+        self.execute_module(changed=False)
 
         # ssm None to 'default'
         set_module_args(dict(ssm_range='default'))
@@ -92,5 +96,5 @@ class TestNxosPimModule(TestNxosModule):
     def test_nxos_pim_6(self):
         # Idempotence
         self.get_config.return_value = load_fixture('nxos_pim', 'config.cfg')
-        set_module_args(dict(bfd=True, ssm_range='127.0.0.0/31'))
+        set_module_args(dict(bfd='enable', ssm_range='127.0.0.0/31'))
         self.execute_module(changed=False, commands=[])

@@ -36,7 +36,9 @@ options:
       - Enables BFD on all PIM interfaces.
       - "Dependency: 'feature bfd'"
     version_added: "2.9"
-    type: bool
+    type: str
+    choices: ['enable', 'disable']
+
   ssm_range:
     description:
       - Configure group ranges for Source Specific Multicast (SSM).
@@ -50,7 +52,7 @@ options:
 EXAMPLES = '''
 - name: Configure ssm_range, enable bfd
   nxos_pim:
-    bfd: true
+    bfd: enable
     ssm_range: "224.0.0.0/8"
 
 - name: Set to default
@@ -100,8 +102,8 @@ def get_existing(module, args):
                 value = m.group('value').replace('232.0.0.0/8', '')
                 existing[arg] = value.split()
 
-        elif 'bfd' in arg:
-            existing[arg] = 'ip pim bfd' in config
+        elif 'bfd' in arg and 'ip pim bfd' in config:
+            existing[arg] = 'enable'
 
     return existing
 
@@ -130,7 +132,7 @@ def get_commands(module, existing, proposed, candidate):
             elif value:
                 command = 'ip pim ssm range {0}'.format(value)
         elif key == 'ip pim bfd':
-            no_cmd = '' if value else 'no '
+            no_cmd = 'no ' if value == 'disable' else ''
             command = no_cmd + key
 
         if command:
@@ -142,7 +144,7 @@ def get_commands(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-        bfd=dict(required=False, type='bool'),
+        bfd=dict(required=False, type='str', choices=['enable', 'disable']),
         ssm_range=dict(required=False, type='list', default=[]),
     )
 
@@ -180,6 +182,10 @@ def main():
                 ex = sorted(set([str(i) for i in existing.get(key, [])]))
                 if v != ex:
                     proposed[key] = ' '.join(str(s) for s in v)
+
+        elif key == 'bfd':
+            if value != existing.get('bfd', 'disable'):
+                proposed[key] = value
 
         elif value != existing.get(key):
             proposed[key] = value

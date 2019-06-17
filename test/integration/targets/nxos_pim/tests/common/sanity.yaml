@@ -30,7 +30,7 @@
 - block:
   - name: Initial config from none
     nxos_pim: &configure
-      bfd: true
+      bfd: enable
       ssm_range:
         - "239.128.1.0/24"
         - "224.0.0.0/8"
@@ -51,7 +51,7 @@
 
   - name: Configure ssm_range default
     nxos_pim: &conf_default
-      bfd: false
+      bfd: disable
       ssm_range: "default"
       provider: "{{ connection }}"
     register: result
