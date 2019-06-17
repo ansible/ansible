@@ -10,7 +10,7 @@ DOCUMENTATION = '''
     name: libvirt
     plugin_type: inventory
     short_description: libvirt inventory source
-    version_added: '2.5'
+    version_added: '2.9'
     requirements:
       - libvirt python library
     author:
@@ -111,14 +111,7 @@ class InventoryModule(BaseInventoryPlugin):
                 tags.append(tag_elem.text)
             self.inventory.set_variable(host, 'libvirt_tags', tags)
 
-            # TODO: support more than one network interface, also support interface types other than 'network'
-            interface = root.find("./devices/interface[@type='network']")
-            if interface is not None:
-                source_elem = interface.find('source')
-                mac_elem = interface.find('mac')
-                if source_elem is not None and mac_elem is not None:
-                    dhcp_leases = conn.networkLookupByName(source_elem.get('network')).DHCPLeases(mac_elem.get('address'))
-                    if len(dhcp_leases) > 0:
-                        ip_address = dhcp_leases[0]['ipaddr']
-                        self.inventory.set_variable(host, 'ansible_host', ip_address)
-                        self.inventory.set_variable(host, 'libvirt_ip_address', ip_address)
+            # Add all iface information
+            ifaces = domain.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0) or {}
+
+            self.inventory_set_variable(host, 'libvirt_network', {"interfaces": ifaces})
