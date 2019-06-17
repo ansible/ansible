@@ -71,12 +71,12 @@ options:
   uid:
     version_added: '2.9'
     description:
-    - The UNIX group ID for the clone volume.
+    - The UNIX user ID for the clone volume.
     type: int
   gid:
     version_added: '2.9'
     description:
-    - The UNIX user ID for the clone volume.
+    - The UNIX group ID for the clone volume.
     type: int
 '''
 
