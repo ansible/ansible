@@ -25,7 +25,6 @@ $drive = Get-AnsibleParam -obj $params -name "drive" -type "str"
 $fullPath = $drive + ":\pagefile.sys"
 $initialSize = Get-AnsibleParam -obj $params -name "initial_size" -type "int"
 $maximumSize = Get-AnsibleParam -obj $params -name "maximum_size" -type "int"
-#$override = Get-AnsibleParam -obj $params -name "override" -type "bool" -default $true
 $override = Get-AnsibleParam -obj $params -name "override" -type "str" -default "false" -validateset "true", "match", "false"
 $removeAll = Get-AnsibleParam -obj $params -name "remove_all" -type "bool" -default $false
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "query" -validateset "present", "absent", "query"
