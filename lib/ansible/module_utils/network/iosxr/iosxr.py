@@ -345,8 +345,12 @@ def get_config_diff(module, running=None, candidate=None):
         return response
     elif is_netconf(module):
         if running and candidate:
-            running_data = running.split("\n", 1)[-1].rsplit("\n", 1)[0]
-            candidate_data = candidate.split("\n", 1)[-1].rsplit("\n", 1)[0]
+            # ignore rpc-reply root node and diff from data element onwards
+            running_data_ele = etree.fromstring(to_bytes(running.strip())).getchildren()[0]
+            candidate_data_ele = etree.fromstring(to_bytes(candidate.strip())).getchildren()[0]
+
+            running_data = to_text(etree.tostring(running_data_ele)).strip()
+            candidate_data = to_text(etree.tostring(candidate_data_ele)).strip()
             if running_data != candidate_data:
                 d = Differ()
                 diff = list(d.compare(running_data.splitlines(), candidate_data.splitlines()))
