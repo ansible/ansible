@@ -45,7 +45,7 @@ options:
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h), and ASN.1 TIME (i.e. pattern C(YYYYMMDDHHMMSSZ)).
               Note that all timestamps will be treated as being in UTC.
-
+        type: dict
     select_crypto_backend:
         description:
             - Determines which crypto backend to use.
