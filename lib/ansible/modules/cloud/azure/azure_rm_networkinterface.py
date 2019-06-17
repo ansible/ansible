@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_networkinterface
 
-version_added: "2.1"
+version_added: '2.1'
 
 short_description: Manage Azure network interfaces
 
@@ -83,7 +83,7 @@ options:
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
     private_ip_allocation_method:
         description:
-            - (Deprecate) Specify whether or not the assigned IP address is permanent.
+            - (Deprecate) Whether or not the assigned IP address is permanent.
             - When creating a network interface, if you specify I(private_ip_address=Static), you must provide a value for I(private_ip_address).
             - You can update the allocation method to C(Static) after a dynamic private IP address has been assigned.
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
@@ -116,7 +116,7 @@ options:
         default: Dynamic
     ip_configurations:
         description:
-            - List of IP configuration if contains multiple configuration, should contain configuration object include
+            - List of IP configurations. Each configuration object should include
               field I(private_ip_address), I(private_ip_allocation_method), I(public_ip_address_name), I(public_ip), I(public_ip_allocation_method), I(name).
         suboptions:
             name:
@@ -148,10 +148,10 @@ options:
                 default: Dynamic
             load_balancer_backend_address_pools:
                 description:
-                    - List of an existing load-balancer backend address pool id to associate with the network interface.
-                    - It can be write as a resource id.
+                    - List of existing load-balancer backend address pools to associate with the network interface.
+                    - Can be written as a resource ID.
                     - Also can be a dict of I(name) and I(load_balancer).
-                version_added: "2.6"
+                version_added: '2.6'
             primary:
                 description:
                     - Whether the IP configuration is the primary one in the list.
@@ -161,20 +161,20 @@ options:
                 description:
                     - List of application security groups in which the IP configuration is included.
                     - Element of the list could be a resource id of application security group, or dict of I(resource_group) and I(name).
-                version_added: "2.8"
-        version_added: "2.5"
+                version_added: '2.8'
+        version_added: '2.5'
     enable_accelerated_networking:
         description:
-            - Specifies whether the network interface should be created with the accelerated networking feature or not.
+            - Whether the network interface should be created with the accelerated networking feature or not.
         type: bool
-        version_added: "2.7"
+        version_added: '2.7'
         default: False
     create_with_security_group:
         description:
-            - Specifies whether a security group should be be created with the NIC.
+            - Whether a security group should be be created with the NIC.
             - If this flag set to C(True) and no I(security_group) set, a default security group will be created.
         type: bool
-        version_added: "2.6"
+        version_added: '2.6'
         default: True
     security_group:
         description:
@@ -198,13 +198,13 @@ options:
             - ip_forwarding
         type: bool
         default: False
-        version_added: "2.7"
+        version_added: '2.7'
     dns_servers:
         description:
             - Which DNS servers should the NIC lookup.
-            - List of IP address.
+            - List of IP addresses.
         type: list
-        version_added: "2.7"
+        version_added: '2.7'
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -265,7 +265,7 @@ EXAMPLES = '''
             public_ip_address_name: publicip001
             primary: True
 
-    - name: Create a network with mutilple ip configurations
+    - name: Create a network with multiple ip configurations
       azure_rm_networkinterface:
         name: nic004
         resource_group: myResourceGroup
@@ -330,7 +330,7 @@ state:
         dns_server:
             description:
                 - Which DNS servers should the NIC lookup.
-                - List of IP's.
+                - List of IP addresses.
             type: list
             sample: ['8.9.10.11', '7.8.9.10']
         dns_setting:
@@ -363,12 +363,12 @@ state:
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nic003"
         enable_accelerated_networking:
             description:
-                 - Specifies whether the network interface should be created with the accelerated networking feature or not.
+                 - Whether the network interface should be created with the accelerated networking feature or not.
             type: bool
             sample: true
         ip_configurations:
             description:
-                - List of IP configuration  if contains mutilple configuration.
+                - List of IP configurations.
             type: complex
             contains:
                 name:
@@ -378,7 +378,7 @@ state:
                     sample: default
                 load_balancer_backend_address_pools:
                     description:
-                        - List of an existing load-balancer backend address pool id to associate with the network interface.
+                        - List of existing load-balancer backend address pools to associate with the network interface.
                     type: list
                 private_ip_address:
                     description:

@@ -107,7 +107,7 @@ azure_networkinterfaces:
     }]
 networkinterfaces:
     description:
-        - List of network interface dict, the dict contains parameters can be passed to M(azure_rm_networkinterface) module.
+        - List of network interface dicts. Each dict contains parameters can be passed to M(azure_rm_networkinterface) module.
     type: list
     returned: always
     contains:
@@ -135,7 +135,7 @@ networkinterfaces:
                 - Tags of the network interface.
         ip_configurations:
             description:
-                - List of IP configuration if contains mutilple configuration.
+                - List of IP configurations, if contains multiple configurations.
             contains:
                 name:
                     description:
@@ -154,7 +154,7 @@ networkinterfaces:
                         - Public IP allocation method.
                 load_balancer_backend_address_pools:
                     description:
-                        - List of an existing load-balancer backend address pool id to associate with the network interface.
+                        - List of existing load-balancer backend address pools to associate with the network interface.
                 primary:
                     description:
                         - Whether the IP configuration is the primary one in the list.
@@ -178,7 +178,7 @@ networkinterfaces:
         dns_servers:
             description:
                 - Which DNS servers should the NIC lookup.
-                - List of IP address.
+                - List of IP addresses.
         mac_address:
             description:
                 - The MAC address of the network interface.
