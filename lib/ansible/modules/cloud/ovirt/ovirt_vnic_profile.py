@@ -280,7 +280,7 @@ def main():
             if entity is not None:
                 ret = entitynics_module.remove(entity=entity)
             else:
-                raise Exception("Vnic profile '%s' in network '%s' was not found." % (module.params['name'], module.params['network']) )
+                raise Exception("Vnic profile '%s' in network '%s' was not found." % (module.params['name'], module.params['network']))
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
