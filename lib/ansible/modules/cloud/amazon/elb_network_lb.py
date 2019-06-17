@@ -103,7 +103,7 @@ EXAMPLES = '''
       - subnet-012345678
       - subnet-abcdef000
     listeners:
-      - Protocol: TCP # Required. The protocol for connections from clients to the load balancer (Only TCP is available) (case-sensitive).
+      - Protocol: TCP # Required. The protocol for connections from clients to the load balancer (TCP or TLS) (case-sensitive).
         Port: 80 # Required. The port on which the load balancer is listening.
         DefaultActions:
           - Type: forward # Required. Only 'forward' is accepted at this time
@@ -117,7 +117,7 @@ EXAMPLES = '''
       - SubnetId: subnet-012345678
         AllocationId: eipalloc-aabbccdd
     listeners:
-      - Protocol: TCP # Required. The protocol for connections from clients to the load balancer (Only TCP is available) (case-sensitive).
+      - Protocol: TCP # Required. The protocol for connections from clients to the load balancer (TCP or TLS) (case-sensitive).
         Port: 80 # Required. The port on which the load balancer is listening.
         DefaultActions:
           - Type: forward # Required. Only 'forward' is accepted at this time
@@ -402,8 +402,8 @@ def main():
     if listeners is not None:
         for listener in listeners:
             for key in listener.keys():
-                if key == 'Protocol' and listener[key] != 'TCP':
-                    module.fail_json(msg="'Protocol' must be 'TCP'")
+                if key == 'Protocol' and listener[key] not in ['TCP', 'TLS']:
+                    module.fail_json(msg="'Protocol' must be either 'TCP' or 'TLS'")
 
     connection = module.client('elbv2')
     connection_ec2 = module.client('ec2')
