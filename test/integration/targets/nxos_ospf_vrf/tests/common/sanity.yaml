@@ -34,7 +34,7 @@
       timer_throttle_lsa_hold: 1100
       timer_throttle_lsa_max: 3000
       vrf: test
-      bfd: true
+      bfd: enable
       passive_interface: true
       provider: "{{ connection }}"
       state: present
@@ -62,7 +62,7 @@
       default_metric: 1000
       log_adjacency: log
       vrf: default
-      bfd: false
+      bfd: disable
       passive_interface: true
       provider: "{{ connection }}"
       state: present
