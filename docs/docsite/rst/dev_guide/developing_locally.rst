@@ -72,7 +72,7 @@ Ansible loads plugins automatically too, loading each type of plugin separately 
     * test_plugins*
     * vars_plugins
 
-To get your local plugins loaded automatically, create or add them in any of these locations:
+To load your local plugins automatically, create or add them in any of these locations:
 
 * any directory added to the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable (these variables, such as ``$ANSIBLE_INVENTORY_PLUGINS`` and ``$ANSIBLE_VARS_PLUGINS`` take colon-separated lists like ``$PATH``)
 * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback``
