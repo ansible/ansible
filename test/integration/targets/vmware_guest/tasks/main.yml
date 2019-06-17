@@ -56,7 +56,7 @@
     - include: network_with_portgroup.yml
     - include: network_with_dvpg.yml
     #- include: template_d1_c1_f0.yml
-    - include: vapp_d1_c1_f0.yml
+    # - include: vapp_d1_c1_f0.yml
     - include: disk_size_d1_c1_f0.yml
     - include: network_with_device.yml
     - include: disk_mode_d1_c1_f0.yml
