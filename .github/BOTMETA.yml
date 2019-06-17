@@ -1000,7 +1000,13 @@ files:
     labels: networking
 ###############################
 # plugins/become
-  $plugins/become/:
+  $plugins/become:
+    support: community
+  $plugins/become/__init__.py:
+    support: core
+  $plugins/become/su.py:
+    support: core
+  $plugins/become/sudo.py:
     support: core
 ###############################
 # plugins/cache
