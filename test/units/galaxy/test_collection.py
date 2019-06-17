@@ -200,9 +200,13 @@ def test_build_ignore_files_and_folders(collection_input, monkeypatch):
     for manifest_entry in actual['files']:
         assert manifest_entry['name'] not in ['.git', 'ansible.retry', 'galaxy.yml']
 
+    expected_msgs = [
+        "Skipping '%s' for collection build" % to_text(retry_file),
+        "Skipping '%s' for collection build" % to_text(git_folder),
+    ]
     assert mock_display.call_count == 2
-    assert mock_display.mock_calls[0][1][0] == "Skipping '%s' for collection build" % to_text(retry_file)
-    assert mock_display.mock_calls[1][1][0] == "Skipping '%s' for collection build" % to_text(git_folder)
+    assert mock_display.mock_calls[0][1][0] in expected_msgs
+    assert mock_display.mock_calls[1][1][0] in expected_msgs
 
 
 def test_build_ignore_symlink_target_outside_collection(collection_input, monkeypatch):

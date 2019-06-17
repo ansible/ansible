@@ -585,8 +585,6 @@ def test_invalid_skeleton_path():
     "hypen-ns.collection",
     "ns.hyphen-collection",
     "ns.collection.weird",
-    "Ånsible.collection",
-    "ansible.collectÌon",
 ])
 def test_invalid_collection_name(name):
     expected = "Invalid collection name, must be in the format <namespace>.<collection>"
