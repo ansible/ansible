@@ -193,7 +193,7 @@ CE_NC_GET_INTF = """
 CE_NC_XML_CREATE_INTF = """
 <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
 <interfaces>
-  <interface operation="merge">
+  <interface operation="create">
     <ifName>%s</ifName>
     <ifDescr>%s</ifDescr>
   </interface>
@@ -204,7 +204,7 @@ CE_NC_XML_CREATE_INTF = """
 CE_NC_XML_CREATE_INTF_L2SUB = """
 <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
 <interfaces>
-  <interface operation="merge">
+  <interface operation="create">
     <ifName>%s</ifName>
     <ifDescr>%s</ifDescr>
     <l2SubIfFlag>true</l2SubIfFlag>
