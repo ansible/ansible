@@ -41,7 +41,7 @@
     - name: assert results report being unchanged (check-mode)
       assert:
         that:
-          - email_result.changed == True
+          - email_result.changed == False
           # Note, if actually changed, the subsequent enable test will fail
 
     ## DKIM enable test
