@@ -58,10 +58,10 @@ def build_collection(collection_path, output_path, force):
 
     if os.path.exists(collection_output):
         if os.path.isdir(collection_output):
-            raise AnsibleError("The output collection artifact %s already exists, "
+            raise AnsibleError("The output collection artifact '%s' already exists, "
                                "but is a directory - aborting" % collection_output)
         elif not force:
-            raise AnsibleError("The file %s already exists. You can use --force to re-create "
+            raise AnsibleError("The file '%s' already exists. You can use --force to re-create "
                                "the collection artifact." % collection_output)
 
     _build_collection_tar(collection_path, collection_output, collection_manifest, file_manifest)
@@ -208,15 +208,15 @@ def _build_files_manifest(collection_path):
 
             if os.path.isdir(abs_path):
                 if item in ignore_dirs:
-                    display.vvv("Skipping %s for collection build" % abs_path)
+                    display.vvv("Skipping '%s' for collection build" % to_text(abs_path))
                     continue
 
                 if os.path.islink(abs_path):
                     link_target = os.path.realpath(abs_path)
 
                     if not link_target.startswith(top_level_dir):
-                        display.warning("Skipping %s as it is a symbolic link to a directory outside the collection"
-                                        % abs_path)
+                        display.warning("Skipping '%s' as it is a symbolic link to a directory outside the collection"
+                                        % to_text(abs_path))
                         continue
 
                 manifest_entry = entry_template.copy()
@@ -230,7 +230,7 @@ def _build_files_manifest(collection_path):
                 if item == 'galaxy.yml':
                     continue
                 elif any(fnmatch.fnmatch(item, pattern) for pattern in ignore_files):
-                    display.vvv("Skipping %s for collection build" % abs_path)
+                    display.vvv("Skipping '%s' for collection build" % to_text(abs_path))
                     continue
 
                 manifest_entry = entry_template.copy()
@@ -322,7 +322,7 @@ def _build_collection_tar(collection_path, tar_path, collection_manifest, file_m
         shutil.copy(tar_filepath, tar_path)
         collection_name = "%s.%s" % (collection_manifest['collection_info']['namespace'],
                                      collection_manifest['collection_info']['name'])
-        display.display('Created collection for %s at %s' % (collection_name, tar_path))
+        display.display('Created collection for %s at %s' % (collection_name, to_text(tar_path)))
     finally:
         shutil.rmtree(tempdir)
 
@@ -371,7 +371,13 @@ def _wait_import(task_url, key, validate_certs):
         time.sleep(wait)
 
     for message in resp.get('messages', []):
-        display.vvv("Galaxy import message: %s - %s" % (message['level'], message['message']))
+        level = message['level']
+        if level == 'error':
+            display.error("Galaxy import error message: %s" % message['message'])
+        elif level == 'warning':
+            display.warning("Galaxy import warning message: %s" % message['message'])
+        else:
+            display.vvv("Galaxy import message: %s - %s" % (level, message['message']))
 
     if resp['state'] == 'failed':
         code = resp['error'].get('code', 'UNKNOWN')
