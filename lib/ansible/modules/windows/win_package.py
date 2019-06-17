@@ -243,7 +243,7 @@ EXAMPLES = r'''
 RETURN = r'''
 log:
   description: The contents of the MSI log.
-  returned: change occured and package is an MSI
+  returned: installation/uninstallation failure for MSI packages
   type: str
   sample: Installation completed successfully
 rc:
