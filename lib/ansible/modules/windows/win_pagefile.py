@@ -36,8 +36,9 @@ options:
   override:
     description:
       - Override the current pagefile on the drive.
-    type: bool
-    default: yes
+    type: str
+    choices: [ yes, no, match ]
+    default: match
   system_managed:
     description:
       - Configures current pagefile to be managed by the system.
@@ -93,6 +94,14 @@ EXAMPLES = r'''
     drive: C
     initial_size: 1024
     maximum_size: 1024
+    override: yes
+    state: present
+
+- name: Set C pagefile, don't override if input matches current configuration
+  win_pagefile:
+    drive: C
+    initial_size: 1024
+    maximum_size: 1024
     state: present
 
 - name: Remove C pagefile
@@ -135,5 +144,9 @@ pagefiles:
     sample:
       [{"caption": "c:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ c:\\", "initial_size": 2048, "maximum_size": 2048, "name": "c:\\pagefile.sys"},
        {"caption": "d:\\ 'pagefile.sys'", "description": "'pagefile.sys' @ d:\\", "initial_size": 1024, "maximum_size": 1024, "name": "d:\\pagefile.sys"}]
-
+reboot_required:
+    description: True when there is a change in the configuration of pagefile and target needs a reboot for the effect to take place.
+    returned: always
+    type: bool
+    sample: true
 '''
