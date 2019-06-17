@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins import AnsiblePlugin
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.six import string_types
 
 try:
     from ncclient.operations import RPCError
@@ -223,9 +224,9 @@ class NetconfBase(AnsiblePlugin):
         """
         if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
-
-        resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
-        return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+        req = fromstring(rpc_command)
+        resp = self.m.dispatch(req, source=source, filter=filter)
+        return resp.data_xml if resp.data_ele else resp.xml
 
     @ensure_connected
     def lock(self, target="candidate"):
