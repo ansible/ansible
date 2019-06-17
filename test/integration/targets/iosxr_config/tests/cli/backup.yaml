@@ -67,14 +67,14 @@
       - "result.changed == true"
 
 - name: check if the backup file-1 exist
-  find:
-    paths: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}/backup.cfg"
+  stat:
+    path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}/backup.cfg"
   register: backup_file
   connection: local
 
 - assert:
     that:
-      - "backup_file.files is defined"
+      - "backup_file.stat.exists == True"
 
 - name: take configuration backup in custom filename
   iosxr_config:
@@ -89,14 +89,14 @@
       - "result.changed == true"
 
 - name: check if the backup file-2 exist
-  find:
-    paths: "{{ role_path }}/backup/backup.cfg"
+  stat:
+    path: "{{ role_path }}/backup/backup.cfg"
   register: backup_file
   connection: local
 
 - assert:
     that:
-      - "backup_file.files is defined"
+      - "backup_file.stat.exists == True"
 
 - name: take configuration backup in custom path and default filename
   iosxr_config:
