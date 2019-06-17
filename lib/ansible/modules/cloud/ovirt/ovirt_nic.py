@@ -184,6 +184,7 @@ class EntityNicsModule(BaseModule):
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
             )
 
+
 def get_vnics(networks_service, networks, connection):
     resp = []
     network = networks_service.network_service(networks[0].id).get()
@@ -192,6 +193,7 @@ def get_vnics(networks_service, networks, connection):
         if vnic.network.id == network.id:
             resp.append(vnic)
     return resp
+
 
 def main():
     argument_spec = ovirt_full_argument_spec(
