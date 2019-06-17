@@ -244,12 +244,12 @@ def main():
         )
 
         # Find vNIC id of the network interface (if any):
-        profile = module.params.get('profile')
-        cluster_name = get_link_name(connection, cluster_id)
-        dcs_service = connection.system_service().data_centers_service()
-        dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
-        networks_service = dcs_service.service(dc.id).networks_service()
         if module.params['network']:
+            profile = module.params.get('profile')
+            cluster_name = get_link_name(connection, cluster_id)
+            dcs_service = connection.system_service().data_centers_service()
+            dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
+            networks_service = dcs_service.service(dc.id).networks_service()
             network = next(
                 (n for n in networks_service.list()
                  if n.name == module.params['network']),
