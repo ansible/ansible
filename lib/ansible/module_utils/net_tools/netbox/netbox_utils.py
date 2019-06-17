@@ -27,7 +27,7 @@ API_APPS_ENDPOINTS = dict(
 
 QUERY_TYPES = dict(
     cluster="name",
-    devices="name",
+    device="name",
     device_role="slug",
     device_type="slug",
     manufacturer="slug",

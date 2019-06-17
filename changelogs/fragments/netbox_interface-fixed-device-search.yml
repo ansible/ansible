@@ -1,0 +1,2 @@
+bugfixes:
+  - netbox_interface - Fixes (57948) device search query type from defaulting to ``q`` due to incorrect key for ``device`` within ``QUERY_TYPES`` - was ``devices`` now ``device`` to match required key.
