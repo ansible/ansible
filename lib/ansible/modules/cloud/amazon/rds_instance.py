@@ -847,7 +847,7 @@ def get_options_with_changing_values(client, module, parameters):
     if cloudwatch_logs_enabled:
         parameters['CloudwatchLogsExportConfiguration'] = cloudwatch_logs_enabled
     if not module.params['storage_type']:
-        parameters.pop('Iops')
+        parameters.pop('Iops', None)
 
     instance = get_instance(client, module, instance_id)
     updated_parameters = get_changing_options_with_inconsistent_keys(parameters, instance, purge_cloudwatch_logs)
