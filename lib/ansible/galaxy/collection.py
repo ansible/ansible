@@ -120,9 +120,10 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
     display.display("Collection has been successfully publish to the Galaxy server")
 
 
+# TODO: Remove this once Python 2.6 is fully excised from the controller tests
 @contextmanager
-def open_tarfile(path):
-    tfile = tarfile.open(path, mode='w:gz')
+def _open_tarfile(path, mode='r'):
+    tfile = tarfile.open(path, mode=mode)
     yield tfile
     tfile.close()
 
@@ -288,7 +289,7 @@ def _build_collection_tar(collection_path, tar_path, collection_manifest, file_m
     try:
         tar_filepath = os.path.join(tempdir, os.path.basename(tar_path))
 
-        with open_tarfile(tar_filepath) as tar_file:
+        with _open_tarfile(tar_filepath, mode='w:gz') as tar_file:
             # Add the MANIFEST.json and FILES.json file to the archive
             for name, b in [('MANIFEST.json', collection_manifest_json), ('FILES.json', files_manifest_json)]:
                 b_io = BytesIO(b)

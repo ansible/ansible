@@ -33,6 +33,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
+from ansible.galaxy.collection import _open_tarfile
 from ansible.module_utils._text import to_text
 from ansible.utils import context_objects as co
 from units.compat import unittest
@@ -531,12 +532,10 @@ def test_collection_skeleton(collection_skeleton):
     for empty_dir in ['plugins/action', 'plugins/filter', 'plugins/inventory', 'plugins/lookup',
                       'plugins/module_utils', 'plugins/modules']:
 
-        assert os.path.isdir(os.path.join(collection_skeleton, empty_dir))
         assert os.listdir(os.path.join(collection_skeleton, empty_dir)) == []
 
     # Test files that don't end with .j2 were not templated
     doc_file = os.path.join(collection_skeleton, 'docs', 'My Collection.md')
-    assert os.path.exists(doc_file)
     with open(doc_file, 'r') as f:
         doc_contents = f.read()
     assert doc_contents.strip() == 'Welcome to my test collection doc for {{ namespace }}.'
@@ -555,10 +554,8 @@ def test_collection_skeleton(collection_skeleton):
 
 
 @pytest.fixture()
-def collection_build(collection_skeleton):
-    output_dir = tempfile.mkdtemp()
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
+def collection_build(collection_skeleton, tmp_path_factory):
+    output_dir = str(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
     # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
     # args, we reset the original args once it is done.
@@ -573,9 +570,6 @@ def collection_build(collection_skeleton):
     finally:
         co.GlobalCLIArgs._Singleton__instance = orig_cli_args
 
-    if os.path.isdir(output_dir):
-        shutil.rmtree(output_dir)
-
 
 def test_invalid_skeleton_path():
     expected = "- the skeleton path '/fake/path' does not exist, cannot init collection"
@@ -586,7 +580,14 @@ def test_invalid_skeleton_path():
         gc.run()
 
 
-@pytest.mark.parametrize("name", ["invalid", "hypen-ns.collection", "ns.hyphen-collection", "ns.collection.weird"])
+@pytest.mark.parametrize("name", [
+    "invalid",
+    "hypen-ns.collection",
+    "ns.hyphen-collection",
+    "ns.collection.weird",
+    "Ånsible.collection",
+    "ansible.collectÌon",
+])
 def test_invalid_collection_name(name):
     expected = "Invalid collection name, must be in the format <namespace>.<collection>"
 
@@ -600,11 +601,9 @@ def test_invalid_collection_name(name):
 ], indirect=True)
 def test_collection_build(collection_build):
     tar_path = os.path.join(collection_build, 'ansible_test-build_collection-1.0.0.tar.gz')
-    assert os.path.exists(tar_path)
     assert tarfile.is_tarfile(tar_path)
 
-    tar = tarfile.open(tar_path)
-    try:
+    with _open_tarfile(tar_path) as tar:
         tar_members = tar.getmembers()
 
         valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md']
@@ -682,5 +681,3 @@ def test_collection_build(collection_build):
                 assert file_entry['chksum_sha256'] is None
 
             assert len(file_entry.keys()) == 5
-    finally:
-        tar.close()

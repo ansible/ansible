@@ -271,8 +271,7 @@ def test_build_with_symlink_inside_collection(collection_input):
     output_artifact = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
     assert tarfile.is_tarfile(output_artifact)
 
-    actual = tarfile.open(output_artifact)
-    try:
+    with collection._open_tarfile(output_artifact) as actual:
         members = actual.getmembers()
 
         linked_members = [m for m in members if m.path.startswith('playbooks/roles/linked/tasks')]
@@ -288,8 +287,6 @@ def test_build_with_symlink_inside_collection(collection_input):
         linked_task.close()
 
         assert actual_task == 'f4dcc52576b6c2cd8ac2832c52493881c4e54226'
-    finally:
-        actual.close()
 
 
 def test_publish_missing_file():
