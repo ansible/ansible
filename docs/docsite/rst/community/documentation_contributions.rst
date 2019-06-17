@@ -71,6 +71,7 @@ To work with documentation on your local machine, you need the following package
 - jinja2
 - rstcheck
 - sphinx
+- sphinx-notfound-page
 
 .. note::
 
