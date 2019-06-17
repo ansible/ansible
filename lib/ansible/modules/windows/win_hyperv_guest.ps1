@@ -13,9 +13,9 @@ $spec = @{
         state = @{ type = "str"; choices = "present", "absent", "created", "started", "stopped", "restarted"; default = "present" }
         force_stop = @{ type = "bool"; default = $false }
         hostserver = @{ type = "str"; }
+        generation = @{ type = "int"; choices = 1, 2; default = 1; }
         cpu = @{ type = "int"; default = 1 }
         memory = @{ type = "str"; default = "512MB" }
-        generation = @{ type = "int"; choices = 1, 2; default = 1; }
         disks = @{ type = "list";}
         network_adapters = @{ type = "list" }
         secure_boot = @{ type = "bool"; default = $false }

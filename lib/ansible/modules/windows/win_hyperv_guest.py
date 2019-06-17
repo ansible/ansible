@@ -26,12 +26,14 @@ options:
   name:
     description:
       - Name of VM
+    type: str
     required: true
   state:
     description:
       - State of VM, for started, stopped, restarted and shutdown the VM needs to exist
       - Poweroperations are performed after state updates!
       - Important to notice for generation 1 VM's and disk updates, stopping the VM and the disk updates are seperate tasks
+    type: str
     required: false
     choices:
       - present
@@ -44,17 +46,19 @@ options:
   force_stop:
     description:
       - When true the virtual plug is pulled on the VM instead of a gentle shutdown (poweroff instead of shutdown)
+    type: bool
     required: false
     default: false
-    type: bool
   hostserver:
     description:
       - Server to host VM
+    type: str
     required: false
     default: null
   generation:
     description:
       - Specifies the generation of the VM, cannot be updated without recreating the VM
+    type: int
     required: false
     choices:
       - 1
@@ -63,11 +67,13 @@ options:
   cpu:
     description:
       - Sets the amount of cores of the VM
+    type: int
     required: false
     default: 1
   memory:
     description:
       - Sets the amount of memory for the VM.
+    type: str
     required: false
     default: 512MB
   disks:
@@ -83,6 +89,7 @@ options:
       - 'The following options are optional:'
       - ' - C(parent_path) (string): If set a parent of the disk to create a differencing disk (available since Server 2012)'
       - ' - C(first_boot_device) (bool): If set this disk will be set first boot device, only supported on a generarion 2 VM!'
+    type: list
     required: false
     default: null
   network_adapters:
@@ -96,10 +103,12 @@ options:
       - ' - C(name) (string): The name of the network adapter'
       - 'The following options are optional'
       - ' - C(switch_name) (string): Name of the switch to connect the adapter to'
+    type: list
     required: false
     default: null
   secure_boot:
     description: Enables or disables secure_boot
+    type: bool
     required: false
     default: false
   secure_boot_template:
@@ -110,16 +119,19 @@ options:
     choices:
       - MicrosoftWindows
       - MicrosoftUEFICertificateAuthority
+    type: str
     required: false
     default: null
   wait_for_ip:
     description:
       - When true waits until an IP address is set on the first network interface after starting or restarting
+    type: bool
     required: false
     default: false
   timeout:
     description:
       - Timeout in seconds for waiting on IPV4 address
+    type: int
     required: false
     default: 30
 '''
