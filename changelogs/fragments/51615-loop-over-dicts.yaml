@@ -1,0 +1,2 @@
+minor_changes:
+  - Support iterating over dicts in ``loop`` (https://github.com/ansible/ansible/issues/51615)

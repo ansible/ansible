@@ -334,3 +334,20 @@
     - 1
   loop_control:
     loop_var: alvin
+
+# https://github.com/ansible/ansible/issues/51615
+- name: Use loop to iterate over a dictionary
+  debug:
+    msg: "{{ item.key }}={{ item.value }}"
+  loop:
+    key1: value1
+    key2: value2
+  register: loop_dict_out
+
+- name: Check that the dict turned into list of key value dicts
+  assert:
+    that:
+      - "loop_dict_out.results[0]['item']['key'] == 'key1'"
+      - "loop_dict_out.results[0]['item']['value'] == 'value1'"
+      - "loop_dict_out.results[1]['item']['key'] == 'key2'"
+      - "loop_dict_out.results[1]['item']['value'] == 'value2'"

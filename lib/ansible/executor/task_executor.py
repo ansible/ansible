@@ -18,12 +18,14 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.filter.core import dict_to_list_of_dict_key_value_elements
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -249,6 +251,10 @@ class TaskExecutor:
 
         elif self._task.loop is not None:
             items = templar.template(self._task.loop)
+
+            if isinstance(items, Mapping):
+                items = dict_to_list_of_dict_key_value_elements(items)
+
             if not isinstance(items, list):
                 raise AnsibleError(
                     "Invalid data passed to 'loop', it requires a list, got this instead: %s."

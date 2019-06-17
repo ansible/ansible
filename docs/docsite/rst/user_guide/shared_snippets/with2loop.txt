@@ -119,6 +119,13 @@ with_dict
         msg: "{{ item.0 }} - {{ item.1 }}"
       loop: "{{ dictionary|dictsort }}"
 
+Starting in ``2.9`` ``loop`` supports iterating over dictionaries directly.
+
+    - name: with_dict -> loop
+      debug:
+        msg: "{{ item.key }} - {{ item.value }}"
+      loop: "{{ dictionary }}"
+
 with_sequence
 -------------
 

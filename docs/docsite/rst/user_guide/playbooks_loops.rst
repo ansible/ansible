@@ -132,6 +132,8 @@ To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
 
 Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
 
+Starting in ``2.9`` ``loop`` supports iterating over dictionaries directly and so using the ``dict2items`` filter is not needed.
+
 Registering variables with a loop
 =================================
 
