@@ -39,6 +39,7 @@
             "ecs:DeregisterTaskDefinition",
             "ecs:Describe*",
             "ecs:List*",
+            "ecs:PutAccountSetting",
             "ecs:RegisterTaskDefinition",
             "ecs:RunTask",
             "ecs:StartTask",

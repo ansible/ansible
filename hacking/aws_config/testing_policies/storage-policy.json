@@ -37,6 +37,14 @@
             ],
             "Effect": "Allow",
             "Resource": "*"
+        },
+        {
+            "Sid": "ManageEFS",
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:*"
+            ],
+            "Resource": "*"
         }
     ]
 }
