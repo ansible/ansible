@@ -153,6 +153,9 @@ EXAMPLES = '''
   when: inventory_hostname==groups['group_name'][0]
 '''
 
+
+import traceback
+
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
     from zabbix_api import ZabbixAPIException
@@ -170,9 +173,10 @@ try:
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Screen(object):
@@ -372,7 +376,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
