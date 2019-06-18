@@ -33,7 +33,7 @@ Ensure that the table stays formatted correctly. That is:
 Adding a platform-specific options section
 ==========================================
 
-The platform- specific sections are individual ``.rst`` files that provide more detailed information for the users of your network platform modules.  See :ref:`eos_platform_options` for an example of the details you should provide in your platform-specific options section. Name your new file ``platform_<name>.rst`` (for example, ``platform_myos.rst``).
+The platform- specific sections are individual ``.rst`` files that provide more detailed information for the users of your network platform modules.  See :ref:`eos_platform_options` for an example of the details you should provide in your platform-specific options section. Name your new file ``platform_<name>.rst`` (for example, ``platform_myos.rst``).  The platform name should match the module prefix.
 
 Your platform-specific section should include the following:
 
