@@ -229,6 +229,14 @@ class EntityVnicPorfileModule(BaseModule):
         )
 
 
+def get_entity(vnic_services, entitynics_module):
+    vnic_profiles = vnic_services.list()
+    network_id = entitynics_module._get_network_id()
+    for vnic in vnic_profiles:
+        # When vNIC already exist update it, when not create it.
+        if vnic.name == entitynics_module.param('name') and network_id == vnic.network.id:
+            return vnic
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -262,17 +270,9 @@ def main():
         )
         state = module.params['state']
         force_create = True
-        entity = None
-
-        vnic_profiles = vnic_services.list()
-        network_id = entitynics_module._get_network_id()
-        for vnic in vnic_profiles:
-            # When vNIC already exist update it, when not create it.
-            if vnic.name == module.params['name'] and network_id == vnic.network.id:
-                entity = vnic
-                force_create = False
-                break
-
+        entity = get_entity(vnic_services, entitynics_module)
+        if entity:
+            force_create = False
         if state == 'present':
             ret = entitynics_module.create(entity=entity, force_create=force_create)
         elif state == 'absent':
