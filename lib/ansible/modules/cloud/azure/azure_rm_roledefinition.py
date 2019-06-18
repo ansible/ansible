@@ -49,7 +49,7 @@ options:
                 type: list
     assignable_scopes:
         description:
-            - List of assignable scope of this definition.
+            - List of assignable scopes of this definition.
     scope:
         description:
             - The scope of the role definition.
@@ -59,7 +59,7 @@ options:
     state:
         description:
             - Assert the state of the role definition.
-            - Use C(present) to create or update a role definition and C(absent) to delete it.
+            - Use C(present) to create or update a role definition; use C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -90,7 +90,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Id of current role definition.
+        - ID of current role definition.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/roleDefinitionId"
