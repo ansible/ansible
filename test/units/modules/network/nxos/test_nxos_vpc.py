@@ -110,17 +110,17 @@ class TestNxosVpcModule(TestNxosModule):
         ])
 
     def test_nxos_vpc_vrf_3(self):
-        # vrf 'my_vrf'-> vrf 'test-vrf'
+        # vrf 'my_vrf' -> vrf 'obviously-different-vrf'
         # Existing pkl_src should be retained even though playbook does not specify it
         self.get_config.return_value = load_fixture('nxos_vpc', 'vrf_test_vpc_config')
         set_module_args(dict(
             domain=100,
             pkl_dest='192.168.1.1',
-            pkl_vrf='test-vrf',
+            pkl_vrf='obviously-different-vrf'
         ))
         self.execute_module(changed=True, device='_vrf_test', commands=[
             'vpc domain 100',
-            'peer-keepalive destination 192.168.1.1 source 10.1.1.1 vrf test-vrf'
+            'peer-keepalive destination 192.168.1.1 source 10.1.1.1 vrf obviously-different-vrf'
         ])
 
     def test_nxos_vpc_vrf_4(self):
@@ -159,3 +159,25 @@ class TestNxosVpcModule(TestNxosModule):
             'terminal dont-ask',
             'no vpc domain 100',
         ])
+
+    def test_nxos_vpc_vrf_7(self):
+        # dest 192.168.1.1 source 10.1.1.1 vrf my_vrf -> (dest only) (idempotence)
+        # pkl_src not in playbook but exists on device.
+        self.get_config.return_value = load_fixture('nxos_vpc', 'vrf_test_vpc_config')
+        set_module_args(dict(
+            domain=100,
+            pkl_dest='192.168.1.1',
+        ))
+        self.execute_module(changed=False, device='_vrf_test')
+
+    def test_nxos_vpc_vrf_8(self):
+        # dest 192.168.1.1 source 10.1.1.1 vrf my_vrf -> (optional vrf) (idempotence)
+        # vrf 'my_vrf' -> vrf 'my_vrf' (idempotence)
+        # pkl_src not in playbook but exists on device.
+        self.get_config.return_value = load_fixture('nxos_vpc', 'vrf_test_vpc_config')
+        set_module_args(dict(
+            domain=100,
+            pkl_dest='192.168.1.1',
+            pkl_vrf='my_vrf',
+        ))
+        self.execute_module(changed=False, device='_vrf_test')
