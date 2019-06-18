@@ -132,11 +132,12 @@ def test_boto3_conn(inventory):
     inventory._options = {"aws_profile": "first_precedence",
                           "aws_access_key": "test_access_key",
                           "aws_secret_key": "test_secret_key",
-                          "aws_security_token": "test_security_token"}
+                          "aws_security_token": "test_security_token",
+                          "iam_role_arn": None}
     inventory._set_credentials()
     with pytest.raises(AnsibleError) as error_message:
         for connection, region in inventory._boto3_conn(regions=['us-east-1']):
-            assert error_message == "Insufficient credentials found."
+            assert "Insufficient credentials found" in error_message
 
 
 def test_get_hostname_default(inventory):
@@ -154,13 +155,15 @@ def test_set_credentials(inventory):
     inventory._options = {'aws_access_key': 'test_access_key',
                           'aws_secret_key': 'test_secret_key',
                           'aws_security_token': 'test_security_token',
-                          'aws_profile': 'test_profile'}
+                          'aws_profile': 'test_profile',
+                          'iam_role_arn': 'arn:aws:iam::112233445566:role/test-role'}
     inventory._set_credentials()
 
     assert inventory.boto_profile == "test_profile"
     assert inventory.aws_access_key_id == "test_access_key"
     assert inventory.aws_secret_access_key == "test_secret_key"
     assert inventory.aws_security_token == "test_security_token"
+    assert inventory.iam_role_arn == "arn:aws:iam::112233445566:role/test-role"
 
 
 def test_insufficient_credentials(inventory):
@@ -168,11 +171,12 @@ def test_insufficient_credentials(inventory):
         'aws_access_key': None,
         'aws_secret_key': None,
         'aws_security_token': None,
-        'aws_profile': None
+        'aws_profile': None,
+        'iam_role_arn': None
     }
     with pytest.raises(AnsibleError) as error_message:
         inventory._set_credentials()
-        assert "Insufficient boto credentials found" in error_message
+        assert "Insufficient credentials found" in error_message
 
 
 def test_verify_file_bad_config(inventory):
