@@ -391,7 +391,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for region in regions:
             connection = self._get_connection(credentials, region)
-
+            try:
                 if iam_role_arn is not None:
                     assumed_credentials = self._boto3_assume_role(credentials, region)
                 else:
