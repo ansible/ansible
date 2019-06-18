@@ -1,3 +1,4 @@
 #pip packages required to build docssite
 sphinx
 PyYAML
+Pygments >= 2.4.0
