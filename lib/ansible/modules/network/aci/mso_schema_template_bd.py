@@ -42,7 +42,7 @@ options:
     type: str
   vrf:
     description:
-    - The VRF associated to this BD.
+    - The VRF associated to this BD. This is required only when creating a new BD.
     type: dict
   subnets:
     description:
@@ -111,6 +111,8 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     bd: BD 1
+    vrf:
+      name: VRF1
     state: present
   delegate_to: localhost
 
