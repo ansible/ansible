@@ -62,7 +62,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Resource id.
+        - Resource ID.
     returned: success
     type: str
     sample: "/subscriptions/xxxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/routeTables/tableb57dc95236"
