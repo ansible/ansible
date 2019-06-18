@@ -1,0 +1,4 @@
+minor_changes:
+    - added ability for systemd to use a 'root' option.
+bugfixes:
+    - scope now only correctly applies to commands using a unit.

@@ -368,9 +368,6 @@ def main():
         else:
             module.params['scope'] = 'system'
 
-    # if scope is 'system' or None, we can ignore as there is no extra switch.
-    # The other choices match the corresponding switch
-
     if module.params['no_block']:
         systemctl += " --no-block"
 
@@ -408,6 +405,8 @@ def main():
         if module.params['root']:
             systemctl_unit += " --root=%s" % module.params['root']
 
+        # if scope is 'system' or None, we can ignore as there is no extra switch.
+        # The other choices match the corresponding switch
         if module.params['scope'] not in (None, 'system'):
             systemctl_unit += " --%s" % module.params['scope']
 
