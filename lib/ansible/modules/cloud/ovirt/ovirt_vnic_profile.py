@@ -237,6 +237,7 @@ def get_entity(vnic_services, entitynics_module):
         if vnic.name == entitynics_module.param('name') and network_id == vnic.network.id:
             return vnic
 
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=['absent', 'present']),
