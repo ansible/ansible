@@ -211,20 +211,19 @@ class MerakiModule(object):
             self.nets.append(t)
         return self.nets
 
-    # def get_net(self, org_name, net_name, data=None):
-    #     path = self.construct_path('get_all', function='network', org_id=org_id)
-    #     r = self.request(path, method='GET')
-    #     return r
-
-    def get_net(self, org_name, net_name, org_id=None, data=None):
+    def get_net(self, org_name, net_name=None, org_id=None, data=None, net_id=None):
         ''' Return network information '''
         if not data:
             if not org_id:
                 org_id = self.get_org_id(org_name)
             data = self.get_nets(org_id=org_id)
         for n in data:
-            if n['name'] == net_name:
-                return n
+            if net_id:
+                if n['id'] == net_id:
+                    return n
+            elif net_name:
+                if n['name'] == net_name:
+                    return n
         return False
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
