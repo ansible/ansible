@@ -162,7 +162,7 @@ class TestNxosVpcModule(TestNxosModule):
 
     def test_nxos_vpc_vrf_7(self):
         # dest 192.168.1.1 source 10.1.1.1 vrf my_vrf -> (dest only) (idempotence)
-        # pkl_src not in playbook but exists on device.
+        # pkl_src/pkl_vrf not in playbook but exists on device.
         self.get_config.return_value = load_fixture('nxos_vpc', 'vrf_test_vpc_config')
         set_module_args(dict(
             domain=100,
@@ -172,7 +172,6 @@ class TestNxosVpcModule(TestNxosModule):
 
     def test_nxos_vpc_vrf_8(self):
         # dest 192.168.1.1 source 10.1.1.1 vrf my_vrf -> (optional vrf) (idempotence)
-        # vrf 'my_vrf' -> vrf 'my_vrf' (idempotence)
         # pkl_src not in playbook but exists on device.
         self.get_config.return_value = load_fixture('nxos_vpc', 'vrf_test_vpc_config')
         set_module_args(dict(
