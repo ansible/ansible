@@ -705,12 +705,12 @@ def self_link(module):
         'cluster': replace_resource_dict(module.params['cluster'], 'name'),
         'name': module.params['name'],
     }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools/{name}".format(**res)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters/{cluster}/nodePools/{name}".format(**res)
 
 
 def collection(module):
     res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools".format(**res)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters/{cluster}/nodePools".format(**res)
 
 
 def return_if_object(module, response, allow_not_found=False):
@@ -773,7 +773,7 @@ def response_to_hash(module, response):
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/operations/{op_id}"
+    url = "https://container.googleapis.com/v1/projects/{project}/locations/{location}/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)
