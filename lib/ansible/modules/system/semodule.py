@@ -115,7 +115,7 @@ def main():
         argument_spec=dict(
             src=dict(type='path', required=True),
             force=dict(type='bool', required=False, choices=[True, False]),
-            state=dict(type='str', default='present', choices=['present', 'latest', 'absent'])
+            state=dict(type='str', default='present', choices=['present', 'absent'])
         ),
         supports_check_mode=True
     )
