@@ -1,0 +1,2 @@
+bugfixes:
+  - na_ontap_snapshot_policy - allow for multiple schedules to be set for a snapshot policy
