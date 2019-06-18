@@ -190,6 +190,7 @@ options:
     activate:
         description:
             - I(True) if the disk should be activated.
+            - When creating disk of virtual machine it is set to I(True).
         version_added: "2.8"
         type: bool
 extends_documentation_fragment: ovirt
@@ -612,6 +613,23 @@ def searchable_attributes(module):
     return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
+def get_vm_service(connection, module):
+    if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and module.params['state'] != 'absent':
+        vms_service = connection.system_service().vms_service()
+
+        # If `vm_id` isn't specified, find VM by name:
+        vm_id = module.params['vm_id']
+        if vm_id is None:
+            vm_id = get_id_by_name(vms_service, module.params['vm_name'])
+
+        if vm_id is None:
+            module.fail_json(
+                msg="VM don't exists, please create it first."
+            )
+
+        return vms_service.vm_service(vm_id)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -684,6 +702,10 @@ def main():
         ret = None
         # First take care of creating the VM, if needed:
         if state in ('present', 'detached', 'attached'):
+            vm_service = get_vm_service(connection, module)
+            # Always activate disk when its being created
+            if vm_service is not None and disk is None:
+                module.params['activate'] = True
             ret = disks_module.create(
                 entity=disk,
                 search_params=searchable_attributes(module),
