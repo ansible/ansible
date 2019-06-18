@@ -5,6 +5,9 @@ Controlling playbook execution: strategies and more
 
 By default, Ansible runs each task on all hosts affected by a play before starting the next task on any host, using 5 forks. If you want to change this default behavior, you can use a different strategy plugin, change the number of forks, or apply one of several play-level keywords like ``serial``.
 
+.. contents::
+   :local:
+
 Selecting a strategy
 --------------------
 The default behavior described above is the :ref:`linear strategy<linear_strategy>`. Ansible offers other strategies, including the :ref:`debug strategy<debug_strategy>` (see also  :ref:`playbook_debugger`) and the :ref:`free strategy<free_strategy>`, which allows
@@ -21,6 +24,15 @@ You can select a different strategy for each play as shown above, or set your pr
     strategy = free
 
 All strategies are implemented as :ref:`strategy plugins<strategy_plugins>`. Please review the documentation for each strategy plugin for details on how it works.
+
+Setting the number of forks
+---------------------------
+If you have the processing power available and want to use more forks, you can set the number in ``ansible.cfg``::
+
+    [defaults]
+    forks = 30
+
+or pass it on the command line: `ansible-playbook -f 30 my_playbook.yml`.
 
 Using keywords to control execution
 -----------------------------------
