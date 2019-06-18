@@ -38,7 +38,7 @@
 # The child group can define anything you would normally add to a group.
 # Hosts in child groups inherit all variables from parent, parents include all hosts in child groups.
 # webservers is added as a child group of testing, so all gamma hosts (1-3) are added
-# to the existing webservers group, even if gamma3, whic is defined in the tree of another parent group.
+# to the 'webservers' group, including gamma3, which is defined in the tree of another parent group.
 # All references to webservers will get any hosts defined under webservers.
 # References to testing will get all of those hosts plus any host matching www[001:006].example.com
 
