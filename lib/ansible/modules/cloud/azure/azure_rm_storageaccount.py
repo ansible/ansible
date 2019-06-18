@@ -207,7 +207,10 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.storage.cloudstorageaccount import CloudStorageAccount
+    try:
+        from azure.storage.common.cloudstorageaccount import CloudStorageAccount
+    except ImportError:
+        from azure.storage.cloudstorageaccount import CloudStorageAccount
     from azure.common import AzureMissingResourceHttpError
 except ImportError:
     # This is handled in azure_rm_common
