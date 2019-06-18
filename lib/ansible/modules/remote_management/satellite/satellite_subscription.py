@@ -30,18 +30,18 @@ options:
       - The name or IP address of the Red Hat Satellite server.
     type: str
     required: yes
-  user:
+  url_username:
     description:
       - Satellite server user.
     type: str
     required: yes
-    aliases: [url_username]
-  password:
+    aliases: [username]
+  url_password:
     description:
       - Satellite server password.
     type: str
     required: yes
-    aliases: [url_password]
+    aliases: [password]
   org_id:
     description:
       - Satellite organization ID to work on
@@ -269,7 +269,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             hostname=dict(type='str', required=True),
-            url_username=dict(type='str', required=True, aliases=['user']),
+            url_username=dict(type='str', required=True, aliases=['username']),
             url_password=dict(type='str', required=True, no_log=True, aliases=['password']),
             org_id=dict(type='int', required=True),
             state=dict(
