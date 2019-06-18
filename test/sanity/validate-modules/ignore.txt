@@ -464,7 +464,6 @@ lib/ansible/modules/network/cloudengine/ce_ntp.py E322
 lib/ansible/modules/network/cloudengine/ce_ntp_auth.py E322
 lib/ansible/modules/network/cloudengine/ce_ospf.py E322
 lib/ansible/modules/network/cloudengine/ce_ospf_vrf.py E322
-lib/ansible/modules/network/cloudengine/ce_reboot.py E317
 lib/ansible/modules/network/cloudengine/ce_reboot.py E322
 lib/ansible/modules/network/cloudengine/ce_rollback.py E322
 lib/ansible/modules/network/cloudengine/ce_sflow.py E322
