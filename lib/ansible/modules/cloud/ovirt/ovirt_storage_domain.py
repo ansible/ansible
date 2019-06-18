@@ -465,7 +465,7 @@ class StorageDomainModule(BaseModule):
             warning_low_space_indicator=self.param('warning_low_space'),
             import_=True if self.param('state') == 'imported' else None,
             id=self.param('id') if self.param('state') == 'imported' else None,
-            type=otypes.StorageDomainType(storage_type if storage_type == 'managed_block_storage' else self.param('domain_function') ),
+            type=otypes.StorageDomainType(storage_type if storage_type == 'managed_block_storage' else self.param('domain_function')),
             host=otypes.Host(name=self.param('host')),
             discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
