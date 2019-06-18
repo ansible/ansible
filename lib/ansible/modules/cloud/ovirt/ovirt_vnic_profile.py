@@ -233,7 +233,7 @@ def get_entity(vnic_services, entitynics_module):
     vnic_profiles = vnic_services.list()
     network_id = entitynics_module._get_network_id()
     for vnic in vnic_profiles:
-        # When vNIC already exist update it, when not create it.
+        # When vNIC already exist update it, when not create it
         if vnic.name == entitynics_module.param('name') and network_id == vnic.network.id:
             return vnic
 
