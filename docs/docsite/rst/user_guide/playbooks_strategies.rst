@@ -1,10 +1,12 @@
 .. _playbooks_strategies:
 
-Controlling playbook execution: strategies, forks, and ``serial``
-=================================================================
+Controlling playbook execution: strategies and more
+===================================================
 
-By default, Ansible runs each task on all hosts affected by a play before starting the next task on any host, using 5 forks. If you want to change this default behavior, you can change the number of forks, use a different strategy plugin, or define the ``serial`` keyword.
+By default, Ansible runs each task on all hosts affected by a play before starting the next task on any host, using 5 forks. If you want to change this default behavior, you can use a different strategy plugin, change the number of forks, or apply one of several play-level keywords like ``serial``.
 
+Selecting a strategy
+--------------------
 The default behavior described above is the :ref:`linear strategy<linear_strategy>`. Ansible offers other strategies, including the :ref:`debug strategy<debug_strategy>` (see also  :ref:`playbook_debugger`) and the :ref:`free strategy<free_strategy>`, which allows
 each host to run until the end of the play as fast as it can::
 
@@ -13,17 +15,18 @@ each host to run until the end of the play as fast as it can::
       tasks:
       ...
 
-You can select a different strategy for each play, or set your preferred strategy globally in ``ansible.cfg``, under the ``defaults`` stanza::
+You can select a different strategy for each play as shown above, or set your preferred strategy globally in ``ansible.cfg``, under the ``defaults`` stanza::
 
     [defaults]
     strategy = free
 
 All strategies are implemented as :ref:`strategy plugins<strategy_plugins>`. Please review the documentation for each strategy plugin for details on how it works.
 
-You can also use the play-level :ref:`keyword<playbook_keywords>` ``serial``
-to set the number or percentage of hosts you want to manage at a time. This works with any
-strategy. Ansible will then 'batch' the hosts, completing the play on the specified number or percentage of hosts before starting the next 'batch'.
-This is especially useful for :ref:`rolling updates<rolling_update_batch_size>`. Please note that ``serial`` is not a strategy, but a play-level directive/option.
+Using keywords to control execution
+-----------------------------------
+Several play-level :ref:`keyword<playbook_keywords>` also affect play execution. The most common one is ``serial``, which sets a number, a percentage, or a list of numbers of hosts you want to manage at a time. Setting ``serial`` with any strategy directs Ansible to 'batch' the hosts, completing the play on the specified number or percentage of hosts before starting the next 'batch'. This is especially useful for :ref:`rolling updates<rolling_update_batch_size>`.
+
+Other keywords that affect play execution include ``ignore_errors``, ``ignore_unreachable``, and ``any_errors_fatal``. Please note that these keywords are not strategies. They are play-level directives or options.
 
 .. seealso::
 
