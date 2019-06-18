@@ -272,7 +272,8 @@ def main():
                 if len(vnics) == 1:
                     entitynics_module.vnic_id = vnics[0].id
                 else:
-                    raise Exception("You didn't specify any vnic profile. Following vnic profiles are in system: '%s', please specify one of them" % ([vnic.name for vnic in vnics]))
+                    raise Exception("You didn't specify any vnic profile. Following vnic profiles are in system: '%s', please specify one of them"
+                    % ([vnic.name for vnic in vnics]))
         # Handle appropriate action:
         state = module.params['state']
         if state == 'present':
