@@ -339,6 +339,7 @@ EXAMPLES = '''
       path: /path/iso
 
 # Create managed storage domain
+# Available from ovirt 4.3 and ansible 2.9
 - ovirt_storage_domain:
     name: my_managed_domain
     host: myhost
