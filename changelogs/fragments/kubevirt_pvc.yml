@@ -1,3 +1,4 @@
 ---
 bugfixes:
   - Properly handle data importer failures on PVC creation, instead of timing out.
+  - kubevirt_pvc – fix regression breaking any CDI features.
