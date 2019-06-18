@@ -61,7 +61,7 @@ options:
         description:
             - "Function of the storage domain."
             - "This parameter isn't idempotent, it's not possible to change domain function of storage domain."
-        choices: ['data', 'iso', 'export', 'managed_block_storage']
+        choices: ['data', 'iso', 'export']
         default: 'data'
         aliases:  ['type']
     host:
@@ -341,7 +341,6 @@ EXAMPLES = '''
 # Create managed storage domain
 - ovirt_storage_domain:
     name: my_managed_domain
-    domain_function: managed_block_storage
     host: myhost
     data_center: mydatacenter
     managed_block_storage:
@@ -466,7 +465,7 @@ class StorageDomainModule(BaseModule):
             warning_low_space_indicator=self.param('warning_low_space'),
             import_=True if self.param('state') == 'imported' else None,
             id=self.param('id') if self.param('state') == 'imported' else None,
-            type=otypes.StorageDomainType(self.param('domain_function')),
+            type=otypes.StorageDomainType(storage_type if storage_type == 'managed_block_storage' else self.param('domain_function') ),
             host=otypes.Host(name=self.param('host')),
             discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
@@ -711,7 +710,7 @@ def main():
         description=dict(default=None),
         comment=dict(default=None),
         data_center=dict(default=None),
-        domain_function=dict(choices=['data', 'iso', 'export', 'managed_block_storage'], default='data', aliases=['type']),
+        domain_function=dict(choices=['data', 'iso', 'export'], default='data', aliases=['type']),
         host=dict(default=None),
         localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
