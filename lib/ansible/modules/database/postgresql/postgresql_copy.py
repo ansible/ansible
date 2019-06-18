@@ -180,7 +180,6 @@ from ansible.module_utils.postgres import (
     exec_sql,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
 
@@ -220,7 +219,6 @@ class PgCopyData(object):
 
     def copy_from(self):
         """Implements COPY FROM command behavior."""
-
         self.src = self.module.params['copy_from']
         self.dst = self.module.params['dst']
 
@@ -251,7 +249,6 @@ class PgCopyData(object):
 
     def copy_to(self):
         """Implements COPY TO command behavior."""
-
         self.src = self.module.params['src']
         self.dst = self.module.params['copy_to']
 
@@ -287,7 +284,6 @@ class PgCopyData(object):
 
     def __transform_options(self):
         """Transform options dict into a suitable string."""
-
         for (key, val) in iteritems(self.module.params['options']):
             if key.upper() in self.opt_need_quotes:
                 self.module.params['options'][key] = "'%s'" % val
@@ -305,7 +301,6 @@ class PgCopyData(object):
                 It can be SQL SELECT statement that was passed
                 instead of the table name.
         """
-
         if 'SELECT ' in table.upper():
             # In this case table is actually SQL SELECT statement.
             # If SQL fails, it's handled by exec_sql():

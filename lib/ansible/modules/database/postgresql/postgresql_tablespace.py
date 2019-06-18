@@ -172,13 +172,12 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_native
 
 
 class PgTablespace(object):
@@ -218,7 +217,6 @@ class PgTablespace(object):
 
     def get_info(self):
         """Get tablespace information."""
-
         # Check that spcoptions exists:
         opt = exec_sql(self, "SELECT 1 FROM information_schema.columns "
                              "WHERE table_name = 'pg_tablespace' "
@@ -275,7 +273,6 @@ class PgTablespace(object):
         args:
             location (str) -- tablespace directory path in the FS
         """
-
         query = ("CREATE TABLESPACE %s LOCATION '%s'" % (pg_quote_identifier(self.name, 'database'), location))
         return exec_sql(self, query, ddl=True)
 
@@ -284,7 +281,6 @@ class PgTablespace(object):
 
         Return True if success, otherwise, return False.
         """
-
         return exec_sql(self, "DROP TABLESPACE %s" % pg_quote_identifier(self.name, 'database'), ddl=True)
 
     def set_owner(self, new_owner):
@@ -295,7 +291,6 @@ class PgTablespace(object):
         args:
             new_owner (str) -- name of a new owner for the tablespace"
         """
-
         if new_owner == self.owner:
             return False
 
@@ -310,7 +305,6 @@ class PgTablespace(object):
         args:
             newname (str) -- new name for the tablespace"
         """
-
         query = "ALTER TABLESPACE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'database'), newname)
         self.new_name = newname
         return exec_sql(self, query, ddl=True)
@@ -324,7 +318,6 @@ class PgTablespace(object):
         args:
             new_settings (list) -- list of new settings
         """
-
         # settings must be a dict {'key': 'value'}
         if self.opt_not_supported:
             return False
@@ -351,7 +344,6 @@ class PgTablespace(object):
         args:
             setting (str) -- string in format "setting_name = 'setting_value'"
         """
-
         query = "ALTER TABLESPACE %s RESET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
         return exec_sql(self, query, ddl=True)
 
@@ -363,7 +355,6 @@ class PgTablespace(object):
         args:
             setting (str) -- string in format "setting_name = 'setting_value'"
         """
-
         query = "ALTER TABLESPACE %s SET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
         return exec_sql(self, query, ddl=True)
 
