@@ -20,7 +20,7 @@ You can select a different strategy for each play, or set your preferred strateg
 
 All strategies are implemented as :ref:`strategy plugins<strategy_plugins>`. Please review the documentation for each strategy plugin for details on how it works.
 
-You can also use the play-level :ref:`keyword<playbooks_keywords>` ``serial``
+You can also use the play-level :ref:`keyword<playbook_keywords>` ``serial``
 to set the number or percentage of hosts you want to manage at a time with any
 strategy. Ansible will then 'batch' the hosts, completing the play on the specified number or percentage of hosts before starting the next 'batch'.
 This is especially useful for :ref:`rolling updates<rolling_update_batch_size>`. Please note that ``serial`` is not a strategy, but a play-level directive/option.
