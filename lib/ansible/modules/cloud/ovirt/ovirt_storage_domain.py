@@ -158,6 +158,18 @@ options:
             mount_options:
                 description:
                     - Option which will be passed when mounting storage.
+    managed_block_storage:
+        description:
+            - "Dictionary with values for managed block storage type"
+        suboptions:
+            driver_options:
+                description:
+                    - "The options to be passed when creating a storage domain using a cinder driver."
+                    - "List of dictionary containing C(name) and C(value) of driver option"
+            driver_sensitive_options:
+                description:
+                    - "Parameters containing sensitive information, to be passed when creating a storage domain using a cinder driver."
+                    - "List of dictionary containing C(name) and C(value) of driver sensitive option"
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
@@ -325,6 +337,26 @@ EXAMPLES = '''
       address: 10.34.63.199
       path: /path/iso
 
+# Create managed storage domain
+- ovirt_storage_domain:
+    name: my_managed_domain
+    domain_function: managed_block_storage
+    host: myhost
+    data_center: mydatacenter
+    managed_block_storage:
+    driver_options:
+      - name: rbd_pool
+        value: pool1
+      - name: rbd_user
+        value: admin
+      - name: volume_driver
+        value: cinder.volume.drivers.rbd.RBDDriver
+      - name: rbd_keyring_conf
+        value: /etc/ceph/keyring
+    driver_sensitive_options:
+      - name: password
+        value: password
+
 # Remove storage domain
 - ovirt_storage_domain:
     state: absent
@@ -375,12 +407,12 @@ from ansible.module_utils.ovirt import (
 class StorageDomainModule(BaseModule):
 
     def _get_storage_type(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs', 'managed_block_storage']:
             if self.param(sd_type) is not None:
                 return sd_type
 
     def _get_storage(self):
-        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs']:
+        for sd_type in ['nfs', 'iscsi', 'posixfs', 'glusterfs', 'fcp', 'localfs', 'managed_block_storage']:
             if self.param(sd_type) is not None:
                 return self.param(sd_type)
 
@@ -437,6 +469,18 @@ class StorageDomainModule(BaseModule):
             host=otypes.Host(name=self.param('host')),
             discard_after_delete=self.param('discard_after_delete'),
             storage=otypes.HostStorage(
+                driver_options=[
+                    otypes.Property(
+                        name=do.get('name'),
+                        value=do.get('value')
+                    ) for do in storage.get('driver_options')
+                ] if storage.get('driver_options') else None,
+                driver_sensitive_options=[
+                    otypes.Property(
+                        name=dso.get('name'),
+                        value=dso.get('value')
+                    ) for dso in storage.get('driver_sensitive_options')
+                ] if storage.get('driver_sensitive_options') else None,
                 type=otypes.StorageType(storage_type),
                 logical_units=[
                     otypes.LogicalUnit(
@@ -666,11 +710,12 @@ def main():
         description=dict(default=None),
         comment=dict(default=None),
         data_center=dict(default=None),
-        domain_function=dict(choices=['data', 'iso', 'export'], default='data', aliases=['type']),
+        domain_function=dict(choices=['data', 'iso', 'export', 'managed_block_storage'], default='data', aliases=['type']),
         host=dict(default=None),
         localfs=dict(default=None, type='dict'),
         nfs=dict(default=None, type='dict'),
         iscsi=dict(default=None, type='dict'),
+        managed_block_storage=dict(default=None, type='dict'),
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
