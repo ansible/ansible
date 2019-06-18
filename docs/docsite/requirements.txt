@@ -4,3 +4,4 @@ PyYAML
 rstcheck
 sphinx
 sphinx-notfound-page
+Pygments >= 2.4.0
