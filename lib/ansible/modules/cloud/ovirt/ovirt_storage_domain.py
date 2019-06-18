@@ -718,7 +718,7 @@ def main():
         iscsi=dict(default=None, type='dict'),
         managed_block_storage=dict(default=None, type='dict', options=dict(
             driver_options=dict(type='list'),
-            driver_sensitive_options=dict(type='list',no_log=True))),
+            driver_sensitive_options=dict(type='list', no_log=True))),
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
