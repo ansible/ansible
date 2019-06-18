@@ -217,7 +217,7 @@ def sanitize_user_representation(user_representation):
     result = user_representation.copy()
     if 'credentials' in result:
         # check if this value are to sanitize
-        for credential_key in ['hashedSaltedValue', 'salt']:
+        for credential_key in ['hashedSaltedValue', 'salt', 'value']:
             if credential_key in result['credentials']:
                 result['credentials'][credential_key] = 'no_log'
     return result
@@ -346,7 +346,7 @@ def create_changeset(module):
                     pass
 
         changeset[camel(user_param)] = new_param_value
-    return changeset
+    return sanitize_user_representation(changeset)
 
 
 def do_nothing_and_exit(kc, result):
