@@ -55,7 +55,10 @@ EXAMPLES = '''
     timeout: 10
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -73,6 +76,7 @@ try:
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 
@@ -104,7 +108,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
