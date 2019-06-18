@@ -170,6 +170,7 @@ options:
                 description:
                     - "Parameters containing sensitive information, to be passed when creating a storage domain using a cinder driver."
                     - "List of dictionary containing C(name) and C(value) of driver sensitive option"
+        version_added: "2.9"
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
