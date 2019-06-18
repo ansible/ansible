@@ -289,7 +289,6 @@ from ansible.module_utils.postgres import (
     exec_sql,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_native
 
 
 class Sequence(object):

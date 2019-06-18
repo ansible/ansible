@@ -145,9 +145,7 @@ except ImportError:
     # ansible.module_utils.postgres
     pass
 
-import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 

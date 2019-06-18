@@ -474,11 +474,9 @@ except ImportError:
     # from ansible.module_utils.postgres
     pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
 
 # ===========================================
@@ -544,9 +542,7 @@ class PgClusterInfo(object):
         }
 
     def collect(self, val_list=False):
-        """
-        Collect information based on 'filter' option.
-        """
+        """Collect information based on 'filter' option."""
         subset_map = {
             "version": self.get_pg_version,
             "tablespaces": self.get_tablespaces,
@@ -598,9 +594,7 @@ class PgClusterInfo(object):
         return self.pg_info
 
     def get_tablespaces(self):
-        """
-        Get information about tablespaces.
-        """
+        """Get information about tablespaces."""
         # Check spcoption exists:
         opt = self.__exec_sql("SELECT column_name "
                               "FROM information_schema.columns "
@@ -632,9 +626,7 @@ class PgClusterInfo(object):
         self.pg_info["tablespaces"] = ts_dict
 
     def get_ext_info(self):
-        """
-        Get information about existing extensions.
-        """
+        """Get information about existing extensions."""
         # Check that pg_extension exists:
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
@@ -666,9 +658,7 @@ class PgClusterInfo(object):
         return ext_dict
 
     def get_role_info(self):
-        """
-        Get information about roles (in PgSQL groups and users are roles).
-        """
+        """Get information about roles (in PgSQL groups and users are roles)."""
         query = ("SELECT r.rolname, r.rolsuper, r.rolcanlogin, "
                  "r.rolvaliduntil, "
                  "ARRAY(SELECT b.rolname "
@@ -691,9 +681,7 @@ class PgClusterInfo(object):
         self.pg_info["roles"] = rol_dict
 
     def get_rslot_info(self):
-        """
-        Get information about replication slots if exist.
-        """
+        """Get information about replication slots if exist."""
         # Check that pg_replication_slots exists:
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
@@ -721,9 +709,7 @@ class PgClusterInfo(object):
         self.pg_info["repl_slots"] = rslot_dict
 
     def get_settings(self):
-        """
-        Get server settings.
-        """
+        """Get server settings."""
         # Check pending restart column exists:
         pend_rest_col_exists = self.__exec_sql("SELECT 1 FROM information_schema.columns "
                                                "WHERE table_name = 'pg_settings' "
@@ -789,9 +775,7 @@ class PgClusterInfo(object):
         self.pg_info["settings"] = set_dict
 
     def get_repl_info(self):
-        """
-        Get information about replication if the server is a master.
-        """
+        """Get information about replication if the server is a master."""
         # Check that pg_replication_slots exists:
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
@@ -823,9 +807,7 @@ class PgClusterInfo(object):
         self.pg_info["replications"] = repl_dict
 
     def get_lang_info(self):
-        """
-        Get information about current supported languages.
-        """
+        """Get information about current supported languages."""
         query = ("SELECT l.lanname, a.rolname, l.lanacl "
                  "FROM pg_language AS l "
                  "JOIN pg_authid AS a ON l.lanowner = a.oid")
@@ -840,9 +822,7 @@ class PgClusterInfo(object):
         return lang_dict
 
     def get_namespaces(self):
-        """
-        Get information about namespaces.
-        """
+        """Get information about namespaces."""
         query = ("SELECT n.nspname, a.rolname, n.nspacl "
                  "FROM pg_catalog.pg_namespace AS n "
                  "JOIN pg_authid AS a ON a.oid = n.nspowner")
@@ -858,9 +838,7 @@ class PgClusterInfo(object):
         return nsp_dict
 
     def get_pg_version(self):
-        """
-        Get major and minor PostgreSQL server version.
-        """
+        """Get major and minor PostgreSQL server version."""
         query = "SELECT version()"
         raw = self.__exec_sql(query)[0][0]
         raw = raw.split()[1].split('.')
@@ -870,10 +848,7 @@ class PgClusterInfo(object):
         )
 
     def get_db_info(self):
-        """
-        Get information about the current database.
-        """
-
+        """Get information about the current database."""
         # Following query returns:
         # Name, Owner, Encoding, Collate, Ctype, Access Priv, Size
         query = ("SELECT d.datname, "
@@ -912,15 +887,11 @@ class PgClusterInfo(object):
         self.pg_info["databases"] = db_dict
 
     def __get_pretty_val(self, setting):
-        """
-        Get setting's value represented by SHOW command.
-        """
+        """Get setting's value represented by SHOW command."""
         return self.__exec_sql("SHOW %s" % setting)[0][0]
 
     def __exec_sql(self, query):
-        """
-        Execute SQL and return the result.
-        """
+        """Execute SQL and return the result."""
         try:
             self.cursor.execute(query)
             res = self.cursor.fetchall()

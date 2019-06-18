@@ -143,13 +143,12 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_native
 
 
 class PgMembership(object):
