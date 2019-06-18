@@ -158,12 +158,15 @@ def main():
         allowed_ips=dict(type='list', element='str'),
     )
 
+    mutually_exclusive = [('net_name',  'net_id')]
+
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
+                           mutually_exclusive=mutually_exclusive
                            )
 
     meraki = MerakiModule(module, function='firewalled_services')
@@ -174,9 +177,6 @@ def main():
 
     meraki.url_catalog['network_services'] = net_services_urls
     meraki.url_catalog['service'] = services_urls
-
-    if meraki.params['net_name'] and meraki.params['net_id']:
-        meraki.fail_json(msg='net_name and net_id are mutually exclusive')
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
