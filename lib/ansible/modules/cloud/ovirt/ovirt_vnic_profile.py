@@ -66,6 +66,7 @@ options:
     pass_through:
         description:
             - "Enables passthrough to an SR-IOV-enabled host NIC."
+            - "When enabled C(qos) and  C(network_filter) are automatically set to None and C(port_mirroring) to False."
         choices: ['disabled', 'enabled']
     migratable:
         description:
@@ -186,7 +187,7 @@ class EntityVnicPorfileModule(BaseModule):
     def _get_port_mirroring(self):
         if self.param('pass_through') == 'enabled':
             return False
-        return self.param('pass_through')
+        return self.param('port_mirroring')
 
     def build_entity(self):
         return otypes.VnicProfile(
@@ -273,8 +274,6 @@ def main():
                 break
 
         if state == 'present':
-            if entity is not None and entity.pass_through == 'disabled' and module.params.get('pass_through') == 'enabled':
-                module.params['port_mirroring'] = False
             ret = entitynics_module.create(entity=entity, force_create=force_create)
         elif state == 'absent':
             if entity is not None:
