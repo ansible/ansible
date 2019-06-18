@@ -161,6 +161,7 @@ options:
     managed_block_storage:
         description:
             - "Dictionary with values for managed block storage type"
+            - "Note: available from ovirt 4.3"
         suboptions:
             driver_options:
                 description:
