@@ -38,12 +38,15 @@ options:
         description:
         - The name of the resource group in which to create the Batch Account.
         required: true
+        type: str
     name:
         description:
         - The name of the Batch Account.
+        type: str
     tags:
         description:
         - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
@@ -54,13 +57,13 @@ author:
 
 EXAMPLES = '''
   - name: Get instance of Batch Account
-    azure_rm_batchaccount:
-        resource_group: myResourceGroup
+    azure_rm_batchaccount_info:
+        resource_group: MyResourceGroup
         name: mybatchaccount
 
   - name: List instances of Batch Account
-    azure_rm_batchaccount:
-        resource_group: myResourceGroup
+    azure_rm_batchaccount_info:
+        resource_group: MyResourceGroup
 '''
 
 RETURN = '''
@@ -163,10 +166,12 @@ class AzureRMBatchAccountInfo(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(BatchManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.name):
-            self.results['items'] = self.get()
+        if self.resource_group is not None and self.name is not None:
+          self.results['items'] = self.get()
+        elif self.resource_group is not None:
+          self.results['items'] = self.list_by_resource_group()
         else:
-            self.results['items'] = self.list()
+          self.results['items'] = self.list_by_subscription()
         return self.results
 
     def get(self):
@@ -184,11 +189,27 @@ class AzureRMBatchAccountInfo(AzureRMModuleBase):
 
         return results
 
-    def list(self):
+    def list_by_resource_group(self):
         response = None
         results = []
         try:
             response = self.mgmt_client.batch_account.list_by_resource_group(resource_group_name=self.resource_group)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get info for Batch Account.')
+
+        if response is not None:
+            for item in response:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
+
+        return results
+
+    def list_by_subscription(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.batch_account.list()
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get info for Batch Account.')
