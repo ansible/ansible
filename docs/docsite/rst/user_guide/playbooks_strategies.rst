@@ -1,11 +1,11 @@
 .. _playbooks_strategies:
 
-Strategies
-===========
+Controlling playbook execution: strategies, forks, and ``serial``
+=================================================================
 
-Strategies control play execution. By default, plays run with the :ref:`linear strategy<linear_strategy>`, in which all hosts will run each task before any host starts the next task, using the number of forks (default 5) to parallelize.
+By default, Ansible runs each task on all hosts affected by a play before starting the next task on any host, using 5 forks. If you want to change this default behavior, you can change the number of forks, use a different strategy plugin, or define the ``serial`` keyword.
 
-Ansible offers other strategies, including the :ref:`debug strategy<debug_strategy>` (see also  :ref:`playbook_debugger`) and the :ref:`free strategy<free_strategy>`, which allows
+The default behavior described above is the :ref:`linear strategy<linear_strategy>`. Ansible offers other strategies, including the :ref:`debug strategy<debug_strategy>` (see also  :ref:`playbook_debugger`) and the :ref:`free strategy<free_strategy>`, which allows
 each host to run until the end of the play as fast as it can::
 
     - hosts: all
@@ -21,7 +21,7 @@ You can select a different strategy for each play, or set your preferred strateg
 All strategies are implemented as :ref:`strategy plugins<strategy_plugins>`. Please review the documentation for each strategy plugin for details on how it works.
 
 You can also use the play-level :ref:`keyword<playbook_keywords>` ``serial``
-to set the number or percentage of hosts you want to manage at a time with any
+to set the number or percentage of hosts you want to manage at a time. This works with any
 strategy. Ansible will then 'batch' the hosts, completing the play on the specified number or percentage of hosts before starting the next 'batch'.
 This is especially useful for :ref:`rolling updates<rolling_update_batch_size>`. Please note that ``serial`` is not a strategy, but a play-level directive/option.
 
