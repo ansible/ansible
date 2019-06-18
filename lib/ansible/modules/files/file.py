@@ -198,7 +198,7 @@ EXAMPLES = r'''
 
 - name: Remove file (delete file)
   file:
-    path: /etc/foo
+    path: /etc/foo.txt
     state: absent
 
 - name: Recursively remove directory
