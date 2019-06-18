@@ -6,24 +6,20 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-try:
-    import requests
-    from requests.auth import HTTPBasicAuth
-    requests.packages.urllib3.disable_warnings()
-    requests_available = True
-except ImportError:
-    requests_available = False
+from ansible.module_utils.urls import url_argument_spec, fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+import json
 
 
-def host_list(sat_url, user, password, org, validate_certs, content_host=None):
+def host_list(module, url, org, content_host=None):
     """Get a list of hosts from the satellite"""
 
-    apicall = "{0}/api/hosts".format(sat_url)
     params = dict(
         organization_id=org,
         sort_by="name",
         sort_order="ASC"
     )
+
     if content_host:
         if '=' in content_host:
             # this is a already a search query, don't search for hostnames
@@ -32,55 +28,64 @@ def host_list(sat_url, user, password, org, validate_certs, content_host=None):
             # treat other patterns as hostnames
             params["search"] = "name={0}".format(content_host)
 
-    hosts = request(apicall, user, password, validate_certs, True, params)
+    url = "{0}/api/hosts?{1}".format(url, urlencode(params))
+    hosts = request(module, url, True, params)
 
     return hosts
 
 
-def request(url, user, password, validate_certs=True, pagination=False, params=None):
+def request(module, url, pagination=False, params=None):
     """"Execute a Satellite GET API request"""
 
+    timeout = 120
     per_page = 200
     if not params:
         params = dict()
     if params != {} or pagination:
-        params["page"] = 1
-        params["paged"] = True
-        params["per_page"] = per_page
+        params.update(page=1, per_page=per_page, paged=True)
 
-    items = []
+    results = []
     done = 0
-    req = requests.get(url, timeout=60, verify=validate_certs, params=params,
-                       auth=HTTPBasicAuth(user, password))
-    req.raise_for_status()
-    response = req.json()
+    url = '{0}?{1}'.format(url, urlencode(params))
+    resp, info = fetch_url(module, url, timeout=timeout)
+    if info["status"] == 200:
+        response = json.loads(resp.read())
+    else:
+        module.fail_json(msg="Bad api call return status", error=info)
 
     done += per_page
     # pagination: check if we need more requests
     if pagination:
-        items.extend(response["results"])
+        results.extend(response["results"])
         if response["subtotal"]:
             while done < response["subtotal"]:
                 response = None
                 params["page"] += 1
-                req = requests.get(url, timeout=60, verify=validate_certs, params=params,
-                                   auth=HTTPBasicAuth(user, password))
-                req.raise_for_status()
-                response = req.json()
-                items.extend(response["results"])
-                done += per_page
+                url = '{0}?{1}'.format(url, urlencode(params))
+                resp, info = fetch_url(module, url, timeout=timeout)
+                if info["status"] == 200:
+                    response = json.loads(resp.read())
+                    results.extend(response["results"])
+                    done += per_page
+                else:
+                    module.fail_json(msg="Bad api call return status", error=info)
     # not pagination: just return the response
     else:
         return response
 
-    return items
+    return results
 
 
-def put(url, user, password, data, validate_certs=True):
+def put(module, url, data):
     """"Execute a Satellite PUT API request"""
 
-    req = requests.put(url, timeout=60, verify=validate_certs, json=data,
-                       auth=HTTPBasicAuth(user, password))
-    req.raise_for_status()
-
-    return req.json()
+    resp, info = fetch_url(module,
+                           url,
+                           data=module.jsonify(data),
+                           method='PUT',
+                           headers={'Content-type': 'application/json'},
+                           timeout=120)
+    if info["status"] == 200:
+        return json.loads(resp.read())
+    else:
+        module.fail_json(msg="Bad api call return status", error=info)
