@@ -285,7 +285,7 @@
         - get_net.data is defined
 
   always:
-  - name: Reset SNMPv3
+  - name: Disable SNMPv3
     meraki_snmp:
       auth_key: '{{auth_key}}'
       org_name: '{{test_org_name}}'
