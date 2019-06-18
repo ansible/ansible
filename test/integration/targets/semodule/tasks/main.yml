@@ -117,12 +117,3 @@
   semodule:
     src: test.te
     state: absent
-
-- name: TEST CLEANUP | install module requirements
-  yum:
-    name: 
-      - policycoreutils
-      - selinux-policy-targeted
-      - policycoreutils-python
-      - checkpolicy
-    state: absent
