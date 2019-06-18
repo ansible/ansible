@@ -107,10 +107,10 @@ strict_permissions: False
 # Note: I(hostnames) sets the inventory_hostname. To modify ansible_host without modifying
 # inventory_hostname use compose (see example below).
 hostnames:
-  - tag:Name=Tag1,Name=Tag2  # Return specific hosts only
+  - tag:Name=Tag1,Name=Tag2            # Return specific hosts only
   - tag:CustomDNSName
   - dns-name
-  - private-ip-address
+  - [ "tag:Name", private-ip-address ] # Concatenate a list of options
 
 # Example using constructed features to create groups and set ansible_host
 plugin: aws_ec2
@@ -507,7 +507,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         hostname = None
         for preference in hostnames:
-            if 'tag' in preference:
+            if isinstance(preference, list):
+                for preference_element in preference:
+                    pereference_hostname = self._get_hostname(instance, [preference_element])
+                    if hostname:
+                        hostname += '_' + pereference_hostname
+                    else:
+                        hostname = pereference_hostname
+            elif 'tag' in preference:
                 if not preference.startswith('tag:'):
                     raise AnsibleError("To name a host by tags name_value, use 'tag:name=value'.")
                 hostname = self._get_tag_hostname(preference, instance)
