@@ -20,12 +20,12 @@ The :ref:`settings_by_platform` table is a convenient summary of the connections
 .. code-block:: text
 
     +-------------------+-------------------------+-------------+---------+---------+----------+
-    | My OS*            | ``myos``                | ✓           | ✓       |         | ✓        |
+    | My OS             | ``myos``                | ✓           | ✓       |         | ✓        |
 
 Ensure that the table stays formatted correctly. That is:
 
 * Each row is inserted in alphabetical order.
-* The cell division ``|`` line up with the ``+`` markers.
+* The cell division ``|`` markers line up with the ``+`` markers.
 * The check marks appear only for the connection types provided by the network modules.
 
 
@@ -46,7 +46,7 @@ If your network platform supports SSH connections, also include the following at
 
     .. include:: shared_snippets/SSH_warning.txt
 
-Adding your new file to the documentation
+Adding your new file to the table of contents
 =========================================
 
 As a final step, add your new file in alphabetical order in the ``platform_index.rst`` file. You should then build the documentation to verify your additions. See :ref:`community_documentation_contributions` for more details.
