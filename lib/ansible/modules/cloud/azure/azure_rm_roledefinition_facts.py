@@ -96,13 +96,13 @@ roledefinitions:
             contains:
                 actions:
                     description:
-                        - List of allowed actions.
+                        - List of allowed data actions.
                     returned: always
                     type: list
                     sample: [ 'Microsoft.Compute/virtualMachines/read' ]
                 not_actions:
                     description:
-                        - List of denied actions.
+                        - List of denied data actions.
                     returned: always
                     type: list
                     sample: [ 'Microsoft.Compute/virtualMachines/write' ]
