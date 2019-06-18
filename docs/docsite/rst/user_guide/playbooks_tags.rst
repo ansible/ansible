@@ -39,6 +39,8 @@ tasks, you can use the ``--skip-tags`` command-line option::
 
     ansible-playbook example.yml --skip-tags "packages"
 
+.. warning::
+    * Gathering facts about remote hosts is skipped if you run the playbook with a tag that is not defined at the playbook level.
 
 .. _tag_reuse:
 
