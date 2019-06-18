@@ -729,6 +729,7 @@ class TaskExecutor:
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
                         self._final_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
                         time.sleep(delay)
+                        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
