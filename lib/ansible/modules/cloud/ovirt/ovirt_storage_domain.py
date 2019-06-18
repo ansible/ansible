@@ -61,7 +61,7 @@ options:
         description:
             - "Function of the storage domain."
             - "This parameter isn't idempotent, it's not possible to change domain function of storage domain."
-        choices: ['data', 'iso', 'export']
+        choices: ['data', 'iso', 'export', 'managed_block_storage']
         default: 'data'
         aliases:  ['type']
     host:
@@ -355,7 +355,7 @@ EXAMPLES = '''
       - name: rbd_keyring_conf
         value: /etc/ceph/keyring
     driver_sensitive_options:
-      - name: password
+      - name: secret_password
         value: password
 
 # Remove storage domain
