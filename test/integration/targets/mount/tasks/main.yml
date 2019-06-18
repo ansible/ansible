@@ -339,4 +339,4 @@
         - /tmp/myfs.img
         - /tmp/myfs
       when: ansible_system in ('Linux')
-
+...
