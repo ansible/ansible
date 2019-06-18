@@ -158,7 +158,7 @@ def main():
         allowed_ips=dict(type='list', element='str'),
     )
 
-    mutually_exclusive = [('net_name',  'net_id')]
+    mutually_exclusive = [('net_name', 'net_id')]
 
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
