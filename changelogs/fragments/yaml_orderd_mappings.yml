@@ -1,0 +1,2 @@
+minor_change:
+    - Use orderddict by defaul when importing mappings from YAML.
