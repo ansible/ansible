@@ -95,6 +95,7 @@ options:
         required: true
         choices: ['globalBFD','singleBFD','dynamicBFD','staticBFD']
         default: null
+        type: str
     min_tx_interval:
         description:
             - Set the minimum BFD session sending interval (range 50-1000).
