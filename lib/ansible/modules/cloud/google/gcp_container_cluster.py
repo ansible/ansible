@@ -1174,7 +1174,7 @@ def response_to_hash(module, response):
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/operations/{op_id}"
+    url = "https://container.googleapis.com/v1/projects/{project}/locations/{location}/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)
