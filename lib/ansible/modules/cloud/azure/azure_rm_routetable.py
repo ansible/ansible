@@ -79,7 +79,7 @@ changed:
     sample: true
 id:
     description:
-        - Resource id.
+        - Resource ID.
     returned: success
     type: str
     sample: "/subscriptions/xxx...xxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/routeTables/tableb57dc95642/routes/routeb57dc95986"
