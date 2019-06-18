@@ -20,7 +20,7 @@ short_description: Manages reverse DNS records for Exoscale compute instances.
 description:
     - Set and unset reverse DNS record on Exoscale instance.
 version_added: "2.9"
-author: "Lorenz Schori"
+author: "Lorenz Schori (@znerol)"
 options:
   name:
     description:
@@ -34,7 +34,7 @@ options:
       - State of the record.
     default: present
     choices: [ present, absent ]
-extends_documentation_fragment: exoscale
+extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
@@ -52,9 +52,9 @@ EXAMPLES = '''
 RETURN = '''
 ---
 exo_rdns_domain:
-    description: Reverse DSN name for the cs instance
-    returned: success
-    type: string
+  description: Reverse DSN name for the cs instance
+  returned: success
+  type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule
