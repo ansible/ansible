@@ -1,0 +1,190 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_tms_destgroup sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: telemetry
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
+- block:
+  - name: TMS non defaults - present
+    nxos_tms_destgroup: &tms_non_def
+      identifier: "{{ item.identifier }}"
+      destination:
+        ip: "{{ item.ip}}"
+        port: "{{ item.port }}"
+        protocol: "{{ item.protocol }}"
+        encoding: "{{ item.encoding }}"
+      provider: "{{ connection }}"
+    loop: &loop_items
+      - { identifier: 2, ip: 192.168.0.1, port: 50001, protocol: grpc, encoding: gpb}
+      - { identifier: 2, ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}
+      - { identifier: 10, ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}
+      - { identifier: 10, ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}
+    register: result
+
+  - assert: &true
+      that:
+        - "{{ item.changed }} == true"
+    with_items: "{{ result.results }}"
+
+  - name: TMS non defaults - present - idempotence check
+    nxos_tms_destgroup:
+      identifier: "{{ item.identifier }}"
+      destination:
+        ip: "{{ item.ip}}"
+        port: "{{ item.port }}"
+        protocol: "{{ item.protocol }}"
+        encoding: "{{ item.encoding }}"
+      provider: "{{ connection }}"
+    loop: *loop_items
+    register: result
+
+  - assert: &false
+      that:
+        - "{{ item.changed }} == false"
+    with_items: "{{ result.results }}"
+
+  - name: TMS non defaults - absent
+    nxos_tms_destgroup: &tms_absent
+      state: absent
+      identifier: "{{ item.identifier }}"
+      provider: "{{ connection }}"
+    loop: &loop_items_absent
+      - { identifier: 2}
+      - { identifier: 10}
+    register: result
+
+  - assert:
+      that:
+        - "{{ item.changed }} == true"
+    with_items: "{{ result.results }}"
+
+  - name: TMS non defaults - absent - itempotence check
+    nxos_tms_destgroup:
+      state: absent
+      identifier: "{{ item.identifier }}"
+      destination:
+        ip: "{{ item.ip}}"
+        port: "{{ item.port }}"
+        protocol: "{{ item.protocol }}"
+        encoding: "{{ item.encoding }}"
+      provider: "{{ connection }}"
+    loop:
+      - { identifier: 2, ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}
+      - { identifier: 2, ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}
+      - { identifier: 10, ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}
+      - { identifier: 10, ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}
+    register: result
+
+  - assert:
+      that:
+        - "{{ item.changed }} == false"
+    with_items: "{{ result.results }}"
+
+  - name: Configure destgroups using aggregate
+    nxos_tms_destgroup: &destgroup_aggregate
+      state: present
+      aggregate:
+        - { identifier: 28, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 2,  destination: {ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 2,  destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 10, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 11, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 12, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 13, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 14, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 15, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 16, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 17, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 18, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 19, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 20, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 21, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 22, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 23, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 24, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 25, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 26, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 27, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 29, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 30, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 31, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 32, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 33, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 34, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 35, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - result.changed == true
+
+  - name: Configure destgroups using aggregate - idempotence
+    nxos_tms_destgroup: *destgroup_aggregate
+    register: result
+
+  - assert:
+      that:
+        - result.changed == false
+
+  - name: Remove destgroups using aggregate
+    nxos_tms_destgroup: &remove_destgroup_aggregate
+      state: absent
+      aggregate:
+        - { identifier: 28, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 2,  destination: {ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 2,  destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 10, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 11, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 12, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 13, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 14, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 15, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 16, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 17, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 18, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 19, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 20, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 21, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 22, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 23, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 24, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 25, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 26, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 27, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 29, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 30, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 31, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 32, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 33, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 34, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+        - { identifier: 35, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - result.changed == true
+
+  - name: Remove destgroups using aggregate - idempotence
+    nxos_tms_destgroup: *remove_destgroup_aggregate
+    register: result
+
+  - assert:
+      that:
+        - result.changed == false
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_tms_destgroup sanity test"
