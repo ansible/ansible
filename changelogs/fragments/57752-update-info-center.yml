@@ -1,0 +1,2 @@
+bugfixes:
+  - update info-center to fix bugs.(https://github.com/ansible/ansible/pull/57269 )
