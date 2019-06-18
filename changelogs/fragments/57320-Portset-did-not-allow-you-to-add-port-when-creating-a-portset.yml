@@ -1,0 +1,2 @@
+bugfixes:
+  - na_ontap_portset - Fixed issue that portset did not allow you to add port when creating a portset
