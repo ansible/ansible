@@ -1,0 +1,2 @@
+bugfixes:
+  - na_ontap_interface - was not checking for vserver 
