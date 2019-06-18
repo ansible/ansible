@@ -33,7 +33,7 @@ Ensure that the table stays formatted correctly. That is:
 Adding a platform-specific options section
 ==========================================
 
-The platform- specific sections are individual ``.rst`` files that provide more detailed information for the users of your network platform modules.  See :ref:`eos_platform_options` for an example of the details you should provide in your platform-specific options section. Name your new file ``platform_<name>.rst`` (for example, ``platform_myos.rst``).  The platform name should match the module prefix.
+The platform- specific sections are individual ``.rst`` files that provide more detailed information for the users of your network platform modules.   Name your new file ``platform_<name>.rst`` (for example, ``platform_myos.rst``).  The platform name should match the module prefix. See `platform_eos.rst <https://github.com/ansible/ansible/blob/devel/docs/docsite/rst/network/user_guide/platform_eos.rst>`_ and :ref:`eos_platform_options` for an example of the details you should provide in your platform-specific options section.
 
 Your platform-specific section should include the following:
 
@@ -47,6 +47,6 @@ If your network platform supports SSH connections, also include the following at
     .. include:: shared_snippets/SSH_warning.txt
 
 Adding your new file to the table of contents
-=========================================
+=============================================
 
 As a final step, add your new file in alphabetical order in the ``platform_index.rst`` file. You should then build the documentation to verify your additions. See :ref:`community_documentation_contributions` for more details.
