@@ -1,0 +1,2 @@
+minor_changes:
+  - gitlab_group - Adds missing visibility parameter to gitlab group creation
