@@ -105,7 +105,9 @@ fail if the option name is incorrect, a mandatory option is not set, or the
 value is not a valid choice. When running Ansible with a verbosity level of 3
 or more (``-vvv``), the return value will contain the possible invocation
 options based on the ``resource_name`` specified. Here is an example of the
-invocation output for the above ``Registry`` task::
+invocation output for the above ``Registry`` task:
+
+.. code-block:: ansible-output
 
     changed: [2016] => {
         "changed": true,
