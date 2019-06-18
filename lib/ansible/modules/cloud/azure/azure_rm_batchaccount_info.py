@@ -101,7 +101,8 @@ items:
             - Existing storage account with which to associate the Batch Account.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
+            sample:
+              "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/mystorageaccount"
         key_vault:
             description:
             - Existing key vault with which to associate the Batch Account.
@@ -115,7 +116,7 @@ items:
             type: str
         tags:
             description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Resource tags.
             returned: always
             type: list
 '''
