@@ -67,7 +67,7 @@ roledefinitions:
     contains:
         id:
             description:
-                - Role Definition id.
+                - Role Definition ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
@@ -85,13 +85,13 @@ roledefinitions:
             sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         assignable_scopes:
             description:
-                - List of assignable scope of this definition.
+                - List of assignable scopes of this definition.
             returned: always
             type: list
             sample: [ "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup" ]
         permissions:
             description:
-                - List of Role Definition peremissions.
+                - List of Role Definition permissions.
             returned: always
             contains:
                 actions:
@@ -114,7 +114,7 @@ roledefinitions:
                     sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read' ]
                 not_data_actions:
                     description:
-                        - List of denied actions.
+                        - List of denied data actions.
                     returned: always
                     type: list
                     sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write' ]
