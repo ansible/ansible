@@ -358,7 +358,7 @@ def test_publish_no_wait(publish_artifact, monkeypatch):
     assert mock_open.mock_calls[0][2]['method'] == 'POST'
     assert mock_open.mock_calls[0][2]['validate_certs'] is True
     assert mock_open.mock_calls[0][2]['headers']['Authorization'] == 'Token key'
-    assert mock_open.mock_calls[0][2]['headers']['Content-length'] == 417
+    assert mock_open.mock_calls[0][2]['headers']['Content-length'] == len(expected_form)
     assert mock_open.mock_calls[0][2]['headers']['Content-type'] == expected_content_type
 
     assert mock_display.call_count == 2
