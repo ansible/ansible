@@ -325,7 +325,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return boto_params
 
-
     def _get_connection(self, credentials, region='us-east-1'):
         try:
             connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
@@ -358,7 +357,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             )
         except botocore.exceptions.ClientError as e:
             raise AnsibleError("Unable to assume IAM role: %s" % to_native(e))
-
 
     def _boto3_conn(self, regions):
         '''

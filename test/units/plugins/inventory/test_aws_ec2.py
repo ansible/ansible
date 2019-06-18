@@ -171,7 +171,7 @@ def test_insufficient_credentials(inventory):
         'aws_access_key': None,
         'aws_secret_key': None,
         'aws_security_token': None,
-        'aws_profile': None
+        'aws_profile': None,
         'iam_role_arn': None
     }
     with pytest.raises(AnsibleError) as error_message:
