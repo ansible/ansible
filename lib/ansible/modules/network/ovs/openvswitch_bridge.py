@@ -134,7 +134,7 @@ def map_obj_to_commands(want, have, module):
                 templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
                                        " br-set-external-id %(bridge)s")
                 command = templatized_command % module.params
-                if want['external_ids']:
+                if want.get('external_ids') and have.get('external_ids'):
                     for k, v in iteritems(want['external_ids']):
                         if (k not in have['external_ids']
                                 or want['external_ids'][k] != have['external_ids'][k]):
