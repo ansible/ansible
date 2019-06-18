@@ -69,7 +69,7 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 192.0.2.3', 'description some words'])
 
     def test_nxos_bgp_neighbor_absent(self):
-        set_module_args(dict(asn=65535, neighbor='1.1.1.1', state='absent' ))
+        set_module_args(dict(asn=65535, neighbor='1.1.1.1', state='absent'))
         self.execute_module(changed=True, commands=['router bgp 65535', 'no neighbor 1.1.1.1'])
 
     def test_nxos_bgp_neighbor_remove_private_as(self):
