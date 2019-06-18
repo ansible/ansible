@@ -26,7 +26,7 @@ options:
     description:
       - State of policy module in system
     type: str
-    choices: ["present", "absent", "latest"]
+    choices: ["present", "absent"]
     default: "present"
   force:
     description:
@@ -55,24 +55,10 @@ EXAMPLES = '''
 - semodule:
     src: policy.te
     state: absent
-
-# update existing module
-- semodule:
-    src: policyv2.te
-    state: latest
 '''
 
 RETURN = '''
-version:
-  description: Returns version of affected policy
-  returned: If state absent, the version of the removed module. If state present version of just applied module
-  type: str
-  sample: 1.2.3
-name:
-  description: Returns name of affected policy
-  returned: If state absent, the name of the removed module. If state present name of just applied module
-  type: str
-  sample: my-policy
+# standard return values
 '''
 
 REQUIREMENTS = [
@@ -98,7 +84,7 @@ def ensure(module, policy_def):
     apply_te_file(module, policy_def)
     end_pol = semodule.parse_pol_info(policy_def['name'], get_semodule_info(module))
     changed = True
-    module.exit_json(changed=changed, name=end_pol['name'], version=end_pol['version'])
+    module.exit_json(changed=changed)
 
 
 def check_run_fail(run, module):

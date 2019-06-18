@@ -23,8 +23,6 @@
 
 - assert:
     that: 
-      - test1_mod_install.version == '1.0'
-      - test1_mod_install.name == 'ansible-semodule-test'
       - test1_mod_install.changed
       - "'ansible-semodule-test' in semodule_out.stdout"
 
@@ -53,138 +51,78 @@
       - "'ansible-semodule-test' not in semodule_out.stdout"
 
 
-    # test installing and upgrading
+# TEST 2 test force stuff
 
 - name: TEST 2 | install test module v1.0
   semodule:
     src: test.te
 
-- name: TEST 2 | test latest with v1.0
+- name: TEST 2 | force install
   semodule:
     src: test.te
-    state: latest
-  register: test2_10_upgrade
+    force: true
+  register: test2_force_install
 
-- assert:
-    that:
-      - not test2_10_upgrade.changed
-
-- name: TEST 2 | install test module v1.0.1
-  semodule:
-    src: test2.te
-    state: latest
-  register: test2_upgrade
-
-- name: TEST 2 | verify upgrade
+- name: TEST 2 | verify version 1.0.1 force installed
   shell: semodule -l | grep ansible-semodule-test
   register: semodule_out
 
 - assert:
     that:
-      - test2_upgrade.changed
-      - test2_upgrade.version == '1.0.1'
-      - "'1.0.1' in semodule_out.stdout"
-
-- name: TEST 2 | test with version 1.0
-  semodule:
-    src: test.te
-    state: latest
-  register: test2_10_older
-
-- name: TEST 2 | verify version 1.0.1 still installed
-  shell: semodule -l | grep ansible-semodule-test
-  register: semodule_out
-
-- assert:
-    that:
-      - not test2_10_older.changed
-      - test2_10_older.version == '1.0.1'
-      - "'1.0.1' in semodule_out.stdout"
+      - test2_force_install.changed
 
 - name: TEST 2 | cleanup
   semodule:
     src: test.te
     state: absent
 
-# test 3 test force stuff
+# TEST 3 test check mode
 
-- name: TEST 3 | install test module v1.0
-  semodule:
-    src: test.te
-
-- name: TEST 3 | force install modulev1.0.1
-  semodule:
-    src: test2.te
-    force: true
-  register: test3_force_install
-
-- name: TEST 3 | verify version 1.0.1 force installed
-  shell: semodule -l | grep ansible-semodule-test
-  register: semodule_out
-
-- assert:
-    that:
-      - test3_force_install.changed
-      - test3_force_install.version == '1.0.1'
-      - "'1.0.1' in semodule_out.stdout"
-
-- name: TEST 3 | cleanup
-  semodule:
-    src: test.te
-    state: absent
-
-# test check mode
-
-- name: TEST 4 | check mode
+- name: TEST 2 | check mode
   semodule:
     src: test.te
   check_mode: true
-  register: test4_check_mode_install
+  register: test2_check_mode_install
 
-- name: TEST 4 | verify .te not installed
+- name: TEST 2 | verify .te not installed
   shell: semodule -l
   register: semodule_out
 
 - assert:
     that:
-      - test4_check_mode_install.changed
-      - test4_check_mode_install.version == '1.0'
+      - test2_check_mode_install.changed
       - "'ansible-semodule-test' not in semodule_out.stdout"
 
-- name: TEST 4 | install for latest check mode test
+- name: TEST 2 | install for latest check mode test
   semodule:
     src: test.te
 
-- name: TEST 4 | check mode upgrade
-  semodule:
-    src: test2.te
-    state: latest
-  check_mode: true
-  register: test4_check_mode_upgrade
-
-- name: TEST 4 | verify upgrade
-  shell: semodule -l | grep ansible-semodule-test
-  register: semodule_out
-
-- assert:
-    that:
-      - test4_check_mode_upgrade.changed
-      - test4_check_mode_upgrade.version == '1.0.1'
-      - "'ansible-semodule-test\t1.0' in semodule_out.stdout_lines"
-
-- name: TEST 4 | check mode remove
+- name: TEST 2 | check mode remove
   semodule:
     src: test2.te
     state: absent
   check_mode: true
-  register: test4_check_mode_remove
+  register: test2_check_mode_remove
 
-- name: TEST 4 | verify remove
+- name: TEST 2 | verify remove
   shell: semodule -l
   register: semodule_out
 
 - assert:
     that:
-      - test4_check_mode_remove.changed
-      - test4_check_mode_remove.version == '1.0'
+      - test2_check_mode_remove.changed
       - "'ansible-semodule-test' in semodule_out.stdout"
+
+- name: TEST 2 | cleanup
+  semodule:
+    src: test.te
+    state: absent
+
+- name: TEST CLEANUP | install module requirements
+  yum:
+    name: 
+      - policycoreutils
+      - selinux-policy-targeted
+      - policycoreutils-python
+      - checkpolicy
+    state: absent
