@@ -1,0 +1,2 @@
+bugfixes:
+  - meraki_network - Restructure code execution so net_id parameter works in all situations.
