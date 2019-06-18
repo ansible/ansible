@@ -274,6 +274,8 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                 # Handle aliases
                 source = os.path.splitext(os.path.basename(os.path.realpath(module_path)))[0]
                 module = module.replace("_", "", 1)
+                if source.startswith("_"):
+                    source = source.replace("_", "", 1)
                 aliases = module_info[source].get('aliases', set())
                 aliases.add(module)
                 aliases_deprecated = module_info[source].get('aliases_deprecated', set())
