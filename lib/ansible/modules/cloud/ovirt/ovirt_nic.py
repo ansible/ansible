@@ -47,6 +47,7 @@ options:
     profile:
         description:
             - Virtual network interface profile to be attached to VM network interface.
+            - When not specified and network has only single profile it will be auto-selected, otherwise you must specify profile.
     interface:
         description:
             - "Type of the network interface. For example e1000, pci_passthrough, rtl8139, rtl8139_virtio, spapr_vlan or virtio."
@@ -183,6 +184,15 @@ class EntityNicsModule(BaseModule):
             )
 
 
+def get_vnics(networks_service, network, connection):
+    resp = []
+    vnic_services = connection.system_service().vnic_profiles_service()
+    for vnic in vnic_services.list():
+        if vnic.network.id == network.id:
+            resp.append(vnic)
+    return resp
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(type='str', default='present', choices=['absent', 'plugged', 'present', 'unplugged']),
@@ -234,8 +244,8 @@ def main():
         )
 
         # Find vNIC id of the network interface (if any):
-        profile = module.params.get('profile')
-        if profile and module.params['network']:
+        if module.params['network']:
+            profile = module.params.get('profile')
             cluster_name = get_link_name(connection, cluster_id)
             dcs_service = connection.system_service().data_centers_service()
             dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
@@ -252,10 +262,20 @@ def main():
                         dc.name
                     )
                 )
-            for vnic in connection.system_service().vnic_profiles_service().list():
-                if vnic.name == profile and vnic.network.id == network.id:
-                    entitynics_module.vnic_id = vnic.id
-
+            if profile:
+                for vnic in connection.system_service().vnic_profiles_service().list():
+                    if vnic.name == profile and vnic.network.id == network.id:
+                        entitynics_module.vnic_id = vnic.id
+            else:
+                # When not specified which vnic use ovirtmgmt/ovirtmgmt
+                vnics = get_vnics(networks_service, network, connection)
+                if len(vnics) == 1:
+                    entitynics_module.vnic_id = vnics[0].id
+                else:
+                    raise Exception(
+                        "You didn't specify any vnic profile. "
+                        "Following vnic profiles are in system: '%s', please specify one of them" % ([vnic.name for vnic in vnics])
+                    )
         # Handle appropriate action:
         state = module.params['state']
         if state == 'present':
