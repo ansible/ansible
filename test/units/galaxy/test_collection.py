@@ -6,12 +6,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os
 import pytest
+import re
 import tarfile
 import tempfile
+import time
+import uuid
 
+from io import BytesIO, StringIO
 from units.compat.mock import MagicMock
+
+import ansible.module_utils.six.moves.urllib.error as urllib_error
 
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
@@ -43,6 +50,27 @@ def collection_input(tmp_path_factory):
     output_dir = str(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Output'))
 
     return collection_dir, output_dir
+
+
+@pytest.fixture()
+def publish_artifact(monkeypatch, tmp_path):
+    mock_open = MagicMock()
+    monkeypatch.setattr(collection, 'open_url', mock_open)
+
+    mock_uuid = MagicMock()
+    mock_uuid.return_value.hex = 'uuid'
+    monkeypatch.setattr(uuid, 'uuid4', mock_uuid)
+
+    input_file = str(tmp_path / 'collection.tar.gz')
+
+    with collection._open_tarfile(input_file, 'w:gz') as tfile:
+        b_io = BytesIO(b"\x00\x01\x02\x03")
+        tar_info = tarfile.TarInfo('test')
+        tar_info.size = 4
+        tar_info.mode = 0o0644
+        tfile.addfile(tarinfo=tar_info, fileobj=b_io)
+
+    return input_file, mock_open
 
 
 def test_build_collection_no_galaxy_yaml():
@@ -309,3 +337,282 @@ def test_publish_not_a_tarball():
         temp_file.flush()
         with pytest.raises(AnsibleError, match=expected.format(temp_file.name)):
             collection.publish_collection(temp_file.name, None, None, False, True)
+
+
+def test_publish_no_wait(publish_artifact, monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    artifact_path, mock_open = publish_artifact
+    fake_import_uri = 'https://galaxy.server.com/api/v2/import/1234'
+    server = 'https://galaxy.com'
+
+    mock_open.return_value = StringIO(u'{"task":"%s"}' % fake_import_uri)
+    expected_form, expected_content_type = collection._get_mime_data(artifact_path)
+
+    collection.publish_collection(artifact_path, server, 'key', False, False)
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == 'https://galaxy.com/api/v2/collections/'
+    assert mock_open.mock_calls[0][2]['data'] == expected_form
+    assert mock_open.mock_calls[0][2]['method'] == 'POST'
+    assert mock_open.mock_calls[0][2]['validate_certs'] is True
+    assert mock_open.mock_calls[0][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[0][2]['headers']['Content-length'] == 417
+    assert mock_open.mock_calls[0][2]['headers']['Content-type'] == expected_content_type
+
+    assert mock_display.call_count == 2
+    assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s" % (artifact_path, server)
+    assert mock_display.mock_calls[1][1][0] == \
+        "Collection has been pushed to the Galaxy server, not waiting until import has completed due to --no-wait " \
+        "being set. Import task results can be found at %s" % fake_import_uri
+
+
+def test_publish_dont_validate_cert(publish_artifact):
+    artifact_path, mock_open = publish_artifact
+
+    mock_open.return_value = StringIO(u'{"task":"https://galaxy.server.com/api/v2/import/1234"}')
+
+    collection.publish_collection(artifact_path, 'https://galaxy.server.com', 'key', True, False)
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][2]['validate_certs'] is False
+
+
+def test_publish_failure(publish_artifact):
+    artifact_path, mock_open = publish_artifact
+
+    mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 500, 'msg', {}, StringIO())
+
+    expected = 'Error when publishing collection (HTTP Code: 500, Message: Unknown error returned by Galaxy ' \
+               'server. Code: Unknown)'
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        collection.publish_collection(artifact_path, 'https://galaxy.server.com', 'key', False, True)
+
+
+def test_publish_failure_with_json_info(publish_artifact):
+    artifact_path, mock_open = publish_artifact
+
+    return_content = StringIO(u'{"message":"Galaxy error message","code":"GWE002"}')
+    mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 503, 'msg', {}, return_content)
+
+    expected = 'Error when publishing collection (HTTP Code: 503, Message: Galaxy error message Code: GWE002)'
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        collection.publish_collection(artifact_path, 'https://galaxy.server.com', 'key', False, True)
+
+
+def test_publish_with_wait(publish_artifact, monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
+    server = 'https://galaxy.server.com'
+
+    artifact_path, mock_open = publish_artifact
+
+    mock_open.side_effect = (
+        StringIO(u'{"task":"%s"}' % fake_import_uri),
+        StringIO(u'{"finished_at":"some_time","state":"success"}')
+    )
+
+    collection.publish_collection(artifact_path, server, 'key', False, True)
+
+    assert mock_open.call_count == 2
+    assert mock_open.mock_calls[1][1][0] == fake_import_uri
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[1][2]['validate_certs'] is True
+    assert mock_open.mock_calls[1][2]['method'] == 'GET'
+
+    assert mock_display.call_count == 2
+    assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s" % (artifact_path, server)
+    assert mock_display.mock_calls[1][1][0] == 'Collection has been successfully published to the Galaxy server'
+
+    assert mock_vvv.call_count == 2
+    assert mock_vvv.mock_calls[0][1][0] == 'Collection has been pushed to the Galaxy server %s' % server
+    assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
+
+
+def test_publish_with_wait_timeout(publish_artifact, monkeypatch):
+    monkeypatch.setattr(time, 'sleep', MagicMock())
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
+    server = 'https://galaxy.server.com'
+
+    artifact_path, mock_open = publish_artifact
+
+    mock_open.side_effect = (
+        StringIO(u'{"task":"%s"}' % fake_import_uri),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":"some_time","state":"success"}')
+    )
+
+    collection.publish_collection(artifact_path, server, 'key', True, True)
+
+    assert mock_open.call_count == 3
+    assert mock_open.mock_calls[1][1][0] == fake_import_uri
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[1][2]['validate_certs'] is False
+    assert mock_open.mock_calls[1][2]['method'] == 'GET'
+    assert mock_open.mock_calls[2][1][0] == fake_import_uri
+    assert mock_open.mock_calls[2][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[2][2]['validate_certs'] is False
+    assert mock_open.mock_calls[2][2]['method'] == 'GET'
+
+    assert mock_display.call_count == 2
+    assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s" % (artifact_path, server)
+    assert mock_display.mock_calls[1][1][0] == 'Collection has been successfully published to the Galaxy server'
+
+    assert mock_vvv.call_count == 3
+    assert mock_vvv.mock_calls[0][1][0] == 'Collection has been pushed to the Galaxy server %s' % server
+    assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
+    assert mock_vvv.mock_calls[2][1][0] == \
+        'Galaxy import process has a status of waiting, wait 2 seconds before trying again'
+
+
+def test_publish_with_wait_and_failure(publish_artifact, monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    mock_warn = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_warn)
+
+    mock_err = MagicMock()
+    monkeypatch.setattr(Display, 'error', mock_err)
+
+    fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
+    server = 'https://galaxy.server.com'
+
+    artifact_path, mock_open = publish_artifact
+
+    import_stat = {
+        'finished_at': 'some_time',
+        'state': 'failed',
+        'error': {
+            'code': 'GW001',
+            'description': 'Because I said so!',
+
+        },
+        'messages': [
+            {
+                'level': 'error',
+                'message': 'Some error',
+            },
+            {
+                'level': 'warning',
+                'message': 'Some warning',
+            },
+            {
+                'level': 'info',
+                'message': 'Some info',
+            },
+        ],
+    }
+
+    mock_open.side_effect = (
+        StringIO(u'{"task":"%s"}' % fake_import_uri),
+        StringIO(to_text(json.dumps(import_stat)))
+    )
+
+    expected = 'Galaxy import process failed: Because I said so! (Code: GW001)'
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        collection.publish_collection(artifact_path, server, 'key', True, True)
+
+    assert mock_open.call_count == 2
+    assert mock_open.mock_calls[1][1][0] == fake_import_uri
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[1][2]['validate_certs'] is False
+    assert mock_open.mock_calls[1][2]['method'] == 'GET'
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s" % (artifact_path, server)
+
+    assert mock_vvv.call_count == 3
+    assert mock_vvv.mock_calls[0][1][0] == 'Collection has been pushed to the Galaxy server %s' % server
+    assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
+    assert mock_vvv.mock_calls[2][1][0] == 'Galaxy import message: info - Some info'
+
+    assert mock_warn.call_count == 1
+    assert mock_warn.mock_calls[0][1][0] == 'Galaxy import warning message: Some warning'
+
+    assert mock_err.call_count == 1
+    assert mock_err.mock_calls[0][1][0] == 'Galaxy import error message: Some error'
+
+
+def test_publish_with_wait_and_failure_and_no_error(publish_artifact, monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    mock_warn = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_warn)
+
+    mock_err = MagicMock()
+    monkeypatch.setattr(Display, 'error', mock_err)
+
+    fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
+    server = 'https://galaxy.server.com'
+
+    artifact_path, mock_open = publish_artifact
+
+    import_stat = {
+        'finished_at': 'some_time',
+        'state': 'failed',
+        'error': {},
+        'messages': [
+            {
+                'level': 'error',
+                'message': 'Some error',
+            },
+            {
+                'level': 'warning',
+                'message': 'Some warning',
+            },
+            {
+                'level': 'info',
+                'message': 'Some info',
+            },
+        ],
+    }
+
+    mock_open.side_effect = (
+        StringIO(u'{"task":"%s"}' % fake_import_uri),
+        StringIO(to_text(json.dumps(import_stat)))
+    )
+
+    expected = 'Galaxy import process failed: Unknown error, see %s for more details (Code: UNKNOWN)' % fake_import_uri
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        collection.publish_collection(artifact_path, server, 'key', True, True)
+
+    assert mock_open.call_count == 2
+    assert mock_open.mock_calls[1][1][0] == fake_import_uri
+    assert mock_open.mock_calls[1][2]['headers']['Authorization'] == 'Token key'
+    assert mock_open.mock_calls[1][2]['validate_certs'] is False
+    assert mock_open.mock_calls[1][2]['method'] == 'GET'
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s" % (artifact_path, server)
+
+    assert mock_vvv.call_count == 3
+    assert mock_vvv.mock_calls[0][1][0] == 'Collection has been pushed to the Galaxy server %s' % server
+    assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
+    assert mock_vvv.mock_calls[2][1][0] == 'Galaxy import message: info - Some info'
+
+    assert mock_warn.call_count == 1
+    assert mock_warn.mock_calls[0][1][0] == 'Galaxy import warning message: Some warning'
+
+    assert mock_err.call_count == 1
+    assert mock_err.mock_calls[0][1][0] == 'Galaxy import error message: Some error'

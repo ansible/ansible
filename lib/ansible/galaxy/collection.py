@@ -82,7 +82,7 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
         raise AnsibleError("The collection path specified '%s' is not a tarball, use 'ansible-galaxy collection "
                            "build' to create a proper release artifact." % collection_path)
 
-    display.display("Publishing collection artifact '%s' to %s" % (collection_path, server))
+    display.display("Publishing collection artifact '%s' to %s" % (to_text(collection_path), server))
 
     url = "%s/api/v2/collections/" % server
 
@@ -100,24 +100,23 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
     except urllib_error.HTTPError as err:
         try:
             err_info = json.load(err)
-        except (AttributeError, json.JSONDecodeError):
+        except (AttributeError, ValueError):
             err_info = {}
 
         code = err_info.get('code', 'Unknown')
         message = err_info.get('message', 'Unknown error returned by Galaxy server.')
 
         raise AnsibleError("Error when publishing collection (HTTP Code: %d, Message: %s Code: %s)"
-                           % (err.status, message, code))
+                           % (err.code, message, code))
 
-    display.vvv("Collection has been pushed to Galaxy server")
+    display.vvv("Collection has been pushed to the Galaxy server %s" % server)
     import_uri = resp['task']
     if wait:
         _wait_import(import_uri, key, validate_certs)
+        display.display("Collection has been successfully published to the Galaxy server")
     else:
-        display.display("Not waiting until import has completed dur to --no-wait not being set. Import task results "
-                        "can be found at %s" % import_uri)
-
-    display.display("Collection has been successfully publish to the Galaxy server")
+        display.display("Collection has been pushed to the Galaxy server, not waiting until import has completed "
+                        "due to --no-wait being set. Import task results can be found at %s" % import_uri)
 
 
 # TODO: Remove this once Python 2.6 is fully excised from the controller tests
@@ -368,7 +367,7 @@ def _wait_import(task_url, key, validate_certs):
             break
 
         status = resp.get('status', 'waiting')
-        display.vvv('Galaxy import process has status of %s, wait %d seconds before trying again' % (status, wait))
+        display.vvv('Galaxy import process has a status of %s, wait %d seconds before trying again' % (status, wait))
         time.sleep(wait)
 
     for message in resp.get('messages', []):
