@@ -33,7 +33,7 @@ Comparing ``loop`` and ``with_*``
 
 you would need::
 
-  loop: [1, [2,3] ,4] | flatten(1)
+  loop: "{{ [1, [2,3] ,4] | flatten(1) }}"
 
 * Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword. For example, instead of doing:
 
