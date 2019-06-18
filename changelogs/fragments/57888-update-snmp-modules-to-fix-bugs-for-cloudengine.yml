@@ -1,0 +1,8 @@
+bugfixes:
+  - update scmp to fix bugs(https://github.com/ansible/ansible/pull/57025).
+  - ce_snmp_community - it should be 'config' end of 'edit-config', not filter that is used to 'get-config'.As well the changed state is not correct.
+  - ce_snmp_contact - overwrite get_config,and fix array out of range bug(line173 line183)
+  - ce_snmp_location - overwrite get_config.
+  - ce_snmp_traps - overwrite get_config;do not use netconf and network_cli together in one module.
+  - ce_snmp_user - do not use netconf and network_cli together in one module.
+  - ce_snmp_target_host -do not use netconf and network_cli together in one module.
