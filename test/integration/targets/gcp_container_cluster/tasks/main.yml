@@ -61,7 +61,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'my-cluster' in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'my-cluster' in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a cluster that already exists
   gcp_container_cluster:
@@ -116,7 +116,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'my-cluster' not in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'my-cluster' not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a cluster that does not exist
   gcp_container_cluster:
