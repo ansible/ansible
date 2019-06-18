@@ -167,11 +167,11 @@ class AzureRMBatchAccountInfo(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.resource_group is not None and self.name is not None:
-          self.results['items'] = self.get()
+            self.results['items'] = self.get()
         elif self.resource_group is not None:
-          self.results['items'] = self.list_by_resource_group()
+            self.results['items'] = self.list_by_resource_group()
         else:
-          self.results['items'] = self.list_by_subscription()
+            self.results['items'] = self.list_by_subscription()
         return self.results
 
     def get(self):
