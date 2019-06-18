@@ -36,50 +36,59 @@ options:
         description:
             - Destination ip address of static route.
         required: true
+        type: str
     mask:
         description:
             - Destination ip mask of static route.
-        required: true
+        type: str
     aftype:
         description:
             - Destination ip address family type of static route.
         required: true
+        type: str
         choices: ['v4','v6']
     next_hop:
         description:
             - Next hop address of static route.
         required: false
         default: null
+        type: str
     nhp_interface:
         description:
             - Next hop interface full name of static route.
         required: false
         default: null
+        type: str
     vrf:
         description:
             - VPN instance of destination ip address.
         required: false
         default: null
+        type: str
     destvrf:
         description:
             - VPN instance of next hop ip address.
         required: false
         default: null
+        type: str
     tag:
         description:
             - Route tag value (numeric).
         required: false
         default: null
+        type: int
     description:
         description:
             - Name of the route. Used with the name parameter on the CLI.
         required: false
         default: null
+        type: str
     pref:
         description:
             - Preference or administrative difference of route (range 1-255).
         required: false
         default: null
+        type: int
     function_flag:
         description:
             - Used to distinguish between command line functions.
@@ -91,31 +100,37 @@ options:
             - Set the minimum BFD session sending interval (range 50-1000).
         required: false
         default: null
+        type: int
     min_rx_interval:
         description:
             - Set the minimum BFD receive interval (range 50-1000).
         required: false
         default: null
+        type: int
     detect_multiplier:
         description:
             - Configure the BFD multiplier (range 3-50).
         required: false
         default: null
+        type: int
     bfd_session_name:
         description:
             - bfd name (range 1-15).
         required: false
         default: null
+        type: str
     commands:
         description:
             - Incoming command line is used to send sys,undo ip route-static default-bfd,commit.
         required: false
         default: null
+        type: list
     state:
         description:
             - Specify desired state of the resource.
         required: false
         choices: ['present','absent']
+        type: str
         default: present
     provider:
         description:
@@ -1596,8 +1611,7 @@ def main():
         pref=dict(required=False, type='int'),
         # bfd
         function_flag=dict(required=True,
-                           choices=['globalBFD', 'singleBFD', 'dynamicBFD', 'staticBFD'],
-                           type='str'),
+                           choices=['globalBFD', 'singleBFD', 'dynamicBFD', 'staticBFD']),
         min_tx_interval=dict(required=False, type='int'),
         min_rx_interval=dict(required=False, type='int'),
         detect_multiplier=dict(required=False, type='int'),
