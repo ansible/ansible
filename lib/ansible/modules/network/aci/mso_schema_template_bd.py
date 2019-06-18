@@ -44,6 +44,12 @@ options:
     description:
     - The VRF associated to this BD. This is required only when creating a new BD.
     type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
   subnets:
     description:
     - The subnets associated to this BD.
