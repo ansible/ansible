@@ -1,6 +1,6 @@
 # Copyright: (c) 2019, Philip Bove <phil@bove.online>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+#
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -10,7 +10,7 @@ def parse_pol_info(name, semodule_info):
     semodule_list = semodule_info.split('\n')
     for line in semodule_list:
         if name in line:
-            cur_pol['name'], cur_pol['version'] = line.split('\t')
+            cur_pol['name'] = line.split('\t')[0]
     return cur_pol
 
 

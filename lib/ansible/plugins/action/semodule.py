@@ -14,16 +14,6 @@ import traceback
 
 class ActionModule(ActionBase):
 
-    def _check_policy_version(self, new_version, cur_version):
-        version_list = [int(x) for x in new_version.split('.')]
-        cur_version_list = [int(x) for x in cur_version.split('.')]
-        if version_list < cur_version_list:
-            return True, 'older'
-        elif version_list > cur_version_list:
-            return True, 'newer'
-        else:
-            return False, 'same'
-
     def _module_exist(self, name, semodule_info):
         if name in semodule_info:
             return True
@@ -43,8 +33,6 @@ class ActionModule(ActionBase):
     def _check_mode(self, changed, policy_def, result):
         if self._play_context.check_mode:
             result['changed'] = changed
-            result['version'] = policy_def['version']
-            result['name'] = policy_def['name']
             return result
         return None
 
@@ -77,25 +65,9 @@ class ActionModule(ActionBase):
         except IndexError:
             AnsibleError('Module is missing module definition line')
         semodule_info = self._get_semodule_info()
-        cur_pol = None
-        if self._module_exist(policy_def['name'], semodule_info):
-            cur_pol = semodule.parse_pol_info(policy_def['name'], semodule_info)
-        if state == 'latest':
-            if cur_pol or force:
-                ver_check = self._check_policy_version(policy_def['version'], cur_pol['version'])
-                if ver_check[1] == 'newer' or force:
-                    check_res = self._check_mode(True, policy_def, result)
-                    if check_res:
-                        return check_res
-                    self._copy_te_file(te_file, tmp_src, task_vars)
-                    new_module_args.update(dict(src=tmp_src))
-                    module_return = self._execute_module(module_name='semodule', module_args=new_module_args, task_vars=task_vars)
-                    result.update(module_return)
-                else:
-                    result['version'] = cur_pol['version']
-                    result['name'] = cur_pol['name']
-        elif state == 'present':
-            if not cur_pol or force:
+        module_installed = self._module_exist(policy_def['name'], semodule_info)
+        if state == 'present':
+            if not module_installed or force:
                 check_res = self._check_mode(True, policy_def, result)
                 if check_res:
                     return check_res
@@ -106,18 +78,14 @@ class ActionModule(ActionBase):
         # no need to copy extra files over to target
         # when we can remove it from here
         elif state == 'absent':
-            if cur_pol:
-                check_res = self._check_mode(True, cur_pol, result)
+            if module_installed:
+                check_res = self._check_mode(True, policy_def['name'], result)
                 if check_res:
                     return check_res
                 self._remove_module(policy_def['name'])
                 result['changed'] = True
-                result['name'] = cur_pol['name']
-                result['version'] = cur_pol['version']
             else:
                 result['changed'] = False
-                result['name'] = None
-                result['version'] = None
         # clean up temp path
         self._remove_tmp_path(self._connection._shell.tmpdir)
         return result

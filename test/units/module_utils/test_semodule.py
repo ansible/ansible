@@ -1,4 +1,5 @@
 import ansible.module_utils.semodule as semodule
+import pytest
 
 SEMODULE_OUTPUT = '''unconfined\t3.5.0
 unconfineduser\t1.0.0
@@ -12,8 +13,24 @@ userhelper\t1.8.1
 usermanage\t1.19.0
 usernetctl\t1.7.0
 '''
+SEMODULE_OUTPUT_NO_VER = '''unconfined
+unconfineduser
+unlabelednet
+unprivuser
+updfstab
+usbmodules
+usbmuxd
+userdomain
+userhelper
+usermanage
+usernetctl
+'''
 
-def test_parse_pol_info():
+
+@pytest.mark.parametrize('output', [
+    (SEMODULE_OUTPUT),
+    (SEMODULE_OUTPUT_NO_VER)]
+)
+def test_parse_pol_info(output):
     cur_pol = semodule.parse_pol_info('usbmuxd', SEMODULE_OUTPUT)
     assert cur_pol['name'] == 'usbmuxd'
-    assert cur_pol['version'] == '1.2.0'
