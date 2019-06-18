@@ -26,14 +26,18 @@ options:
     description:
       - Name of cs instance.
     required: true
+    type: str
   content:
+    aliases: [ 'value' ]
     description:
       - Reverse DSN name for the cs instance. Required if state=present.
+    type: str
   state:
     description:
       - State of the record.
     default: present
-    choices: [ present, absent ]
+    choices: [ 'present', 'absent' ]
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
