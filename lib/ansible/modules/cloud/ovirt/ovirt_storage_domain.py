@@ -347,16 +347,16 @@ EXAMPLES = '''
     managed_block_storage:
       driver_options:
         - name: rbd_pool
-            value: pool1
+          value: pool1
         - name: rbd_user
-            value: admin
+          value: admin
         - name: volume_driver
-            value: cinder.volume.drivers.rbd.RBDDriver
+          value: cinder.volume.drivers.rbd.RBDDriver
         - name: rbd_keyring_conf
-            value: /etc/ceph/keyring
+          value: /etc/ceph/keyring
       driver_sensitive_options:
         - name: secret_password
-            value: password
+          value: password
 
 # Remove storage domain
 - ovirt_storage_domain:
