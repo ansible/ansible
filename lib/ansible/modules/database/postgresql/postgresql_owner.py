@@ -157,13 +157,12 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
     postgres_common_argument_spec,
 )
-from ansible.module_utils._text import to_native
 
 
 class PgOwnership(object):
@@ -225,7 +224,6 @@ class PgOwnership(object):
             fail_on_role (bool): If True, fail when a role from old_owners does not exist.
                 Otherwise just warn and continue.
         """
-
         roles = []
         for r in old_owners:
             if self.check_role_exists(r, fail_on_role):
@@ -251,7 +249,6 @@ class PgOwnership(object):
             obj_type (str): Type of object (like database, table, view, etc.).
             obj_name (str): Object name.
         """
-
         self.obj_name = obj_name
         self.obj_type = obj_type
 
@@ -286,7 +283,6 @@ class PgOwnership(object):
 
     def __is_owner(self):
         """Return True if self.role is the current object owner."""
-
         if self.obj_type == 'table':
             query = ("SELECT 1 FROM pg_tables WHERE tablename = '%s' "
                      "AND tableowner = '%s'" % (self.obj_name, self.role))
