@@ -67,7 +67,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'test-user' in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'test-user' in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a user that already exists
   gcp_sql_user:
@@ -114,7 +114,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'test-user' not in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'test-user' not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a user that does not exist
   gcp_sql_user:
