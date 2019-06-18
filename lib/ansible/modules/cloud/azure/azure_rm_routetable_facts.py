@@ -19,7 +19,7 @@ module: azure_rm_routetable_facts
 
 version_added: "2.7"
 
-short_description: Get route table facts.
+short_description: Get route table facts
 
 description:
     - Get facts for a specific route table or all route table in a resource group or subscription.
@@ -39,7 +39,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -61,37 +61,49 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Resource id.
+    description:
+        - Resource ID.
     returned: success
     type: str
+    sample: "/subscriptions/xxxx...xxxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/routeTables/tableb57dc95236"
 name:
-    description: Name of the resource.
+    description:
+        - Name of the resource.
     returned: success
     type: str
+    sample: tableb57dc95236
 resource_group:
-    description: Resource group of the route table.
+    description:
+        - Resource group of the route table.
     returned: success
     type: str
+    sample: v-xisuRG
 disable_bgp_route_propagation:
-    description: Whether the routes learned by BGP on that route table disabled.
+    description:
+        - Whether the routes learned by BGP on that route table disabled.
     returned: success
     type: bool
+    sample: false
 tags:
-    description: Tags of the route table.
+    description:
+        - Tags of the route table.
     returned: success
-    type: list
+    type: dict
+    sample: { 'key1':'value1', 'key2':'value2'}
 routes:
-    description: Current routes of the route table.
+    description:
+        - Current routes of the route table.
     returned: success
     type: list
     sample: [
         {
-          "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/routeTables/foobar/routes/route",
-          "name": "route",
-          "resource_group": "Testing",
-          "routeTables": "foobar",
-          "address_prefix": "192.0.0.1",
-          "next_hop_type": "virtual_networkGateway"
+          "id": "/subscriptions/xxx...xxx/resourceGroups/v-xisuRG/providers/Microsoft.Network/routeTables/tableb57dc95236/routes/routeb57dc95540",
+          "name": "routeb57dc95540",
+          "resource_group": "v-xisuRG",
+          "route_table_name": "tableb57dc95236",
+          "address_prefix": "10.1.0.0/24",
+          "next_hop_type": "virtual_network_gateway",
+          "next_hop_ip_address": null
         }
     ]
 '''
