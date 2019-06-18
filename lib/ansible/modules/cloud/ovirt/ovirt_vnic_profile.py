@@ -270,12 +270,9 @@ def main():
             service=vnic_services,
         )
         state = module.params['state']
-        force_create = True
         entity = get_entity(vnic_services, entitynics_module)
-        if entity:
-            force_create = False
         if state == 'present':
-            ret = entitynics_module.create(entity=entity, force_create=force_create)
+            ret = entitynics_module.create(entity=entity, force_create=entity is None)
         elif state == 'absent':
             if entity is not None:
                 ret = entitynics_module.remove(entity=entity)
