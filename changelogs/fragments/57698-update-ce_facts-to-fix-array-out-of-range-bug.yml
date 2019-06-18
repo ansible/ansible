@@ -1,0 +1,2 @@
+bugfixes:
+  - update ce_facts to fix array out of range bug(https://github.com/ansible/ansible/pull/57187).
