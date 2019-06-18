@@ -259,10 +259,10 @@ class GitLabRunner(object):
     @param description Description of the runner
     '''
     def findRunner(self, description):
-        runners = self._gitlab.runners.all()
+        runners = self._gitlab.runners.list(as_list=False)
         for runner in runners:
-            if (runner['description'] == description):
-                return self._gitlab.runners.get(runner['id'])
+            if (runner.description == description):
+                return self._gitlab.runners.get(runner.id)
 
     '''
     @param description Description of the runner
