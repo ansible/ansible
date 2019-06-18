@@ -1,0 +1,2 @@
+bugfixes:
+- To fix the netvisor failure with network_cli connection - https://github.com/ansible/ansible/pull/57938
