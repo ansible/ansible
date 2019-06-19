@@ -495,10 +495,20 @@ class ModuleManager(object):
             self.client.provider['server_port'],
             self.want.tenants
         )
-        response = self.client.api.delete(uri)
-        if response.status == 200:
+        if resp.status != 200:
+            result = resp.json()
+            errors = self._get_errors_from_response(result)
+            if errors:
+                message = "{0}".format('. '.join(errors))
+                raise F5ModuleError(message)
+            raise F5ModuleError(resp.content)
+        else:
+            result = resp.json()
+            errors = self._get_errors_from_response(result)
+            if errors:
+                message = "{0}".format('. '.join(errors))
+                raise F5ModuleError(message)
             return True
-        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
