@@ -32,7 +32,7 @@ from lib.util import (
 
 class HttpClient(object):
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False, insecure=False):
+    def __init__(self, args, always=False, insecure=False, proxy=None):
         """
         :type args: CommonConfig
         :type always: bool
@@ -41,6 +41,7 @@ class HttpClient(object):
         self.args = args
         self.always = always
         self.insecure = insecure
+        self.proxy = proxy
 
         self.username = None
         self.password = None
@@ -98,6 +99,9 @@ class HttpClient(object):
 
         if data is not None:
             cmd += ['-d', data]
+
+        if self.proxy:
+            cmd += ['-x', self.proxy]
 
         cmd += [url]
 
