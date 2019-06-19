@@ -97,8 +97,9 @@ from ansible.module_utils.network.checkpoint.checkpoint import show_api_call
 def expand_api_object_n_payload(module):
     api_object = module.params.get('command')
     payload = dict()
-    for each in module.params.get('filters'):
-        payload.update(each)
+    if module.params.get('filters'):
+        for each in module.params.get('filters'):
+            payload.update(each)
     return api_object, payload
 
 
