@@ -54,6 +54,7 @@ class TestNxosOspfVrfModule(TestNxosModule):
                              timer_throttle_lsa_start=60,
                              timer_throttle_lsa_hold=1100,
                              timer_throttle_lsa_max=3000,
+                             bfd='enable',
                              state='present'))
         result = self.execute_module(changed=True)
         self.assertEqual(sorted(result['commands']),
@@ -61,9 +62,67 @@ class TestNxosOspfVrfModule(TestNxosModule):
                                  'vrf test',
                                  'timers throttle lsa 60 1100 3000',
                                  'timers throttle spf 50 1000 2000',
-                                 'vrf test']))
+                                 'bfd',
+                                 ]))
 
     def test_nxos_ospf_vrf_absent(self):
         set_module_args(dict(ospf=1, vrf='test', state='absent'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
+
+    def test_bfd_1(self):
+        self.get_config.return_value = 'router ospf 1\n  bfd\nrouter ospf 2'
+        # enable -> disable
+        set_module_args(dict(
+            ospf=1,
+            bfd='disable',
+        ))
+        self.execute_module(changed=True, commands=[
+            'router ospf 1',
+            'no bfd',
+        ])
+
+        # disable -> enable
+        set_module_args(dict(
+            ospf=2,
+            bfd='enable',
+        ))
+        self.execute_module(changed=True, commands=[
+            'router ospf 2',
+            'bfd',
+        ])
+
+    def test_bfd_2(self):
+        # enable idempotence
+        self.get_config.return_value = 'router ospf 1\n  bfd\nrouter ospf 2'
+        set_module_args(dict(
+            ospf=1,
+            bfd='enable',
+        ))
+        self.execute_module(changed=False)
+
+        # disable idempotence
+        set_module_args(dict(
+            ospf=2,
+            bfd='disable',
+        ))
+        self.execute_module(changed=False)
+
+    def test_bfd_3(self):
+        # absent tests
+        self.get_config.return_value = 'router ospf 1\n  bfd\nrouter ospf 2'
+        set_module_args(dict(
+            ospf=1,
+            state='absent'
+        ))
+        self.execute_module(changed=True, commands=[
+            'router ospf 1',
+            'no bfd',
+        ])
+
+        # absent w/bfd disable
+        set_module_args(dict(
+            ospf=2,
+            state='absent'
+        ))
+        self.execute_module(changed=False)
