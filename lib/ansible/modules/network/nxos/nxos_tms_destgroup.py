@@ -73,12 +73,14 @@ cmds:
     sample: ["telemetry", "destination-group 2", "ip address 192.168.1.1 port 50001 protocol gRPC encoding GPB "]
 '''
 
-import re, yaml
+import re
+import yaml
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.basic import AnsibleModule
 
+# pylint: disable=W1401
 TMS_CMD_REF = """
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.
