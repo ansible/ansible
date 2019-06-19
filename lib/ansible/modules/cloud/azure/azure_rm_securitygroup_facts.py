@@ -207,7 +207,6 @@ azure_securitygroups:
                     "provisioningState": "Succeeded",
                     "resourceGuid": "ebd00afa-5dc8-446f-810a-50dd6f671588",
                     "securityRules": []
-                    }
             }
         tags:
             descripition:
