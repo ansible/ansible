@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: aci_extepg
+module: aci_l3out_extepg
 short_description: Manage External Network Instance Profile (ExtEpg) objects (l3extInstP:instP)
 description:
 - Manage External Network Instance Profile (ExtEpg) objects (l3extInstP:instP)
@@ -78,7 +78,7 @@ author:
 
 EXAMPLES = r'''
 - name: Add a new ExtEpg
-  aci_extepg:
+  aci_l3out_extepg:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -101,7 +101,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query ExtEpg information
-  aci_extepg:
+  aci_l3out_extepg:
     host: apic
     username: admin
     password: SomeSecretPassword
