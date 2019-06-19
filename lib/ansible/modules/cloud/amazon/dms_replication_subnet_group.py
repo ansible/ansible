@@ -64,6 +64,8 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 backoff_params = dict(tries=5, delay=1, backoff=1.5)
+
+
 @AWSRetry.backoff(**backoff_params)
 def describe_subnet_group(connection, subnet_group):
     """checks if instance exists"""
