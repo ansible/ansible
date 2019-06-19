@@ -166,7 +166,7 @@ from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, get_conn_params, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 
 PG_REQ_VER = 90400
@@ -305,7 +305,8 @@ def main():
     if not value and not reset:
         module.fail_json(msg="%s: at least one of value or reset param must be specified" % name)
 
-    db_connection = connect_to_db(module, autocommit=True, warn_db_default=False)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     kw = {}
@@ -398,7 +399,7 @@ def main():
 
     # Reconnect and recheck current value:
     if context in ('sighup', 'superuser-backend', 'backend', 'superuser', 'user'):
-        db_connection = connect_to_db(module, autocommit=True)
+        db_connection = connect_to_db(module, conn_params, autocommit=True)
         cursor = db_connection.cursor(cursor_factory=DictCursor)
 
         res = param_get(cursor, module, name)

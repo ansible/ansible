@@ -476,7 +476,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, get_conn_params, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -493,27 +493,9 @@ class PgDbConn(object):
         self.session_role = self.module.params.get('session_role')
 
     def connect(self):
-        try:
-            self.db_conn = connect_to_db(self.module, warn_db_default=False)
-            self.cursor = self.db_conn.cursor(cursor_factory=DictCursor)
-
-            # Switch role, if specified:
-            if self.session_role:
-                try:
-                    self.cursor.execute('SET ROLE %s' % self.session_role)
-                except Exception as e:
-                    self.module.fail_json(msg="Could not switch role: %s" % to_native(e))
-
-            return self.cursor
-
-        except TypeError as e:
-            if 'sslrootcert' in e.args[0]:
-                self.module.fail_json(msg='PostgreSQL server must be at least version 8.4 '
-                                          'to support sslrootcert')
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-
-        except Exception as e:
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+        conn_params = get_conn_params(self.module, self.module.params, warn_db_default=False)
+        self.db_conn = connect_to_db(self.module, conn_params)
+        return self.db_conn.cursor(cursor_factory=DictCursor)
 
     def reconnect(self, dbname):
         self.db_conn.close()
