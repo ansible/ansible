@@ -39,7 +39,7 @@
         <<: *aws_connection_info
       register: subnet2
 
-    - name: create replication subnet subnet group
+    - name: create replication subnet group
       dms_replication_subnet_group:
         state: present
         identifier: "dev-sngroup"
