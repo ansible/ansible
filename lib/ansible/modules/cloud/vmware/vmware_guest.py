@@ -645,7 +645,7 @@ class PyVmomiDeviceHelper(object):
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         ide_ctl.device = vim.vm.device.VirtualIDEController()
         ide_ctl.device.deviceInfo = vim.Description()
-        ide_ctl.device.key = PyVmomiDeviceHelper.next_key()
+        ide_ctl.device.key = PyVmomiKeyHelper.next_key()
         ide_ctl.device.busNumber = 0
 
         return ide_ctl
