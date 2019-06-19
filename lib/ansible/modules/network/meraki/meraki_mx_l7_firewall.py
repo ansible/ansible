@@ -26,26 +26,22 @@ notes:
 options:
     state:
         description:
-        - Create or modify an organization.
+        - Query or modify a firewall rule.
         choices: ['present', 'query']
         default: present
-    org_name:
-        description:
-        - Name of organization.
-        - If C(clone) is specified, C(org_name) is the name of the new organization.
-    org_id:
-        description:
-        - ID of organization.
         type: str
     net_name:
         description:
         - Name of network which MX firewall is in.
+        type: str
     net_id:
         description:
         - ID of network which MX firewall is in.
+        type: str
     rules:
         description:
         - List of layer 7 firewall rules.
+        type: list
         suboptions:
             policy:
                 description:
@@ -266,8 +262,6 @@ data:
 import copy
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
 from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
