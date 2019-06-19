@@ -161,7 +161,7 @@ def show_api_call(module, api_call_object):
     connection = Connection(module._socket_path)
 
     if module.params.get('version'):
-        version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
+        version = ('v' + module.params['version'] + '/')
     else:
         version = ''
     code, response = send_request(connection, version, api_call_object, payload)
