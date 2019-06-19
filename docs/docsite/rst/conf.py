@@ -266,5 +266,5 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../pytho
 
 html_context = {
     'current_version': version,
-    'available_versions': ('2.6', '2.7', '2.8', 'devel')
+    'available_versions': ('latest', 'devel', '2.7', '2.6')
 }
