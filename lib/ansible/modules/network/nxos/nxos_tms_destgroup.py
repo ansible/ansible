@@ -57,7 +57,7 @@ options:
     required: false
     type: str
     choices: ['present', 'absent']
-    default: ['present']
+    default: 'present'
 '''
 EXAMPLES = '''
 - name: Configure a single destination group instance
@@ -95,7 +95,7 @@ from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.basic import AnsibleModule
 
 # pylint: disable=W1401, W605
-TMS_CMD_REF = """
+TMS_CMD_REF = '''
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.
 # TBD: Use Structured Where Possible
@@ -120,7 +120,7 @@ destination:
     port: ~
     protocol: ~
     encoding: ~
-"""
+'''
 
 
 def normalize_data(cmd_ref):

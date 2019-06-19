@@ -92,8 +92,7 @@ from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
-# pylint: disable=W1401, W605
-TMS_CMD_REF = """
+TMS_CMD_REF = '''
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.
 # TMS does not have convenient global json data so this cmd_ref uses raw cli configs.
@@ -141,7 +140,7 @@ destination_profile_vrf:
   setval: 'use-vrf {0}'
   default: ~
   context: *dpcontext
-"""
+'''
 
 
 def main():
