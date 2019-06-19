@@ -495,6 +495,7 @@ class ModuleManager(object):
             self.client.provider['server_port'],
             self.want.tenants
         )
+        resp = self.client.api.delete(uri)
         if resp.status != 200:
             result = resp.json()
             errors = self._get_errors_from_response(result)
