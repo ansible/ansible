@@ -240,7 +240,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         l3out=dict(type='str', aliases=['l3out_name']),  # Not required for querying all objects
         extepg=dict(type='str', aliases=['extepg_name', 'name']),  # Not required for querying all objects
-        network=dict(type='str', aliases=['address, ip']),
+        network=dict(type='str', aliases=['address', 'ip']),
         description=dict(type='str', aliases=['descr']),
         subnet_name=dict(type='str', aliases=['name']),
         scope=dict(type='list', choices=['export-rtctrl', 'import-security', 'shared-rtctrl', 'shared-security']),
