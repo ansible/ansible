@@ -29,7 +29,6 @@ version_added: "2.9"
 short_description: Telemetry Monitoring Service (TMS) global-level configuration
 description:
   - Manages Telemetry Monitoring Service (TMS) global-level configuration.
-
 author: Mike Wiebe (@mikewiebe)
 notes:
     - Tested against N9k Version 7.0(3)I7(5) and later.
@@ -39,7 +38,7 @@ options:
   certificate:
     description:
       - Certificate SSL/TLS and hostname values.
-      - Value must be a dict defining values for keys: key and hostname.
+      - Value must be a dict defining values for keys (key and hostname).
     required: false
     type: dict
   destination_profile_compression:

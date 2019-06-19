@@ -20,7 +20,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = '''
 ---
 module: nxos_tms_destgroup
@@ -29,7 +28,6 @@ version_added: "2.9"
 short_description: Telemetry Monitoring Service (TMS) destination-group configuration
 description:
   - Manages Telemetry Monitoring Service (TMS) destination-group configuration.
-
 author: Mike Wiebe (@mikewiebe)
 notes:
     - Tested against N9k Version 7.0(3)I7(5) and later.
@@ -45,7 +43,7 @@ options:
   destination:
     description:
       - Group destination ipv4, port, protocol and encoding values.
-      - Value must be a dict defining values for keys: ip, port, protocol, encoding.
+      - Value must be a dict defining values for keys (ip, port, protocol, encoding).
     required: false
     type: dict
   state:
