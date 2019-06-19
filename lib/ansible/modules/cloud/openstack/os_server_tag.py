@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: os_server_tag
 short_description: Manage server tags
 extends_documentation_fragment: openstack
-version_added: "2.8"
+version_added: "2.9"
 author: Dominik Stucki (@n-ik)
 description:
     - set or delete tags on the instance
