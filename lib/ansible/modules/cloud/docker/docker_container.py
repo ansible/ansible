@@ -2099,7 +2099,7 @@ class Container(DockerBaseClass):
         self.log('_get_expected_binds')
         image_vols = []
         if image:
-            image_vols = self._get_image_binds(image['ContainerConfig'].get('Volumes'))
+            image_vols = self._get_image_binds(image[self.parameters.client.image_inspect_source].get('Volumes'))
         param_vols = []
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
@@ -2149,8 +2149,8 @@ class Container(DockerBaseClass):
     def _get_expected_volumes(self, image):
         self.log('_get_expected_volumes')
         expected_vols = dict()
-        if image and image['ContainerConfig'].get('Volumes'):
-            expected_vols.update(image['ContainerConfig'].get('Volumes'))
+        if image and image[self.parameters.client.image_inspect_source].get('Volumes'):
+            expected_vols.update(image[self.parameters.client.image_inspect_source].get('Volumes'))
 
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
@@ -2180,8 +2180,8 @@ class Container(DockerBaseClass):
     def _get_expected_env(self, image):
         self.log('_get_expected_env')
         expected_env = dict()
-        if image and image['ContainerConfig'].get('Env'):
-            for env_var in image['ContainerConfig']['Env']:
+        if image and image[self.parameters.client.image_inspect_source].get('Env'):
+            for env_var in image[self.parameters.client.image_inspect_source]['Env']:
                 parts = env_var.split('=', 1)
                 expected_env[parts[0]] = parts[1]
         if self.parameters.env:
@@ -2195,7 +2195,8 @@ class Container(DockerBaseClass):
         self.log('_get_expected_exposed')
         image_ports = []
         if image:
-            image_ports = [self._normalize_port(p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
+            image_exposed_ports = image[self.parameters.client.image_inspect_source].get('ExposedPorts') or {}
+            image_ports = [self._normalize_port(p) for p in image_exposed_ports.keys()]
         param_ports = []
         if self.parameters.ports:
             param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
@@ -2873,6 +2874,11 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS,
             **kwargs
         )
+
+        self.image_inspect_source = 'Config'
+        if self.docker_api_version < LooseVersion('1.21'):
+            self.image_inspect_source = 'ContainerConfig'
+
         self._get_additional_minimal_versions()
         self._parse_comparisons()
 
