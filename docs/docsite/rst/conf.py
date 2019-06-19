@@ -34,7 +34,7 @@ sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 # the repository version needs to be the one that is loaded:
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
 
-VERSION = '2.8'
+VERSION = 'devel'
 AUTHOR = 'Ansible, Inc'
 
 
@@ -263,3 +263,9 @@ autoclass_content = 'both'
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2-2.7.13.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3-3.6.2.inv')),
                        'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja2-2.9.7.inv'))}
+
+# list specifically out of order to make latest work
+html_context = {
+    'current_version': version,
+    'available_versions': ('latest', '2.7', '2.6', 'devel')
+}
