@@ -1795,6 +1795,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
 
+        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
+            self.remove_autocreated_resources(vm.tags)
+
         return True
 
     def get_network_interface(self, resource_group, name):
