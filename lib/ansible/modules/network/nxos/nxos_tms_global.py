@@ -45,6 +45,7 @@ options:
     description:
       - Destination profile compression method.
     required: false
+    type: str
     choices: ['gzip']
   destination_profile_source_interface:
     description:
@@ -62,8 +63,9 @@ options:
     description:
       - Maka configuration present or absent on the device.
     required: false
+    type: str
     choices: ['present', 'absent']
-    default: ['present']
+    default: 'present'
 '''
 EXAMPLES = '''
 - nxos_tms_global:
@@ -84,14 +86,13 @@ cmds:
 '''
 
 import re
-import yaml
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef, normalize_interface
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
-# pylint: disable=W1401
+# pylint: disable=W1401, W605
 TMS_CMD_REF = """
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.

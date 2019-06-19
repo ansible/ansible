@@ -117,6 +117,22 @@ class TestNxosTmsDestGroupModule(TestNxosModule):
             'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb'
         ])
 
+    def test_tms_destgroup_checkmode_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS destgroup config is not present.
+        self.execute_show_command.return_value = None
+        set_module_args(dict(
+            identifier='88',
+            destination={'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
+            _ansible_check_mode=True,
+        ))
+        self.execute_module(changed=True, commands=[
+            'feature telemetry',
+            'telemetry',
+            'destination-group 88',
+            'ip address 192.168.1.1 port 5001 protocol grpc encoding gpb'
+        ])
+
     def test_tms_destgroup_present2_n9k(self):
         # Assumes feature telemetry is enabled
         # TMS destgroup config is not present.

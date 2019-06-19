@@ -77,6 +77,27 @@ class TestNxosTmsGlobalModule(TestNxosModule):
             'use-vrf blue'
         ])
 
+    def test_tms_global_checkmode_n9k(self):
+        # Assumes feature telemetry is disabled
+        # TMS global config is not present.
+        self.execute_show_command.return_value = None
+        set_module_args(dict(
+            certificate={'key': '/bootflash/sample.key', 'hostname': 'server.example.com'},
+            destination_profile_compression='gzip',
+            destination_profile_source_interface='Ethernet2/1',
+            destination_profile_vrf='blue',
+            _ansible_check_mode=True,
+        ))
+        self.execute_module(changed=True, commands=[
+            'feature telemetry',
+            'telemetry',
+            'certificate /bootflash/sample.key server.example.com',
+            'destination-profile',
+            'use-compression gzip',
+            'source-interface Ethernet2/1',
+            'use-vrf blue'
+        ])
+
     def test_tms_global_present2_n9k(self):
         # Assumes feature telemetry is disabled
         # TMS global config is not present.

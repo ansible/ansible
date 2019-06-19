@@ -46,21 +46,38 @@ options:
       - Value must be a dict defining values for keys (ip, port, protocol, encoding).
     required: false
     type: dict
+  aggregate:
+    description:
+      - Configure a list of nxos_tms_destgroup instances.
+    required: false
+    type: list
   state:
     description:
       - Maka configuration present or absent on the device.
     required: false
+    type: str
     choices: ['present', 'absent']
     default: ['present']
 '''
 EXAMPLES = '''
-- nxos_tms_destgroup:
+- name: Configure a single destination group instance
+  nxos_tms_destgroup:
     identifier: 2
     destination:
       ip: 192.168.1.1
       port: 50001
       protocol: grpc
       encoding: gpb
+
+- name: Configure multiple destination group instances using aggregate.
+  nxos_tms_destgroup:
+    state: present
+    aggregate:
+      - { identifier: 28, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
+      - { identifier: 2,  destination: {ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}}
+      - { identifier: 2,  destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}}
+      - { identifier: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: gRPC, encoding: GPB}}
+      - { identifier: 10, destination: {ip: 192.168.0.2, port: 45001, protocol: gRPC, encoding: GPB}}
 '''
 
 RETURN = '''
@@ -72,13 +89,12 @@ cmds:
 '''
 
 import re
-import yaml
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.basic import AnsibleModule
 
-# pylint: disable=W1401
+# pylint: disable=W1401, W605
 TMS_CMD_REF = """
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.
