@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix python3 encoding issue with iosxr_config.
