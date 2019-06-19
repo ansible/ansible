@@ -109,7 +109,7 @@ _template: # _template holds common settings for all commands
 certificate:
   _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
   kind: dict
-  getval: certificate (?P<key>\S+) (?P<hostname>\S+)$
+  getval: certificate (?P<key>\\S+) (?P<hostname>\\S+)$
   setval: certificate {key} {hostname}
   default:
     key: ~
@@ -118,7 +118,7 @@ certificate:
 destination_profile_compression:
   _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
   kind: str
-  getval: use-compression (\S+)$
+  getval: use-compression (\\S+)$
   setval: 'use-compression {0}'
   default: ~
   context: &dpcontext
@@ -128,7 +128,7 @@ destination_profile_compression:
 destination_profile_source_interface:
   _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
   kind: str
-  getval: source-interface (\S+)$
+  getval: source-interface (\\S+)$
   setval: 'source-interface {0}'
   default: ~
   context: *dpcontext
@@ -136,7 +136,7 @@ destination_profile_source_interface:
 destination_profile_vrf:
   _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
   kind: str
-  getval: use-vrf (\S+)$
+  getval: use-vrf (\\S+)$
   setval: 'use-vrf {0}'
   default: ~
   context: *dpcontext

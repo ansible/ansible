@@ -94,7 +94,6 @@ from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_arg
 from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.basic import AnsibleModule
 
-# pylint: disable=W1401, W605
 TMS_CMD_REF = '''
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.
@@ -113,7 +112,7 @@ destination:
   _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
   multiple: true
   kind: dict
-  getval: ip address (?P<ip>\S+) port (?P<port>\S+) protocol (?P<protocol>\S+) encoding (?P<encoding>\S+)
+  getval: ip address (?P<ip>\\S+) port (?P<port>\\S+) protocol (?P<protocol>\\S+) encoding (?P<encoding>\\S+)
   setval: ip address {ip} port {port} protocol {protocol} encoding {encoding}
   default:
     ip: ~
