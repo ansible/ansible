@@ -82,6 +82,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
+    get_conn_params,
     postgres_common_argument_spec,
 )
 
@@ -138,7 +139,8 @@ def main():
         server_version=dict(),
     )
 
-    db_connection = connect_to_db(module, fail_on_conn=False)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, fail_on_conn=False)
 
     if db_connection is not None:
         cursor = db_connection.cursor(cursor_factory=DictCursor)
