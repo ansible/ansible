@@ -20,7 +20,8 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection, publish_collection
+from ansible.galaxy.collection import build_collection, install_collections, parse_collections_requirements_file, \
+    publish_collection
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
@@ -80,7 +81,8 @@ class GalaxyCLI(CLI):
                                      'configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
         force = opt_help.argparse.ArgumentParser(add_help=False)
-        force.add_argument('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
+        force.add_argument('-f', '--force', dest='force', action='store_true', default=False,
+                           help='Force overwriting an existing role or collection')
 
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
@@ -108,7 +110,25 @@ class GalaxyCLI(CLI):
             help='The path in which the collection is built to. The default is the current working directory.')
 
         self.add_init_parser(collection_parser, [common, force])
-        self.add_login_parser(collection_parser, [common])
+
+        cinstall_parser = collection_parser.add_parser('install', help='Install collection from Ansible Galaxy',
+                                                       parents=[force, common])
+        cinstall_parser.set_defaults(func=self.execute_install)
+        cinstall_parser.add_argument('args', metavar='collection_name', nargs='*',
+                                     help='The collection(s) name or path/url to a tar.gz collection artifact. This '
+                                          'is mutually exclusive with --requirements-file.')
+        cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', default='./',
+                                     help='The path to the directory containing your collections.')
+        cinstall_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
+                                     help='Ignore errors and continue with the next specified collection.')
+        cinstall_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                     help='A file containing a list of collections to be installed.')
+
+        cinstall_exclusive = cinstall_parser.add_mutually_exclusive_group()
+        cinstall_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
+                                        help="Don't download collections listed as dependencies")
+        cinstall_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
+                                        help="Force overwriting an existing collection and it's dependencies")
 
         publish_parser = collection_parser.add_parser(
             'publish', help='Publish a collection artifact to Ansible Galaxy.',
@@ -180,7 +200,12 @@ class GalaxyCLI(CLI):
         list_parser.set_defaults(func=self.execute_list)
         list_parser.add_argument('role', help='Role', nargs='?', metavar='role')
 
-        self.add_login_parser(role_parser, [common])
+        login_parser = role_parser.add_parser('login', parents=[common],
+                                              help="Login to api.github.com server in order to use ansible-galaxy role "
+                                                   "sub command such as 'import', 'delete', 'publish', and 'setup'")
+        login_parser.set_defaults(func=self.execute_login)
+        login_parser.add_argument('--github-token', dest='token', default=None,
+                                  help='Identify with github token rather than username and password.')
 
         search_parser = role_parser.add_parser('search', help='Search the Galaxy database by tags, platforms, author and multiple keywords.',
                                                parents=[common])
@@ -226,17 +251,6 @@ class GalaxyCLI(CLI):
                                  **obj_name_kwargs)
 
         return init_parser
-
-    def add_login_parser(self, parser, parents):
-        login_parser = parser.add_parser('login',
-                                         parents=parents,
-                                         help="Login to api.github.com server in order to use ansible-galaxy <TYPE> "
-                                              "sub command such as 'import', 'delete', 'publish', and 'setup'")
-        login_parser.set_defaults(func=self.execute_login)
-        login_parser.add_argument('--github-token',
-                                  dest='token',
-                                  default=None,
-                                  help='Identify with github token rather than username and password.')
 
     def post_process_args(self, options):
         options = super(GalaxyCLI, self).post_process_args(options)
@@ -475,6 +489,58 @@ class GalaxyCLI(CLI):
         uses the args list of roles to be installed, unless -f was specified. The list of roles
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
         """
+        if context.CLIARGS['type'] == 'collection':
+            collections = context.CLIARGS['args']
+            force = context.CLIARGS['force']
+            output_path = context.CLIARGS['collections_path']
+            # TODO: use a list of server that have been configured in ~/.ansible_galaxy
+            servers = [context.CLIARGS['api_server']]
+            ignore_certs = context.CLIARGS['ignore_certs']
+            ignore_errors = context.CLIARGS['ignore_errors']
+            requirements_file = context.CLIARGS['requirements']
+            no_deps = context.CLIARGS['no_deps']
+            force_deps = context.CLIARGS['force_with_deps']
+
+            if collections and requirements_file:
+                raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
+            elif not collections and not requirements_file:
+                raise AnsibleError("You must specify a collection name or a requirements file.")
+
+            if requirements_file:
+                requirements_file = os.path.expanduser(os.path.expandvars(requirements_file))
+                collection_requirements = parse_collections_requirements_file(requirements_file)
+            else:
+                collection_requirements = []
+                for collection_input in collections:
+                    if ':' in collection_input:
+                        name, requirement = collection_input.split(':', 1)
+                    else:
+                        name = collection_input
+                        requirement = '*'
+                    collection_requirements.append((name, requirement, None))
+
+            output_path = os.path.expanduser(os.path.expandvars(output_path))
+            if not os.path.isabs(output_path):
+                output_path = os.path.abspath(output_path)
+
+            collections_path = C.COLLECTIONS_PATHS
+
+            if len([p for p in collections_path if p.startswith(output_path)]) == 0:
+                display.warning("The specified collections path '%s' is not part of the configured Ansible "
+                                "collections paths '%s'. The installed collection won't be picked up in an Ansible "
+                                "run." % (output_path, ":".join(collections_path)))
+
+            if os.path.split(output_path)[1] != 'ansible_collections':
+                output_path = os.path.join(output_path, 'ansible_collections')
+
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+
+            install_collections(collection_requirements, output_path, servers, (not ignore_certs), ignore_errors,
+                                no_deps, force, force_deps)
+
+            return
+
         role_file = context.CLIARGS['role_file']
 
         if not context.CLIARGS['args'] and role_file is None:

@@ -33,7 +33,6 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
-from ansible.galaxy.collection import _open_tarfile
 from ansible.module_utils._text import to_text
 from ansible.utils import context_objects as co
 from units.compat import unittest
@@ -601,7 +600,7 @@ def test_collection_build(collection_build):
     tar_path = os.path.join(collection_build, 'ansible_test-build_collection-1.0.0.tar.gz')
     assert tarfile.is_tarfile(tar_path)
 
-    with _open_tarfile(tar_path) as tar:
+    with tarfile.open(tar_path, mode='r') as tar:
         tar_members = tar.getmembers()
 
         valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md']

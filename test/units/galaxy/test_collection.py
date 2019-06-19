@@ -63,7 +63,7 @@ def publish_artifact(monkeypatch, tmp_path):
 
     input_file = str(tmp_path / 'collection.tar.gz')
 
-    with collection._open_tarfile(input_file, 'w:gz') as tfile:
+    with tarfile.open(input_file, 'w:gz') as tfile:
         b_io = BytesIO(b"\x00\x01\x02\x03")
         tar_info = tarfile.TarInfo('test')
         tar_info.size = 4
@@ -303,7 +303,7 @@ def test_build_with_symlink_inside_collection(collection_input):
     output_artifact = os.path.join(output_dir, 'ansible_namespace-collection-0.1.0.tar.gz')
     assert tarfile.is_tarfile(output_artifact)
 
-    with collection._open_tarfile(output_artifact) as actual:
+    with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
         linked_members = [m for m in members if m.path.startswith('playbooks/roles/linked/tasks')]
