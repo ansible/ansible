@@ -475,7 +475,11 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -502,7 +506,8 @@ class PgDbConn(object):
 
         Note: connection parameters are passed by self.module object.
         """
-        self.db_conn = connect_to_db(self.module, warn_db_default=False)
+        conn_params = get_conn_params(self.module, self.module.params, warn_db_default=False)
+        self.db_conn = connect_to_db(self.module, conn_params)
         return self.db_conn.cursor(cursor_factory=DictCursor)
 
     def reconnect(self, dbname):

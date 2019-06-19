@@ -244,7 +244,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
@@ -801,7 +805,8 @@ def main():
     conn_limit = module.params["conn_limit"]
     role_attr_flags = module.params["role_attr_flags"]
 
-    db_connection = connect_to_db(module, warn_db_default=False)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
+    db_connection = connect_to_db(module, conn_params)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     try:
