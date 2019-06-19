@@ -30,8 +30,8 @@ DOCUMENTATION = """
 module: cp_get_facts
 short_description: Retrieve and Show existing objects on Checkpoint over Web Services API
 description:
-  - Manages network objects on Checkpoint devices including creating, updating and removing objects.
-    All operations are performed over Web Services API.
+  - Checkpoint facts module to handle all available api's show tasks. All operations are performed over Web
+    Services API.
 version_added: "2.9"
 author: "Sumit Jaiswal (@justjais)"
 options:
@@ -39,7 +39,8 @@ options:
     description:
       - Actual command to send to the remote checkpoint device over the
         configured provider. The resulting output from the command
-        is returned based on the list of filters if provided.
+        is returned based on the list of filters if provided. Note, the
+        show command should be exactly same as used in Checkpoint APIs.
     type: str
     required: true
   filters:
