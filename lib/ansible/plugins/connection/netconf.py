@@ -88,20 +88,6 @@ options:
         awaiting a response after issuing a call to a RPC.  If the RPC
         does not return in timeout seconds, an error is generated.
     default: 120
-  host_key_auto_add:
-    type: boolean
-    description:
-      - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file. By enabling this option, unknown host keys will
-        automatically be added to the known hosts file.
-      - Be sure to fully understand the security implications of enabling this
-        option on production systems as it could create a security vulnerability.
-    default: False
-    ini:
-      - section: paramiko_connection
-        key: host_key_auto_add
-    env:
-      - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
     description:
