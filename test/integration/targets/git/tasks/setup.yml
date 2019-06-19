@@ -37,3 +37,7 @@
   file:
     path: "{{ repo_dir }}"
     state: directory
+
+- name: SETUP | show git version
+  debug:
+    msg: "Running test with git {{ git_version.stdout }}"
