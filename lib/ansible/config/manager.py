@@ -260,12 +260,15 @@ class ConfigManager(object):
 
         # update constants
         self.update_config_data()
+        # load module_groupings
+        self.module_defaults_groups = {}
         try:
             self.update_module_defaults_groups()
+            for module_defaults_file in self.get_config_value('MODULE_DEFAULTS_PATH'):
+                self.update_module_defaults_groups(module_defaults_file)
         except Exception as e:
             # Since this is a 2.7 preview feature, we want to have it fail as gracefully as possible when there are issues.
             sys.stderr.write('Could not load module_defaults_groups: %s: %s\n\n' % (type(e).__name__, e))
-            self.module_defaults_groups = {}
 
     def _read_config_yaml_file(self, yml_file):
         # TODO: handle relative paths as relative to the directory containing the current playbook instead of CWD
@@ -488,13 +491,13 @@ class ConfigManager(object):
 
         self._plugins[plugin_type][name] = defs
 
-    def update_module_defaults_groups(self):
-        defaults_config = self._read_config_yaml_file(
-            '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
-        )
+    def update_module_defaults_groups(self, filename=None):
+        if filename is None:
+            filename = '%s/module_defaults.yml' % os.path.join(os.path.dirname(__file__))
+        defaults_config = self._read_config_yaml_file(filename)
         if defaults_config.get('version') not in ('1', '1.0', 1, 1.0):
             raise AnsibleError('module_defaults.yml has an invalid version "%s" for configuration. Could be a bad install.' % defaults_config.get('version'))
-        self.module_defaults_groups = defaults_config.get('groupings', {})
+        self.module_defaults_groups.update(defaults_config.get('groupings', {}))
 
     def update_config_data(self, defs=None, configfile=None):
         ''' really: update constants '''
