@@ -1919,7 +1919,11 @@ class PyVmomiHelper(PyVmomi):
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
                 datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
-                datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
+                if self.params['esxi_hostname']:
+                    # Filtering datastores to those one attached to esxi host selected (it could be local storage)
+                    datastores = [x for x in datastores if self.params['esxi_hostname'].split(".",1)[0] in [h.key.config.network.netStackInstance[0].dnsConfig.hostName for h in x.host]]
+                else:
+                    datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
                 if datastores is None or len(datastores) == 0:
                     self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
 
