@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roledefinition_facts
 version_added: "2.8"
-short_description: Get Azure Role Definition facts.
+short_description: Get Azure Role Definition facts
 description:
     - Get facts of Azure Role Definition.
 
@@ -30,9 +30,11 @@ options:
         description:
             - Role definition id.
     role_name:
-        description: Role name.
+        description:
+            - Role name.
     type:
-        description: Type of role.
+        description:
+            - Type of role.
         choices:
             - system
             - custom
@@ -41,7 +43,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -58,60 +60,64 @@ EXAMPLES = '''
 
 RETURN = '''
 roledefinitions:
-    description: A list of Role Definition facts.
+    description:
+        - A list of Role Definition facts.
     returned: always
     type: complex
     contains:
-      id:
-        description: Role Definition id.
-        returned: always
-        type: str
-        sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-      role_name:
-        description: Role name.
-        returned: always
-        type: str
-        sample: myCustomRoleDefinition
-      name:
-        description: System assigned role name.
-        returned: always
-        type: str
-        sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-      assignable_scopes:
-        description:
-            - List of assignable scope of this definition.
-        returned: always
-        type: list
-        sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup"
-      permissions:
-        description:
-            - List of Role Definition peremissions.
-        returned: always
-        contains:
-            actions:
-                description:
-                    - List of allowed actions.
-                returned: always
-                type: list
-                sample: Microsoft.Compute/virtualMachines/read
-            not_actions:
-                description:
-                    - List of denied actions.
-                returned: always
-                type: list
-                sample: Microsoft.Compute/virtualMachines/write
-            data_actions:
-                description:
-                    - List of allowed data actions.
-                returned: always
-                type: list
-                sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read
-            not_data_actions:
-                description:
-                    - List of denied actions.
-                returned: always
-                type: list
-                sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write
+        id:
+            description:
+                - Role Definition ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        role_name:
+            description:
+                - Role name.
+            returned: always
+            type: str
+            sample: myCustomRoleDefinition
+        name:
+            description:
+                - System assigned role name.
+            returned: always
+            type: str
+            sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        assignable_scopes:
+            description:
+                - List of assignable scopes of this definition.
+            returned: always
+            type: list
+            sample: [ "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup" ]
+        permissions:
+            description:
+                - List of Role Definition permissions.
+            returned: always
+            contains:
+                actions:
+                    description:
+                        - List of allowed actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Compute/virtualMachines/read' ]
+                not_actions:
+                    description:
+                        - List of denied actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Compute/virtualMachines/write' ]
+                data_actions:
+                    description:
+                        - List of allowed data actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read' ]
+                not_data_actions:
+                    description:
+                        - List of denied data actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write' ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
