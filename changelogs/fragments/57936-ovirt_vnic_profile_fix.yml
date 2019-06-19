@@ -1,0 +1,2 @@
+bugfixes:
+  - Update ovirt vnic profile module BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1597537)
