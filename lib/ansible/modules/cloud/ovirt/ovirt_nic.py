@@ -178,7 +178,7 @@ class EntityNicsModule(BaseModule):
         if self._module.params.get('vm'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
-                equal(self._module.params.get('linked'), str(entity.linked)) and
+                equal(self._module.params.get('linked'), entity.linked) and
                 equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile)) and
                 equal(self._module.params.get('mac_address'), entity.mac.address)
@@ -186,7 +186,7 @@ class EntityNicsModule(BaseModule):
         elif self._module.params.get('template'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
-                equal(self._module.params.get('linked'), str(entity.linked)) and
+                equal(self._module.params.get('linked'), entity.linked) and
                 equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
             )
