@@ -159,8 +159,7 @@ def main():
 
     # Normalize interface name.
     int = module.params.get('destination_profile_source_interface')
-    if int:
-        module.params['destination_profile_source_interface'] = normalize_interface(int)
+    module.params['destination_profile_source_interface'] = normalize_interface(int)
 
     cmd_ref = NxosCmdRef(module, TMS_CMD_REF)
     cmd_ref.set_context()
