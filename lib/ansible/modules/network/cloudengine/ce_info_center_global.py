@@ -625,7 +625,7 @@ class InfoCenterGlobal(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         channel_info["channelInfos"] = list()
-        channels = root.findall("data/syslog/icChannels/icChannel")
+        channels = root.findall("syslog/icChannels/icChannel")
         if channels:
             for channel in channels:
                 channel_dict = dict()
@@ -716,7 +716,7 @@ class InfoCenterGlobal(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         channel_direct_info["channelDirectInfos"] = list()
-        dir_channels = root.findall("data/syslog/icDirChannels/icDirChannel")
+        dir_channels = root.findall("syslog/icDirChannels/icDirChannel")
         if dir_channels:
             for ic_dir_channel in dir_channels:
                 channel_direct_dict = dict()
@@ -806,7 +806,7 @@ class InfoCenterGlobal(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         filter_info["filterInfos"] = list()
-        ic_filters = root.findall("data/syslog/icFilters/icFilter")
+        ic_filters = root.findall("syslog/icFilters/icFilter")
         if ic_filters:
             for ic_filter in ic_filters:
                 filter_dict = dict()
@@ -894,7 +894,7 @@ class InfoCenterGlobal(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         server_ip_info["serverIpInfos"] = list()
-        syslog_servers = root.findall("data/syslog/syslogServers/syslogServer")
+        syslog_servers = root.findall("syslog/syslogServers/syslogServer")
         if syslog_servers:
             for syslog_server in syslog_servers:
                 server_dict = dict()
@@ -1065,7 +1065,7 @@ class InfoCenterGlobal(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         server_domain_info["serverAddressInfos"] = list()
-        syslog_dnss = root.findall("data/syslog/syslogDNSs/syslogDNS")
+        syslog_dnss = root.findall("syslog/syslogDNSs/syslogDNS")
         if syslog_dnss:
             for syslog_dns in syslog_dnss:
                 dns_dict = dict()
@@ -1172,7 +1172,7 @@ class InfoCenterGlobal(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/syslog/globalParam")
+                "syslog/globalParam")
 
             if global_info:
                 for tmp in global_info:
@@ -1253,7 +1253,7 @@ class InfoCenterGlobal(object):
 
             root = ElementTree.fromstring(xml_str)
             logfile_info = root.findall(
-                "data/syslog/icLogFileInfos/icLogFileInfo")
+                "syslog/icLogFileInfos/icLogFileInfo")
             if logfile_info:
                 for tmp in logfile_info:
                     for site in tmp:

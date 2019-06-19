@@ -78,11 +78,12 @@ except ImportError:
     # from ansible.module_utils.postgres
     pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
@@ -103,7 +104,7 @@ class PgPing(object):
 
     def get_pg_version(self):
         query = "SELECT version()"
-        raw = self.__exec_sql(query)[0][0]
+        raw = exec_sql(self, query, add_to_executed=False)[0][0]
         if raw:
             self.is_available = True
             raw = raw.split()[1].split('.')
@@ -112,16 +113,6 @@ class PgPing(object):
                 minor=int(raw[1]),
             )
 
-    def __exec_sql(self, query):
-        try:
-            self.cursor.execute(query)
-            res = self.cursor.fetchall()
-            if res:
-                return res
-        except Exception as e:
-            self.module.fail_json("Unable to execute '%s': %s" % (query, to_native(e)))
-
-        return False
 
 # ===========================================
 # Module execution.

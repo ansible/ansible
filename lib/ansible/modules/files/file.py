@@ -196,6 +196,16 @@ EXAMPLES = r'''
     owner: foo
     group: foo
 
+- name: Remove file (delete file)
+  file:
+    path: /etc/foo.txt
+    state: absent
+
+- name: Recursively remove directory
+  file:
+    path: /etc/foo
+    state: absent
+
 '''
 RETURN = r'''
 
@@ -367,6 +377,22 @@ def initial_diff(path, state, prev_state):
     if prev_state != state:
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
+        if state == 'absent':
+            walklist = {
+                'directories': [],
+                'files': [],
+            }
+            b_path = to_bytes(path, errors='surrogate_or_strict')
+            for base_path, sub_folders, files in os.walk(b_path):
+                for folder in sub_folders:
+                    folderpath = os.path.join(base_path, folder)
+                    walklist['directories'].append(folderpath)
+
+                for filename in files:
+                    filepath = os.path.join(base_path, filename)
+                    walklist['files'].append(filepath)
+
+            diff['before']['path_content'] = walklist
 
     return diff
 
@@ -481,6 +507,8 @@ def ensure_absent(path):
     result = {}
 
     if prev_state != 'absent':
+        diff = initial_diff(path, 'absent', prev_state)
+
         if not module.check_mode:
             if prev_state == 'directory':
                 try:
@@ -495,7 +523,6 @@ def ensure_absent(path):
                         raise AnsibleModuleError(results={'msg': "unlinking failed: %s " % to_native(e),
                                                           'path': path})
 
-        diff = initial_diff(path, 'absent', prev_state)
         result.update({'path': path, 'changed': True, 'diff': diff, 'state': 'absent'})
     else:
         result.update({'path': path, 'changed': False, 'state': 'absent'})

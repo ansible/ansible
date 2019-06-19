@@ -1,0 +1,2 @@
+minor_changes:
+- Make VM name and VM UUID as mutual exclusive and required one of (https://github.com/ansible/ansible/issues/57580).

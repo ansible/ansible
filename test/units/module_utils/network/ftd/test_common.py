@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.module_utils.network.ftd.common import equal_objects, delete_ref_duplicates
+from ansible.module_utils.network.ftd.common import equal_objects, delete_ref_duplicates, construct_ansible_facts
 
 
 # simple objects
@@ -372,3 +372,75 @@ def test_delete_ref_duplicates_with_object_containing_duplicate_refs_in_nested_o
             ]
         }
     } == delete_ref_duplicates(data)
+
+
+def test_construct_ansible_facts_should_make_default_fact_with_name_and_type():
+    response = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar'
+    }
+
+    assert {'bar_foo': response} == construct_ansible_facts(response, {})
+
+
+def test_construct_ansible_facts_should_not_make_default_fact_with_no_name():
+    response = {
+        'id': '123',
+        'name': 'foo'
+    }
+
+    assert {} == construct_ansible_facts(response, {})
+
+
+def test_construct_ansible_facts_should_not_make_default_fact_with_no_type():
+    response = {
+        'id': '123',
+        'type': 'bar'
+    }
+
+    assert {} == construct_ansible_facts(response, {})
+
+
+def test_construct_ansible_facts_should_use_register_as_when_given():
+    response = {
+        'id': '123',
+        'name': 'foo',
+        'type': 'bar'
+    }
+    params = {'register_as': 'fact_name'}
+
+    assert {'fact_name': response} == construct_ansible_facts(response, params)
+
+
+def test_construct_ansible_facts_should_extract_items():
+    response = {'items': [
+        {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }, {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }
+    ]}
+    params = {'register_as': 'fact_name'}
+
+    assert {'fact_name': response['items']} == construct_ansible_facts(response, params)
+
+
+def test_construct_ansible_facts_should_ignore_items_with_no_register_as():
+    response = {'items': [
+        {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }, {
+            'id': '123',
+            'name': 'foo',
+            'type': 'bar'
+        }
+    ]}
+
+    assert {} == construct_ansible_facts(response, {})

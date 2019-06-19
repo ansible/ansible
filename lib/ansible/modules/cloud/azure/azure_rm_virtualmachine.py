@@ -553,12 +553,12 @@ EXAMPLES = '''
 
 - name: Power On
   azure_rm_virtualmachine:
-    resource_group:
+    resource_group: myResourceGroup
     name: testvm002
 
 - name: Restart
   azure_rm_virtualmachine:
-    resource_group:
+    resource_group: myResourceGroup
     name: testvm002
     restarted: yes
 
@@ -1794,6 +1794,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Deleting public IPs')
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
+
+        if 'all' in self.remove_on_absent or 'all_autocreated' in self.remove_on_absent:
+            self.remove_autocreated_resources(vm.tags)
 
         return True
 

@@ -61,23 +61,23 @@ files:
   $modules/cloud/amazon/ec2_ami.py: willthames
   $modules/cloud/amazon/ec2_asg.py: $team_ansible s-hertel ryansb
   $modules/cloud/amazon/ec2_group.py: $team_ansible
-  $modules/cloud/amazon/ec2_group_facts.py: willthames
+  $modules/cloud/amazon/ec2_group_info.py: willthames
   $modules/cloud/amazon/ec2_instance.py: Shaps
-  $modules/cloud/amazon/ec2_instance_facts.py: willthames
+  $modules/cloud/amazon/ec2_instance_info.py: willthames
   $modules/cloud/amazon/ec2_key.py: $team_ansible
   $modules/cloud/amazon/ec2_lc.py: $team_ansible
-  $modules/cloud/amazon/ec2_lc_facts.py: willthames
+  $modules/cloud/amazon/ec2_lc_info.py: willthames
   $modules/cloud/amazon/ec2_metric_alarm.py: $team_ansible
   $modules/cloud/amazon/ec2_tag.py: $team_ansible
   $modules/cloud/amazon/ec2_vol.py: $team_ansible
   $modules/cloud/amazon/ec2_vpc_endpoint.py: willthames
-  $modules/cloud/amazon/ec2_vpc_endpoint_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_endpoint_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_igw.py: willthames
-  $modules/cloud/amazon/ec2_vpc_igw_facts.py: willthames
-  $modules/cloud/amazon/ec2_vpc_nat_gateway_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_igw_info.py: willthames
+  $modules/cloud/amazon/ec2_vpc_nat_gateway_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_net.py: $team_ansible
-  $modules/cloud/amazon/ec2_vpc_net_facts.py: whiter
-  $modules/cloud/amazon/ec2_vpc_peering_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_net_info.py: whiter
+  $modules/cloud/amazon/ec2_vpc_peering_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_subnet.py: willthames
   $modules/cloud/amazon/ecs_cluster.py: willthames
   $modules/cloud/amazon/ecs_ecr.py: willthames
@@ -87,7 +87,7 @@ files:
   $modules/cloud/amazon/ecs_taskdefinition.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition_facts.py: willthames
   $modules/cloud/amazon/elasticache.py: alachaum
-  $modules/cloud/amazon/elb_target_group_facts.py: willthames
+  $modules/cloud/amazon/elb_target_group_info.py: willthames
   $modules/cloud/amazon/iam.py: $team_ansible
   $modules/cloud/amazon/iam_cert.py: $team_ansible
   $modules/cloud/amazon/iam_group.py: willthames
@@ -999,6 +999,16 @@ files:
     maintainers: $team_networking
     labels: networking
 ###############################
+# plugins/become
+  $plugins/become:
+    support: community
+  $plugins/become/__init__.py:
+    support: core
+  $plugins/become/su.py:
+    support: core
+  $plugins/become/sudo.py:
+    support: core
+###############################
 # plugins/cache
   $plugins/cache/__init__.py:
     support: core
@@ -1078,6 +1088,9 @@ files:
 # plugins/connection
   $plugins/connection/:
     support: core
+  $plugins/connection/buildah.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/docker.py:
     <<: *docker
     support: community
@@ -1101,6 +1114,9 @@ files:
   $plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/podman.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/psrp.py: *windows_core
   $plugins/connection/saltstack.py:
     support: community
@@ -1225,6 +1241,50 @@ files:
 ###############################
 # plugins/lookup
   $plugins/lookup/__init__.py:
+    support: core
+  $plugins/lookup/config.py:
+    support: core
+  $plugins/lookup/dict.py:
+    support: core
+  $plugins/lookup/env.py:
+    support: core
+  $plugins/lookup/file.py:
+    support: core
+  $plugins/lookup/fileglob.py:
+    support: core
+  $plugins/lookup/first_found.py:
+    support: core
+  $plugins/lookup/indexed_items.py:
+    support: core
+  $plugins/lookup/inventory_hostnames.py:
+    support: core
+  $plugins/lookup/items.py:
+    support: core
+  $plugins/lookup/lines.py:
+    support: core
+  $plugins/lookup/list.py:
+    support: core
+  $plugins/lookup/nested.py:
+    support: core
+  $plugins/lookup/password.py:
+    support: core
+  $plugins/lookup/pipe.py:
+    support: core
+  $plugins/lookup/random_choice.py:
+    support: core
+  $plugins/lookup/sequence.py:
+    support: core
+  $plugins/lookup/subelements.py:
+    support: core
+  $plugins/lookup/template.py:
+    support: core
+  $plugins/lookup/together.py:
+    support: core
+  $plugins/lookup/url.py:
+    support: core
+  $plugins/lookup/varnames.py:
+    support: core
+  $plugins/lookup/vars.py:
     support: core
   $plugins/lookup/aws:
     labels:
@@ -1516,7 +1576,7 @@ macros:
   team_macos: akasurde dagwieers kyleabenson martinm82
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: kbreit
-  team_mysql: Alexander198961 bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
+  team_mysql: Alexander198961 bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon Andersson007
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos

@@ -52,7 +52,7 @@ $members_before = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = [System.Collections.Generic.List`1[String]]@()
 
 foreach ($member in $members) {
-    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName
+    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName @extra_vars
     if (!$group_member) {
         Fail-Json -obj $result "Could not find domain user, group, service account or computer named $member"
     }

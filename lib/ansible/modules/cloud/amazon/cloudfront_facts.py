@@ -238,6 +238,12 @@ summary:
     description: Gives a summary of distributions, streaming distributions and origin access identities.
     returned: as default or if summary is true
     type: dict
+result:
+    description: >
+        Result dict not nested under the cloudfront id to access results of module without the knowledge of that id
+        as figuring out the DistributionId is usually the reason one uses this module in the first place.
+    returned: always
+    type: dict
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
@@ -545,6 +551,10 @@ class CloudFrontServiceManager:
 
 def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, aliases):
     facts[distribution_id].update(details)
+    # also have a fixed key for accessing results/details returned
+    facts['result'] = details
+    facts['result']['DistributionId'] = distribution_id
+
     for alias in aliases:
         facts[alias].update(details)
     return facts

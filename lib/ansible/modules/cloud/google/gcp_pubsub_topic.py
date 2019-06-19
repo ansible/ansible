@@ -117,7 +117,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module))
+                update(module, self_link(module), fetch)
                 fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
@@ -141,9 +141,19 @@ def create(module, link):
     return return_if_object(module, auth.put(link, resource_to_request(module)))
 
 
-def update(module, link):
-    delete(module, self_link(module))
-    create(module, self_link(module))
+def update(module, link, fetch):
+    auth = GcpSession(module, 'pubsub')
+    params = {'updateMask': updateMask(resource_to_request(module), response_to_hash(module, fetch))}
+    request = resource_to_request(module)
+    del request['name']
+    return return_if_object(module, auth.patch(link, request, params=params))
+
+
+def updateMask(request, response):
+    update_mask = []
+    if request.get('labels') != response.get('labels'):
+        update_mask.append('labels')
+    return ','.join(update_mask)
 
 
 def delete(module, link):
@@ -220,7 +230,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': response.get(u'name'), u'labels': response.get(u'labels')}
+    return {u'name': module.params.get('name'), u'labels': response.get(u'labels')}
 
 
 def decode_request(response, module):

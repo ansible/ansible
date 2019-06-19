@@ -1245,8 +1245,16 @@ class ModuleValidator(Validator):
 
             # TODO: needs to recursively traverse suboptions
             doc_type = docs.get('options', {}).get(arg, {}).get('type')
-            if 'type' in data:
-                if data['type'] != doc_type and doc_type is not None:
+            if 'type' in data and data['type'] is not None:
+                if doc_type is None:
+                    if not arg.startswith('_'):  # hidden parameter, for example _raw_params
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=337,
+                            msg="Argument '%s' in argument_spec defines type as %r "
+                                "but documentation doesn't define type" % (arg, data['type'])
+                        )
+                elif data['type'] != doc_type:
                     self.reporter.error(
                         path=self.object_path,
                         code=325,
@@ -1254,7 +1262,14 @@ class ModuleValidator(Validator):
                             "but documentation defines type as %r" % (arg, data['type'], doc_type)
                     )
             else:
-                if doc_type != 'str' and doc_type is not None:
+                if doc_type is None:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=338,
+                        msg="Argument '%s' in argument_spec uses default type ('str') "
+                            "but documentation doesn't define type" % (arg)
+                    )
+                elif doc_type != 'str':
                     self.reporter.error(
                         path=self.object_path,
                         code=335,

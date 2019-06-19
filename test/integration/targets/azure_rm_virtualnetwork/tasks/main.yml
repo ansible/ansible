@@ -71,7 +71,7 @@
       - testing
 
 - assert:
-    that: "azure_virtualnetworks | length == 1"
+    that: "azure_virtualnetworks | length >= 1"
 
 - name: Gather facts by tags
   azure_rm_virtualnetwork_facts:

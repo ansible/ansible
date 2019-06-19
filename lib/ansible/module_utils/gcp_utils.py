@@ -49,6 +49,10 @@ def remove_nones_from_dict(obj):
         value = obj[key]
         if value is not None and value != {} and value != []:
             new_obj[key] = value
+
+    # Blank dictionaries should return None or GCP API may complain.
+    if not new_obj:
+        return None
     return new_obj
 
 

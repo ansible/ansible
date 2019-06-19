@@ -74,6 +74,8 @@ class ActionModule(ActionBase):
                     skipped[fact_module] = res.get('msg')
                 else:
                     result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+
+            self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
             # do it async
             jobs = {}

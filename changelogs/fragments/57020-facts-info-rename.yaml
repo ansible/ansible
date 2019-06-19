@@ -1,0 +1,4 @@
+minor_changes:
+- The ``jenkins_job_facts`` module has been renamed to ``jenkins_job_info``.
+- The ``intersight_facts`` module has been renamed to ``intersight_info``.
+- The ``github_webhook_facts`` module has been renamed to ``github_webhook_info``.

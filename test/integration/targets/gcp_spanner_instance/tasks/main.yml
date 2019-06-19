@@ -54,7 +54,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "\"{{resource_name}}\" in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "\"{{resource_name}}\" in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a instance that already exists
   gcp_spanner_instance:
@@ -102,7 +102,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "\"{{resource_name}}\" not in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "\"{{resource_name}}\" not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a instance that does not exist
   gcp_spanner_instance:

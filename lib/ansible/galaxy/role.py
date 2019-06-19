@@ -256,12 +256,9 @@ class GalaxyRole(object):
             display.debug("installing from %s" % tmp_file)
 
             if not tarfile.is_tarfile(tmp_file):
-                raise AnsibleError("the file downloaded was not a tar.gz")
+                raise AnsibleError("the downloaded file does not appear to be a valid tar archive.")
             else:
-                if tmp_file.endswith('.gz'):
-                    role_tar_file = tarfile.open(tmp_file, "r:gz")
-                else:
-                    role_tar_file = tarfile.open(tmp_file, "r")
+                role_tar_file = tarfile.open(tmp_file, "r")
                 # verify the role's meta file
                 meta_file = None
                 members = role_tar_file.getmembers()
