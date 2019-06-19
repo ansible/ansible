@@ -27,7 +27,7 @@
 - assert:
     that:
       - 'pg_authid is failed'
-      - '"permission denied for relation pg_authid" in pg_authid.stderr'
+      - pg_authid.stderr is search('permission denied for (relation|table) pg_authid')
 
 - name: "Normal user isn't allowed to access pg_authid relation: password comparison will fail, password will be updated"
   become_user: "{{ pg_user }}"
