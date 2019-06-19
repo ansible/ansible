@@ -49,8 +49,6 @@ options:
         command. Note, the filter key should be exactly the same used
         in checkpoint APIs.
     type: list
-    required: true
-extends_documentation_fragment: checkpoint_objects
 """
 
 EXAMPLES = """
