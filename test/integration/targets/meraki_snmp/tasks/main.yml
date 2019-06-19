@@ -19,6 +19,20 @@
 - debug:
     msg: '{{snmp_query}}'
 
+- name: Enable SNMPv2c with check mode
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v2c_enabled: true
+  delegate_to: localhost
+  register: snmp_v2_enable_check
+  check_mode: yes
+
+- assert:
+    that:
+      - snmp_v2_enable_check is not changed
+
 - name: Enable SNMPv2c
   meraki_snmp:
     auth_key: '{{auth_key}}'
@@ -119,6 +133,23 @@
     that:
       - snmp_idempotent.changed == False
       - snmp_idempotent.data is defined
+
+- name: Check for idempotency with check mode
+  meraki_snmp:
+    auth_key: '{{auth_key}}'
+    org_name: '{{test_org_name}}'
+    state: present
+    v3_enabled: true
+    v3_auth_mode: SHA
+    v3_auth_pass: ansiblepass
+    v3_priv_mode: AES128
+    v3_priv_pass: ansiblepass
+  delegate_to: localhost
+  register: snmp_idempotent_check
+
+- assert:
+    that:
+      - snmp_idempotent_check is not changed
 
 - name: Add peer IPs
   meraki_snmp:
