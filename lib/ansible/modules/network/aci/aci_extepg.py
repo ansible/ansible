@@ -16,7 +16,7 @@ module: aci_extepg
 short_description: Manage External Network Instance Profile (ExtEpg) objects (l3extInstP:instP)
 description:
 - Manage External Network Instance Profile (ExtEpg) objects (l3extInstP:instP)
-version_added: '2.8'
+version_added: '2.9'
 options:
   tenant:
     description:
@@ -236,7 +236,7 @@ def main():
                   aliases=['target']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
-    
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -276,9 +276,9 @@ def main():
             target_filter={'name': extepg},
         ),
     )
-    
+
     aci.get_existing()
-    
+
     if state == 'present':
         aci.payload(
             aci_class='l3extInstP',

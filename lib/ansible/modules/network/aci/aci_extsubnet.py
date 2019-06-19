@@ -16,7 +16,7 @@ module: aci_extsubnet
 short_description: Manage External Subnet objects (l3extSubnet:extsubnet)
 description:
 - Manage External Subnet objects (l3extSubnet:extsubnet)
-version_added: '2.8'
+version_added: '2.9'
 options:
   tenant:
     description:
@@ -60,6 +60,8 @@ options:
     - The C(shared-rtctrl) option controls which external prefixes are advertised to other tenants for shared services.
     - The C(shared-security) option configures the classifier for the subnets in the VRF where the routes are leaked.
     - The APIC defaults to C(import-security) when unset during creation.
+    type: list
+    choices: [ export-rtctrl, import-security, shared-rtctrl, shared-security ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -238,13 +240,13 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         l3out=dict(type='str', aliases=['l3out_name']),  # Not required for querying all objects
         extepg=dict(type='str', aliases=['extepg_name', 'name']),  # Not required for querying all objects
-        network=dict(type='str', aliases=['ip, address']),
+        network=dict(type='str', aliases=['address, ip']),
         description=dict(type='str', aliases=['descr']),
         subnet_name=dict(type='str', aliases=['name']),
         scope=dict(type='list', choices=['export-rtctrl', 'import-security', 'shared-rtctrl', 'shared-security']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
-    
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -291,9 +293,9 @@ def main():
             target_filter={'name': network},
         ),
     )
-    
+
     aci.get_existing()
-    
+
     if state == 'present':
         aci.payload(
             aci_class='l3extSubnet',
