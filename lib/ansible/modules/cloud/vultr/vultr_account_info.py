@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2017, René Moser <mail@renemoser.net>
+# Copyright (c) 2019, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,23 +13,23 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: vultr_account_facts
-short_description: Gather facts about the Vultr account.
+module: vultr_account_info
+short_description: Get infos about the Vultr account.
 description:
-  - Gather facts about account balance, charges and payments.
-version_added: "2.5"
+  - Get infos about account balance, charges and payments.
+version_added: "2.9"
 author: "René Moser (@resmo)"
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = r'''
-- name: Gather Vultr account facts
-  local_action:
-    module: vultr_account_facts
+- name: Get Vultr account infos
+  vultr_account_info:
+  register: result
 
-- name: Print the gathered facts
+- name: Print the infos
   debug:
-    var: ansible_facts.vultr_account_facts
+    var: result.vultr_account_info
 '''
 
 RETURN = r'''
@@ -59,7 +59,7 @@ vultr_api:
       returned: success
       type: str
       sample: "https://api.vultr.com"
-vultr_account_facts:
+vultr_account_info:
   description: Response from Vultr API
   returned: success
   type: complex
@@ -93,10 +93,10 @@ from ansible.module_utils.vultr import (
 )
 
 
-class AnsibleVultrAccountFacts(Vultr):
+class AnsibleVultrAccountInfo(Vultr):
 
     def __init__(self, module):
-        super(AnsibleVultrAccountFacts, self).__init__(module, "vultr_account_facts")
+        super(AnsibleVultrAccountInfo, self).__init__(module, "vultr_account_info")
 
         self.returns = {
             'balance': dict(convert_to='float'),
@@ -117,12 +117,9 @@ def main():
         supports_check_mode=True,
     )
 
-    account_facts = AnsibleVultrAccountFacts(module)
-    result = account_facts.get_result(account_facts.get_account_info())
-    ansible_facts = {
-        'vultr_account_facts': result['vultr_account_facts']
-    }
-    module.exit_json(ansible_facts=ansible_facts, **result)
+    account_info = AnsibleVultrAccountInfo(module)
+    result = account_info.get_result(account_info.get_account_info())
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
