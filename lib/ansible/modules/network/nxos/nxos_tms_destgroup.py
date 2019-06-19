@@ -112,22 +112,22 @@ destination:
 def normalize_data(cmd_ref):
     ''' Normalize playbook values and get_exisiting data '''
 
-    if cmd_ref._ref.get('destination').get('playval'):
-        protocol = cmd_ref._ref['destination']['playval']['protocol'].lower()
-        encoding = cmd_ref._ref['destination']['playval']['encoding'].lower()
-        cmd_ref._ref['destination']['playval']['protocol'] = protocol
-        cmd_ref._ref['destination']['playval']['encoding'] = encoding
-    if cmd_ref._ref.get('destination').get('existing'):
-        for key in cmd_ref._ref['destination']['existing'].keys():
-            protocol = cmd_ref._ref['destination']['existing'][key]['protocol'].lower()
-            encoding = cmd_ref._ref['destination']['existing'][key]['encoding'].lower()
-            cmd_ref._ref['destination']['existing'][key]['protocol'] = protocol
-            cmd_ref._ref['destination']['existing'][key]['encoding'] = encoding
+    playval = cmd_ref._ref.get('destination').get('playval')
+    existing = cmd_ref._ref.get('destination').get('existing')
 
-    return cmd_ref
+    keys = ['protocol', 'encoding']
+    if playval:
+        for key in keys:
+            playval[key] = playval[key].lower()
+    if existing:
+        for index in existing.keys():
+            for key in keys:
+                existing[index][key] = existing[index][key].lower()
 
 
 def aggregate_input_validation(module, item):
+    ''' Validate aggregate parameter values '''
+
     if 'identifier' not in item:
         msg = "aggregate item: {0} is missing required 'identifier' parameter".format(item)
         module.fail_json(msg=msg)
@@ -145,26 +145,21 @@ def aggregate_input_validation(module, item):
 def get_aggregate_cmds(module):
     ''' Get list of commands from aggregate parameter '''
 
+    params = module.params
     cache_existing = None
     proposed_cmds = []
-    aggregate = module.params.get('aggregate')
+    aggregate = params.get('aggregate')
     for item in aggregate:
         aggregate_input_validation(module, item)
         for k, v in item.items():
             if 'identifier' in k:
-                module.params['identifier'] = v
+                params['identifier'] = v
             if 'destination' in k:
-                module.params['destination'] = {}
+                dest = {}
                 for k, v in v.items():
-                    if 'ip' in k:
-                        module.params['destination']['ip'] = v
-                    if 'port' in k:
-                        module.params['destination']['port'] = v
-                    if 'protocol' in k:
-                        module.params['destination']['protocol'] = v
-                    if 'encoding' in k:
-                        module.params['destination']['encoding'] = v
-        resource_key = 'destination-group {0}'.format(module.params['identifier'])
+                    dest[k] = v
+                params['destination'] = dest
+        resource_key = 'destination-group {0}'.format(params['identifier'])
         cmd_ref = NxosCmdRef(module, TMS_CMD_REF)
         cmd_ref.set_context([resource_key])
         if cache_existing:
@@ -173,7 +168,7 @@ def get_aggregate_cmds(module):
             cmd_ref.get_existing()
             cache_existing = cmd_ref.cache_existing
         cmd_ref.get_playvals()
-        cmd_ref = normalize_data(cmd_ref)
+        normalize_data(cmd_ref)
         cmds = cmd_ref.get_proposed()
         proposed_cmds.extend(cmds)
 
@@ -202,7 +197,7 @@ def main():
         cmd_ref.set_context([resource_key])
         cmd_ref.get_existing()
         cmd_ref.get_playvals()
-        cmd_ref = normalize_data(cmd_ref)
+        normalize_data(cmd_ref)
         cmds = cmd_ref.get_proposed()
 
     result = {'changed': False, 'commands': cmds, 'warnings': warnings,

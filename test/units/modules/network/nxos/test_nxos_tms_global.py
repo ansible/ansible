@@ -81,7 +81,6 @@ class TestNxosTmsGlobalModule(TestNxosModule):
         # Assumes feature telemetry is disabled
         # TMS global config is not present.
         # Configure only vrf
-        module_name = self.module.__name__.rsplit('.', 1)[1]
         self.execute_show_command.return_value = None
         set_module_args(dict(
             destination_profile_vrf='blue',
