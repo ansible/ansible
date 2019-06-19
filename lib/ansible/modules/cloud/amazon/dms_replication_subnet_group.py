@@ -32,7 +32,7 @@ options:
         description:
             - The description for the subnet group.
         type: str
-    subnetids:
+    subnet_ids:
         description:
             - A list containing the subnet ids for the replication subnet group,
               needs to be at least 2 items in the list
@@ -49,7 +49,7 @@ EXAMPLES = '''
     state: present
     identifier: "dev-sngroup"
     description: "Development Subnet Group asdasdas"
-    subnetids: ['subnet-id1','subnet-id2']
+    subnet_ids: ['subnet-id1','subnet-id2']
 '''
 
 RETURN = ''' # '''
@@ -122,7 +122,7 @@ def create_module_params(module):
         # ReplicationSubnetGroupIdentifier gets translated to lower case anyway by the API
         ReplicationSubnetGroupIdentifier=module.params.get('identifier').lower(),
         ReplicationSubnetGroupDescription=module.params.get('description'),
-        SubnetIds=module.params.get('subnetids'),
+        subnet_ids=module.params.get('subnet_ids'),
     )
 
     return instance_parameters
@@ -147,11 +147,11 @@ def compare_params(module, param_described):
         if paramname in param_described.keys() and \
                 param_described.get(paramname) == modparams[paramname]:
             pass
-        elif paramname == 'SubnetIds':
+        elif paramname == 'subnet_ids':
             subnets = []
             for subnet in param_described.get('Subnets'):
                 subnets.append(subnet.get('SubnetIdentifier'))
-            for modulesubnet in modparams['SubnetIds']:
+            for modulesubnet in modparams['subnet_ids']:
                 if modulesubnet in subnets:
                     pass
         else:
@@ -190,7 +190,7 @@ def main():
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         identifier=dict(type='str', required=True),
         description=dict(type='str', required=True),
-        subnetids=dict(type='list', elements='str', required=True),
+        subnet_ids=dict(type='list', elements='str', required=True),
     )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
@@ -199,7 +199,6 @@ def main():
     exit_message = None
     changed = False
     if not HAS_BOTO3:
-
         module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')

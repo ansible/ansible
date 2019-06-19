@@ -8,7 +8,7 @@
       region: "{{ aws_region }}"
     resource_prefix: "test_dms_sg"
     dms_sg_identifier: "{{ resource_prefix }}-dms"
-  no_log: no
+  no_log: yes
 
 - block:
     - name: Create VPC for use in testing
@@ -18,6 +18,7 @@
         tags:
           Name: Ansible ec2_instance Testing VPC
         tenancy: default
+        <<: *aws_connection_info
       register: testing_vpc
 
     - name: create subnet1
@@ -26,6 +27,7 @@
         vpc_id:  "{{ testing_vpc.vpc.id }}"
         cidr: 10.22.32.16/28
         az: eu-west-1a
+        <<: *aws_connection_info
       register: subnet1
 
     - name: create subnet2
@@ -34,6 +36,7 @@
         vpc_id:  "{{ testing_vpc.vpc.id }}"
         cidr: 10.22.32.32/28
         az: eu-west-1c
+        <<: *aws_connection_info
       register: subnet2
 
     - name: create replication subnet subnet group
@@ -41,8 +44,9 @@
         state: present
         identifier: "dev-sngroup"
         description: "Development Subnet Group asdasdas"
-        subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
-        register: result
+        subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        <<: *aws_connection_info
+      register: result
 
     - assert:
         that:
@@ -54,7 +58,7 @@
         state: present
         identifier: "{{ dms_sg_identifier }}"
         description: "Development Subnet Group"
-        subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
 
@@ -68,7 +72,7 @@
         state: present
         identifier: "{{ dms_sg_identifier }}"
         description: "Development Subnet Group updated"
-        subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
 
@@ -82,7 +86,7 @@
         state: present
         identifier: "{{ dms_sg_identifier }}"
         description: "Development Subnet Group updated"
-        subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
 
@@ -97,7 +101,7 @@
         state: absent
         identifier: "{{ dms_sg_identifier }}"
         description: "Development Subnet Group updated"
-        subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
 
@@ -111,7 +115,7 @@
         state: absent
         identifier: "{{ dms_sg_identifier }}"
         description: "Development Subnet Group updated"
-        subnetids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
+        subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result
 
@@ -126,6 +130,7 @@
         vpc_id:  "{{ testing_vpc.vpc.id }}"
         cidr: 10.22.32.16/28
         az: eu-west-1a
+        <<: *aws_connection_info
 
     - name: delete subnet2
       ec2_vpc_subnet:
@@ -133,6 +138,7 @@
         vpc_id:  "{{ testing_vpc.vpc.id }}"
         cidr: 10.22.32.32/28
         az: eu-west-1c
+        <<: *aws_connection_info
 
     - name: delete VPC for use in testing
       ec2_vpc_net:
@@ -142,3 +148,4 @@
           Name: Ansible ec2_instance Testing VPC
         tenancy: default
         state: absent
+        <<: *aws_connection_info
