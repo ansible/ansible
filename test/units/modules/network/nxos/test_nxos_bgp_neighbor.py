@@ -46,9 +46,31 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         self.get_config.return_value = load_fixture('nxos_bgp', 'config.cfg')
         self.load_config.return_value = []
 
+    def test_nxos_bgp_neighbor_bfd_1(self):
+        # None (disable) -> enable
+        set_module_args(dict(asn=65535, neighbor='1.1.1.1', bfd='enable'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 1.1.1.1', 'bfd'])
+
+        # enable -> enable (idempotence)
+        set_module_args(dict(asn=65535, neighbor='1.1.1.2', bfd='enable'))
+        self.execute_module(changed=False)
+
+    def test_nxos_bgp_neighbor_bfd_2(self):
+        # enable -> None (disable)
+        set_module_args(dict(asn=65535, neighbor='1.1.1.2', bfd='disable'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 1.1.1.2', 'no bfd'])
+
+        # None (disable) -> disable (idempotence)
+        set_module_args(dict(asn=65535, neighbor='1.1.1.1', bfd='disable'))
+        self.execute_module(changed=False)
+
     def test_nxos_bgp_neighbor(self):
         set_module_args(dict(asn=65535, neighbor='192.0.2.3', description='some words'))
         self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 192.0.2.3', 'description some words'])
+
+    def test_nxos_bgp_neighbor_absent(self):
+        set_module_args(dict(asn=65535, neighbor='1.1.1.1', state='absent'))
+        self.execute_module(changed=True, commands=['router bgp 65535', 'no neighbor 1.1.1.1'])
 
     def test_nxos_bgp_neighbor_remove_private_as(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.4', remove_private_as='all'))
