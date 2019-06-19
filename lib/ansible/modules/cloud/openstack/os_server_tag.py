@@ -28,18 +28,22 @@ options:
       description:
         - Name or ID of the server
       required: true
+      type: str
    state:
      description:
        - Should the resource be present or absent.
      choices: [ present, absent ]
      default: present
+     type: str
    tags:
      description:
        - Key and value for tags
      required: true
+     type: list
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+     type: str
 requirements:
     - "python >= 2.7"
     - "openstacksdk >= 0.21.0"
