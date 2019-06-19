@@ -56,7 +56,8 @@ options:
     description:
     - Determines the scope of the Subnet.
     - The C(export-rtctrl) option controls which external networks are advertised out of the fabric using route-maps and IP prefix-lists.
-    - The C(import-security) option classifies for the external EPG. The rules and contracts defined in this external EPG apply to networks matching this subnet.
+    - The C(import-security) option classifies for the external EPG.
+      The rules and contracts defined in this external EPG apply to networks matching this subnet.
     - The C(shared-rtctrl) option controls which external prefixes are advertised to other tenants for shared services.
     - The C(shared-security) option configures the classifier for the subnets in the VRF where the routes are leaked.
     - The APIC defaults to C(import-security) when unset during creation.
