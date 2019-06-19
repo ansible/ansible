@@ -58,6 +58,7 @@ options:
         description:
             - Defines if the NIC is linked to the virtual machine.
         type: bool
+        version_added: "2.9"
 extends_documentation_fragment: ovirt
 '''
 
