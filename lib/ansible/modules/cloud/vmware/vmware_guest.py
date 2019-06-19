@@ -609,6 +609,7 @@ class PyVmomiKeyHelper(object):
         PyVmomiKeyHelper.current_key -= 1
         return PyVmomiKeyHelper.current_key
 
+
 class PyVmomiDeviceHelper(object):
     """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
 
