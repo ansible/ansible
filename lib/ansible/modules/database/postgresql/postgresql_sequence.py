@@ -287,6 +287,7 @@ from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
+    get_conn_params,
     postgres_common_argument_spec,
 )
 
@@ -498,7 +499,8 @@ def main():
     # Change autocommit to False if check_mode:
     autocommit = not module.check_mode
     # Connect to DB and make cursor object:
-    db_connection = connect_to_db(module, autocommit=autocommit)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=autocommit)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
