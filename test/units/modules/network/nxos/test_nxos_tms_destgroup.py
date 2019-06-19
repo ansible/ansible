@@ -66,8 +66,9 @@ class TestNxosTmsDestGroupModule(TestNxosModule):
         ))
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
-        assert 'parameter: identifier is required' in str(errinfo.value[0]['msg'])
-        assert errinfo.value[0]['failed']
+        testdata = errinfo.value.args[0]
+        assert 'parameter: identifier is required' in str(testdata['msg'])
+        assert testdata['failed']
 
     def test_tms_destgroup_input_validation_2(self):
         # Parameter 'aggregate' sub-parameter 'destination' is not a dict.
@@ -77,8 +78,9 @@ class TestNxosTmsDestGroupModule(TestNxosModule):
         ))
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
-        assert "parameter 'destination' must be a dict" in str(errinfo.value[0]['msg'])
-        assert errinfo.value[0]['failed']
+        testdata = errinfo.value.args[0]
+        assert "parameter 'destination' must be a dict" in str(testdata['msg'])
+        assert testdata['failed']
 
     def test_tms_destgroup_input_validation_3(self):
         # Parameter 'aggregate' sub-parameter 'destination' is not a dict.
@@ -88,8 +90,9 @@ class TestNxosTmsDestGroupModule(TestNxosModule):
         ))
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
-        assert 'contains unrecognized parameters' in str(errinfo.value[0]['msg'])
-        assert errinfo.value[0]['failed']
+        testdata = errinfo.value.args[0]
+        assert 'contains unrecognized parameters' in str(testdata['msg'])
+        assert testdata['failed']
 
     def test_tms_destgroup_input_validation_4(self):
         # Parameter 'aggregate' sub-parameter 'identifier' is required.
@@ -99,8 +102,9 @@ class TestNxosTmsDestGroupModule(TestNxosModule):
         ))
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
-        assert "is missing required 'identifier' parameter" in str(errinfo.value[0]['msg'])
-        assert errinfo.value[0]['failed']
+        testdata = errinfo.value.args[0]
+        assert "is missing required 'identifier' parameter" in str(testdata['msg'])
+        assert testdata['failed']
 
     def test_tms_destgroup_present_n9k(self):
         # Assumes feature telemetry is enabled
