@@ -1,0 +1,2 @@
+bugfixes:
+  - When nic has only one vnic profile use it as default or raise error (https://github.com/ansible/ansible/pull/57945)
