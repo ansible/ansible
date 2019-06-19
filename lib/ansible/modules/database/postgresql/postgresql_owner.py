@@ -161,6 +161,7 @@ from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils.postgres import (
     connect_to_db,
     exec_sql,
+    get_conn_params,
     postgres_common_argument_spec,
 )
 
@@ -415,7 +416,8 @@ def main():
     reassign_owned_by = module.params['reassign_owned_by']
     fail_on_role = module.params['fail_on_role']
 
-    db_connection = connect_to_db(module, autocommit=False)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############
