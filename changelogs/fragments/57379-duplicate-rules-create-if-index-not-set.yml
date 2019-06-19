@@ -1,0 +1,2 @@
+bugfixes:
+  - na_ontap_export_policy_rule - duplicate rules created if index was not set
