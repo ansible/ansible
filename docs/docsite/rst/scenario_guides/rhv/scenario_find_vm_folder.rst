@@ -4,7 +4,8 @@
 Find folder path of an existing RHV virtual machine
 ******************************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============

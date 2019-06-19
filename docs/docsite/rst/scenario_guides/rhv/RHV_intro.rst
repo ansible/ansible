@@ -4,7 +4,8 @@
 Introduction to Ansible for RHV
 **********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============
@@ -39,4 +40,3 @@ They are found here: `oVirt Modules <https://docs.ansible.com/ansible/latest/mod
         A blog about oVirt Ansible roles
     :ref:`working_with_playbooks`
         An introduction to playbooks
-

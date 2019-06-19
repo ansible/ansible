@@ -4,7 +4,8 @@
 Rename an existing virtual machine
 **********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============

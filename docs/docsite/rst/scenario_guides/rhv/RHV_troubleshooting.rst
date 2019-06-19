@@ -4,16 +4,17 @@
 Troubleshooting Ansible for RHV
 **********************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 This section lists things that can go wrong and possible ways to fix them.
 
 Debugging
 =========
 
-When debugging or creating a new issue, you will need information about your RHV infrastructure. 
+When debugging or creating a new issue, you will need information about your RHV infrastructure.
 
-Troubleshooting Item 
+Troubleshooting Item
 ====================
 
 Description

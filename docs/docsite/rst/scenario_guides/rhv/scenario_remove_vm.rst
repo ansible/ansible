@@ -4,7 +4,8 @@
 Remove an existing RHV virtual machine
 *****************************************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Introduction
 ============

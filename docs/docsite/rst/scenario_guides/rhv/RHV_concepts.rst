@@ -10,7 +10,8 @@ You need to understand them to use Ansible for RHV automation.
 This basic introduction provides the background you need to follow the
 examples in this guide.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 
 Control Node
