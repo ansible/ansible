@@ -154,6 +154,24 @@ def api_command(module, command):
     return result
 
 
+def show_api_call(module, api_call_object):
+    # This function is only for getting objects
+    result = {}
+    payload = module.params.get('filters')
+    connection = Connection(module._socket_path)
+
+    if module.params.get('version'):
+        version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
+    else:
+        version = ''
+    code, response = send_request(connection, version, api_call_object, payload)
+    if code != 200:
+        module.fail_json(msg=response)
+
+    result[api_call_object] = response
+    return result
+
+
 # handle api call
 def api_call(module, api_call_object):
     payload = get_payload_from_parameters(module)
