@@ -210,7 +210,7 @@ options:
         version_added: "2.8"
     zones:
         description:
-            - A list of Availability Zones for your virtual machine scale set
+            - A list of Availability Zones for your virtual machine scale set.
         type: list
         version_added: "2.8"
     custom_data:
