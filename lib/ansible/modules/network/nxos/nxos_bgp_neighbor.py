@@ -373,11 +373,6 @@ def state_present(module, existing, proposed, candidate):
                 # this will loop for each local_as_attribute -- only append one time.
                 if command not in commands:
                     commands.append(command)
-            # If local_as arg is NOT passed to module execution -- only remove if it existed originally
-            elif module.params['local_as'] is None and existing.get('local_as'):
-                command = 'no local-as {0}'.format(existing.get('local_as'))
-                if command not in commands:
-                    commands.append(command)
         elif value is True:
             commands.append(key)
         elif value is False:

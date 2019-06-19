@@ -85,10 +85,10 @@ class TestNxosBgpNeighborModule(TestNxosModule):
         set_module_args(dict(asn=65535, neighbor='3.3.3.6', local_as='65523', local_as_no_prepend=True, local_as_replace_as=True))
         self.execute_module(changed=False, commands=[])
 
-    # Remote all Local AS Attributes
-    def test_nxos_bgp_neighbor_local_as_remove(self):
+    # Default Behaviour Test - Do not remove non-playbook values from device.
+    def test_nxos_bgp_neighbor_local_as_default_behaviour(self):
         set_module_args(dict(asn=65535, neighbor='3.3.3.6'))
-        self.execute_module(changed=True, commands=['router bgp 65535', 'neighbor 3.3.3.6', 'no local-as 65523'])
+        self.execute_module(changed=False, commands=[])
 
     # Remove Subset of Local AS Attributes (ie. reapply without extras)
     def test_nxos_bgp_neighbor_local_as_changed(self):
