@@ -48,7 +48,7 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.plugins.httpapi import HttpApiBase
 
 
-CONTENT_TYPE = 'application/yang.data+json'
+CONTENT_TYPE = 'application/yang-data+json'
 
 
 class HttpApi(HttpApiBase):

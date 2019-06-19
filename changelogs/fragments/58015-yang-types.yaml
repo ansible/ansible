@@ -1,0 +1,2 @@
+bugfixes:
+- Fix media type of RESTCONF requests.
