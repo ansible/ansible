@@ -107,6 +107,13 @@ resources:
       - A reference to the region where the regional address resides.
       returned: success
       type: str
+    prefixLength:
+      description:
+      - The prefix length of the IP range. If not present, it means the address field
+        is a single IP address.
+      - This field is not applicable to addresses with addressType=EXTERNAL.
+      returned: success
+      type: int
     addressType:
       description:
       - The type of the address to reserve, default is EXTERNAL.
@@ -114,6 +121,20 @@ resources:
       - "* INTERNAL indicates internal IP ranges belonging to some network."
       returned: success
       type: str
+    purpose:
+      description:
+      - The purpose of the resource. For global internal addresses it can be * VPC_PEERING
+        - for peer networks This should only be set when using an Internal address.
+      returned: success
+      type: str
+    network:
+      description:
+      - The URL of the network in which to reserve the IP range. The IP range must
+        be in RFC1918 space. The network cannot be deleted if there are any reserved
+        IP ranges referring to it.
+      - This should only be set when using an Internal address.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
