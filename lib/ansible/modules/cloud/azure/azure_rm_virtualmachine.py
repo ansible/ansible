@@ -510,7 +510,7 @@ EXAMPLES = '''
       name: customimage001
       resource_group: myResourceGroup
 
-- name: Create a VM with a image id
+- name: Create a VM with an image id
   azure_rm_virtualmachine:
     resource_group: myResourceGroup
     name: testvm001
