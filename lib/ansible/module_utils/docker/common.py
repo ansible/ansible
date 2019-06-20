@@ -332,14 +332,14 @@ class AnsibleDockerClient(Client):
 
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
+            self.docker_api_version_str = self.version()['ApiVersion']
         except APIError as exc:
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
 
+        self.docker_api_version = LooseVersion(self.docker_api_version_str)
         if min_docker_api_version is not None:
-            self.docker_api_version_str = self.version()['ApiVersion']
-            self.docker_api_version = LooseVersion(self.docker_api_version_str)
             if self.docker_api_version < LooseVersion(min_docker_api_version):
                 self.fail('Docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
