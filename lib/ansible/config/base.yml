@@ -1349,6 +1349,17 @@ FACTS_MODULES:
   type: list
   vars:
     - name: ansible_facts_modules
+FORCE_YAML_ORDERED_MAP:
+  name: use ordered dicts with YAML
+  description: forces Ansible to use ordered dictionaries when reading from yaml (default since Python 3.7)
+                in an attempt to preserve the order of mappings 'as written' by the user.
+  env:
+    - name: ANSIBLE_FORCE_YAML_ORDERED_MAP
+  ini:
+    - {key: yaml_ordered_mapping, section: defaults}
+  type: boolean
+  default: True
+  version_added: '2.9'
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
   default: False
