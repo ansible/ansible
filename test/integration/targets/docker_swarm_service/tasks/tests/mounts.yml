@@ -513,17 +513,6 @@
 ## mounts.source ###################################################
 ####################################################################
 
-- name: Delete volumes
-  docker_volume:
-    name: "{{ volume_name }}"
-    state: absent
-  loop:
-    - "{{ volume_name_1 }}"
-    - "{{ volume_name_2 }}"
-  loop_control:
-    loop_var: volume_name
-  ignore_errors: yes
-
 - name: mounts.source (empty for tmpfs)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -570,3 +559,14 @@
 ####################################################################
 ####################################################################
 ####################################################################
+
+- name: Delete volumes
+  docker_volume:
+    name: "{{ volume_name }}"
+    state: absent
+  loop:
+    - "{{ volume_name_1 }}"
+    - "{{ volume_name_2 }}"
+  loop_control:
+    loop_var: volume_name
+  ignore_errors: yes
