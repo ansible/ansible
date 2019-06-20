@@ -2230,7 +2230,7 @@ class DockerServiceManager(object):
                     (key.lower(), value) for key, value in driver_config.items()
                 ) or None
                 ds.mounts.append({
-                    'source': mount_data['Source'],
+                    'source': mount_data.get('Source', ''),
                     'type': mount_data['Type'],
                     'target': mount_data['Target'],
                     'readonly': mount_data.get('ReadOnly'),
