@@ -518,7 +518,7 @@ EXAMPLES = '''
     admin_username: adminUser
     admin_password: password01
     image:
-      id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      id: '{{image_id}}'
 
 - name: Create VM with spcified OS disk size
   azure_rm_virtualmachine:
