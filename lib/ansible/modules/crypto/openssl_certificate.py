@@ -1859,7 +1859,8 @@ def main():
 
             if backend == 'pyopenssl':
                 if not PYOPENSSL_FOUND:
-                    module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                    module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                     exception=PYOPENSSL_IMP_ERR)
                 if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
                     try:
                         getattr(crypto.X509Req, 'get_extensions')
@@ -1876,7 +1877,8 @@ def main():
                     certificate = AssertOnlyCertificate(module)
             elif backend == 'cryptography':
                 if not CRYPTOGRAPHY_FOUND:
-                    module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                    module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                     exception=CRYPTOGRAPHY_IMP_ERR)
                 if module.params['selfsigned_version'] == 2 or module.params['ownca_version'] == 2:
                     module.fail_json(msg='The cryptography backend does not support v2 certificates, '
                                          'use select_crypto_backend=pyopenssl for v2 certificates')
