@@ -64,6 +64,7 @@ options:
     protected_networks:
         description:
         - Set included/excluded networks for Intrusion Prevention.
+        type: dict
         suboptions:
             use_default:
                 description:
