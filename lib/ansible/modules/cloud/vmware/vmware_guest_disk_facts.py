@@ -114,6 +114,7 @@ guest_disk_facts:
             "capacity_in_kb": 10240,
             "controller_bus_number": 0,
             "controller_key": 1000,
+            "controller_type": "paravirtual",
             "key": 2000,
             "label": "Hard disk 1",
             "summary": "10,240 KB",
@@ -131,6 +132,7 @@ guest_disk_facts:
             "capacity_in_kb": 15360,
             "controller_bus_number": 0,
             "controller_key": 1000,
+            "controller_type": "paravirtual",
             "key": 2001,
             "label": "Hard disk 3",
             "summary": "15,360 KB",
@@ -167,11 +169,20 @@ class PyVmomiHelper(PyVmomi):
         if vm_obj is None:
             return disks_facts
 
+        controller_types = {
+            vim.vm.device.VirtualLsiLogicController: 'lsilogic',
+            vim.vm.device.ParaVirtualSCSIController: 'paravirtual',
+            vim.vm.device.VirtualBusLogicController: 'buslogic',
+            vim.vm.device.VirtualLsiLogicSASController: 'lsilogicsas',
+            vim.vm.device.VirtualIDEController: 'ide'
+        }
+
         controller_index = 0
         for controller in vm_obj.config.hardware.device:
-            if isinstance(controller, vim.vm.device.ParaVirtualSCSIController):
+            if isinstance(controller, tuple(controller_types.keys())):
                 controller_facts[controller_index] = dict(
                     key=controller.key,
+                    controller_type=controller_types[type(controller)],
                     bus_number=controller.busNumber,
                     devices=controller.device
                 )
@@ -248,6 +259,7 @@ class PyVmomiHelper(PyVmomi):
                 for controller_index in range(len(controller_facts)):
                     if controller_facts[controller_index]['key'] == disks_facts[disk_index]['controller_key']:
                         disks_facts[disk_index]['controller_bus_number'] = controller_facts[controller_index]['bus_number']
+                        disks_facts[disk_index]['controller_type'] = controller_facts[controller_index]['controller_type']
 
                 disk_index += 1
         return disks_facts
