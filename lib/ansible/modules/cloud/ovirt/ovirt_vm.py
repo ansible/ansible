@@ -1605,7 +1605,6 @@ class VmsModule(BaseModule):
         vm_service = self._service.service(entity.id)
         self._wait_for_UP(vm_service)
         self._attach_cd(vm_service.get())
-        self._migrate_vm(vm_service.get())
 
     def _attach_cd(self, entity):
         cd_iso = self.param('cd_iso')
@@ -1630,6 +1629,8 @@ class VmsModule(BaseModule):
 
     def _migrate_vm(self, entity):
         vm_host = self.param('host')
+        if entity.id is None and entity.name is not None:
+            entity = get_id_by_name(self._service, entity.name)
         vm_service = self._service.vm_service(entity.id)
         # In case VM is preparing to be UP, wait to be up, to migrate it:
         if entity.status == otypes.VmStatus.UP:
@@ -2425,6 +2426,7 @@ def main():
                         action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
+            vms_module._migrate_vm(vm)
             ret['changed'] = vms_module.changed
         elif state == 'stopped':
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
