@@ -225,7 +225,7 @@ except ImportError:
     try:
         from ordereddict import OrderedDict
     except ImportError:
-        pass
+        from ordereddict import OrderedDict
 
 
 def _needs_update(module, port, cloud):
