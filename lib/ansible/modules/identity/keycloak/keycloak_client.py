@@ -479,11 +479,13 @@ options:
             - The scopes the client requires by default. (KeyCloak >= 4.0.0, replaces client templates)
         aliases:
             - defaultClientScopes
+        version_added: "2.9"
     optional_client_scopes:
         description:
             - The scopes the client can add based on the request. (KeyCloak >= 4.0.0, replaces client templates)
         aliases:
             - optionalClientScopes
+        version_added: "2.9"
 
 extends_documentation_fragment:
     - keycloak
@@ -722,7 +724,7 @@ def main():
         protocol_mappers=dict(type='list', elements='dict', options=protmapper_spec, aliases=['protocolMappers']),
         authorization_settings=dict(type='dict', aliases=['authorizationSettings']),
         default_client_scopes=dict(type='list', aliases=['defaultClientScopes']),
-        optional_client_scopes=dict(type='list', aliases=['defaultClientScopes']),
+        optional_client_scopes=dict(type='list', aliases=['optionalClientScopes']),
     )
     argument_spec.update(meta_args)
 
