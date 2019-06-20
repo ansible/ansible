@@ -1,0 +1,3 @@
+bugfixes:
+- TaskExecutor - Create new instance of the action plugin on each
+  iteration when using until (https://github.com/ansible/ansible/issues/57886)
