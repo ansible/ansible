@@ -1046,6 +1046,7 @@ EXAMPLES = '''
 import shlex
 import time
 import operator
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -2740,21 +2741,24 @@ def main():
         option_minimal_versions=option_minimal_versions,
     )
 
-    dsm = DockerServiceManager(client)
-    msg, changed, rebuilt, changes, facts = dsm.run_safe()
+    try:
+        dsm = DockerServiceManager(client)
+        msg, changed, rebuilt, changes, facts = dsm.run_safe()
 
-    results = dict(
-        msg=msg,
-        changed=changed,
-        rebuilt=rebuilt,
-        changes=changes,
-        swarm_service=facts,
-    )
-    if client.module._diff:
-        before, after = dsm.diff_tracker.get_before_after()
-        results['diff'] = dict(before=before, after=after)
+        results = dict(
+            msg=msg,
+            changed=changed,
+            rebuilt=rebuilt,
+            changes=changes,
+            swarm_service=facts,
+        )
+        if client.module._diff:
+            before, after = dsm.diff_tracker.get_before_after()
+            results['diff'] = dict(before=before, after=after)
 
-    client.module.exit_json(**results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
