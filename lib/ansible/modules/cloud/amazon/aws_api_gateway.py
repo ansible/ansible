@@ -73,19 +73,22 @@ options:
     description:
       - Enable API GW caching of backend responses. Defaults to false
     type: bool
+    default: false
     version_added: '2.9'
   cache_size:
     description:
       - Size in GB of the API GW cache, becomes effective when cache_enabled is true.
     choices: ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237']
     type: str
+    default: '0.5'
     version_added: '2.9'
   stage_variables:
     description:
       - ENV variables for the stage. Define a dict of key values pairs for variables.
     type: dict
+    version_added: '2.9'
   stage_canary_settings:
-    decription:
+    description:
       - Canary settings for the deployment of the stage
     type: dict
     version_added: '2.9'
@@ -99,6 +102,7 @@ options:
       - Type of endpoint configuration, use EDGE for edge optomized API endpoint, REGIONAL for just regional deploy or PRIVATE for private API.
     choices: ['EDGE', 'REGIONAL', 'PRIVATE']
     type: str
+    default: EDGE
     version_added: '2.9'
 
 author:
@@ -243,7 +247,7 @@ def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_te
 
 def create_empty_api(module, client, endpoint_type):
     """
-    creates a new empty API ready to be configured.  The description is
+    creates a new empty API ready to be configured. The description is
     temporarily set to show the API as incomplete but should be
     updated when the API is configured.
     """
@@ -288,16 +292,16 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None):
     if stage:
         try:
             deploy_response = create_deployment(
-                    client,
-                    api_id=api_id,
-                    stage=stage,
-                    description = module.params.get('deploy_desc'),
-                    cache_enabled = module.params.get('cache_enabled'),
-                    cache_size = module.params.get('cache_size'),
-                    variables = module.params.get('stage_variables'),
-                    canary_settings = module.params.get('stage_canary_settings'),
-                    tracing_enabled = module.params.get('tracing_enabled')
-                )
+                client,
+                api_id=api_id,
+                stage=stage,
+                description=module.params.get('deploy_desc'),
+                cache_enabled=module.params.get('cache_enabled'),
+                cache_size=module.params.get('cache_size'),
+                variables=module.params.get('stage_variables'),
+                canary_settings=module.params.get('stage_canary_settings'),
+                tracing_enabled=module.params.get('tracing_enabled')
+            )
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {0} to stage {1}".format(api_id, stage)
             module.fail_json_aws(e, msg)
@@ -310,7 +314,7 @@ retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 
 @AWSRetry.backoff(**retry_params)
 def create_api(client, name=None, description=None, endpoint_type=None):
-    return client.create_rest_api(name="ansible-temp-api", description=description, endpointConfiguration={ 'types': [endpoint_type] })
+    return client.create_rest_api(name="ansible-temp-api", description=description, endpointConfiguration={'types': [endpoint_type]})
 
 
 @AWSRetry.backoff(**retry_params)
@@ -324,9 +328,9 @@ def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
 
 
 @AWSRetry.backoff(**retry_params)
-def create_deployment(client, api_id=None, stage=None, description=None,
-        cache_enabled=False, cache_size='0.5', variables={}, canary_settings={}, tracing_enabled=False):
-    if len(canary_settings) > 0:
+def create_deployment(client, api_id=None, stage=None, description=None, cache_enabled=False, cache_size='0.5',
+        variables=None, canary_settings=None, tracing_enabled=False):
+    if canary_settings and len(canary_settings) > 0:
         result = client.create_deployment(
             restApiId=api_id,
             stageName=stage,
