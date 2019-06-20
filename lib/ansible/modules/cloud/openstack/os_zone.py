@@ -138,6 +138,25 @@ def _system_state_change(state, email, description, ttl, masters, zone):
     return False
 
 
+def _wait(timeout, cloud, zone, state, module, sdk):
+    """Wait for a zone to reach the desired state for the given state."""
+
+    for count in sdk.utils.iterate_timeout(
+            timeout,
+            "Timeout waiting for zone to be %s" % state):
+
+        if (state == 'absent' and zone is None) or (state == 'present' and zone and zone.status == 'ACTIVE'):
+            return
+
+        try:
+            zone = cloud.get_zone(zone.id)
+        except Exception:
+            continue
+
+        if zone and zone.status == 'ERROR':
+            module.fail_json(msg="Zone reached ERROR state while waiting for it to be %s" % state)
+
+
 def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
@@ -156,6 +175,8 @@ def main():
 
     name = module.params.get('name')
     state = module.params.get('state')
+    wait = module.params.get('wait')
+    timeout = module.params.get('timeout')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -191,6 +212,10 @@ def main():
                         name, email=email,
                         description=description,
                         ttl=ttl, masters=masters)
+
+            if wait:
+                _wait(timeout, cloud, zone, state, module, sdk)
+
             module.exit_json(changed=changed, zone=zone)
 
         elif state == 'absent':
@@ -204,6 +229,10 @@ def main():
             else:
                 cloud.delete_zone(name)
                 changed = True
+
+            if wait:
+                _wait(timeout, cloud, zone, state, module, sdk)
+
             module.exit_json(changed=changed)
 
     except sdk.exceptions.OpenStackCloudException as e:
