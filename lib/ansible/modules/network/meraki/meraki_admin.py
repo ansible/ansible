@@ -80,10 +80,6 @@ options:
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         aliases: ['organization']
         type: str
-    org_id:
-        description:
-        - ID of organization.
-        type: str
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
