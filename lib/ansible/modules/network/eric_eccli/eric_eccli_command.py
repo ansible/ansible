@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2019 Ericsson AB.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -26,7 +27,6 @@ description:
     before returning or timing out if the condition is not met.
   - This module also supports running commands in configuration mode
     in raw command style.
-extends_documentation_fragment: eric_eccli
 notes:
   - Tested against IPOS 19.3
 options:
