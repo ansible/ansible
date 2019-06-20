@@ -65,7 +65,7 @@ EXAMPLES = '''
 # Set vm.swappiness to 5 in /etc/sysctl.conf
 - sysctl:
     name: vm.swappiness
-    value: 5
+    value: '5'
     state: present
 
 # Remove kernel.panic entry from /etc/sysctl.conf
@@ -77,20 +77,20 @@ EXAMPLES = '''
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl:
     name: kernel.panic
-    value: 3
+    value: '3'
     sysctl_file: /tmp/test_sysctl.conf
     reload: no
 
 # Set ip forwarding on in /proc and verify token value with the sysctl command
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
     state: present
     reload: yes
