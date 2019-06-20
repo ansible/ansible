@@ -130,11 +130,12 @@ def _boto3_conn(region, credentials):
         if boto_profile:
             try:
                 connection = boto3.session.Session(profile_name=boto_profile).client('ssm', region)
-            # FIXME: we should probably do better passing on of the error information
-            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError):
-                raise AnsibleError("Insufficient credentials found.")
+            except botocore.exceptions.ProfileNotFound:
+                raise AnsibleError("Boto Profile: %s not found" % (boto_profile))
+            except botocore.exceptions.PartialCredentialsError:
+                raise AnsibleError("Insufficient credentials found: %s" % (credentials))
         else:
-            raise AnsibleError("Insufficient credentials found.")
+            raise AnsibleError("Insufficient credentials found: %s" % (credentials))
     return connection
 
 
