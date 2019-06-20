@@ -510,6 +510,16 @@ EXAMPLES = '''
       name: customimage001
       resource_group: myResourceGroup
 
+- name: Create a VM with a image id
+  azure_rm_virtualmachine:
+    resource_group: myResourceGroup
+    name: testvm001
+    vm_size: Standard_DS1_v2
+    admin_username: adminUser
+    admin_password: password01
+    image:
+      id: '/subscriptions/<our-subscription-id>/resourceGroups/<our-shared-image-gallery-rsg>/providers/Microsoft.Compute/galleries/<our-gallery-name>/images/rhel-7-cis/versions/1.0.1'
+
 - name: Create VM with spcified OS disk size
   azure_rm_virtualmachine:
     resource_group: myResourceGroup
@@ -988,17 +998,16 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     image_reference = self.get_custom_image_reference(
                         self.image.get('name'),
                         self.image.get('resource_group'))
-                else:
-                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]")
-            elif self.image and isinstance(self.image, str):
-                custom_image = True
-                image_reference = self.get_custom_image_reference(self.image)
-            elif 'id' in self.image:
-                if self.image['id'] is not None:
+                elif self.image.get('id'):
                     try:
                         image_reference = self.compute_models.ImageReference(id=self.image['id'])
                     except Exception as exc:
-                        self.fail("WrongId Error: Cannot get image reference from the id - {0}".format(self.image['id']))
+                        self.fail("id Error: Cannot get image from the reference id - {0}".format(self.image['id']))
+                else:
+                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version], [name, resource_group] or [id]")
+            elif self.image and isinstance(self.image, str):
+                custom_image = True
+                image_reference = self.get_custom_image_reference(self.image)
             elif self.image:
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
 
