@@ -84,7 +84,7 @@ EXAMPLES = r'''
     ip_address: 127.0.0.1
 
 - name: Add ::1 as an AAAA record for localhost
-  win_environment:
+  win_hosts:
     state: present
     canonical_name: localhost
     ip_address: '::1'
