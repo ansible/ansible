@@ -362,6 +362,7 @@
   - assert:
       that:
         - 'result.changed == false'
+    when: ansible_net_version != "15.6(2)T"
 
   - name: Override all the exisiting BGP config
     ios_bgp:
