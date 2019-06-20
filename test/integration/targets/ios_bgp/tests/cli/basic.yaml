@@ -328,6 +328,10 @@
       that:
         - 'result.changed == false'
 
+  - name: Get the IOS version
+    ios_facts:
+      gather_subset: all
+
   - name: Configure redistribute information under address family mode with operation replace
     ios_bgp: &af_rdr_rplc
       operation: replace
@@ -353,6 +357,7 @@
   - name: Configure redistribute information under address family mode with operation replace (idempotent)
     ios_bgp: *af_rdr_rplc
     register: result
+    when: ansible_net_version != "15.6(2)T"
 
   - assert:
       that:
