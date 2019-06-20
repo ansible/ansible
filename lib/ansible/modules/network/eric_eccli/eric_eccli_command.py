@@ -1,11 +1,12 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2019 Ericsson AB.
-# All rights reserved.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -24,7 +25,6 @@ description:
     before returning or timing out if the condition is not met.
   - This module also support running commands in configuration mode
     in raw command style.
-extends_documentation_fragment: eric_eccli
 notes:
   - Tested against IPOS 19.3
 options:
@@ -131,7 +131,7 @@ import re
 import time
 
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
-from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec, check_args
+from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
@@ -184,7 +184,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
