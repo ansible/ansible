@@ -22,10 +22,6 @@ description:
 - Allows for creation, management, and visibility of NAT rules (1:1, 1:many, port forwarding) within Meraki.
 
 options:
-    auth_key:
-        description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
-        type: str
     state:
         description:
         - Create or modify an organization.
@@ -40,10 +36,6 @@ options:
     net_id:
         description:
         - ID number of a network.
-        type: str
-    org_name:
-        description:
-        - Name of organization associated to a network.
         type: str
     org_id:
         description:
