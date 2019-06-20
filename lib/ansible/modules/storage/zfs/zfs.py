@@ -167,7 +167,7 @@ class Zfs(object):
                 elif prop == 'volblocksize':
                     cmd += ['-b', value]
                 elif prop == 'sparse':
-                    if value == 'on':
+                    if check_type_bool(value):
                         cmd += ['-s']
                 else:
                     cmd += ['-o', '%s="%s"' % (prop, value)]
