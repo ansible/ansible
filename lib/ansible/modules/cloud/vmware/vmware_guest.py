@@ -1921,7 +1921,8 @@ class PyVmomiHelper(PyVmomi):
                 datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
                 if self.params['esxi_hostname']:
                     # Filtering datastores to those one attached to esxi host selected (it could be local storage)
-                    datastores = [x for x in datastores if self.params['esxi_hostname'].split(".",1)[0] in [h.key.config.network.netStackInstance[0].dnsConfig.hostName for h in x.host]]
+                    datastores = [x for x in datastores if self.params['esxi_hostname'].split(".", 1)[0] in 
+                                    [h.key.config.network.netStackInstance[0].dnsConfig.hostName for h in x.host]]
                 else:
                     datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
                 if datastores is None or len(datastores) == 0:
