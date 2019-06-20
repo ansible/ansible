@@ -518,7 +518,7 @@ EXAMPLES = '''
     admin_username: adminUser
     admin_password: password01
     image:
-      id: '/subscriptions/<our-subscription-id>/resourceGroups/<our-shared-image-gallery-rsg>/providers/Microsoft.Compute/galleries/<our-gallery-name>/images/rhel-7-cis/versions/1.0.1'
+      id: '{{image_id}}'
 
 - name: Create VM with spcified OS disk size
   azure_rm_virtualmachine:
