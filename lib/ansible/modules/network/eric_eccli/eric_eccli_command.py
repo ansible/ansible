@@ -18,7 +18,7 @@ DOCUMENTATION = """
 ---
 module: eric_eccli_command
 version_added: "2.9"
-author: Ericsson IPOS OAM team (@cheng.you@ericsson.com)
+author: Ericsson IPOS OAM team (@cheng)
 short_description: Run commands on remote devices running Ericsson ECCLI
 description:
   - Sends arbitrary commands to an ERICSSON eccli node and returns the results
@@ -111,19 +111,6 @@ tasks:
           prompt: 'Uncommitted changes found, commit them? [yes/no/CANCEL]'
           answer: 'no'
         - command: 'end'
-
-  - name: Set the prompt and error information regular expressions
-    eric_eccli_command:
-      commands:
-        - command: 'evr_2d01_vfrwd-evr1#dd'
-          prompt: 'error input: element does not exist'
-        - ansible.cfg:
-        - command: '[\r\n]+ error input: .*'
-
-        - command: 'evr_2d01_vfrwd-evr1#aaa'
-          prompt: 'aaa#'
-        - ansible.cfg:
-        - command: 'a{3}?#'
 """
 
 RETURN = """
@@ -146,7 +133,6 @@ failed_conditions:
 import re
 import time
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
 from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
