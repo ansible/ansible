@@ -993,6 +993,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             elif self.image and isinstance(self.image, str):
                 custom_image = True
                 image_reference = self.get_custom_image_reference(self.image)
+            elif 'id' in self.image:
+                if self.image['id'] is not None:
+                    try:
+                        image_reference = self.compute_models.ImageReference(id=self.image['id'])
+                    except Exception as exc:
+                        self.fail("WrongId Error: Cannot get image reference from the id - {0}".format(self.image['id']))
             elif self.image:
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
 
