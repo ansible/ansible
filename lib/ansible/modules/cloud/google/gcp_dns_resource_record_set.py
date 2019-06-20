@@ -162,6 +162,7 @@ def main():
             ttl=dict(type='int'),
             target=dict(type='list', elements='str'),
             managed_zone=dict(required=True, type='dict'),
+            timeout=dict(type='int')
         )
     )
 
