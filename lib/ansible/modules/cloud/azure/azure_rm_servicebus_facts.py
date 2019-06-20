@@ -232,7 +232,7 @@ servicebuses:
                     sample: 0
         support_ordering:
             description:
-                - Value that indicates whether the topic supports ordering.
+                - Value that indicates whether the C(topic) supports ordering.
             returned: always
             type: bool
             sample: true
@@ -244,13 +244,13 @@ servicebuses:
             sample: active
         requires_session:
             description:
-                - A value that indicates whether the  queue or topic supports the concept of sessions.
+                - A value that indicates whether the C(queue) or C(topic) supports the concept of sessions.
             returned: always
             type: bool
             sample: true
         requires_duplicate_detection:
             description:
-               - A value indicating if this queue or topic requires duplicate detection.
+               - A value indicating if this C(queue) or C(topic) requires duplicate detection.
             returned: always
             type: bool
             sample: true
