@@ -23,8 +23,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: ios_command
-version_added: "2.1"
+module: eric_eccli_command
+version_added: "2.9"
 author: "Peter Sprygada (@privateip)"
 short_description: Run commands on remote devices running Cisco IOS
 description:
@@ -58,7 +58,7 @@ options:
         within the configured number of retries, the task fails.
         See examples.
     aliases: ['waitfor']
-    version_added: "2.2"
+    version_added: "3.0"
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -69,7 +69,7 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
-    version_added: "2.2"
+    version_added: "3.0"
   retries:
     description:
       - Specifies the number of retries a command should by tried
