@@ -1,13 +1,11 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
+#
 # Copyright (c) 2019 Ericsson AB.
+# All rights reserved.
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+# 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -17,16 +15,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: eric_eccli_command
-version_added: "2.9"
-author: Ericsson IPOS OAM team (@cheng)
-short_description: Run commands on remote devices running Ericsson ECCLI
+author: Ericsson IPOS OAM team
+short_description: Run commands on remote devices running ERICSSON ECCLI
 description:
   - Sends arbitrary commands to an ERICSSON eccli node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module also supports running commands in configuration mode
+  - This module also support running commands in configuration mode
     in raw command style.
+extends_documentation_fragment: eric_eccli
 notes:
   - Tested against IPOS 19.3
 options:
@@ -101,7 +99,6 @@ tasks:
       wait_for:
         - result[0] contains IPOS
         - result[1] contains management
-
   - name: run commands that require answering a prompt
     eric_eccli_command:
       commands:
@@ -134,9 +131,9 @@ import re
 import time
 
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
-from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
+from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import transform_commands
+from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
@@ -149,8 +146,12 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    commands = transform_commands(module)
-
+    command = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+    commands = command(module.params['commands'])
     for item in list(commands):
         if module.check_mode:
             if item['command'].startswith('conf'):
@@ -183,6 +184,7 @@ def main():
     result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
