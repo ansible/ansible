@@ -69,7 +69,7 @@ id:
         - Current state of the service bus.
     returned: success
     type: str
-    sample: "/subscriptions/xxx...xxx/resourceGroups/v-xisuRG/providers/Microsoft.ServiceBus/namespaces/nsb57dc9561"
+    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/namespaces/myServicebus"
 '''
 
 try:
