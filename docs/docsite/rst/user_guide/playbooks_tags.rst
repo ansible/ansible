@@ -40,7 +40,7 @@ tasks, you can use the ``--skip-tags`` command-line option::
     ansible-playbook example.yml --skip-tags "packages"
 
 .. warning::
-    * When ``--tags`` or ``--skip-tags`` is supplied to the playbook, fact gathering about remote hosts is skipped. The `tags` can be only used in the plays and below.
+    * When ``--tags`` or ``--skip-tags`` is supplied to the playbook, fact gathering about remote hosts is skipped. The ``tags`` can be only used in the plays and below.
 
 .. _tag_reuse:
 
