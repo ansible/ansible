@@ -366,6 +366,7 @@ class HostsModule(BaseModule):
 
         return False
 
+
 def remove_host(host_module, host, count=0):
     try:
         return host_module.remove()
