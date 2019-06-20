@@ -276,6 +276,7 @@ network:
 '''
 
 import re
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -289,6 +290,7 @@ from ansible.module_utils.docker.common import (
 
 try:
     from docker import utils
+    from docker.errors import DockerException
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
@@ -681,8 +683,11 @@ def main():
         option_minimal_versions=option_minimal_versions,
     )
 
-    cm = DockerNetworkManager(client)
-    client.module.exit_json(**cm.results)
+    try:
+        cm = DockerNetworkManager(client)
+        client.module.exit_json(**cm.results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

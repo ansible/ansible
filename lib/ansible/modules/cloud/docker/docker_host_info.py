@@ -185,11 +185,13 @@ disk_usage:
 
 '''
 
+import traceback
+
 from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils._text import to_native
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # Missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -321,12 +323,15 @@ def main():
     )
     client.fail_results['can_talk_to_docker'] = True
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    DockerHostManager(client, results)
-    client.module.exit_json(**results)
+        DockerHostManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

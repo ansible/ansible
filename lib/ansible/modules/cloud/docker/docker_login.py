@@ -129,6 +129,13 @@ import base64
 import json
 import os
 import re
+import traceback
+
+try:
+    from docker.errors import DockerException
+except ImportError:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    pass
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.docker.common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
@@ -311,16 +318,19 @@ def main():
         min_docker_api_version='1.20',
     )
 
-    results = dict(
-        changed=False,
-        actions=[],
-        login_result={}
-    )
+    try:
+        results = dict(
+            changed=False,
+            actions=[],
+            login_result={}
+        )
 
-    LoginManager(client, results)
-    if 'actions' in results:
-        del results['actions']
-    client.module.exit_json(**results)
+        LoginManager(client, results)
+        if 'actions' in results:
+            del results['actions']
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

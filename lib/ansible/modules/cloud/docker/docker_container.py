@@ -942,6 +942,7 @@ container:
 import os
 import re
 import shlex
+import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils.common.text.formatters import human_to_bytes
@@ -964,7 +965,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException, APIError, NotFound
 except Exception:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -1410,11 +1411,17 @@ class TaskParameters(DockerBaseClass):
             return ip
         for net in self.networks:
             if net.get('name'):
-                network = self.client.inspect_network(net['name'])
-                if network.get('Driver') == 'bridge' and \
-                   network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
-                    ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
-                    break
+                try:
+                    network = self.client.inspect_network(net['name'])
+                    if network.get('Driver') == 'bridge' and \
+                       network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
+                        ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
+                        break
+                except NotFound as e:
+                    self.client.fail(
+                        "Cannot inspect the network '{0}' to determine the default IP.".format(net['name']),
+                        exception=traceback.format_exc()
+                    )
         return ip
 
     def _parse_publish_ports(self):
@@ -3017,8 +3024,11 @@ def main():
             version='2.12'
         )
 
-    cm = ContainerManager(client)
-    client.module.exit_json(**sanitize_result(cm.results))
+    try:
+        cm = ContainerManager(client)
+        client.module.exit_json(**sanitize_result(cm.results))
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
