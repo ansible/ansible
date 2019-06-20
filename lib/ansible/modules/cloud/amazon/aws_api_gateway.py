@@ -69,6 +69,38 @@ options:
         AWS console.
     default: Automatic deployment by Ansible.
     type: str
+  cache_enabled:
+    description:
+      - Enable API GW caching of backend responses. Defaults to false
+    type: bool
+    version_added: '2.9'
+  cache_size:
+    description:
+      - Size in GB of the API GW cache, becomes effective when cache_enabled is true.
+    choices: ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237']
+    type: str
+    version_added: '2.9'
+  stage_variables:
+    description:
+      - ENV variables for the stage. Define a dict of key values pairs for variables.
+    type: dict
+  stage_canary_settings:
+    decription:
+      - Canary settings for the deployment of the stage
+    type: dict
+    version_added: '2.9'
+  tracing_enabled:
+    description:
+      - Specifies whether active tracing with X-ray is enabled for the API GW stage.
+    type: bool
+    version_added: '2.9'
+  endpoint_type:
+    description:
+      - Type of endpoint configuration, use EDGE for edge optomized API endpoint, REGIONAL for just regional deploy or PRIVATE for private API.
+    choices: ['EDGE', 'REGIONAL', 'PRIVATE']
+    type: str
+    version_added: '2.9'
+
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
@@ -98,6 +130,9 @@ EXAMPLES = '''
     swagger_file: my_api.yml
     stage: production
     deploy_desc: Make auth fix available.
+    cache_enabled: true
+    cache_size: '1.6'
+    tracing_enabled: true
 '''
 
 RETURN = '''
@@ -136,6 +171,12 @@ def main():
         swagger_text=dict(type='str', default=None),
         stage=dict(type='str', default=None),
         deploy_desc=dict(type='str', default="Automatic deployment by Ansible."),
+        cache_enabled=dict(type='bool', default=False),
+        cache_size=dict(type='str', default='0.5', choices=['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237']),
+        stage_variables=dict(type='dict', default={}),
+        stage_canary_settings=dict(type='dict', default={}),
+        tracing_enabled=dict(type='bool', default=False),
+        endpoint_type=dict(type='str', default='EDGE', choices=['EDGE', 'REGIONAL', 'PRIVATE'])
     )
 
     mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text']]  # noqa: F841
@@ -151,8 +192,7 @@ def main():
     swagger_file = module.params.get('swagger_file')
     swagger_dict = module.params.get('swagger_dict')
     swagger_text = module.params.get('swagger_text')
-    stage = module.params.get('stage')
-    deploy_desc = module.params.get('deploy_desc')
+    endpoint_type = module.params.get('endpoint_type')
 
     client = module.client('apigateway')
 
@@ -163,12 +203,10 @@ def main():
 
     if state == "present":
         if api_id is None:
-            api_id = create_empty_api(module, client)
+            api_id = create_empty_api(module, client, endpoint_type)
         api_data = get_api_definitions(module, swagger_file=swagger_file,
                                        swagger_dict=swagger_dict, swagger_text=swagger_text)
-        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id,
-                                                        api_data=api_data, stage=stage,
-                                                        deploy_desc=deploy_desc)
+        conf_res, dep_res = ensure_api_in_correct_state(module, client, api_id=api_id, api_data=api_data)
     if state == "absent":
         del_res = delete_rest_api(module, client, api_id)
 
@@ -203,7 +241,7 @@ def get_api_definitions(module, swagger_file=None, swagger_dict=None, swagger_te
     return apidata
 
 
-def create_empty_api(module, client):
+def create_empty_api(module, client, endpoint_type):
     """
     creates a new empty API ready to be configured.  The description is
     temporarily set to show the API as incomplete but should be
@@ -211,7 +249,7 @@ def create_empty_api(module, client):
     """
     desc = "Incomplete API creation by ansible aws_api_gateway module"
     try:
-        awsret = create_api(client, name="ansible-temp-api", description=desc)
+        awsret = create_api(client, name="ansible-temp-api", description=desc, endpoint_type=endpoint_type)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="creating API")
     return awsret["id"]
@@ -219,9 +257,7 @@ def create_empty_api(module, client):
 
 def delete_rest_api(module, client, api_id):
     """
-    creates a new empty API ready to be configured.  The description is
-    temporarily set to show the API as incomplete but should be
-    updated when the API is configured.
+    Deletes entire REST API setup
     """
     try:
         delete_response = delete_api(client, api_id=api_id)
@@ -230,8 +266,7 @@ def delete_rest_api(module, client, api_id):
     return delete_response
 
 
-def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stage=None,
-                                deploy_desc=None):
+def ensure_api_in_correct_state(module, client, api_id=None, api_data=None):
     """Make sure that we have the API configured and deployed as instructed.
 
     This function first configures the API correctly uploading the
@@ -249,10 +284,20 @@ def ensure_api_in_correct_state(module, client, api_id=None, api_data=None, stag
 
     deploy_response = None
 
+    stage = module.params.get('stage')
     if stage:
         try:
-            deploy_response = create_deployment(client, api_id=api_id, stage=stage,
-                                                description=deploy_desc)
+            deploy_response = create_deployment(
+                    client,
+                    api_id=api_id,
+                    stage=stage,
+                    description = module.params.get('deploy_desc'),
+                    cache_enabled = module.params.get('cache_enabled'),
+                    cache_size = module.params.get('cache_size'),
+                    variables = module.params.get('stage_variables'),
+                    canary_settings = module.params.get('stage_canary_settings'),
+                    tracing_enabled = module.params.get('tracing_enabled')
+                )
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             msg = "deploying api {0} to stage {1}".format(api_id, stage)
             module.fail_json_aws(e, msg)
@@ -264,8 +309,8 @@ retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
 
 
 @AWSRetry.backoff(**retry_params)
-def create_api(client, name=None, description=None):
-    return client.create_rest_api(name="ansible-temp-api", description=description)
+def create_api(client, name=None, description=None, endpoint_type=None):
+    return client.create_rest_api(name="ansible-temp-api", description=description, endpointConfiguration={ 'types': [endpoint_type] })
 
 
 @AWSRetry.backoff(**retry_params)
@@ -279,9 +324,31 @@ def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
 
 
 @AWSRetry.backoff(**retry_params)
-def create_deployment(client, api_id=None, stage=None, description=None):
-    # we can also get None as an argument so we don't do this as a default
-    return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
+def create_deployment(client, api_id=None, stage=None, description=None,
+        cache_enabled=False, cache_size='0.5', variables={}, canary_settings={}, tracing_enabled=False):
+    if len(canary_settings) > 0:
+        result = client.create_deployment(
+            restApiId=api_id,
+            stageName=stage,
+            description=description,
+            cacheClusterEnabled=cache_enabled,
+            cacheClusterSize=cache_size,
+            variables=variables,
+            canarySettings=canary_settings,
+            tracingEnabled=tracing_enabled
+        )
+    else:
+        result = client.create_deployment(
+            restApiId=api_id,
+            stageName=stage,
+            description=description,
+            cacheClusterEnabled=cache_enabled,
+            cacheClusterSize=cache_size,
+            variables=variables,
+            tracingEnabled=tracing_enabled
+        )
+
+    return result
 
 
 if __name__ == '__main__':
