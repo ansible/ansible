@@ -31,7 +31,6 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
-from ansible.plugins.process import keyboard_interrupt_event
 from ansible.utils.display import Display
 
 display = Display()
@@ -223,27 +222,23 @@ class ActionModule(ActionBase):
 
                 if timeout_event and timeout_event.is_set():
                     break
-                elif keyboard_interrupt_event.is_set():
-                    if thread_timer:
-                        thread_timer.cancel()
-                    if stdin_fd is not None and isatty(stdin_fd):
-                        keyboard_interrupt_event.clear()
-                        display.display("Press 'C' to continue the play or 'A' to abort \r"),
-                        if self._c_or_a(stdin):
-                            clear_line(stdout)
-                            break
-
-                    clear_line(stdout)
-                    raise AnsibleError('user requested abort!')
-
-                if stdin_fd is not None and isatty(stdin_fd):
+                elif stdin_fd is not None and isatty(stdin_fd):
                     # use select to poll stdin so we can timeout if
                     # nothing is written, and we won't block on the read
                     r, dummy, dummy = select.select([stdin], [], [], 0.01)
                     if stdin in r:
                         key_pressed = stdin.read(1)
                         if key_pressed == intr:  # value for Ctrl+C
-                            keyboard_interrupt_event.set()
+                            if stdin_fd is not None and isatty(stdin_fd):
+                                display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                                key_pressed = self._get_c_or_a(stdin)
+                                if thread_timer:
+                                    thread_timer.cancel()
+                                clear_line(stdout)
+                                if key_pressed == b'c':
+                                    break
+                                else:
+                                    raise AnsibleError('user requested abort!')
 
                         if not seconds:
                             # read key presses and act accordingly
@@ -259,8 +254,6 @@ class ActionModule(ActionBase):
                                 stdout.flush()
                             else:
                                 result['user_input'] += key_pressed
-                    else:
-                        continue
 
         finally:
             # cleanup and save some information
@@ -281,10 +274,8 @@ class ActionModule(ActionBase):
         result['user_input'] = to_text(result['user_input'], errors='surrogate_or_strict')
         return result
 
-    def _c_or_a(self, stdin):
+    def _get_c_or_a(self, stdin):
         while True:
-            key_pressed = stdin.read(1)
-            if key_pressed.lower() == b'a':
-                return False
-            elif key_pressed.lower() == b'c':
-                return True
+            key_pressed = stdin.read(1).lower()
+            if key_pressed in (b'a', b'c'):
+                return key_pressed

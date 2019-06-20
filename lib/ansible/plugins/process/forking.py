@@ -71,7 +71,7 @@ def results_thread_main(pm):
                 pm._final_q_lock.acquire()
                 pm._final_q.append(result)
                 pm._final_q_lock.release()
-        except (IOError, EOFError) as e:
+        except (IOError, EOFError, TypeError) as e:
             break
         except Queue.Empty:
             pass
@@ -146,10 +146,12 @@ class ProcessModel(ProcessModelBase):
         self._worker_results_q.put(data, block=False)
 
     def cleanup(self):
-        self.terminate()
+        for worker in self._workers:
+            if worker and worker.is_alive():
+                worker.terminate()
         self._worker_results_q.put(self._sentinel)
-        self._results_thread.join()
         self._worker_results_q.close()
+        self.terminate()
 
 
 class WorkerProcess(multiprocessing.Process):
@@ -301,7 +303,7 @@ class WorkerProcess(multiprocessing.Process):
                         dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
                         task_fields=self._task.dump_attrs(),
                     )
-                    self._final_q.put(task_result, block=False)
+                    self._process_manager.put_result(task_result)
                 except Exception:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))

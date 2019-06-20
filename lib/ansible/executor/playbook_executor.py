@@ -27,6 +27,7 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
+from ansible.plugins.process import keyboard_interrupt_event
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
@@ -167,6 +168,8 @@ class PlaybookExecutor:
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
                             result = self._tqm.run(play=play)
+                            if keyboard_interrupt_event.is_set():
+                                raise KeyboardInterrupt()
 
                             # break the play if the result equals the special return code
                             if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:

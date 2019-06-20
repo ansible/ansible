@@ -65,6 +65,7 @@ class TaskQueueManager:
     RUN_FAILED_HOSTS = 2
     RUN_UNREACHABLE_HOSTS = 4
     RUN_FAILED_BREAK_PLAY = 8
+    RUN_INTERRUPTED = 127
     RUN_UNKNOWN_ERROR = 255
 
     def __init__(self, inventory, variable_manager, loader, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False, forks=None):
@@ -258,6 +259,8 @@ class TaskQueueManager:
     def cleanup(self):
         display.debug("RUNNING CLEANUP")
         self.terminate()
+        if self._process_manager is not None:
+            self._process_manager.cleanup()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -273,8 +276,6 @@ class TaskQueueManager:
 
     def terminate(self):
         self._terminated = True
-        if self._process_manager is not None:
-            self._process_manager.cleanup()
 
     def has_dead_workers(self):
 

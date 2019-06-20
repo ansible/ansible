@@ -174,6 +174,10 @@ class StrategyBase:
         # This should be safe, as everything should be ITERATING_COMPLETE by
         # this point, though the strategy may not advance the hosts itself.
 
+        if keyboard_interrupt_event.is_set():
+            display.debug("User interrupted the run, skipping handlers.")
+            return self._tqm.RUN_INTERRUPTED
+
         inv_hosts = self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)
         [iterator.get_next_task_for_host(host) for host in inv_hosts if host.name not in self._tqm._unreachable_hosts]
 
@@ -184,7 +188,10 @@ class StrategyBase:
 
         display.debug("running handlers")
         handler_result = self.run_handlers(iterator, play_context)
-        if isinstance(handler_result, bool) and not handler_result:
+        if keyboard_interrupt_event.is_set():
+            display.debug("User interrupted the handlers run, returning interrupted result.")
+            return self._tqm.RUN_INTERRUPTED
+        elif isinstance(handler_result, bool) and not handler_result:
             result |= self._tqm.RUN_ERROR
         elif not handler_result:
             result |= handler_result
@@ -234,6 +241,9 @@ class StrategyBase:
         # The next common higher level is __init__.py::run() and that has
         # tasks inside of play_iterator so we'd have to extract them to do it
         # there.
+
+        if self._tqm._terminated:
+            return
 
         if task.action not in action_write_locks.action_write_locks:
             display.debug('Creating lock for %s' % task.action)
@@ -321,7 +331,7 @@ class StrategyBase:
             self._check_for_keyboard_interrupt()
 
             task_result = self._tqm._process_manager.get_result()
-            if task_result is None:
+            if task_result is None or self._tqm._terminated:
                 break
 
             # get the original host and task. We then assign them to the TaskResult for use in callbacks/etc.
@@ -593,8 +603,6 @@ class StrategyBase:
         display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
 
-            self._check_for_keyboard_interrupt()
-
             if self._tqm.has_dead_workers():
                 raise AnsibleError("A worker was found in a dead state")
 
@@ -603,15 +611,16 @@ class StrategyBase:
             if self._pending_results > 0:
                 time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
+            self._check_for_keyboard_interrupt()
+
         display.debug("no more pending results, returning what we have")
 
         return ret_results
 
     def _check_for_keyboard_interrupt(self):
         if keyboard_interrupt_event.is_set():
+            self._tqm.terminate()
             self.cleanup()
-            self._tqm.cleanup()
-            sys.exit(255)
 
     def _add_host(self, host_info, iterator):
         '''

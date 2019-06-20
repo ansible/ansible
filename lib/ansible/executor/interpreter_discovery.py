@@ -12,6 +12,7 @@ import re
 from ansible import constants as C
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.distro import LinuxDistribution
+from ansible.plugins.process import keyboard_interrupt_event
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 from distutils.version import LooseVersion
@@ -65,10 +66,15 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         shell_bootstrap = "echo PLATFORM; uname; echo FOUND; {0}; echo ENDFOUND".format('; '.join(command_list))
 
         # FUTURE: in most cases we probably don't want to use become, but maybe sometimes we do?
+        if keyboard_interrupt_event.is_set():
+            raise KeyboardInterrupt()
+
         res = action._low_level_execute_command(shell_bootstrap, sudoable=False)
 
-        raw_stdout = res.get('stdout', u'')
+        if keyboard_interrupt_event.is_set():
+            raise KeyboardInterrupt()
 
+        raw_stdout = res.get('stdout', u'')
         match = foundre.match(raw_stdout)
 
         if not match:
@@ -147,6 +153,8 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     except NotImplementedError as ex:
         display.vvv(msg=u'Python interpreter discovery fallback ({0})'.format(to_text(ex)), host=host)
     except Exception as ex:
+        if isinstance(ex, KeyboardInterrupt) or keyboard_interrupt_event.is_set():
+            raise ex
         if not is_silent:
             display.warning(msg=u'Unhandled error in Python interpreter discovery for host {0}: {1}'.format(host, to_text(ex)))
             display.debug(msg=u'Interpreter discovery traceback:\n{0}'.format(to_text(format_exc())), host=host)
