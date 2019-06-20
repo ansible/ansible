@@ -43,8 +43,17 @@ DOCUMENTATION = '''
           description:
               - A dictionary of filter value pairs.
               - Available filters are listed here U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
+              - An additional special key of 'ec2ini_filters' may be used if specifying filter_syntax: ec2_ini 
           type: dict
           default: {}
+        filter_syntax:
+          description:
+              - Specifies whether to enable legacy-style contrib/scripts/inventory/ec2.ini filter behaviour.
+              - This makes AND/OR filters possible.
+              - To enable, use 'ec2_ini'. Any other value results in the standard plugin behaviour, which is inclusive AND.
+              - AND filters must be provided to the filters key in subkey ec2ini_filters
+          type: string
+          default: boto3
         include_extra_api_calls:
           description:
               - Add two additional API calls for every instance to include 'persistent' and 'events' host variables.
@@ -137,6 +146,15 @@ compose:
   # Use the private IP address to connect to the host
   # (note: this does not modify inventory_hostname, which is set via I(hostnames))
   ansible_host: private_ip_address
+# Use ec2_ini AND/OR filters
+# This filter in the script would have looked like:
+# EC2_INSTANCE_FILTERS='availability-zone=us-west-2b,hypervisor=xen,availability-zone=us-east1b&instance-type=t2.micro'
+plugin: aws_ec2
+filter_syntax: ec2_ini  ## toggles filters being AND/OR type instead of default AND type
+filters:
+  availability-zone: us-west-2b  ## Will match us-west-2b OR
+  hypervisor: xen  ## xen hypervisor OR
+  ec2ini_filters: {availability-zone: us-east-1b, instance-type: t2.micro}  ## us-east-1b AND type t2.micro
 '''
 
 import re
@@ -484,6 +502,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         return {'aws_ec2': self._get_instances_by_region(regions, filters, strict_permissions)}
 
+    def _ec2_ini_query(self, regions, filter_list, strict_permissions):
+        results = dict(aws_ec2=[])
+        for filters in filter_list:
+            tmp_dict = {
+                'aws_ec2': self._get_instances_by_region(regions, filters,
+                                                         strict_permissions)}
+            for i in tmp_dict['aws_ec2']:
+                results['aws_ec2'].append(i)
+        return results
+
     def _populate(self, groups, hostnames):
         for group in groups:
             group = self.inventory.add_group(group)
@@ -570,7 +598,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # get user specifications
         regions = self.get_option('regions')
-        filters = ansible_dict_to_boto3_filter_list(self.get_option('filters'))
+        raw_filters = self.get_option('filters')
+
+        # Handle different ways of specifying filters
+        if self.get_option('filter_syntax', 'boto3') == 'ec2_ini':
+            ec2ini_filters = raw_filters.pop('ec2ini_filters', '')
+            filter_list = [{k: v} for k, v in raw_filters.items()]
+            if ec2ini_filters:
+                if self.get_option('filter_syntax', 'boto3') != 'ec2_ini':
+                    raise AnsibleError("ec2ini_filters may only be used with"
+                                       "filter_syntax: ec2_ini")
+                filter_list.append(ec2ini_filters)
+            filters = [ansible_dict_to_boto3_filter_list(i) for i in filter_list]
+
+        else:
+            filters = ansible_dict_to_boto3_filter_list(raw_filters)
+
         hostnames = self.get_option('hostnames')
         strict_permissions = self.get_option('strict_permissions')
 
@@ -590,7 +633,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 cache_needs_update = True
 
         if not cache or cache_needs_update:
-            results = self._query(regions, filters, strict_permissions)
+            if self.get_option('filter_syntax', 'boto3') == 'ec2_ini':
+                results = self._ec2_ini_query(regions, filters,
+                                                 strict_permissions)
+            else:
+                results = self._query(regions, filters, strict_permissions)
 
         self._populate(results, hostnames)
 
