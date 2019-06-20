@@ -147,8 +147,7 @@ files:
   $modules/cloud/huawei/: &huawei
     keywords: [ cloud, huawei, hwc ]
     labels: [ cloud, huawei ]
-    maintainers: $team_ansible
-    ignored: $team_huawei
+    maintainers: $team_huawei
   $modules/cloud/kubevirt/: &kubevirt
     keywords: [ kubevirt ]
     labels: [ cloud, kubevirt ]
@@ -303,8 +302,7 @@ files:
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/cloudengine/:
-    maintainers: $team_ansible
-    ignored: $team_huawei
+    maintainers: $team_huawei
   $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
@@ -699,8 +697,6 @@ files:
   $module_utils/gitlab.py: *gitlab
   $module_utils/hwc_utils.py: &huawei_hwc
     <<: *huawei
-    maintainers: $team_ansible
-    ignored: $team_huawei
     support: community
     labels:
       - networking
@@ -745,8 +741,7 @@ files:
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
   $module_utils/network/cloudengine:
-    maintainers: $team_ansible
-    ignored: $team_huawei
+    maintainers: $team_huawei
   $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
   $module_utils/network/common:
@@ -1146,8 +1141,7 @@ files:
     supershipit: $team_google
     maintainers: $team_google
   $plugins/doc_fragments/hwc.py:
-    maintainers: $team_ansible
-    ignored: $team_huawei
+    maintainers: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
@@ -1469,8 +1463,7 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   test/integration/targets/hwc_:
-    maintainers: $team_ansible
-    ignored: $team_huawei
+    maintainers: $team_huawei
   test/integration/targets/inventory_docker: *docker
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
@@ -1507,8 +1500,7 @@ files:
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
   test/units/module_utils/hwc:
-    maintainers: $team_ansible
-    ignored: $team_huawei
+    maintainers: $team_huawei
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
