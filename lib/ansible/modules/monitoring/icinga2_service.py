@@ -34,20 +34,24 @@ options:
   check_command:
     description:
       - The command used to execute the service check
+    type: str
     required: true
   client_cert:
     description:
       - PEM formatted certificate chain file to be used for SSL client
         authentication. This file can also include the key as well, and if
         the key is included, I(client_key) is not required.
+    type: path
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL
         client authentication. If I(client_cert) contains both the certificate
         and key, this option is not required.
+    type: path
   display_name:
     description:
       - The name used to display the service. If not set, then Icinga will use the value of I(name).
+    type: str
   force_basic_auth:
     description:
       - Httplib2, the library used by the uri module only sends authentication information when a webservice
@@ -66,36 +70,44 @@ options:
       - The name of the host the service is associated to.
       - If used, must be paired with I(service).
       - Mutually exclusive with I(name).
+    type: str
   name:
     description:
       - Name of the service in Icinga2 style; C(host!service). Where C(host) is
         an existing host.
       - Mutually exclusive with I(host) + I(service).
+    type: str
   service:
     description:
       - The name of the service.
       - If used, must be paired with I(host).
       - Mutually exclusive with I(name).
+    type: str
   state:
     description:
       - Apply feature state.
     choices: [ "present", "absent" ]
     default: present
+    type: str
   template:
     description:
       - The template used to define the host
+    type: str
   url:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+    type: str
     required: true
   url_password:
     description:
         - The password for use in HTTP basic authentication.
         - If the I(url_username) option is not specified, the I(url_password) option will not be used.
+    type: str
   url_username:
     description:
       - The username for use in HTTP basic authentication.
       - This parameter can be used without I(url_password) for sites that allow empty passwords.
+    type: str
   use_proxy:
     description:
       - If C(no), it will not use a proxy, even if one is defined in
@@ -115,9 +127,10 @@ options:
   check_period:
     description:
       - The name of a time period which determines when this service should be checked.
+    type: str
   check_timeout:
     description:
-      - Check command timeout in seconds. Overrides the CheckCommand’s timeout attribute.
+      - Check command timeout in seconds. Overrides the CheckCommand's timeout attribute.
     type: int
   check_interval:
     description:
@@ -147,13 +160,22 @@ options:
     description:
       - Enables Whether flap detection is enabled.
     type: bool
+  flapping_threshold_high:
+    description:
+      - Flapping upper bound in percent for a service to be considered flapping.
+    type: int
+  flapping_threshold_low:
+    description:
+      - Flapping lower bound in percent for a service to be considered flapping.
+    type: int
   enable_perfdata:
     description:
       - Enables event handlers for this host.
     type: bool
   event_command:
     description:
-      - The name of an event command that should be executed every time the service’s state changes or the service is in a SOFT state.
+      - The name of an event command that should be executed every time the service's state changes or the service is in a SOFT state.
+    type: str
   volatile:
     description:
       - The volatile setting enables always HARD state types if NOT-OK state changes occur.
@@ -162,29 +184,37 @@ options:
   command_endpoint:
     description:
       - The endpoint where commands are executed on.
+    type: str
   notes:
     description:
       - Notes for the host.
+    type: str
   notes_url:
     description:
       - URL for notes for the host (for example, in notification commands).
+    type: str
   action_url:
     description:
       - URL for actions for the host (for example, an external graphing tool).
-  image_icon:
+    type: str
+  icon_image:
     description:
       -  Icon image for the host. Used by external interfaces only.
-  image_icon_alt:
+    type: str
+  icon_image_alt:
     description:
       - Icon image description for the host. Used by external interface only.
+    type: str
   variables:
     description:
       - List of variables.
+    type: dict
     required: false
   zone:
     description:
       - The zone from where this host should be polled. If I(zone) is omitted, during creation of the object,
         then the zone will be inherited from the engine that processes the API call.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -217,7 +247,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
     description: The name used to create, modify or delete the service
-    type: string
+    type: str
     returned: always
 data:
     description: The data structure used for create, modify or delete of the service
@@ -236,28 +266,29 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 # ===========================================
 # Return a dict that is flat (no dict as values)
 #
-def flat_dict (aDict):
-  if type(aDict) is types.DictType:
-    flat = {}
-    for key, value in aDict.iteritems():
-       if type (value) is types.DictType:
-         ret = flat_dict (value)
-         for k, v in ret.iteritems():
-           flat[key+'.'+k] = v
-       else:
-         flat[key] = value
-    return flat
-  else:
-    return aDict
+def flat_dict(aDict):
+    if isinstance(aDict, dict):
+        flat = {}
+        for key, value in aDict.items():
+            if isinstance(value, dict):
+                ret = flat_dict(value)
+                for k, v in ret.items():
+                    flat[key + '.' + k] = v
+            else:
+                flat[key] = value
+        return flat
+    else:
+        return aDict
+
 
 # ===========================================
 # Return a dict that is expande all keys with '.'
 #
-def expand_flat (aDict):
-    if type(aDict) is types.DictType:
+def expand_flat(aDict):
+    if isinstance(aDict, dict):
         aExpand = {}
-        for key, value in aDict.iteritems():
-            if type(value) is types.DictType:
+        for key, value in aDict.items():
+            if isinstance(value, dict):
                 value = expand_flat(value)
             ar_key = key.split(".")
             current_lvl = aExpand
@@ -273,6 +304,7 @@ def expand_flat (aDict):
         return aExpand
     else:
         return aDict
+
 
 # ===========================================
 # Icinga2 API class
@@ -360,7 +392,7 @@ class icinga2_api:
             method="GET"
         )
         changed = False
-        ch_data={
+        ch_data = {
             'attrs': {}
         }
         ic_attr = flat_dict(ret['data']['results'][0]['attrs'])
@@ -382,7 +414,10 @@ class icinga2_api:
 def main():
     # use the predefined argument spec for url
     argument_spec = url_argument_spec()
-    # remove unnecessary argument 'force'
+    # remove unnecessary arguments
+    del argument_spec['force']
+    del argument_spec['http_agent']
+
     del argument_spec['force']
     # add our own arguments
     argument_spec.update(
@@ -392,7 +427,7 @@ def main():
         service=dict(),
         zone=dict(default=None),
         template=dict(default=None),
-        check_command=dict(required=True,default=None),
+        check_command=dict(required=True),
         cascade=dict(default=True, type='bool'),
         display_name=dict(default=None),
         force_check=dict(default=True, type='bool'),
@@ -409,7 +444,8 @@ def main():
         enable_flapping=dict(default=None, type='bool'),
         enable_perfdata=dict(default=None, type='bool'),
         event_command=dict(default=None),
-        flapping_threshold=dict(default=None),
+        flapping_threshold_high=dict(default=None, type='int'),
+        flapping_threshold_low=dict(default=None, type='int'),
         volatile=dict(default=False, type='bool'),
         command_endpoint=dict(default=None),
         notes=dict(default=None),
@@ -439,7 +475,7 @@ def main():
     if module.params["template"]:
         template.append(module.params["template"])
     check_command = module.params["check_command"]
-    cascade=module.params["cascade"]
+    cascade = module.params["cascade"]
     command_endpoint = module.params["command_endpoint"]
     force_check = module.params["force_check"]
     display_name = module.params["display_name"]
@@ -468,10 +504,10 @@ def main():
     #Loop through list of setable objects.
     obj_attrs = ['max_check_attempts', 'check_period', 'check_timeout', 'check_interval', 'retry_interval', 'enable_notifications', 'enable_active_checks',
               'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile',
-              'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt', 'zone' ]
+              'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt', 'zone']
     for x in obj_attrs:
         if module.params[x]:
-            data['attrs'][x]=module.params[x]
+            data['attrs'][x] = module.params[x]
 
     if variables:
         data['attrs']['vars'].update(variables)
@@ -505,9 +541,9 @@ def main():
                         if force_check:
                             ret = icinga.check(name)
                             if ret['code'] != 200:
-                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'],ret['data']))
+                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'], ret['data']))
                     else:
-                        module.fail_json(msg="Caught return code [%i] modifying service: %s" % (ret['code'],ret['data']))
+                        module.fail_json(msg="Caught return code [%i] modifying service: %s" % (ret['code'], ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception modifying service: " + str(e))
     else:
@@ -524,9 +560,9 @@ def main():
                         if force_check:
                             ret = icinga.check(name)
                             if ret['code'] != 200:
-                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'],ret['data']))
+                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'], ret['data']))
                     else:
-                        module.fail_json(msg="Caught return code [%i] creating service: %s" % (ret['code'],ret['data']))
+                        module.fail_json(msg="Caught return code [%i] creating service: %s" % (ret['code'], ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception creating service: " + str(e))
 
