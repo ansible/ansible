@@ -149,7 +149,8 @@ options:
     provider:
         type: dict
         description:
-            - A dict specified some options about connection  that is not required from version 2.9.And provider is unnecessary when using network_cli and will be ignored.
+            - A dict specified some options about connection  that is not required from version 2.9.
+            - And provider is unnecessary when using network_cli and will be ignored.
         required: false
 '''
 EXAMPLES = '''
