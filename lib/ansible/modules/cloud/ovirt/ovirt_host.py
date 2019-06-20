@@ -344,13 +344,19 @@ class HostsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def raise_host_exception(self):
+        event = self._connection.system_service().events_service().list(max=1)[0]
+        if event.host is not None and event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]:
+            raise Exception("Error message: %s" % event.description)
+        return True
+
     def failed_state_after_reinstall(self, host, count=0):
         if host.status in [
             hoststate.ERROR,
             hoststate.INSTALL_FAILED,
             hoststate.NON_OPERATIONAL,
         ]:
-            return True
+            return self.raise_host_exception()
 
         # If host is in non-responsive state after upgrade/install
         # let's wait for few seconds and re-check again the state:
@@ -362,7 +368,7 @@ class HostsModule(BaseModule):
                     count + 1,
                 )
             else:
-                return True
+                return self.raise_host_exception()
 
         return False
 
