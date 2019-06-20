@@ -293,7 +293,7 @@ def main():
 
     db = module.params["name"]
     if not db:
-        module.fail_json(msg="Please provide database name")
+        module.fail_json(msg="Please provide at least one database name")
 
     encoding = module.params["encoding"]
     collation = module.params["collation"]
