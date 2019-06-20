@@ -32,70 +32,47 @@ options:
     type: str
   group:
     description:
-    - List of group names assign to this role.
-    - If the state is set 'present', the provided groups will be assigned to the role.
-    - If an empty list is passed all assigned groups will be unassigned from the role.
-    - If option is omitted groups will not be checked or changed.
-    - If option is passed all assigned groups that are not passed will be unassigned from the role.
-    - If the state is set to 'add_members', any provided groups not currently in the role will be added.
-    - If the state is set to 'remove_members', any provided groups currently in the role will be removed.
+    - Accepts a list of member groups.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
   host:
     description:
-    - List of host names to assign.
-    - If the state is set 'present', the provided groups will be assigned to the role.
-    - If an empty list is passed all assigned hosts will be unassigned from the role.
-    - If option is omitted hosts will not be checked or changed.
-    - If option is passed all assigned hosts that are not passed will be unassigned from the role.
-    - If the state is set to 'add_members', any provided hosts not currently in the role will be added.
-    - If the state is set to 'remove_members', any provided hosts currently in the role will be removed.
+    - Accepts a list of member hosts.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
   hostgroup:
     description:
-    - List of host group names to assign.
-    - If the state is set 'present', the provided host groups will be assigned to the role.
-    - If an empty list is passed all assigned host groups will be removed from the role.
-    - If option is omitted host groups will not be checked or changed.
-    - If option is passed all assigned hostgroups that are not passed will be unassigned from the role.
-    - If the state is set to 'add_members', any provided host groups not currently in the role will be added.
-    - If the state is set to 'remove_members', any provided host groups currently in the role will be removed.
+    - Accepts a list of member host-groups.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
+  member_action:
+    description:
+    - Action to take for parameters accepting a list of member objects, such as host or hostgroup.
+    - Setting the members will add and/or remove members so that the members are exactly those specified.
+    - Adding members will add the specified members if required; existing members will not otherwise be affected.
+    - Removing members will remove the specified members if they are present.  Nonexistent members will be ignored.
+    default: "set"
+    choices: ["add", "remove", "set"]
+    version_added: "2.9"
   privilege:
     description:
-    - List of privileges granted to the role.
-    - If the state is set 'present', the provided privileges will be assigned to the role.
-    - If an empty list is passed all assigned privileges will be removed.
-    - If option is omitted privileges will not be checked or changed.
-    - If option is passed all assigned privileges that are not passed will be removed.
-    - If the state is set to 'add_members', any provided privileges not currently in the role will be added.
-    - If the state is set to 'remove_members', any provided privileges currently in the role will be removed.
+    - Accepts a list of member privileges.  The action taken will depend on the value of "member_action."
+    version_added: "2.4"
     type: list
     elements: str
-    version_added: "2.4"
   service:
     description:
-    - List of service names to assign.
-    - If the state is set 'present', the provided services will be assigned to the role.
-    - If an empty list is passed all assigned services will be removed from the role.
-    - If option is omitted services will not be checked or changed.
-    - If option is passed all assigned services that are not passed will be removed from the role.
-    - If the state is set to 'add_members', any provided services not currently in the role will be added.
-    - If the state is set to 'remove_members', any provided services currently in the role will be removed.
+    - Accepts a list of member services.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
   state:
     description: State to ensure.
     default: "present"
-    choices: ["present", "absent", "add_members", "remove_members"]
+    choices: ["present", "absent"]
     type: str
   user:
     description:
-    - List of user names to assign.
-    - If an empty list is passed all assigned users will be removed from the role.
-    - If option is omitted users will not be checked or changed.
+    - Accepts a list of member users.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
 extends_documentation_fragment: ipa.documentation
@@ -230,6 +207,7 @@ def ensure(module, client):
     group = module.params['group']
     host = module.params['host']
     hostgroup = module.params['hostgroup']
+    member_action = module.params['member_action']
     privilege = module.params['privilege']
     service = module.params['service']
     user = module.params['user']
@@ -238,7 +216,7 @@ def ensure(module, client):
     ipa_role = client.role_find(name=name)
 
     changed = False
-    if state in ['present', 'add_members', 'remove_members']:
+    if state == 'present':
         if not ipa_role:
             changed = True
             if not module.check_mode:
@@ -252,77 +230,81 @@ def ensure(module, client):
                     for key in diff:
                         data[key] = module_role.get(key)
                     client.role_mod(name=name, item=data)
-    else:
+
+        if member_action == 'set':
+            if group is not None:
+                changed = client.modify_if_diff(name, ipa_role.get('member_group', []), group,
+                                                client.role_add_group,
+                                                client.role_remove_group) or changed
+            if host is not None:
+                changed = client.modify_if_diff(name, ipa_role.get('member_host', []), host,
+                                                client.role_add_host,
+                                                client.role_remove_host) or changed
+            if hostgroup is not None:
+                changed = client.modify_if_diff(name, ipa_role.get('member_hostgroup', []), hostgroup,
+                                                client.role_add_hostgroup,
+                                                client.role_remove_hostgroup) or changed
+            if privilege is not None:
+                changed = client.modify_if_diff(name, ipa_role.get('memberof_privilege', []), privilege,
+                                                client.role_add_privilege,
+                                                client.role_remove_privilege) or changed
+            if service is not None:
+                changed = client.modify_if_diff(name, ipa_role.get('member_service', []), service,
+                                                client.role_add_service,
+                                                client.role_remove_service) or changed
+            if user is not None:
+                changed = client.modify_if_diff(name, ipa_role.get('member_user', []), user,
+                                                client.role_add_user,
+                                                client.role_remove_user) or changed
+
+        elif member_action == "add":
+            if group is not None:
+                changed = client.add_if_missing(name, ipa_role.get('member_group', []), group,
+                                                client.role_add_group) or changed
+            if host is not None:
+                changed = client.add_if_missing(name, ipa_role.get('member_host', []), host,
+                                                client.role_add_host) or changed
+            if hostgroup is not None:
+                changed = client.add_if_missing(name, ipa_role.get('member_hostgroup', []), hostgroup,
+                                                client.role_add_hostgroup) or changed
+            if privilege is not None:
+                changed = client.add_if_missing(name, ipa_role.get('memberof_privilege', []), privilege,
+                                                client.role_add_privilege) or changed
+            if service is not None:
+                changed = client.add_if_missing(name, ipa_role.get('member_service', []), service,
+                                                client.role_add_service) or changed
+            if user is not None:
+                changed = client.add_if_missing(name, ipa_role.get('member_user', []), user,
+                                                client.role_add_user) or changed
+
+        elif member_action == 'remove':
+            if group is not None:
+                changed = client.remove_if_present(name, ipa_role.get('member_group', []), group,
+                                                   client.role_remove_group) or changed
+            if host is not None:
+                changed = client.remove_if_present(name, ipa_role.get('member_host', []), host,
+                                                   client.role_remove_host) or changed
+            if hostgroup is not None:
+                changed = client.remove_if_present(name, ipa_role.get('member_hostgroup', []), hostgroup,
+                                                   client.role_remove_hostgroup) or changed
+            if privilege is not None:
+                changed = client.remove_if_present(name, ipa_role.get('memberof_privilege', []), privilege,
+                                                   client.role_remove_privilege) or changed
+            if service is not None:
+                changed = client.remove_if_present(name, ipa_role.get('member_service', []), service,
+                                                   client.role_remove_service) or changed
+            if user is not None:
+                changed = client.remove_if_present(name, ipa_role.get('member_user', []), user,
+                                                   client.role_remove_user) or changed
+
+    elif state == 'absent':
         if ipa_role:
             changed = True
             if not module.check_mode:
                 client.role_del(name)
 
-    if state == 'present':
-        if group is not None:
-            changed = client.modify_if_diff(name, ipa_role.get('member_group', []), group,
-                                            client.role_add_group,
-                                            client.role_remove_group) or changed
-        if host is not None:
-            changed = client.modify_if_diff(name, ipa_role.get('member_host', []), host,
-                                            client.role_add_host,
-                                            client.role_remove_host) or changed
-        if hostgroup is not None:
-            changed = client.modify_if_diff(name, ipa_role.get('member_hostgroup', []), hostgroup,
-                                            client.role_add_hostgroup,
-                                            client.role_remove_hostgroup) or changed
-        if privilege is not None:
-            changed = client.modify_if_diff(name, ipa_role.get('memberof_privilege', []), privilege,
-                                            client.role_add_privilege,
-                                            client.role_remove_privilege) or changed
-        if service is not None:
-            changed = client.modify_if_diff(name, ipa_role.get('member_service', []), service,
-                                            client.role_add_service,
-                                            client.role_remove_service) or changed
-        if user is not None:
-            changed = client.modify_if_diff(name, ipa_role.get('member_user', []), user,
-                                            client.role_add_user,
-                                            client.role_remove_user) or changed
-
-    if state == 'add_members':
-        if group is not None:
-            changed = client.add_if_missing(name, ipa_role.get('member_group', []), group,
-                                            client.role_add_group) or changed
-        if host is not None:
-            changed = client.add_if_missing(name, ipa_role.get('member_host', []), host,
-                                            client.role_add_host) or changed
-        if hostgroup is not None:
-            changed = client.add_if_missing(name, ipa_role.get('member_hostgroup', []), hostgroup,
-                                            client.role_add_hostgroup) or changed
-        if privilege is not None:
-            changed = client.add_if_missing(name, ipa_role.get('memberof_privilege', []), privilege,
-                                            client.role_add_privilege) or changed
-        if service is not None:
-            changed = client.add_if_missing(name, ipa_role.get('member_service', []), service,
-                                            client.role_add_service) or changed
-        if user is not None:
-            changed = client.add_if_missing(name, ipa_role.get('member_user', []), user,
-                                            client.role_add_user) or changed
-
-    if state == 'remove_members':
-        if group is not None:
-            changed = client.remove_if_present(name, ipa_role.get('member_group', []), group,
-                                               client.role_remove_group) or changed
-        if host is not None:
-            changed = client.remove_if_present(name, ipa_role.get('member_host', []), host,
-                                               client.role_remove_host) or changed
-        if hostgroup is not None:
-            changed = client.remove_if_present(name, ipa_role.get('member_hostgroup', []), hostgroup,
-                                               client.role_remove_hostgroup) or changed
-        if privilege is not None:
-            changed = client.remove_if_present(name, ipa_role.get('memberof_privilege', []), privilege,
-                                               client.role_remove_privilege) or changed
-        if service is not None:
-            changed = client.remove_if_present(name, ipa_role.get('member_service', []), service,
-                                               client.role_remove_service) or changed
-        if user is not None:
-            changed = client.remove_if_present(name, ipa_role.get('member_user', []), user,
-                                               client.role_remove_user) or changed
+    else:
+        raise NotImplementedError("Support for state '%s' has not yet been implemented." % state)
 
     return changed, client.role_find(name=name)
 
@@ -335,15 +317,21 @@ def main():
         group=dict(type='list', elements='str'),
         host=dict(type='list', elements='str'),
         hostgroup=dict(type='list', elements='str'),
+        member_action=dict(
+            type='str', default='set',
+            choices=[
+                'add',
+                'remove',
+                'set',
+            ],
+        ),
         privilege=dict(type='list', elements='str'),
         service=dict(type='list', elements='str'),
         state=dict(
             type='str', default='present',
             choices=[
                 'absent',
-                'add_members',
                 'present',
-                'remove_members',
             ]),
         user=dict(type='list', elements='str')
     )
