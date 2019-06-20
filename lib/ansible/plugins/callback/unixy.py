@@ -21,28 +21,14 @@ DOCUMENTATION = '''
 '''
 
 from os.path import basename
-
 from ansible import constants as C
 from ansible import context
 from ansible.module_utils._text import to_text
-from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
-
-# These values use ansible.constants for historical reasons, mostly to allow
-# unmodified derivative plugins to work. However, newer options added to the
-# plugin are not also added to ansible.constants, so authors of derivative
-# callback plugins will eventually need to add a reference to the common docs
-# fragment for the 'default' callback plugin
-
-# these are used to provide backwards compat with old plugins that subclass from default
-# but still don't use the new config system and/or fail to document the options
-COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
-                  ('display_ok_hosts', True),
-                  ('show_custom_stats', C.SHOW_CUSTOM_STATS),
-                  ('display_failed_stderr', False),)
+from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
 
-class CallbackModule(CallbackBase):
+class CallbackModule(CallbackModule_default):
 
     '''
     Design goals:
@@ -60,18 +46,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'unixy'
-
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-
-        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-
-        # for backwards compat with plugins subclassing default, fallback to constants
-        for option, constant in COMPAT_OPTIONS:
-            try:
-                value = self.get_option(option)
-            except (AttributeError, KeyError):
-                value = constant
-            setattr(self, option, value)
 
     def _run_is_verbose(self, result):
         return ((self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result)
