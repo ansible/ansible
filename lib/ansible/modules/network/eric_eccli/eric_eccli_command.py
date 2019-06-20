@@ -1,36 +1,45 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Ericsson AB.
+# This file is part of Ansible
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
 ---
 module: eric_eccli_command
-author: Ericsson IPOS OAM team
-short_description: Run commands on remote devices running ERICSSON ECCLI
+version_added: "2.9"
+author: "Peter Sprygada (@privateip)"
+short_description: Run commands on remote devices running Cisco IOS
 description:
-  - Sends arbitrary commands to an ERICSSON eccli node and returns the results
+  - Sends arbitrary commands to an ios node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module also support running commands in configuration mode
-    in raw command style.
+  - This module does not support running commands in configuration mode.
+    Please use M(ios_config) to configure IOS devices.
 notes:
-  - Tested against IPOS 19.3
+  - Tested against IOS 15.6
 options:
   commands:
     description:
-      - List of commands to send to the remote ECCLI device over the
+      - List of commands to send to the remote ios device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -48,6 +57,7 @@ options:
         within the configured number of retries, the task fails.
         See examples.
     aliases: ['waitfor']
+    version_added: "3.0"
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -58,6 +68,7 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
+    version_added: "3.0"
   retries:
     description:
       - Specifies the number of retries a command should by tried
@@ -77,37 +88,37 @@ options:
 EXAMPLES = r"""
 tasks:
   - name: run show version on remote devices
-    eric_eccli_command:
+    ios_command:
       commands: show version
 
-  - name: run show version and check to see if output contains IPOS
-    eric_eccli_command:
+  - name: run show version and check to see if output contains IOS
+    ios_command:
       commands: show version
-      wait_for: result[0] contains IPOS
+      wait_for: result[0] contains IOS
 
   - name: run multiple commands on remote nodes
-    eric_eccli_command:
+    ios_command:
       commands:
         - show version
-        - show running-config interfaces
+        - show interfaces
 
   - name: run multiple commands and evaluate the output
-    eric_eccli_command:
+    ios_command:
       commands:
         - show version
-        - show running-config interfaces
+        - show interfaces
       wait_for:
-        - result[0] contains IPOS
-        - result[1] contains management
+        - result[0] contains IOS
+        - result[1] contains Loopback0
   - name: run commands that require answering a prompt
-    eric_eccli_command:
+    ios_command:
       commands:
-        - command: 'config'
-        - command: 'system hostname ub4-1-changed'
-        - command: 'commit'
-          prompt: 'Uncommitted changes found, commit them? [yes/no/CANCEL]'
-          answer: 'no'
-        - command: 'end'
+        - command: 'clear counters GigabitEthernet0/1'
+          prompt: 'Clear "show interface" counters on this interface \[confirm\]'
+          answer: 'y'
+        - command: 'clear counters GigabitEthernet0/2'
+          prompt: '[confirm]'
+          answer: "\r"
 """
 
 RETURN = """
@@ -130,10 +141,11 @@ failed_conditions:
 import re
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
 from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.network.common.utils import transform_commands
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
@@ -146,12 +158,8 @@ def to_lines(stdout):
 
 
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict()
-    ), module)
-    commands = command(module.params['commands'])
+    commands = transform_commands(module)
+
     for item in list(commands):
         if module.check_mode:
             if item['command'].startswith('conf'):
