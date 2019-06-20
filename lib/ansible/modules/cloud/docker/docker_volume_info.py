@@ -80,8 +80,10 @@ volume:
         }'
 '''
 
+import traceback
+
 try:
-    from docker.errors import NotFound
+    from docker.errors import DockerException, NotFound
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -110,13 +112,16 @@ def main():
         min_docker_api_version='1.21',
     )
 
-    volume = get_existing_volume(client, client.module.params['name'])
+    try:
+        volume = get_existing_volume(client, client.module.params['name'])
 
-    client.module.exit_json(
-        changed=False,
-        exists=(True if volume else False),
-        volume=volume,
-    )
+        client.module.exit_json(
+            changed=False,
+            exists=(True if volume else False),
+            volume=volume,
+        )
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

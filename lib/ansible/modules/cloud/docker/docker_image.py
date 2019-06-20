@@ -410,8 +410,10 @@ image:
     type: dict
     sample: {}
 '''
+
 import os
 import re
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -427,6 +429,7 @@ if docker_version is not None:
         else:
             from docker.auth.auth import resolve_repository_name
         from docker.utils.utils import parse_repository_tag
+        from docker.errors import DockerException
     except ImportError:
         # missing Docker SDK for Python handled in module_utils.docker.common
         pass
@@ -914,14 +917,17 @@ def main():
                            'use the "force_source", "force_absent" or "force_tag" option '
                            'instead, depending on what you want to force.')
 
-    results = dict(
-        changed=False,
-        actions=[],
-        image={}
-    )
+    try:
+        results = dict(
+            changed=False,
+            actions=[],
+            image={}
+        )
 
-    ImageManager(client, results)
-    client.module.exit_json(**results)
+        ImageManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
