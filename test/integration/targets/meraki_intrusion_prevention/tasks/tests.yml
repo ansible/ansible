@@ -1,0 +1,316 @@
+# Test code for the Meraki IPS module
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+    
+  - name: Create test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      type: appliance
+    register: net
+
+  - debug:
+      var: net
+
+  - name: Set whitelist for organization in check mode
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      whitelisted_rules:
+        - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+          message: Test rule
+    check_mode: yes
+    register: create_org_check
+
+  - assert:
+      that:
+        - create_org_check is changed
+        - create_org_check.data is defined
+
+  - name: Set whitelist for organization
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      whitelisted_rules:
+        - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+          message: Test rule
+    register: create_org
+
+  - assert:
+      that:
+        - create_org is changed
+        - create_org.data is defined
+        - create_org.data.whitelistedRules | length == 1
+
+  - name: Set whitelist for organization with idempotency
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_id: '{{test_org_id}}'
+      whitelisted_rules:
+        - rule_id: "meraki:intrusion/snort/GID/01/SID/5805"
+          message: Test rule
+    register: create_org_idempotent
+
+  - assert:
+      that:
+        - create_org_idempotent is not changed
+        - create_org_idempotent.data is defined
+
+  - name: Query IPS info for organization
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+    register: query_org
+
+  - assert:
+      that:
+        - query_org.data.whitelistedRules is defined
+
+  - name: Set mode to prevention with check mode
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+    check_mode: yes
+    register: mode_check
+
+  - assert:
+      that:
+        - mode_check is changed
+        - mode_check.data is defined
+
+  - name: Set mode to prevention
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+    register: mode
+
+  - debug:
+      var: mode
+
+  - assert:
+      that:
+        - mode is changed
+        - mode.data.mode is defined
+
+  - name: Set mode to prevention with idempotency
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+    register: mode_idempotent
+
+  - debug:
+      var: mode_idempotent
+
+  - assert:
+      that:
+        - mode_idempotent is not changed
+        - mode_idempotent.data.mode is defined
+
+  - name: Set full ruleset with check mode
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+      ids_rulesets: security
+      protected_networks:
+        use_default: true
+        included_cidr:
+          - 192.0.1.0/24
+        excluded_cidr:
+          - 10.0.1.0/24
+    check_mode: yes
+    register: full_check
+
+  - debug:
+      var: full_check
+
+  - assert:
+      that:
+        - full_check is changed
+        - full_check.data.mode is defined
+
+  # Meraki says protectedNetworks isn't supported on layer 3 firewalls
+  # Passthrough mode cannot be set via API
+  # - name: Set full ruleset
+  #   meraki_intrusion_prevention:
+  #     auth_key: '{{auth_key}}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}} - IPS'
+  #     mode: detection
+  #     ids_rulesets: security
+  #     protected_networks:
+  #       use_default: true
+  #       included_cidr:
+  #         - 192.0.1.0/24
+  #       excluded_cidr:
+  #         - 10.0.1.0/24
+  #   delegate_to: localhost
+  #   register: full
+
+  # - debug:
+  #     var: full
+
+  # - assert:
+  #     that:
+  #       - full is changed
+  #       - full.data.mode is defined
+
+  # Meraki says protectedNetworks isn't supported on layer 3 firewalls
+  # Passthrough mode cannot be set via API
+  # - name: Set full ruleset with idempotency
+  #   meraki_intrusion_prevention:
+  #     auth_key: '{{auth_key}}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}} - IPS'
+  #     mode: prevention
+  #     ids_rulesets: security
+  #     protected_networks:
+  #       use_default: true
+  #       included_cidr:
+  #         - 192.0.1.0/24
+  #       excluded_cidr:
+  #         - 10.0.1.0/24
+  #   delegate_to: localhost
+  #   register: full_idempotent
+
+  # - debug:
+  #     var: full_idempotent
+
+  # - assert:
+  #     that:
+  #       - full_idempotent is not changed
+  #       - full_idempotent.data.mode is defined
+
+  - name: Query IPS info for network
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+    register: query_net
+
+  - assert:
+      that:
+        - query_net is defined
+
+  - name: Test use_default error with included_cidr
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+      ids_rulesets: security
+      protected_networks:
+        use_default: false
+        excluded_cidr:
+          - 10.0.1.0/24
+    check_mode: yes
+    register: included_missing
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'included_missing.msg == "included_cidr is required when use_default is False."'
+
+  - name: Test use_default error with included_cidr
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+      mode: prevention
+      ids_rulesets: security
+      protected_networks:
+        use_default: false
+        included_cidr:
+          - 10.0.1.0/24
+    check_mode: yes
+    register: excluded_missing
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'excluded_missing.msg == "excluded_cidr is required when use_default is False."'
+
+  # #############################################################################
+  # # Tear down starts here
+  # #############################################################################
+  always:
+  - name: Delete network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
+    register: delete_net
+
+  - name: Clear rules from organization with check mode
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      whitelisted_rules:
+        - 
+    check_mode: yes
+    register: cleared
+
+  - assert:
+      that:
+        - cleared is changed
+        - cleared.data is defined
+
+  - name: Clear rules from organization
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      whitelisted_rules:
+        - 
+
+  - name: Clear rules from organization with idempotency
+    meraki_intrusion_prevention:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      whitelisted_rules:
+        - 
+    register: del_idempotent
+
+  - assert:
+      that:
+        - del_idempotent is not changed
+        - del_idempotent.data is defined
+
+  - name: Delete test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}} - IPS'
