@@ -222,10 +222,7 @@ from ansible.module_utils.openstack import openstack_full_argument_spec, opensta
 try:
     from collections import OrderedDict
 except ImportError:
-    try:
-        from ordereddict import OrderedDict
-    except ImportError:
-        from ordereddict import OrderedDict
+    from ordereddict import OrderedDict
 
 
 def _needs_update(module, port, cloud):
