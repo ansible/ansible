@@ -366,6 +366,15 @@ class HostsModule(BaseModule):
 
         return False
 
+def remove_host(host_module, host, count=0):
+    try:
+        return host_module.remove()
+    except:
+        if count > 5:
+            raise Exception('Cannot remove host.')
+        time.sleep(20)
+        return remove_host(host_module, host, count + 1)
+
 
 def failed_state(host):
     return host.status in [
@@ -485,7 +494,7 @@ def main():
                     fail_condition=failed_state,
                 )
         elif state == 'absent':
-            ret = hosts_module.remove()
+            ret = remove_host(hosts_module, host)
         elif state == 'maintenance':
             hosts_module.action(
                 action='deactivate',
