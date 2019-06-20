@@ -66,6 +66,14 @@ service:
     type: dict
 '''
 
+import traceback
+
+try:
+    from docker.errors import DockerException
+except ImportError:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    pass
+
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 
@@ -91,13 +99,16 @@ def main():
 
     client.fail_task_if_not_swarm_manager()
 
-    service = get_service_info(client)
+    try:
+        service = get_service_info(client)
 
-    client.module.exit_json(
-        changed=False,
-        service=service,
-        exists=bool(service)
-    )
+        client.module.exit_json(
+            changed=False,
+            service=service,
+            exists=bool(service)
+        )
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
