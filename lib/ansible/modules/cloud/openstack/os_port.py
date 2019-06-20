@@ -221,8 +221,13 @@ from ansible.module_utils.openstack import openstack_full_argument_spec, opensta
 
 try:
     from collections import OrderedDict
+    HAS_ORDEREDDICT = True
 except ImportError:
-    from ordereddict import OrderedDict
+    try:
+        from ordereddict import OrderedDict
+        HAS_ORDEREDDICT = True
+    except ImportError:
+        HAS_ORDEREDDICT = False
 
 
 def _needs_update(module, port, cloud):
@@ -364,6 +369,9 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
+
+    if not HAS_ORDEREDDICT:
+        module.fail_json(msg=missing_required_lib('orederddict'))
 
     name = module.params['name']
     state = module.params['state']
