@@ -32,26 +32,23 @@ options:
     type: str
   host:
     description:
-    - If the state is set to 'present', any provided hosts will be added to the group.
-    - If an empty list is passed all hosts will be removed from the group.
-    - If option is omitted hosts will not be checked or changed.
-    - If option is passed all assigned hosts that are not passed will be unassigned from the group.
-    - Any assigned hostgroups which are not passed will be unassigned from the group.
-    - If the state is set to 'add_members', any provided hosts not currently in the group will be added.
-    - If the state is set to 'remove_members', any provided hosts currently in the group will be removed.
+    - Accepts a list of member hosts.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
   hostgroup:
     description:
-    - If the state is set to 'present', any provided host-groups will be added to the group.
-    - If an empty list is passed all host-groups will be removed from the group.
-    - If option is omitted host-groups will not be checked or changed.
-    - If option is passed all assigned hostgroups that are not passed will be unassigned from the group.
-    - Any assigned hostgroups which are not passed will be unassigned from the group.
-    - If the state is set to 'add_members', any provided host-groups not currently in the group will be added.
-    - If the state is set to 'remove_members', any provided host-groups currently in the group will be removed.
+    - Accepts a list of member host-groups.  The action taken will depend on the value of "member_action."
     type: list
     elements: str
+  member_action:
+    description:
+    - Action to take for parameters accepting a list of member objects, such as host or hostgroup.
+    - Setting the members will add and/or remove members so that the members are exactly those specified.
+    - Adding members will add the specified members if required; existing members will not otherwise be affected.
+    - Removing members will remove the specified members if they are present.  Nonexistent members will be ignored.
+    default: "set"
+    choices: ["add", "remove", "set"]
+    version_added: "2.9"
   state:
     description:
     - State to ensure.
@@ -148,6 +145,7 @@ def get_hostgroup_diff(client, ipa_hostgroup, module_hostgroup):
 def ensure(module, client):
     name = module.params['cn']
     state = module.params['state']
+    member_action = module.params['member_action']
     host = module.params['host']
     hostgroup = module.params['hostgroup']
 
@@ -155,7 +153,7 @@ def ensure(module, client):
     module_hostgroup = get_hostgroup_dict(description=module.params['description'])
 
     changed = False
-    if state in ['present', 'add_members', 'remove_members']:
+    if state == 'present':
         if not ipa_hostgroup:
             changed = True
             if not module.check_mode:
@@ -169,13 +167,16 @@ def ensure(module, client):
                     for key in diff:
                         data[key] = module_hostgroup.get(key)
                     client.hostgroup_mod(name=name, item=data)
-    else:
+    elif state == 'absent':
         if ipa_hostgroup:
             changed = True
             if not module.check_mode:
                 client.hostgroup_del(name=name)
 
-    if state == 'present':
+    else:
+        raise NotImplementedError("Support for state '%s' has not yet been implemented." % state)
+
+    if member_action == 'set':
         if host is not None:
             changed = client.modify_if_diff(name, ipa_hostgroup.get('member_host', []),
                                             [item.lower() for item in host],
@@ -187,7 +188,7 @@ def ensure(module, client):
                                             [item.lower() for item in hostgroup],
                                             client.hostgroup_add_hostgroup,
                                             client.hostgroup_remove_hostgroup) or changed
-    elif state == 'add_members':
+    elif member_action == 'add':
         if host is not None:
             changed = client.add_if_missing(name, ipa_hostgroup.get('member_host', []),
                                             [item.lower() for item in host],
@@ -197,7 +198,7 @@ def ensure(module, client):
             changed = client.add_if_missing(name, ipa_hostgroup.get('member_hostgroup', []),
                                             [item.lower() for item in hostgroup],
                                             client.hostgroup_add_hostgroup) or changed
-    elif state == 'remove_members':
+    elif member_action == 'remove':
         if host is not None:
             changed = client.remove_if_present(name, ipa_hostgroup.get('member_host', []),
                                                [item.lower() for item in host],
@@ -218,13 +219,19 @@ def main():
         description=dict(type='str'),
         host=dict(type='list', elements='str'),
         hostgroup=dict(type='list', elements='str'),
+        member_action=dict(
+            type='str', default='set',
+            choices=[
+                'add',
+                'remove',
+                'set',
+            ],
+        ),
         state=dict(
             type='str', default='present',
             choices=[
                 'present',
                 'absent',
-                'add_members',
-                'remove_members',
                 'enabled',
                 'disabled'
             ]
