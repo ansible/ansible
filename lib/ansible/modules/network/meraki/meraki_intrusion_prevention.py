@@ -22,27 +22,21 @@ description:
 - Allows for management of intrusion prevention rules networks within Meraki MX networks.
 
 options:
-    auth_key:
-        description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
     state:
         description:
         - Create or modify an organization.
         choices: [ absent, present, query ]
         default: present
+        type: str
     net_name:
         description:
         - Name of a network.
         aliases: [ name, network ]
+        type: str
     net_id:
         description:
         - ID number of a network.
-    org_name:
-        description:
-        - Name of organization associated to a network.
-    org_id:
-        description:
-        - ID of organization associated to a network.
+        type: str
     mode:
         description:
         - Operational mode of Intrusion Prevention system.
@@ -56,6 +50,7 @@ options:
     whitelisted_rules:
         description:
         - List of IDs related to rules which are whitelisted for the organization.
+        type: list
         suboptions:
             rule_id:
                 description:
