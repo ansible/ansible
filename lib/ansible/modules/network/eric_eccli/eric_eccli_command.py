@@ -16,9 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -26,8 +23,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: eric_eccli_command
-version_added: "2.9"
+module: ios_command
+version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Run commands on remote devices running Cisco IOS
 description:
@@ -37,6 +34,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
+extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
 options:
@@ -60,7 +58,7 @@ options:
         within the configured number of retries, the task fails.
         See examples.
     aliases: ['waitfor']
-    version_added: "3.0"
+    version_added: "2.2"
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -71,7 +69,7 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
-    version_added: "3.0"
+    version_added: "2.2"
   retries:
     description:
       - Specifies the number of retries a command should by tried
@@ -141,36 +139,28 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-import re
 import time
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
-from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import transform_commands
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.six import string_types
-
-
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
 def parse_commands(module, warnings):
     commands = transform_commands(module)
 
-    for item in list(commands):
-        if module.check_mode:
-            if item['command'].startswith('conf'):
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
                 warnings.append(
-                    'only non-config commands are supported when using check mode, not '
+                    'Only show commands are supported when using check mode, not '
                     'executing %s' % item['command']
                 )
                 commands.remove(item)
+
     return commands
 
 
@@ -187,19 +177,21 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(eric_eccli_argument_spec)
+    argument_spec.update(ios_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    result = {'changed': False}
-
     warnings = list()
+    result = {'changed': False, 'warnings': warnings}
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
-    result['warnings'] = warnings
-
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
+
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError as exc:
+        module.fail_json(msg=to_text(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -227,9 +219,8 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({
-        'changed': False,
         'stdout': responses,
-        'stdout_lines': list(to_lines(responses))
+        'stdout_lines': list(to_lines(responses)),
     })
 
     module.exit_json(**result)
