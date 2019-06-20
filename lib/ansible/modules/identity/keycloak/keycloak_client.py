@@ -257,6 +257,7 @@ options:
             - Client template to use for this client. If it does not exist this field will silently
               be dropped.
               This is 'clientTemplate' in the Keycloak REST API.
+              This was replaced by defaultClientScopes and optionalClientScopes in Keycloak >=4.0.0
         aliases:
             - clientTemplate
 
@@ -473,6 +474,16 @@ options:
                 description:
                     - For OpenID-Connect clients, client certificate for validating JWT issued by
                       client and signed by its key, base64-encoded.
+    default_client_scopes:
+        description:
+            - The scopes the client requires by default. (KeyCloak >= 4.0.0, replaces client templates)
+        aliases:
+            - defaultClientScopes
+    optional_client_scopes:
+        description:
+            - The scopes the client can add based on the request. (KeyCloak >= 4.0.0, replaces client templates)
+        aliases:
+            - optionalClientScopes
 
 extends_documentation_fragment:
     - keycloak
@@ -590,6 +601,11 @@ EXAMPLES = '''
       use.jwks.url: true
       jwks.url: JWKS_URL_FOR_CLIENT_AUTH_JWT
       jwt.credential.certificate: JWT_CREDENTIAL_CERTIFICATE_FOR_CLIENT_AUTH
+    default_client_scopes:
+      - email
+      - openid
+    optional_client_scopes:
+      - profile
 '''
 
 RETURN = '''
@@ -705,6 +721,8 @@ def main():
         use_template_mappers=dict(type='bool', aliases=['useTemplateMappers']),
         protocol_mappers=dict(type='list', elements='dict', options=protmapper_spec, aliases=['protocolMappers']),
         authorization_settings=dict(type='dict', aliases=['authorizationSettings']),
+        default_client_scopes=dict(type='list', aliases=['defaultClientScopes']),
+        optional_client_scopes=dict(type='list', aliases=['defaultClientScopes']),
     )
     argument_spec.update(meta_args)
 

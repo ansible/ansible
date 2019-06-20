@@ -43,8 +43,11 @@ URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 
 URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
 URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
+URL_DEFAULT_CLIENT_SCOPES = "{url}/admin/realms/{realm}/clients/{id}/default-client-scopes"
+URL_OPTIONAL_CLIENT_SCOPES = "{url}/admin/realms/{realm}/clients/{id}/optional-client-scopes"
 URL_GROUPS = "{url}/admin/realms/{realm}/groups"
 URL_GROUP = "{url}/admin/realms/{realm}/groups/{groupid}"
+URL_CLIENT_SCOPES = "{url}/admin/realms/{realm}/client-scopes"
 
 
 def keycloak_argument_spec():
@@ -194,6 +197,10 @@ class KeycloakAPI(object):
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
 
         try:
+            # Keycloak >=4.0.0 <= 6.0.0 does not update the default
+            # and optional client scope passed in the client
+            # represenation.
+            self._update_scopes(clientrep, realm)
             return open_url(client_url, method='PUT', headers=self.restheaders,
                             data=json.dumps(clientrep), validate_certs=self.validate_certs)
         except Exception as e:
@@ -209,8 +216,13 @@ class KeycloakAPI(object):
         client_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
 
         try:
-            return open_url(client_url, method='POST', headers=self.restheaders,
+            resp = open_url(client_url, method='POST', headers=self.restheaders,
                             data=json.dumps(clientrep), validate_certs=self.validate_certs)
+            # Keycloak >=4.0.0 <= 6.0.0 does not update the default
+            # and optional client scope passed in the client
+            # represenation.
+            self._update_scopes(clientrep, realm)
+            return resp
         except Exception as e:
             self.module.fail_json(msg='Could not create client %s in realm %s: %s'
                                       % (clientrep['clientId'], realm, str(e)))
@@ -472,3 +484,55 @@ class KeycloakAPI(object):
 
         except Exception as e:
             self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
+
+    def _update_scopes(self, clientrep, realm):
+        """ Update the client's default client scopes and optional client scopes.
+
+        :@param clientrep: the client representation.
+        :@param realm: the client's realm.
+        """
+        client_scopes = None
+        for scope_type, url in (('defaultClientScopes', URL_DEFAULT_CLIENT_SCOPES),
+                                ('optionalClientScopes', URL_OPTIONAL_CLIENT_SCOPES)):
+            if scope_type in clientrep:
+                client_scopes = client_scopes or self.get_client_scopes(realm)
+                self._update_scope_type(clientrep[scope_type], url,
+                                        client_scopes, clientrep['id'], realm)
+
+    def _update_scope_type(self, scopes, url, client_scopes, client_id, realm):
+        """ Update the client's default client scopes or optional client scopes.
+
+        :@param scopes: list of scopes to set. All other scopes will be removed. Scopes
+                        that do not exist in the realm will be silently ignored.
+        :@param url: the url pattern (default or optional scope url) to PUT the scope to.
+        :@param client_scopes: list of realm client scopes.
+        :@param realm: the client's realm.
+        """
+        current_scopes_url = url.format(url=self.baseurl,
+                                        realm=realm, id=client_id)
+        # Get the id of the scopes we want to set
+        scopes = set([scope['id'] for scope in client_scopes if scope['name'] in scopes])
+
+        current_scopes = set(map(lambda x: x['id'],
+                                 json.load(open_url(current_scopes_url, method='GET',
+                                                    headers=self.restheaders,
+                                                    validate_certs=self.validate_certs))))
+
+        # add missing and remove extra scopes
+        for scope in (scopes ^ current_scopes):
+            request_url = (url + '/{clientScopeId}').format(url=self.baseurl,
+                                                            realm=realm, id=client_id,
+                                                            clientScopeId=scope)
+            action = 'PUT' if scope in scopes else 'DELETE'
+            open_url(request_url, method=action, headers=self.restheaders,
+                     validate_certs=self.validate_certs)
+
+    def get_client_scopes(self, realm="master"):
+        """ Get all the client scopes for the realm.
+
+        :@param realm: Realm to obtain the client scopes for.
+        """
+        return json.load(
+            open_url(URL_CLIENT_SCOPES.format(url=self.baseurl, realm=realm),
+                     method='GET', headers=self.restheaders,
+                     validate_certs=self.validate_certs))
