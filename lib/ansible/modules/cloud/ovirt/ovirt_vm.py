@@ -1000,9 +1000,9 @@ EXAMPLES = '''
       nic_on_boot: true
     - nic_name: eth2
       nic_boot_protocol_v6: static
-      nic_ip_address_v6: "2620:52:0:2282:b898:1f69:6512:36c5"
-      nic_gateway_v6: "2620:52:0:2282:b898:1f69:6512:36c9"
-      nic_netmask_v6: "120"
+      nic_ip_address_v6: '2620:52:0:2282:b898:1f69:6512:36c5'
+      nic_gateway_v6: '2620:52:0:2282:b898:1f69:6512:36c9'
+      nic_netmask_v6: '120'
       nic_on_boot: true
     - nic_name: eth3
       nic_on_boot: true
