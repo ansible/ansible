@@ -167,6 +167,40 @@ def ensure(module, client):
                     for key in diff:
                         data[key] = module_hostgroup.get(key)
                     client.hostgroup_mod(name=name, item=data)
+
+        if member_action == 'set':
+            if host is not None:
+                changed = client.modify_if_diff(name, ipa_hostgroup.get('member_host', []),
+                                                [item.lower() for item in host],
+                                                client.hostgroup_add_host,
+                                                client.hostgroup_remove_host) or changed
+
+            if hostgroup is not None:
+                changed = client.modify_if_diff(name, ipa_hostgroup.get('member_hostgroup', []),
+                                                [item.lower() for item in hostgroup],
+                                                client.hostgroup_add_hostgroup,
+                                                client.hostgroup_remove_hostgroup) or changed
+        elif member_action == 'add':
+            if host is not None:
+                changed = client.add_if_missing(name, ipa_hostgroup.get('member_host', []),
+                                                [item.lower() for item in host],
+                                                client.hostgroup_add_host) or changed
+
+            if hostgroup is not None:
+                changed = client.add_if_missing(name, ipa_hostgroup.get('member_hostgroup', []),
+                                                [item.lower() for item in hostgroup],
+                                                client.hostgroup_add_hostgroup) or changed
+        elif member_action == 'remove':
+            if host is not None:
+                changed = client.remove_if_present(name, ipa_hostgroup.get('member_host', []),
+                                                   [item.lower() for item in host],
+                                                   client.hostgroup_remove_host) or changed
+
+            if hostgroup is not None:
+                changed = client.remove_if_present(name, ipa_hostgroup.get('member_hostgroup', []),
+                                                   [item.lower() for item in hostgroup],
+                                                   client.hostgroup_remove_hostgroup) or changed
+
     elif state == 'absent':
         if ipa_hostgroup:
             changed = True
@@ -175,39 +209,6 @@ def ensure(module, client):
 
     else:
         raise NotImplementedError("Support for state '%s' has not yet been implemented." % state)
-
-    if member_action == 'set':
-        if host is not None:
-            changed = client.modify_if_diff(name, ipa_hostgroup.get('member_host', []),
-                                            [item.lower() for item in host],
-                                            client.hostgroup_add_host,
-                                            client.hostgroup_remove_host) or changed
-
-        if hostgroup is not None:
-            changed = client.modify_if_diff(name, ipa_hostgroup.get('member_hostgroup', []),
-                                            [item.lower() for item in hostgroup],
-                                            client.hostgroup_add_hostgroup,
-                                            client.hostgroup_remove_hostgroup) or changed
-    elif member_action == 'add':
-        if host is not None:
-            changed = client.add_if_missing(name, ipa_hostgroup.get('member_host', []),
-                                            [item.lower() for item in host],
-                                            client.hostgroup_add_host) or changed
-
-        if hostgroup is not None:
-            changed = client.add_if_missing(name, ipa_hostgroup.get('member_hostgroup', []),
-                                            [item.lower() for item in hostgroup],
-                                            client.hostgroup_add_hostgroup) or changed
-    elif member_action == 'remove':
-        if host is not None:
-            changed = client.remove_if_present(name, ipa_hostgroup.get('member_host', []),
-                                               [item.lower() for item in host],
-                                               client.hostgroup_remove_host) or changed
-
-        if hostgroup is not None:
-            changed = client.remove_if_present(name, ipa_hostgroup.get('member_hostgroup', []),
-                                               [item.lower() for item in hostgroup],
-                                               client.hostgroup_remove_hostgroup) or changed
 
     return changed, client.hostgroup_find(name=name)
 
