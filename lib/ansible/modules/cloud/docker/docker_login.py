@@ -330,7 +330,7 @@ def main():
             del results['actions']
         client.module.exit_json(**results)
     except DockerException as e:
-        client.fail('Unhandled docker error: {0}'.format(e), exception=traceback.format_exc())
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
