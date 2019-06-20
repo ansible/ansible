@@ -30,7 +30,7 @@ options:
         - Query an organization.
         choices: [absent, present, query]
         default: query
-        type: str        
+        type: str
     net_name:
         description:
         - Name of a network.
