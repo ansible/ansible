@@ -1674,8 +1674,6 @@ lib/ansible/modules/monitoring/zabbix/zabbix_template.py E338
 lib/ansible/modules/net_tools/basics/get_url.py E337
 lib/ansible/modules/net_tools/basics/uri.py E337
 lib/ansible/modules/net_tools/cloudflare_dns.py E337
-lib/ansible/modules/net_tools/dnsimple.py E337
-lib/ansible/modules/net_tools/dnsimple.py E338
 lib/ansible/modules/net_tools/dnsmadeeasy.py E337
 lib/ansible/modules/net_tools/dnsmadeeasy.py E338
 lib/ansible/modules/net_tools/exoscale/exo_dns_domain.py E338

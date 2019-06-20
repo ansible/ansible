@@ -47,7 +47,7 @@ options:
   record_ids:
     description:
       - List of records to ensure they either exist or do not exist.
-    type: str
+    type: list
   type:
     description:
       - The type of DNS record to create.
@@ -177,7 +177,7 @@ def main():
             record=dict(type='str'),
             record_ids=dict(type='list'),
             type=dict(type='str', choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO',
-                                               'POOL']),
+                                           'POOL']),
             ttl=dict(type='int', default=3600),
             value=dict(type='str'),
             priority=dict(type='int'),
