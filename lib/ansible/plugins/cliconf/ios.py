@@ -207,9 +207,12 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_version'] = match.group(1).strip(',')
 
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
-        if match:
-            device_info['network_os_model'] = match.group(1)
+        model_search_strs = [r'^Cisco (.+) \(revision', r'^[Cc]isco (\S+).+bytes of .*memory']
+        for item in model_search_strs:
+            match = re.search(item, data, re.M)
+            if match:
+                device_info['network_os_model'] = match.group(1)
+                break
 
         match = re.search(r'^(.+) uptime', data, re.M)
         if match:
