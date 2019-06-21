@@ -53,6 +53,7 @@ options:
         Common answers are 'y' or "\\r" (carriage return, must be
         double quotes). See examples.
     required: true
+    type:list
   wait_for:
     description:
       - List of conditions to evaluate against the output of the
@@ -61,6 +62,7 @@ options:
         within the configured number of retries, the task fails.
         See examples.
     aliases: ['waitfor']
+    type:list
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -71,6 +73,7 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
+    type:str
   retries:
     description:
       - Specifies the number of retries a command should by tried
@@ -78,6 +81,7 @@ options:
         target device every retry and evaluated against the
         I(wait_for) conditions.
     default: 10
+    type:int
   interval:
     description:
       - Configures the interval in seconds to wait between retries
@@ -85,6 +89,7 @@ options:
         conditions, the interval indicates how long to wait before
         trying the command again.
     default: 1
+    type:int
 """
 
 EXAMPLES = r"""
