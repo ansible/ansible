@@ -93,7 +93,8 @@ class HttpApi(HttpApiBase):
                 csrftoken_search = re.search('\"(.*)\"', val)
                 if csrftoken_search:
                     self._ccsrftoken = csrftoken_search.group(1)
-                    headers['x-csrftoken'] = self._ccsrftoken
+
+        headers['x-csrftoken'] = self._ccsrftoken
 
         return headers
 
@@ -116,18 +117,8 @@ class HttpApi(HttpApiBase):
         data = message_kwargs.get('data', '')
         method = message_kwargs.get('method', 'GET')
 
-        if self._ccsrftoken == '' and not (method == 'POST' and 'logincheck' in url):
-            raise Exception('Not logged in. Please login first')
-
-        headers = {}
-        if self._ccsrftoken != '':
-            headers['x-csrftoken'] = self._ccsrftoken
-
-        if method == 'POST' or 'PUT':
-            headers['Content-Type'] = 'application/json'
-
         try:
-            response, response_data = self.connection.send(url, data, headers=headers, method=method)
+            response, response_data = self.connection.send(url, data, method=method)
 
             return response.status, to_text(response_data.getvalue())
         except Exception as err:
