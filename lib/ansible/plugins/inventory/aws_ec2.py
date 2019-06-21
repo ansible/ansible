@@ -585,6 +585,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
                                "inventory configuration file or set them as environment variables.")
 
+    def _filter_template(self, filters):
+        '''
+            :param filters: the filters to be processed
+            :return filter processed
+        '''
+        processed_filters = {}
+        for key, value in filters.items():
+            if self.templar.is_template(value):
+                value = self.templar.template(value)
+            processed_filters[key] = value
+
+        return processed_filters
+
     def verify_file(self, path):
         '''
             :param loader: an ansible.parsing.dataloader.DataLoader object
@@ -610,7 +623,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # get user specifications
         regions = self.get_option('regions')
-        filters = ansible_dict_to_boto3_filter_list(self.get_option('filters'))
+        filters = ansible_dict_to_boto3_filter_list(self._filter_template(self.get_option('filters')))
         hostnames = self.get_option('hostnames')
         strict_permissions = self.get_option('strict_permissions')
 
