@@ -381,7 +381,7 @@ class ModuleManager(object):
 
         if self.want.image and self.want.image not in self.have.image_names:
             raise F5ModuleError(
-                "The specified image was not found on the device,"
+                "The specified image was not found on the device."
             )
 
         options = list()
