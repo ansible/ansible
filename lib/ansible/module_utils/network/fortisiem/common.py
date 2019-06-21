@@ -63,16 +63,16 @@ BASE_HEADERS = {
 class SyslogFacility:
     """Syslog facilities"""
     KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
-    LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
+        LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
 
     LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
-    LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+        LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
 
 
 class SyslogLevel:
     """Syslog levels"""
     EMERG, ALERT, CRIT, ERR, \
-    WARNING, NOTICE, INFO, DEBUG = range(8)
+        WARNING, NOTICE, INFO, DEBUG = range(8)
 
 
 # FSM URL ENDPOINTS
@@ -462,11 +462,11 @@ class FSMCommon(object):
         if fh_contents:
             f = open(file_path, "a+")
             append_string = str(results["json_results"]["Access IP"]) + "," + \
-                            str(results["json_results"]["score"]) + "," + \
-                            str(results["json_results"]["verified_status"]) + "," + \
-                            str(results["json_results"]["Name"]) + "," + \
-                            str(results["json_results"]["Distinct Event Types"]) + "," + \
-                            str(results["json_results"]["Num of Events"])
+                str(results["json_results"]["score"]) + "," + \
+                str(results["json_results"]["verified_status"]) + "," + \
+                str(results["json_results"]["Name"]) + "," + \
+                str(results["json_results"]["Distinct Event Types"]) + "," + \
+                str(results["json_results"]["Num of Events"])
             try:
                 missing_list = results["json_results"]["missing_items"]
                 append_string = append_string + "," + "-".join(missing_list)
@@ -484,11 +484,11 @@ class FSMCommon(object):
             f = open(file_path, "w")
             f.write("ip, score, verified_status, Name, DistinctEventTypes, NumOfEvents, missing, present\n")
             append_string = str(results["json_results"]["Access IP"]) + \
-                            "," + str(results["json_results"]["score"]) + \
-                            "," + str(results["json_results"]["verified_status"]) + \
-                            "," + str(results["json_results"]["Name"]) + \
-                            "," + str(results["json_results"]["Distinct Event Types"]) + \
-                            "," + str(results["json_results"]["Num of Events"])
+                "," + str(results["json_results"]["score"]) + \
+                "," + str(results["json_results"]["verified_status"]) + \
+                "," + str(results["json_results"]["Name"]) + \
+                "," + str(results["json_results"]["Distinct Event Types"]) + \
+                "," + str(results["json_results"]["Num of Events"])
             try:
                 missing_list = results["json_results"]["missing_items"]
                 append_string = append_string + "," + "-".join(missing_list)
