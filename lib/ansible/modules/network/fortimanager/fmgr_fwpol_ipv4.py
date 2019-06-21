@@ -66,6 +66,7 @@ options:
     required: false
     default: "disable"
     choices: ["enable", "disable"]
+    version_added: "2.9"
 
   wsso:
     description:
@@ -1033,7 +1034,7 @@ def main():
         mode=dict(choices=["add", "set", "delete", "update"], type="str", default="add"),
         package_name=dict(type="str", required=False, default="default"),
         fail_on_missing_dependency=dict(type="str", required=False, default="disable", choices=["enable",
-                                                                                                 "disable"]),
+                                                                                                "disable"]),
         wsso=dict(required=False, type="str", choices=["disable", "enable"]),
         webfilter_profile=dict(required=False, type="str"),
         webcache_https=dict(required=False, type="str", choices=["disable", "enable"]),
