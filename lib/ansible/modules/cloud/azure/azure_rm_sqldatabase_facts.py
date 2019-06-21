@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase_facts
 version_added: "2.8"
-short_description: Get Azure SQL Database facts.
+short_description: Get Azure SQL Database facts
 description:
     - Get facts of Azure SQL Database.
 
@@ -44,7 +44,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -69,7 +69,8 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing facts for SQL Database.
+    description:
+        - A list of dictionaries containing facts for SQL Database.
     returned: always
     type: complex
     contains:
@@ -96,15 +97,12 @@ databases:
                 - Resource tags.
             returned: always
             type: dict
-            sample:
-                taga: aaa
-                tagb: bbb
+            sample: { 'taga':'aaa', 'tagb':'bbb' }
         sku:
             description:
                 - The name and tier of the SKU.
             returned: always
             type: complex
-            sample: sku
             contains:
                 name:
                     description:
@@ -114,13 +112,13 @@ databases:
                     sample: BC_Gen4_2
                 tier:
                     description:
-                        - Service tier.
+                        - The SKU tier.
                     returned: always
                     type: str
                     sample: BusinessCritical
                 capacity:
                     description:
-                        - Capacity.
+                        - The SKU capacity.
                     returned: always
                     type: int
                     sample: 2
