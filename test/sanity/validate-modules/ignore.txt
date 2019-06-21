@@ -2652,7 +2652,6 @@ lib/ansible/modules/network/junos/junos_vrf.py E337
 lib/ansible/modules/network/junos/junos_vrf.py E338
 lib/ansible/modules/network/meraki/meraki_admin.py E337
 lib/ansible/modules/network/meraki/meraki_config_template.py E337
-lib/ansible/modules/network/meraki/meraki_device.py E337
 lib/ansible/modules/network/meraki/meraki_malware.py E337
 lib/ansible/modules/network/meraki/meraki_mr_l3_firewall.py E325
 lib/ansible/modules/network/meraki/meraki_mx_l3_firewall.py E337
@@ -2662,7 +2661,6 @@ lib/ansible/modules/network/meraki/meraki_snmp.py E337
 lib/ansible/modules/network/meraki/meraki_ssid.py E325
 lib/ansible/modules/network/meraki/meraki_switchport.py E337
 lib/ansible/modules/network/meraki/meraki_syslog.py E337
-lib/ansible/modules/network/meraki/meraki_vlan.py E337
 lib/ansible/modules/network/netact/netact_cm_command.py E326
 lib/ansible/modules/network/netact/netact_cm_command.py E337
 lib/ansible/modules/network/netconf/netconf_config.py E326

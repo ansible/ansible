@@ -26,6 +26,7 @@ options:
         - Specifies whether a switchport should be queried or modified.
         choices: [query, present]
         default: query
+        type: str
     access_policy_number:
         description:
         - Number of the access policy to apply.
