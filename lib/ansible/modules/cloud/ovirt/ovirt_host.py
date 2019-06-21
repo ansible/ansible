@@ -368,7 +368,7 @@ class HostsModule(BaseModule):
 
 
 def remove_host(host_module, host, max_count=5, timeout=20):
-    for count in range(max_count+1):
+    for count in range(max_count + 1):
         try:
             return host_module.remove()
         except Exception as e:
