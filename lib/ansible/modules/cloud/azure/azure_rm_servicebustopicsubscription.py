@@ -17,22 +17,21 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_servicebustopicsubscription
 version_added: "2.8"
-short_description: Manage Azure Service Bus subscription.
+short_description: Manage Azure Service Bus subscription
 description:
     - Create, update or delete an Azure Service Bus subscriptions.
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
         required: true
     name:
         description:
-            - name of the servicebus subscription.
+            - Name of the servicebus subscription.
         required: true
     state:
         description:
-            - Assert the state of the servicebus subscription. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the servicebus subscription. Use C(present) to create or update and use C(absent) to delete.
         default: present
         choices:
             - absent
@@ -109,7 +108,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -123,9 +122,12 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Current state of the subscription.
+    description:
+        - Current state of the subscription.
     returned: success
     type: str
+    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/
+            namespaces/nsb57dc95979/topics/topicb57dc95979/subscriptions/subsb57dc95979"
 '''
 
 try:

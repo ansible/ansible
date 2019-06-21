@@ -17,22 +17,21 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_servicebussaspolicy
 version_added: "2.8"
-short_description: Manage Azure Service Bus SAS policy.
+short_description: Manage Azure Service Bus SAS policy
 description:
     - Create, update or delete an Azure Service Bus SAS policy.
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
         required: true
     name:
         description:
-            - name of the sas policy.
+            - Name of the SAS policy.
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the route. Use C(present) to create or update and C(absent) to delete.
         default: present
         choices:
             - absent
@@ -75,7 +74,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -90,46 +89,68 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Current state of the SAS policy.
+    description:
+        - Current state of the SAS policy.
     returned: Successed
     type: str
+    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/
+            namespaces/nsb57dc95979/topics/topicb57dc95979/authorizationRules/testpolicy"
 keys:
-    description: Key dict of the SAS policy.
+    description:
+        - Key dict of the SAS policy.
     returned: Successed
-    type: dict
+    type: complex
     contains:
         key_name:
-            description: Name of the SAS policy.
+            description:
+                - Name of the SAS policy.
             returned: Successed
             type: str
+            sample: testpolicy
         primary_connection_string:
-            description: Primary connection string.
+            description:
+                - Primary connection string.
             returned: Successed
             type: str
+            sample: "Endpoint=sb://nsb57dc95979.servicebus.windows.net/;SharedAccessKeyName=testpolicy;
+                    SharedAccessKey=r+HD3es/9aOOq0XjQtkx5KXROH1MIHDs0WxCgR23gMc=;EntityPath=topicb57dc95979"
         primary_key:
-            description: Primary key.
+            description:
+                - Primary key.
             returned: Successed
             type: str
+            sample: "r+HD3es/9aOOq0XjQtkx5KXROH1MIHDs0WxCgR23gMc="
         secondary_key:
-            description: Secondary key.
+            description:
+                - Secondary key.
             returned: Successed
             type: str
+            sample: "/EcGztJBv72VD0Dy14bdsxi30rl+pSZMtKcs4KV3JWU="
         secondary_connection_string:
-            description: Secondary connection string.
+            description:
+                - Secondary connection string.
             returned: Successed
             type: str
+            sample: "Endpoint=sb://nsb57dc95979.servicebus.windows.net/;SharedAccessKeyName=testpolicy;
+                    SharedAccessKey=/EcGztJBv72VD0Dy14bdsxi30rl+pSZMtKcs4KV3JWU=;EntityPath=topicb57dc95979"
 name:
-    description: Name of the SAS policy.
+    description:
+        - Name of the SAS policy.
     returned: Successed
     type: str
+    sample: testpolicy
 rights:
-    description: Priviledge of the SAS policy.
+    description:
+        - Priviledge of the SAS policy.
     returned: Successed
     type: str
+    sample: manage
 type:
-    description: Type of the SAS policy.
+    description:
+        - Type of the SAS policy.
     returned: Successed
     type: str
+    sample: "Microsoft.ServiceBus/Namespaces/Topics/AuthorizationRules"
 '''
 
 try:
