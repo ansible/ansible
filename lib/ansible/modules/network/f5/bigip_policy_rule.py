@@ -883,7 +883,7 @@ class ModuleManager(object):
     def publish_on_device(self):
         params = dict(
             name=fq_name(self.want.partition,
-                         self.want.name,
+                         self.want.policy,
                          sub_path='Drafts'
                          ),
             command="publish"
