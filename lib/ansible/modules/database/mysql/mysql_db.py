@@ -22,10 +22,10 @@ version_added: "0.6"
 options:
   name:
     description:
-      - name of the database to add or remove
+      - name of the database to add or remove.
       - I(name=all) May only be provided if I(state) is C(dump) or C(import).
-      - List of databases is provided with I(state=dump) only
-      - if name=all Works like --all-databases option for mysqldump (Added in 2.0)
+      - List of databases is provided with I(state=dump) only.
+      - if name=all Works like --all-databases option for mysqldump (Added in 2.0).
     required: true
     type: list
     aliases: [ db ]
