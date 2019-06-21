@@ -604,7 +604,7 @@ def get_nextvmid(module, proxmox):
 
 
 def get_vmid(proxmox, name):
-    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == name]
+    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm.get('name') == name]
 
 
 def get_vm(proxmox, vmid):
