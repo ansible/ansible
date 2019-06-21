@@ -186,15 +186,9 @@ class AzureRMDevTestLabArtifactsSource(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        required_if = [
-            ('state', 'present', [
-             'source_type', 'uri', 'security_token'])
-        ]
-
         super(AzureRMDevTestLabArtifactsSource, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                                supports_check_mode=True,
-                                                               supports_tags=True,
-                                                               required_if=required_if)
+                                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -210,8 +204,8 @@ class AzureRMDevTestLabArtifactsSource(AzureRMModuleBase):
         elif self.artifact_source.get('source_type') == 'vso':
             self.artifact_source['source_type'] = 'VsoGit'
 
-        if self.artifact_source.get('status') is not None:
-            self.artifact_source['status'] = 'Enabled' if self.artifact_source.get('status') else 'Disabled'
+        if self.artifact_source.get('is_enabled') is not None:
+            self.artifact_source['status'] = 'Enabled' if self.artifact_source.get('is_enabled') else 'Disabled'
 
         response = None
 
@@ -240,11 +234,13 @@ class AzureRMDevTestLabArtifactsSource(AzureRMModuleBase):
                 else:
                     self.artifact_source['display_name'] = old_response.get('display_name')
 
-                if self.artifact_source.get('source_type').lower() != old_response.get('source_type').lower():
-                    self.to_do = Actions.Update
+                if self.artifact_source.get('source_type') is not None:
+                    if self.artifact_source.get('source_type').lower() != old_response.get('source_type').lower():
+                        self.to_do = Actions.Update
 
-                if self.artifact_source.get('uri') != old_response.get('uri'):
-                    self.to_do = Actions.Update
+                if self.artifact_source.get('uri') is not None:
+                    if self.artifact_source.get('uri') != old_response.get('uri'):
+                        self.to_do = Actions.Update
 
                 if self.artifact_source.get('branch_ref') is not None:
                     if self.artifact_source.get('branch_ref') != old_response.get('branch_ref'):
