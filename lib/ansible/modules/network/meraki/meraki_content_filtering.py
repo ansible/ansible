@@ -35,14 +35,6 @@ options:
         description:
         - ID number of a network.
         type: str
-    org_name:
-        description:
-        - Name of organization associated to a network.
-        type: str
-    org_id:
-        description:
-        - ID of organization associated to a network.
-        type: str
     state:
         description:
         - States that a policy should be created or modified.

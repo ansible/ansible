@@ -29,13 +29,6 @@ options:
         - Create or modify an organization.
         choices: ['present', 'query']
         default: present
-    org_name:
-        description:
-        - Name of organization.
-        - If C(clone) is specified, C(org_name) is the name of the new organization.
-    org_id:
-        description:
-        - ID of organization.
     net_name:
         description:
         - Name of network which MX firewall is in.
