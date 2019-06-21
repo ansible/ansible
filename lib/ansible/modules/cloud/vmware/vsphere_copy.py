@@ -206,7 +206,7 @@ def main():
         try:
             if isinstance(e[0], int):
                 error_code = e[0]
-        except (KeyError, TypeError):
+        except (KeyError, TypeError, IndexError):
             pass
         module.fail_json(msg=to_native(e), status=None, errno=error_code,
                          reason=to_native(e), url=url, exception=traceback.format_exc())
