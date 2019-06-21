@@ -212,7 +212,30 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                try
+                {
+                    $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
+                    # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
+                    # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
+                    if ($_.Exception.ExitCode -eq 15) {
+                        $result.reboot_required = $true
+                    } else {
+                        Fail-Json -obj $result -message "Failed to install ADDSDomainController with DCPromo: $($_.Exception.Message)"
+                    }
+                } catch {
+                    # We cannot directly catch Microsoft.ADRoles.Deployment.Common.Tests.TestFailedException
+                    # As the type is within an internal flagged class of Microsoft.ADRoles.Deployment.Common
+                    if (
+                        ($_.FullyQualifiedErrorId -eq 'Test.VerifyUserCredentialPermissions.DCPromo.General.25,Microsoft.DirectoryServices.Deployment.PowerShell.Commands.InstallADDSDomainControllerCommand') -and
+                        ($_.CategroyInfo.Reason -eq "TestFailedException") -and
+                        ($_.Exception.ErrorCode -eq 25)
+                    ) {
+                        Fail-Json -obj $result -message "Failed to resolve domain name $($dns_domain_name): $($_.Exception.Message)"
+                    } else {
+                        throw
+                    }
+                }
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
