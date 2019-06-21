@@ -31,6 +31,8 @@ from ansible.module_utils.network.fortimanager.common import FMGR_RC
 from ansible.module_utils.network.fortimanager.common import FMGBaseException
 from ansible.module_utils.network.fortimanager.common import FMGRCommon
 from ansible.module_utils.network.fortimanager.common import scrub_dict
+from ansible.module_utils.network.fortimanager.common import FMGRMethods
+
 
 # check for pyFMG lib - DEPRECATING
 try:
@@ -57,6 +59,14 @@ class FortiManagerHandler(object):
         self._conn = conn
         self._module = module
         self._tools = FMGRCommon
+        self._uses_workspace = None
+        self._uses_adoms = None
+        self._locked_adom_list = list()
+        self._lock_info = None
+
+        self.workspace_check()
+        if self._uses_workspace:
+            self.get_lock_info(adom=self._module.paramgram["adom"])
 
     def process_request(self, url, datagram, method):
         """
@@ -72,8 +82,23 @@ class FortiManagerHandler(object):
         :return: Dictionary containing results of the API Request via Connection Plugin
         :rtype: dict
         """
+        try:
+            adom = self._module.paramgram["adom"]
+            if self.uses_workspace and adom not in self._locked_adom_list and method != FMGRMethods.GET:
+                self.lock_adom(adom=adom)
+        except BaseException as err:
+            raise FMGBaseException(err)
+
         data = self._tools.format_request(method, url, **datagram)
         response = self._conn.send_request(method, data)
+
+        try:
+            adom = self._module.paramgram["adom"]
+            if self.uses_workspace and adom in self._locked_adom_list \
+                    and response[0] == 0 and method != FMGRMethods.GET:
+                self.commit_changes(adom=adom)
+        except BaseException as err:
+            raise FMGBaseException(err)
 
         # if HAS_FMGR_DEBUG:
         #     try:
@@ -82,6 +107,123 @@ class FortiManagerHandler(object):
         #         pass
 
         return response
+
+    def workspace_check(self):
+        """
+       Checks FortiManager for the use of Workspace mode
+       """
+        url = "/cli/global/system/global"
+        data = {"fields": ["workspace-mode", "adom-status"]}
+        resp_obj = self.process_request(url, data, FMGRMethods.GET)
+        try:
+            if resp_obj[1]["workspace-mode"] in ["workflow", "normal"]:
+                self.uses_workspace = True
+            elif resp_obj[1]["workspace-mode"] == "disabled":
+                self.uses_workspace = False
+        except KeyError:
+            raise FMGBaseException(msg="Couldn't determine workspace-mode in the plugin")
+        try:
+            if resp_obj[1]["adom-status"] in [1, "enable"]:
+                self.uses_adoms = True
+            else:
+                self.uses_adoms = False
+        except KeyError:
+            raise FMGBaseException(msg="Couldn't determine adom-status in the plugin")
+
+    def run_unlock(self):
+        """
+        Checks for ADOM status, if locked, it will unlock
+        """
+        for adom_locked in self._locked_adom_list:
+            self.unlock_adom(adom_locked)
+
+    def lock_adom(self, adom=None):
+        """
+        Locks an ADOM for changes
+        """
+        if not adom or adom == "root":
+            url = "/dvmdb/adom/root/workspace/lock"
+        else:
+            if adom.lower() == "global":
+                url = "/dvmdb/global/workspace/lock/"
+            else:
+                url = "/dvmdb/adom/{adom}/workspace/lock/".format(adom=adom)
+        datagram = {}
+        data = self._tools.format_request(FMGRMethods.EXEC, url, **datagram)
+        resp_obj = self._conn.send_request(FMGRMethods.EXEC, data)
+        code = resp_obj[0]
+        if code == 0 and resp_obj[1]["status"]["message"].lower() == "ok":
+            self.add_adom_to_lock_list(adom)
+        else:
+            lockinfo = self.get_lock_info(adom=adom)
+            self._module.fail_json(msg=("An error occurred trying to lock the adom. Error: "
+                                        + str(resp_obj) + ", LOCK INFO: " + str(lockinfo)))
+        return resp_obj
+
+    def unlock_adom(self, adom=None):
+        """
+        Unlocks an ADOM after changes
+        """
+        if not adom or adom == "root":
+            url = "/dvmdb/adom/root/workspace/unlock"
+        else:
+            if adom.lower() == "global":
+                url = "/dvmdb/global/workspace/unlock/"
+            else:
+                url = "/dvmdb/adom/{adom}/workspace/unlock/".format(adom=adom)
+        datagram = {}
+        data = self._tools.format_request(FMGRMethods.EXEC, url, **datagram)
+        resp_obj = self._conn.send_request(FMGRMethods.EXEC, data)
+        code = resp_obj[0]
+        if code == 0 and resp_obj[1]["status"]["message"].lower() == "ok":
+            self.remove_adom_from_lock_list(adom)
+        else:
+            self._module.fail_json(msg=("An error occurred trying to unlock the adom. Error: " + str(resp_obj)))
+        return resp_obj
+
+    def get_lock_info(self, adom=None):
+        """
+        Gets ADOM lock info so it can be displayed with the error messages. Or if determined to be locked by ansible
+        for some reason, then unlock it.
+        """
+        if not adom or adom == "root":
+            url = "/dvmdb/adom/root/workspace/lockinfo"
+        else:
+            if adom.lower() == "global":
+                url = "/dvmdb/global/workspace/lockinfo/"
+            else:
+                url = "/dvmdb/adom/{adom}/workspace/lockinfo/".format(adom=adom)
+        datagram = {}
+        data = self._tools.format_request(FMGRMethods.GET, url, **datagram)
+        resp_obj = self._conn.send_request(FMGRMethods.GET, data)
+        code = resp_obj[0]
+        if code != 0:
+            self._module.fail_json(msg=("An error occurred trying to get the ADOM Lock Info. Error: " + str(resp_obj)))
+        elif code == 0:
+            self._lock_info = resp_obj[1]
+        return resp_obj
+
+    def commit_changes(self, adom=None, aux=False):
+        """
+        Commits changes to an ADOM
+        """
+        if not adom or adom == "root":
+            url = "/dvmdb/adom/root/workspace/commit"
+        else:
+            if aux:
+                url = "/pm/config/adom/{adom}/workspace/commit".format(adom=adom)
+            else:
+                if adom.lower() == "global":
+                    url = "/dvmdb/global/workspace/commit/"
+                else:
+                    url = "/dvmdb/adom/{adom}/workspace/commit".format(adom=adom)
+        datagram = {}
+        data = self._tools.format_request(FMGRMethods.EXEC, url, **datagram)
+        resp_obj = self._conn.send_request(FMGRMethods.EXEC, data)
+        code = resp_obj[0]
+        if code != 0:
+            self._module.fail_json(msg=("An error occurred trying to commit changes to the adom. Error: "
+                                        + str(resp_obj)))
 
     def govern_response(self, module, results, msg=None, good_codes=None,
                         stop_on_fail=None, stop_on_success=None, skipped=None,
@@ -182,8 +324,7 @@ class FortiManagerHandler(object):
                                     success=rc_data.get("success", False),
                                     ansible_facts=rc_data.get("ansible_facts", dict()))
 
-    @staticmethod
-    def return_response(module, results, msg="NULL", good_codes=(0,),
+    def return_response(self, module, results, msg="NULL", good_codes=(0,),
                         stop_on_fail=True, stop_on_success=False, skipped=False,
                         changed=False, unreachable=False, failed=False, success=False, changed_if_success=True,
                         ansible_facts=()):
@@ -255,6 +396,11 @@ class FortiManagerHandler(object):
                 if failed and unreachable:
                     failed = False
                 if stop_on_fail:
+                    if self._uses_workspace:
+                        try:
+                            self.run_unlock()
+                        except BaseException as err:
+                            raise FMGBaseException(msg=("Couldn't unlock ADOM! Error: " + str(err)))
                     module.exit_json(msg=msg, failed=failed, changed=changed, unreachable=unreachable, skipped=skipped,
                                      results=results[1], ansible_facts=ansible_facts, rc=results[0],
                                      invocation={"module_args": ansible_facts["ansible_params"]})
@@ -263,6 +409,11 @@ class FortiManagerHandler(object):
                     changed = True
                     success = False
                 if stop_on_success:
+                    if self._uses_workspace:
+                        try:
+                            self.run_unlock()
+                        except BaseException as err:
+                            raise FMGBaseException(msg=("Couldn't unlock ADOM! Error: " + str(err)))
                     module.exit_json(msg=msg, success=success, changed=changed, unreachable=unreachable,
                                      skipped=skipped, results=results[1], ansible_facts=ansible_facts, rc=results[0],
                                      invocation={"module_args": ansible_facts["ansible_params"]})
@@ -299,7 +450,29 @@ class FortiManagerHandler(object):
 
         return facts
 
+    @property
+    def uses_workspace(self):
+        return self._uses_workspace
 
+    @uses_workspace.setter
+    def uses_workspace(self, val):
+        self._uses_workspace = val
+
+    @property
+    def uses_adoms(self):
+        return self._uses_adoms
+
+    @uses_adoms.setter
+    def uses_adoms(self, val):
+        self._uses_adoms = val
+
+    def add_adom_to_lock_list(self, adom):
+        if adom not in self._locked_adom_list:
+            self._locked_adom_list.append(adom)
+
+    def remove_adom_from_lock_list(self, adom):
+        if adom in self._locked_adom_list:
+            self._locked_adom_list.remove(adom)
 ##########################
 # BEGIN DEPRECATED METHODS
 ##########################
