@@ -24,6 +24,13 @@ TESTSETS = [
             "7.2.1511",
             "Core"
         ],
+        'distro': {
+            'codename': 'Core',
+            'id': 'centos',
+            'name': 'CentOS Linux',
+            'version': '7',
+            'version_best': '7.2.1511',
+        },
         "input": {
             "/etc/redhat-release": "CentOS Linux release 7.2.1511 (Core) \n",
             "/etc/os-release": (
@@ -40,7 +47,7 @@ TESTSETS = [
             "distribution": "CentOS",
             "distribution_major_version": "7",
             "os_family": "RedHat",
-            "distribution_version": "7.2.1511",
+            "distribution_version": "7.2",
         }
     },
     {
@@ -50,6 +57,13 @@ TESTSETS = [
             "6.7",
             "Final"
         ],
+        'distro': {
+            'codename': 'Core',
+            'id': 'centos',
+            'name': 'CentOS Linux',
+            'version': '6',
+            'version_best': '6.7',
+        },
         "input": {
             "/etc/redhat-release": "CentOS release 6.7 (Final)\n",
             "/etc/lsb-release": (
@@ -73,6 +87,13 @@ TESTSETS = [
             "7.2",
             "Maipo"
         ],
+        'distro': {
+            'codename': 'Maipo',
+            'id': 'rhel',
+            'name': 'RedHat Enterprise Linux',
+            'version': '7.2',
+            'version_best': '7.2',
+        },
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
             "/etc/os-release": (
@@ -100,6 +121,13 @@ TESTSETS = [
             "6.7",
             "Santiago"
         ],
+        'distro': {
+            'codename': 'Santiago',
+            'id': 'rhel',
+            'name': 'RedHat Enterprise Linux',
+            'version': '6.7',
+            'version_best': '6.7',
+        },
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
             "/etc/lsb-release": (
@@ -123,6 +151,13 @@ TESTSETS = [
             "7.3",
             ""
         ],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'virtuozzo',
+            'name': 'Virtuozzo Linux',
+            'version': '7.3',
+            'version_best': '7.3',
+        },
         "input": {
             "/etc/redhat-release": "Virtuozzo Linux release 7.3\n",
             "/etc/os-release": (
@@ -170,6 +205,13 @@ CODENAME = Malachite
 """
         },
         "platform.dist": ['SuSE', '42.1', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'opensuse-leap',
+            'name': 'openSUSE Leap',
+            'version': '42.1',
+            'version_best': '42.1',
+        },
         "result": {
             "distribution": "openSUSE Leap",
             "distribution_major_version": "42",
@@ -199,6 +241,13 @@ ID_LIKE="suse"
 """
         },
         'platform.dist': ('SuSE', '13.2', 'x86_64'),
+        'distro': {
+            'codename': 'n/a',
+            'id': 'opensuse-leap',
+            'name': 'openSUSE Harlequin',
+            'version': '13.2',
+            'version_best': '13.2',
+        },
         'result': {
             'distribution': u'openSUSE',
             'distribution_major_version': u'13',
@@ -213,6 +262,13 @@ ID_LIKE="suse"
             "",
             ""
         ],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'opensuse-leap',
+            'name': 'openSUSE Tumbleweed',
+            'version': '20160917',
+            'version_best': '20160917',
+        },
         "input": {
             "/etc/os-release": (
                 "NAME=\"openSUSE Tumbleweed\"\n# VERSION=\"20160917\"\nID=opensuse\nID_LIKE=\"suse\"\nVERSION_ID=\"20160917\"\n"
@@ -235,6 +291,13 @@ ID_LIKE="suse"
             "",
             ""
         ],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'opensuse-leap',
+            'name': 'openSUSE Leap',
+            'version': '15.0',
+            'version_best': '15.0',
+        },
         "input": {
             "/etc/os-release": (
                 "NAME=\"openSUSE Leap\"\n# VERSION=\"15.0\"\nID=opensuse-leap\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.0\"\n"
@@ -261,6 +324,13 @@ PATCHLEVEL = 3
 """
         },
         "platform.dist": ['SuSE', '11', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'sles',
+            'name': 'SUSE Linux Enterprise Server',
+            'version': '11.3',
+            'version_best': '11.3',
+        },
         "result": {
             "distribution": "SLES",
             "distribution_major_version": "11",
@@ -288,6 +358,13 @@ CPE_NAME="cpe:/o:suse:sles:11:4"
 """,
         },
         "platform.dist": ['SuSE', '11', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'sles',
+            'name': 'SUSE Linux Enterprise Server',
+            'version': '11.4',
+            'version_best': '11.4',
+        },
         "result":{
             "distribution": "SLES",
             "distribution_major_version": "11",
@@ -317,6 +394,13 @@ CPE_NAME="cpe:/o:suse:sles:12"
 """,
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'sles',
+            'name': 'SUSE Linux Enterprise Server',
+            'version': '12',
+            'version_best': '12',
+        },
         "result": {
             "distribution": "SLES",
             "distribution_major_version": "12",
@@ -346,6 +430,13 @@ CPE_NAME="cpe:/o:suse:sles:12:sp1"
             """,
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'sles',
+            'name': 'SUSE Linux Enterprise Server',
+            'version': '12.1',
+            'version_best': '12.1',
+        },
         "result":{
             "distribution": "SLES",
             "distribution_major_version": "12",
@@ -375,6 +466,13 @@ CPE_NAME="cpe:/o:suse:sles_sap:12:sp2"
             """,
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'sles',
+            'name': 'SUSE Linux Enterprise Server',
+            'version': '12.2',
+            'version_best': '12.2',
+        },
         "result":{
             "distribution": "SLES_SAP",
             "distribution_major_version": "12",
@@ -404,6 +502,13 @@ CPE_NAME="cpe:/o:suse:sles_sap:12:sp3"
             """,
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
+        'distro': {
+            'codename': 'n/a',
+            'id': 'sles',
+            'name': 'SUSE Linux Enterprise Server',
+            'version': '12.3',
+            'version_best': '12.3',
+        },
         "result":{
             "distribution": "SLES_SAP",
             "distribution_major_version": "12",
@@ -428,6 +533,13 @@ BUG_REPORT_URL="https://bugs.debian.org/"
             """,
         },
         "platform.dist": ('debian', 'stretch/sid', ''),
+        'distro': {
+            'codename': 'stretch',
+            'id': 'debian',
+            'name': 'Debian GNU/Linux',
+            'version': '9',
+            'version_best': '9.8',
+        },
         "result": {
             "distribution": "Debian",
             "distribution_major_version": "stretch/sid",
@@ -451,6 +563,13 @@ BUG_REPORT_URL="http://bugs.debian.org/"
 """
         },
         'platform.dist': ('debian', '7.9', ''),
+        'distro': {
+            'codename': 'wheezy',
+            'id': 'debian',
+            'name': 'Debian GNU/Linux',
+            'version': '7',
+            'version_best': '7.9',
+        },
         'result': {
             'distribution': u'Debian',
             'distribution_major_version': u'7',
@@ -1230,13 +1349,15 @@ def test_distribution_version(am, mocker, testcase):
         return testcase.get('platform.version', '')
 
     def mock_distro_name():
-        return testcase['platform.dist'][0]
+        return testcase['distro']['name']
 
-    def mock_distro_version():
-        return testcase['platform.dist'][1]
+    def mock_distro_version(best=False):
+        if best:
+            return testcase['distro']['version_best']
+        return testcase['distro']['version']
 
     def mock_distro_codename():
-        return testcase['platform.dist'][2]
+        return testcase['distro']['codename']
 
     def mock_open(filename, mode='r'):
         if filename in testcase['input']:
