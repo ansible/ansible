@@ -279,6 +279,7 @@ class Connection(ConnectionBase):
             self.allow_executable = False
             self.has_pipelining = True
             self.allow_extras = True
+        self._si = None
 
     def _establish_connection(self):
         connection_kwargs = {
