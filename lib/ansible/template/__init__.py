@@ -562,7 +562,7 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        if not USE_JINJA2_NATIVE:
+                        if not USE_JINJA2_NATIVE and result:
                             if convert_data and not self._no_type_regex.match(variable):
                                 if result in T_F:
                                     result = boolean(result)
