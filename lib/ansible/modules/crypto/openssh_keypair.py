@@ -181,6 +181,8 @@ class Keypair(object):
                 args.extend(['-C', ""])
 
             try:
+                if os.path.exists(self.path) and not os.access(self.path, os.W_OK):
+                    os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
                 self.changed = True
                 module.run_command(args, data="y")
                 proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
@@ -204,23 +206,15 @@ class Keypair(object):
         if _check_state():
             proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
             if not proc[0] == 0:
-                if not os.path.isdir(self.path) and os.access(self.path, os.W_OK):
-                    if not self.force:
-                        module.fail_json(
-                            msg='%s seems not to be a valid key file. If you want this module to overwrite '
-                            'the file at %s please specify the force parameter.' % (self.path, self.path))
-                    else:
-                        return False
-                elif not os.path.isdir(self.path) and not os.access(self.path, os.W_OK):
-                    if not self.force:
-                        module.fail_json(
-                            msg='%s seems not to be write-able. If you want this module to (re)generate the '
-                                'keypair anyways please specify the force parameter.' % (self.path))
-                    else:
-                        os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
-                        return False
-                else:
+                if os.path.isdir(self.path):
                     module.fail_json(msg='%s is a directory. Please specify a path to a file.' % (self.path))
+
+                if os.access(self.path, os.W_OK) and not self.force:
+                    module.fail_json(
+                            msg='%s seems not to be a valid key file. If you want this module to overwrite '
+                                'the file at %s please specify the force parameter.' % (self.path, self.path))
+                else:
+                    return False
 
             fingerprint = proc[1].split()
             pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
