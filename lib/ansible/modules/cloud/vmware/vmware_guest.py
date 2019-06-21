@@ -265,7 +265,7 @@ options:
     version_added: '2.3'
   esxi_hostname:
     description:
-    - The ESXi hostname where the virtual machine will run.
+    - The ESXi hostname (fqdn) where the virtual machine will run.
     - This is a required parameter, if C(cluster) is not set.
     - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
     - This parameter is case sensitive.
@@ -1921,8 +1921,10 @@ class PyVmomiHelper(PyVmomi):
                 datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
                 if self.params['esxi_hostname']:
                     # Filtering datastores to those one attached to esxi host selected (it could be local storage)
-                    datastores = [x for x in datastores if self.params['esxi_hostname'].split(".", 1)[0] in 
-                                    [h.key.config.network.netStackInstance[0].dnsConfig.hostName for h in x.host]]
+                    datastores = [x for x in datastores if self.params['esxi_hostname'] in 
+                                    [h.key.config.network.netStackInstance[0].dnsConfig.hostName + '.' 
+                                    + h.key.config.network.netStackInstance[0].dnsConfig.domainName for h in x.host]
+                                ]
                 else:
                     datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
                 if datastores is None or len(datastores) == 0:
