@@ -1536,7 +1536,7 @@ macros:
   team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
   team_aireos: jmighion
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
-  team_asa: gdpak ogenstad
+  team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho yungezz zikalino
@@ -1559,8 +1559,8 @@ macros:
   team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
-  team_ios: rcarrillocruz
-  team_iosxr: rcarrillocruz gdpak
+  team_ios: justjais
+  team_iosxr: justjais NilashishC
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_kubevirt: machacekondra mmazur pkliczewski
@@ -1573,12 +1573,12 @@ macros:
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
+  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha justjais NilashishC danielmellado
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me cloudnull gtema
-  team_openswitch: Qalthos gdpak
+  team_openswitch: Qalthos danielmellado
   team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
