@@ -1177,10 +1177,17 @@ class ModuleValidator(Validator):
                 deprecated_args_from_argspec.add(arg)
                 deprecated_args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
-                # Record provider options from network modules, for later comparison
-                for provider_arg, provider_data in data.get('options', {}).items():
-                    provider_args.add(provider_arg)
-                    provider_args.update(provider_data.get('aliases', []))
+                if data.get('options') and not isinstance(data.get('options'), dict):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=331,
+                        msg="Argument 'options' in argument_spec['provider'] must be a dictionary/hash when used",
+                    )
+                else:
+                    # Record provider options from network modules, for later comparison
+                    for provider_arg, provider_data in data.get('options', {}).items():
+                        provider_args.add(provider_arg)
+                        provider_args.update(provider_data.get('aliases', []))
 
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
