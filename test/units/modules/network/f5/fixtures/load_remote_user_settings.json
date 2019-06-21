@@ -1,0 +1,10 @@
+{
+  "kind": "tm:auth:remote-user:remote-userstate",
+  "selfLink": "https://localhost/mgmt/tm/auth/remote-user?ver=12.1.4",
+  "defaultPartition": "all",
+  "defaultPartitionReference": {
+    "link": "https://localhost/mgmt/tm/auth/partition/all?ver=12.1.4"
+  },
+  "defaultRole": "no-access",
+  "remoteConsoleAccess": "disabled"
+}
