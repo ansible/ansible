@@ -367,14 +367,14 @@ class HostsModule(BaseModule):
         return False
 
 
-def remove_host(host_module, host, count=0):
-    try:
-        return host_module.remove()
-    except Exception as e:
-        if count > 5:
-            raise Exception('Cannot remove host. Error message %s' % str(e))
-        time.sleep(20)
-        return remove_host(host_module, host, count + 1)
+def remove_host(host_module, host, max_count=5, timeout=20):
+    for count in range(max_count+1):
+        try:
+            return host_module.remove()
+        except Exception as e:
+            if count == max_count:
+                raise Exception('Cannot remove host. Error message %s' % str(e))
+            time.sleep(timeout)
 
 
 def failed_state(host):
