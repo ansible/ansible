@@ -52,8 +52,8 @@ options:
         a dict containing I(command), I(answer) and I(prompt).
         Common answers are 'y' or "\\r" (carriage return, must be
         double quotes). See examples.
-    required: true
     type:list
+    required: true
   wait_for:
     description:
       - List of conditions to evaluate against the output of the
@@ -71,25 +71,25 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
+    type:str
     default: all
     choices: ['any', 'all']
-    type:str
   retries:
     description:
       - Specifies the number of retries a command should by tried
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    default: 10
     type:int
+    default: 10
   interval:
     description:
       - Configures the interval in seconds to wait between retries
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    default: 1
     type:int
+    default: 1
 """
 
 EXAMPLES = r"""
