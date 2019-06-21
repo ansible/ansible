@@ -26,9 +26,11 @@ from mock import MagicMock, call
 
 from units.compat import unittest
 from ansible.plugins.cliconf import ios
+from ansible.module_utils._text import to_bytes
 
-FIXTURE_DIR = b'%s/fixtures/ios' % (
-    path.dirname(path.abspath(__file__)).encode('utf-8')
+
+b_FIXTURE_DIR = b'%s/fixtures/ios' % (
+    to_bytes(path.dirname(path.abspath(__file__)), errors='surrogate_or_strict')
 )
 
 
@@ -40,7 +42,7 @@ def _connection_side_effect(*args, **kwargs):
             value = kwargs.get('command')
 
         fixture_path = path.abspath(
-            b'%s/%s' % (FIXTURE_DIR, b'_'.join(value.split(b' ')))
+            b'%s/%s' % (b_FIXTURE_DIR, b'_'.join(value.split(b' ')))
         )
         with open(fixture_path, 'rb') as file_desc:
             return file_desc.read()
