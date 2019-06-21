@@ -31,7 +31,7 @@ options:
         you know that the object cannot be removed, while there are dependent objects.
     default: true
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   check_command:
     description:
       - The command used to check if the host is alive.
@@ -62,7 +62,7 @@ options:
       - Force a check when a host is created or modified
     type: bool
     default: yes
-    version_added: 2.8
+    version_added: 2.9
   ip:
     description:
       - The IP address of the host.
@@ -107,90 +107,90 @@ options:
     description:
       - The number of times a service is checked before changing into a hard state.
     type: int
-    version_added: 2.8
+    version_added: 2.9
   check_period:
     description:
       - The name of a time period which determines when this service should be checked.
-    version_added: 2.8
+    version_added: 2.9
   check_timeout:
     description:
       - Check command timeout in seconds. Overrides the CheckCommand's timeout attribute.
     type: int
-    version_added: 2.8
+    version_added: 2.9
   check_interval:
     description:
       - The check interval (in seconds). This interval is used for checks when the service is in a HARD state.
     type: int
-    version_added: 2.8
+    version_added: 2.9
   retry_interval:
     description:
       - The retry interval (in seconds). This interval is used for checks when the service is in a SOFT state.
     type: int
-    version_added: 2.8
+    version_added: 2.9
   enable_notifications:
     description:
       - Whether notifications are enabled.
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   enable_active_checks:
     description:
       - Whether active checks are enabled.
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   enable_passive_checks:
     description:
       - Whether passive checks are enabled.
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   enable_event_handler:
     description:
        - Enables event handlers for this host.
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   enable_flapping:
     description:
       - Enables Whether flap detection is enabled.
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   enable_perfdata:
     description:
       - Enables event handlers for this host.
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   event_command:
     description:
       - The name of an event command that should be executed every time the service's state changes or the service is in a SOFT state.
-    version_added: 2.8
+    version_added: 2.9
   volatile:
     description:
       - The volatile setting enables always HARD state types if NOT-OK state changes occur.
     default: False
     type: bool
-    version_added: 2.8
+    version_added: 2.9
   command_endpoint:
     description:
       - The endpoint where commands are executed on.
-    version_added: 2.8
+    version_added: 2.9
   notes:
     description:
       - Notes for the host.
-    version_added: 2.8
+    version_added: 2.9
   notes_url:
     description:
       - URL for notes for the host (for example, in notification commands).
-    version_added: 2.8
+    version_added: 2.9
   action_url:
     description:
       - URL for actions for the host (for example, an external graphing tool).
-    version_added: 2.8
+    version_added: 2.9
   image_icon:
     description:
       -  Icon image for the host. Used by external interfaces only.
-    version_added: 2.8
+    version_added: 2.9
   image_icon_alt:
     description:
       - Icon image description for the host. Used by external interface only.
-    version_added: 2.8
+    version_added: 2.9
   variables:
     description:
       - List of variables.
