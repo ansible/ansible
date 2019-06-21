@@ -26,12 +26,13 @@ description:
     before returning or timing out if the condition is not met.
   - This module also supports running commands in configuration mode
     in raw command style.
+extends_documentation_fragment: eric_eccli
 notes:
   - Tested against IPOS 19.3
 options:
   commands:
     description:
-      - List of commands to send to the remote ECCLI device over the
+      - List of commands to send to the remote ios device over the
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
@@ -49,6 +50,7 @@ options:
         within the configured number of retries, the task fails.
         See examples.
     aliases: ['waitfor']
+    version_added: "3.2"
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -59,6 +61,7 @@ options:
         satisfied.
     default: all
     choices: ['any', 'all']
+    version_added: "3.2"
   retries:
     description:
       - Specifies the number of retries a command should by tried
