@@ -211,8 +211,8 @@ class Keypair(object):
 
                 if os.access(self.path, os.W_OK) and not self.force:
                     module.fail_json(
-                            msg='%s seems not to be a valid key file. If you want this module to overwrite '
-                            'the file at %s please specify the force parameter.' % (self.path, self.path))
+                        msg='%s seems not to be a valid key file. If you want this module to overwrite '
+                        'the file at %s please specify the force parameter.' % (self.path, self.path))
                 else:
                     return False
 
