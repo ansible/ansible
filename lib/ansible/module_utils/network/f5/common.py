@@ -62,36 +62,6 @@ f5_argument_spec = {
     'provider': dict(type='dict', options=f5_provider_spec),
 }
 
-f5_top_spec = {
-    'server': dict(
-        removed_in_version=2.9,
-    ),
-    'user': dict(
-        removed_in_version=2.9,
-    ),
-    'password': dict(
-        removed_in_version=2.9,
-        no_log=True,
-        aliases=['pass', 'pwd'],
-    ),
-    'validate_certs': dict(
-        removed_in_version=2.9,
-        type='bool',
-    ),
-    'server_port': dict(
-        removed_in_version=2.9,
-        type='int',
-    ),
-    'transport': dict(
-        removed_in_version=2.9,
-        choices=['cli', 'rest']
-    ),
-    'auth_provider': dict(
-        default=None
-    )
-}
-f5_argument_spec.update(f5_top_spec)
-
 
 def get_provider_argspec():
     return f5_provider_spec
@@ -110,19 +80,6 @@ def is_empty_list(seq):
         if seq[0] == '' or seq[0] == 'none':
             return True
     return False
-
-
-# Fully Qualified name (with the partition)
-def fqdn_name(partition, value):
-    """This method is not used
-
-    This was the original name of a method that was used throughout all
-    the F5 Ansible modules. This is now deprecated, and should be removed
-    in 2.9. All modules should be changed to use ``fq_name``.
-
-    TODO(Remove in Ansible 2.9)
-    """
-    return fq_name(partition, value)
 
 
 def fq_name(partition, value, sub_path=''):
@@ -187,7 +144,7 @@ def fq_name(partition, value, sub_path=''):
 def fq_list_names(partition, list_names):
     if list_names is None:
         return None
-    return map(lambda x: fqdn_name(partition, x), list_names)
+    return map(lambda x: fq_name(partition, x), list_names)
 
 
 def to_commands(module, commands):
@@ -465,8 +422,6 @@ class F5BaseClient(object):
     def merge_provider_server_param(self, result, provider):
         if self.validate_params('server', provider):
             result['server'] = provider['server']
-        elif self.validate_params('server', self.params):
-            result['server'] = self.params['server']
         elif self.validate_params('F5_SERVER', os.environ):
             result['server'] = os.environ['F5_SERVER']
         else:
@@ -475,8 +430,6 @@ class F5BaseClient(object):
     def merge_provider_server_port_param(self, result, provider):
         if self.validate_params('server_port', provider):
             result['server_port'] = provider['server_port']
-        elif self.validate_params('server_port', self.params):
-            result['server_port'] = self.params['server_port']
         elif self.validate_params('F5_SERVER_PORT', os.environ):
             result['server_port'] = os.environ['F5_SERVER_PORT']
         else:
@@ -485,8 +438,6 @@ class F5BaseClient(object):
     def merge_provider_validate_certs_param(self, result, provider):
         if self.validate_params('validate_certs', provider):
             result['validate_certs'] = provider['validate_certs']
-        elif self.validate_params('validate_certs', self.params):
-            result['validate_certs'] = self.params['validate_certs']
         elif self.validate_params('F5_VALIDATE_CERTS', os.environ):
             result['validate_certs'] = os.environ['F5_VALIDATE_CERTS']
         else:
@@ -499,8 +450,6 @@ class F5BaseClient(object):
     def merge_provider_auth_provider_param(self, result, provider):
         if self.validate_params('auth_provider', provider):
             result['auth_provider'] = provider['auth_provider']
-        elif self.validate_params('auth_provider', self.params):
-            result['auth_provider'] = self.params['auth_provider']
         elif self.validate_params('F5_AUTH_PROVIDER', os.environ):
             result['auth_provider'] = os.environ['F5_AUTH_PROVIDER']
         else:
@@ -524,8 +473,6 @@ class F5BaseClient(object):
     def merge_provider_user_param(self, result, provider):
         if self.validate_params('user', provider):
             result['user'] = provider['user']
-        elif self.validate_params('user', self.params):
-            result['user'] = self.params['user']
         elif self.validate_params('F5_USER', os.environ):
             result['user'] = os.environ.get('F5_USER')
         elif self.validate_params('ANSIBLE_NET_USERNAME', os.environ):
@@ -536,8 +483,6 @@ class F5BaseClient(object):
     def merge_provider_password_param(self, result, provider):
         if self.validate_params('password', provider):
             result['password'] = provider['password']
-        elif self.validate_params('password', self.params):
-            result['password'] = self.params['password']
         elif self.validate_params('F5_PASSWORD', os.environ):
             result['password'] = os.environ.get('F5_PASSWORD')
         elif self.validate_params('ANSIBLE_NET_PASSWORD', os.environ):
