@@ -17,6 +17,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_enos
    platform_eos
    platform_exos
+   platform_eric_eccli
    platform_ios
    platform_ironware
    platform_junos
