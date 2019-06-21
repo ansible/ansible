@@ -884,6 +884,15 @@ class PyVmomi(object):
         if self.content.customFieldsManager:  # not an ESXi
             self.custom_field_mgr = self.content.customFieldsManager.field
 
+    # Helper functions
+    @staticmethod
+    def is_integer(value, type_of='int'):
+        try:
+            VmomiSupport.vmodlTypes[type_of](value)
+            return True
+        except (TypeError, ValueError):
+            return False
+
     def is_vcenter(self):
         """
         Check if given hostname is vCenter or ESXi host
