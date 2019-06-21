@@ -114,7 +114,6 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             arp_log_level='debug',
             layer4_log_level='debug',
-            password='admin',
             provider=dict(
                 server='localhost',
                 password='password',
