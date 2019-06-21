@@ -290,11 +290,14 @@ def fmgr_fwpol_package(fmgr, paramgram):
         if paramgram["ngfw-mode"] == "policy-based" and paramgram["ssl-ssh-profile"] is not None:
             datagram["package settings"]["ssl-ssh-profile"] = paramgram["ssl-ssh-profile"]
 
-        # SET THE SCOPE MEMBERS ACCORDING TO MODE AND WHAT WAS SUPPLIED
-        if len(paramgram["append_members_list"]) > 0:
-            datagram["scope member"] = paramgram["append_members_list"]
-        elif len(paramgram["append_members_list"]) == 0:
-            datagram["scope member"] = {}
+        try:
+            # SET THE SCOPE MEMBERS ACCORDING TO MODE AND WHAT WAS SUPPLIED
+            if len(paramgram["append_members_list"]) > 0:
+                datagram["scope member"] = paramgram["append_members_list"]
+            elif len(paramgram["append_members_list"]) == 0:
+                datagram["scope member"] = {}
+        except BaseException:
+            pass
 
         # IF PARENT FOLDER IS DEFINED
         if paramgram["parent_folder"] is not None:
