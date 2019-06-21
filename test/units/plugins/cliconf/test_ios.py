@@ -55,7 +55,7 @@ def _connection_side_effect(*args, **kwargs):
         return 'Nope'
 
 
-class TestPluginCLIConfNOS(unittest.TestCase):
+class TestPluginCLIConfIOS(unittest.TestCase):
     """ Test class for IOS CLI Conf Methods
     """
     def setUp(self):
