@@ -241,7 +241,7 @@ class TestModuleManager(unittest.TestCase):
 
         results = mm.exec_module()
         assert results['changed'] is True
-        assert results['ssl_protocols'] == '-SSLv2 all'
+        assert results['ssl_protocols'] == 'all -SSLv2'
 
     def test_update_issue_00587_as_list(self, *args):
         set_module_args(
@@ -272,7 +272,7 @@ class TestModuleManager(unittest.TestCase):
 
         results = mm.exec_module()
         assert results['changed'] is True
-        assert results['ssl_protocols'] == '-SSLv2 all'
+        assert results['ssl_protocols'] == 'all -SSLv2'
 
     def test_update_issue_00587_default(self, *args):
         set_module_args(
