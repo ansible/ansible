@@ -1,45 +1,33 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
+# Copyright (c) 2019 Ericsson AB.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
 module: eric_eccli_command
 version_added: "2.9"
-author: "Peter Sprygada (@privateip)"
-short_description: Run commands on remote devices running Cisco IOS
+author: Ericsson IPOS OAM team (@cheng.you@ericsson.com)
+short_description: Run commands on remote devices running Ericsson ECCLI
 description:
-  - Sends arbitrary commands to an ios node and returns the results
+  - Sends arbitrary commands to an ERICSSON eccli node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module does not support running commands in configuration mode.
-    Please use M(ios_config) to configure IOS devices.
-extends_documentation_fragment: eric_eccli
+  - This module also supports running commands in configuration mode
+    in raw command style.
 notes:
-  - Tested against IOS 15.6
+  - Tested against IPOS 19.3
 options:
   commands:
     description:
@@ -90,37 +78,51 @@ options:
 EXAMPLES = r"""
 tasks:
   - name: run show version on remote devices
-    ios_command:
+    eric_eccli_command:
       commands: show version
 
-  - name: run show version and check to see if output contains IOS
-    ios_command:
+  - name: run show version and check to see if output contains IPOS
+    eric_eccli_command:
       commands: show version
-      wait_for: result[0] contains IOS
+      wait_for: result[0] contains IPOS
 
   - name: run multiple commands on remote nodes
-    ios_command:
+    eric_eccli_command:
       commands:
         - show version
-        - show interfaces
+        - show running-config interfaces
 
   - name: run multiple commands and evaluate the output
-    ios_command:
+    eric_eccli_command:
       commands:
         - show version
-        - show interfaces
+        - show running-config interfaces
       wait_for:
-        - result[0] contains IOS
-        - result[1] contains Loopback0
+        - result[0] contains IPOS
+        - result[1] contains management
+
   - name: run commands that require answering a prompt
-    ios_command:
+    eric_eccli_command:
       commands:
-        - command: 'clear counters GigabitEthernet0/1'
-          prompt: 'Clear "show interface" counters on this interface \[confirm\]'
-          answer: 'y'
-        - command: 'clear counters GigabitEthernet0/2'
-          prompt: '[confirm]'
-          answer: "\r"
+        - command: 'config'
+        - command: 'system hostname ub4-1-changed'
+        - command: 'commit'
+          prompt: 'Uncommitted changes found, commit them? [yes/no/CANCEL]'
+          answer: 'no'
+        - command: 'end'
+
+  - name: Set the prompt and error information regular expressions
+    eric_eccli_command:
+      commands:
+        - command: 'evr_2d01_vfrwd-evr1#dd'
+          prompt: 'error input: element does not exist'
+        - ansible.cfg:
+        - command: '[\r\n]+ error input: .*'
+
+        - command: 'evr_2d01_vfrwd-evr1#aaa'
+          prompt: 'aaa#'
+        - ansible.cfg:
+        - command: 'a{3}?#'
 """
 
 RETURN = """
@@ -140,28 +142,36 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
+import re
 import time
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
+from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import transform_commands
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.network.common.utils import transform_commands, to_lines
-from ansible.module_utils.network.ios.ios import run_commands
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.six import string_types
+
+
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, string_types):
+            item = str(item).split('\n')
+        yield item
 
 
 def parse_commands(module, warnings):
     commands = transform_commands(module)
 
-    if module.check_mode:
-        for item in list(commands):
-            if not item['command'].startswith('show'):
+    for item in list(commands):
+        if module.check_mode:
+            if item['command'].startswith('conf'):
                 warnings.append(
-                    'Only show commands are supported when using check mode, not '
+                    'only non-config commands are supported when using check mode, not '
                     'executing %s' % item['command']
                 )
                 commands.remove(item)
-
     return commands
 
 
@@ -178,21 +188,19 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(ios_argument_spec)
+    argument_spec.update(eric_eccli_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    warnings = list()
-    result = {'changed': False, 'warnings': warnings}
-    check_args(module, warnings)
-    commands = parse_commands(module, warnings)
-    wait_for = module.params['wait_for'] or list()
+    result = {'changed': False}
 
-    try:
-        conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError as exc:
-        module.fail_json(msg=to_text(exc))
+    warnings = list()
+    commands = parse_commands(module, warnings)
+    result['warnings'] = warnings
+
+    wait_for = module.params['wait_for'] or list()
+    conditionals = [Conditional(c) for c in wait_for]
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -220,8 +228,9 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({
+        'changed': False,
         'stdout': responses,
-        'stdout_lines': list(to_lines(responses)),
+        'stdout_lines': list(to_lines(responses))
     })
 
     module.exit_json(**result)
