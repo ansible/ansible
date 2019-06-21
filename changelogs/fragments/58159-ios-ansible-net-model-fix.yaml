@@ -1,0 +1,2 @@
+bugfixes:
+- Fix ios_facts ansible_net_model - https://github.com/ansible/ansible/pull/58159
