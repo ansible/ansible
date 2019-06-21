@@ -711,10 +711,10 @@ class FSMCommon(object):
             return_string = return_string + ','.join(keys)
             return_string = return_string + "\n"
             for item in param:
-                itemKeys = item.keys()
+                item_keys = item.keys()
                 value = []
                 for key in keys:
-                    if key not in itemKeys:
+                    if key not in item_keys:
                         value.append('')
                     else:
                         value.append(item[key])
@@ -752,13 +752,13 @@ class FSMCommon(object):
                     mapping = {}
                     for node2 in node1.getElementsByTagName("attributes"):
                         for node3 in node2.getElementsByTagName("attribute"):
-                            itemName = node3.getAttribute("name")
+                            item_name = node3.getAttribute("name")
                             for node4 in node3.childNodes:
                                 if node4.nodeType == node.TEXT_NODE:
                                     message = node4.data
                                     if '\n' in message:
                                         message = message.replace('\n', '')
-                                    mapping[itemName] = message
+                                    mapping[item_name] = message
                     param.append(mapping)
         return param
 

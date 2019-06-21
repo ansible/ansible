@@ -170,9 +170,9 @@ def main():
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         ignore_ssl_errors=dict(required=False, type="str", choices=["enable", "disable"], default="enable"),
         export_json_to_screen=dict(required=False, type="str", choices=["enable", "disable"], default="enable"),
-        export_json_to_file_path=dict(required=False, type="str", default=None),
-        export_xml_to_file_path=dict(required=False, type="str", default=None),
-        export_csv_to_file_path=dict(required=False, type="str", default=None),
+        export_json_to_file_path=dict(required=False, type="str", default="None"),
+        export_xml_to_file_path=dict(required=False, type="str", default="None"),
+        export_csv_to_file_path=dict(required=False, type="str", default="None"),
 
         mode=dict(required=False, type="str",
                   choices=["short_all", "ip_range", "detailed_single"], default="short_all"),
