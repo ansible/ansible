@@ -81,9 +81,15 @@
     that:
       - "result.changed == true"
 
-- name: wait for netconf server to come up
-  pause:
-    seconds: 10
+- name: wait for netconf port tcp/12345 to be closed
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 12345
+    state: stopped
+  with_inventory_hostnames: junos
+
+- name: Reset ansible connections
+  meta: reset_connection
 
 - name: Ensure we can NOT communicate over non-default port
   include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=12345 is_ignore_errors=true"
