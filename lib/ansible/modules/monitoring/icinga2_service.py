@@ -417,8 +417,6 @@ def main():
     # remove unnecessary arguments
     del argument_spec['force']
     del argument_spec['http_agent']
-
-    del argument_spec['force']
     # add our own arguments
     argument_spec.update(
         state=dict(default="present", choices=["absent", "present"]),
@@ -502,9 +500,30 @@ def main():
         }
     }
     #Loop through list of setable objects.
-    obj_attrs = ['max_check_attempts', 'check_period', 'check_timeout', 'check_interval', 'retry_interval', 'enable_notifications', 'enable_active_checks',
-              'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile',
-              'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt', 'zone']
+    obj_attrs = [
+        'action_url',
+        'check_interval',
+        'check_period',
+        'check_timeout',
+        'command_endpoint',
+        'enable_active_checks',
+        'enable_event_handler',
+        'enable_flapping',
+        'enable_notifications',
+        'enable_passive_checks',
+        'enable_perfdata',
+        'event_command',
+        'flapping_threshold',
+        'image_icon',
+        'image_icon_alt',
+        'max_check_attempts',
+        'notes',
+        'notes_url',
+        'retry_interval',
+        'volatile',
+        'zone'
+    ]
+
     for x in obj_attrs:
         if module.params[x]:
             data['attrs'][x] = module.params[x]
@@ -526,7 +545,7 @@ def main():
                     if ret['code'] == 200:
                         changed = True
                     else:
-                        module.fail_json(msg="Caught return code [%i] deleting service: %s" % (ret['code'],ret['data']))
+                        module.fail_json(msg="Caught return code [%i] deleting service: %s" % (ret['code'], ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception deleting service: " + str(e))
         elif diff:
@@ -553,7 +572,7 @@ def main():
             else:
                 try:
                     # Flatten the dictionary because there could be attrs set by templates that need to be retained.
-                    data['attrs'] = flat_dict (data['attrs'])
+                    data['attrs'] = flat_dict(data['attrs'])
                     ret = icinga.create(name, data)
                     if ret['code'] == 200:
                         changed = True
