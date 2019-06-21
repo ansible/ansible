@@ -201,7 +201,9 @@ def normalize_prefix(module, prefix):
     splitted_prefix = prefix.split('/')
 
     address = splitted_prefix[0]
-    if len(splitted_prefix) > 2:
+    if not address:
+        module.fail_json(msg='Prefix cannot be empty.', prefix=prefix)
+    elif len(splitted_prefix) > 2:
         module.fail_json(msg='Incorrect address format.', address=address)
     elif len(splitted_prefix) == 2:
         mask = splitted_prefix[1]
