@@ -17,45 +17,43 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_servicebus
 version_added: "2.8"
-short_description: Manage Azure Service Bus.
+short_description: Manage Azure Service Bus
 description:
     - Create, update or delete an Azure Service Bus namespaces.
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
         required: true
     name:
         description:
-            - name of the servicebus namespace
+            - Name of the servicebus namespace.
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the servicebus. Use C(present) to create or update and use C(absen) to delete.
         default: present
         choices:
             - absent
             - present
     location:
         description:
-            - Namespace location.
+            - The servicebus's location.
     sku:
         description:
-            - Namespace sku.
+            - Namespace SKU.
         choices:
             - standard
             - basic
             - premium
-        default:
-            standard
+        default: standard
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -67,9 +65,11 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Current state of the service bus.
+    description:
+        - Current state of the service bus.
     returned: success
     type: str
+    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/namespaces/myServicebus"
 '''
 
 try:
