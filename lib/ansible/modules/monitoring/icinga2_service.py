@@ -421,7 +421,7 @@ def main():
     del argument_spec['http_agent']
     # override url arguments
     argument_spec.update(
-        url_username=dict(aliases=['api_user', 'user'], type='str', no_log=True),
+        url_username=dict(aliases=['api_username', 'username'], type='str', no_log=True),
         url_password=dict(aliases=['api_password', 'password'], type='str', no_log=True),
     )
     # add our own arguments
