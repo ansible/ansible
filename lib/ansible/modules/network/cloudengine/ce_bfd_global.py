@@ -281,7 +281,7 @@ class BfdGlobal(object):
         root = ElementTree.fromstring(xml_str)
 
         # get bfd global info
-        glb = root.find("data/bfd/bfdSchGlobal")
+        glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
                 bfd_dict["global"][attr.tag] = attr.text
@@ -495,6 +495,8 @@ class BfdGlobal(object):
             return
 
         self.end_state["global"] = bfd_dict.get("global")
+        if self.existing == self.end_state:
+            self.changed = False
 
     def work(self):
         """worker"""
