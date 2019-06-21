@@ -508,7 +508,10 @@ class Templar:
 
         # Don't template unsafe variables, just return them.
         if is_unsafe(variable):
-            return variable
+            if isinstance(variable, AnsibleVaultEncryptedUnicode):
+                return to_native(variable, nonstring='passthrough')  # nusing to_ functions to force decryption
+            else:
+                return variable
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
