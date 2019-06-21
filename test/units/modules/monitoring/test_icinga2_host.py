@@ -33,4 +33,3 @@ class TestIcinga2_HostModule(ModuleTestCase):
         })
         with self.assertRaises(AnsibleFailJson):
             self.module.main()
-
