@@ -40,17 +40,20 @@ options:
     description:
       - The FortiSIEM's FQDN or IP Address.
     required: true
+    type: str
 
   username:
     description:
       - The username used to authenticate with the FortiManager.
       - organization/username format. The Organization is important, and will only return data from specified Org.
     required: false
+    type: str
 
   password:
     description:
       - The password associated with the username account.
     required: false
+    type: str
 
   ignore_ssl_errors:
     description:
@@ -58,6 +61,7 @@ options:
     required: false
     default: "enable"
     choices: ["enable", "disable"]
+    type: str
 
   export_json_to_screen:
     description:
@@ -65,6 +69,7 @@ options:
     required: false
     default: "enable"
     choices: ["enable", "disable"]
+    type: str
 
   export_json_to_file_path:
     description:
@@ -72,6 +77,7 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+    type: str
 
   export_xml_to_file_path:
     description:
@@ -79,6 +85,15 @@ options:
       - An error will be thrown if this fails.
     required: false
     default: None
+    type: str
+    
+  export_csv_to_file_path:
+    description:
+      - When populated, an attempt to write XML to file is made.
+      - An error will be thrown if this fails.
+    required: false
+    default: None
+    type: str
 
   mode:
     description:
@@ -86,18 +101,21 @@ options:
     required: false
     default: "short_all"
     choices: ["short_all", "ip_range", "detailed_single"]
+    type: str
 
   ip_range:
     description:
       - Specifies the IP Range of devices to search for and return.
       - Ignored unless "ip_range" is set for mode
     required: false
+    type: str
 
   ip:
     description:
       - Specifies the single IP address of a device to get detailed information from.
       - Ignored unless "detailed_single" is set for mode
     required: false
+    type: str
 
 '''
 
@@ -152,9 +170,9 @@ def main():
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         ignore_ssl_errors=dict(required=False, type="str", choices=["enable", "disable"], default="enable"),
         export_json_to_screen=dict(required=False, type="str", choices=["enable", "disable"], default="enable"),
-        export_json_to_file_path=dict(required=False, type="str"),
-        export_xml_to_file_path=dict(required=False, type="str"),
-        export_csv_to_file_path=dict(required=False, type="str"),
+        export_json_to_file_path=dict(required=False, type="str", default=None),
+        export_xml_to_file_path=dict(required=False, type="str", default=None),
+        export_csv_to_file_path=dict(required=False, type="str", default=None),
 
         mode=dict(required=False, type="str",
                   choices=["short_all", "ip_range", "detailed_single"], default="short_all"),

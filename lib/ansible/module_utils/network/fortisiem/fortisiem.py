@@ -667,9 +667,9 @@ class FortiSIEMHandler(object):
         end_epoch = None
         # BUILD THE TIMESTAMP
         begin_timestamp = self._module.paramgram["report_absolute_begin_date"] + " " + \
-                          self._module.paramgram["report_absolute_begin_time"]
+            self._module.paramgram["report_absolute_begin_time"]
         end_timestamp = self._module.paramgram["report_absolute_end_date"] + " " + \
-                        self._module.paramgram["report_absolute_end_time"]
+            self._module.paramgram["report_absolute_end_time"]
         start_epoch = self._tools.convert_timestamp_to_epoch(begin_timestamp)
         end_epoch = self._tools.convert_timestamp_to_epoch(end_timestamp)
 

@@ -63,16 +63,16 @@ BASE_HEADERS = {
 class SyslogFacility:
     """Syslog facilities"""
     KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, \
-        LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
+    LPR, NEWS, UUCP, CRON, AUTHPRIV, FTP = range(12)
 
     LOCAL0, LOCAL1, LOCAL2, LOCAL3, \
-        LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
+    LOCAL4, LOCAL5, LOCAL6, LOCAL7 = range(16, 24)
 
 
 class SyslogLevel:
     """Syslog levels"""
     EMERG, ALERT, CRIT, ERR, \
-        WARNING, NOTICE, INFO, DEBUG = range(8)
+    WARNING, NOTICE, INFO, DEBUG = range(8)
 
 
 # FSM URL ENDPOINTS
@@ -430,13 +430,13 @@ class FSMCommon(object):
         verified_dict["json_results"]["score"] = score
         if score < 0:
             verified_dict["json_results"]["verified_status"] = "MISSING"
-        if score > 0 and score < bad_score:
+        if 0 < score < bad_score:
             verified_dict["json_results"]["verified_status"] = "BAD"
-        if score > bad_score and score < ok_score:
+        if bad_score < score < ok_score:
             verified_dict["json_results"]["verified_status"] = "OK"
-        if score > ok_score and score < good_score:
+        if ok_score < score < good_score:
             verified_dict["json_results"]["verified_status"] = "GOOD"
-        if score > good_score and score < great_score:
+        if good_score < score < great_score:
             verified_dict["json_results"]["verified_status"] = "GREAT"
         if score > great_score:
             verified_dict["json_results"]["verified_status"] = "AWESOME"
@@ -462,11 +462,11 @@ class FSMCommon(object):
         if fh_contents:
             f = open(file_path, "a+")
             append_string = str(results["json_results"]["Access IP"]) + "," + \
-                str(results["json_results"]["score"]) + "," + \
-                str(results["json_results"]["verified_status"]) + "," + \
-                str(results["json_results"]["Name"]) + "," + \
-                str(results["json_results"]["Distinct Event Types"]) + "," + \
-                str(results["json_results"]["Num of Events"])
+                            str(results["json_results"]["score"]) + "," + \
+                            str(results["json_results"]["verified_status"]) + "," + \
+                            str(results["json_results"]["Name"]) + "," + \
+                            str(results["json_results"]["Distinct Event Types"]) + "," + \
+                            str(results["json_results"]["Num of Events"])
             try:
                 missing_list = results["json_results"]["missing_items"]
                 append_string = append_string + "," + "-".join(missing_list)
@@ -484,11 +484,11 @@ class FSMCommon(object):
             f = open(file_path, "w")
             f.write("ip, score, verified_status, Name, DistinctEventTypes, NumOfEvents, missing, present\n")
             append_string = str(results["json_results"]["Access IP"]) + \
-                "," + str(results["json_results"]["score"]) + \
-                "," + str(results["json_results"]["verified_status"]) + \
-                "," + str(results["json_results"]["Name"]) + \
-                "," + str(results["json_results"]["Distinct Event Types"]) + \
-                "," + str(results["json_results"]["Num of Events"])
+                            "," + str(results["json_results"]["score"]) + \
+                            "," + str(results["json_results"]["verified_status"]) + \
+                            "," + str(results["json_results"]["Name"]) + \
+                            "," + str(results["json_results"]["Distinct Event Types"]) + \
+                            "," + str(results["json_results"]["Num of Events"])
             try:
                 missing_list = results["json_results"]["missing_items"]
                 append_string = append_string + "," + "-".join(missing_list)
@@ -656,7 +656,7 @@ class FSMCommon(object):
             if loop_count == 1:
                 out_string = out_string + item.replace('</events>\n', '').replace('</queryResult>\n', '')
                 out_string = re.sub(r'(?imu)^\s*\n', u'', out_string)
-            if loop_count > 1 and loop_count <= list_len:
+            if 1 < loop_count <= list_len:
                 stripped_item = item.replace('</events>\n', '').replace('</queryResult>\n', '')
                 stripped_item = stripped_item.replace('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', '')
                 stripped_item = re.sub("<queryResult.*\n", "", stripped_item)
@@ -689,7 +689,7 @@ class FSMCommon(object):
         :param dict_in: dict to convert
         :return: xml
         """
-       # xml_out = Dict2XML.parse(dict_in, pretty=True)
+        # xml_out = Dict2XML.parse(dict_in, pretty=True)
         dict_parser = Dict2XML()
         xml_out = Dict2XML.parse(dict_parser, dict_in)
         return xml_out
