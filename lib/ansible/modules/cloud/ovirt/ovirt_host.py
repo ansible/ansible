@@ -345,9 +345,10 @@ class HostsModule(BaseModule):
         )
 
     def raise_host_exception(self):
-        event = self._connection.system_service().events_service().list(max=1)[0]
-        if event.host is not None and event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]:
-            raise Exception("Error message: %s" % event.description)
+        events = self._connection.system_service().events_service().list(max=20)
+        error_events = [event.description for event in events if event.host is not None and (event.host.id == self._module.params.get('id') or event.host.name == self.param('name')) and event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]]
+        if error_events:
+            raise Exception("Error message: %s" % error_events)
         return True
 
     def failed_state_after_reinstall(self, host, count=0):
