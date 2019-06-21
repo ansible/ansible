@@ -126,7 +126,8 @@ id:
         - Current state of the subscription.
     returned: success
     type: str
-    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/namespaces/nsb57dc95979/topics/topicb57dc95979/subscriptions/subsb57dc95979"
+    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/
+            namespaces/nsb57dc95979/topics/topicb57dc95979/subscriptions/subsb57dc95979"
 '''
 
 try:

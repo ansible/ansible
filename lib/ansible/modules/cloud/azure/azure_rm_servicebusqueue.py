@@ -111,7 +111,6 @@ options:
             - disabled
             - send_disabled
             - receive_disabled
-        default: active
 extends_documentation_fragment:
     - azure
     - azure_tags

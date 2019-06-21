@@ -93,7 +93,8 @@ id:
         - Current state of the SAS policy.
     returned: Successed
     type: str
-    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/namespaces/nsb57dc95979/topics/topicb57dc95979/authorizationRules/testpolicy"
+    sample: "/subscriptions/xxx...xxx/resourceGroups/myResourceGroup/providers/Microsoft.ServiceBus/
+            namespaces/nsb57dc95979/topics/topicb57dc95979/authorizationRules/testpolicy"
 keys:
     description:
         - Key dict of the SAS policy.
@@ -111,7 +112,8 @@ keys:
                 - Primary connection string.
             returned: Successed
             type: str
-            sample: "Endpoint=sb://nsb57dc95979.servicebus.windows.net/;SharedAccessKeyName=testpolicy;SharedAccessKey=r+HD3es/9aOOq0XjQtkx5KXROH1MIHDs0WxCgR23gMc=;EntityPath=topicb57dc95979"
+            sample: "Endpoint=sb://nsb57dc95979.servicebus.windows.net/;SharedAccessKeyName=testpolicy;
+                    SharedAccessKey=r+HD3es/9aOOq0XjQtkx5KXROH1MIHDs0WxCgR23gMc=;EntityPath=topicb57dc95979"
         primary_key:
             description:
                 - Primary key.
@@ -129,7 +131,8 @@ keys:
                 - Secondary connection string.
             returned: Successed
             type: str
-            sample: "Endpoint=sb://nsb57dc95979.servicebus.windows.net/;SharedAccessKeyName=testpolicy;SharedAccessKey=/EcGztJBv72VD0Dy14bdsxi30rl+pSZMtKcs4KV3JWU=;EntityPath=topicb57dc95979"
+            sample: "Endpoint=sb://nsb57dc95979.servicebus.windows.net/;SharedAccessKeyName=testpolicy;
+                    SharedAccessKey=/EcGztJBv72VD0Dy14bdsxi30rl+pSZMtKcs4KV3JWU=;EntityPath=topicb57dc95979"
 name:
     description:
         - Name of the SAS policy.
