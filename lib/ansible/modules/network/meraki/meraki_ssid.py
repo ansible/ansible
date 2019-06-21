@@ -38,14 +38,6 @@ options:
         description:
         - Name of SSID.
         type: str
-    org_name:
-        description:
-        - Name of organization.
-        type: str
-    org_id:
-        description:
-        - ID of organization.
-        type: int
     net_name:
         description:
         - Name of network.
