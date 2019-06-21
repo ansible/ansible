@@ -99,13 +99,15 @@ options:
     type: str
     required: true
   url_password:
+    aliases: [ api_password, password ]
     description:
-        - The password for use in HTTP basic authentication.
+        - The Icinga2 API password for use in HTTP basic authentication.
         - If the I(url_username) option is not specified, the I(url_password) option will not be used.
     type: str
   url_username:
+    aliases: [ api_username, username ]
     description:
-      - The username for use in HTTP basic authentication.
+      - The Icinga2 API username for use in HTTP basic authentication.
       - This parameter can be used without I(url_password) for sites that allow empty passwords.
     type: str
   use_proxy:
@@ -414,9 +416,14 @@ class icinga2_api:
 def main():
     # use the predefined argument spec for url
     argument_spec = url_argument_spec()
-    # remove unnecessary arguments
+    # remove url arguments
     del argument_spec['force']
     del argument_spec['http_agent']
+    # override url arguments
+    argument_spec.update(
+        url_username=dict(aliases=['api_user', 'user'], type='str', no_log=True),
+        url_password=dict(aliases=['api_password', 'password'], type='str', no_log=True),
+    )
     # add our own arguments
     argument_spec.update(
         state=dict(default="present", choices=["absent", "present"]),
@@ -449,8 +456,8 @@ def main():
         notes=dict(default=None),
         notes_url=dict(default=None),
         action_url=dict(default=None),
-        image_icon=dict(default=None),
-        image_icon_alt=dict(default=None),
+        icon_image=dict(default=None),
+        icon_image_alt=dict(default=None),
     )
 
     # Define the main module
@@ -499,7 +506,7 @@ def main():
             }
         }
     }
-    #Loop through list of setable objects.
+    # Loop through list of setable objects.
     obj_attrs = [
         'action_url',
         'check_interval',
@@ -515,8 +522,8 @@ def main():
         'event_command',
         'flapping_threshold_high',
         'flapping_threshold_low',
-        'image_icon',
-        'image_icon_alt',
+        'icon_image',
+        'icon_image_alt',
         'max_check_attempts',
         'notes',
         'notes_url',
