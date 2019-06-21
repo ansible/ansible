@@ -99,7 +99,7 @@ class TestPluginCLIConfIOS(unittest.TestCase):
                 'run_commands',
                 'get_defaults_flag'
             ],
-            'device_operations':{
+            'device_operations': {
                 'supports_diff_replace': True,
                 'supports_commit': False,
                 'supports_rollback': False,
