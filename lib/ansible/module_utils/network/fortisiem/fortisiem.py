@@ -539,7 +539,7 @@ class FortiSIEMHandler(object):
             if pages > 0:
                 for i in range(pages):
                     self._module.paramgram["uri"] = FSMEndpoints.GET_REPORT_RESULTS + str(query_id) + \
-                                                    "/" + str((i + 1) * 1000) + '/1000'
+                        "/" + str((i + 1) * 1000) + '/1000'
                     url = self.create_endpoint_url()
                     out_xml_append = self.get_query_results(self.next_http_auth, url)
                     if out_xml_append != '':
