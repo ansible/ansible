@@ -1,11 +1,9 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2019 Ericsson AB.
-# All rights reserved.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -15,7 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: eric_eccli_command
-author: Ericsson IPOS OAM team
+version_added: "2.9"
+author: Ericsson IPOS OAM team (@cheng)
 short_description: Run commands on remote devices running ERICSSON ECCLI
 description:
   - Sends arbitrary commands to an ERICSSON eccli node and returns the results
