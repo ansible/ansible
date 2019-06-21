@@ -1,8 +1,10 @@
 #
 # Copyright (c) 2019 Ericsson AB.
+# All rights reserved.
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-
+# 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
 
 class ModuleDocFragment(object):
 
@@ -69,5 +71,5 @@ options:
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
 notes:
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
-  - For more information on using Ansible to manage Ericsson devices see the Ericsson documentation.
+  - For more information on using Ansible to manage Ericsson devices see the Ericsson documents.
 """

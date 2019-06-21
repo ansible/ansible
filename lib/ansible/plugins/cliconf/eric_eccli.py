@@ -1,37 +1,15 @@
 #
 # Copyright (c) 2019 Ericsson AB.
+# All rights reserved.
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
+# 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-author: Ericsson IPOS OAM team
-cliconf: eccli
-short_description: Use eccli cliconf to run command on Ericsson ECCLI platform
-description:
-  - This eccli plugin provides low level abstraction APIs for
-    sending and receiving CLI commands from Ericsson ECCLI network devices.
-version_added: "2.9"
-"""
-
-
-from ansible.module_utils.common._collections_compat import Mapping
+import collections
 import re
 import time
 import json
@@ -69,7 +47,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = ['get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging', 'run_commands']
+        result['rpc'] = self.get_base_rpc() + ['run_commands']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
@@ -80,7 +58,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, Mapping):
+            if not isinstance(cmd, collections.Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -96,3 +74,5 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
+
+
