@@ -23,7 +23,7 @@ description:
 version_added: "2.5"
 options:
   state:
-    choices: ['planned', 'present', 'absent']
+    choices: ['planned', 'present', 'absent', 'output']
     description:
       - Goal state of given stage/project
     required: false
@@ -275,7 +275,7 @@ def main():
             binary_path=dict(type='path'),
             workspace=dict(required=False, type='str', default='default'),
             purge_workspace=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent', 'planned']),
+            state=dict(default='present', choices=['present', 'absent', 'planned', 'output']),
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
@@ -354,13 +354,13 @@ def main():
             command.append(plan_file)
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
-    else:
+    elif state == 'planned':
         plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file,
                                                                      module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
     out, err = '', ''
-    if needs_application and not module.check_mode and not state == 'planned':
+    if needs_application and not module.check_mode and state not in ['planned', 'output']:
         rc, out, err = module.run_command(command, cwd=project_path)
         # checks out to decide if changes were made during execution
         if '0 added, 0 changed' not in out and not state == "absent" or '0 destroyed' not in out:
@@ -383,6 +383,10 @@ def main():
             command=' '.join(outputs_command))
     else:
         outputs = json.loads(outputs_text)
+
+    if state == 'output':
+        out = outputs_text
+        err = outputs_err
 
     # Restore the Terraform workspace found when running the module
     if workspace_ctx["current"] != workspace:
