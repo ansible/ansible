@@ -1,0 +1,2 @@
+minor_changes:
+    - Implement config options for ``display_ok_hosts`` and ``display_skipped_hosts`` in unixy callback plugin
