@@ -17,17 +17,17 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_servicebusqueue
 version_added: "2.8"
-short_description: Manage Azure Service Bus queue.
+short_description: Manage Azure Service Bus queue
 description:
     - Create, update or delete an Azure Service Bus queue.
 options:
     resource_group:
         description:
-            - name of resource group.
+            - Name of resource group.
         required: true
     name:
         description:
-            - name of the queue.
+            - Name of the queue.
         required: true
     namespace:
         description:
@@ -37,8 +37,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the queue. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the queue. Use C(present) to create or update and use C(absent) to delete.
         default: present
         choices:
             - absent
@@ -85,7 +84,7 @@ options:
         type: int
     max_delivery_count:
         description:
-            - he maximum delivery count.
+            - The maximum delivery count.
             - A message is automatically deadlettered after this number of deliveries.
         type: int
     max_size_in_mb:
@@ -94,7 +93,7 @@ options:
         type: int
     requires_duplicate_detection:
         description:
-            -  A value indicating if this queue or topic  requires duplicate detection.
+            - A value indicating if this queue or topic requires duplicate detection.
         type: bool
     duplicate_detection_time_in_seconds:
         description:
@@ -112,13 +111,12 @@ options:
             - disabled
             - send_disabled
             - receive_disabled
-
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -132,9 +130,11 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Current state of the queue.
+    description:
+        - Current state of the queue.
     returned: success
     type: str
+    sample: "/subscriptions/xxx...xxx/resourceGroups/v-xisuRG/providers/Microsoft.ServiceBus/namespaces/nsb57dc9561/queues/queueb57dc9561"
 '''
 
 try:
