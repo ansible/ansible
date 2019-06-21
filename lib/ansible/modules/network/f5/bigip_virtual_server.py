@@ -870,7 +870,6 @@ clone_pools:
   type: list
   sample: [{'pool_name':'/Common/Pool1', 'context': 'clientside'}]
 '''
-
 import os
 import re
 
@@ -1772,7 +1771,7 @@ class ModuleParameters(Parameters):
         if len(result) > 1:
             pattern = r'^[a-zA-Z0-9_.-]+'
             matches = re.search(pattern, result[0])
-            if matches and not is_valid_ip(matches.group(0)):
+            if matches and not is_valid_ip(result[0]):
                 # we need to strip RD because when using Virtual Address names the RD is not needed.
                 return None
             return int(result[1])
@@ -3618,8 +3617,6 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         mutually_exclusive=spec.mutually_exclusive
     )
-
-    client = F5RestClient(**module.params)
 
     try:
         mm = ModuleManager(module=module)
