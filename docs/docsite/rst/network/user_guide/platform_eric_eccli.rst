@@ -37,8 +37,6 @@ For legacy playbooks, IOS still supports ``ansible_connection: local``. We recom
 Using CLI in Ansible
 ====================
 
-Example CLI ``group_vars/eric_eccli.yml``
-----------------------------------
 
 .. code-block:: yaml
 
