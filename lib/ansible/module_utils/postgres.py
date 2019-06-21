@@ -29,12 +29,15 @@
 
 try:
     import psycopg2
-    import psycopg2.extras
+    from psycopg2.extras import DictCursor
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
 
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
+from distutils.version import LooseVersion
 
 
 class LibraryError(Exception):
@@ -63,28 +66,108 @@ def postgres_common_argument_spec():
     )
 
 
-def connect_to_db(module, kw, autocommit=False):
+def ensure_required_libs(module):
+    if not HAS_PSYCOPG2:
+        module.fail_json(msg=missing_required_lib('psycopg2'))
+
+    if module.params.get('ca_cert') and LooseVersion(psycopg2.__version__) < LooseVersion('2.4.3'):
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to use the ca_cert parameter')
+
+
+def connect_to_db(module, conn_params, autocommit=False, fail_on_conn=True):
+    """Connect to a PostgreSQL database.
+
+    Return psycopg2 connection object.
+
+    Args:
+        module (AnsibleModule) -- object of ansible.module_utils.basic.AnsibleModule class
+        conn_params (dict) -- dictionary with connection parameters
+
+    Kwargs:
+        autocommit (bool) -- commit automatically (default False)
+        fail_on_conn (bool) -- fail if connection failed or just warn and return None (default True)
+    """
+    ensure_required_libs(module)
+
     try:
-        db_connection = psycopg2.connect(**kw)
+        db_connection = psycopg2.connect(**conn_params)
         if autocommit:
             if psycopg2.__version__ >= '2.4.2':
                 db_connection.set_session(autocommit=True)
             else:
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
+        # Switch role, if specified:
+        cursor = db_connection.cursor(cursor_factory=DictCursor)
+        if module.params.get('session_role'):
+            try:
+                cursor.execute('SET ROLE %s' % module.params['session_role'])
+            except Exception as e:
+                module.fail_json(msg="Could not switch role: %s" % to_native(e))
+        cursor.close()
+
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
             module.fail_json(msg='Postgresql server must be at least '
                                  'version 8.4 to support sslrootcert')
 
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        if fail_on_conn:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        else:
+            module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            db_connection = None
 
     except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        if fail_on_conn:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+        else:
+            module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
+            db_connection = None
 
     return db_connection
 
 
-def get_pg_version(cursor):
-    cursor.execute("select current_setting('server_version_num')")
-    return int(cursor.fetchone()[0])
+def get_conn_params(module, params_dict, warn_db_default=True):
+    """Get connection parameters from the passed dictionary.
+
+    Return a dictionary with parameters to connect to PostgreSQL server.
+
+    Args:
+        module (AnsibleModule) -- object of ansible.module_utils.basic.AnsibleModule class
+        params_dict (dict) -- dictionary with variables
+
+    Kwargs:
+        warn_db_default (bool) -- warn that the default DB is used (default True)
+    """
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the return dictionary
+    params_map = {
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "ssl_mode": "sslmode",
+        "ca_cert": "sslrootcert"
+    }
+
+    # Might be different in the modules:
+    if params_dict.get('db'):
+        params_map['db'] = 'database'
+    elif params_dict.get('database'):
+        params_map['database'] = 'database'
+    elif params_dict.get('login_db'):
+        params_map['login_db'] = 'database'
+    else:
+        if warn_db_default:
+            module.warn('Database name has not been passed, '
+                        'used default database to connect to.')
+
+    kw = dict((params_map[k], v) for (k, v) in iteritems(params_dict)
+              if k in params_map and v != '' and v is not None)
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
+    if is_localhost and params_dict["login_unix_socket"] != "":
+        kw["host"] = params_dict["login_unix_socket"]
+
+    return kw

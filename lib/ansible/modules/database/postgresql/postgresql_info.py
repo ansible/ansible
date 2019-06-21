@@ -468,14 +468,15 @@ settings:
 from fnmatch import fnmatch
 
 try:
-    import psycopg2
-    HAS_PSYCOPG2 = True
+    from psycopg2.extras import DictCursor
 except ImportError:
-    HAS_PSYCOPG2 = False
+    # psycopg2 is checked by connect_to_db()
+    # from ansible.module_utils.postgres
+    pass
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import postgres_common_argument_spec
+from ansible.module_utils.postgres import connect_to_db, get_conn_params, postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -485,40 +486,21 @@ from ansible.module_utils.six import iteritems
 #
 
 class PgDbConn(object):
-    def __init__(self, module, params_dict, session_role):
-        self.params_dict = params_dict
+    def __init__(self, module):
         self.module = module
         self.db_conn = None
-        self.session_role = session_role
         self.cursor = None
+        self.session_role = self.module.params.get('session_role')
 
     def connect(self):
-        try:
-            self.db_conn = psycopg2.connect(**self.params_dict)
-            self.cursor = self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-            # Switch role, if specified:
-            if self.session_role:
-                try:
-                    self.cursor.execute('SET ROLE %s' % self.session_role)
-                except Exception as e:
-                    self.module.fail_json(msg="Could not switch role: %s" % to_native(e))
-
-            return self.cursor
-
-        except TypeError as e:
-            if 'sslrootcert' in e.args[0]:
-                self.module.fail_json(msg='PostgreSQL server must be at least version 8.4 '
-                                          'to support sslrootcert')
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-
-        except Exception as e:
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+        conn_params = get_conn_params(self.module, self.module.params, warn_db_default=False)
+        self.db_conn = connect_to_db(self.module, conn_params)
+        return self.db_conn.cursor(cursor_factory=DictCursor)
 
     def reconnect(self, dbname):
         self.db_conn.close()
 
-        self.params_dict['database'] = dbname
+        self.module.params['database'] = dbname
         return self.connect()
 
 
@@ -905,10 +887,7 @@ class PgClusterInfo(object):
             res = self.cursor.fetchall()
             if res:
                 return res
-        except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e))
-            self.cursor.close()
-        except psycopg2.ProgrammingError as e:
+        except Exception as e:
             self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
             self.cursor.close()
         return False
@@ -930,38 +909,9 @@ def main():
         supports_check_mode=True,
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'))
-
     filter_ = module.params["filter"]
-    sslrootcert = module.params["ca_cert"]
-    session_role = module.params["session_role"]
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port",
-        "db": "database",
-        "ssl_mode": "sslmode",
-        "ca_cert": "sslrootcert"
-    }
-    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
-
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    if psycopg2.__version__ < '2.4.3' and sslrootcert:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
-                             'to user the ca_cert parameter')
-
-    db_conn_obj = PgDbConn(module, kw, session_role)
+    db_conn_obj = PgDbConn(module)
 
     # Do job:
     pg_info = PgClusterInfo(module, db_conn_obj)
