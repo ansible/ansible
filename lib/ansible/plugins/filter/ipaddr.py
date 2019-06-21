@@ -630,7 +630,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
     # address/network is inside that specific subnet
     try:
         # ?? 6to4 and link-local were True here before.  Should they still?
-        if query and (query not in query_func_map or query == 'cidr_lookup') and ipaddr(query, 'network'):
+        if query and (query not in query_func_map or query == 'cidr_lookup') and not str(query).isdigit() and ipaddr(query, 'network'):
             iplist = netaddr.IPSet([netaddr.IPNetwork(query)])
             query = 'cidr_lookup'
     except Exception:
