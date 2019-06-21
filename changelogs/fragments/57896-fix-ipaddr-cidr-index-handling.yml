@@ -1,0 +1,2 @@
+bugfixes:
+  - 'ipaddr: prevent integer indices from being parsed as ip nets (https://github.com/ansible/ansible/issues/57895).'
