@@ -70,11 +70,13 @@ class TestParameters(unittest.TestCase):
             name='my-snat-pool',
             state='present',
             members=['10.10.10.10', '20.20.20.20'],
+            description='A SNAT pool description',
             partition='Common'
         )
         p = ModuleParameters(params=args)
         assert p.name == 'my-snat-pool'
         assert p.state == 'present'
+        assert p.description == 'A SNAT pool description'
         assert len(p.members) == 2
         assert '/Common/10.10.10.10' in p.members
         assert '/Common/20.20.20.20' in p.members
