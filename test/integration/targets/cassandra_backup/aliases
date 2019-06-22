@@ -1,3 +1,4 @@
 destructive
 needs/privileged
 shippable/posix/group1
+skip/rhel
