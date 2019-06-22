@@ -278,6 +278,9 @@ As always with delegation, the action will be executed on the delegated host, bu
 .. note::
     Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
 
+.. note::
+    If facts should *not* be set for all hosts `delegate_facts: True` also needs to be specified for the specific task or block.
+
 .. _local_playbooks:
 
 Local Playbooks
