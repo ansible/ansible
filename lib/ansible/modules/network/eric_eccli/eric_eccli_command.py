@@ -137,7 +137,7 @@ import re
 import time
 
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
-from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec, check_args
+from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
@@ -190,7 +190,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     commands = parse_commands(module, warnings)
     result['warnings'] = warnings
 
