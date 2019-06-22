@@ -31,7 +31,7 @@
   when: "'opensuse' in (ansible_facts.distribution | lower)"
 
 - name: TEST SETUP | install module requirements fedora
-  yum:
+  dnf:
     name: 
       - policycoreutils
       - selinux-policy-targeted

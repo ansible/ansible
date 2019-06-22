@@ -2,3 +2,5 @@ needs/root
 shippable/posix/group2
 skip/freebsd
 skip/osx
+skip/ubuntu
+skip/opensuse15py2
