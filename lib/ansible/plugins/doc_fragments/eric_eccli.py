@@ -12,12 +12,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = """
 options:
-  provider:
-    description:
-      - B(Deprecated)
-      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli)."
-      - HORIZONTALLINE
-      - A dict object containing connection details.
     suboptions:
       host:
         description:
