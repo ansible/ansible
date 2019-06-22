@@ -22,13 +22,13 @@ class ActionModule(ActionBase):
     def _get_semodule_info(self):
         result = self._low_level_execute_command('semodule -l')
         if result['rc'] != 0:
-            AnsibleError('semodule command failed')
+            raise AnsibleError('semodule command failed')
         return to_text(result['stdout'])
 
     def _remove_module(self, name):
         result = self._low_level_execute_command('semodule -r {module}'.format(module=name))
         if result['rc'] != 0:
-            AnsibleError('failed to remove policy')
+            raise AnsibleError('failed to remove policy')
 
     def _check_mode(self, changed, policy_def, result):
         if self._play_context.check_mode:
@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
         self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
         remote_checksum = self._execute_remote_stat(dest, all_vars=task_vars, follow=False)
         if local_checksum != remote_checksum['checksum']:
-            AnsibleError('.te file copy failed, checksum does not match')
+            raise AnsibleError('.te file copy failed, checksum does not match')
 
     def run(self, tmp=None, task_vars=None):
         result = super(ActionModule, self).run(tmp, task_vars)
@@ -50,7 +50,11 @@ class ActionModule(ActionBase):
         new_module = self._task.copy()
         new_module_args = self._task.args.copy()
         state = self._task.args.get('state', 'present')
+        if state not in ['present', 'absent']:
+            raise AnsibleError('state can only be present or absent')
         file_name = self._task.args.get('src', None)
+        if not file_name:
+            raise AnsibleError('src parameter cannot be null')
         force = self._task.args.get('force', None)
         tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
         try:
@@ -63,7 +67,7 @@ class ActionModule(ActionBase):
         try:
             policy_def = semodule.parse_module_info(semodule.read_te_file(te_file))
         except IndexError:
-            AnsibleError('Module is missing module definition line')
+            raise AnsibleError('Module is missing module definition line')
         semodule_info = self._get_semodule_info()
         module_installed = self._module_exist(policy_def['name'], semodule_info)
         if state == 'present':
