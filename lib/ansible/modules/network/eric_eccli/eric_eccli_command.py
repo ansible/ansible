@@ -68,6 +68,7 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
+    type: int
     default: 10
   interval:
     description:
@@ -75,6 +76,7 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
+    type: int
     default: 1
 """
 
