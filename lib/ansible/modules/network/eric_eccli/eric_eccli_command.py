@@ -25,6 +25,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module also support running commands in configuration mode
     in raw command style.
+extends_documentation_fragment: eric_eccli
 notes:
   - Tested against IPOS 19.3
 options:
