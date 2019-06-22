@@ -18,6 +18,7 @@ options:
       - "Starting with Ansible 2.5 we recommend using C(connection: network_cli)."
       - HORIZONTALLINE
       - A dict object containing connection details.
+    type: dict
     suboptions:
       host:
         description:
