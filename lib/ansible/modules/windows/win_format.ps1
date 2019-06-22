@@ -145,11 +145,8 @@ $ansible_volume_alu = $ansible_volume.AllocationUnitSize
 
 $ansible_partition = Get-Partition -Volume $ansible_volume
 
-if (-not $force_format -and
-    $null -ne $allocation_unit_size -and
-    $ansible_volume_alu -ne 0 -and
-    $allocation_unit_size -ne $ansible_volume_alu) {
-    $module.FailJson("Force format must be specified since target allocation unit size: $($allocation_unit_size) is different from the current allocation unit size of the volume: $($ansible_volume_alu)")
+if (-not $force_format -and $null -ne $allocation_unit_size -and $ansible_volume_alu -ne 0 -and $allocation_unit_size -ne $ansible_volume_alu) {
+        $module.FailJson("Force format must be specified since target allocation unit size: $($allocation_unit_size) is different from the current allocation unit size of the volume: $($ansible_volume_alu)")
 }
 
 foreach ($access_path in $ansible_partition.AccessPaths) {

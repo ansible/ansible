@@ -35,8 +35,6 @@
 - win_shell: $AnsiPart = Get-Partition -DriveLetter T; $AnsiVol = Get-Volume -DriveLetter T; "$($AnsiPart.Size),$($AnsiVol.Size),$($AnsiVol.FileSystemLabel),$($AnsiVol.AllocationUnitSize)"
   register: formatted_value_result_check
 
-- debug: var=formatted_value_result_check
-
 - name: Fully format volume and assign label
   win_format:
     drive_letter: T
