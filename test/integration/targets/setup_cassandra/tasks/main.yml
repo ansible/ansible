@@ -22,6 +22,7 @@
 
 # CassandraDaemon.java:749 - Local host name unknown: java.net.UnknownHostException: localhost.localdomain: localhost.localdomain: Name or service not known
 - command: hostname localhost
+  become: yes
 
 - name: Install OpenJDK package
   yum:
