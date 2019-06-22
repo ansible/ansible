@@ -122,9 +122,8 @@ class DocCLI(CLI):
                 jdump(plugins)
             else:
                 # format for user
-                columns = display.columns
                 displace = max(len(x) for x in self.plugin_list)
-                linelimit = columns - displace - 5
+                linelimit = display.columns - displace - 5
                 text = []
 
                 for plugin in plugins.keys():
@@ -143,9 +142,8 @@ class DocCLI(CLI):
             if do_json:
                 jdump(descs)
             else:
-                columns = display.columns
                 displace = max(len(x) for x in self.plugin_list)
-                linelimit = columns - displace - 5
+                linelimit = display.columns - displace - 5
                 text = []
                 deprecated = []
                 for plugin in descs.keys():
