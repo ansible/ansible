@@ -1,119 +1,43 @@
-- name: TEST SETUP | install module requirements
+- name: TEST SETUP | install module requirements redhat/centos
   yum:
     name: 
       - policycoreutils
       - selinux-policy-targeted
-      - policycoreutils-python
+      - policycoreutils-python{{'-utils' if ansible_facts.distribution_major_version | int > 7 else ''}}
       - checkpolicy
     state: present
+  when: (ansible_facts.distribution | lower == 'redhat') or (ansible_facts.distribution | lower == 'centos')
 
-    # test installing and removing test module
+- name: TEST SETUP | install selinx opensuse repo
+  zypper_repository:
+    repo: https://download.opensuse.org/repositories/security:SELinux/{{ansible_facts.distribution | replace(' ','_')}}_{{ ansible_facts.distribution_version }}/security:SELinux.repo
+    state: present
+  when: "'opensuse' in (ansible_facts.distribution | lower)"
 
-- name: TEST 1 | install test module
-  semodule:
-    src: test.te
-  register: test1_mod_install
+- name: TEST SETUP | refresh opensuse15 repos
+  zypper_repository:
+    repo: "*"
+    auto_import_keys: true
+    runrefresh: true
+  when: "'opensuse' in (ansible_facts.distribution | lower)"
 
-- debug:
-    var: test1_mod_install
+- name: TEST SETUP | install module requirements opensuse15
+  zypper:
+    name:
+      - libsepol1-2.9
+      - policycoreutils-2.9
+      - selinux-policy-minimum
+    state: present
+  when: "'opensuse' in (ansible_facts.distribution | lower)"
 
-- name: TEST 1 | verify installed
-  shell: semodule -l
-  register: semodule_out
+- name: TEST SETUP | install module requirements fedora
+  yum:
+    name: 
+      - policycoreutils
+      - selinux-policy-targeted
+      - policycoreutils-python{{'-utils' if ansible_facts.distribution_major_version | int > 28 else ''}}
+      - checkpolicy
+    state: present
+  when: "ansible_facts.distribution | lower == 'fedora'"
 
-- assert:
-    that: 
-      - test1_mod_install.changed
-      - "'ansible-semodule-test' in semodule_out.stdout"
-
-- name: TEST 1 | double install test
-  semodule:
-    src: test.te
-  register: test1_mod_install2
-
-- assert:
-    that:
-      - not test1_mod_install2.changed
-
-- name: TEST 1 | remove test module
-  semodule:
-    src: test.te
-    state: absent
-  register: test1_mod_remove
-
-- name: TEST 1 | verify removed
-  shell: semodule -l
-  register: semodule_out
-
-- assert:
-    that: 
-      - test1_mod_remove.changed
-      - "'ansible-semodule-test' not in semodule_out.stdout"
-
-
-# TEST 2 test force stuff
-
-- name: TEST 2 | install test module v1.0
-  semodule:
-    src: test.te
-
-- name: TEST 2 | force install
-  semodule:
-    src: test.te
-    force: true
-  register: test2_force_install
-
-- name: TEST 2 | verify version 1.0.1 force installed
-  shell: semodule -l | grep ansible-semodule-test
-  register: semodule_out
-
-- assert:
-    that:
-      - test2_force_install.changed
-
-- name: TEST 2 | cleanup
-  semodule:
-    src: test.te
-    state: absent
-
-# TEST 3 test check mode
-
-- name: TEST 2 | check mode
-  semodule:
-    src: test.te
-  check_mode: true
-  register: test2_check_mode_install
-
-- name: TEST 2 | verify .te not installed
-  shell: semodule -l
-  register: semodule_out
-
-- assert:
-    that:
-      - test2_check_mode_install.changed
-      - "'ansible-semodule-test' not in semodule_out.stdout"
-
-- name: TEST 2 | install for latest check mode test
-  semodule:
-    src: test.te
-
-- name: TEST 2 | check mode remove
-  semodule:
-    src: test2.te
-    state: absent
-  check_mode: true
-  register: test2_check_mode_remove
-
-- name: TEST 2 | verify remove
-  shell: semodule -l
-  register: semodule_out
-
-- assert:
-    that:
-      - test2_check_mode_remove.changed
-      - "'ansible-semodule-test' in semodule_out.stdout"
-
-- name: TEST 2 | cleanup
-  semodule:
-    src: test.te
-    state: absent
+- include_tasks: semodule.yml

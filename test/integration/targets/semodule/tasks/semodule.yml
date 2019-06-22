@@ -1,0 +1,108 @@
+- name: TEST 1 | install test module
+  semodule:
+    src: test.te
+  register: test1_mod_install
+
+- name: TEST 1 | install test module
+  semodule:
+  register: test1_mod_install
+
+- debug:
+    var: test1_mod_install
+
+- name: TEST 1 | verify installed
+  shell: semodule -l
+  register: semodule_out
+
+- assert:
+    that: 
+      - test1_mod_install.changed
+      - "'ansible-semodule-test' in semodule_out.stdout"
+
+- name: TEST 1 | double install test
+  semodule:
+    src: test.te
+  register: test1_mod_install2
+
+- assert:
+    that:
+      - not test1_mod_install2.changed
+
+- name: TEST 1 | remove test module
+  semodule:
+    src: test.te
+    state: absent
+  register: test1_mod_remove
+
+- name: TEST 1 | verify removed
+  shell: semodule -l
+  register: semodule_out
+
+- assert:
+    that: 
+      - test1_mod_remove.changed
+      - "'ansible-semodule-test' not in semodule_out.stdout"
+
+
+# TEST 2 test force stuff
+
+- name: TEST 2 | install test module v1.0
+  semodule:
+    src: test.te
+
+- name: TEST 2 | force install
+  semodule:
+    src: test.te
+    force: true
+  register: test2_force_install
+
+- assert:
+    that:
+      - test2_force_install.changed
+
+- name: TEST 2 | cleanup
+  semodule:
+    src: test.te
+    state: absent
+
+# TEST 3 test check mode
+
+- name: TEST 3 | check mode
+  semodule:
+    src: test.te
+  check_mode: true
+  register: test3_check_mode_install
+
+- name: TEST 3 | verify .te not installed
+  shell: semodule -l
+  register: semodule_out
+
+- assert:
+    that:
+      - test3_check_mode_install.changed
+      - "'ansible-semodule-test' not in semodule_out.stdout"
+
+- name: TEST 3 | install for latest check mode test
+  semodule:
+    src: test.te
+
+- name: TEST 3 | check mode remove
+  semodule:
+    src: test2.te
+    state: absent
+  check_mode: true
+  register: test3_check_mode_remove
+
+- name: TEST 3 | verify remove
+  shell: semodule -l
+  register: semodule_out
+
+- assert:
+    that:
+      - test3_check_mode_remove.changed
+      - "'ansible-semodule-test' in semodule_out.stdout"
+
+- name: TEST 3 | cleanup
+  semodule:
+    src: test.te
+    state: absent
