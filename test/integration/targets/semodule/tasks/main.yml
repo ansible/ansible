@@ -1,43 +1,7 @@
-- name: TEST SETUP | install module requirements redhat/centos
-  yum:
-    name: 
-      - policycoreutils
-      - selinux-policy-targeted
-      - policycoreutils-python{{'-utils' if ansible_facts.distribution_major_version | int > 7 else ''}}
-      - checkpolicy
-    state: present
-  when: (ansible_facts.distribution | lower == 'redhat') or (ansible_facts.distribution | lower == 'centos')
-
-- name: TEST SETUP | install selinx opensuse repo
-  zypper_repository:
-    repo: https://download.opensuse.org/repositories/security:SELinux/{{ansible_facts.distribution | replace(' ','_')}}_{{ ansible_facts.distribution_version }}/security:SELinux.repo
-    state: present
-  when: "'opensuse' in (ansible_facts.distribution | lower)"
-
-- name: TEST SETUP | refresh opensuse15 repos
-  zypper_repository:
-    repo: "*"
-    auto_import_keys: true
-    runrefresh: true
-  when: "'opensuse' in (ansible_facts.distribution | lower)"
-
-- name: TEST SETUP | install module requirements opensuse15
-  zypper:
-    name:
-      - libsepol1-2.9
-      - policycoreutils-2.9
-      - selinux-policy-minimum
-    state: present
-  when: "'opensuse' in (ansible_facts.distribution | lower)"
-
-- name: TEST SETUP | install module requirements fedora
-  dnf:
-    name: 
-      - policycoreutils
-      - selinux-policy-targeted
-      - policycoreutils-python{{'-utils' if ansible_facts.distribution_major_version | int > 28 else ''}}
-      - checkpolicy
-    state: present
-  when: "ansible_facts.distribution | lower == 'fedora'"
-
-- include_tasks: semodule.yml
+- name: semodule integration tests
+  block:
+    - include_tasks: setup.yml
+    - include_tasks: semodule.yml
+  when: 
+    - not ('opensuse' in ansible_facts.distribution | lower and ansible_facts.python_version[0] | int == 2)
+    - not ansible_facts.distribution | lower == 'ubuntu'
