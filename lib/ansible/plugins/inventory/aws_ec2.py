@@ -45,6 +45,7 @@ DOCUMENTATION = '''
         filters:
           description:
               - A dictionary of filter value pairs.
+              - Values are compatible with jinja2.
               - Available filters are listed here U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options).
           type: dict
           default: {}
@@ -98,6 +99,8 @@ filters:
   tag:Environment:
     - dev
     - qa
+  # if you need to, get dynamic values from your machine env
+  tag:Workspace: "{{ lookup('env','AWS_WORKSPACE') }}"
   instance.group-id: sg-xxxxxxxx
 # Ignores 403 errors rather than failing
 strict_permissions: False
