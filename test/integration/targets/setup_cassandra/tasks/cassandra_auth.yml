@@ -1,0 +1,104 @@
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- name: Set authenticator in cassandra.yml
+  lineinfile:
+    path: "{{ cassandra_yml_file }}"
+    regexp: "{{ cassandra_regexp }}"
+    line: "{{ cassandra_authenticator }}"
+
+- name: Set authorizer in cassandra.yml
+  lineinfile:
+    path: "{{ cassandra_yml_file }}"
+    regexp: "{{ cassandra_regexp_auth }}"
+    line: "{{ cassandra_authorizer}}"
+
+- name: Add lines for nodetool auth to cassandra-env.sh
+  blockinfile:
+    dest: "{{ cassandra_env_file }}"
+    block: |
+      JVM_OPTS="$JVM_OPTS -Djava.security.auth.login.config=$CASSANDRA_HOME/cassandra-jaas.config"
+      JVM_OPTS="$JVM_OPTS -Dcassandra.jmx.authorizer=org.apache.cassandra.auth.jmx.AuthorizationProxy"
+
+#- name: Create password file
+#  tempfile:
+#    state: file
+#    suffix: temp
+#  register: pwd_file TO REMOVE
+
+#- name: Set password in pwd file
+#  shell: "echo {{ cassandra_admin_pwd }} > {{ pwd_file.path }}" TO REMOVE
+
+- name: Activate local jmx
+  lineinfile:
+    path:  "{{ cassandra_env_file }}"
+    regexp: '^if \[ \"\$LOCAL_JMX\" \= \"yes\" \]\; then'
+    line: 'if [ "$LOCAL_JMX" = "no" ]; then'
+
+- name: Set jmx password file
+  copy:
+    dest: /etc/cassandra/jmxremote.password
+    content: |
+      {{ cassandra_admin_user }} {{ cassandra_admin_pwd }}
+    mode: 0400
+    owner: cassandra
+    group: cassandra
+
+- name: Set jmx access file
+  copy:
+    dest: /etc/cassandra/jmxremote.access
+    content: |
+      {{ cassandra_admin_user }} readwrite
+    mode: 0400
+    owner: cassandra
+    group: cassandra
+
+- name: Set jmx auth options
+  blockinfile:
+    path: "{{ cassandra_env_file }}"
+    block: |
+      JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.authenticate=true"
+      JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.password.file=/etc/cassandra/jmxremote.password"
+      JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.access.file=/etc/cassandra/jmxremote.access"
+
+- name: Restart cassandra
+  service:
+    name: "{{ cassandra_service }}"
+    state: "restarted"
+
+- name: Wait for Cassandra to become active
+  wait_for:
+    port: 9042
+    host: 0.0.0.0
+    delay: 10
+
+- name: Test nodetool authentication from shell
+  command: nodetool -u {{ cassandra_admin_user }} -pw {{ cassandra_admin_pwd }} status
+
+- name: Test login fails with bad password
+  command: nodetool -u {{ cassandra_admin_user }} -pw XXXXXXXXXXXXX status
+  register: bad_login
+  ignore_errors: true
+
+- assert:
+    that:
+      - "'Invalid username or password' in bad_login.stderr"
+
+- name: Test nodetool authentication with passwordFile
+  command: nodetool -u {{ cassandra_admin_user }}	-pwf /etc/cassandra/jmxremote.password status

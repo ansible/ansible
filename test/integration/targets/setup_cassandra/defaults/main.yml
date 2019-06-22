@@ -1,0 +1,26 @@
+openjdk: java-1.8.0-openjdk
+
+cassandra_yum:
+  description: "Apache Cassandra"
+  name: cassandra_yum
+  baseurl: "https://www.apache.org/dist/cassandra/redhat/311x/"
+  enabled: yes
+  gpgcheck: yes
+  gpgkey: "https://www.apache.org/dist/cassandra/KEYS"
+
+cassandra_deb:
+  repo: deb http://www.apache.org/dist/cassandra/debian 311x main
+
+cassandra_yum_pkg: cassandra
+cassandra_deb_pkg: cassandra
+cassandra_service: cassandra
+
+cassandra_yml_file: "/etc/cassandra/conf/cassandra.yaml"
+cassandra_env_file: "/etc/cassandra/conf/cassandra-env.sh"
+cassandra_regexp: '^authenticator:'
+cassandra_authenticator: "authenticator: PasswordAuthenticator"
+cassandra_regexp_auth: '^authorizer:'
+cassandra_authorizer: "authorizer: CassandraAuthorizer"
+
+cassandra_admin_user: cassandra
+cassandra_admin_pwd: cassandra

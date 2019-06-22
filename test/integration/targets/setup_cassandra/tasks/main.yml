@@ -1,0 +1,85 @@
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+- meta: end_play
+  when: ansible_os_family not in  ['RedHat', 'Debian' ]
+
+# CassandraDaemon.java:749 - Local host name unknown: java.net.UnknownHostException: localhost.localdomain: localhost.localdomain: Name or service not known
+- command: hostname localhost
+
+- name: Install OpenJDK package
+  yum:
+    name: "{{ openjdk }}"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Setup Cassandra yum repo
+  yum_repository:
+    name: "{{ cassandra_yum.name }}"
+    description: "{{ cassandra_yum.description }}"
+    baseurl: "{{ cassandra_yum.baseurl }}"
+    enabled: "{{ cassandra_yum.enabled }}"
+    gpgcheck: "{{ cassandra_yum.gpgcheck }}"
+    gpgkey: "{{ cassandra_yum.gpgkey }}"
+  when: ansible_os_family == 'RedHat'
+
+- name: Install cassandra yum package
+  yum:
+    name: "{{ cassandra_yum_pkg }}"
+    state: present
+  when: ansible_os_family == 'RedHat'
+  notify:
+    - redhat_remove_cassandra
+    - redhat_remove_python3
+
+- name: Setup Cassandra apt repo
+  apt_repository:
+    repo: "{{ cassandra_deb.repo }}"
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Run the equivalent of "apt-get update"
+  apt:
+    update_cache: yes
+  when: ansible_os_family == 'Debian'
+
+- name: Install cassandra deb package
+  apt:
+    name: "{{ cassandra_deb_pkg }}"
+    state: present
+    force: yes
+  when: ansible_os_family == 'Debian'
+
+- name: Adjust heap size
+  lineinfile:
+    path: /etc/cassandra/default.conf/cassandra-env.sh
+    regexp: "^MAX_HEAP_SIZE="
+    line: "MAX_HEAP_SIZE=256M"
+
+- name: Start Cassandra service
+  service:
+    name: "{{ cassandra_service }}"
+    enabled: "yes"
+    state: "restarted"
+
+- name: Allow a little time for Cassandra to start listening on ports
+  wait_for:
+    port: 9042
+    host: 0.0.0.0
+    delay: 10

@@ -1,0 +1,136 @@
+# test code for the cassandra_backup module
+# (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ===========================================================
+- name: Get incremental backup status 1
+  shell: nodetool -h $(hostname) statusbackup
+  register: backup_status
+
+- name: Assert incremental backup is not running 1
+  assert:
+    that: "'not running' == backup_status.stdout"
+
+- name: Turn on incremental backup with module
+  cassandra_backup:
+    state: "enabled"
+
+- name: Get incremental backup status 2
+  shell: nodetool -h $(hostname) statusbackup
+  register: backup_status
+
+- name: Assert incremental backup is running
+  assert:
+    that: "'running' == backup_status.stdout"
+
+- name: Turn off incremental backup with module
+  cassandra_backup:
+    state: "disabled"
+
+- name: Get incremental backup status 3
+  shell: nodetool -h $(hostname) statusbackup
+  register: backup_status
+
+- name: Assert incremental backup is not running 2
+  assert:
+    that: "'not running' == backup_status.stdout"
+
+- name: Execute with check_mode = True
+  cassandra_backup:
+    state: "enabled"
+  check_mode: true
+  register: backup_status
+
+- name: Assert increment backup status has changed (check_mode)
+  assert:
+    that: backup_status.changed == True
+
+- name: Get incremental backup status 4
+  shell: nodetool -h $(hostname) statusbackup
+  register: backup_status
+
+- name: Assert incremental backup is not running (after check_mode)
+  assert:
+    that: "'not running' == backup_status.stdout"
+
+- include_tasks: ../../setup_cassandra/tasks/cassandra_auth.yml
+  when: cassandra_auth_tests == True
+
+- name: Turn on incremental backup with auth
+  cassandra_backup:
+    state: "enabled"
+    username: "{{ cassandra_admin_user }}"
+    password: "{{ cassandra_admin_pwd }}"
+  register: backup_status
+  when: cassandra_auth_tests == True
+
+- name: Get incremental backup status 5
+  shell: nodetool -u {{ cassandra_admin_user }} -pw {{ cassandra_admin_pwd }} -h $(hostname) statusbackup
+  register: backup_status
+  when: cassandra_auth_tests == True
+
+- name: Assert incremental backup is running
+  assert:
+    that: "'running' == backup_status.stdout"
+  when: cassandra_auth_tests == True
+
+- name: Turn off incremental backup using password file
+  cassandra_backup:
+    state: "disabled"
+    username: "{{ cassandra_admin_user }}"
+    password_file: /etc/cassandra/jmxremote.password
+  register: backup_status
+  when: cassandra_auth_tests == True
+
+- name: Get incremental backup status 6
+  shell: nodetool -u {{ cassandra_admin_user }} -pw {{ cassandra_admin_pwd }} -h $(hostname) statusbackup
+  register: backup_status
+  when: cassandra_auth_tests == True
+
+- name: Assert incremental backup is running
+  assert:
+    that: "'not running' == backup_status.stdout"
+  when: cassandra_auth_tests == True
+
+- name: Test login failure handling
+  cassandra_backup:
+    state: "disabled"
+    username: "{{ cassandra_admin_user }}"
+    password: XXXXXXXXXXXXXXXXXXXXX
+  register: login_status
+  ignore_errors: true
+  when: cassandra_auth_tests == True
+
+- name: Assert failed login
+  assert:
+    that:
+      - login_status.failed == True
+      - "\"nodetool: Failed to connect to 'localhost:7199' - FailedLoginException: 'Invalid username or password'.\" == login_status.stderr_lines[0]"
+  when: cassandra_auth_tests == True
+
+- name: Test incorrect nodetool_path handling
+  cassandra_backup:
+    state: "disabled"
+    nodetool_path: /tmp
+  register: nodetool_path_error
+  ignore_errors: true
+  when: cassandra_auth_tests == True
+
+- name: Assert no such file
+  assert:
+    that:
+      - "'No such file or directory' in nodetool_path_error.msg"
