@@ -39,25 +39,25 @@ def load_additional_regular_setting(all_eres, all_pres):
             file = open(config_file, "r")
             lines = file.readlines()
             for line in lines:
-                line=line.strip('\n')
+                line = line.strip('\n')
                 li = line.strip()
-                if li == '[ERE]' :
+                if li == '[ERE]':
                     mode = 1
-                elif li == '[PRE]' :
+                elif li == '[PRE]':
                     mode = 2
                 else:
-                    if li and (li.startswith("#") == False):
+                    if li and (li.startswith("#") is False):
                         if python_version == 3:
-                            new_re = re.compile(bytes(line,'ascii'))
+                            new_re = re.compile(bytes(line, 'ascii'))
                         else:
                             new_re = re.compile(line)
                         if mode == 1:
-                            if ((new_re in new_eres) == False):
-                                if ((new_re in all_eres) == False):
+                            if ((new_re in new_eres) is False):
+                                if ((new_re in all_eres) is False):
                                     new_eres.append(new_re)
                         elif mode == 2:
-                            if ((new_re in new_pres) == False):
-                                if ((new_re in all_pres) == False):
+                            if ((new_re in new_pres) is False):
+                                if ((new_re in all_pres) is False):
                                     new_pres.append(new_re)
                         else:
                             display.vvvv(u'Regular expression loading skipping:%s' % line)
@@ -103,4 +103,3 @@ class TerminalModule(TerminalBase):
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-

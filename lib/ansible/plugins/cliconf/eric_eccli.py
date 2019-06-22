@@ -1,14 +1,13 @@
 #
 # Copyright (c) 2019 Ericsson AB.
-# All rights reserved.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.module_utils.common._collections_compat import Mapping
 import collections
 import re
 import time
@@ -58,7 +57,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -74,5 +73,3 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
-
-
