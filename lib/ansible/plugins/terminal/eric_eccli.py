@@ -17,11 +17,10 @@ from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
+
+display = Display()
+
 
 def load_additional_regular_setting(all_eres, all_pres):
     new_eres = []
@@ -69,6 +68,7 @@ def load_additional_regular_setting(all_eres, all_pres):
         if file in locals():
             file.close()
 
+
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
@@ -79,17 +79,9 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        #covered example syntax error: expecting
         re.compile(br"[\r\n]+syntax error: .*"),
-        #Should not use Aborted: .*, for example
-        #Aborted: by user, should be treated as success
-        #Aborted: permission denied, should be treated as fail
-        #re.compile(br"Aborted: permission denied"),
-        #Current decision, still use RE Aborted: .*
         re.compile(br"Aborted: .*"),
-        #covered example Error: access denied
         re.compile(br"[\r\n]+Error: .*"),
-        #other errors
         re.compile(br"[\r\n]+% Error:.*"),
         re.compile(br"[\r\n]+% Invalid input.*"),
         re.compile(br"[\r\n]+% Incomplete command:.*")

@@ -7,6 +7,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ericsson IPOS OAM team
+cliconf: eccli
+short_description: Use eccli cliconf to run command on Ericsson ECCLI platform
+description:
+  - This eccli plugin provides low level abstraction APIs for
+    sending and receiving CLI commands from Ericsson ECCLI network devices.
+version_added: "2.9"
+"""
+
 from ansible.module_utils.common._collections_compat import Mapping
 import collections
 import re
