@@ -430,6 +430,8 @@ class Connection(ConnectionBase):
                 raise AnsibleConnectionFailure("Connection plugin failed. Reason: %s" % (to_native(e.reason)))
         except vim.fault.GuestOperationsUnavailable:
             raise AnsibleConnectionFailure("Cannot connect to guest. Native error: GuestOperationsUnavailable")
+        except vim.fault.InvalidGuestLogin:
+            raise AnsibleConnectionFailure("Guest login failed. Native error: InvalidGuestLogin")
 
         return processes[0]
 
