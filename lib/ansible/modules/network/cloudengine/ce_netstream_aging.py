@@ -330,7 +330,7 @@ class NetStreamAging(object):
                         inactive_tmp["ip"] = config_mem_list[4]
                     if config_mem_list[3] == "tcp-session":
                         tcp_tmp["ip"] = "present"
-                if  len(config_mem_list) > 5 and config_mem_list[2] == "vxlan":
+                if len(config_mem_list) > 5 and config_mem_list[2] == "vxlan":
                     if config_mem_list[4] == "active":
                         active_tmp["vxlan"] = config_mem_list[5]
                     if config_mem_list[4] == "inactive":
