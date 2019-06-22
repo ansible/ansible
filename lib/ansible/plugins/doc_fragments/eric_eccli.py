@@ -6,6 +6,7 @@
 #
 # 2019/03/20 - add new ansible module eric_eccli to support auto-config with Ericsson ECCLI node
 
+
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
@@ -15,7 +16,6 @@ options:
     description:
       - B(Deprecated)
       - "Starting with Ansible 2.5 we recommend using C(connection: network_cli)."
-      - For more information please see the L(ERIC_ECCLI Platform Options guide, ../network/user_guide/platform_eric_eccli.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
     suboptions:
