@@ -3,10 +3,6 @@
     src: test.te
   register: test1_mod_install
 
-- name: TEST 1 | install test module
-  semodule:
-  register: test1_mod_install
-
 - debug:
     var: test1_mod_install
 
