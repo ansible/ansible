@@ -305,7 +305,7 @@ class Connection(ConnectionBase):
         except vim.fault.InvalidLogin as e:
             raise AnsibleError("Connection Login Error: %s" % to_native(e.msg))
 
-    def _establish_vm(self):
+    def _establish_vm(self, check_vm_credentials=True):
         searchIndex = self._si.content.searchIndex
         self.vm = searchIndex.FindByInventoryPath(self.get_option("vm_path"))
 
@@ -317,7 +317,8 @@ class Connection(ConnectionBase):
         )
 
         try:
-            self.authManager.ValidateCredentialsInGuest(vm=self.vm, auth=self.vm_auth)
+            if check_vm_credentials:
+                self.authManager.ValidateCredentialsInGuest(vm=self.vm, auth=self.vm_auth)
         except vim.fault.InvalidPowerState as e:
             raise AnsibleError("VM Power State Error: %s" % to_native(e.msg))
         except vim.fault.RestrictedVersion as e:
@@ -340,7 +341,7 @@ class Connection(ConnectionBase):
         except vim.fault.GuestOperationsUnavailable:
             raise AnsibleConnectionFailure("Cannot connect to guest. Native error: GuestOperationsUnavailable")
 
-    def _connect(self):
+    def _connect(self, check_vm_credentials=True):
         if not HAS_REQUESTS:
             raise AnsibleError("%s : %s" % (missing_required_lib('requests'), REQUESTS_IMP_ERR))
 
@@ -349,13 +350,10 @@ class Connection(ConnectionBase):
 
         super(Connection, self)._connect()
 
-        if self.connected:
-            pass
-
-        self._establish_connection()
-        self._establish_vm()
-
-        self._connected = True
+        if not self.connected:
+            self._establish_connection()
+            self._establish_vm(check_vm_credentials=check_vm_credentials)
+            self._connected = True
 
     def close(self):
         """Close connection."""
@@ -365,11 +363,12 @@ class Connection(ConnectionBase):
         self._connected = False
 
     def reset(self):
-        """Reset the connection."""
-        super(Connection, self).reset()
-
+        """Reset the connection to vcenter."""
+        # TODO: Fix persistent connection implementation currently ansible creates new connections to vcenter for each task
+        # therefore we're currently closing a non existing connection here and establish a connection just for being thrown away
+        # right afterwards.
         self.close()
-        self._connect()
+        self._connect(check_vm_credentials=False)
 
     def create_temporary_file_in_guest(self, prefix="", suffix=""):
         """Create a temporary file in the VM."""
