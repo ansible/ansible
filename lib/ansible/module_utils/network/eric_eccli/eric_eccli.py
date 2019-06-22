@@ -38,6 +38,7 @@ eric_eccli_top_spec = {
 }
 eric_eccli_argument_spec.update(eric_eccli_top_spec)
 
+
 def get_connection(module):
     if hasattr(module, '_eric_eccli_connection'):
         return module._eric_eccli_connection
