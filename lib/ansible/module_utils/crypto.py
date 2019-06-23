@@ -45,7 +45,13 @@ try:
     from cryptography.hazmat.primitives import hashes
     import ipaddress
 
-    # Older versions of cryptography (< 2.1) do not have
+    # Older versions of cryptography (< 2.1) do not have __hash__ functions for
+    # general name objects (DNSName, IPAddress, ...), while providing overloaded
+    # equality and string representation operations. This makes it impossible to
+    # use them in hash-based data structures such as set or dict. Since we are
+    # actually doing that in openssl_certificate, and potentially in other code,
+    # we need to monkey-patch __hash__ for these classes to make sure our code
+    # works fine.
     if LooseVersion(cryptography.__version__) < LooseVersion('2.1'):
         # A very simply hash function which relies on the representation
         # of an object to be implemented. This is the case since at least
