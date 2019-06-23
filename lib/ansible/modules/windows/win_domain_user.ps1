@@ -6,6 +6,7 @@
 
 try {
     Import-Module ActiveDirectory
+    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
  }
  catch {
      Fail-Json $result "Failed to import ActiveDirectory PowerShell module. This module should be run on a domain controller, and the ActiveDirectory module must be available."
@@ -23,7 +24,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default
 
 # Module control parameters
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","query"
-$update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create"
+$update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create","when_changed"
 $groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","remove","replace"
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
 $domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($null -ne $domain_username)
@@ -104,12 +105,32 @@ If ($state -eq 'present') {
     }
 
     # Set the password if required
-    If ($password -and (($new_user -and $update_password -eq "on_create") -or $update_password -eq "always")) {
-        $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
-        Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
-        $result.password_updated = $true
-        $result.changed = $true
+    If (
+        (
+            $password
+        ) -and (
+            (
+                $new_user -and $update_password -eq "on_create"
+            ) -or (
+                $update_password -in @("always"; "when_changed")
+            )
+        )
+    ) {
+        If (-not $new_user) { # Don't uncecessary check if the credentials works, if we know it doesn't.
+            $test_new_credentials = [System.DirectoryServices.AccountManagement.PrincipalContext]::new('domain').ValidateCredentials($username, $password)
+        } else {
+            $test_new_credentials = $false
+        }
+        If ($test_new_credentials -and ($update_password -ne "always")) {
+            $result.password_updated = $false
+            $result.changed = $false
+        } Else {
+            $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
+            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
+            $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+            $result.password_updated = $true
+            $result.changed = $true
+        }
     }
 
     # Configure password policies
