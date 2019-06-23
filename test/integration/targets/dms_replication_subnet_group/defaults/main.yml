@@ -1,0 +1,2 @@
+resource_prefix: "test_dms_sg"
+dms_role_role_name: dms-vpc-role

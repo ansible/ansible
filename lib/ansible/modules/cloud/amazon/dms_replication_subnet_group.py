@@ -124,7 +124,7 @@ def create_module_params(module):
         # ReplicationSubnetGroupIdentifier gets translated to lower case anyway by the API
         ReplicationSubnetGroupIdentifier=module.params.get('identifier').lower(),
         ReplicationSubnetGroupDescription=module.params.get('description'),
-        subnet_ids=module.params.get('subnet_ids'),
+        SubnetIds=module.params.get('subnet_ids'),
     )
 
     return instance_parameters
@@ -149,7 +149,7 @@ def compare_params(module, param_described):
         if paramname in param_described.keys() and \
                 param_described.get(paramname) == modparams[paramname]:
             pass
-        elif paramname == 'subnet_ids':
+        elif paramname == 'SubnetIds':
             subnets = []
             for subnet in param_described.get('Subnets'):
                 subnets.append(subnet.get('SubnetIdentifier'))
