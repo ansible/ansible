@@ -207,7 +207,7 @@ class NetAppONTAPGatherFacts(object):
                 'kwargs': {
                     'call': 'lun-get-iter',
                     'attribute': 'lun-info',
-                    'field': 'path',
+                    'field': ('path', 'vserver'),
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',
