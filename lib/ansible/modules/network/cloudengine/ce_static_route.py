@@ -255,27 +255,29 @@ def build_config_xml(xmlstr):
     return '<config> ' + xmlstr + ' </config>'
 
 
+def is_valid_v4addr(addr):
+    """check if ipv4 addr is valid"""
+    if addr.find('.') != -1:
+        addr_list = addr.split('.')
+        if len(addr_list) != 4:
+            return False
+        for each_num in addr_list:
+            if not each_num.isdigit():
+                return False
+            if int(each_num) > 255:
+                return False
+        return True
+    return False
+
+
 def is_valid_v6addr(addr):
     """check if ipv6 addr is valid"""
     if addr.find(':') != -1:
         addr_list = addr.split(':')
-        # should not greater than 8 groups
-        if len(addr_list) > 8:
+        if len(addr_list) > 6:
             return False
-        #You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once.    
-        if addr.count('::') > 1:
+        if addr_list[1] != "":
             return False
-        # if do not use '::', the length of address should not be less than 8.
-        if addr.count('::') == 0 and len(addr_list) < 8:
-            return False
-        for group in addr_list:
-            if group.strip() == '':
-                continue
-            try:
-                # Each group is represented in 4-digit hexadecimal
-                int(group, base=16)
-            except ValueError:
-                return False
         return True
     return False
 
@@ -405,7 +407,7 @@ class StaticRoute(object):
                 if int(each_num) > 255:
                     return False
             byte_len = 8
-            ip_len = int(self.mask) // byte_len
+            ip_len = int(self.mask) / byte_len
             ip_bit = int(self.mask) % byte_len
         else:
             if self.prefix.find(':') == -1:
@@ -420,7 +422,7 @@ class StaticRoute(object):
             if length > 6:
                 return False
             byte_len = 16
-            ip_len = int(self.mask) // byte_len
+            ip_len = int(self.mask) / byte_len
             ip_bit = int(self.mask) % byte_len
 
         if self.aftype == "v4":
@@ -569,7 +571,7 @@ class StaticRoute(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         static_routes = root.findall(
-            "staticrt/staticrtbase/srRoutes/srRoute")
+            "data/staticrt/staticrtbase/srRoutes/srRoute")
 
         if static_routes:
             for static_route in static_routes:
@@ -761,8 +763,6 @@ class StaticRoute(object):
 
         self.get_static_route(self.state)
         self.end_state['sroute'] = self.static_routes_info["sroute"]
-        if self.end_state == self.existing:
-            self.changed = False
 
     def work(self):
         """worker"""
