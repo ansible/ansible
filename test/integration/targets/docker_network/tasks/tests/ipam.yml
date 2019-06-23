@@ -321,5 +321,6 @@
 - assert:
     that:
       - network_1 is failed
-      - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in network_1.msg"
+      - "('version is ' ~ docker_py_version ~ ' ') in network_1.msg"
+      - "'Minimum version required is 2.0.0 ' in network_1.msg"
   when: docker_py_version is version('2.0.0', '<')
