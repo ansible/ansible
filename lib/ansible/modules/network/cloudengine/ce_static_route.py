@@ -274,7 +274,8 @@ def is_valid_v6addr(addr):
     """check if ipv6 addr is valid"""
     if addr.find(':') != -1:
         addr_list = addr.split(':')
-        # should not greater than 8 groups
+        # The IPv6 binary system has a length of 128 bits and is grouped by 16 bits.
+        # Each group is separated by a colon ":" and can be divided into 8 groups, each group being represented by 4 hexadecimal
         if len(addr_list) > 8:
             return False
         #You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once.    
