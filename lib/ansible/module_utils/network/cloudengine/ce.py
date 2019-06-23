@@ -271,7 +271,7 @@ def get_cli_config(module, flags=None):
             cfg = rm_config_prefix(cfg)
             break
     if cfg.startwith('display'):
-        linss = cfg.split('\n')
+        lines = cfg.split('\n')
         if len(lines) > 1:
             return '\n'.join(cfg[1:])
         else:
