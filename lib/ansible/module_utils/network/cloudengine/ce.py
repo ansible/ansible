@@ -248,6 +248,37 @@ def get_config(module, flags=None):
     return conn.get_config(flags)
 
 
+def get_cli_config(module, flags=None):
+    """Retrieves the current config from the device or cache
+    """
+    flags = [] if flags is None else flags
+    if isinstance(flags, str):
+        flags = [flags]
+    elif not isinstance(flags, list):
+        flags = []
+
+    cmd = 'display current-configuration '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
+    conn = get_connection(module)
+    rc, out, err = conn.exec_command(cmd)
+    if rc != 0:
+        module.fail_json(msg=err)
+    cfg = str(out).strip()
+    # remove default configuration prefix '~'
+    for flag in flags:
+        if "include-default" in flag:
+            cfg = rm_config_prefix(cfg)
+            break
+    if cfg.startwith('display'):
+        linss = cfg.split('\n')
+        if len(lines) > 1:
+            return '\n'.join(cfg[1:])
+        else:
+            return ''
+    return cfg
+
+
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands), check_rc)
