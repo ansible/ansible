@@ -278,7 +278,7 @@ def is_valid_v6addr(addr):
         # Each group is separated by a colon ":" and can be divided into 8 groups, each group being represented by 4 hexadecimal
         if len(addr_list) > 8:
             return False
-        #You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once.    
+        # You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once.
         if addr.count('::') > 1:
             return False
         # if do not use '::', the length of address should not be less than 8.
