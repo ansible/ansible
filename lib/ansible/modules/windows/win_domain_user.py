@@ -75,12 +75,10 @@ options:
     description:
       - C(always) will update passwords if they differ.
       - C(on_create) will only set the password for newly created users.
-      - Note that C(always) will always report an Ansible status of 'changed'
-        because we cannot determine whether the new password differs from
-        the old password.
+      - C(when_changed) will only set the password when it differs.
     type: str
-    choices: [ always, on_create ]
-    default: always
+    choices: [ always, on_create, when_changed ]
+    default: when_changed
   password_expired:
     description:
       - C(yes) will require the user to change their password at next login.
