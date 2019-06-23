@@ -27,7 +27,7 @@
     subject_alt_name:
       - "DNS:ansible.com"
       - "IP:127.0.0.1"
-      # - "IP:::1"
+      - "IP:::1"
     useCommonNameForSAN: no
 
 - name: (Assertonly, {{select_crypto_backend}}) - Generate selfsigned certificate (no extensions)
@@ -65,7 +65,7 @@
     subject_alt_name:
       - "DNS:ansible.com"
       - "IP:127.0.0.1"
-      # - "IP:::1"
+      - "IP:::1"
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: extension_san
 
@@ -76,7 +76,7 @@
     subject_alt_name:
       - "DNS:ansible.com"
       - "IP:127.0.0.1"
-      # - "IP:::1"
+      - "IP:::1"
     subject_alt_name_strict: yes
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: extension_san_strict
