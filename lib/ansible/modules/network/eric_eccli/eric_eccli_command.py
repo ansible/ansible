@@ -167,7 +167,7 @@ def to_lines(stdout):
 
 def parse_commands(module, warnings):
     commands = transform_commands(module)
-    
+
     for item in list(commands):
         if module.check_mode:
             if item['command'].startswith('conf'):
