@@ -82,6 +82,10 @@ options:
         description:
             - Enable the ability to send system description TLV.
         type: str
+    portvlantxenable:
+        description:
+            - Enable the ability to port vlan TLV.
+        type: str
     sysnametxenable:
         description:
             - Enable the ability to send system name TLV.
