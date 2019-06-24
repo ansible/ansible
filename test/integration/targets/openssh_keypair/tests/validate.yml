@@ -1,3 +1,4 @@
+---
 - name: Log privatekey1 return values
   debug:
     var: privatekey1_result
@@ -73,3 +74,20 @@
   assert:
     that:
       - "publickey_gen.public_key == lookup('file', output_dir ~ '/privatekey5.pub').strip('\n')"
+
+- name: Verify that privatekey6 will be regenerated via force
+  assert:
+    that:
+      - output_regenerated_via_force is changed
+
+
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
+
+- name: Verify that read-only key will be regenerated
+  assert:
+    that:
+      - output_read_only is changed
