@@ -2338,11 +2338,11 @@ class DockerServiceManager(object):
         if not secret_names:
             return {}
         secrets = self.client.secrets(filters={'name': secret_names})
-        secrets = {
-            secret['Spec']['Name']: secret['ID']
+        secrets = dict(
+            (secret['Spec']['Name'], secret['ID'])
             for secret in secrets
             if secret['Spec']['Name'] in secret_names
-        }
+        )
         for secret_name in secret_names:
             if secret_name not in secrets:
                 self.client.fail(
@@ -2362,11 +2362,11 @@ class DockerServiceManager(object):
         if not config_names:
             return {}
         configs = self.client.configs(filters={'name': config_names})
-        configs = {
-            config['Spec']['Name']: config['ID']
+        configs = dict(
+            (config['Spec']['Name'], config['ID'])
             for config in configs
             if config['Spec']['Name'] in config_names
-        }
+        )
         for config_name in config_names:
             if config_name not in configs:
                 self.client.fail(
