@@ -50,6 +50,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         # also add back some builtins we do need
         'True': True,
         'False': False,
+        'None': None
     }
 
     # this is the whitelist of AST nodes we are going to
