@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_privs - Fix incorrect views handling (https://github.com/ansible/ansible/issues/27327).
