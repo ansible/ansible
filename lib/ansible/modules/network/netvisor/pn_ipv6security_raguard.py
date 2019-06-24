@@ -52,6 +52,7 @@ options:
     description:
       - RA Guard Router Priority.
     required: false
+    type: str
     choices: ['low', 'medium', 'high']
   pn_name:
     description:
