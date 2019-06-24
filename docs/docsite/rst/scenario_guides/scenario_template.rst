@@ -23,7 +23,7 @@ Credentials and authenticating
 
 Describe credential requirements and how to authenticate to this platform.
 
-Using a dynamic inventory
+Using dynamic inventory
 =========================
 
 If applicable, describe how to use a dynamic inventory plugin for this platform.
@@ -47,7 +47,7 @@ Troubleshooting
 What to look for if it breaks.
 
 
-Conclusion and Where To Go Next
+Conclusion and where to go next
 ===============================
 
 Recap of important points. For more information please see: links.
