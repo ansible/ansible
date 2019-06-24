@@ -60,7 +60,7 @@ except subprocess.CalledProcessError as e:
     print(e.output)
     sys.exit(e.returncode)
 
-parsed = json.loads(ansible_out[ansible_out.index('{'):])
+parsed = json.loads(ansible_out[ansible_out.index(b'{'):])
 ansible_facts = {}
 for fact in facts:
     try:
@@ -72,6 +72,13 @@ nicename = ansible_facts['distribution'] + ' ' + ansible_facts['distribution_ver
 
 output = {
     'name': nicename,
+    'distro': {
+        'codename': distro.codename(),
+        'id': distro.id(),
+        'name': distro.name(),
+        'version': distro.version(),
+        'version_best': distro.version(best=True),
+    },
     'input': fcont,
     'platform.dist': dist,
     'result': ansible_facts,
