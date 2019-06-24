@@ -174,6 +174,11 @@ class LunMapping(object):
             volume_name.update({volume["name"]: volume["volumeRef"]})
             if volume["listOfMappings"]:
                 lun_name.update({volume["name"]: volume["listOfMappings"][0]["lun"]})
+        for volume in response["highLevelVolBundle"]["thinVolume"]:
+            volume_reference.update({volume["volumeRef"]: volume["name"]})
+            volume_name.update({volume["name"]: volume["volumeRef"]})
+            if volume["listOfMappings"]:
+                lun_name.update({volume["name"]: volume["listOfMappings"][0]["lun"]})
 
         # Build current mapping object
         self.mapping_info = dict(lun_mapping=[dict(volume_reference=mapping["volumeRef"],
