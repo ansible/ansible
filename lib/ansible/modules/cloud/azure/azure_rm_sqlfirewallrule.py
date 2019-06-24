@@ -41,10 +41,10 @@ options:
     end_ip_address:
         description:
             - The end IP address of the firewall rule.
-            - Must be IPv4 format. Must be greater than or equal to startIpAddress. Use value C(0.0.0.0) to represent all Azure-internal IP addresses.
+            - Must be IPv4 format. Must be greater than or equal to I(start_ip_address). Use value C(0.0.0.0) to represent all Azure-internal IP addresses.
     state:
         description:
-            - Assert the state of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
+            - State of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
         default: present
         choices:
             - absent
