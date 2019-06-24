@@ -1,0 +1,8 @@
+[node1:vars]
+host_var=True
+
+[testgroup:vars]
+group_var=True
+
+[undefinedgroup:vars]
+fail=True

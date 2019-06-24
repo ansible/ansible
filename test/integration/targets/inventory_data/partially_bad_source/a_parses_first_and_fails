@@ -1,0 +1,7 @@
+[all:vars]
+ansible_become=yes
+ansible_ssh_user=testuser
+scp_if_ssh=True
+
+[group_a:vars]
+containerized=True
