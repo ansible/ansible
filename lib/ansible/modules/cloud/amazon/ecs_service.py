@@ -78,19 +78,17 @@ options:
           - Wait for update/deployment to complete before returning.
         required: false
         default: false
-        version_added: "2.9"
+        version_added: 2.9
     delay:
         description:
-          - The time to wait before checking that the service is deployed
+          - The time to wait before checking that the service is deployed. This parameter is valid only when used with 'wait'.
         required: false
         default: 10
-        version_added: "2.9"
     repeat:
         description:
-          - The number of times to check that the service is deployed
+          - The number of times to check that the service is deployed. This parameter is valid only when used with 'wait'.
         required: false
         default: 10
-        version_added: "2.9"
     force_new_deployment:
         description:
           - Force deployment of service even if there are no changes
@@ -642,7 +640,7 @@ def main():
                         delay = module.params['delay']
                         repeat = module.params['repeat']
                         successful_deploy = False
-                        for i in xrange(repeat):
+                        for i in range(repeat):
                             existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
                             status = existing['status']
                             for deployment in existing['deployments']:
@@ -682,7 +680,7 @@ def main():
             if module.params['wait'] and not successful_deploy:
                 module.fail_json(
                     msg="Service still not deployed after " + str(repeat * delay) +
-                    " seconds. Failure message: "+existing['events'][0]['message'])
+                    " seconds. Failure message: " + existing['events'][0]['message'])
 
     elif module.params['state'] == 'absent':
         if not existing:
