@@ -327,6 +327,10 @@ class HostsModule(BaseModule):
             )
         )
 
+    def pre_create(self, entity):
+        from datetime import datetime
+        self.start_time = datetime.utcnow()
+
     def pre_remove(self, entity):
         self.action(
             entity=entity,
@@ -345,8 +349,13 @@ class HostsModule(BaseModule):
         )
 
     def raise_host_exception(self):
-        events = self._connection.system_service().events_service().list(max=20)
-        error_events = [event.description for event in events if event.host is not None and (event.host.id == self._module.params.get('id') or event.host.name == self.param('name')) and event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]]
+        events = self._connection.system_service().events_service().list(max=30)
+        error_events = [event.description for event in events
+                            if event.host is not None and (
+                            event.host.id == self._module.params.get('id') or event.host.name == self.param('name')) and
+                            event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR] and
+                            (self.start_time - event.time.utcnow()).total_seconds() < 0
+                        ]
         if error_events:
             raise Exception("Error message: %s" % error_events)
         return True
