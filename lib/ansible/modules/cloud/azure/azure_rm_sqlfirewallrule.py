@@ -45,10 +45,10 @@ options:
     state:
         description:
             - Assert the state of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
-      default: present
-      choices:
-          - absent
-          - present
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
