@@ -43,7 +43,7 @@ options:
         description:
           - The desired state of the service
         required: true
-        choices: ["present", "absent", "deleting", "deployed"]
+        choices: ["present", "absent", "deleting"]
     name:
         description:
           - The name of the service
@@ -73,14 +73,19 @@ options:
           - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer
             on your behalf. This parameter is only required if you are using a load balancer with your service, in a network mode other than `awsvpc`.
         required: false
+    wait:
+        description:
+          - Wait for update/deployment to complete before returning.
+        required: false
+        default: false
     delay:
         description:
-          - The time to wait before checking that the service is available
+          - The time to wait before checking that the service is deployed
         required: false
         default: 10
     repeat:
         description:
-          - The number of times to check that the service is available
+          - The number of times to check that the service is deployed
         required: false
         default: 10
     force_new_deployment:
@@ -206,14 +211,6 @@ EXAMPLES = '''
     placement_strategy:
       - type: binpack
         field: memory
-    state: present
-
-# Checking whether service is deployed
-- ecs_service:
-    state: deployed
-    name: console-test-service
-    cluster: new_cluster
-    task_definition: new_cluster-task:2"
 '''
 
 RETURN = '''
@@ -510,7 +507,7 @@ class EcsServiceManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'deleting', 'deployed']),
+        state=dict(required=True, choices=['present', 'absent', 'deleting']),
         name=dict(required=True, type='str'),
         cluster=dict(required=False, type='str'),
         task_definition=dict(required=False, type='str'),
@@ -518,6 +515,7 @@ def main():
         desired_count=dict(required=False, type='int'),
         client_token=dict(required=False, default='', type='str'),
         role=dict(required=False, default='', type='str'),
+        wait=dict(required=False, default=False, type='bool'),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10),
         force_new_deployment=dict(required=False, default=False, type='bool'),
@@ -634,6 +632,26 @@ def main():
                                                           module.params['health_check_grace_period_seconds'],
                                                           module.params['force_new_deployment'])
 
+                    # if 'wait' is set, wait until desiredCount and runningCount of the PRIMARY deployment are matching
+                    # in case of successful deploy, return info about the cluster deployed
+                    # in case if deploy is failed, return the message from latest event
+                    if module.params['wait']:
+                        delay = module.params['delay']
+                        repeat = module.params['repeat']
+                        successful_deploy = False
+                        for i in xrange(repeat):
+                            existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
+                            status = existing['status']
+                            for deployment in existing['deployments']:
+                                if deployment['status'] == 'PRIMARY':
+                                    desired_count = deployment['desiredCount']
+                                    running_count = deployment['runningCount']
+                                    break
+                            if status == "ACTIVE" and desired_count == running_count:
+                                results['service'] = service_mgr.jsonize(existing)
+                                successful_deploy = True
+                                break
+                            time.sleep(delay)
                 else:
                     try:
                         response = service_mgr.create_service(module.params['name'],
@@ -658,6 +676,10 @@ def main():
                 results['service'] = response
 
             results['changed'] = True
+            if module.params['wait'] and not successful_deploy:
+                module.fail_json(
+                    msg="Service still not deployed after " + str(repeat * delay) +
+                    " seconds. Failure message: "+existing['events'][0]['message'])
 
     elif module.params['state'] == 'absent':
         if not existing:
@@ -700,34 +722,6 @@ def main():
         if i is repeat - 1:
             module.fail_json(msg="Service still not deleted after " + str(repeat) + " tries of " + str(delay) + " seconds each.")
             return
-
-    elif module.params['state'] == 'deployed':
-        if not existing:
-            module.fail_json(msg="Service '"+module.params['name']+" not found.")
-        # it exists, so we should check if desiredCount and runningCount of the PRIMARY deployment matches
-        # in case of successful deploy, return info about the cluster deployed
-        # in case if deploy is failed, return the message from latest event
-        delay = module.params['delay']
-        repeat = module.params['repeat']
-        successful = False
-        if not module.check_mode:
-            for i in range(repeat):
-                existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
-                status = existing['status']
-                for deployment in existing['deployments']:
-                    if deployment['status'] == 'PRIMARY':
-                        desired_count = deployment['desiredCount']
-                        running_count = deployment['runningCount']
-                        break
-                if status == "ACTIVE" and desired_count == running_count:
-                    results['service'] = service_mgr.jsonize(existing)
-                    successful = True
-                    break
-                time.sleep(delay)
-            if not successful:
-                module.fail_json(
-                    msg="Service still not deployed after " + str(repeat) + " tries of " + str(delay) +
-                    " seconds each. Failure message: "+existing['events'][0]['message'])
 
     module.exit_json(**results)
 
