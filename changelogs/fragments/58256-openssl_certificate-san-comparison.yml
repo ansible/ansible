@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_certificate - fix Subject Alternate Name comparison, which was broken for IPv6 addresses with PyOpenSSL, or with older cryptography versions (before 2.1)."
