@@ -58,10 +58,10 @@ TESTSETS = [
             "Final"
         ],
         'distro': {
-            'codename': 'Core',
+            'codename': 'Final',
             'id': 'centos',
             'name': 'CentOS Linux',
-            'version': '6',
+            'version': '6.7',
             'version_best': '6.7',
         },
         "input": {
@@ -152,7 +152,7 @@ TESTSETS = [
             ""
         ],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'virtuozzo',
             'name': 'Virtuozzo Linux',
             'version': '7.3',
@@ -206,7 +206,7 @@ CODENAME = Malachite
         },
         "platform.dist": ['SuSE', '42.1', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'opensuse-leap',
             'name': 'openSUSE Leap',
             'version': '42.1',
@@ -242,8 +242,8 @@ ID_LIKE="suse"
         },
         'platform.dist': ('SuSE', '13.2', 'x86_64'),
         'distro': {
-            'codename': 'n/a',
-            'id': 'opensuse-leap',
+            'codename': '',
+            'id': 'opensuse-harlequin',
             'name': 'openSUSE Harlequin',
             'version': '13.2',
             'version_best': '13.2',
@@ -263,8 +263,8 @@ ID_LIKE="suse"
             ""
         ],
         'distro': {
-            'codename': 'n/a',
-            'id': 'opensuse-leap',
+            'codename': '',
+            'id': 'opensuse-tumbleweed',
             'name': 'openSUSE Tumbleweed',
             'version': '20160917',
             'version_best': '20160917',
@@ -292,7 +292,7 @@ ID_LIKE="suse"
             ""
         ],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'opensuse-leap',
             'name': 'openSUSE Leap',
             'version': '15.0',
@@ -325,11 +325,11 @@ PATCHLEVEL = 3
         },
         "platform.dist": ['SuSE', '11', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'sles',
             'name': 'SUSE Linux Enterprise Server',
-            'version': '11.3',
-            'version_best': '11.3',
+            'version': '11',
+            'version_best': '11',
         },
         "result": {
             "distribution": "SLES",
@@ -359,13 +359,13 @@ CPE_NAME="cpe:/o:suse:sles:11:4"
         },
         "platform.dist": ['SuSE', '11', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'sles',
             'name': 'SUSE Linux Enterprise Server',
             'version': '11.4',
             'version_best': '11.4',
         },
-        "result":{
+        "result": {
             "distribution": "SLES",
             "distribution_major_version": "11",
             "distribution_release": "4",
@@ -395,7 +395,7 @@ CPE_NAME="cpe:/o:suse:sles:12"
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'sles',
             'name': 'SUSE Linux Enterprise Server',
             'version': '12',
@@ -431,13 +431,13 @@ CPE_NAME="cpe:/o:suse:sles:12:sp1"
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'sles',
             'name': 'SUSE Linux Enterprise Server',
             'version': '12.1',
             'version_best': '12.1',
         },
-        "result":{
+        "result": {
             "distribution": "SLES",
             "distribution_major_version": "12",
             "distribution_release": "1",
@@ -467,13 +467,13 @@ CPE_NAME="cpe:/o:suse:sles_sap:12:sp2"
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'sles',
             'name': 'SUSE Linux Enterprise Server',
             'version': '12.2',
             'version_best': '12.2',
         },
-        "result":{
+        "result": {
             "distribution": "SLES_SAP",
             "distribution_major_version": "12",
             "distribution_release": "2",
@@ -503,13 +503,13 @@ CPE_NAME="cpe:/o:suse:sles_sap:12:sp3"
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
-            'codename': 'n/a',
+            'codename': '',
             'id': 'sles',
             'name': 'SUSE Linux Enterprise Server',
             'version': '12.3',
             'version_best': '12.3',
         },
-        "result":{
+        "result": {
             "distribution": "SLES_SAP",
             "distribution_major_version": "12",
             "distribution_release": "3",
@@ -542,10 +542,10 @@ BUG_REPORT_URL="https://bugs.debian.org/"
         },
         "result": {
             "distribution": "Debian",
-            "distribution_major_version": "stretch/sid",
-            "distribution_release": "NA",
+            "distribution_major_version": "9",
+            "distribution_release": "stretch",
             "os_family": "Debian",
-            "distribution_version": "stretch/sid",
+            "distribution_version": "9.8",
         }
     },
     {
@@ -598,6 +598,13 @@ DISTRIB_DESCRIPTION="SteamOS 2.0"
 """
         },
         'platform.dist': ('Steamos', '2.0', 'brewmaster'),
+        'distro': {
+            'codename': 'brewmaster',
+            'id': 'steamos',
+            'name': 'SteamOS GNU/Linux',
+            'version': '2.0',
+            'version_best': '2.0',
+        },
         'result': {
             'distribution': u'SteamOS',
             'distribution_major_version': u'2',
@@ -620,6 +627,13 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
 """
         },
         'platform.dist': ('', '', ''),
+        'distro': {
+            'codename': 'jessie',
+            'id': 'devuan',
+            'name': 'Devuan GNU/Linux',
+            'version': '1',
+            'version_best': '1',
+        },
         'result': {
             'distribution': u'Devuan',
             'distribution_major_version': u'1',
@@ -640,6 +654,13 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
 """
         },
         'platform.dist': ('', '', ''),
+        'distro': {
+            'codename': '',
+            'id': 'devuan',
+            'name': 'Devuan GNU/Linux',
+            'version': '',
+            'version_best': '',
+        },
         'result': {
             'distribution': u'Devuan',
             'distribution_major_version': u'NA',
@@ -654,6 +675,13 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
             "16.04",
             "xenial"
         ],
+        'distro': {
+            'codename': 'xenial',
+            'id': 'ubuntu',
+            'name': 'Ubuntu',
+            'version': '16.04',
+            'version_best': '16.04.6',
+        },
         "input": {
             "/etc/os-release": (
                 "NAME=\"Ubuntu\"\nVERSION=\"16.04 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 16.04 LTS\"\n"
@@ -682,6 +710,13 @@ DISTRIB_DESCRIPTION="Ubuntu 10.04.4 LTS
 """
             },
         'platform.dist': ('Ubuntu', '10.04', 'lucid'),
+        'distro': {
+            'codename': 'lucid',
+            'id': 'ubuntu',
+            'name': 'Ubuntu',
+            'version': '10.04',
+            'version_best': '10.04.1',
+        },
         'result':
             {
                 'distribution': u'Ubuntu',
@@ -711,6 +746,13 @@ BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
 """
         },
         'platform.dist': ('Ubuntu', '14.04', 'trusty'),
+        'distro': {
+            'codename': 'trusty',
+            'id': 'ubuntu',
+            'name': 'Ubuntu',
+            'version': '14.04',
+            'version_best': '14.04.4',
+        },
         'result': {
             'distribution': u'Ubuntu',
             'distribution_major_version': u'14',
@@ -734,6 +776,13 @@ PRETTY_NAME="Ubuntu precise (12.04.5 LTS)"
 VERSION_ID="12.04"
 """},
         'platform.dist': ('Ubuntu', '12.04', 'precise'),
+        'distro': {
+            'codename': 'precise',
+            'id': 'ubuntu',
+            'name': 'Ubuntu',
+            'version': '12.04',
+            'version_best': '12.04.5',
+        },
         'result': {'distribution': u'Ubuntu',
                    'distribution_major_version': u'12',
                    'distribution_release': u'precise',
@@ -757,6 +806,13 @@ VERSION_ID="12.04"
             '2019.1',
             ''
         ],
+        'distro': {
+            'codename': 'kali-rolling',
+            'id': 'kali',
+            'name': 'Kali GNU/Linux Rolling',
+            'version': '2019.1',
+            'version_best': '2019.1',
+        },
         'result': {
             'distribution': 'Kali',
             'distribution_version': '2019.1',
@@ -771,6 +827,13 @@ VERSION_ID="12.04"
             "16.04",
             "xenial"
         ],
+        'distro': {
+            'codename': 'xenial',
+            'id': 'neon',
+            'name': 'KDE neon',
+            'version': '16.04',
+            'version_best': '16.04',
+        },
         "input": {
             "/etc/os-release": ("NAME=\"KDE neon\"\nVERSION=\"5.8\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.8\"\n"
                                 "VERSION_ID=\"16.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\n"
@@ -807,11 +870,17 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
 """,
         },
         'platform.dist': ('', '', ''),
+        'distro': {
+            'codename': 'Coeur Rouge',
+            'id': 'coreos',
+            'name': 'CoreOS',
+            'version': '976.0.0',
+            'version_best': '976.0.0',
+        },
         'platform.release': '',
         'result': {
             "distribution": "CoreOS",
-            "distribution_major_version": "NA",
-            "distribution_release": "NA",
+            "distribution_major_version": "976",
             "distribution_version": "976.0.0",
         }
     },
@@ -830,6 +899,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("                       SmartOS 20160330T234717Z x86_64\n"
                              "              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n"
@@ -866,6 +942,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("                                SmartOS x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n"
                              "              Copyright 2010-2013 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n"
@@ -888,6 +971,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("             OpenIndiana Development oi_151.1.9 X86 (powered by illumos)\n        Copyright 2011 Oracle and/or its affiliates. "
                              "All rights reserved.\n                        Use is subject to license terms.\n                           "
@@ -909,6 +999,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         #        "platform.release": 'OmniOS',
         "input": {
             "/etc/release": (
@@ -931,6 +1028,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "platform.release:": "",
         "input": {
             "/etc/release": ("                         Open Storage Appliance v3.1.6\n           Copyright (c) 2014 Nexenta Systems, Inc.  "
@@ -953,6 +1057,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("                        Open Storage Appliance 4.0.3-FP2\n           Copyright (c) 2014 Nexenta Systems, Inc.  "
                              "All Rights Reserved.\n           Copyright (c) 2010 Oracle.  All Rights Reserved.\n                        "
@@ -976,6 +1087,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("                       Solaris 10 10/09 s10x_u8wos_08a X86\n           Copyright 2009 Sun Microsystems, Inc.  "
                              "All Rights Reserved.\n                        Use is subject to license terms.\n                           "
@@ -999,6 +1117,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  "
                              "All rights reserved.\n                            Assembled 18 October 2011\n")
@@ -1013,6 +1138,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": (
                 "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2018, Oracle and/or its affiliates.  "
@@ -1036,6 +1168,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": (
                 "                            Oracle Solaris 11.4 SPARC\n    Copyright (c) 1983, 2018, Oracle and/or its affiliates."
@@ -1059,6 +1198,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': '',
+            'name': '',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/release": ("                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. "
                              "All rights reserved.\n                            Assembled 17 January 2013\n")
@@ -1079,6 +1225,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "22",
             "Twenty Two"
         ],
+        'distro': {
+            'codename': 'Twenty Two',
+            'id': 'fedora',
+            'name': 'Fedora',
+            'version': '22',
+            'version_best': '22',
+        },
         "input": {
             "/etc/redhat-release": "Fedora release 22 (Twenty Two)\n",
             "/etc/os-release": (
@@ -1104,6 +1257,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "25",
             "Rawhide"
         ],
+        'distro': {
+            'codename': 'Rawhide',
+            'id': 'fedora',
+            'name': 'Fedora',
+            'version': '25',
+            'version_best': '25',
+        },
         "input": {
             "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
             "/etc/os-release": (
@@ -1131,6 +1291,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': 'smgl',
+            'name': 'Source Mage GNU/Linux',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/sourcemage-release": ("Source Mage GNU/Linux x86_64-pc-linux-gnu\nInstalled from tarball using chroot image (Grimoire 0.61-rc) "
                                         "on Thu May 17 17:31:37 UTC 2012\n")
@@ -1152,6 +1319,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': 'arch',
+            'name': 'Arch Linux',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",  # noqa
             "/etc/arch-release": "",
@@ -1173,6 +1347,13 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         "26580",
         "clear-linux-os"
     ],
+    'distro': {
+        'codename': '',
+        'id': 'clear-linux-os',
+        'name': 'Clear Linux OS',
+        'version': '26580',
+        'version_best': '26580',
+    },
     "input": {
         "/etc/os-release": '''
 NAME="Clear Linux OS"
@@ -1218,6 +1399,13 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
             "",
             ""
         ],
+        'distro': {
+            'codename': '',
+            'id': 'arch',
+            'name': 'Arch Linux',
+            'version': '',
+            'version_best': '',
+        },
         "input": {
             "/etc/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nID_LIKE=archlinux\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\n\n",  # noqa
         },
@@ -1245,6 +1433,13 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
 """
         },
         'platform.dist': ('debian', '8.11', ''),
+        'distro': {
+            'codename': '',
+            'id': 'cumulus-linux',
+            'name': 'Cumulus Linux',
+            'version': '3.7.3',
+            'version_best': '3.7.3',
+        },
         'result': {
             'distribution': 'Cumulus Linux',
             'distribution_major_version': '3',
@@ -1268,6 +1463,13 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
 """
         },
         'platform.dist': ('', '', ''),
+        'distro': {
+            'codename': '',
+            'id': 'cumulus-linux',
+            'name': 'Cumulus Linux',
+            'version': '2.5.4',
+            'version_best': '2.5.4',
+        },
         'result': {
             'distribution': 'Cumulus Linux',
             'distribution_major_version': '2',
@@ -1282,12 +1484,19 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
             "18.3",
             "sylvia",
         ],
+        'distro': {
+            'codename': 'Sylvia',
+            'id': 'linuxmint',
+            'name': 'Linux Mint',
+            'version': '18.3',
+            'version_best': '18.3',
+        },
         "input": {
             "/etc/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.3 (Sylvia)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.3\"\nVERSION_ID=\"18.3\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sylvia\nUBUNTU_CODENAME=xenial",  # noqa
         },
         "name": "Linux Mint 18.3",
         "result": {
-            "distribution_release": "sylvia",
+            "distribution_release": "Sylvia",
             "distribution": "Linux Mint",
             "distribution_major_version": "18",
             "os_family": "Debian",
@@ -1351,6 +1560,9 @@ def test_distribution_version(am, mocker, testcase):
     def mock_distro_name():
         return testcase['distro']['name']
 
+    def mock_distro_id():
+        return testcase['distro']['id']
+
     def mock_distro_version(best=False):
         if best:
             return testcase['distro']['version_best']
@@ -1376,7 +1588,7 @@ def test_distribution_version(am, mocker, testcase):
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
-    mocker.patch('ansible.module_utils.distro.id', mock_distro_name)
+    mocker.patch('ansible.module_utils.distro.id', mock_distro_id)
     mocker.patch('ansible.module_utils.distro.version', mock_distro_version)
     mocker.patch('ansible.module_utils.distro.codename', mock_distro_codename)
     mocker.patch('os.path.isfile', mock_os_path_is_file)
