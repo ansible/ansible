@@ -1,0 +1,2 @@
+bugfixes:
+  - openssh_keypair - make regeneration of valid keypairs with the ``force`` option possible, add better handling for invalid files
