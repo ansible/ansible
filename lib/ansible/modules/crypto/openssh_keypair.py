@@ -204,7 +204,7 @@ class Keypair(object):
             return os.path.exists(self.path)
 
         if _check_state():
-            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
+            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path], check_rc=False)
             if not proc[0] == 0:
                 if os.path.isdir(self.path):
                     module.fail_json(msg='%s is a directory. Please specify a path to a file.' % (self.path))
