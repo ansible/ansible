@@ -23,8 +23,8 @@ class FactsBase(object):
         self._connection = get_resource_connection(module)
 
         self.ansible_facts = {'ansible_network_resources': {}}
-        self.ansible_facts['gather_network_resources'] = list()
-        self.ansible_facts['gather_subset'] = list()
+        self.ansible_facts['ansible_gather_network_resources'] = list()
+        self.ansible_facts['ansible_net_gather_subset'] = list()
 
         if not self._gather_subset:
             self._gather_subset = ['!config']
@@ -114,7 +114,7 @@ class FactsBase(object):
         runable_subsets = self.gen_runable(legacy_facts_type, fact_legacy_obj_map.keys())
         if runable_subsets:
             facts = dict()
-            self.ansible_facts['gather_subset'] = list(runable_subsets)
+            facts['gather_subset'] = list(runable_subsets)
 
             instances = list()
             for key in runable_subsets:
