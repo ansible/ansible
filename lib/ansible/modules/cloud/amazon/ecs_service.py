@@ -78,16 +78,19 @@ options:
           - Wait for update/deployment to complete before returning.
         required: false
         default: false
+        version_added: "2.9"
     delay:
         description:
           - The time to wait before checking that the service is deployed
         required: false
         default: 10
+        version_added: "2.9"
     repeat:
         description:
           - The number of times to check that the service is deployed
         required: false
         default: 10
+        version_added: "2.9"
     force_new_deployment:
         description:
           - Force deployment of service even if there are no changes
