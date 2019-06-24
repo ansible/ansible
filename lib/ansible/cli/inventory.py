@@ -241,8 +241,10 @@ class InventoryCLI(CLI):
         return self._remove_internal(hostvars)
 
     def _get_group(self, gname):
-        group = self.inventory.groups.get(gname)
-        return group
+        return self.inventory.groups.get(gname)
+
+    def _get_host(self, hname):
+        return self.inventory.hosts.get(hname)
 
     @staticmethod
     def _remove_internal(dump):
@@ -278,13 +280,13 @@ class InventoryCLI(CLI):
 
         result = [self._graph_name('@%s:' % group.name, depth)]
         depth = depth + 1
-        for kid in sorted(group.child_groups, key=attrgetter('name')):
-            result.extend(self._graph_group(kid, depth))
+        for kid in sorted(group.child_groups):
+            result.extend(self._graph_group(self._get_group(kid), depth))
 
         if group.name != 'all':
-            for host in sorted(group.hosts, key=attrgetter('name')):
-                result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
+            for host in sorted(group.hosts):
+                result.append(self._graph_name(host, depth))
+                result.extend(self._show_vars(self._get_host_variables(self._get_host(host)), depth + 1))
 
         result.extend(self._show_vars(self._get_group_variables(group), depth))
 
@@ -306,13 +308,13 @@ class InventoryCLI(CLI):
             results = {}
             results[group.name] = {}
             if group.name != 'all':
-                results[group.name]['hosts'] = [h.name for h in sorted(group.hosts, key=attrgetter('name'))]
+                results[group.name]['hosts'] = sorted(group.hosts)
             results[group.name]['children'] = []
-            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
-                results[group.name]['children'].append(subgroup.name)
-                if subgroup.name not in seen:
-                    results.update(format_group(subgroup))
-                    seen.add(subgroup.name)
+            for subgroup in sorted(group.child_groups):
+                results[group.name]['children'].append(subgroup)
+                if subgroup not in seen:
+                    results.update(format_group(self._get_group(subgroup)))
+                    seen.add(subgroup)
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
@@ -326,8 +328,7 @@ class InventoryCLI(CLI):
 
         # populate meta
         results['_meta'] = {'hostvars': {}}
-        hosts = self.inventory.get_hosts()
-        for host in hosts:
+        for name, host in self.inventory.hosts.items():
             hvars = self._get_host_variables(host)
             if hvars:
                 results['_meta']['hostvars'][host.name] = hvars
@@ -346,19 +347,19 @@ class InventoryCLI(CLI):
 
             # subgroups
             results[group.name]['children'] = {}
-            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
-                if subgroup.name != 'all':
-                    results[group.name]['children'].update(format_group(subgroup))
+            for subgroup in sorted(group.child_groups):
+                if subgroup != 'all':
+                    results[group.name]['children'].update(format_group(self._get_group(subgroup)))
 
             # hosts for group
             results[group.name]['hosts'] = {}
             if group.name != 'all':
-                for h in sorted(group.hosts, key=attrgetter('name')):
+                for h in sorted(group.hosts):
                     myvars = {}
-                    if h.name not in seen:  # avoid defining host vars more than once
-                        seen.append(h.name)
-                        myvars = self._get_host_variables(host=h)
-                    results[group.name]['hosts'][h.name] = myvars
+                    if h not in seen: # avoid defining host vars more than once
+                        seen.append(h)
+                        myvars = self._get_host_variables(host=self._get_host(h))
+                    results[group.name]['hosts'][h] = myvars
 
             if context.CLIARGS['export']:
                 gvars = self._get_group_variables(group)
@@ -373,31 +374,31 @@ class InventoryCLI(CLI):
 
     def toml_inventory(self, top):
         seen = set()
-        has_ungrouped = bool(next(g.hosts for g in top.child_groups if g.name == 'ungrouped'))
+        has_ungrouped = bool(next(self._get_group(g).hosts for g in top.child_groups if g == 'ungrouped'))
 
         def format_group(group):
             results = {}
             results[group.name] = {}
 
             results[group.name]['children'] = []
-            for subgroup in sorted(group.child_groups, key=attrgetter('name')):
-                if subgroup.name == 'ungrouped' and not has_ungrouped:
+            for subgroup in sorted(group.child_groups):
+                if subgroup == 'ungrouped' and not has_ungrouped:
                     continue
                 if group.name != 'all':
-                    results[group.name]['children'].append(subgroup.name)
-                results.update(format_group(subgroup))
+                    results[group.name]['children'].append(subgroup)
+                results.update(format_group(self._get_group(subgroup)))
 
             if group.name != 'all':
-                for host in sorted(group.hosts, key=attrgetter('name')):
-                    if host.name not in seen:
-                        seen.add(host.name)
-                        host_vars = self._get_host_variables(host=host)
+                for host in sorted(group.hosts):
+                    if host not in seen:
+                        seen.add(host)
+                        host_vars = self._get_host_variables(host=self._get_host(host))
                     else:
                         host_vars = {}
                     try:
-                        results[group.name]['hosts'][host.name] = host_vars
+                        results[group.name]['hosts'][host] = host_vars
                     except KeyError:
-                        results[group.name]['hosts'] = {host.name: host_vars}
+                        results[group.name]['hosts'] = {host: host_vars}
 
             if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
