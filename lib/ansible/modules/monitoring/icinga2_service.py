@@ -91,7 +91,8 @@ options:
     type: str
   template:
     description:
-      - The template used to define the host
+      - The template used to define the service
+      - Template cannot be modified after object creation.
     type: str
   url:
     description:
@@ -172,7 +173,7 @@ options:
     type: int
   enable_perfdata:
     description:
-      - Enables event handlers for this host.
+      - Whether performance data processing is enabled.
     type: bool
   event_command:
     description:
@@ -189,23 +190,23 @@ options:
     type: str
   notes:
     description:
-      - Notes for the host.
+      - Notes for the service.
     type: str
   notes_url:
     description:
-      - URL for notes for the host (for example, in notification commands).
+      - URL for notes for the service (for example, in notification commands).
     type: str
   action_url:
     description:
-      - URL for actions for the host (for example, an external graphing tool).
+      - URL for actions for the service (for example, an external graphing tool).
     type: str
   icon_image:
     description:
-      -  Icon image for the host. Used by external interfaces only.
+      -  Icon image for the service. Used by external interfaces only.
     type: str
   icon_image_alt:
     description:
-      - Icon image description for the host. Used by external interface only.
+      - Icon image description for the service. Used by external interface only.
     type: str
   variables:
     description:
@@ -214,13 +215,13 @@ options:
     required: false
   zone:
     description:
-      - The zone from where this host should be polled. If I(zone) is omitted, during creation of the object,
+      - The zone this object is a member of.. If I(zone) is omitted, during creation of the object,
         then the zone will be inherited from the engine that processes the API call.
     type: str
 '''
 
 EXAMPLES = '''
-- name: Add a service to a host to icinga
+- name: Add a service to a host to icinga, using name attr
   icinga2_service:
     url: "https://icinga2.example.com"
     url_username: "ansible"
@@ -232,7 +233,7 @@ EXAMPLES = '''
     variables:
         nrpe_port: "5667"
 
-- name: Same service but with host/service
+- name: Same service, using host and service attrs
   icinga2_service:
     url: "https://icinga2.example.com"
     url_username: "ansible"
@@ -314,13 +315,16 @@ def expand_flat(aDict):
 class icinga2_api:
     module = None
 
+    def __init__(self, module):
+        self.module = module
+
     def call_url(self, path, data='', method='GET'):
         headers = {
             'Accept': 'application/json',
             'X-HTTP-Method-Override': method,
         }
         url = self.module.params.get("url") + "/" + path
-        rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method)
+        rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method, use_proxy=self.module.params['use_proxy'])
         # catching transport level code and body first
         body = info['msg']
         code = info['status']
@@ -489,8 +493,7 @@ def main():
     variables = expand_flat(module.params["variables"])
 
     try:
-        icinga = icinga2_api()
-        icinga.module = module
+        icinga = icinga2_api(module=module)
         icinga.check_connection()
     except Exception as e:
         module.fail_json(msg="unable to connect to Icinga. Exception message: %s" % (e))
