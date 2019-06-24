@@ -1629,8 +1629,6 @@ class VmsModule(BaseModule):
 
     def _migrate_vm(self, entity):
         vm_host = self.param('host')
-        if entity.id is None and entity.name is not None:
-            entity = get_id_by_name(self._service, entity.name)
         vm_service = self._service.vm_service(entity.id)
         # In case VM is preparing to be UP, wait to be up, to migrate it:
         if entity.status == otypes.VmStatus.UP:
@@ -2426,6 +2424,7 @@ def main():
                         action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
+            # Allow migrate vm when state present.
             vms_module._migrate_vm(vm)
             ret['changed'] = vms_module.changed
         elif state == 'stopped':
