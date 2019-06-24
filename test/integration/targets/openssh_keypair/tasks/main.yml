@@ -52,7 +52,6 @@
   openssh_keypair:
     path: '{{ output_dir }}/privatekeybroken'
     type: rsa
-    force: yes
   register: output_broken
 
 - name: Generate read-only private key

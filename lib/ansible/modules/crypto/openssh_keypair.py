@@ -209,12 +209,7 @@ class Keypair(object):
                 if os.path.isdir(self.path):
                     module.fail_json(msg='%s is a directory. Please specify a path to a file.' % (self.path))
 
-                if os.access(self.path, os.W_OK) and not self.force:
-                    module.fail_json(
-                        msg='%s seems not to be a valid key file. If you want this module to overwrite '
-                        'the file at %s please specify the force parameter.' % (self.path, self.path))
-                else:
-                    return False
+                return False
 
             fingerprint = proc[1].split()
             pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
