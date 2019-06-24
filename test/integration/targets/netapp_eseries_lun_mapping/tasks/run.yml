@@ -1,0 +1,326 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test ASUP module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+
+- name: set credentials
+  set_fact:
+    credentials: *creds
+# ****************************************************
+# *** Setup test hosts, storage pools, and volumes ***
+# ****************************************************
+- name: Create host for host mapping
+  netapp_e_host:
+    <<: *creds
+    state: present
+    name: test_host_mapping_host
+    host_type: 27
+- netapp_e_host:
+    <<: *creds
+    state: present
+    name: test_host1
+    host_type: 27
+- netapp_e_host:
+    <<: *creds
+    state: present
+    name: test_host2
+    host_type: 27
+- name: Create storage pool for host mapping
+  netapp_e_storagepool:
+    <<: *creds
+    state: present
+    name: test_host_mapping_storage_pool
+    raid_level: raid0
+    criteria_min_usable_capacity: 1
+- name: Create volume for host mapping
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: test_host_mapping_volume
+    storage_pool_name: test_host_mapping_storage_pool
+    size: 1
+- name: Create volume for host mapping
+  netapp_e_volume:
+    <<: *creds
+    state: present
+    name: test_host_mapping_volume2
+    storage_pool_name: test_host_mapping_storage_pool
+    size: 1
+
+# **********************************************
+# *** Create new lun between host and volume ***
+# **********************************************
+- name: Create netapp_e_lun_mapping
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume
+  register: result
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ item['mapped'] }}"
+    msg: "Lun failed to be created."
+  loop: "{{ lookup('list', current.json)}}"
+
+# QUICK VERIFICATION OF MISMATCHING TARGET/TARGET_TYPE - GOOD
+#- name: Create netapp_e_lun_mapping
+#  netapp_e_lun_mapping:
+#    <<: *creds
+#    state: present
+#    target: test_host_mapping_host
+#    volume: test_host_mapping_volume
+#    lun: 100
+#    target_type: group
+#  register: result
+#
+#- pause: seconds=30
+# **************************************************************
+# *** Repeat previous lun creation play and verify unchanged ***
+# **************************************************************
+- name: Repeat lun creation
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume
+  register: result
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ item['mapped'] and result.changed==False }}"
+    msg: "Lun failed to be unchanged."
+  loop: "{{ lookup('list', current.json)}}"
+
+# ****************************************************************
+# *** Move existing lun to default target and verify unchanged ***
+# ****************************************************************
+- name: Move lun to default target
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    volume: test_host_mapping_volume
+  register: result
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ item['mapped'] }}"
+    msg: "Lun failed to be created."
+  loop: "{{ lookup('list', current.json)}}"
+
+# *****************************************************************
+# *** Move existing lun to specific target and verify unchanged ***
+# *****************************************************************
+- name: Move lun to default target
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume
+  register: result
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ item['mapped'] }}"
+    msg: "Lun failed to be created."
+  loop: "{{ lookup('list', current.json)}}"
+
+# *******************************************
+# *** Modify a volume mapping's lun value ***
+# *******************************************
+- name: Change volume mapping's lun value
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume
+    lun: 100
+  register: result
+
+- pause: seconds=15
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ result.changed }}"
+    msg: "Lun failed to be unchanged."
+  loop: "{{ lookup('list', current.json)}}"
+
+- name: Verify mapping fails when lun already in use on existing host object
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume2
+    lun: 100
+  register: result
+  ignore_errors: True
+
+- pause: seconds=15
+
+- assert:
+    that: "{{ not result.changed }}"
+    msg: "Lun succeeded when it should have failed."
+  loop: "{{ lookup('list', current.json)}}"
+
+- name: Verify mapping succeeds when the same lun is used on multiple host objects.
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: present
+    target: test_host1
+    volume: test_host_mapping_volume2
+    lun: 100
+  register: result
+
+- pause: seconds=15
+
+- assert:
+    that: "{{ result.changed }}"
+    msg: "Lun failed to be unchanged."
+  loop: "{{ lookup('list', current.json)}}"
+
+# *************************************************************************************************
+# *** Verify that exact mapping details but different lun results in an unchanged configuration ***
+# *************************************************************************************************
+- name: Verify that exact mapping details but different lun results in an unchanged configuration
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: absent
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume
+    lun: 99
+  register: result
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ item['mapped'] and not result.changed }}"
+    msg: "Lun failed to be unchanged."
+  loop: "{{ lookup('list', current.json)}}"
+
+# ********************************
+# *** Delete newly created lun ***
+# ********************************
+- name: Delete lun creation
+  netapp_e_lun_mapping:
+    <<: *creds
+    state: absent
+    target: test_host_mapping_host
+    volume: test_host_mapping_volume
+  register: result
+
+- name: Verify lun mapping
+  uri:
+    url: "{{ credentials.api_url }}/storage-systems/{{ netapp_e_ssid }}/graph/xpath-filter?query=//volume[name='test_host_mapping_volume']"
+    user: "{{ credentials.api_username }}"
+    password: "{{ credentials.api_password }}"
+    body_format: json
+    validate_certs: no
+  register: current
+
+- assert:
+    that: "{{ not item['mapped'] }}"
+    msg: "Lun failed to be created."
+  loop: "{{ lookup('list', current.json)}}"
+
+# ********************************************************
+# *** Tear down test hosts, storage pools, and volumes ***
+# ********************************************************
+- name: Delete volume for host mapping
+  netapp_e_volume:
+    <<: *creds
+    state: absent
+    name: test_host_mapping_volume
+    storage_pool_name: test_host_mapping_storage_pool
+    size: 1
+- name: Delete volume for host mapping
+  netapp_e_volume:
+    <<: *creds
+    state: absent
+    name: test_host_mapping_volume2
+    storage_pool_name: test_host_mapping_storage_pool
+    size: 1
+- name: Delete storage pool for host mapping
+  netapp_e_storagepool:
+    <<: *creds
+    state: absent
+    name: test_host_mapping_storage_pool
+    raid_level: raid0
+    criteria_min_usable_capacity: 1
+- name: Delete host for host mapping
+  netapp_e_host:
+    <<: *creds
+    state: absent
+    name: test_host_mapping_host
+    host_type_index: 27
+- name: Delete host for host mapping
+  netapp_e_host:
+    <<: *creds
+    state: absent
+    name: test_host2
+    host_type_index: 27
+- name: Delete host for host mapping
+  netapp_e_host:
+    <<: *creds
+    state: absent
+    name: test_host1
+    host_type_index: 27
