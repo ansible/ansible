@@ -24,6 +24,7 @@ import operator as py_operator
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
+from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.utils.display import Display
 
@@ -114,6 +115,9 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
         This is likely only useful for `search` and `match` which already
         have their own filters.
     '''
+    # In addition to ensuring the correct type, to_text here will ensure
+    # _fail_with_undefined_error happens if the value is Undefined
+    value = to_text(value, errors='surrogate_or_strict')
     flags = 0
     if ignorecase:
         flags |= re.I

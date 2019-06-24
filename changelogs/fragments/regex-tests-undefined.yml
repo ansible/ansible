@@ -1,0 +1,3 @@
+bugfixes:
+- regex tests - Fail with undefined error if the value is
+  undefined (https://github.com/ansible/ansible/issues/12186)
