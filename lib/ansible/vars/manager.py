@@ -202,7 +202,7 @@ class VariableManager:
         if host:
             # THE 'all' group and the rest of groups for a host, used below
             all_group = self._inventory.groups.get('all')
-            host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
+            host_groups = sort_groups([self._inventory.groups.get(g) for g in host.groups if g not in ['all']])
 
             def _get_plugin_vars(plugin, path, entities):
                 data = {}

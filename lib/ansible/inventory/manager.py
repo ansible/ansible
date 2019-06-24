@@ -333,7 +333,7 @@ class InventoryManager(object):
     def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None):
         """
         Takes a pattern or list of patterns and returns a list of matching
-        inventory host names, taking into account any active restrictions
+        inventory host objects, taking into account any active restrictions
         or applied subsets
         """
 
@@ -385,7 +385,7 @@ class InventoryManager(object):
 
     def _evaluate_patterns(self, patterns):
         """
-        Takes a list of patterns and returns a list of matching host names,
+        Takes a list of patterns and returns a list of matching host objects,
         taking into account any negative and intersection patterns.
         """
 
@@ -408,7 +408,7 @@ class InventoryManager(object):
 
     def _match_one_pattern(self, pattern):
         """
-        Takes a single pattern and returns a list of matching host names.
+        Takes a single pattern and returns a list of matching host objects.
         Ignores intersection (&) and exclusion (!) specifiers.
 
         The pattern may be:
@@ -523,7 +523,7 @@ class InventoryManager(object):
 
     def _enumerate_matches(self, pattern):
         """
-        Returns a list of host names matching the given pattern according to the
+        Returns a list of host objects matching the given pattern according to the
         rules explained above in _match_one_pattern.
         """
 
@@ -532,7 +532,8 @@ class InventoryManager(object):
         matching_groups = self._match_list(self._inventory.groups, pattern)
         if matching_groups:
             for groupname in matching_groups:
-                results.extend(self._inventory.groups[groupname].get_hosts())
+                group_hosts = [self._inventory.hosts[h] for h in self._inventory.group_get_hosts(groupname)]
+                results.extend(group_hosts)
 
         # check hosts if no groups matched or it is a regex/glob pattern
         if not matching_groups or pattern.startswith('~') or any(special in pattern for special in ('.', '?', '*', '[')):

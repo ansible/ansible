@@ -54,16 +54,12 @@ class Host:
         return self.get_name()
 
     def serialize(self):
-        groups = []
-        for group in self.groups:
-            groups.append(group.serialize())
-
         return dict(
             name=self.name,
             vars=self.vars.copy(),
             address=self.address,
             uuid=self._uuid,
-            groups=groups,
+            groups=self.groups,
             implicit=self.implicit,
         )
 
@@ -75,12 +71,7 @@ class Host:
         self.address = data.get('address', '')
         self._uuid = data.get('uuid', None)
         self.implicit = data.get('implicit', False)
-
-        groups = data.get('groups', [])
-        for group_data in groups:
-            g = Group()
-            g.deserialize(group_data)
-            self.groups.append(g)
+        self.groups = data.get('groups', [])
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
@@ -101,41 +92,6 @@ class Host:
     def get_name(self):
         return self.name
 
-    def populate_ancestors(self, additions=None):
-        # populate ancestors
-        if additions is None:
-            for group in self.groups:
-                self.add_group(group)
-        else:
-            for group in additions:
-                if group not in self.groups:
-                    self.groups.append(group)
-
-    def add_group(self, group):
-
-        # populate ancestors first
-        for oldg in group.get_ancestors():
-            if oldg not in self.groups:
-                self.groups.append(oldg)
-
-        # actually add group
-        if group not in self.groups:
-            self.groups.append(group)
-
-    def remove_group(self, group):
-
-        if group in self.groups:
-            self.groups.remove(group)
-
-            # remove exclusive ancestors, xcept all!
-            for oldg in group.get_ancestors():
-                if oldg.name != 'all':
-                    for childg in self.groups:
-                        if oldg in childg.get_ancestors():
-                            break
-                    else:
-                        self.remove_group(oldg)
-
     def set_variable(self, key, value):
         self.vars[key] = value
 
@@ -146,7 +102,7 @@ class Host:
         results = {}
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
+        results['group_names'] = sorted([g for g in self.get_groups() if g != 'all'])
 
         return results
 

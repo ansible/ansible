@@ -738,8 +738,7 @@ class StrategyBase:
                 changed = True
         group = self._inventory.groups[group_name]
         for parent_group_name in parent_group_names:
-            parent_group = self._inventory.groups[parent_group_name]
-            parent_group.add_child_group(group)
+            self._inventory.group_add_child_group(group_name, parent_group_name)
 
         if real_host.name not in group.get_hosts():
             group.add_host(real_host)
