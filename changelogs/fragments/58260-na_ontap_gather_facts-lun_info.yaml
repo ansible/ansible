@@ -1,2 +1,0 @@
-bugfixes:
-  - na_ontap_gather_facts - Added vserver to lun_info field to ensure unique LUN dict keys
