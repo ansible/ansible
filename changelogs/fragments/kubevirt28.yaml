@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "kubevirt: fix regression when combining `inline:` yaml with module parameters"

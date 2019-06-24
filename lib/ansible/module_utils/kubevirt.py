@@ -7,6 +7,7 @@
 from collections import defaultdict
 from distutils.version import Version
 
+from ansible.module_utils.common import dict_transformations
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
@@ -142,9 +143,9 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         new_dict = {}
         for d in reversed(merging_dicts):
-            new_dict.update(d)
+            new_dict = dict_transformations.dict_merge(new_dict, d)
 
-        new_dict.update(base_dict)
+        new_dict = dict_transformations.dict_merge(new_dict, base_dict)
 
         return new_dict
 
