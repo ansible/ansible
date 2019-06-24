@@ -149,6 +149,8 @@ class CallbackModule(CallbackModule_default):
         self.v2_runner_on_ok(result)
 
     def v2_runner_on_unreachable(self, result):
+        self._preprocess_result(result)
+
         msg = "unreachable"
         display_color = C.COLOR_UNREACHABLE
         task_result = self._process_result_output(result, msg)
