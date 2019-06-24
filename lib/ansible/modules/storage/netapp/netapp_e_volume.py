@@ -401,8 +401,9 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                 for operation in operations["longLivedOpsProgress"]:
                     if operation["volAction"] is not None:
                         for key in operation.keys():
-                            if (operation[key] is not None and "volumeRef" in operation[key] and operation[key]["volumeRef"] == self.volume_detail["id"] or
-                                    ("storageVolumeRef" in self.volume_detail and operation[key]["volumeRef"] == self.volume_detail["storageVolumeRef"])):
+                            if (operation[key] is not None and "volumeRef" in operation[key] and
+                                    (operation[key]["volumeRef"] == self.volume_detail["id"] or
+                                     ("storageVolumeRef" in self.volume_detail and operation[key]["volumeRef"] == self.volume_detail["storageVolumeRef"]))):
                                 action = operation["volAction"]
                                 percent_complete = operation["init"]["percentComplete"]
             except Exception as err:
