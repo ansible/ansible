@@ -1,0 +1,10 @@
+- hosts: nxos
+  module_defaults:
+    nxos_facts:
+      gather_subset: min
+      gather_network_resources:
+      - tms_global
+  gather_facts: True
+  roles:
+  - nxos_tms_global
+  - tests
