@@ -524,9 +524,9 @@ def get_xml_conf_arg(cfg, path, type='text'):
     return result
 
 
-def populate_config(cfg_dict):
+def remove_empties(cfg_dict):
     """
-    Populate final config dictionary by removing empty values
+    Generate final config dictionary
 
     :param cfg_dict: A dictionary parsed in the facts system
     :rtype: A dictionary
@@ -539,7 +539,12 @@ def populate_config(cfg_dict):
     for key, val in iteritems(cfg_dict):
         dct = None
         if isinstance(val, dict):
-            child_val = populate_config(val)
+            child_val = remove_empties(val)
+            if child_val:
+                dct = {key: child_val}
+        elif (isinstance(val, list) and val
+              and all([isinstance(x, dict) for x in val])):
+            child_val = [remove_empties(x) for x in val]
             if child_val:
                 dct = {key: child_val}
         elif val not in [None, [], {}, (), '']:
