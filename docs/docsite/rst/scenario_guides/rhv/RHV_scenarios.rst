@@ -14,11 +14,10 @@ To get started, please select one of the following topics.
 .. toctree::
    :maxdepth: 2
 
-   scenario_clone_template
+.. remove comments to restore TOC links when pages are ready
+..   scenario_clone_template
    scenario_rename_vm
    scenario_remove_vm
    scenario_find_vm_folder
-   scenario_RHV_http
+..   scenario_RHV_http
    RHV_scenario_1
-
-
