@@ -42,7 +42,7 @@ These are the units of code Ansible executes. Each module has a particular use,
  oVirt/ RHV datacenter. You can invoke a single module with a task, or invoke
  several different modules in a playbook. For an idea of how many modules
  Ansible includes, take a look at the
- :ref:`list of RHV modules<RHV_cloud_modules>`.
+ :ref:`list of RHV modules<RHV_ansible_module_index>`.
 
 
 Playbooks
