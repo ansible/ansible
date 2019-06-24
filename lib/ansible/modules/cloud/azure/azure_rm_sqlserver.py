@@ -48,7 +48,7 @@ options:
             - Possible values include C(SystemAssigned).
     state:
         description:
-            - Assert the state of the SQL server. Use C(present) to create or update a server and use C(absent) to delete a server.
+            - State of the SQL server. Use C(present) to create or update a server and use C(absent) to delete a server.
         default: present
         choices:
             - absent
