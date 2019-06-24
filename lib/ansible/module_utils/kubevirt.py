@@ -7,6 +7,7 @@
 from collections import defaultdict
 from distutils.version import Version
 
+from ansible.module_utils.common import dict_transformations
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
@@ -137,14 +138,6 @@ class KubeVirtRawModule(KubernetesRawModule):
         merging_dicts can be a dict or a list or tuple of dicts.  In the latter case, the
         dictionaries at the front of the list have higher precedence over the ones at the end.
         """
-        def _deepupdate(D, E):
-            for k in E:
-                if isinstance(E[k], dict) and isinstance(D.get(k), dict):
-                    D[k] = _deepupdate(D[k], E[k])
-                else:
-                    D[k] = E[k]
-            return D
-
         if not merging_dicts:
             merging_dicts = ({},)
 
@@ -153,9 +146,9 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         new_dict = {}
         for d in reversed(merging_dicts):
-            _deepupdate(new_dict, d)
+            new_dict = dict_transformations.dict_merge(new_dict, d)
 
-        _deepupdate(new_dict, base_dict)
+        new_dict = dict_transformations.dict_merge(new_dict, base_dict)
 
         return new_dict
 
