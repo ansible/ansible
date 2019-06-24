@@ -598,7 +598,6 @@ options:
         description:
           - Secret's ID.
         type: str
-        required: yes
       secret_name:
         description:
           - Secret's name as defined at its creation.
@@ -1480,7 +1479,9 @@ class DockerService(DockerBaseClass):
         }
 
     @classmethod
-    def from_ansible_params(cls, ap, old_service, image_digest, can_update_networks):
+    def from_ansible_params(
+        cls, ap, old_service, image_digest, can_update_networks, secret_ids
+    ):
         s = DockerService()
         s.image = image_digest
         s.can_update_networks = can_update_networks
@@ -1628,9 +1629,10 @@ class DockerService(DockerBaseClass):
             s.secrets = []
             for param_m in ap['secrets']:
                 service_s = {}
-                service_s['secret_id'] = param_m['secret_id']
-                service_s['secret_name'] = param_m['secret_name']
-                service_s['filename'] = param_m['filename'] or service_s['secret_name']
+                secret_name = param_m['secret_name']
+                service_s['secret_id'] = param_m['secret_id'] or secret_ids[secret_name]
+                service_s['secret_name'] = secret_name
+                service_s['filename'] = param_m['filename'] or secret_name
                 service_s['uid'] = param_m['uid']
                 service_s['gid'] = param_m['gid']
                 service_s['mode'] = param_m['mode']
@@ -2326,6 +2328,30 @@ class DockerServiceManager(object):
             self.client.docker_py_version >= LooseVersion('2.7')
         )
 
+    def get_missing_secret_ids(self):
+        """
+        Resolve missing secret ids by looking them up by name
+        """
+        secret_names = [
+            secret['secret_name']
+            for secret in self.client.module.params.get('secrets') or []
+            if secret['secret_id'] is None
+        ]
+        if not secret_names:
+            return {}
+        secrets = self.client.secrets(filters={'name': secret_names})
+        secrets = {
+            secret['Spec']['Name']: secret['ID']
+            for secret in secrets
+            if secret['Spec']['Name'] in secret_names
+        }
+        for secret_name in secret_names:
+            if secret_name not in secrets:
+                self.client.fail(
+                    'Could not find a secret named "%s"' % secret_name
+                )
+        return secrets
+
     def run(self):
         self.diff_tracker = DifferenceTracker()
         module = self.client.module
@@ -2351,11 +2377,13 @@ class DockerServiceManager(object):
             )
         try:
             can_update_networks = self.can_update_networks()
+            secret_ids = self.get_missing_secret_ids()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
                 image_digest,
-                can_update_networks
+                can_update_networks,
+                secret_ids,
             )
         except Exception as e:
             return self.client.fail(
@@ -2375,7 +2403,9 @@ class DockerServiceManager(object):
                 msg = 'Service removed'
                 changed = True
             else:
-                changed, differences, need_rebuild, force_update = new_service.compare(current_service)
+                changed, differences, need_rebuild, force_update = new_service.compare(
+                    current_service
+                )
                 if changed:
                     self.diff_tracker.merge(differences)
                     if need_rebuild:
@@ -2512,7 +2542,7 @@ def main():
             mode=dict(type='int'),
         )),
         secrets=dict(type='list', elements='dict', options=dict(
-            secret_id=dict(type='str', required=True),
+            secret_id=dict(type='str'),
             secret_name=dict(type='str', required=True),
             filename=dict(type='str'),
             uid=dict(type='str'),
