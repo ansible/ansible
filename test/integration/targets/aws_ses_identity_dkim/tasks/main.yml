@@ -38,10 +38,10 @@
       check_mode: True
       register: email_result
 
-    - name: assert results report being unchanged (check-mode)
+    - name: assert results report being changed (check-mode, doesn't really make change on AWS)
       assert:
         that:
-          - email_result.changed == False
+          - email_result.changed == True
           # Note, if actually changed, the subsequent enable test will fail
 
     ## DKIM enable test
