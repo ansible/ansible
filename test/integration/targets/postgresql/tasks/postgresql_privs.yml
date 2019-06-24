@@ -27,6 +27,129 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
+#############################
+# Test of solving bug 27327 #
+#############################
+
+# Create the test table and view:
+- name: Create table
+  become: yes
+  become_user: postgres
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    name: test_table1
+
+- name: Create view
+  become: yes
+  become_user: postgres
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    query: "CREATE VIEW test_view AS SELECT * FROM test_table1"
+
+# Test check_mode:
+- name: Grant SELECT on test_view, check_mode
+  become: yes
+  become_user: postgres
+  postgresql_privs:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    state: present
+    privs: SELECT
+    type: table
+    objs: test_view
+    roles: "{{ db_user2 }}"
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result.changed == true
+
+# Check:
+- name: Check that nothing was changed after the prev step
+  become: yes
+  become_user: postgres
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    query: "SELECT grantee FROM information_schema.role_table_grants WHERE table_name='test_view' AND grantee = '{{ db_user2 }}'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# Test true mode:
+- name: Grant SELECT on test_view
+  become: yes
+  become_user: postgres
+  postgresql_privs:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    state: present
+    privs: SELECT
+    type: table
+    objs: test_view
+    roles: "{{ db_user2 }}"
+  register: result
+
+- assert:
+    that:
+    - result.changed == true
+
+# Check:
+- name: Check that nothing was changed after the prev step
+  become: yes
+  become_user: postgres
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    query: "SELECT grantee FROM information_schema.role_table_grants WHERE table_name='test_view' AND grantee = '{{ db_user2 }}'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Test true mode:
+- name: Try to grant SELECT again
+  become: yes
+  become_user: postgres
+  postgresql_privs:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    state: present
+    privs: SELECT
+    type: table
+    objs: test_view
+    roles: "{{ db_user2 }}"
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+
+# Cleanup:
+- name: Drop test table
+  become: yes
+  become_user: postgres
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    name: test_table1
+    state: absent
+
+- name: Drop test view
+  become: yes
+  become_user: postgres
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: "{{ db_name }}"
+    query: "DROP VIEW test_view"
+
+
 ######################################################
 # Test foreign data wrapper and foreign server privs #
 ######################################################
