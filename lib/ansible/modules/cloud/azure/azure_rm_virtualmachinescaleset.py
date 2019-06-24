@@ -265,33 +265,6 @@ EXAMPLES = '''
         caching: ReadWrite
         managed_disk_type: Standard_LRS
 
-- name: Create VMSS with >100 instances
-  azure_rm_virtualmachinescaleset:
-    resource_group: myResourceGroup
-    name: testvmss
-    vm_size: Standard_DS1_v2
-    capacity: 200
-    singlePlacementGroup = false
-    virtual_network_name: testvnet
-    upgrade_policy: Manual
-    subnet_name: testsubnet
-    admin_username: adminUser
-    ssh_password_enabled: false
-    ssh_public_keys:
-      - path: /home/adminUser/.ssh/authorized_keys
-        key_data: < insert yor ssh public key here... >
-    managed_disk_type: Standard_LRS
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-    data_disks:
-      - lun: 0
-        disk_size_gb: 64
-        caching: ReadWrite
-        managed_disk_type: Standard_LRS
-
 - name: Create a VMSS with a custom image
   azure_rm_virtualmachinescaleset:
     resource_group: myResourceGroup
@@ -543,6 +516,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         # default virtual_network_resource_group to resource_group
         if not self.virtual_network_resource_group:
             self.virtual_network_resource_group = self.resource_group
+
+        if self.capacity > 100:
+            self.singlePlacementGroup = False
 
         changed = False
         results = dict()
