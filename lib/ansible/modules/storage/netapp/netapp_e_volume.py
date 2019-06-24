@@ -130,13 +130,13 @@ options:
             - This option has no effect on thinly provisioned volumes since the architecture for thin volumes cannot
               benefit from read ahead caching.
         type: bool
-        default: false
+        default: true
         version_added: 2.8
     write_cache_enable:
         description:
             - Indicates whether write-back caching should be enabled for the volume.
         type: bool
-        default: false
+        default: true
         version_added: 2.8
     workload_name:
         description:
@@ -271,8 +271,8 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             thin_volume_expansion_policy=dict(type="str", choices=["automatic", "manual"]),
             thin_volume_growth_alert_threshold=dict(type="int", default=95),
             read_cache_enable=dict(type="bool", default=True),
-            read_ahead_enable=dict(type="bool", default=False),
-            write_cache_enable=dict(type="bool", default=False),
+            read_ahead_enable=dict(type="bool", default=True),
+            write_cache_enable=dict(type="bool", default=True),
             workload_name=dict(type="str", required=False),
             metadata=dict(type="dict", require=False),
             wait_for_initialization=dict(type="bool", default=False))
@@ -388,30 +388,37 @@ class NetAppESeriesVolume(NetAppESeriesModule):
         """Waits until volume action is complete is complete.
         :param: int timeout: Wait duration measured in seconds. Waits indefinitely when None.
         """
-        action = None
+        action = "unknown"
         percent_complete = None
-
-        while action != 'none':
+        while action != "complete":
             time.sleep(5)
 
             try:
-                rc, expansion = self.request("storage-systems/%s/volumes/%s/expand"
-                                             % (self.ssid, self.volume_detail["id"]))
-                action = expansion["action"]
-                percent_complete = expansion["percentComplete"]
+                rc, operations = self.request("storage-systems/%s/symbol/getLongLivedOpsProgress" % self.ssid)
+
+                # Search long lived operations for volume
+                action = "complete"
+                for operation in operations["longLivedOpsProgress"]:
+                    if operation["volAction"] is not None:
+                        for key in operation.keys():
+                            if (operation[key] is not None and "volumeRef" in operation[key] and
+                                    (operation[key]["volumeRef"] == self.volume_detail["id"] or
+                                     ("storageVolumeRef" in self.volume_detail and operation[key]["volumeRef"] == self.volume_detail["storageVolumeRef"]))):
+                                action = operation["volAction"]
+                                percent_complete = operation["init"]["percentComplete"]
             except Exception as err:
                 self.module.fail_json(msg="Failed to get volume expansion progress. Volume [%s]. Array Id [%s]."
                                           " Error[%s]." % (self.name, self.ssid, to_native(err)))
 
-            if timeout <= 0:
-                self.module.warn("Expansion action, %s, failed to complete during the allotted time. Time remaining"
-                                 " [%s]. Array Id [%s]." % (action, percent_complete, self.ssid))
-                self.module.fail_json(msg="Expansion action failed to complete. Time remaining [%s]. Array Id [%s]."
-                                          % (percent_complete, self.ssid))
-            if timeout:
-                timeout -= 5
-            self.module.log("Expansion action, %s, is %s complete." % (action, percent_complete))
+            if timeout is not None:
+                if timeout <= 0:
+                    self.module.warn("Expansion action, %s, failed to complete during the allotted time. Time remaining"
+                                     " [%s]. Array Id [%s]." % (action, percent_complete, self.ssid))
+                    self.module.fail_json(msg="Expansion action failed to complete. Time remaining [%s]. Array Id [%s]." % (percent_complete, self.ssid))
+                if timeout:
+                    timeout -= 5
 
+            self.module.log("Expansion action, %s, is %s complete." % (action, percent_complete))
         self.module.log("Expansion action is complete.")
 
     def get_storage_pool(self):
@@ -709,10 +716,6 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                     self.module.fail_json(msg="Failed to expand volume.  Volume [%s].  Array Id [%s]. Error[%s]."
                                               % (self.name, self.ssid, to_native(err)))
 
-                if self.wait_for_initialization:
-                    self.module.log("Waiting for expansion operation to complete.")
-                    self.wait_for_volume_action()
-
                 self.module.log("Volume storage capacities have been expanded.")
 
     def delete_volume(self):
@@ -786,6 +789,10 @@ class NetAppESeriesVolume(NetAppESeriesModule):
                     if self.get_expand_volume_changes():
                         self.expand_volume()
                         msg = msg[:-1] + " and was expanded." if msg else "Volume [%s] was expanded."
+
+                if self.wait_for_initialization:
+                    self.module.log("Waiting for volume operation to complete.")
+                    self.wait_for_volume_action()
 
             elif self.state == 'absent':
                 self.delete_volume()
