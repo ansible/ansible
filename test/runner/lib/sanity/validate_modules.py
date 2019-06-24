@@ -168,6 +168,21 @@ class ValidateModulesTest(SanitySingleVersion):
                     confidence=calculate_best_confidence(((VALIDATE_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
                 ))
 
+        for path in sorted(ignore.keys()):
+            if os.path.exists(path):
+                continue
+
+            for line in sorted(ignore[path].values()):
+                # Keep files out of the list which no longer exist in the repo.
+                errors.append(SanityMessage(
+                    code='A101',
+                    message='Remove "%s" since it does not exist' % path,
+                    path=VALIDATE_IGNORE_PATH,
+                    line=line,
+                    column=1,
+                    confidence=calculate_best_confidence(((VALIDATE_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
+                ))
+
         for path in paths:
             if path not in ignore:
                 continue
