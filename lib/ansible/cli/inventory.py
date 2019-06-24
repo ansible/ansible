@@ -356,7 +356,7 @@ class InventoryCLI(CLI):
             if group.name != 'all':
                 for h in sorted(group.hosts):
                     myvars = {}
-                    if h not in seen: # avoid defining host vars more than once
+                    if h not in seen:  # avoid defining host vars more than once
                         seen.append(h)
                         myvars = self._get_host_variables(host=self._get_host(h))
                     results[group.name]['hosts'][h] = myvars

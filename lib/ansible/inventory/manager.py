@@ -264,7 +264,7 @@ class InventoryManager(object):
 
                 if plugin_wants:
                     # No need to deepcopy inventory unless it has changed
-                    if inventory_copy == None:
+                    if inventory_copy is None:
                         inventory_copy = deepcopy(self._inventory)
 
                     try:

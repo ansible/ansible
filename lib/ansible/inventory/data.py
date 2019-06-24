@@ -27,6 +27,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
