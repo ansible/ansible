@@ -1,0 +1,13 @@
+[east1]
+node01
+node02
+node02
+
+[east2]
+node03
+node04
+node05
+
+[all_east:children]
+east1
+east2
