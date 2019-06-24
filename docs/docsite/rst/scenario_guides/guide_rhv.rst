@@ -18,12 +18,12 @@ Feel free to contribute to modules and documentation.
 .. toctree::
    :maxdepth: 2
 
-   RHV_intro
-   RHV_concepts
-   RHV_requirements
-   RHV_getting_started
-   RHV_scenarios
-   RHV_module_reference
-   RHV_troubleshooting
-   RHV_external_doc_links
-   faq
+   rhv/RHV_intro
+   rhv/RHV_concepts
+   rhv/RHV_requirements
+   rhv/RHV_getting_started
+   rhv/RHV_scenarios
+   rhv/RHV_module_reference
+   rhv/RHV_troubleshooting
+   rhv/RHV_external_doc_links
+   rhv/faq
