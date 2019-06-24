@@ -26,6 +26,7 @@ import re
 import itertools
 import traceback
 
+from copy import deepcopy
 from operator import attrgetter
 from random import shuffle
 
@@ -243,6 +244,8 @@ class InventoryManager(object):
         else:
             # left with strings or files, let plugins figure it out
 
+            inventory_copy = None
+
             # set so new hosts can use for inventory_file/dir vasr
             self._inventory.current_source = source
 
@@ -260,6 +263,10 @@ class InventoryManager(object):
                     plugin_wants = False
 
                 if plugin_wants:
+                    # No need to deepcopy inventory unless it has changed
+                    if inventory_copy == None:
+                        inventory_copy = deepcopy(self._inventory)
+
                     try:
                         # FIXME in case plugin fails 1/2 way we have partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
@@ -269,6 +276,7 @@ class InventoryManager(object):
                             # some plugins might not implement caching
                             pass
                         parsed = True
+                        inventory_copy = None
                         display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
                         break
                     except AnsibleParserError as e:
@@ -279,6 +287,11 @@ class InventoryManager(object):
                         display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
                         tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
+                    finally:
+                        if not parsed and self._inventory != inventory_copy:
+                            display.warning(u'\n restoring inventory because %s was partially parsed by %s' % (source, plugin_name))
+                            self._inventory = inventory_copy
+                            inventory_copy = None
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
             else:
