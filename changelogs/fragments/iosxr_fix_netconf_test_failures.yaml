@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix iosxr netconf config diff and integration test failures (https://github.com/ansible/ansible/pull/57909)
