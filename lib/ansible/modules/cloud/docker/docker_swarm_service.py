@@ -991,8 +991,7 @@ EXAMPLES = '''
     name: myservice
     image: alpine:edge
     configs:
-      - config_id: myconfig_id
-        config_name: myconfig_name
+      - config_name: myconfig_name
         filename: "/tmp/config.txt"
 
 - name: Set networks
@@ -1007,8 +1006,7 @@ EXAMPLES = '''
     name: myservice
     image: alpine:edge
     secrets:
-      - secret_id: mysecret_id
-        secret_name: mysecret_name
+      - secret_name: mysecret_name
         filename: "/run/secrets/secret.txt"
 
 - name: Start service with healthcheck
