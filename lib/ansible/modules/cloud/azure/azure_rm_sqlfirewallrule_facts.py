@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlfirewallrule_facts
 version_added: "2.8"
-short_description: Get Azure SQL Firewall Rule facts.
+short_description: Get Azure SQL Firewall Rule facts
 description:
     - Get facts of SQL Firewall Rule.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,13 +57,14 @@ EXAMPLES = '''
 
 RETURN = '''
 rules:
-    description: A list of dict results containing the facts for matching SQL firewall rules.
+    description:
+        - A list of dict results containing the facts for matching SQL firewall rules.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/testser
@@ -94,7 +95,7 @@ rules:
             sample: 10.0.0.1
         end_ip_address:
             description:
-                - The start IP address of the firewall rule.
+                - The end IP address of the firewall rule.
             returned: always
             type: str
             sample: 10.0.0.5
