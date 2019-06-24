@@ -535,7 +535,7 @@ class Templar:
             if isinstance(variable, string_types):
                 result = variable
 
-                if self.maybe_template(variable):
+                if self.is_possibly_template(variable):
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
@@ -646,19 +646,21 @@ class Templar:
 
     templatable = is_template
 
-    def maybe_template(self, data):
+    def is_possibly_template(self, data):
         '''Determines if a string looks like a template, by seeing if it
-        contains a jinja2 start delimiter
+        contains a jinja2 start delimiter. Does not guarantee that the string
+        is actually a template.
 
-        This is different than ``is_template`` which is more strict,
-        this method may return ``True`` on a string that is not templatable
+        This is different than ``is_template`` which is more strict.
+        This method may return ``True`` on a string that is not templatable.
 
         Useful when guarding passing a string for templating, but when
         you want to allow the templating engine to make the final
         assessment which may result in ``TemplateSyntaxError``.
         '''
+        env = self.environment
         if isinstance(data, string_types):
-            for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
+            for marker in (env.block_start_string, env.variable_start_string, env.comment_start_string):
                 if marker in data:
                     return True
         return False
