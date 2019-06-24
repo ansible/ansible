@@ -184,7 +184,10 @@ class Keypair(object):
                 if os.path.exists(self.path) and not os.access(self.path, os.W_OK):
                     os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
                 self.changed = True
-                module.run_command(args, data="y")
+                stdin_data = None
+                if os.path.exists(self.path):
+                    stdin_data = 'y'
+                module.run_command(args, data=stdin_data)
                 proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
                 self.fingerprint = proc[1].split()
                 pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
