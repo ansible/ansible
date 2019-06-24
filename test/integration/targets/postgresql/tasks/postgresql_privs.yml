@@ -34,27 +34,29 @@
 # Create the test table and view:
 - name: Create table
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_table:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     name: test_table1
+    columns:
+    - id int
 
 - name: Create view
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_query:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
-    query: "CREATE VIEW test_view AS SELECT * FROM test_table1"
+    db: postgres
+    query: "CREATE VIEW test_view AS SELECT id FROM test_table1"
 
 # Test check_mode:
 - name: Grant SELECT on test_view, check_mode
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_privs:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     state: present
     privs: SELECT
     type: table
@@ -70,10 +72,10 @@
 # Check:
 - name: Check that nothing was changed after the prev step
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_query:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     query: "SELECT grantee FROM information_schema.role_table_grants WHERE table_name='test_view' AND grantee = '{{ db_user2 }}'"
   register: result
 
@@ -84,10 +86,10 @@
 # Test true mode:
 - name: Grant SELECT on test_view
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_privs:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     state: present
     privs: SELECT
     type: table
@@ -102,10 +104,10 @@
 # Check:
 - name: Check that nothing was changed after the prev step
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_query:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     query: "SELECT grantee FROM information_schema.role_table_grants WHERE table_name='test_view' AND grantee = '{{ db_user2 }}'"
   register: result
 
@@ -116,10 +118,10 @@
 # Test true mode:
 - name: Try to grant SELECT again
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_privs:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     state: present
     privs: SELECT
     type: table
@@ -132,23 +134,22 @@
     - result.changed == false
 
 # Cleanup:
-- name: Drop test table
-  become: yes
-  become_user: postgres
-  postgresql_table:
-    login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
-    name: test_table1
-    state: absent
-
 - name: Drop test view
   become: yes
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   postgresql_query:
     login_user: "{{ pg_user }}"
-    db: "{{ db_name }}"
+    db: postgres
     query: "DROP VIEW test_view"
 
+- name: Drop test table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: test_table1
+    state: absent
 
 ######################################################
 # Test foreign data wrapper and foreign server privs #
