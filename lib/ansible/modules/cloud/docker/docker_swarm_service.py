@@ -44,7 +44,6 @@ options:
         description:
           - Config's ID.
         type: str
-        required: yes
       config_name:
         description:
           - Config's name as defined at its creation.
@@ -1480,7 +1479,7 @@ class DockerService(DockerBaseClass):
 
     @classmethod
     def from_ansible_params(
-        cls, ap, old_service, image_digest, can_update_networks, secret_ids
+        cls, ap, old_service, image_digest, can_update_networks, secret_ids, config_ids
     ):
         s = DockerService()
         s.image = image_digest
@@ -1617,9 +1616,10 @@ class DockerService(DockerBaseClass):
             s.configs = []
             for param_m in ap['configs']:
                 service_c = {}
-                service_c['config_id'] = param_m['config_id']
-                service_c['config_name'] = param_m['config_name']
-                service_c['filename'] = param_m['filename'] or service_c['config_name']
+                config_name = param_m['config_name']
+                service_c['config_id'] = param_m['config_id'] or config_ids[config_name]
+                service_c['config_name'] = config_name
+                service_c['filename'] = param_m['filename'] or config_name
                 service_c['uid'] = param_m['uid']
                 service_c['gid'] = param_m['gid']
                 service_c['mode'] = param_m['mode']
@@ -2352,6 +2352,30 @@ class DockerServiceManager(object):
                 )
         return secrets
 
+    def get_missing_config_ids(self):
+        """
+        Resolve missing config ids by looking them up by name
+        """
+        config_names = [
+            config['config_name']
+            for config in self.client.module.params.get('configs') or []
+            if config['config_id'] is None
+        ]
+        if not config_names:
+            return {}
+        configs = self.client.configs(filters={'name': config_names})
+        configs = {
+            config['Spec']['Name']: config['ID']
+            for config in configs
+            if config['Spec']['Name'] in config_names
+        }
+        for config_name in config_names:
+            if config_name not in configs:
+                self.client.fail(
+                    'Could not find a config named "%s"' % config_name
+                )
+        return configs
+
     def run(self):
         self.diff_tracker = DifferenceTracker()
         module = self.client.module
@@ -2378,12 +2402,14 @@ class DockerServiceManager(object):
         try:
             can_update_networks = self.can_update_networks()
             secret_ids = self.get_missing_secret_ids()
+            config_ids = self.get_missing_config_ids()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
                 image_digest,
                 can_update_networks,
                 secret_ids,
+                config_ids
             )
         except Exception as e:
             return self.client.fail(
@@ -2534,7 +2560,7 @@ def main():
             tmpfs_mode=dict(type='int')
         )),
         configs=dict(type='list', elements='dict', options=dict(
-            config_id=dict(type='str', required=True),
+            config_id=dict(type='str'),
             config_name=dict(type='str', required=True),
             filename=dict(type='str'),
             uid=dict(type='str'),
