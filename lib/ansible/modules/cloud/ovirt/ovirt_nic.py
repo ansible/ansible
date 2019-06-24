@@ -55,6 +55,11 @@ options:
     mac_address:
         description:
             - Custom MAC address of the network interface, by default it's obtained from MAC pool.
+    linked:
+        description:
+            - Defines if the NIC is linked to the virtual machine.
+        type: bool
+        version_added: "2.9"
 extends_documentation_fragment: ovirt
 '''
 
@@ -81,6 +86,7 @@ EXAMPLES = '''
 - name: Unplug NIC from VM
   ovirt_nic:
     state: unplugged
+    linked: false
     vm: myvm
     name: mynic
 
@@ -166,12 +172,14 @@ class EntityNicsModule(BaseModule):
             mac=otypes.Mac(
                 address=self._module.params.get('mac_address')
             ) if self._module.params.get('mac_address') else None,
+            linked=self.param('linked') if self.param('linked') is not None else None,
         )
 
     def update_check(self, entity):
         if self._module.params.get('vm'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
+                equal(self._module.params.get('linked'), entity.linked) and
                 equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile)) and
                 equal(self._module.params.get('mac_address'), entity.mac.address)
@@ -179,6 +187,7 @@ class EntityNicsModule(BaseModule):
         elif self._module.params.get('template'):
             return (
                 equal(self._module.params.get('interface'), str(entity.interface)) and
+                equal(self._module.params.get('linked'), entity.linked) and
                 equal(self._module.params.get('name'), str(entity.name)) and
                 equal(self._module.params.get('profile'), get_link_name(self._connection, entity.vnic_profile))
             )
@@ -204,6 +213,7 @@ def main():
         profile=dict(type='str'),
         network=dict(type='str'),
         mac_address=dict(type='str'),
+        linked=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
