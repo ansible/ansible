@@ -25,16 +25,17 @@ import string
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.inventory.group import to_safe_group_name as original_safe
-from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
+from ansible.parsing.utils.addresses import parse_address
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 
 display = Display()
 
@@ -160,6 +161,22 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.inventory = None
         self.display = display
 
+    def get_option(self, option):
+
+        value = super(BaseInventoryPlugin, self).get_option(option)
+
+        if self.templar.is_template(value):
+            value = self.templar.template(value)
+
+        if isinstance(value, AnsibleVaultEncryptedUnicode):
+            # trigger decryption via __str__
+            value = to_text(value, nonstring='passthrough')
+
+        return value
+
+    def set_templating_variables(self, variables):
+        self.template.available_variables = variables
+
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure
             :arg inventory: a copy of the previously accumulated inventory data,
@@ -174,9 +191,12 @@ class BaseInventoryPlugin(AnsiblePlugin):
                  you can ignore if this plugin does not implement caching.
         '''
 
-        self.loader = loader
         self.inventory = inventory
-        self.templar = Templar(loader=loader)
+
+        self.loader = loader
+        # TODO: move version function to other area as CLI creates circular refs
+        variables = combine_vars(load_extra_vars(loader=self.loader), load_options_vars(version=None))
+        self.templar = Templar(loader=loader, variables=variables)
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check
