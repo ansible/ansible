@@ -141,7 +141,7 @@ function Format-AnsibleVolume {
 $ansible_volume = Get-AnsibleVolume -DriveLetter $drive_letter -Path $path -Label $label
 $ansible_file_system = $ansible_volume.FileSystem
 $ansible_volume_size = $ansible_volume.Size
-$ansible_volume_alu = (Get-CimInstance -ClassName Win32_Volume | Where-Object { $_.DeviceId -eq $ansible_volume.Path } | Select-Object BlockSize).BlockSize
+$ansible_volume_alu = (Get-CimInstance -ClassName Win32_Volume -Filter "DeviceId = '$($ansible_volume.path.replace('\','\\'))'" -Property BlockSize).BlockSize
 
 $ansible_partition = Get-Partition -Volume $ansible_volume
 
