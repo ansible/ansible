@@ -50,6 +50,8 @@ VM_SPEC_DEF_ARG_SPEC = {
 VM_COMMON_ARG_SPEC = {
     'name': {'required': True},
     'namespace': {'required': True},
+    'hostname': {'type': 'str'},
+    'subdomain': {'type': 'str'},
     'state': {
         'default': 'present',
         'choices': ['present', 'absent'],
@@ -322,6 +324,8 @@ class KubeVirtRawModule(KubernetesRawModule):
         node_affinity = params.get('node_affinity')
         vm_affinity = params.get('affinity')
         vm_anti_affinity = params.get('anti_affinity')
+        hostname = params.get('hostname')
+        subdomain = params.get('subdomain')
         template_spec = template['spec']
 
         # Merge additional flat parameters:
@@ -410,6 +414,12 @@ class KubeVirtRawModule(KubernetesRawModule):
                 template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'].append({
                     'matchExpressions': affinity.get('term').get('match_expressions'),
                 })
+
+        if hostname:
+            template_spec['hostname'] = hostname
+
+        if subdomain:
+            template_spec['subdomain'] = subdomain
 
         # Define disks
         self._define_disks(disks, template_spec, defaults)
