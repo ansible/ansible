@@ -632,7 +632,7 @@ class VariableManager:
 
         try:
             host_cache = self._fact_cache[host]
-        except KeyError as e:
+        except KeyError:
             # We get to set this as new
             host_cache = facts
         else:
