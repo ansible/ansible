@@ -269,6 +269,8 @@ storageaccounts:
                 key:
                     description:
                         - The account key for the primary_endpoints
+                    returned: always
+                    type: str
                     sample: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         secondary_endpoints:
             description:
