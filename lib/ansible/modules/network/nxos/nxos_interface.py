@@ -402,7 +402,6 @@ def map_obj_to_commands(updates, module):
                     elif mode == 'layer3' and mode != obj_in_have.get('mode'):
                         add_command_to_interface(interface, 'no switchport', commands)
 
-
                 if admin_state == 'up' and admin_state != obj_in_have.get('admin_state'):
                     add_command_to_interface(interface, 'no shutdown', commands)
                 elif admin_state == 'down' and admin_state != obj_in_have.get('admin_state'):
@@ -784,11 +783,11 @@ def main():
         if not module.check_mode:
             load_config(module, commands)
             result['changed'] = True
-            # Ethernet L2/L3 'mode' changes may result in unexpected admin state
-            # values due to `system default switchport shutdown` state, which is
-            # a user # configurable system default for L2 interfaces.
-            # L3 default state is shutdown. Add a second call to ensure admin is
-            # in the desired state after any 'mode' change.
+            # Add a second call to ensure admin is in the desired state after
+            # any 'mode' change. Ethernet L2/L3 'mode' changes may result in
+            # unexpected admin state due to `system default switchport shutdown`
+            # state, which is a user configurable system default for L2 interfaces.
+            # L3 default state is shutdown.
             if commands2:
                 load_config(module, commands2)
                 commands.extend(commands2)
