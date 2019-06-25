@@ -518,7 +518,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             self.virtual_network_resource_group = self.resource_group
 
         if self.capacity > 100:
-            self.singlePlacementGroup['default'] = False
+            self.singlePlacementGroup = False
 
         changed = False
         results = dict()
@@ -759,7 +759,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
                         overprovision=self.overprovision,
-                        proximity_placement_group=self.singlePlacementGroup,
+                        single_placement_group=self.singlePlacementGroup,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -857,7 +857,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
-                    vmss_resource.proximity_placement_group = self.singlePlacementGroup
+                    vmss_resource.single_placement_group = self.singlePlacementGroup
 
                     if support_lb_change:
                         if self.load_balancer:
