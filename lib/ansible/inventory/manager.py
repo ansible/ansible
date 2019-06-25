@@ -364,6 +364,8 @@ class InventoryManager(object):
             if not ignore_restrictions and self._restriction:
                 pattern_list.extend(self._restriction)
 
+            # This is only used as a hash key in the self._hosts_patterns_cache dict
+            # a tuple is faster than stringifying
             pattern_hash = tuple(pattern_list)
 
             if pattern_hash not in self._hosts_patterns_cache:
