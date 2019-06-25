@@ -63,6 +63,8 @@ class StrategySentinel:
 def SharedPluginLoaderObj():
     '''This only exists for backwards compat, do not use.
     '''
+    display.deprecated('SharedPluginLoaderObj is deprecated, please directly use ansible.plugins.loader',
+                       version='2.11')
     return plugin_loader
 
 
