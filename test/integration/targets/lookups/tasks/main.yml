@@ -244,7 +244,7 @@
       - "'{{ badssl_host_substring }}' in web_data"
 
 - name: Test cartesian lookup
-  debug: var={{item}}
+  debug: var=item
   with_cartesian:
     - ["A", "B", "C"]
     - ["1", "2", "3"]
