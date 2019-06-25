@@ -14,8 +14,9 @@
     name: auth.id
     value: master.1
     p4port: '1666'
-    p4user: bruno
+    p4user: p4
     p4passwd: ''
+    p4charset: none
   register: auth_set_configurable
 
 - debug:
@@ -31,8 +32,9 @@
     name: auth.id
     value: master.1
     p4port: '1666'
-    p4user: bruno
+    p4user: p4
     p4passwd: ''
+    p4charset: none
   register: auth_set_configurable_idempotent
 
 - debug:
@@ -48,8 +50,9 @@
     name: auth.id
     value: master.1
     p4port: '1666'
-    p4user: bruno
+    p4user: p4
     p4passwd: ''
+    p4charset: none
   register: auth_unset_configurable
 
 - debug:
@@ -66,8 +69,9 @@
     value: master.1
     serverid: master
     p4port: '1666'
-    p4user: bruno
+    p4user: p4
     p4passwd: ''
+    p4charset: none
   register: auth_set_serverid_configurable
   check_mode: yes
 
@@ -85,8 +89,9 @@
     value: master.1
     serverid: master
     p4port: '1666'
-    p4user: bruno
+    p4user: p4
     p4passwd: ''
+    p4charset: none
   register: auth_set_serverid_configurable
 
 - debug:
@@ -103,8 +108,9 @@
     value: master.1
     serverid: master
     p4port: '1666'
-    p4user: bruno
+    p4user: p4
     p4passwd: ''
+    p4charset: none
   register: auth_unset_serverid_configurable
 
 - debug:
@@ -122,6 +128,7 @@
     p4port: '1666'
     p4user: bruno1
     p4passwd: ''
+    p4charset: none
   register: auth_set_invalid_login
   ignore_errors: true
 
@@ -140,6 +147,7 @@
     p4port: '1999'
     p4user: bruno1
     p4passwd: ''
+    p4charset: none
   register: auth_set_invalid_port
   ignore_errors: true
 

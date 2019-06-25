@@ -19,7 +19,7 @@ module: helix_configurable
 
 short_description: This module will allow you to set config options on Perforce Helix Core
 
-version_added: "2.9"
+version_added: "2.10"
 
 description:
     - "Configurables allow you to customize a Perforce service. Configurable settings might affect the server, the client, or a proxy."
@@ -45,6 +45,7 @@ options:
         default: present
         description:
             - Determines if the configurable is set or removed
+        type: str
     name:
         description:
             - The name of the configurable that needs to be set
@@ -55,21 +56,39 @@ options:
             - The value of named configurable
         required: true
         type: str
-    p4port:
+    server:
         description:
             - The hostname/ip and port of the server (perforce:1666)
+            - Can also use 'P4PORT' environment variable
         required: true
         type: str
-    p4user:
+        aliases:
+            - p4port
+    user:
         description:
             - A user with super user access
+            - Can also use 'P4USER' environment variable
         required: true
         type: str
-    p4passwd:
+        aliases:
+            - p4user
+    password:
         description:
             - The super user password
+            - Can also use 'P4PASSWD' environment variable
         required: true
         type: str
+        aliases:
+            - p4passwd
+    charset:
+        default: none
+        description:
+            - Character set used for translation of unicode files
+            - Can also use 'P4CHARSET' environment variable
+        required: false
+        type: str
+        aliases:
+            - p4charset
     serverid:
         default: any
         description:
@@ -88,10 +107,10 @@ EXAMPLES = '''
     state: present
     name: auth.id
     value: master.1
-    p4port: '1666'
-    p4user: bruno
-    p4passwd: ''
-
+    server: '1666'
+    user: bruno
+    charset: none
+    password: ''
 # Unset auth.id configurable for specific server
 - name: Unset auth.id
   helix_configurable:
@@ -99,50 +118,17 @@ EXAMPLES = '''
     name: auth.id
     value: master.1
     serverid: master.1
-    p4port: '1666'
-    p4user: bruno
-    p4passwd: ''
+    server: '1666'
+    user: bruno
+    password: ''
+    charset: auto
 '''
 
 RETURN = r''' # '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 
-try:
-    from P4 import P4, P4Exception
-    HAS_P4 = True
-except ImportError:
-    HAS_P4 = False
-
-
-def helix_connect(p4_user, p4_port, p4_password, script_name):
-    """
-    Pass this function a user, p4port, password and client to connect to
-    the server
-    """
-    try:
-        p4 = P4()
-        p4.prog = script_name
-        p4.port = p4_port
-        p4.user = p4_user
-        p4.password = p4_password
-        p4.connect()
-        p4.run_login()
-        if p4.connected() is not True:
-            raise RuntimeError
-        return p4
-    except Exception as e:
-        return "There was a problem in connecting to Helix: {0}".format(e)
-
-
-def helix_disconnect(connection):
-    """
-    Pass this function a connection object to disconnect the Helix Core
-    session
-    """
-
-    connection.disconnect()
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.perforce.common import helix_connect, helix_disconnect
 
 
 def run_module():
@@ -151,9 +137,10 @@ def run_module():
         state=dict(type='str', default='present', choices=['present', 'absent']),
         name=dict(type='str', required=True),
         value=dict(type='str', required=True),
-        p4port=dict(type='str', required=True),
-        p4user=dict(type='str', required=True),
-        p4passwd=dict(type='str', required=True, no_log=True),
+        server=dict(type='str', required=True, aliases=['p4port'], fallback=(env_fallback, ['P4PORT'])),
+        user=dict(type='str', required=True, aliases=['p4user'], fallback=(env_fallback, ['P4USER'])),
+        password=dict(type='str', required=True, aliases=['p4passwd'], fallback=(env_fallback, ['P4PASSWD']), no_log=True),
+        charset=dict(type='str', default='none', aliases=['p4charset'], fallback=(env_fallback, ['P4CHARSET'])),
         serverid=dict(type='str', default='any')
     )
 
@@ -166,15 +153,8 @@ def run_module():
         supports_check_mode=True
     )
 
-    if not HAS_P4:
-        module.fail_json(msg="Missing required lib 'p4python'")
-
     # connect to helix
-    p4 = helix_connect(module.params['p4user'], module.params['p4port'], module.params['p4passwd'], 'ansible')
-
-    # check to see if connection to helix server was successful
-    if isinstance(p4, string_types) and 'problem' in p4:
-        module.fail_json(msg="Error: {0}".format(p4), **result)
+    p4 = helix_connect(module, 'ansible')
 
     try:
         # get existing config values
@@ -207,7 +187,7 @@ def run_module():
     except Exception as e:
         module.fail_json(msg="Error: {0}".format(e), **result)
 
-    helix_disconnect(p4)
+    helix_disconnect(module, p4)
 
     module.exit_json(**result)
 
