@@ -209,7 +209,7 @@ options:
         type: bool
         default: True
         version_added: "2.8"
-    singlePlacementGroup:
+    single_placement_group:
         description:
             - When true this limits the scale set to a single placement group, of max size 100 virtual machines.
         type: bool
@@ -442,7 +442,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
             overprovision=dict(type='bool', default=True),
-            singlePlacementGroup=dict(type='bool', default=True),
+            single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
             custom_data=dict(type='str')
         )
@@ -475,7 +475,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
-        self.singlePlacementGroup = None
+        self.single_placement_group = None
         self.zones = None
         self.custom_data = None
 
@@ -518,7 +518,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             self.virtual_network_resource_group = self.resource_group
 
         if self.capacity > 100:
-            self.singlePlacementGroup = False
+            self.single_placement_group = False
 
         changed = False
         results = dict()
@@ -665,8 +665,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     differences.append('overprovision')
                     changed = True
 
-                if bool(self.singlePlacementGroup) != bool(vmss_dict['properties']['singlePlacementGroup']):
-                    differences.append('singlePlacementGroup')
+                if bool(self.single_placement_group) != bool(vmss_dict['properties']['singlePlacementGroup']):
+                    differences.append('single_placement_group')
                     changed = True
 
                 vmss_dict['zones'] = [int(i) for i in vmss_dict['zones']] if 'zones' in vmss_dict and vmss_dict['zones'] else None
@@ -759,7 +759,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
                         overprovision=self.overprovision,
-                        single_placement_group=self.singlePlacementGroup,
+                        single_placement_group=self.single_placement_group,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -857,7 +857,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
-                    vmss_resource.single_placement_group = self.singlePlacementGroup
+                    vmss_resource.single_placement_group = self.single_placement_group
 
                     if support_lb_change:
                         if self.load_balancer:
