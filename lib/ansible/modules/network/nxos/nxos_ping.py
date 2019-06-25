@@ -58,6 +58,7 @@ options:
     size:
         description:
             - The datagram size of packets.
+        version_added: "2.9"
 notes:
     - For a general purpose network module, see the M(net_ping) module.
     - For Windows targets, use the M(win_ping) module instead.
