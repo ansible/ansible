@@ -286,7 +286,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     try:
                         k8s_obj = resource.apply(definition, namespace=namespace).to_dict()
                     except DynamicApiError as exc:
-                        msg = "Failed to replace object: {0}".format(exc.body)
+                        msg = "Failed to apply object: {0}".format(exc.body)
                         if self.warnings:
                             msg += "\n" + "\n    ".join(self.warnings)
                         self.fail_json(msg=msg, error=exc.status, status=exc.status, reason=exc.reason)
