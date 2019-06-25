@@ -211,8 +211,6 @@ class PgMembership(object):
         if res:
             membership = res[0][0]
 
-        print('MEMBERSHIP ', membership)
-
         if not membership:
             return False
 
