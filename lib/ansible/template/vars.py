@@ -103,7 +103,7 @@ class AnsibleJ2Vars(Mapping):
         from ansible.vars.hostvars import HostVars, HostVarsVars
         if varname == "vars" and isinstance(variable, Mapping) or is_unsafe(variable) or isinstance(variable, (HostVars, HostVarsVars)):
             if isinstance(variable, AnsibleVaultEncryptedUnicode):
-                value = to_native(variable, nonstring='passthrough')  # using to_ as this forces decryption
+                value = to_native(variable, nonstring='passthru')  # using to_ as this forces decryption
             else:
                 value = variable
         else:
