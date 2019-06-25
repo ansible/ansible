@@ -40,6 +40,9 @@ options:
     - Determines if the expected result is success or fail.
     choices: [ absent, present ]
     default: present
+  size:
+    description:
+    - The datagram size of packets.
   vrf:
     description:
     - The VRF to use for forwarding.
@@ -65,12 +68,13 @@ EXAMPLES = r'''
     dest: 10.30.30.30
     state: absent
 
-- name: Test reachability to 10.40.40.40 using prod vrf and setting count and source
+- name: Test reachability to 10.40.40.40 using prod vrf and setting count, source, and size
   ios_ping:
     dest: 10.40.40.40
     source: loopback0
     vrf: prod
     count: 20
+    size: 1500
 '''
 
 RETURN = '''
@@ -115,6 +119,7 @@ def main():
         dest=dict(type="str", required=True),
         source=dict(type="str"),
         state=dict(type="str", choices=["absent", "present"], default="present"),
+        size=dict(type="int"),
         vrf=dict(type="str")
     )
 
@@ -125,6 +130,7 @@ def main():
     count = module.params["count"]
     dest = module.params["dest"]
     source = module.params["source"]
+    size = module.params["size"]
     vrf = module.params["vrf"]
 
     warnings = list()
@@ -134,7 +140,7 @@ def main():
     if warnings:
         results["warnings"] = warnings
 
-    results["commands"] = [build_ping(dest, count, source, vrf)]
+    results["commands"] = [build_ping(dest, count, source, size, vrf)]
 
     ping_results = run_commands(module, commands=results["commands"])
     ping_results_list = ping_results[0].split("\n")
@@ -162,7 +168,7 @@ def main():
     module.exit_json(**results)
 
 
-def build_ping(dest, count=None, source=None, vrf=None):
+def build_ping(dest, count=None, source=None, size=None, vrf=None):
     """
     Function to build the command to send to the terminal for the switch
     to execute. All args come from the module's unique params.
@@ -177,6 +183,9 @@ def build_ping(dest, count=None, source=None, vrf=None):
 
     if source is not None:
         cmd += " source {0}".format(source)
+
+    if size is not None:
+        cmd += " size {0}".format(str(size))
 
     return cmd
 

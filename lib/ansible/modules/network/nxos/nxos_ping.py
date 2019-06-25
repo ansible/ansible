@@ -55,6 +55,9 @@ options:
             - Determines if the expected result is success or fail.
         choices: [ absent, present ]
         default: present
+    size:
+        description:
+            - The datagram size of packets.
 notes:
     - For a general purpose network module, see the M(net_ping) module.
     - For Windows targets, use the M(win_ping) module instead.
@@ -159,7 +162,8 @@ def get_ping_results(command, module):
         module.fail_json(msg="An unexpected error occurred. Check all params.",
                          command=command, destination=module.params['dest'],
                          vrf=module.params['vrf'],
-                         source=module.params['source'])
+                         source=module.params['source'],
+                         size=module.params['size'])
 
     elif "can't bind to address" in ping:
         module.fail_json(msg="Can't bind to source address.", command=command)
@@ -182,6 +186,7 @@ def main():
         vrf=dict(required=False),
         source=dict(required=False),
         state=dict(required=False, choices=['present', 'absent'], default='present'),
+        size=dict(required=False, type='int'),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -194,12 +199,15 @@ def main():
     destination = module.params['dest']
     count = module.params['count']
     state = module.params['state']
+    size = module.params['size']
 
     ping_command = 'ping {0}'.format(destination)
     for command in ['count', 'source', 'vrf']:
         arg = module.params[command]
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
+    if size:
+        ping_command += ' {0} {1}'.format('packet-size', size)
 
     summary, rtt, ping_pass = get_ping_results(ping_command, module)
 
