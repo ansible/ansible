@@ -44,6 +44,7 @@ options:
       that will be created.
     - Required when performing any action on the disk, except fetching information.
     type: int
+    required: True
   unit:
     description:
     - Selects the current default unit that Parted will use to display
