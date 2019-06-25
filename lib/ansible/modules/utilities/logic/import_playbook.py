@@ -29,7 +29,7 @@ options:
       - The name of the imported playbook is specified directly without any other option.
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
-seealso:
+see also:
 - module: import_role
 - module: import_tasks
 - module: include_role
