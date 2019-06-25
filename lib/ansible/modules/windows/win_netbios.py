@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 ---
 module: win_netbios
 version_added: '2.9'
-short_description: Manage NetBIOS settings on Windows.
+short_description: Manage NetBIOS over TCP/IP settings on Windows.
 description:
   - Enables or disables NetBIOS on Windows network adapters.
   - Can be used to protect a system against NBT-NS poisoning and avoid NBNS broadcast storms.
