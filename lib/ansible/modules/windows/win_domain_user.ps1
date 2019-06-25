@@ -298,5 +298,10 @@ If ($user_obj) {
     $result.msg = "User '$username' is present"
     $result.state = "present"
 }
+Else {
+    $result.name = $username
+    $result.msg = "User '$username' is absent"
+    $result.state = "absent"
+}
 
 Exit-Json $result
