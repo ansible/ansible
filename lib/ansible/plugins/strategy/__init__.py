@@ -267,20 +267,22 @@ class StrategyBase:
         else:
             return self._tqm.RUN_OK
 
-    def get_hosts_remaining(self, play, hosts=None):
+    def get_hosts_remaining(self, play):
+        self._set_hosts_cache(refresh=False)
         ignore = set(self._tqm._failed_hosts).union(self._tqm._unreachable_hosts)
-        return [host for host in hosts if host not in ignore]
+        return [host for host in self._hosts_cache if host not in ignore]
 
-    def get_failed_hosts(self, play, hosts=None):
-        return [host for host in hosts if host in self._tqm._failed_hosts]
+    def get_failed_hosts(self, play):
+        self._set_hosts_cache(refresh=False)
+        return [host for host in self._hosts_cache if host in self._tqm._failed_hosts]
 
     def add_tqm_variables(self, vars, play):
         '''
         Base class method to add extra variables/information to the list of task
         vars sent through the executor engine regarding the task queue manager state.
         '''
-        vars['ansible_current_hosts'] = self.get_hosts_remaining(play, hosts=self._hosts_cache)
-        vars['ansible_failed_hosts'] = self.get_failed_hosts(play, hosts=self._hosts_cache)
+        vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
+        vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
 
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
