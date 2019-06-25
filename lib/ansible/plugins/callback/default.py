@@ -113,7 +113,8 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_CHANGED
         else:
             if not self.display_ok_hosts:
-                return
+                if not 'print_action' in result._task.tags:
+                    return
 
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
@@ -272,7 +273,8 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_CHANGED
         else:
             if not self.display_ok_hosts:
-                return
+                if not 'print_action' in result._task.tags:
+                    return
 
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
@@ -320,10 +322,11 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
-        msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        if 'item' in included_file._args:
-            msg += " => (item=%s)" % (self._get_item_label(included_file._args),)
-        self._display.display(msg, color=C.COLOR_SKIP)
+        if self.display_ok_hosts:
+            msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
+            if 'item' in included_file._args:
+                msg += " => (item=%s)" % (self._get_item_label(included_file._args),)
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
         self._display.banner("PLAY RECAP")
