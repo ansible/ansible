@@ -28,12 +28,12 @@ switch ( $state )
 if(-not $adapter_names)
 {
     # Target all network adapters on the system
-    $target_adapters_config = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object {$_.IPEnabled -eq $true}
+    $target_adapters_config = Get-CimInstance -Class Win32_NetworkAdapterConfiguration | Where-Object {$_.IPEnabled -eq $true}
 }
 else
 {
-    $target_adapters = Get-WmiObject Win32_NetworkAdapter | Where-Object NetConnectionId -in $adapter_names | Select MacAddress,NetConnectionId
-    $target_adapters_config = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object MacAddress -in $target_adapters.MacAddress
+    $target_adapters = Get-CimInstance -Class Win32_NetworkAdapter | Where-Object NetConnectionId -in $adapter_names | Select-Object MacAddress,NetConnectionId
+    $target_adapters_config = Get-CimInstance -Class Win32_NetworkAdapterConfiguration | Where-Object MacAddress -in $target_adapters.MacAddress
     if(($target_adapters_config | Measure-Object).Count -ne $adapter_names.Count)
     {
         $module.FailJson("Not all of the target adapter names could be found on the system. No configuration changes have been made. $adapter_names")
@@ -42,11 +42,12 @@ else
 
 foreach($adapter in $target_adapters_config)
 {
-  
-    if($adapter.TcpipNetbiosOptions -ne $netbiosoption) 
+
+    if($adapter.TcpipNetbiosOptions -ne $netbiosoption)
     {
         if(-not $module.CheckMode)
         {
+            $result = Invoke-CimMethod -InputObject $adapter -MethodName SetTcpipNetbios -Arguments @{TcpipNetbiosOptions=$netbiosoption}
             $result = $adapter.SetTcpipNetbios($netbiosoption)
             switch ( $result.ReturnValue )
             {
@@ -57,7 +58,6 @@ foreach($adapter in $target_adapters_config)
             }
         }
         $module.Result.changed = $true
-        
     }
 
 

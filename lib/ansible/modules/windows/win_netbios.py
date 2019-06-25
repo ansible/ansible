@@ -29,6 +29,7 @@ options:
       - disabled
       - default
     required: yes
+    type: str
   adapter_names:
     description:
       - List of adapter names for which to manage NetBIOS settings. If this option is omitted then configuration is applied to all adapters on the system.
@@ -51,7 +52,7 @@ EXAMPLES = r'''
 - name: Disable NetBIOS on Ethernet2
   win_netbios:
     state: disabled
-    adapter_names: 
+    adapter_names:
       - Ethernet2
 
 - name: Enable NetBIOS on Public and Backup adapters
