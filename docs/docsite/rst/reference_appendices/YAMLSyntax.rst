@@ -5,7 +5,7 @@ YAML Syntax
 ===========
 
 This page provides a basic overview of correct YAML syntax, which is how Ansible
-playbooks (our configuration management language) are expressed.  
+playbooks (our configuration management language) are expressed.
 
 We use YAML because it is easier for humans to read and write than other common
 data formats like XML or JSON.  Further, there are libraries available in most
@@ -18,7 +18,7 @@ is used in practice.
 YAML Basics
 -----------
 
-For Ansible, nearly every YAML file starts with a list.   
+For Ansible, nearly every YAML file starts with a list.
 Each item in the list is a list of key/value pairs, commonly
 called a "hash" or a "dictionary".  So, we need to know how
 to write lists and dictionaries in YAML.
@@ -153,7 +153,7 @@ Because of this, the following is going to result in a YAML syntax error::
 You will want to quote hash values using colons followed by a space or the end of the line::
 
     foo: 'somebody said I should put a colon here: so I did'
-    
+
     windows_drive: 'c:'
 
 ...and then the colon will be preserved.
@@ -161,7 +161,7 @@ You will want to quote hash values using colons followed by a space or the end o
 Alternatively, you can use double quotes::
 
     foo: "somebody said I should put a colon here: so I did"
-    
+
     windows_drive: "c:"
 
 The difference between single quotes and double quotes is that in double quotes
@@ -171,7 +171,9 @@ you can use escapes::
 
 The list of allowed escapes can be found in the YAML Specification under "Escape Sequences" (YAML 1.1) or "Escape Characters" (YAML 1.2).
 
-The following is invalid YAML::
+The following is invalid YAML:
+
+.. code-block:: text
 
     foo: "an escaped \' single quote"
 
@@ -237,4 +239,3 @@ value::
        implementing
    `YAML 1.2 Specification <http://yaml.org/spec/1.2/spec.html>`_
        For completeness, YAML 1.2 is the successor of 1.1
-

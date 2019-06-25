@@ -53,7 +53,9 @@ Or for the openstack plugin:
     # clouds.yml
     plugin: openstack
 
-The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``::
+The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
+
+.. code-block:: text
 
     @all:
       |--@aws_ec2:
@@ -86,7 +88,9 @@ You can create dynamic groups using host variables with the constructed ``keyed_
       # set the ansible_host variable to connect with the private IP address without changing the hostname
       ansible_host: private_ip_address
 
-Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``::
+Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
+
+.. code-block:: text
 
     @all:
       |--@aws_ec2:
@@ -109,7 +113,7 @@ If a host does not have the variables in the configuration above (i.e. ``tags.Na
 Plugin List
 -----------
 
-You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t inventory -l`` to see the list of available plugins.
 Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples.
 
 .. toctree:: :maxdepth: 1
