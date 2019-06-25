@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqlserver_facts
 version_added: "2.5"
-short_description: Get SQL Server facts.
+short_description: Get SQL Server facts
 description:
     - Get facts of SQL Server.
 
@@ -35,7 +35,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -52,12 +52,14 @@ EXAMPLES = '''
 
 RETURN = '''
 servers:
-    description: A list of dict results where the key is the name of the SQL Server and the values are the facts for that SQL Server.
+    description:
+        - A list of dict results where the key is the name of the SQL Server and the values are the facts for that SQL Server.
     returned: always
     type: complex
     contains:
         sqlserver_name:
-            description: The key is the name of the server that the values relate to.
+            description:
+                - The key is the name of the server that the values relate to.
             type: complex
             contains:
                 id:
