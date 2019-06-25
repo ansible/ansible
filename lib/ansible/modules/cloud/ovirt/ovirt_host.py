@@ -367,12 +367,12 @@ class HostsModule(BaseModule):
         return False
 
 
-def remove_host(host_module, host, max_count=5, timeout=20):
+def remove_host(host_module, host, max_count, timeout):
     for count in range(max_count + 1):
         try:
             return host_module.remove()
         except Exception as e:
-            if count == max_count:
+            if count == max_count and host_module.param('wait'):
                 raise Exception('Cannot remove host. Error message %s' % str(e))
             time.sleep(timeout)
 
@@ -445,6 +445,8 @@ def main():
         override_iptables=dict(default=None, type='bool'),
         force=dict(default=False, type='bool'),
         timeout=dict(default=600, type='int'),
+        remove_retry_count=dict(default=5, type='int'),
+        remove_retry_timeout=dict(default=20, type='int'),
         override_display=dict(default=None),
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
@@ -495,7 +497,7 @@ def main():
                     fail_condition=failed_state,
                 )
         elif state == 'absent':
-            ret = remove_host(hosts_module, host)
+            ret = remove_host(hosts_module, host, module.params.get('remove_retry_count'), module.params.get('remove_retry_timeout'))
         elif state == 'maintenance':
             hosts_module.action(
                 action='deactivate',
