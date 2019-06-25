@@ -64,6 +64,10 @@ class TestNxosInterfaceModule(TestNxosModule):
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['interface loopback0', 'no shutdown'])
 
+        # 'up' idempotence
+        set_module_args(dict(interface='Ethernet2/1'))
+        self.execute_module(changed=False)
+
     def test_nxos_interface_down(self):
         set_module_args(dict(interface='loopback0', admin_state='down'))
         result = self.execute_module(changed=True)
@@ -89,3 +93,45 @@ class TestNxosInterfaceModule(TestNxosModule):
         set_module_args(dict(interface='Ethernet2/1', speed='1000'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
+
+    def test_nxos_interface_bfd_1(self):
+        # enable / disable part 1
+        set_module_args(dict(
+            interface='Ethernet2/1',
+            bfd='disable',
+            bfd_echo='enable',
+            hsrp_bfd='disable'))
+        self.execute_module(changed=True, commands=[
+            'interface Ethernet2/1',
+            'no bfd',
+            'bfd echo',
+            'no hsrp bfd',
+        ])
+
+        # enable / disable part 2
+        set_module_args(dict(
+            interface='Ethernet2/2',
+            bfd='enable',
+            bfd_echo='disable',
+            hsrp_bfd='enable'))
+        self.execute_module(changed=True, commands=[
+            'interface Ethernet2/2',
+            'no bfd echo',
+            'hsrp bfd',
+        ])
+
+    def test_nxos_interface_bfd_2(self):
+        # idempotence part 1
+        set_module_args(dict(
+            interface='Ethernet2/1',
+            bfd='enable',
+            bfd_echo='disable',
+            hsrp_bfd='enable'))
+        self.execute_module(changed=False)
+
+        # idempotence part 2
+        set_module_args(dict(
+            interface='Ethernet2/2',
+            bfd_echo='enable',
+            hsrp_bfd='disable'))
+        self.execute_module(changed=False)

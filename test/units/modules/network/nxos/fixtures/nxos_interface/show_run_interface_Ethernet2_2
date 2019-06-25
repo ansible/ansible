@@ -1,0 +1,2 @@
+interface Ethernet2/2
+  no switchport

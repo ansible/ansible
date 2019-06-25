@@ -3,29 +3,44 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- set_fact: testint="{{ nxos_int1 }}"
+- set_fact:
+    testint: "{{ nxos_int1 }}"
+    features:
+      - interface-vlan
+      - bfd
+      - hsrp
 
-- name: "Setup: Enable feature interface-vlan"
+- set_fact:
+    bfd_enable: enable
+    bfd_disable: disable
+  when: platform is not search('N5K|N6K')
+
+- set_fact:
+    hsrp_bfd_enable: enable
+    hsrp_bfd_disable: disable
+  when: platform is not search('N35')
+
+- name: Setup - Disable features
+  # 'no feature interface-vlan' also removes vlan interfaces
   nxos_feature:
-    feature: interface-vlan
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+  loop: "{{ features }}"
+
+- name: Setup - Enable features
+  nxos_feature:
+    feature: "{{ item }}"
     provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
+  loop: "{{ features }}"
 
 - name: "Setup: Put interface {{ testint }} into a default state"
   nxos_config: &intcleanup
     lines:
       - "default interface {{ testint }}"
-    provider: "{{ connection }}"
-  ignore_errors: yes
-
-- name: "Setup: Remove possibly existing vlan interfaces"
-  nxos_config: &vlanintcleanup
-    lines:
-      - "no interface vlan 2"
-      - "no interface vlan 710"
-      - "no interface vlan 711"
-      - "no interface vlan 712"
     provider: "{{ connection }}"
   ignore_errors: yes
 
@@ -51,6 +66,72 @@
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: BFD toggle part 1
+    nxos_interface: &bfd_test_1
+      interface: "{{ testint }}"
+      mode: layer3
+      bfd: "{{ bfd_disable|default(omit)}}"
+      bfd_echo: disable
+      hsrp_bfd: "{{ hsrp_bfd_enable|default(omit)}}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "{{ 'no bfd echo' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+  - assert:
+      that:
+        - "{{ 'no bfd' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+    when: bfd_enable is defined
+  - assert:
+      that:
+        - "{{ 'hsrp bfd' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+    when: hsrp_bfd_enable is defined
+
+  - name: "Check Idempotence"
+    nxos_interface: *bfd_test_1
+    register: result
+
+  - assert:
+      <<: *false
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+
+  - name: BFD toggle part 2
+    nxos_interface: &bfd_test_2
+      interface: "{{ testint }}"
+      mode: layer3
+      bfd: "{{ bfd_enable|default(omit)}}"
+      bfd_echo: enable
+      hsrp_bfd: "{{ hsrp_bfd_disable|default(omit)}}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "{{ 'bfd echo' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+  - assert:
+      that:
+        - "{{ 'bfd' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+    when: bfd_enable is defined
+  - assert:
+      that:
+        - "{{ 'no hsrp bfd' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+    when: hsrp_bfd_disable is defined
+
+  - name: "Check Idempotence"
+    nxos_interface: *bfd_test_2
+    register: result
+
+  - assert:
+      <<: *false
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
 
   - name: "Configure layer2 params"
     nxos_interface: &l2config
@@ -109,20 +190,17 @@
 
   - assert: *false
 
-  rescue:
+  always:
   - name: "Set interface back to default"
     nxos_config: *intcleanup
     ignore_errors: yes
 
-  - name: "Remove vlan interfaces"
-    nxos_config: *vlanintcleanup
-
-  - name: "Setup: Disable feature interface-vlan"
+  - name: Teardown - Disable features
     nxos_feature:
-      feature: interface-vlan
+      feature: "{{ item }}"
       provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
+    loop: "{{ features }}"
 
-  always:
   - debug: msg="END connection={{ ansible_connection }} nxos_interface sanity test"

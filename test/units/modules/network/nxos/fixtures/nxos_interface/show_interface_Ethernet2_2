@@ -1,0 +1,11 @@
+{
+  "TABLE_interface": {
+    "ROW_interface": {
+      "interface": "Ethernet2/2",
+      "state": "up",
+      "admin_state": "up",
+      "eth_hw_desc": "Ethernet",
+      "eth_mode": "routed"
+    }
+  }
+}

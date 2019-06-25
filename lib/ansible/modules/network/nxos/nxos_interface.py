@@ -56,6 +56,27 @@ options:
         This option is supported for ethernet and portchannel interface.
         Applicable for ethernet and portchannel interface only.
     choices: ['layer2','layer3']
+  bfd:
+    description:
+      - Enable/Disable Bidirectional Forwarding Detection (BFD) on the interface.
+      - "Dependency: feature bfd"
+    version_added: 2.9
+    type: str
+    choices: ['enable', 'disable']
+  bfd_echo:
+    description:
+      - Enable/Disable BFD Echo functionality on the interface.
+      - "Dependency: feature bfd"
+    version_added: 2.9
+    type: str
+    choices: ['enable', 'disable']
+  hsrp_bfd:
+    description:
+      - Enable/Disable HSRP BFD functionality on the interface.
+      - "Dependency: feature bfd, feature hsrp"
+    version_added: 2.9
+    type: str
+    choices: ['enable', 'disable']
   mtu:
     description:
       - MTU for a specific interface. Must be an even number between 576 and 9216.
@@ -339,6 +360,9 @@ def map_obj_to_commands(updates, module):
 
     args = ('speed', 'description', 'duplex', 'mtu')
     for w in want:
+        bfd = w['bfd']
+        bfd_echo = w['bfd_echo']
+        hsrp_bfd = w['hsrp_bfd']
         name = w['name']
         mode = w['mode']
         ip_forward = w['ip_forward']
@@ -378,6 +402,7 @@ def map_obj_to_commands(updates, module):
                     elif mode == 'layer3' and mode != obj_in_have.get('mode'):
                         add_command_to_interface(interface, 'no switchport', commands)
 
+
                 if admin_state == 'up' and admin_state != obj_in_have.get('admin_state'):
                     add_command_to_interface(interface, 'no shutdown', commands)
                 elif admin_state == 'down' and admin_state != obj_in_have.get('admin_state'):
@@ -387,6 +412,21 @@ def map_obj_to_commands(updates, module):
                     add_command_to_interface(interface, 'ip forward', commands)
                 elif ip_forward == 'disable' and ip_forward != obj_in_have.get('ip forward'):
                     add_command_to_interface(interface, 'no ip forward', commands)
+
+                bfd_state = obj_in_have.get('bfd', 'enable')
+                if bfd and bfd != bfd_state:
+                    cmd = 'bfd' if bfd == 'enable' else 'no bfd'
+                    add_command_to_interface(interface, cmd, commands)
+
+                bfd_echo_state = obj_in_have.get('bfd_echo', 'enable')
+                if bfd_echo and bfd_echo != bfd_echo_state:
+                    cmd = 'bfd echo' if bfd_echo == 'enable' else 'no bfd echo'
+                    add_command_to_interface(interface, cmd, commands)
+
+                hsrp_bfd_state = obj_in_have.get('hsrp_bfd', 'disable')
+                if hsrp_bfd and hsrp_bfd != hsrp_bfd_state:
+                    cmd = 'hsrp bfd' if hsrp_bfd == 'enable' else 'no hsrp bfd'
+                    add_command_to_interface(interface, cmd, commands)
 
                 if (fabric_forwarding_anycast_gateway is True and
                         obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
@@ -472,6 +512,9 @@ def map_params_to_obj(module):
             'mode': module.params['mode'],
             'mtu': module.params['mtu'],
             'duplex': module.params['duplex'],
+            'bfd': module.params['bfd'],
+            'bfd_echo': module.params['bfd_echo'],
+            'hsrp_bfd': module.params['hsrp_bfd'],
             'ip_forward': module.params['ip_forward'],
             'fabric_forwarding_anycast_gateway': module.params['fabric_forwarding_anycast_gateway'],
             'admin_state': module.params['admin_state'],
@@ -487,12 +530,15 @@ def map_params_to_obj(module):
 
 def map_config_to_obj(want, module):
     objs = list()
+    cmd_keys = '''
+        name description admin_state speed mtu mode duplex
+        interface_type ip_forward
+        bfd bfd_echo hsrp_bfd
+        fabric_forwarding_anycast_gateway
+        '''.split()
 
     for w in want:
-        obj = dict(name=None, description=None, admin_state=None, speed=None,
-                   mtu=None, mode=None, duplex=None, interface_type=None,
-                   ip_forward=None, fabric_forwarding_anycast_gateway=None)
-
+        obj = dict.fromkeys(cmd_keys)
         if not w['name']:
             return obj
 
@@ -511,6 +557,11 @@ def map_config_to_obj(want, module):
                 if interface_table.get('eth_mode') == 'fex-fabric':
                     module.fail_json(msg='nxos_interface does not support interfaces with mode "fex-fabric"')
 
+                obj['name'] = normalize_interface(interface_table.get('interface'))
+                command = 'show run interface {0} all'.format(obj['name'])
+                body = execute_show_command(command, module)[0]
+                body_list = [i.strip() for i in body.split('\n')]
+
                 intf_type = get_interface_type(w['name'])
 
                 if intf_type in ['portchannel', 'ethernet']:
@@ -523,16 +574,11 @@ def map_config_to_obj(want, module):
                         obj['mode'] = 'layer3'
 
                 if intf_type == 'ethernet':
-                    obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
                     obj['mtu'] = interface_table.get('eth_mtu')
                     obj['duplex'] = interface_table.get('eth_duplex')
                     speed = interface_table.get('eth_speed')
-
-                    command = 'show run interface {0}'.format(obj['name'])
-                    body = execute_show_command(command, module)[0]
-
                     speed_match = re.search(r'speed (\d+)', body)
                     if speed_match is None:
                         obj['speed'] = 'auto'
@@ -551,7 +597,6 @@ def map_config_to_obj(want, module):
                         obj['ip_forward'] = 'disable'
 
                 elif intf_type == 'svi':
-                    obj['name'] = normalize_interface(interface_table.get('interface'))
                     attributes = get_vlan_interface_attributes(obj['name'], intf_type, module)
                     obj['admin_state'] = str(attributes.get('admin_state',
                                                             'nxapibug'))
@@ -559,8 +604,6 @@ def map_config_to_obj(want, module):
                                                             'nxapi_bug'))
                     obj['mtu'] = interface_table.get('svi_mtu')
 
-                    command = 'show run interface {0}'.format(obj['name'])
-                    body = execute_show_command(command, module)[0]
                     if 'ip forward' in body:
                         obj['ip_forward'] = 'enable'
                     else:
@@ -571,7 +614,6 @@ def map_config_to_obj(want, module):
                         obj['fabric_forwarding_anycast_gateway'] = False
 
                 elif intf_type in ('loopback', 'management', 'nve'):
-                    obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     if obj['admin_state'] is None and intf_type == 'loopback':
                         # Some platforms don't have the 'admin_state' key.
@@ -581,20 +623,24 @@ def map_config_to_obj(want, module):
                     obj['description'] = interface_table.get('desc')
 
                 elif intf_type == 'portchannel':
-                    obj['name'] = normalize_interface(interface_table.get('interface'))
+                    # obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
                     obj['mtu'] = interface_table.get('eth_mtu')
 
                 if obj['admin_state'] is None:
                     # Some nxos platforms do not have the 'admin_state' key.
-                    # Use the 'state_rsn_desc' key instead to determine the
-                    # admin state of the interface.
+                    # 'show run all' cli text or 'state_rsn_desc' are acceptable fallback sources.
                     state_description = interface_table.get('state_rsn_desc')
-                    if state_description == 'Administratively down':
+                    if 'shutdown' in body_list or state_description == 'Administratively down':
                         obj['admin_state'] = 'down'
-                    elif state_description is not None:
+                    elif 'no shutdown' in body_list or state_description is not None:
                         obj['admin_state'] = 'up'
+
+                # common properties
+                obj['bfd'] = 'disable' if 'no bfd' in body_list else 'enable'
+                obj['bfd_echo'] = 'disable' if 'no bfd echo' in body_list else 'enable'
+                obj['hsrp_bfd'] = 'enable' if 'hsrp bfd' in body_list else 'disable'
 
         objs.append(obj)
 
@@ -686,6 +732,9 @@ def main():
         mode=dict(choices=['layer2', 'layer3']),
         mtu=dict(),
         duplex=dict(choices=['full', 'half', 'auto']),
+        bfd=dict(type='str', choices=['enable', 'disable']),
+        bfd_echo=dict(type='str', choices=['enable', 'disable']),
+        hsrp_bfd=dict(type='str', choices=['enable', 'disable']),
         interface_type=dict(choices=['loopback', 'portchannel', 'svi', 'nve']),
         ip_forward=dict(choices=['enable', 'disable']),
         fabric_forwarding_anycast_gateway=dict(type='bool'),
@@ -735,9 +784,11 @@ def main():
         if not module.check_mode:
             load_config(module, commands)
             result['changed'] = True
-            # if the mode changes from L2 to L3, the admin state
-            # seems to change after the API call, so adding a second API
-            # call to ensure it's in the desired state.
+            # Ethernet L2/L3 'mode' changes may result in unexpected admin state
+            # values due to `system default switchport shutdown` state, which is
+            # a user # configurable system default for L2 interfaces.
+            # L3 default state is shutdown. Add a second call to ensure admin is
+            # in the desired state after any 'mode' change.
             if commands2:
                 load_config(module, commands2)
                 commands.extend(commands2)

@@ -91,6 +91,14 @@
         "eth_outpause": 0
       }, 
       {
+        "interface": "Ethernet2/2",
+        "state": "up",
+        "admin_state": "up",
+        "share_state": "Dedicated",
+        "eth_hw_desc": "Ethernet",
+        "eth_bw": 1000000
+      },
+      {
         "interface": "loopback0", 
         "state": "up", 
         "admin_state": "up", 
