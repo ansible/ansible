@@ -204,6 +204,17 @@ class StrategyBase:
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
+    def _set_hosts_cache(self, iterator, refresh=True):
+        if not refresh and all((self._hosts_cache, self._hosts_cache_all)):
+            return
+
+        if Templar(None).is_template(iterator._play.hosts):
+            _pattern = 'all'
+        else:
+            _pattern = iterator._play.hosts or 'all'
+        self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
+        self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)]
+
     def cleanup(self):
         # close active persistent connections
         for sock in itervalues(self._active_connections):
@@ -996,14 +1007,7 @@ class StrategyBase:
             if task.when:
                 self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
-            self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts)]
-
-            if Templar(None).is_template(iterator._play.hosts):
-                _pattern = 'all'
-            else:
-                _pattern = iterator._play.hosts or 'all'
-            self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
-
+            self._set_hosts_cache(iterator)
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):

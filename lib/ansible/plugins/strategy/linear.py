@@ -206,12 +206,7 @@ class StrategyModule(StrategyBase):
         result = self._tqm.RUN_OK
         work_to_do = True
 
-        if Templar(None).is_template(iterator._play.hosts):
-            _pattern = 'all'
-        else:
-            _pattern = iterator._play.hosts or 'all'
-        self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
-        self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)]
+        self._set_hosts_cache(iterator)
 
         while work_to_do and not self._tqm._terminated:
 
