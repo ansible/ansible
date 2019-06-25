@@ -280,7 +280,7 @@ from ansible.module_utils.ovirt import (
 class HostsModule(BaseModule):
     def __init__(self, start_event=None, *args, **kwargs):
         super(HostsModule, self).__init__(*args, **kwargs)
-        self.start_event=start_event
+        self.start_event = start_event
 
     def build_entity(self):
         return otypes.Host(
@@ -352,11 +352,11 @@ class HostsModule(BaseModule):
 
     def raise_host_exception(self):
         events = self._connection.system_service().events_service().list(from_=int(self.start_event.index))
-        error_events = [event.description for event in events
-                        if event.host is not None and (
-                            event.host.id == self.param('id') or event.host.name == self.param('name')) and
-                        event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]
-                        ]
+        error_events = [
+            event.description for event in events
+            if event.host is not None and (event.host.id == self.param('id') or event.host.name == self.param('name')) and
+            event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]
+        ]
         if error_events:
             raise Exception("Error message: %s" % error_events)
         return True
