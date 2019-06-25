@@ -41,22 +41,27 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
+        description:
             - FortiOS or FortiGate ip address.
-       required: true
+        type: str
+        required: true
     username:
+
         description:
             - FortiOS or FortiGate username.
+        type: str
         required: true
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
@@ -67,6 +72,7 @@ options:
     state:
         description:
             - Indicates whether to create or remove the object
+        type: str
         choices:
             - present
             - absent
@@ -74,6 +80,7 @@ options:
         description:
             - Configure devices.
         default: null
+        type: dict
         suboptions:
             alias:
                 description:
