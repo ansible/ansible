@@ -200,13 +200,17 @@ class StrategyBase:
 
         # Caches for get_host calls, to avoid calling excessively
         # These values should be set at the top of the ``run`` method of each
-        # strategy plugin
+        # strategy plugin. Use ``_set_hosts_cache`` to set these values
         self._hosts_cache = []
         self._hosts_cache_all = []
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
     def _set_hosts_cache(self, iterator, refresh=True):
+        """Responsible for setting _hosts_cache and _hosts_cache_all
+
+        See comment in ``__init__`` for the purpose of these caches
+        """
         if not refresh and all((self._hosts_cache, self._hosts_cache_all)):
             return
 
