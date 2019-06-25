@@ -508,6 +508,9 @@ class GalaxyCLI(CLI):
 
             if requirements_file:
                 requirements_file = os.path.expanduser(os.path.expandvars(requirements_file))
+                if not os.path.isabs(requirements_file):
+                    requirements_file = os.path.abspath(requirements_file)
+
                 collection_requirements = parse_collections_requirements_file(requirements_file)
             else:
                 collection_requirements = []

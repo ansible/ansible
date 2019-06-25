@@ -29,6 +29,7 @@ import tarfile
 import tempfile
 import yaml
 
+import ansible.constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
@@ -36,7 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.utils import context_objects as co
 from units.compat import unittest
-from units.compat.mock import call, patch
+from units.compat.mock import call, patch, MagicMock
 
 
 @pytest.fixture(autouse='function')
@@ -470,7 +471,7 @@ def collection_skeleton(request, tmp_path_factory):
     if skeleton_path is not None:
         galaxy_args += ['--collection-skeleton', skeleton_path]
 
-    test_dir = str(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
     galaxy_args += ['--init-path', test_dir, name]
 
     GalaxyCLI(args=galaxy_args).run()
@@ -554,7 +555,7 @@ def test_collection_skeleton(collection_skeleton):
 
 @pytest.fixture()
 def collection_build(collection_skeleton, tmp_path_factory):
-    output_dir = str(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
+    output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
     # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
     # args, we reset the original args once it is done.
@@ -678,3 +679,256 @@ def test_collection_build(collection_build):
                 assert file_entry['chksum_sha256'] is None
 
             assert len(file_entry.keys()) == 5
+
+
+@pytest.fixture()
+def collection_install(reset_cli_args, tmp_path_factory, monkeypatch):
+    mock_install = MagicMock()
+    monkeypatch.setattr(ansible.cli.galaxy, 'install_collections', mock_install)
+
+    mock_warning = MagicMock()
+    monkeypatch.setattr(ansible.utils.display.Display, 'warning', mock_warning)
+
+    output_dir = to_text((tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output')))
+    yield mock_install, mock_warning, output_dir
+
+
+def test_collection_install_with_names(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', 'namespace2.collection:1.0.1',
+                   '--collections-path', output_dir]
+    GalaxyCLI(args=galaxy_args).run()
+
+    collection_path = os.path.join(output_dir, 'ansible_collections')
+    assert os.path.isdir(collection_path)
+
+    assert mock_warning.call_count == 1
+    assert "The specified collections path '%s' is not part of the configured Ansible collections path" % output_dir \
+        in mock_warning.call_args[0][0]
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
+                                            ('namespace2.collection', '1.0.1', None)]
+    assert mock_install.call_args[0][1] == collection_path
+    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+
+def test_collection_install_with_requirements_file(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    requirements_file = os.path.join(output_dir, 'requirements.yml')
+    with open(requirements_file, 'wb') as req_obj:
+        req_obj.write(b'---\ncollections:\n- namespace.coll\n- name: namespace2.coll\n  version: \'>2.0.1\'\n')
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', '--requirements-file', requirements_file,
+                   '--collections-path', output_dir]
+    GalaxyCLI(args=galaxy_args).run()
+
+    collection_path = os.path.join(output_dir, 'ansible_collections')
+    assert os.path.isdir(collection_path)
+
+    assert mock_warning.call_count == 1
+    assert "The specified collections path '%s' is not part of the configured Ansible collections path" % output_dir \
+        in mock_warning.call_args[0][0]
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None),
+                                            ('namespace2.coll', '>2.0.1', None)]
+    assert mock_install.call_args[0][1] == collection_path
+    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+
+def test_collection_install_with_relative_path(collection_install, monkeypatch):
+    mock_install = collection_install[0]
+
+    mock_req = MagicMock()
+    mock_req.return_value = [('namespace.coll', '*', None)]
+    monkeypatch.setattr(ansible.cli.galaxy, 'parse_collections_requirements_file', mock_req)
+
+    monkeypatch.setattr(os, 'makedirs', MagicMock())
+
+    requirements_file = './requirements.myl'
+    collections_path = './ansible_collections'
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', '--requirements-file', requirements_file,
+                   '--collections-path', collections_path]
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None)]
+    assert mock_install.call_args[0][1] == os.path.abspath(collections_path)
+    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+    assert mock_req.call_count == 1
+    assert mock_req.call_args[0][0] == os.path.abspath(requirements_file)
+
+
+def test_collection_install_with_unexpanded_path(collection_install, monkeypatch):
+    mock_install = collection_install[0]
+
+    mock_req = MagicMock()
+    mock_req.return_value = [('namespace.coll', '*', None)]
+    monkeypatch.setattr(ansible.cli.galaxy, 'parse_collections_requirements_file', mock_req)
+
+    monkeypatch.setattr(os, 'makedirs', MagicMock())
+
+    requirements_file = '~/requirements.myl'
+    collections_path = '~/ansible_collections'
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', '--requirements-file', requirements_file,
+                   '--collections-path', collections_path]
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('namespace.coll', '*', None)]
+    assert mock_install.call_args[0][1] == os.path.expanduser(os.path.expandvars(collections_path))
+    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+    assert mock_req.call_count == 1
+    assert mock_req.call_args[0][0] == os.path.expanduser(os.path.expandvars(requirements_file))
+
+
+def test_collection_install_in_collection_dir(collection_install, monkeypatch):
+    mock_install, mock_warning, output_dir = collection_install
+
+    collections_path = C.COLLECTIONS_PATHS[0]
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', 'namespace2.collection:1.0.1',
+                   '--collections-path', collections_path]
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_warning.call_count == 0
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
+                                            ('namespace2.collection', '1.0.1', None)]
+    assert mock_install.call_args[0][1] == os.path.join(collections_path, 'ansible_collections')
+    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+
+def test_collection_install_name_and_requirements_fail(collection_install):
+    test_path = collection_install[2]
+    expected = 'The positional collection_name arg and --requirements-file are mutually exclusive.'
+
+    with pytest.raises(AnsibleError, match=expected):
+        GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path',
+                        test_path, '--requirements-file', test_path]).run()
+
+
+def test_collection_install_no_name_and_requirements_fail(collection_install):
+    test_path = collection_install[2]
+    expected = 'You must specify a collection name or a requirements file.'
+
+    with pytest.raises(AnsibleError, match=expected):
+        GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', '--collections-path', test_path]).run()
+
+
+def test_collection_install_path_with_ansible_collections(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    collection_path = os.path.join(output_dir, 'ansible_collections')
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', 'namespace2.collection:1.0.1',
+                   '--collections-path', collection_path]
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert os.path.isdir(collection_path)
+
+    assert mock_warning.call_count == 1
+    assert "The specified collections path '%s' is not part of the configured Ansible collections path" \
+        % collection_path in mock_warning.call_args[0][0]
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
+                                            ('namespace2.collection', '1.0.1', None)]
+    assert mock_install.call_args[0][1] == collection_path
+    assert mock_install.call_args[0][2] == ['https://galaxy.ansible.com']
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+
+def test_collection_install_ignore_certs(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path', output_dir,
+                   '--ignore-certs']
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_args[0][3] is False
+
+
+def test_collection_install_force(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path', output_dir,
+                   '--force']
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_args[0][6] is True
+
+
+def test_collection_install_force_deps(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path', output_dir,
+                   '--force-with-deps']
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_args[0][7] is True
+
+
+def test_collection_install_no_deps(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path', output_dir,
+                   '--no-deps']
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_args[0][5] is True
+
+
+def test_collection_install_ignore(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path', output_dir,
+                   '--ignore-errors']
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_args[0][4] is True
+
+
+def test_collection_install_custom_server(collection_install):
+    mock_install, mock_warning, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'namespace.collection', '--collections-path', output_dir,
+                   '--server', 'https://galaxy-dev.ansible.com']
+    GalaxyCLI(args=galaxy_args).run()
+
+    assert mock_install.call_args[0][2] == ['https://galaxy-dev.ansible.com']
