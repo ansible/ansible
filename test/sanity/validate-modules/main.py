@@ -38,6 +38,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
@@ -1177,7 +1178,7 @@ class ModuleValidator(Validator):
                 deprecated_args_from_argspec.add(arg)
                 deprecated_args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
-                if data.get('options') and not isinstance(data.get('options'), dict):
+                if data.get('options') and not isinstance(data.get('options'), Mapping):
                     self.reporter.error(
                         path=self.object_path,
                         code=331,
