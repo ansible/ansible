@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_membership - Remove debug print.
