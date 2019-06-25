@@ -68,7 +68,7 @@ function gen_egg_info
     # Cannot use `test` on wildcards. 
     # @see https://github.com/fish-shell/fish-shell/issues/5960
     if count $PREFIX_PYTHONPATH/ansible*.egg-info > /dev/null
-        rm -rf "$PREFIX_PYTHONPATH/ansible*.egg-info"
+        rm -rf $PREFIX_PYTHONPATH/ansible*.egg-info
     end
 
     if [ $QUIET ]
