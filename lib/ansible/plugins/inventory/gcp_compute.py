@@ -67,6 +67,14 @@ DOCUMENTATION = '''
                   version_added: "2.8"
                 - name: GCE_CREDENTIALS_FILE_PATH
                   version_added: "2.8"
+        service_account_contents:
+            description:
+                - A string representing the contents of a Service Account JSON file. This should not be passed in as a dictionary,
+                  but a string that has the exact contents of a service account json file (valid JSON).
+            type: string
+            env:
+                - name: GCP_SERVICE_ACCOUNT_CONTENTS
+                  version_added: "2.8"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
@@ -434,6 +442,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'zones': self.get_option('zones'),
             'auth_kind': self.get_option('auth_kind'),
             'service_account_file': self.get_option('service_account_file'),
+            'service_account_contents': self.get_option('service_account_contents'),
             'service_account_email': self.get_option('service_account_email'),
         }
 
