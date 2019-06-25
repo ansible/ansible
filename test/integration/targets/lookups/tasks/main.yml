@@ -188,23 +188,24 @@
 
 - name: set variable that clashes
   set_fact:
-      LOGNAME: foobar
+      PATH: foobar
 
 
-- name: get LOGNAME environment var value
-  shell: echo {{ '$LOGNAME' }}
-  register: known_var_value
-
-- name: do the lookup for env LOGNAME
+- name: get PATH environment var value
   set_fact:
-    test_val: "{{ lookup('env', 'LOGNAME') }}"
+    known_var_value: "{{ lookup('pipe', 'echo $PATH') }}"
+
+- name: do the lookup for env PATH
+  set_fact:
+    test_val: "{{ lookup('env', 'PATH') }}"
 
 - debug: var=test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == known_var_value.stdout"
+        - "test_val != ''"
+        - "test_val == known_var_value"
 
 
 - name: set with_dict
