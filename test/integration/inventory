@@ -3,4 +3,4 @@
 
 [testgroup]
 # ansible_python_interpreter must be set to avoid interpreter discovery
-testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+testhost ansible_connection=ssh ansible_host=localhost ansible_python_interpreter="{{ ansible_playbook_python }}"
