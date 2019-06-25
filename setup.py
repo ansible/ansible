@@ -266,6 +266,7 @@ static_setup_params = dict(
             'modules/windows/*.ps1',
             'modules/windows/*/*.ps1',
             'galaxy/data/*/*.*',
+            'galaxy/data/*/.*',
             'galaxy/data/*/*/.*',
             'galaxy/data/*/*/*.*',
             'galaxy/data/*/tests/inventory',
