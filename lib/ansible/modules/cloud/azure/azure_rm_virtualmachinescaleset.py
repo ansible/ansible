@@ -1020,6 +1020,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.fail("Error could not find image with name {0}".format(name))
 
     def create_or_update_vmss(self, params):
+        if params.sku.capacity > 100:
+            params.singlePlacementGroup = False
+        else:
+            params.singlePlacementGroup = True
         try:
             poller = self.compute_client.virtual_machine_scale_sets.create_or_update(self.resource_group, self.name, params)
             self.get_poller_result(poller)
