@@ -759,7 +759,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
                         overprovision=self.overprovision,
-                        singlePlacementGroup=self.singlePlacementGroup,
+                        proximity_placement_group=self.singlePlacementGroup,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -857,7 +857,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
-                    vmss_resource.singlePlacementGroup = self.singlePlacementGroup
+                    vmss_resource.proximity_placement_group = self.singlePlacementGroup
 
                     if support_lb_change:
                         if self.load_balancer:
@@ -1020,10 +1020,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.fail("Error could not find image with name {0}".format(name))
 
     def create_or_update_vmss(self, params):
-        if params.sku.capacity > 100:
-            params.singlePlacementGroup = False
-        else:
-            params.singlePlacementGroup = True
         try:
             poller = self.compute_client.virtual_machine_scale_sets.create_or_update(self.resource_group, self.name, params)
             self.get_poller_result(poller)
