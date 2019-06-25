@@ -141,6 +141,10 @@ For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
 
     ansible-test integration -v ping --docker ubuntu1404
 
+.. note:: Running ansible-test in a container
+
+    When running ``ansible-test`` inside a container, be sure te set ``LC_ALL`` to a utf-8 locale, e.g., ``en_US.UTF-8``. If no locale is set within the container, errors will occur when non-ASCII characters are encountered.
+
 Container Images
 ----------------
 
