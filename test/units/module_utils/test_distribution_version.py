@@ -1480,29 +1480,31 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
     },
     {
         "platform.dist": [
-            "LinuxMint",
-            "18.3",
-            "sylvia",
+            "linuxmint",
+            "18.2",
+            "sonya"
         ],
-        'distro': {
-            'codename': 'Sylvia',
-            'id': 'linuxmint',
-            'name': 'Linux Mint',
-            'version': '18.3',
-            'version_best': '18.3',
-        },
         "input": {
-            "/etc/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.3 (Sylvia)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.3\"\nVERSION_ID=\"18.3\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sylvia\nUBUNTU_CODENAME=xenial",  # noqa
+            "/etc/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.2 (Sonya)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.2\"\nVERSION_ID=\"18.2\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sonya\nUBUNTU_CODENAME=xenial\n",
+            "/usr/lib/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.2 (Sonya)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.2\"\nVERSION_ID=\"18.2\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sonya\nUBUNTU_CODENAME=xenial\n",
+            "/etc/lsb-release": "DISTRIB_ID=LinuxMint\nDISTRIB_RELEASE=18.2\nDISTRIB_CODENAME=sonya\nDISTRIB_DESCRIPTION=\"Linux Mint 18.2 Sonya\"\n"
         },
-        "name": "Linux Mint 18.3",
         "result": {
-            "distribution_release": "Sylvia",
+            "distribution_release": "sonya",
             "distribution": "Linux Mint",
             "distribution_major_version": "18",
             "os_family": "Debian",
-            "distribution_version": "18.3"
-        }
-    }
+            "distribution_version": "18.2"
+        },
+        "name": "Linux Mint 18.2",
+        "distro": {
+            "codename": "sonya",
+            "version": "18.2",
+            "id": "linuxmint",
+            "version_best": "18.2",
+            "name": "Linux Mint"
+        },
+    },
 ]
 
 
