@@ -903,6 +903,8 @@ files:
     support: core
   $plugins/action/fetch.py:
     support: core
+  $plugins/action/gather_facts.py:
+    support: core
   $plugins/action/group_by.py:
     support: core
   $plugins/action/include_vars.py:
