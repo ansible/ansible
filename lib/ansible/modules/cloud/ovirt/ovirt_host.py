@@ -138,6 +138,18 @@ options:
         default: True
         type: bool
         version_added: 2.6
+    remove_retry_count:
+        description:
+            - "Number of tries to remove host."
+        default: 5
+        type: int
+        version_added: 2.9
+    remove_retry_timeout:
+        description:
+            - "Number of seconds how long should each try to remove host wait."
+        default: 20
+        type: int
+        version_added: 2.9
     vgpu_placement:
         description:
             - If I(consolidated), each vGPU is placed on the first physical card with
@@ -367,12 +379,12 @@ class HostsModule(BaseModule):
         return False
 
 
-def remove_host(host_module, host, max_count, timeout):
+def remove_host(host_module, host, max_count, timeout, wait):
     for count in range(max_count + 1):
         try:
             return host_module.remove()
         except Exception as e:
-            if count == max_count and host_module.param('wait'):
+            if count == max_count or not wait:
                 raise Exception('Cannot remove host. Error message %s' % str(e))
             time.sleep(timeout)
 
@@ -497,7 +509,7 @@ def main():
                     fail_condition=failed_state,
                 )
         elif state == 'absent':
-            ret = remove_host(hosts_module, host, module.params.get('remove_retry_count'), module.params.get('remove_retry_timeout'))
+            ret = remove_host(hosts_module, host, module.params.get('remove_retry_count'), module.params.get('remove_retry_timeout'), module.params.get('wait'))
         elif state == 'maintenance':
             hosts_module.action(
                 action='deactivate',
