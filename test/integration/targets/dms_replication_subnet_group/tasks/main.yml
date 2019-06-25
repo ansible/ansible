@@ -54,8 +54,8 @@
     - name: create replication subnet group
       dms_replication_subnet_group:
         state: present
-        identifier: "dev-sngroup"
-        description: "Development Subnet Group asdasdas"
+        identifier: "{{ dms_sg_identifier }}"
+        description: "Development Subnet Group"
         subnet_ids: [ "{{ subnet1.subnet.id }}", "{{ subnet2.subnet.id }}"]
         <<: *aws_connection_info
       register: result

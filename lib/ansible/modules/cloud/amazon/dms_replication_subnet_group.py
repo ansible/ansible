@@ -153,7 +153,7 @@ def compare_params(module, param_described):
             subnets = []
             for subnet in param_described.get('Subnets'):
                 subnets.append(subnet.get('SubnetIdentifier'))
-            for modulesubnet in modparams['subnet_ids']:
+            for modulesubnet in modparams['SubnetIds']:
                 if modulesubnet in subnets:
                     pass
         else:
