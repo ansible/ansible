@@ -349,7 +349,9 @@ class StrategyBase:
         return [host_name or task.delegate_to]
 
     def get_handler_templar(self, handler_task, iterator):
-        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task,
+                                                       _hosts=self._hosts_cache,
+                                                       _hosts_all=self._hosts_cache_all)
         return Templar(loader=self._loader, variables=handler_vars)
 
     @debug_closure
@@ -889,7 +891,8 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not iterator.is_failed(host) or iterator._play.force_handlers:
-                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
+                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler,
+                                                            _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
 
@@ -985,7 +988,8 @@ class StrategyBase:
         meta_action = task.args.get('_raw_params')
 
         def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
+                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)
             return task.evaluate_conditional(templar, all_vars)
 
@@ -1040,7 +1044,8 @@ class StrategyBase:
                 skipped = True
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'reset_connection':
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
+                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)
 
             # apply the given task's information to the connection info,
