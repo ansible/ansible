@@ -1607,9 +1607,6 @@ lib/ansible/modules/net_tools/dnsimple.py E337
 lib/ansible/modules/net_tools/dnsimple.py E338
 lib/ansible/modules/net_tools/dnsmadeeasy.py E337
 lib/ansible/modules/net_tools/dnsmadeeasy.py E338
-lib/ansible/modules/net_tools/exoscale/exo_dns_domain.py E338
-lib/ansible/modules/net_tools/exoscale/exo_dns_record.py E337
-lib/ansible/modules/net_tools/exoscale/exo_dns_record.py E338
 lib/ansible/modules/net_tools/ipinfoio_facts.py E337
 lib/ansible/modules/net_tools/ipinfoio_facts.py E338
 lib/ansible/modules/net_tools/ip_netns.py E338
