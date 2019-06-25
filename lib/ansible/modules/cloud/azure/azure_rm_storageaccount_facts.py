@@ -20,7 +20,7 @@ module: azure_rm_storageaccount_facts
 
 version_added: "2.1"
 
-short_description: Get storage account facts.
+short_description: Get storage account facts
 
 description:
     - Get facts for one storage account or all storage accounts within a resource group.
@@ -47,7 +47,7 @@ options:
     show_blob_cors:
         description:
             - Show the blob CORS settings for each of the storageaccount's blob.
-            - Note that it will cost a lot time when list all storageaccount rather than querry a single one.
+            - Note that it will cost a lot of time when list all storageaccount rather than query a single one.
         type: bool
         version_added: "2.8"
 
@@ -55,8 +55,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -79,7 +79,8 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_storageaccounts:
-    description: List of storage account dicts.
+    description:
+        - List of storage account dicts.
     returned: always
     type: list
     example: [{
@@ -103,121 +104,167 @@ azure_storageaccounts:
         "type": "Microsoft.Storage/storageAccounts"
     }]
 storageaccounts:
-    description: List of storage account dicts in resource module's parameter format.
+    description:
+        - List of storage account dicts in resource module's parameter format.
     returned: always
     type: complex
     contains:
         id:
             description:
                 - Resource ID.
+            returned: always
+            type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/t
                      estaccount001"
         name:
             description:
                 - Name of the storage account to update or create.
-            sample: "testaccount001"
+            returned: always
+            type: str
+            sample: testaccount001
         location:
             description:
-                - Valid azure location. Defaults to location of the resource group.
+                - Valid Azure location. Defaults to location of the resource group.
+            returned: always
+            type: str
             sample: eastus
         account_type:
             description:
                 - Type of storage account.
-                - "NOTE: Standard_ZRS and Premium_LRS accounts cannot be changed to other account types."
-                - Other account types cannot be changed to Standard_ZRS or Premium_LRS.
+                - C(Standard_ZRS) and C(Premium_LRS) accounts cannot be changed to other account types.
+                - Other account types cannot be changed to C(Standard_ZRS) or C(Premium_LRS).
+            returned: always
+            type: str
             sample: Standard_ZRS
         custom_domain:
             description:
                 - User domain assigned to the storage account.
-                - Must be a dictionary with 'name' and 'use_sub_domain' keys where 'name' is the CNAME source.
+                - Must be a dictionary with I(name) and I(use_sub_domain) keys where I(name) is the CNAME source.
+            returned: always
             type: complex
             contains:
                 name:
                     description:
                         - CNAME source.
+                    returned: always
+                    type: str
                     sample: testaccount
                 use_sub_domain:
                     description:
-                        - whether to use sub domain.
+                        - Whether to use sub domain.
+                    returned: always
+                    type: bool
                     sample: true
         kind:
             description:
-                - The 'kind' of storage.
+                - The I(kind) of storage.
+            returned: always
+            type: str
             sample: Storage
         access_tier:
             description:
                 - The access tier for this storage account.
+            returned: always
+            type: str
             sample: Hot
         https_only:
             description:
-                -  Allows https traffic only to storage service if sets to true.
+                -  Allows https traffic only to storage service if sets to C(true).
+            returned: always
+            type: bool
             sample: false
         provisioning_state:
             description:
                 - Gets the status of the storage account at the time the operation was called.
-                - Possible values include 'Creating', 'ResolvingDNS', 'Succeeded'.
+                - Possible values include C(Creating), C(ResolvingDNS), C(Succeeded).
+            returned: always
+            type: str
             sample: Succeeded
         secondary_location:
             description:
                 - Gets the location of the geo-replicated secondary for the storage account.
-                - Only available if the accountType is Standard_GRS or Standard_RAGRS.
+                - Only available if the I(account_type=Standard_GRS) or I(account_type=Standard_RAGRS).
+            returned: always
+            type: str
             sample: westus
         status_of_primary:
             description:
-                - Gets the status indicating whether the primary location of the storage account is available or unavailable.
+                - Gets the status indicating whether the primary location of the storage account is C(available) or C(unavailable).
+            returned: always
+            type: str
             sample: available
         status_of_secondary:
             description:
-                - Gets the status indicating whether the secondary location of the storage account is available or unavailable.
+                - Gets the status indicating whether the secondary location of the storage account is C(available) or C(unavailable).
+            returned: always
+            type: str
             sample: available
         primary_location:
             description:
                 - Gets the location of the primary data center for the storage account.
+            returned: always
+            type: str
             sample: eastus
         primary_endpoints:
             description:
-                - Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object.
-                - Note that Standard_ZRS and Premium_LRS accounts only return the blob endpoint.
+                - Gets the URLs that are used to perform a retrieval of a public I(blob), I(queue), or I(table) object.
+                - Note that C(Standard_ZRS) and C(Premium_LRS) accounts only return the blob endpoint.
+            returned: always
             type: complex
             contains:
                 blob:
                     description:
                         - Gets the primary blob endpoint and connection string.
+                    returned: always
                     type: complex
                     contains:
                         endpoint:
                             description:
                                 - Gets the primary blob endpoint.
+                            returned: always
+                            type: str
                             sample: "https://testaccount001.blob.core.windows.net/"
                         connectionstring:
                             description:
-                                - Connectionstring of the blob endpoint
+                                - Connectionstring of the blob endpoint.
+                            returned: always
+                            type: str
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;BlobEndpoint=X"
                 queue:
                     description:
                         - Gets the primary queue endpoint and connection string.
+                    returned: always
                     type: complex
                     contains:
                         endpoint:
                             description:
                                 - Gets the primary queue endpoint.
+                            returned: always
+                            type: str
                             sample: "https://testaccount001.queue.core.windows.net/"
                         connectionstring:
                             description:
-                                - Connectionstring of the queue endpoint
+                                - Connectionstring of the queue endpoint.
+                            returned: always
+                            type: str
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;QueueEndpoint=X"
                 table:
                     description:
                         - Gets the primary table endpoint and connection string.
+                    returned: always
                     type: complex
                     contains:
                         endpoint:
                             description:
                                 - Gets the primary table endpoint.
+                            returned: always
+                            type: str
                             sample: "https://testaccount001.table.core.windows.net/"
                         connectionstring:
                             description:
-                                - Connectionstring of the table endpoint
+                                - Connectionstring of the table endpoint.
+                            returned: always
+                            type: str
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;TableEndpoint=X"
                 key:
                     description:
@@ -225,48 +272,64 @@ storageaccounts:
                     sample: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         secondary_endpoints:
             description:
-                - Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object from the secondary location.
-                - Only available if the SKU name is Standard_RAGRS.
+                - Gets the URLs that are used to perform a retrieval of a public I(blob), I(queue), or I(table) object from the secondary location.
+                - Only available if the SKU I(name=Standard_RAGRS).
+            returned: always
             type: complex
             contains:
                 blob:
                     description:
                         - Gets the secondary blob endpoint and connection string.
+                    returned: always
                     type: complex
                     contains:
                         endpoint:
                             description:
                                 - Gets the secondary blob endpoint.
+                            returned: always
+                            type: str
                             sample: "https://testaccount001.blob.core.windows.net/"
                         connectionstring:
                             description:
-                                - Connectionstring of the blob endpoint
+                                - Connectionstring of the blob endpoint.
+                            returned: always
+                            type: str
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;BlobEndpoint=X"
                 queue:
                     description:
                         - Gets the secondary queue endpoint and connection string.
+                    returned: always
                     type: complex
                     contains:
                         endpoint:
                             description:
                                 - Gets the secondary queue endpoint.
+                            returned: always
+                            type: str
                             sample: "https://testaccount001.queue.core.windows.net/"
                         connectionstring:
                             description:
-                                - Connectionstring of the queue endpoint
+                                - Connectionstring of the queue endpoint.
+                            returned: always
+                            type: str
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;QueueEndpoint=X"
                 table:
                     description:
                         - Gets the secondary table endpoint and connection string.
+                    returned: always
                     type: complex
                     contains:
                         endpoint:
                             description:
                                 - Gets the secondary table endpoint.
+                            returned: always
+                            type: str
                             sample: "https://testaccount001.table.core.windows.net/"
                         connectionstring:
                             description:
-                                - Connectionstring of the table endpoint
+                                - Connectionstring of the table endpoint.
+                            returned: always
+                            type: str
                             sample: "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=X;AccountKey=X;TableEndpoint=X"
                 key:
                     description:
@@ -275,12 +338,9 @@ storageaccounts:
         tags:
             description:
                 - Resource tags.
+            returned: always
             type: dict
             sample: { "tag1": "abc" }
-        blob_cors:
-            description:
-                - Blob CORS of blob.
-            type: list
 '''
 
 try:
