@@ -376,6 +376,16 @@ options:
         the program from running concurrently.
     type: str
     version_added: "2.10"
+  vaddr:
+    description:
+      - The LVS Virtual IP address to match
+    type: str
+    version_added: "2.9"
+  vport:
+    description:
+      - The LVS port to match
+    type: str
+    version_added: "2.9"
 '''
 
 EXAMPLES = r'''
@@ -514,6 +524,16 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
+- name: "Setup SNAT for LVS"
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    match: ipvs
+    vaddr: '192.168.1.11/24'
+    vport: 80
+    jump: SNAT
+    to_source: '192.168.1.21'
+    comment: "SNAT the VIP"
 '''
 
 import re
@@ -655,6 +675,8 @@ def construct_rule(params):
         False)
     append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
+    append_param(rule, params['vaddr'], '--vaddr', False)
+    append_param(rule, params['vport'], '--vport', False)
     return rule
 
 
@@ -774,6 +796,8 @@ def main():
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            vaddr=dict(type='str'),
+            vport=dict(type='str')
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
