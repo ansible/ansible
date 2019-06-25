@@ -157,8 +157,14 @@ from ansible.module_utils.basic import AnsibleModule
 def image_exists(module, executable, name):
     command = [executable, 'image', 'exists', name]
     rc, out, err = module.run_command(command)
-    if rc != 0:
+    if rc == 1:
         return False
+    elif 'Command "exists" not found' in err:
+        # The 'exists' test is available in podman >= 0.12.1
+        command = [executable, 'image', 'ls', '-q', name]
+        rc2, out2, err2 = module.run_command(command)
+        if rc2 != 0:
+            return False
     return True
 
 
