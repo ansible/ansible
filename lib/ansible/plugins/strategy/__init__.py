@@ -705,8 +705,7 @@ class StrategyBase:
             for group_name in new_groups:
                 if group_name not in self._inventory.groups:
                     self._inventory.add_group(group_name)
-                new_group = self._inventory.groups[group_name]
-                self._inventory.group_add_host(group_name, host_name)
+                self._inventory.add_host(host_name, group=group_name)
 
             # reconcile inventory, ensures inventory rules are followed
             self._inventory.reconcile_inventory()
@@ -738,14 +737,15 @@ class StrategyBase:
                 changed = True
         group = self._inventory.groups[group_name]
         for parent_group_name in parent_group_names:
-            self._inventory.group_add_child_group(group_name, parent_group_name)
+            # Use InventoryData object to add child
+            self._inventory._inventory.add_child(parent_group_name, group_name)
 
-        if real_host.name not in group.get_hosts():
-            self._inventory.group_add_host(group_name, real_host.name)
+        if real_host.name not in self._inventory._inventory.group_get_hosts(group_name):
+            self._inventory.add_host(real_host.name, group=group_name)
             changed = True
 
         if group_name not in host.get_groups():
-            self._inventory.host_add_group(real_host.name, group_name)
+            self._inventory.add_host(real_host.name, group=group_name)
             changed = True
 
         if changed:
