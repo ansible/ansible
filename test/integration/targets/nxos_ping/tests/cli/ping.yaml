@@ -1,0 +1,42 @@
+---
+- debug: msg="START cli/ping.yaml on connection={{ ansible_connection }}"
+
+- name: Get nxos facts
+  nxos_facts:
+  register: facts
+
+- name: Extract the IP address from facts
+  set_fact: management_ip="{{ facts.ansible_facts.ansible_net_all_ipv4_addresses[1] }}"
+
+- name: expected successful ping
+  nxos_ping: &valid_ip
+    dest: '{{ management_ip }}'
+    size: 1500
+  register: esp
+
+- name: unexpected unsuccessful ping
+  nxos_ping: &invalid_ip
+    dest: '10.255.255.250'
+    timeout: 45
+    size: 1500
+  register: uup
+  ignore_errors: yes
+
+- name: unexpected successful ping
+  nxos_ping:
+    <<: *valid_ip
+    state: 'absent'
+  register: usp
+  ignore_errors: yes
+
+- name: expected unsuccessful ping
+  nxos_ping:
+    <<: *invalid_ip
+    state: 'absent'
+  register: eup
+
+- name: assert
+  assert:
+    that:
+    - esp.failed == eup.failed == false
+    - usp.failed == uup.failed == true
