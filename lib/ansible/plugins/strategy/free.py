@@ -82,7 +82,7 @@ class StrategyModule(StrategyBase):
         # start with all workers being counted as being free
         workers_free = len(self._workers)
 
-        self._set_hosts_cache(iterator)
+        self._set_hosts_cache(iterator._play)
 
         work_to_do = True
         while work_to_do and not self._tqm._terminated:

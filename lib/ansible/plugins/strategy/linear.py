@@ -206,7 +206,7 @@ class StrategyModule(StrategyBase):
         result = self._tqm.RUN_OK
         work_to_do = True
 
-        self._set_hosts_cache(iterator)
+        self._set_hosts_cache(iterator._play)
 
         while work_to_do and not self._tqm._terminated:
 

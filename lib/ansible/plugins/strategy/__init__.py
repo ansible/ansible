@@ -206,7 +206,7 @@ class StrategyBase:
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
 
-    def _set_hosts_cache(self, iterator, refresh=True):
+    def _set_hosts_cache(self, play, refresh=True):
         """Responsible for setting _hosts_cache and _hosts_cache_all
 
         See comment in ``__init__`` for the purpose of these caches
@@ -214,12 +214,12 @@ class StrategyBase:
         if not refresh and all((self._hosts_cache, self._hosts_cache_all)):
             return
 
-        if Templar(None).is_template(iterator._play.hosts):
+        if Templar(None).is_template(play.hosts):
             _pattern = 'all'
         else:
-            _pattern = iterator._play.hosts or 'all'
+            _pattern = play.hosts or 'all'
         self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
-        self._hosts_cache = [h.name for h in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)]
+        self._hosts_cache = [h.name for h in self._inventory.get_hosts(play.hosts, order=play.order)]
 
     def cleanup(self):
         # close active persistent connections
@@ -274,10 +274,12 @@ class StrategyBase:
             return self._tqm.RUN_OK
 
     def get_hosts_remaining(self, play):
+        self._set_hosts_cache(play, refresh=False)
         ignore = set(self._tqm._failed_hosts).union(self._tqm._unreachable_hosts)
         return [host for host in self._hosts_cache if host not in ignore]
 
     def get_failed_hosts(self, play):
+        self._set_hosts_cache(play, refresh=False)
         return [host for host in self._hosts_cache if host in self._tqm._failed_hosts]
 
     def add_tqm_variables(self, vars, play):
@@ -1017,7 +1019,7 @@ class StrategyBase:
             if task.when:
                 self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
-            self._set_hosts_cache(iterator)
+            self._set_hosts_cache(iterator._play)
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
