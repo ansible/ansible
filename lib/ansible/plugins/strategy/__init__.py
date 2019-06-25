@@ -274,12 +274,10 @@ class StrategyBase:
             return self._tqm.RUN_OK
 
     def get_hosts_remaining(self, play):
-        self._set_hosts_cache(refresh=False)
         ignore = set(self._tqm._failed_hosts).union(self._tqm._unreachable_hosts)
         return [host for host in self._hosts_cache if host not in ignore]
 
     def get_failed_hosts(self, play):
-        self._set_hosts_cache(refresh=False)
         return [host for host in self._hosts_cache if host in self._tqm._failed_hosts]
 
     def add_tqm_variables(self, vars, play):
