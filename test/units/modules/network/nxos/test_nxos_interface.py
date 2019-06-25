@@ -98,6 +98,7 @@ class TestNxosInterfaceModule(TestNxosModule):
         # enable / disable part 1
         set_module_args(dict(
             interface='Ethernet2/1',
+            mode='layer3',
             bfd='disable',
             bfd_echo='enable',
             hsrp_bfd='disable'))
@@ -111,6 +112,7 @@ class TestNxosInterfaceModule(TestNxosModule):
         # enable / disable part 2
         set_module_args(dict(
             interface='Ethernet2/2',
+            mode='layer3',
             bfd='enable',
             bfd_echo='disable',
             hsrp_bfd='enable'))
@@ -124,6 +126,7 @@ class TestNxosInterfaceModule(TestNxosModule):
         # idempotence part 1
         set_module_args(dict(
             interface='Ethernet2/1',
+            mode='layer3',
             bfd='enable',
             bfd_echo='disable',
             hsrp_bfd='enable'))
@@ -132,6 +135,7 @@ class TestNxosInterfaceModule(TestNxosModule):
         # idempotence part 2
         set_module_args(dict(
             interface='Ethernet2/2',
+            mode='layer3',
             bfd_echo='enable',
             hsrp_bfd='disable'))
         self.execute_module(changed=False)
