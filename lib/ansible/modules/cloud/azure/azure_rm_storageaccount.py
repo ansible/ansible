@@ -291,7 +291,6 @@ state:
             returned: always
             type: str
             sample: "Microsoft.Storage/storageAccounts"
-    }
 '''
 
 try:
