@@ -157,6 +157,7 @@ Some of the available aliases are:
 - ``cloud/cs``
 - ``cloud/foreman``
 - ``cloud/openshift``
+- ``cloud/sentry``
 - ``cloud/tower``
 - ``cloud/vcenter``
 

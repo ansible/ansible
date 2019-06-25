@@ -1,0 +1,72 @@
+---
+# ============================================================
+
+- name: test state=present for an unexisting sentry project
+  sentry_project:
+    api_token: "{{ api_token }}"
+    organization: sentry
+    project_name: ansible-sentry-create-1
+    project_slug: ansible-sentry-create-1
+    state: present
+    team: sentry
+    url: "http://{{ sentry_host }}:{{ sentry_port }}"
+  register: result_present
+
+- name: test state=absent for an existing sentry project
+  sentry_project:
+    api_token: "{{ api_token }}"
+    organization: sentry
+    project_name: ansible-sentry-create-1
+    project_slug: ansible-sentry-create-1
+    state: absent
+    team: sentry
+    url: "http://{{ sentry_host }}:{{ sentry_port }}"
+  register: result_absent
+
+- name: assert that the project has been created
+  assert:
+    that:
+      - "result_present.changed == true"
+      - "result_absent.changed == true"
+
+# ============================================================
+
+- name: test state=absent for an unexisting sentry project
+  sentry_project:
+    api_token: "{{ api_token }}"
+    organization: sentry
+    project_name: ansible-sentry-unexisted
+    project_slug: ansible-sentry-unexisted
+    state: absent
+    team: sentry
+    url: "http://{{ sentry_host }}:{{ sentry_port }}"
+  register: result_unexisted_absent
+
+- name: create a project for the next test
+  sentry_project:
+    api_token: "{{ api_token }}"
+    organization: sentry
+    project_name: ansible-sentry-existed
+    project_slug: ansible-sentry-existed
+    state: absent
+    team: sentry
+    url: "http://{{ sentry_host }}:{{ sentry_port }}"
+
+- name: test state=absent for an unexisting sentry project
+  sentry_project:
+    api_token: "{{ api_token }}"
+    organization: sentry
+    project_name: ansible-sentry-existed
+    project_slug: ansible-sentry-existed
+    state: absent
+    team: sentry
+    url: "http://{{ sentry_host }}:{{ sentry_port }}"
+  register: result_existed_present
+
+- name: assert that the project has been created
+  assert:
+    that:
+      - "result_unexisted_absent.changed == false"
+      - "result_existed_present.changed == false"
+
+# ============================================================
