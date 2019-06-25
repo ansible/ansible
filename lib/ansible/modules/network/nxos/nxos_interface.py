@@ -442,7 +442,7 @@ def map_obj_to_commands(updates, module):
                         add_command_to_interface(interface, cmd, commands)
 
                 if name and get_interface_type(name) == 'ethernet':
-                    if mode != obj_in_have.get('mode'):
+                    if mode and mode != obj_in_have.get('mode'):
                         admin_state = w.get('admin_state') or obj_in_have.get('admin_state')
                         if admin_state:
                             c1 = 'interface {0}'.format(normalize_interface(w['name']))
@@ -622,7 +622,6 @@ def map_config_to_obj(want, module):
                     obj['description'] = interface_table.get('desc')
 
                 elif intf_type == 'portchannel':
-                    # obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
                     obj['mtu'] = interface_table.get('eth_mtu')
