@@ -77,6 +77,10 @@ options:
             os_disk_size_gb:
                 description:
                     - Size of the OS disk.
+            vnet_subnet_id:
+                description:
+                    - The Subnet ID for a existing Subnet or if you use a different CIDR for the Nodes IP (Kubenet or Azure CNI)
+                    - Note: Does not overlap 169.254.0.0/16, 172.30.0.0/16, 172.31.0.0/16, 192.0.2.0/24
     service_principal:
         description:
             - The service principal suboptions.
