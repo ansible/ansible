@@ -169,7 +169,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         if getattr(value, '__ENCRYPTED__', False):
             # trigger decryption via __str__
-            value = to_text(value, nonstring='passthrough')
+            value = to_text(value, nonstring='passthru')
 
         return value
 
