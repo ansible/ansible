@@ -109,7 +109,7 @@ EXAMPLES = """
     mtu: 512
 
 - name: Delete interface using aggregate
-  junos_interface:
+  net_interface:
     aggregate:
       - { name: ge-0/0/1 }
       - { name: ge-0/0/2 }
