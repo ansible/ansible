@@ -351,8 +351,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # template the role name now, if needed
                     all_vars = variable_manager.get_vars(play=play, task=ir)
                     templar = Templar(loader=loader, variables=all_vars)
-                    if templar.is_template(ir._role_name):
-                        ir._role_name = templar.template(ir._role_name)
+                    ir._role_name = templar.template(ir._role_name)
 
                     # uses compiled list from object
                     blocks, _ = ir.get_block_list(variable_manager=variable_manager, loader=loader)
