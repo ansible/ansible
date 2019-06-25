@@ -214,7 +214,7 @@ options:
             - When true this limits the scale set to a single placement group, of max size 100 virtual machines.
         type: bool
         default: True
-        version_added: "2.8"
+        version_added: "2.9"
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
