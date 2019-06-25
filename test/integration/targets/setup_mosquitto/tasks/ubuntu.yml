@@ -1,0 +1,24 @@
+- name: Install https transport for apt
+  apt:
+    name: apt-transport-https
+    state: latest
+    force: yes
+
+- name: Install Mosquitto Server
+  apt:
+    name: mosquitto
+    state: latest
+  register: result
+  until: result is success
+  delay: 3
+  retries: 10
+
+- name: Ensure TLS config
+  copy:
+    src: mosquitto.conf
+    dest: /etc/mosquitto/mosquitto.conf
+
+- name: Start Mosquitto service
+  service:
+    name: mosquitto
+    state: restarted
