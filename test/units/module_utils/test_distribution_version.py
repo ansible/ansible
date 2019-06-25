@@ -7,7 +7,6 @@ __metaclass__ = type
 
 from itertools import product
 
-import mock
 import pytest
 
 from ansible.module_utils.six.moves import builtins
@@ -185,24 +184,13 @@ TESTSETS = [
     {
         "name": "openSUSE Leap 42.1",
         "input": {
-            "/etc/os-release": """
-NAME="openSUSE Leap"
-VERSION="42.1"
-VERSION_ID="42.1"
-PRETTY_NAME="openSUSE Leap 42.1 (x86_64)"
-ID=opensuse
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:opensuse:opensuse:42.1"
-BUG_REPORT_URL="https://bugs.opensuse.org"
-HOME_URL="https://opensuse.org/"
-ID_LIKE="suse"
-""",
-            "/etc/SuSE-release": """
-openSUSE 42.1 (x86_64)
-VERSION = 42.1
-CODENAME = Malachite
-# /etc/SuSE-release is deprecated and will be removed in the future, use /etc/os-release instead
-"""
+            "/etc/os-release": (
+                'NAME="openSUSE Leap"\nVERSION="42.1"\nVERSION_ID="42.1"\nPRETTY_NAME="openSUSE Leap 42.1 (x86_64)"\nID=opensuse\n'
+                'ANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:opensuse:opensuse:42.1"\nBUG_REPORT_URL="https://bugs.opensuse.org"\n'
+                'HOME_URL="https://opensuse.org/"\nID_LIKE="suse"'),
+            "/etc/SuSE-release": (
+                'openSUSE 42.1 (x86_64)\nVERSION = 42.1\nCODENAME = Malachite\n# /etc/SuSE-release is deprecated and will be removed in the future, '
+                'use /etc/os-release instead'),
         },
         "platform.dist": ['SuSE', '42.1', 'x86_64'],
         'distro': {
@@ -223,22 +211,13 @@ CODENAME = Malachite
     {
         'name': 'openSUSE 13.2',
         'input': {
-            '/etc/SuSE-release': """openSUSE 13.2 (x86_64)
-VERSION = 13.2
-CODENAME = Harlequin
-# /etc/SuSE-release is deprecated and will be removed in the future, use /etc/os-release instead
-""",
-            '/etc/os-release': """NAME=openSUSE
-VERSION="13.2 (Harlequin)"
-VERSION_ID="13.2"
-PRETTY_NAME="openSUSE 13.2 (Harlequin) (x86_64)"
-ID=opensuse
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:opensuse:opensuse:13.2"
-BUG_REPORT_URL="https://bugs.opensuse.org"
-HOME_URL="https://opensuse.org/"
-ID_LIKE="suse"
-"""
+            '/etc/SuSE-release': (
+                'openSUSE 13.2 (x86_64)\nVERSION = 13.2\nCODENAME = Harlequin\n'
+                '# /etc/SuSE-release is deprecated and will be removed in the future, use /etc/os-release instead'),
+            '/etc/os-release': (
+                'NAME=openSUSE\nVERSION="13.2 (Harlequin)"\nVERSION_ID="13.2"\nPRETTY_NAME="openSUSE 13.2 (Harlequin) (x86_64)"\nID=opensuse\n'
+                'ANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:opensuse:opensuse:13.2"\nBUG_REPORT_URL="https://bugs.opensuse.org"\n'
+                'HOME_URL="https://opensuse.org/"\nID_LIKE="suse"'),
         },
         'platform.dist': ('SuSE', '13.2', 'x86_64'),
         'distro': {
@@ -317,11 +296,7 @@ ID_LIKE="suse"
     {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 11.3",
         "input": {
-            "/etc/SuSE-release": """
-SUSE Linux Enterprise Server 11 (x86_64)
-VERSION = 11
-PATCHLEVEL = 3
-"""
+            "/etc/SuSE-release": "SUSE Linux Enterprise Server 11 (x86_64)\nVERSION = 11\nPATCHLEVEL = 3"
         },
         "platform.dist": ['SuSE', '11', 'x86_64'],
         'distro': {
@@ -342,20 +317,10 @@ PATCHLEVEL = 3
     {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 11.4",
         "input": {
-            "/etc/SuSE-release": """
-SUSE Linux Enterprise Server 11 (x86_64)
-VERSION = 11
-PATCHLEVEL = 4
-""",
-            "/etc/os-release": """
-NAME="SLES"
-VERSION="11.4"
-VERSION_ID="11.4"
-PRETTY_NAME="SUSE Linux Enterprise Server 11 SP4"
-ID="sles"
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:suse:sles:11:4"
-""",
+            "/etc/SuSE-release": "\nSUSE Linux Enterprise Server 11 (x86_64)\nVERSION = 11\nPATCHLEVEL = 4",
+            "/etc/os-release": (
+                'NAME="SLES"\nVERSION="11.4"\nVERSION_ID="11.4"\nPRETTY_NAME="SUSE Linux Enterprise Server 11 SP4"\nID="sles"\n'
+                'ANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles:11:4"'),
         },
         "platform.dist": ['SuSE', '11', 'x86_64'],
         'distro': {
@@ -376,22 +341,13 @@ CPE_NAME="cpe:/o:suse:sles:11:4"
     {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 12 SP0",
         "input": {
-            "/etc/SuSE-release": """
-SUSE Linux Enterprise Server 12 (x86_64)
-VERSION = 12
-PATCHLEVEL = 0
-# This file is deprecated and will be removed in a future service pack or release.
-# Please check /etc/os-release for details about this release.
-""",
-            "/etc/os-release": """
-NAME="SLES"
-VERSION="12"
-VERSION_ID="12"
-PRETTY_NAME="SUSE Linux Enterprise Server 12"
-ID="sles"
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:suse:sles:12"
-""",
+            "/etc/SuSE-release": (
+                '\nSUSE Linux Enterprise Server 12 (x86_64)\nVERSION = 12\nPATCHLEVEL = 0\n'
+                '# This file is deprecated and will be removed in a future service pack or release.\n'
+                '# Please check /etc/os-release for details about this release.'),
+            "/etc/os-release": (
+                'NAME="SLES"\nVERSION="12"\nVERSION_ID="12"\nPRETTY_NAME="SUSE Linux Enterprise Server 12"\nID="sles"\n'
+                'ANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles:12"'),
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
@@ -412,22 +368,13 @@ CPE_NAME="cpe:/o:suse:sles:12"
     {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 12 SP1",
         "input": {
-            "/etc/SuSE-release": """
-SUSE Linux Enterprise Server 12 (x86_64)
-VERSION = 12
-PATCHLEVEL = 0
-# This file is deprecated and will be removed in a future service pack or release.
-# Please check /etc/os-release for details about this release.
-""",
-            "/etc/os-release": """
-NAME="SLES"
-VERSION="12-SP1"
-VERSION_ID="12.1"
-PRETTY_NAME="SUSE Linux Enterprise Server 12 SP1"
-ID="sles"
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:suse:sles:12:sp1"
-            """,
+            "/etc/SuSE-release": (
+                '\nSUSE Linux Enterprise Server 12 (x86_64)\nVERSION = 12\nPATCHLEVEL = 0\n'
+                '# This file is deprecated and will be removed in a future service pack or release.\n'
+                '# Please check /etc/os-release for details about this release.'),
+            "/etc/os-release": (
+                'NAME="SLES"\nVERSION="12-SP1"\nVERSION_ID="12.1"\nPRETTY_NAME="SUSE Linux Enterprise Server 12 SP1"\nID="sles"\n'
+                'ANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles:12:sp1"'),
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
@@ -448,22 +395,13 @@ CPE_NAME="cpe:/o:suse:sles:12:sp1"
     {
         "name": "SLES4SAP 12 SP2",
         "input": {
-            "/etc/SuSE-release": """
-SUSE Linux Enterprise Server 12 (x86_64)
-VERSION = 12
-PATCHLEVEL = 2
-# This file is deprecated and will be removed in a future service pack or release.
-# Please check /etc/os-release for details about this release.
-""",
-            "/etc/os-release": """
-NAME="SLES_SAP"
-VERSION="12-SP2"
-VERSION_ID="12.2"
-PRETTY_NAME="SUSE Linux Enterprise Server for SAP Applications 12 SP2"
-ID="sles_sap"
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:suse:sles_sap:12:sp2"
-            """,
+            "/etc/SuSE-release": (
+                'SUSE Linux Enterprise Server 12 (x86_64)\nVERSION = 12\nPATCHLEVEL = 2\n'
+                '# This file is deprecated and will be removed in a future service pack or release.\n'
+                '# Please check /etc/os-release for details about this release.'),
+            "/etc/os-release": (
+                'NAME="SLES_SAP"\nVERSION="12-SP2"\nVERSION_ID="12.2"\nPRETTY_NAME="SUSE Linux Enterprise Server for SAP Applications 12 SP2"\n'
+                'ID="sles_sap"\nANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles_sap:12:sp2"'),
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
@@ -484,22 +422,13 @@ CPE_NAME="cpe:/o:suse:sles_sap:12:sp2"
     {
         "name": "SLES4SAP 12 SP3",
         "input": {
-            "/etc/SuSE-release": """
-SUSE Linux Enterprise Server 12 (x86_64)
-VERSION = 12
-PATCHLEVEL = 3
-# This file is deprecated and will be removed in a future service pack or release.
-# Please check /etc/os-release for details about this release.
-""",
-            "/etc/os-release": """
-NAME="SLES"
-VERSION="12-SP3"
-VERSION_ID="12.3"
-PRETTY_NAME="SUSE Linux Enterprise Server 12 SP3"
-ID="sles"
-ANSI_COLOR="0;32"
-CPE_NAME="cpe:/o:suse:sles_sap:12:sp3"
-            """,
+            "/etc/SuSE-release": (
+                'SUSE Linux Enterprise Server 12 (x86_64)VERSION = 12PATCHLEVEL = 3'
+                '\n# This file is deprecated and will be removed in a future service pack or release.\n'
+                '# Please check /etc/os-release for details about this release.'),
+            "/etc/os-release": (
+                'NAME="SLES"\nVERSION="12-SP3"\nVERSION_ID="12.3"\nPRETTY_NAME="SUSE Linux Enterprise Server 12 SP3"\n'
+                'ID="sles"\nANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles_sap:12:sp3"'),
         },
         "platform.dist": ['SuSE', '12', 'x86_64'],
         'distro': {
@@ -520,17 +449,10 @@ CPE_NAME="cpe:/o:suse:sles_sap:12:sp3"
     {
         "name": "Debian stretch/sid",
         "input": {
-            "/etc/os-release": """
-PRETTY_NAME="Debian GNU/Linux stretch/sid"
-NAME="Debian GNU/Linux"
-ID=debian
-HOME_URL="https://www.debian.org/"
-SUPPORT_URL="https://www.debian.org/support"
-BUG_REPORT_URL="https://bugs.debian.org/"
-""",
-            "/etc/debian_version": """
-            stretch/sid
-            """,
+            "/etc/os-release": (
+                'PRETTY_NAME="Debian GNU/Linux stretch/sid"\nNAME="Debian GNU/Linux"\nID=debian\nHOME_URL="https://www.debian.org/"\n'
+                'SUPPORT_URL="https://www.debian.org/support"\nBUG_REPORT_URL="https://bugs.debian.org/"'),
+            "/etc/debian_version": 'stretch/sid\n',
         },
         "platform.dist": ('debian', 'stretch/sid', ''),
         'distro': {
@@ -551,16 +473,9 @@ BUG_REPORT_URL="https://bugs.debian.org/"
     {
         'name': "Debian 7.9",
         'input': {
-            '/etc/os-release': """PRETTY_NAME="Debian GNU/Linux 7 (wheezy)"
-NAME="Debian GNU/Linux"
-VERSION_ID="7"
-VERSION="7 (wheezy)"
-ID=debian
-ANSI_COLOR="1;31"
-HOME_URL="http://www.debian.org/"
-SUPPORT_URL="http://www.debian.org/support/"
-BUG_REPORT_URL="http://bugs.debian.org/"
-"""
+            '/etc/os-release': (
+                'PRETTY_NAME="Debian GNU/Linux 7 (wheezy)"\nNAME="Debian GNU/Linux"\nVERSION_ID="7"\nVERSION="7 (wheezy)"\nID=debian\nANSI_COLOR="1;31"\n'
+                'HOME_URL="http://www.debian.org/"\nSUPPORT_URL="http://www.debian.org/support/"\nBUG_REPORT_URL="http://bugs.debian.org/"'),
         },
         'platform.dist': ('debian', '7.9', ''),
         'distro': {
@@ -581,21 +496,11 @@ BUG_REPORT_URL="http://bugs.debian.org/"
     {
         'name': "SteamOS 2.0",
         'input': {
-            '/etc/os-release': """PRETTY_NAME="SteamOS GNU/Linux 2.0 (brewmaster)"
-NAME="SteamOS GNU/Linux"
-VERSION_ID="2"
-VERSION="2 (brewmaster)"
-ID=steamos
-ID_LIKE=debian
-HOME_URL="http://www.steampowered.com/"
-SUPPORT_URL="http://support.steampowered.com/"
-BUG_REPORT_URL="http://support.steampowered.com/"
-""",
-            '/etc/lsb-release': """DISTRIB_ID=SteamOS
-DISTRIB_RELEASE=2.0
-DISTRIB_CODENAME=brewmaster
-DISTRIB_DESCRIPTION="SteamOS 2.0"
-"""
+            '/etc/os-release': (
+                'PRETTY_NAME="SteamOS GNU/Linux 2.0 (brewmaster)"\nNAME="SteamOS GNU/Linux"\nVERSION_ID="2"\nVERSION="2 (brewmaster)"\n'
+                'ID=steamos\nID_LIKE=debian\nHOME_URL="http://www.steampowered.com/"\nSUPPORT_URL="http://support.steampowered.com/"\n'
+                'BUG_REPORT_URL="http://support.steampowered.com/"'),
+            '/etc/lsb-release': 'DISTRIB_ID=SteamOS\nDISTRIB_RELEASE=2.0\nDISTRIB_CODENAME=brewmaster\nDISTRIB_DESCRIPTION="SteamOS 2.0"',
         },
         'platform.dist': ('Steamos', '2.0', 'brewmaster'),
         'distro': {
@@ -616,15 +521,8 @@ DISTRIB_DESCRIPTION="SteamOS 2.0"
     {
         'name': "Devuan",
         'input': {
-            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux 1 (jessie)"
-NAME="Devuan GNU/Linux"
-VERSION_ID="1"
-VERSION="1 (jessie)"
-ID=devuan
-HOME_URL="http://www.devuan.org/"
-SUPPORT_URL="http://www.devuan.org/support/"
-BUG_REPORT_URL="https://bugs.devuan.org/"
-"""
+            '/etc/os-release': ('PRETTY_NAME="Devuan GNU/Linux 1 (jessie)"\nNAME="Devuan GNU/Linux"\nVERSION_ID="1"\nVERSION="1 (jessie)"\n'
+                'ID=devuan\nHOME_URL="http://www.devuan.org/"\nSUPPORT_URL="http://www.devuan.org/support/"\nBUG_REPORT_URL="https://bugs.devuan.org/"'),
         },
         'platform.dist': ('', '', ''),
         'distro': {
@@ -645,13 +543,9 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
     {
         'name': "Devuan",
         'input': {
-            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux ascii"
-NAME="Devuan GNU/Linux"
-ID=devuan
-HOME_URL="https://www.devuan.org/"
-SUPPORT_URL="https://devuan.org/os/community"
-BUG_REPORT_URL="https://bugs.devuan.org/"
-"""
+            '/etc/os-release': (
+                'PRETTY_NAME="Devuan GNU/Linux ascii"\nNAME="Devuan GNU/Linux"\nID=devuan\nHOME_URL="https://www.devuan.org/"\n'
+                'SUPPORT_URL="https://devuan.org/os/community"\nBUG_REPORT_URL="https://bugs.devuan.org/"'),
         },
         'platform.dist': ('', '', ''),
         'distro': {
@@ -703,11 +597,7 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
         'name': "Ubuntu 10.04 guess",
         'input':
             {
-                '/etc/lsb-release': """DISTRIB_ID=Ubuntu
-DISTRIB_RELEASE=10.04
-DISTRIB_CODENAME=lucid
-DISTRIB_DESCRIPTION="Ubuntu 10.04.4 LTS
-"""
+                '/etc/lsb-release': 'DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=10.04\nDISTRIB_CODENAME=lucid\nDISTRIB_DESCRIPTION="Ubuntu 10.04.4 LTS',
             },
         'platform.dist': ('Ubuntu', '10.04', 'lucid'),
         'distro': {
@@ -729,21 +619,10 @@ DISTRIB_DESCRIPTION="Ubuntu 10.04.4 LTS
     {
         'name': "Ubuntu 14.04",
         'input': {
-            '/etc/lsb-release': """DISTRIB_ID=Ubuntu
-DISTRIB_RELEASE=14.04
-DISTRIB_CODENAME=trusty
-DISTRIB_DESCRIPTION="Ubuntu 14.04.4 LTS"
-""",
-            '/etc/os-release': """NAME="Ubuntu"
-VERSION="14.04.4 LTS, Trusty Tahr"
-ID=ubuntu
-ID_LIKE=debian
-PRETTY_NAME="Ubuntu 14.04.4 LTS"
-VERSION_ID="14.04"
-HOME_URL="http://www.ubuntu.com/"
-SUPPORT_URL="http://help.ubuntu.com/"
-BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
-"""
+            '/etc/lsb-release': 'DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=14.04\nDISTRIB_CODENAME=trusty\nDISTRIB_DESCRIPTION="Ubuntu 14.04.4 LTS"',
+            '/etc/os-release': (
+                'NAME="Ubuntu"\nVERSION="14.04.4 LTS, Trusty Tahr"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME="Ubuntu 14.04.4 LTS"\nVERSION_ID="14.04"\n'
+                'HOME_URL="http://www.ubuntu.com/"\nSUPPORT_URL="http://help.ubuntu.com/"\nBUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"'),
         },
         'platform.dist': ('Ubuntu', '14.04', 'trusty'),
         'distro': {
@@ -763,18 +642,12 @@ BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
     },
     {
         'name': "Ubuntu 12.04",
-        'input': {'/etc/lsb-release': """DISTRIB_ID=Ubuntu
-DISTRIB_RELEASE=12.04
-DISTRIB_CODENAME=precise
-DISTRIB_DESCRIPTION="Ubuntu 12.04.5 LTS"
-""",
-                  '/etc/os-release': """NAME="Ubuntu"
-VERSION="12.04.5 LTS, Precise Pangolin"
-ID=ubuntu
-ID_LIKE=debian
-PRETTY_NAME="Ubuntu precise (12.04.5 LTS)"
-VERSION_ID="12.04"
-"""},
+        'input': {
+            '/etc/lsb-release': 'DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=12.04\nDISTRIB_CODENAME=precise\nDISTRIB_DESCRIPTION="Ubuntu 12.04.5 LTS"',
+            '/etc/os-release': (
+                'NAME="Ubuntu"\nVERSION="12.04.5 LTS, Precise Pangolin"\nID=ubuntu\nID_LIKE=debian\n'
+                'PRETTY_NAME="Ubuntu precise (12.04.5 LTS)"\nVERSION_ID="12.04"'),
+        },
         'platform.dist': ('Ubuntu', '12.04', 'precise'),
         'distro': {
             'codename': 'precise',
@@ -852,22 +725,11 @@ VERSION_ID="12.04"
     {
         'name': 'Core OS',
         'input': {
-            '/etc/os-release': """
-NAME=CoreOS
-ID=coreos
-VERSION=976.0.0
-VERSION_ID=976.0.0
-BUILD_ID=2016-03-03-2324
-PRETTY_NAME="CoreOS 976.0.0 (Coeur Rouge)"
-ANSI_COLOR="1;32"
-HOME_URL="https://coreos.com/"
-BUG_REPORT_URL="https://github.com/coreos/bugs/issues"
-""",
-            '/etc/lsb-release': """DISTRIB_ID=CoreOS
-DISTRIB_RELEASE=976.0.0
-DISTRIB_CODENAME="Coeur Rouge"
-DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
-""",
+            '/etc/os-release': (
+                'NAME=CoreOS\nID=coreos\nVERSION=976.0.0\nVERSION_ID=976.0.0\nBUILD_ID=2016-03-03-2324\nPRETTY_NAME="CoreOS 976.0.0 (Coeur Rouge)"\n'
+                'ANSI_COLOR="1;32"\nHOME_URL="https://coreos.com/"\nBUG_REPORT_URL="https://github.com/coreos/bugs/issues"'),
+            '/etc/lsb-release': (
+                'DISTRIB_ID=CoreOS\nDISTRIB_RELEASE=976.0.0\nDISTRIB_CODENAME="Coeur Rouge"\nDISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"'),
         },
         'platform.dist': ('', '', ''),
         'distro': {
@@ -1341,56 +1203,38 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
 
     # ClearLinux https://github.com/ansible/ansible/issues/31501#issuecomment-340861535
-{
-    "platform.dist": [
-        "Clear Linux OS",
-        "26580",
-        "clear-linux-os"
-    ],
-    'distro': {
-        'codename': '',
-        'id': 'clear-linux-os',
-        'name': 'Clear Linux OS',
-        'version': '26580',
-        'version_best': '26580',
+    {
+        "platform.dist": [
+            "Clear Linux OS",
+            "26580",
+            "clear-linux-os"
+        ],
+        'distro': {
+            'codename': '',
+            'id': 'clear-linux-os',
+            'name': 'Clear Linux OS',
+            'version': '26580',
+            'version_best': '26580',
+        },
+        "input": {
+            "/etc/os-release": (
+                'NAME="Clear Linux OS"\nVERSION=1\nID=clear-linux-os\nID_LIKE=clear-linux-os\nVERSION_ID=26580\nPRETTY_NAME="Clear Linux OS"\n'
+                'ANSI_COLOR="1;35"\nHOME_URL="https://clearlinux.org"\nSUPPORT_URL="https://clearlinux.org"\n'
+                'BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"\nPRIVACY_POLICY_URL="http://www.intel.com/privacy"'),
+            "/usr/lib/os-release": (
+                'NAME="Clear Linux OS"\nVERSION=1\nID=clear-linux-os\nID_LIKE=clear-linux-os\nVERSION_ID=26580\nPRETTY_NAME="Clear Linux OS"\n'
+                'ANSI_COLOR="1;35"\nHOME_URL="https://clearlinux.org"\nSUPPORT_URL="https://clearlinux.org"\n'
+                'BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"\nPRIVACY_POLICY_URL="http://www.intel.com/privacy"'),
+        },
+        "name": "ClearLinux 26580",
+        "result": {
+            "distribution_release": "clear-linux-os",
+            "distribution": "Clear Linux OS",
+            "distribution_major_version": "26580",
+            "os_family": "ClearLinux",
+            "distribution_version": "26580"
+        }
     },
-    "input": {
-        "/etc/os-release": '''
-NAME="Clear Linux OS"
-VERSION=1
-ID=clear-linux-os
-ID_LIKE=clear-linux-os
-VERSION_ID=26580
-PRETTY_NAME="Clear Linux OS"
-ANSI_COLOR="1;35"
-HOME_URL="https://clearlinux.org"
-SUPPORT_URL="https://clearlinux.org"
-BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
-PRIVACY_POLICY_URL="http://www.intel.com/privacy"
-''',
-        "/usr/lib/os-release": '''
-NAME="Clear Linux OS"
-VERSION=1
-ID=clear-linux-os
-ID_LIKE=clear-linux-os
-VERSION_ID=26580
-PRETTY_NAME="Clear Linux OS"
-ANSI_COLOR="1;35"
-HOME_URL="https://clearlinux.org"
-SUPPORT_URL="https://clearlinux.org"
-BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
-PRIVACY_POLICY_URL="http://www.intel.com/privacy"
-'''
-    },
-    "name": "ClearLinux 26580",
-    "result": {
-        "distribution_release": "clear-linux-os",
-        "distribution": "Clear Linux OS",
-        "distribution_major_version": "26580",
-        "os_family": "ClearLinux",
-        "distribution_version": "26580"
-    }
-},
     # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
     # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {
@@ -1421,16 +1265,10 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
     {
         'name': "Cumulus Linux 3.7.3",
         'input': {
-            '/etc/os-release': """NAME="Cumulus Linux"
-VERSION_ID=3.7.3
-VERSION="Cumulus Linux 3.7.3"
-PRETTY_NAME="Cumulus Linux"
-ID=cumulus-linux
-ID_LIKE=debian
-CPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:3.7.3
-HOME_URL="http://www.cumulusnetworks.com/"
-SUPPORT_URL="http://support.cumulusnetworks.com/"
-"""
+            '/etc/os-release': (
+                'NAME="Cumulus Linux"\nVERSION_ID=3.7.3\nVERSION="Cumulus Linux 3.7.3"\nPRETTY_NAME="Cumulus Linux"\nID=cumulus-linux\n'
+                'ID_LIKE=debian\nCPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:3.7.3\nHOME_URL="http://www.cumulusnetworks.com/"\n'
+                'SUPPORT_URL="http://support.cumulusnetworks.com/"'),
         },
         'platform.dist': ('debian', '8.11', ''),
         'distro': {
@@ -1451,16 +1289,10 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
     {
         'name': "Cumulus Linux 2.5.4",
         'input': {
-            '/etc/os-release': """NAME="Cumulus Linux"
-VERSION_ID=2.5.4
-VERSION="2.5.4-6dc6e80-201510091936-build"
-PRETTY_NAME="Cumulus Linux"
-ID=cumulus-linux
-ID_LIKE=debian
-CPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:2.5.4-6dc6e80-201510091936-build
-HOME_URL="http://www.cumulusnetworks.com/"
-SUPPORT_URL="http://support.cumulusnetworks.com/"
-"""
+            '/etc/os-release': (
+                'NAME="Cumulus Linux"\nVERSION_ID=2.5.4\nVERSION="2.5.4-6dc6e80-201510091936-build"\nPRETTY_NAME="Cumulus Linux"\nID=cumulus-linux\n'
+                'ID_LIKE=debian\nCPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:2.5.4-6dc6e80-201510091936-build\nHOME_URL="http://www.cumulusnetworks.com/"\n'
+                'SUPPORT_URL="http://support.cumulusnetworks.com/"'),
         },
         'platform.dist': ('', '', ''),
         'distro': {
@@ -1485,8 +1317,14 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
             "sonya"
         ],
         "input": {
-            "/etc/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.2 (Sonya)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.2\"\nVERSION_ID=\"18.2\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sonya\nUBUNTU_CODENAME=xenial\n",
-            "/usr/lib/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.2 (Sonya)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.2\"\nVERSION_ID=\"18.2\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sonya\nUBUNTU_CODENAME=xenial\n",
+            "/etc/os-release": (
+                'NAME="Linux Mint"\nVERSION="18.2 (Sonya)"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME="Linux Mint 18.2"\n'
+                'VERSION_ID="18.2"\nHOME_URL="http://www.linuxmint.com/"\nSUPPORT_URL="http://forums.linuxmint.com/"\n'
+                'BUG_REPORT_URL="http://bugs.launchpad.net/linuxmint/"\nVERSION_CODENAME=sonya\nUBUNTU_CODENAME=xenial\n'),
+            "/usr/lib/os-release": (
+                'NAME="Linux Mint"\nVERSION="18.2 (Sonya)"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME="Linux Mint 18.2"\n'
+                'VERSION_ID="18.2"\nHOME_URL="http://www.linuxmint.com/"\nSUPPORT_URL="http://forums.linuxmint.com/"\n'
+                'BUG_REPORT_URL="http://bugs.launchpad.net/linuxmint/"\nVERSION_CODENAME=sonya\nUBUNTU_CODENAME=xenial\n'),
             "/etc/lsb-release": "DISTRIB_ID=LinuxMint\nDISTRIB_RELEASE=18.2\nDISTRIB_CODENAME=sonya\nDISTRIB_DESCRIPTION=\"Linux Mint 18.2 Sonya\"\n"
         },
         "result": {
