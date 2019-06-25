@@ -30,7 +30,6 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.addresses import parse_address
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.template import Templar
@@ -168,7 +167,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         if self.templar.is_template(value):
             value = self.templar.template(value)
 
-        if isinstance(value, AnsibleVaultEncryptedUnicode):
+        if getattr(value, '__ENCRYPTED__', False):
             # trigger decryption via __str__
             value = to_text(value, nonstring='passthrough')
 
