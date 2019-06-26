@@ -235,17 +235,17 @@
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
     name: myVersion
-    absent: yes
+    state: absent
 
 - name: Delete gallery image
   azure_rm_galleryimage:
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     name: myImage
-    absent: yes
+    state: absent
 
 - name: Delete a simple gallery.
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
     name: myGallery{{ rpfx }}
-    absent: yes
+    state: absent

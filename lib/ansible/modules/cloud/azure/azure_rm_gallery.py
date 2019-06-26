@@ -25,6 +25,7 @@ options:
     description:
       - The name of the resource group.
     required: true
+    type: str
   name:
     description:
       - >-
@@ -32,6 +33,7 @@ options:
         alphabets and numbers with dots and periods allowed in the middle. The
         maximum length is 80 characters.
     required: true
+    type: str
   location:
     description:
       - Resource location
@@ -41,6 +43,7 @@ options:
       - >-
         The description of this Shared Image Gallery resource. This property is
         updatable.
+    type: str
   state:
     description:
       - Assert the state of the Gallery.
@@ -48,6 +51,7 @@ options:
         Use C(present) to create or update an Gallery and C(absent) to delete
         it.
     default: present
+    type: str
     choices:
       - absent
       - present

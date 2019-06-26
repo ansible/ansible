@@ -25,18 +25,21 @@ options:
     description:
       - The name of the resource group.
     required: true
+    type: str
   gallery_name:
     description:
       - >-
         The name of the Shared Image Gallery in which the Image Definition
         resides.
     required: true
+    type: str
   gallery_image_name:
     description:
       - >-
         The name of the gallery Image Definition in which the Image Version is
         to be created.
     required: true
+    type: str
   name:
     description:
       - >-
@@ -45,14 +48,17 @@ options:
         period. Digits must be within the range of a 32-bit integer. Format:
         <MajorVersion>.<MinorVersion>.<Patch>
     required: true
+    type: str
   location:
     description:
       - Resource location
     required: true
+    type: str
   publishing_profile:
     description:
       - undefined
     required: true
+    type: dict
     suboptions:
       target_regions:
         description:
@@ -64,40 +70,48 @@ options:
           name:
             description:
               - Region name.
+            type: str
           regional_replica_count:
             description:
               - >-
                 The number of replicas of the Image Version to be created per
                 region. This property would take effect for a region when
                 regionalReplicaCount is not specified. This property is updatable.
+            type: str
           storage_account_type:
             description:
               - Storage account type.
+            type: str
       managed_image:
         description:
-          - undefined
+          - Managed image reference, could be resource id, or dictionary containing C(resource_group) and C(name)
         required: true
+        type: raw
       replica_count:
         description:
           - >-
             The number of replicas of the Image Version to be created per
             region. This property would take effect for a region when
             regionalReplicaCount is not specified. This property is updatable.
+            type: number
       exclude_from_latest:
         description:
           - >-
             If set to true, Virtual Machines deployed from the latest version of
             the Image Definition won't use this Image Version.
+            type: bool
       end_of_life_date:
         description:
           - >-
             The end of life date of the gallery Image Version. This property can
             be used for decommissioning purposes. This property is updatable.
+        type: datetime
       storage_account_type:
         description:
           - >-
             Specifies the storage account type to be used to store the image.
             This property is not updatable.
+        type: str
   state:
     description:
       - Assert the state of the GalleryImageVersion.
@@ -108,6 +122,7 @@ options:
     choices:
       - absent
       - present
+    type: str
 extends_documentation_fragment:
   - azure
   - azure_tags
