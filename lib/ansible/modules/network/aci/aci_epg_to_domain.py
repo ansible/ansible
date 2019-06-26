@@ -64,6 +64,7 @@ options:
     - Switching Mode used by the switch
     type: str
     choices: [ AVE, native ]
+    default: native
   epg:
     description:
     - Name of the end point group.
