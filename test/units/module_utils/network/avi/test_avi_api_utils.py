@@ -570,7 +570,6 @@ class TestAviApiUtils(unittest.TestCase):
         cleanup_absent_fields(obj)
         assert 'scalar_field' not in obj
         for elem in obj['list_fields']:
-            print elem
             assert 'y' not in elem
 
     def testGSLB(self):
