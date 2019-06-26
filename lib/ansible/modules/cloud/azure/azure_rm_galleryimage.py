@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimage
 version_added: '2.9'
-short_description: Manage Azure GalleryImage instance.
+short_description: Manage Azure SIG Image instance.
 description:
-  - 'Create, update and delete instance of Azure GalleryImage.'
+  - 'Create, update and delete instance of Azure SIG Image.'
 options:
   resource_group:
     description:
@@ -44,7 +44,6 @@ options:
   location:
     description:
       - Resource location
-    required: true
     type: str
   description:
     description:
@@ -87,10 +86,11 @@ options:
       - >-
         The end of life date of the gallery Image Definition. This property can
         be used for decommissioning purposes. This property is updatable.
+        Format should be according to ISO-8601, for instance "2019-06-26".
     type: str
   identifier:
     description:
-      - undefined
+      - Image identifier.
     required: true
     type: dict
     suboptions:
@@ -111,12 +111,12 @@ options:
         type: str
   recommended:
     description:
-      - undefined
+      - Recommended parameter values.
     type: dict
     suboptions:
       v_cpus:
         description:
-          - undefined
+          - Number of virtual CPUs.
         type: dict
         suboptions:
           min:
@@ -129,7 +129,7 @@ options:
             type: int
       memory:
         description:
-          - undefined
+          - Memory.
         type: dict
         suboptions:
           min:
@@ -142,16 +142,16 @@ options:
             type: int
   disallowed:
     description:
-      - undefined
+      - Disalloved parameter values.
     type: dict
     suboptions:
       disk_types:
         description:
-          - A list of disk types.
+          - A list of disallowed disk types.
         type: list
   purchase_plan:
     description:
-      - undefined
+      - Purchase plan.
     type: dict
     suboptions:
       name:

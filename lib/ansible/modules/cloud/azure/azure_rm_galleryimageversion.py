@@ -52,11 +52,10 @@ options:
   location:
     description:
       - Resource location
-    required: true
     type: str
   publishing_profile:
     description:
-      - undefined
+      - Publishing profile.
     required: true
     type: dict
     suboptions:
@@ -105,6 +104,7 @@ options:
           - >-
             The end of life date of the gallery Image Version. This property can
             be used for decommissioning purposes. This property is updatable.
+            Format should be according to ISO-8601, for instance "2019-06-26".
         type: str
       storage_account_type:
         description:

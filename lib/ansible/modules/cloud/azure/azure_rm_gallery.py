@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_gallery
 version_added: '2.9'
-short_description: Manage Azure Gallery instance.
+short_description: Manage Azure Shared Image Gallery instance.
 description:
-  - 'Create, update and delete instance of Azure Gallery.'
+  - 'Create, update and delete instance of Azure Shared Image Gallery (SIG).'
 options:
   resource_group:
     description:
@@ -29,15 +29,13 @@ options:
   name:
     description:
       - >-
-        The name of the Shared Image Gallery. The allowed characters are
-        alphabets and numbers with dots and periods allowed in the middle. The
-        maximum length is 80 characters.
+        The name of the Shared Image Gallery.
+        Valid names consist of less than 80 alphanumeric characters, underscores and periods.
     required: true
     type: str
   location:
     description:
       - Resource location
-    required: true
     type: str
   description:
     description:
