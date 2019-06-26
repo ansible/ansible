@@ -1,4 +1,16 @@
 ---
+# NOTE(pabelanger): We sometime see random failures from iosxr about paramiko
+# establishing the control socket for network_cli. It seems iosxr is closing
+# the socket for some reason.  This is our attempt to ensure the port is open
+# before starting paramiko.
+- name: wait for iosxr SSH connection
+  delegate_to: localhost
+  wait_for:
+    host: "{{ hostvars[item].ansible_host }}"
+    port: 22
+    search_regex: SSH
+  with_inventory_hostnames: iosxr
+
 - name: Ensure we have loopback 888 for testing
   iosxr_config:
     src: config.j2
