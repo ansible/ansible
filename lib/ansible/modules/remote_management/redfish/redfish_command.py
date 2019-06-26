@@ -203,7 +203,7 @@ EXAMPLES = '''
       password: "{{ password }}"
       target_username: "{{ target_username }}"
 
- - name: Enable user
+  - name: Enable user
     redfish_command:
       category: Accounts
       command: EnableUser
@@ -212,7 +212,7 @@ EXAMPLES = '''
       password: "{{ password }}"
       target_username: "{{ target_username }}"
 
- - name: Add and enable user
+  - name: Add and enable user
     redfish_command:
       category: Accounts
       command: AddUser,EnableUser
@@ -307,7 +307,7 @@ def main():
 
     # user to add/modify/delete
     user = {'target_id': module.params['id'],
-            'target_username':  module.params['target_username'],
+            'target_username': module.params['target_username'],
             'new_username': module.params['new_username'],
             'new_password': module.params['new_password'],
             'roleid': module.params['roleid']}
