@@ -41,7 +41,7 @@ options:
   username:
     required: true
     description:
-      - User for authentication with OOB controller
+      - Username for authentication with OOB controller
     type: str
     version_added: "2.8"
   password:
@@ -51,26 +51,33 @@ options:
     type: str
   id:
     required: false
+    aliases: [ target_id ]
     description:
-      - ID of user to add/delete/modify
+      - ID of account to delete/modify
     type: str
     version_added: "2.8"
+  target_username:
+    required: false
+    description:
+      - Username of account to delete/modify
+    type: str
+    version_added: "2.9"
   new_username:
     required: false
     description:
-      - name of user to add/delete/modify
+      - Username of account to add
     type: str
     version_added: "2.8"
   new_password:
     required: false
     description:
-      - password of user to add/delete/modify
+      - New password of account to add/modify
     type: str
     version_added: "2.8"
   roleid:
     required: false
     description:
-      - role of user to add/delete/modify
+      - Role of account to add/modify
     type: str
     version_added: "2.8"
   bootdevice:
@@ -146,26 +153,74 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
-  - name: Add and enable user
+  - name: Add user
+    redfish_command:
+      category: Accounts
+      command: AddUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      new_username: "{{ new_username }}"
+      new_password: "{{ new_password }}"
+      roleid: "{{ roleid }}"
+
+  - name: Add user on service where existing account Id needs to be PATCHed
+    redfish_command:
+      category: Accounts
+      command: AddUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      target_id: "{{ target_id }}"
+      new_username: "{{ new_username }}"
+      new_password: "{{ new_password }}"
+      roleid: "{{ roleid }}"
+
+  - name: Delete user
+    redfish_command:
+      category: Accounts
+      command: DeleteUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      target_username: "{{ target_username }}"
+
+  - name: Delete user with Id property of target_id
+    redfish_command:
+      category: Accounts
+      command: DeleteUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      target_id: "{{ target_id }}"
+
+  - name: Disable user
+    redfish_command:
+      category: Accounts
+      command: DisableUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      target_username: "{{ target_username }}"
+
+ - name: Enable user
+    redfish_command:
+      category: Accounts
+      command: EnableUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      target_username: "{{ target_username }}"
+
+ - name: Add and enable user
     redfish_command:
       category: Accounts
       command: AddUser,EnableUser
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      id: "{{ id }}"
-      new_username: "{{ new_username }}"
-      new_password: "{{ new_password }}"
+      target_username: "{{ target_username }}"
       roleid: "{{ roleid }}"
-
-  - name: Disable and delete user
-    redfish_command:
-      category: Accounts
-      command: ["DisableUser", "DeleteUser"]
-      baseuri: "{{ baseuri }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      id: "{{ id }}"
 
   - name: Update user password
     redfish_command:
@@ -174,8 +229,18 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      id: "{{ id }}"
+      target_username: "{{ target_username }}"
       new_password: "{{ new_password }}"
+
+  - name: Update user role
+    redfish_command:
+      category: Accounts
+      command: UpdateUserRole
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      target_username: "{{ target_username }}"
+      roleid: "{{ roleid }}"
 
   - name: Clear Manager Logs with a timeout of 20 seconds
     redfish_command:
@@ -220,7 +285,8 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            id=dict(),
+            id=dict(aliases=["target_id"]),
+            target_username=dict(),
             new_username=dict(),
             new_password=dict(no_log=True),
             roleid=dict(),
@@ -240,10 +306,11 @@ def main():
              'pswd': module.params['password']}
 
     # user to add/modify/delete
-    user = {'userid': module.params['id'],
-            'username': module.params['new_username'],
-            'userpswd': module.params['new_password'],
-            'userrole': module.params['roleid']}
+    user = {'target_id': module.params['id'],
+            'target_username':  module.params['target_username'],
+            'new_username': module.params['new_username'],
+            'new_password': module.params['new_password'],
+            'roleid': module.params['roleid']}
 
     # timeout
     timeout = module.params['timeout']
