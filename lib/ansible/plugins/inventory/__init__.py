@@ -165,6 +165,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.inventory = None
         self.display = display
         self._vars = {}
+        self.templar = None
 
     def get_option(self, option):
 
@@ -197,16 +198,11 @@ class BaseInventoryPlugin(AnsiblePlugin):
         '''
 
         self.inventory = inventory
-<<<<<<< HEAD
-        self.templar = Templar(loader=loader)
         self._vars = load_extra_vars(loader)
-=======
-
         self.loader = loader
         # TODO: move version function to other area as CLI creates circular refs
         variables = combine_vars(load_extra_vars(loader=self.loader), load_options_vars(version=None))
         self.templar = Templar(loader=loader, variables=variables)
->>>>>>> 13383f9499 (Add templating to inventory plugin options)
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check
