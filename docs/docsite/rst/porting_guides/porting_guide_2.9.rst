@@ -143,8 +143,116 @@ Noteworthy module changes
 Plugins
 =======
 
-No notable changes
+AWS Inventory Plugin
+--------------------
 
+The ``aws_ec2`` inventory plugin has been updated to support ``iam_role_arn`` as well as OR instance filters.
+This enables migration from the ``ec2.py`` script.
+
+NOTE:  The ``aws_ec2`` inventory plugin only supports EC2 instances.  RDS, Elasticache, and Route53 objects can not
+be retrieved with the plugin.
+
+The plugin must be enabled in your ``ansible.cfg`` file.::
+
+    [inventory]
+    enable_plugins = host_list, yaml, ini, aws_ec2
+
+
+Plugin Configuration
+~~~~~~~~~~~~~~~~~~~~
+
+The ``ec2.py`` script used an ``ec2.ini`` file to store configuration, which could either be alongside the script or specified
+via an environment variable of ``export EC2_INI_PATH='/path/to/file``.
+
+The plugin uses a yaml configuration file which must be named ending in ``aws_ec2.yml`` or ``aws_ec2.yaml``.  Valid filenames
+would include:
+
+* ``aws_ec2.yml``
+* ``production_aws_ec2.yml``
+* ``staging_aws_ec2.yaml``
+
+But not:
+
+  * ``aws_ec2_test.yml``
+  * ``aws_ec2.ini``
+  * ``ec2.yml``
+
+The configuration file can either be specified in ``ansible.cfg`` as the default inventory source::
+
+    [defaults]
+    inventory = /path/to/aws_ec2.yml
+
+    [inventory]
+    enable_plugins = aws_ec2
+
+
+Or it can be passed as an argument on the command-line::
+
+     ansible-inventory --list -i /path/to/aws_ec2.yml
+
+Filters
+~~~~~~~
+
+The plugin takes a yaml list of sets of filters.  List items will be treated as AND filters, and separate lists will be treated
+as OR filters.
+
+If you used this filter with the script::
+
+    ## Combined AND/OR filters
+    EC2_INSTANCE_FILTERS='availability-zone=us-west-2b,hypervisor=xen,availability-zone=us-east1b&instance-type=t2.micro'
+
+Your aws_ec2.yml filter option should look like::
+
+    plugin: aws_ec2
+    filters:
+      - availability-zone: us-west-2b  ## Will match us-west-2b OR
+      - hypervisor: xen  ## xen hypervisor OR
+      - availability-zone: us-east-1b  ## us-east-1b AND type t2.micro
+        instance-type: t2.micro
+
+
+If you used this filter::
+
+    ## AND filters only
+    EC2_INSTANCE_FILTERS='availability-zone=us-east1b&tag:Name=web'
+
+Your aws_ec2.yml filter option should look like::
+
+    plugin: aws_ec2
+    filters:
+      availability-zone: us-east-1b  ## us-east-1b AND Name: web
+      tag:Name: web
+
+If you used this filter with the script::
+
+    ## OR filters only
+    EC2_INSTANCE_FILTERS='tag:Name=database,tag:Name=web'
+
+Your aws_ec2.yml filter option should look like::
+
+        plugin: aws_ec2
+    filters:
+      - tag:Name: database  ## Name: database OR Name: web
+      - tag:Name: web
+
+Credentials
+~~~~~~~~~~~
+
+The plugin supports the same authentication environment variables  as the script and all :ref:`AWS plugins<guide_aws>`.
+Additionally, credentials can be specified in the aws_ec2.yml file.::
+
+    plugin: aws_ec2
+    aws_access_key: AWS_ACCESS_KEY_ID
+    aws_secret_key: AWS_SECRET_KEY
+
+The ec2.py script took a value of ``iam_role`` in the ``ec2.ini`` file to specify a role to assume for the connection.
+For the plugin, you would configure your ``aws_ec2.yml`` file with::
+
+    plugin: aws_ec2
+    iam_role_arn: arn:aws:iam::112233445566:role/example
+
+
+See the :ref:`plugin docs<aws_ec2_inventory>` for more information.
 
 Porting custom scripts
 ======================

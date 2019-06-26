@@ -1,0 +1,2 @@
+minor_changes:
+  - ec2 inventory plugin: The plugin now supports a filter syntax for OR filters. This facilitates migration from the ec2.py script.
