@@ -226,9 +226,6 @@
     that: 
       - output.changed
 
-# do  not test delete at the moment as it will fail due to mysterious nested resource
-# deleting resource group will delete all the resources
-
 - name: Delete gallery Image Version.
   azure_rm_galleryimageversion:
     resource_group: "{{ resource_group }}"
@@ -236,6 +233,12 @@
     gallery_image_name: myImage
     name: myVersion
     state: absent
+
+# pause for 1 minute as the service delete image version, but it takes longer for the process to be completed
+# there's no way to figure out whether resources were cleaned up already or not
+# this must be fixed in the service    
+- pause:
+    minutes: 1
 
 - name: Delete gallery image
   azure_rm_galleryimage:
