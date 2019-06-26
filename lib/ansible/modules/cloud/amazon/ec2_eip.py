@@ -287,7 +287,7 @@ def release_address(ec2, address, check_mode):
     # If we're in check mode, nothing else to do
     if not check_mode:
         if not address.release():
-            EIPException('release failed')
+            raise EIPException('release failed')
 
     return {'changed': True}
 

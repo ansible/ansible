@@ -267,7 +267,7 @@ def main():
         if module.check_mode:
             cmd += " --noop"
         if p['use_srv_records'] is not None:
-            if not ['use_srv_records']:
+            if not p['use_srv_records']:
                 cmd += " --no-use_srv_records"
             else:
                 cmd += " --use_srv_records"
