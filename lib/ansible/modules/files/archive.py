@@ -172,7 +172,7 @@ import zipfile
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import PY3
 
 
