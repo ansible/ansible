@@ -65,7 +65,7 @@ Code Coverage
 
 Code coverage reports make it easy to identify untested code for which more tests should
 be written.  Online reports are available but only cover the ``devel`` branch (see
-:doc:`testing`).  For new code local reports are needed.
+:ref:`developing_testing`).  For new code local reports are needed.
 
 Add the ``--coverage`` option to any test command to collect code coverage data.  If you
 aren't using the ``--tox`` or ``--docker`` options which create an isolated python
