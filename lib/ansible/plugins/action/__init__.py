@@ -992,6 +992,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
 
+            # in some cases a traceback will arrive on stdout instead of stderr, such as when using ssh with -tt
+            if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
+                data['exception'] = data['module_stdout']
+
             # The default
             data['msg'] = "MODULE FAILURE"
 
