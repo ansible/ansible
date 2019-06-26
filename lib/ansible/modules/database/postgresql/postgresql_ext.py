@@ -85,7 +85,7 @@ options:
       - If not specified, the latest extension version will be created.
       - It can't downgrade an extension version.
         When version downgrade is needed, remove the extension and create new one with appropriate version.
-      - If I(version=latest) the module will try to update the extension version (allways return changed=True).
+      - Set I(version=latest) to update the extension to the latest available version.
     type: str
     version_added: '2.9'
 notes:
