@@ -113,7 +113,7 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_CHANGED
         else:
             if not self.display_ok_hosts:
-                if not 'print_action' in result._task.tags:
+                if 'print_action' not in result._task.tags:
                     return
 
             if self._last_task_banner != result._task._uuid:
@@ -273,7 +273,7 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_CHANGED
         else:
             if not self.display_ok_hosts:
-                if not 'print_action' in result._task.tags:
+                if 'print_action' not in result._task.tags:
                     return
 
             if self._last_task_banner != result._task._uuid:
