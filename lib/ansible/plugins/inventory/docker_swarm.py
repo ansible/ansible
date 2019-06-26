@@ -140,7 +140,7 @@ keyed_groups:
     prefix: label
 '''
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.docker.common import update_tls_hostname, get_connect_params
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
@@ -249,8 +249,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def parse(self, inventory, loader, path, cache=True):
         if not HAS_DOCKER:
-            raise AnsibleError('The Docker swarm dynamic inventory plugin requires the Docker SDK for Python: '
-                               'https://github.com/docker/docker-py.')
+            raise AnsibleParserError('The Docker swarm dynamic inventory plugin requires the Docker SDK for Python: '
+                                     'https://github.com/docker/docker-py.')
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         self._read_config_data(path)
         self._populate()

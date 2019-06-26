@@ -86,15 +86,16 @@ keyed_groups:
 """
 
 import os
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.release import __version__
 
 try:
     from hcloud import hcloud
+    HAS_HCLOUD = True
 except ImportError:
-    raise AnsibleError("The Hetzner Cloud dynamic inventory plugin requires hcloud-python.")
+    HAS_HCLOUD = False
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):
@@ -187,7 +188,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         )
 
     def parse(self, inventory, loader, path, cache=True):
+        if not HAS_HCLOUD:
+            raise AnsibleParserError("The Hetzner Cloud dynamic inventory plugin requires hcloud-python.")
+
         super(InventoryModule, self).parse(inventory, loader, path, cache)
+
         self._read_config_data(path)
         self._configure_hcloud_client()
         self._test_hcloud_token()

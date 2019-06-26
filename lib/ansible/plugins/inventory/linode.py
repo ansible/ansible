@@ -56,7 +56,7 @@ types:
 
 import os
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.plugins.inventory import BaseInventoryPlugin
 
@@ -64,8 +64,9 @@ from ansible.plugins.inventory import BaseInventoryPlugin
 try:
     from linode_api4 import LinodeClient
     from linode_api4.errors import ApiError as LinodeApiError
+    HAS_LINODE_API4 = True
 except ImportError:
-    raise AnsibleError('the Linode dynamic inventory plugin requires linode_api4.')
+    HAS_LINODE_API4 = False
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -76,19 +77,6 @@ class InventoryModule(BaseInventoryPlugin):
         """Build the Linode client."""
 
         access_token = self.get_option('access_token')
-
-        if access_token is None:
-            try:
-                access_token = os.environ['LINODE_ACCESS_TOKEN']
-            except KeyError:
-                pass
-
-        if access_token is None:
-            raise AnsibleError((
-                'Could not retrieve Linode access token '
-                'from plugin configuration or environment'
-            ))
-
         self.client = LinodeClient(access_token)
 
     def _get_instances_inventory(self):
@@ -96,7 +84,7 @@ class InventoryModule(BaseInventoryPlugin):
         try:
             self.instances = self.client.linode.instances()
         except LinodeApiError as exception:
-            raise AnsibleError('Linode client raised: %s' % exception)
+            raise AnsibleParserError('Linode client raised: %s' % exception)
 
     def _add_groups(self):
         """Add Linode instance groups to the dynamic inventory."""
@@ -193,6 +181,9 @@ class InventoryModule(BaseInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         """Dynamically parse Linode the cloud inventory."""
+        if not HAS_LINODE_API4:
+            raise AnsibleParserError('the Linode dynamic inventory plugin requires linode_api4.')
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
         self._build_client()

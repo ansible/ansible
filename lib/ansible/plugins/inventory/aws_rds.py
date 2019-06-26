@@ -60,18 +60,18 @@ keyed_groups:
   - key: region
 '''
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import is_boto3_error_code
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
     import boto3
     import botocore
 except ImportError:
-    raise AnsibleError('The RDS dynamic inventory plugin requires boto3 and botocore.')
+    pass  # Handled by HAS_BOTO3 in parse()
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -132,7 +132,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if not strict:
                     results = []
                 else:
-                    raise AnsibleError("Failed to query RDS: {0}".format(to_native(e)))
+                    raise AnsibleParserError("Failed to query RDS: {0}".format(to_native(e)))
             except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
                 raise AnsibleError("Failed to query RDS: {0}".format(to_native(e)))
             return results
@@ -281,6 +281,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return False
 
     def parse(self, inventory, loader, path, cache=True):
+        if not HAS_BOTO3:
+            raise AnsibleParserError('The RDS dynamic inventory plugin requires boto3 and botocore.')
+
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = self._read_config_data(path)

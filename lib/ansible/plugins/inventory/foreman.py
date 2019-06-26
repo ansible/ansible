@@ -71,7 +71,7 @@ validate_certs: False
 
 from distutils.version import LooseVersion
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
@@ -81,10 +81,10 @@ try:
     import requests
     if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
         raise ImportError
+    from requests.auth import HTTPBasicAuth
+    HAS_REQUESTS = True
 except ImportError:
-    raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
-
-from requests.auth import HTTPBasicAuth
+    HAS_REQUESTS = False
 
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
@@ -231,6 +231,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
 
     def parse(self, inventory, loader, path, cache=True):
+        if not HAS_REQUESTS:
+            raise AnsibleParserError('This script requires python-requests 1.1 as a minimum version')
 
         super(InventoryModule, self).parse(inventory, loader, path)
 

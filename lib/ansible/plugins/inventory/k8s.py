@@ -114,7 +114,7 @@ connections:
 
 import json
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER, k8s_import_exception
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
@@ -135,7 +135,7 @@ def format_dynamic_api_exc(exc):
         return '%s Reason: %s' % (exc.status, exc.reason)
 
 
-class K8sInventoryException(Exception):
+class K8sInventoryException(AnsibleParserError):
     pass
 
 

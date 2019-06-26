@@ -144,10 +144,10 @@ compose:
 
 import re
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.utils.display import Display
 
@@ -155,7 +155,7 @@ try:
     import boto3
     import botocore
 except ImportError:
-    raise AnsibleError('The ec2 dynamic inventory plugin requires boto3 and botocore.')
+    pass  # Handled by HAS_BOTO3 in parse()
 
 display = Display()
 
@@ -300,8 +300,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         allowed_filters = sorted(list(instance_data_filter_to_boto_attr.keys()) + list(instance_meta_filter_to_boto_attr.keys()))
         if filter_name not in allowed_filters:
-            raise AnsibleError("Invalid filter '%s' provided; filter must be one of %s." % (filter_name,
-                                                                                            allowed_filters))
+            raise AnsibleParserError("Invalid filter '%s' provided; filter must be one of %s." % (filter_name,
+                                                                                                  allowed_filters))
         if filter_name in instance_data_filter_to_boto_attr:
             boto_attr_list = instance_data_filter_to_boto_attr[filter_name]
         else:
@@ -598,6 +598,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return False
 
     def parse(self, inventory, loader, path, cache=True):
+        if not HAS_BOTO3:
+            raise AnsibleParserError('The ec2 dynamic inventory plugin requires boto3 and botocore.')
 
         super(InventoryModule, self).parse(inventory, loader, path)
 

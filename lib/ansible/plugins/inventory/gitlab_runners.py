@@ -72,7 +72,7 @@ keyed_groups:
     prefix: tag
 '''
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_native
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 
@@ -124,7 +124,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def parse(self, inventory, loader, path, cache=True):
         if not HAS_GITLAB:
-            raise AnsibleError('The Gitlab runners dynamic inventory plugin requires python-gitlab: https://python-gitlab.readthedocs.io/en/stable/')
+            raise AnsibleParserError('The Gitlab runners dynamic inventory plugin requires python-gitlab: https://python-gitlab.readthedocs.io/en/stable/')
         super(InventoryModule, self).parse(inventory, loader, path, cache)
         self._read_config_data(path)
         self._populate()
