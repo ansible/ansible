@@ -311,8 +311,8 @@ def main():
 
             if not module.check_mode and module.params['update'] == 'merge':
                 load_config(module, commands)
+                result['changed'] = True
 
-            result['changed'] = True
             result['commands'] = commands
             result['updates'] = commands
 
