@@ -274,7 +274,7 @@ def main():
     if not b_expanded_paths:
         return module.fail_json(
             path=', '.join(paths),
-            expanded_paths=to_native(b', '.join(b_expanded_paths), errors='surrogate_or_strict')
+            expanded_paths=to_native(b', '.join(b_expanded_paths), errors='surrogate_or_strict'),
             msg='Error, no source paths were found'
         )
 
