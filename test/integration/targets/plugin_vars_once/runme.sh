@@ -5,8 +5,10 @@ function cleanup {
 }
 trap cleanup EXIT
 
-function clear_log {
-    truncate --size=0 "$PLUGIN_VARS_LOG_PATH"
+function new_log {
+    cleanup
+    PLUGIN_VARS_LOG_PATH=$(mktemp)
+    export PLUGIN_VARS_LOG_PATH
 }
 function fill_template {
     sed "s#PLAY_DIR#$PLAY_DIR#;s#INV_DIR#$INV_DIR#" "$1"
@@ -23,8 +25,7 @@ function fail {
 PLAY_DIR="/test/integration/targets/plugin_vars_once"
 EXIT_CODE=0
 
-PLUGIN_VARS_LOG_PATH=$(mktemp)
-export PLUGIN_VARS_LOG_PATH
+PLUGIN_VARS_LOG_PATH=
 
 CASES="
 default
@@ -45,7 +46,7 @@ for CASE in ${CASES}; do
     INV_DIR="$PLAY_DIR"
     echo CONFIG: "$ANSIBLE_CONFIG" INVENTORY: "$INV_DIR"/inventory >&2
 
-    clear_log
+    new_log
     ansible-playbook playbook.yml -i inventory "$@"
 
     TEMPLATE=logs/inventory_next_to_playbook/"$LOG_NAME"
@@ -58,7 +59,7 @@ for CASE in ${CASES}; do
     INV_DIR="/test/integration"
     echo CONFIG: "$ANSIBLE_CONFIG" INVENTORY: "$INV_DIR"/inventory >&2
 
-    clear_log
+    new_log
     ansible-playbook playbook.yml -i ../../inventory "$@"
 
     TEMPLATE=logs/remote_inventory/"$LOG_NAME"
