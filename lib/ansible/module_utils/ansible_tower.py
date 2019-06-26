@@ -70,6 +70,7 @@ def tower_auth_config(module):
         password = module.params.pop('tower_password', None)
         if password:
             auth_config['password'] = password
+        module.params.pop('tower_verify_ssl', None)  # pop alias if used
         verify_ssl = module.params.pop('validate_certs', None)
         if verify_ssl is not None:
             auth_config['verify_ssl'] = verify_ssl
