@@ -26,9 +26,20 @@ EXIT_CODE=0
 PLUGIN_VARS_LOG_PATH=$(mktemp)
 export PLUGIN_VARS_LOG_PATH
 
-for ANSIBLE_CONFIG in configs/* ; do
+CASES="
+default
+no_inventory
+no_play
+no_plugins
+reverse
+reverse_no_inventory
+reverse_no_play
+"
+
+for CASE in ${CASES}; do
+    ANSIBLE_CONFIG="configs/$CASE.cfg"
     export ANSIBLE_CONFIG
-    LOG_NAME=$(basename -s .cfg "$ANSIBLE_CONFIG").log
+    LOG_NAME="$CASE.log"
 
     ## inventory dir == playbook dir
     INV_DIR="$PLAY_DIR"
