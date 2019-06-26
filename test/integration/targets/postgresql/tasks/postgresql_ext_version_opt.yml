@@ -308,10 +308,11 @@
     postgresql_ext:
       <<: *pg_parameters
       name: non_existent
+    ignore_errors: yes
 
   - assert:
       that:
-      - result.faild == true
+      - result.failed == true
       - result.msg == "Extension non_existent is not installed"
 
   # Cleanup:
