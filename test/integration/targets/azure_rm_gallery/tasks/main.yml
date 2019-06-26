@@ -238,7 +238,7 @@
 # there's no way to figure out whether resources were cleaned up already or not
 # this must be fixed in the service    
 - pause:
-    minutes: 1
+    minutes: 3
 
 - name: Delete gallery image
   azure_rm_galleryimage:
