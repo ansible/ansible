@@ -1,2 +1,4 @@
 bugfixes:
   - postgresql_pg_hba - After splitting fields, merge authentication options back into a single field to prevent losing options beyond the first (https://github.com/ansible/ansible/issues/57505)
+  - postgresql_pg_hba - Fix multiple options for local type connections
+  - postgresql_pg_hba - Fix sorting errors between local type connections that lack a src
