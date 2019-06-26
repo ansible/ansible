@@ -397,33 +397,35 @@ def main():
 
                                 for b_dirname in b_dirnames:
                                     b_fullpath = b_dirpath + b_dirname
-                                    b_arcname = b_match_root.sub(b'', b_fullpath)
+                                    n_fullpath = to_native(b_fullpath, errors='surrogate_or_strict', encoding='ascii')
+                                    n_arcname = to_native(b_match_root.sub(b'', b_fullpath), errors='surrogate_or_strict')
 
                                     try:
                                         if fmt == 'zip':
-                                            arcfile.write(b_fullpath, b_arcname)
+                                            arcfile.write(n_fullpath, n_arcname)
                                         else:
-                                            arcfile.add(b_fullpath, b_arcname, recursive=False)
+                                            arcfile.add(n_fullpath, n_arcname, recursive=False)
 
                                     except Exception as e:
-                                        errors.append('%s: %s' % (to_native(b_fullpath), to_native(e)))
+                                        errors.append('%s: %s' % (n_fullpath, to_native(e)))
 
                                 for b_filename in b_filenames:
                                     b_fullpath = b_dirpath + b_filename
-                                    b_arcname = b_match_root.sub(b'', b_fullpath)
+                                    n_fullpath = to_native(b_fullpath, errors='surrogate_or_strict', encoding='ascii')
+                                    n_arcname = to_native(b_match_root.sub(b'', b_fullpath), errors='surrogate_or_strict')
 
                                     if not filecmp.cmp(b_fullpath, b_dest):
                                         try:
                                             if fmt == 'zip':
-                                                arcfile.write(b_fullpath, b_arcname)
+                                                arcfile.write(n_fullpath, n_arcname)
                                             else:
-                                                arcfile.add(b_fullpath, b_arcname, recursive=False)
+                                                arcfile.add(n_fullpath, n_arcname, recursive=False)
 
                                             b_successes.append(b_fullpath)
                                         except Exception as e:
                                             errors.append('Adding %s: %s' % (to_native(b_path), to_native(e)))
                         else:
-                            path = to_native(b_path, errors='surrogate_or_strict')
+                            path = to_native(b_path, errors='surrogate_or_strict', encoding='ascii')
                             arcname = to_native(b_match_root.sub(b'', b_path), errors='surrogate_or_strict')
                             if fmt == 'zip':
                                 arcfile.write(path, arcname)
@@ -503,14 +505,14 @@ def main():
                             True
                         )
                         arcfile.write(
-                            to_native(b_path, errors='surrogate_or_strict'),
+                            to_native(b_path, errors='surrogate_or_strict', encoding='ascii'),
                             to_native(b_path[len(b_arcroot):], errors='surrogate_or_strict')
                         )
                         arcfile.close()
                         state = 'archive'  # because all zip files are archives
                     elif fmt == 'tar':
                         arcfile = tarfile.open(to_native(b_dest, errors='surrogate_or_strict', encoding='ascii'), 'w')
-                        arcfile.add(to_native(b_path, errors='surrogate_or_strict'))
+                        arcfile.add(to_native(b_path, errors='surrogate_or_strict', encoding='ascii'))
                         arcfile.close()
                     else:
                         f_in = open(b_path, 'rb')
