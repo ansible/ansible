@@ -4,9 +4,81 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
+Function Test-Credential {
+    param(
+        [String]$Username,
+        [String]$Password,
+        [String]$Domain,
+        $LOGON32_PROVIDER = 0, # Default
+        $LOGON32_LOGON_TYPE = 3 # NetworkLogon
+    )
+
+    # More information about LogonUser at https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-logonusera
+    $platform_util = @'
+using System;
+using System.Runtime.InteropServices;
+
+namespace Ansible
+{
+    public class WinUserPInvoke
+    {
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LogonUser(
+            string lpszUsername,
+            string lpszDomain,
+            string lpszPassword,
+            UInt32 dwLogonType,
+            UInt32 dwLogonProvider,
+            out IntPtr phToken);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(
+            IntPtr hObject);
+    }
+}
+'@
+
+    $original_tmp = $env:TMP
+    $env:TMP = $_remote_tmp
+    Add-Type -TypeDefinition $platform_util
+    $env:TMP = $original_tmp
+
+    $handle = [IntPtr]::Zero
+    $logon_res = [Ansible.WinUserPInvoke]::LogonUser($Username, $Domain, $Password,
+        $LOGON32_LOGON_TYPE, $LOGON32_PROVIDER, [Ref]$handle)
+
+    if ($logon_res) {
+        $valid_credentials = $true
+        [Ansible.WinUserPInvoke]::CloseHandle($handle) > $null
+    } else {
+        $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+        # following errors indicate the creds are correct but the user was
+        # unable to log on for other reasons, which we don't care about
+        $success_codes = @(
+            0x0000052F,  # ERROR_ACCOUNT_RESTRICTION
+            0x00000530,  # ERROR_INVALID_LOGON_HOURS
+            0x00000531,  # ERROR_INVALID_WORKSTATION
+            0x00000569  # ERROR_LOGON_TYPE_GRANTED
+        )
+
+        if ($err_code -eq 0x0000052E) {
+            # ERROR_LOGON_FAILURE - the user or pass was incorrect
+            $valid_credentials = $false
+        } elseif ($err_code -in $success_codes) {
+            $valid_credentials = $true
+        } else {
+            # an unknown failure, raise an Exception for this
+            $win32_exp = New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code
+            $err_msg = "LogonUserW failed: $($win32_exp.Message) (Win32ErrorCode: $err_code)"
+            throw New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code, $err_msg
+        }
+    }
+
+    return $valid_credentials
+}
+
 try {
     Import-Module ActiveDirectory
-    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
  }
  catch {
      Fail-Json $result "Failed to import ActiveDirectory PowerShell module. This module should be run on a domain controller, and the ActiveDirectory module must be available."
@@ -117,7 +189,16 @@ If ($state -eq 'present') {
         )
     ) {
         If (-not $new_user) { # Don't uncecessary check if the credentials works, if we know it doesn't.
-            $test_new_credentials = [System.DirectoryServices.AccountManagement.PrincipalContext]::new('domain').ValidateCredentials($username, $password)
+            if (($username.ToCharArray()) -contains [char]'@') {
+                # UserPrincipalName
+                $user = ($username -split '@')[0]
+                $domain = ($username -split '@')[1]
+            } else {
+                # Pre Win2k Account Name
+                $user = ($username -split '\')[0]
+                $domain = ($username -split '\')[1]
+            }
+            $test_new_credentials = Test-Credential -Username $user -Password $password -Domain $domain
         } else {
             $test_new_credentials = $false
         }
