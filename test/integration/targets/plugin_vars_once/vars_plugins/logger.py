@@ -1,5 +1,6 @@
 import os
 
+
 class VarsModule(object):
     @staticmethod
     def _log(line):

@@ -231,7 +231,6 @@ class VariableManager:
                     C.VARIABLE_PRECEDENCE.index(category + '_plugins_inventory')
                 )
 
-
             def _get_plugin_vars(plugin, path, entities):
                 data = {}
                 try:
