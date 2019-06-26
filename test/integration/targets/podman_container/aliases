@@ -1,4 +1,5 @@
 shippable/posix/group2
+skip/rhel/8.0b/2
 skip/osx
 skip/freebsd
 destructive
