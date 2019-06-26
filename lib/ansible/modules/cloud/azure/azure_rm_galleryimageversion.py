@@ -372,11 +372,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 return self.results
 
             self.delete_resource()
-
-            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
-            # for some time after deletion -- this should be really fixed in Azure
-            while self.get_resource():
-                time.sleep(20)
         else:
             self.log('GalleryImageVersion instance unchanged')
             self.results['changed'] = False
@@ -427,8 +422,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                                               self.status_code,
                                               600,
                                               30)
-            # allow some time for proper clean up
-            time.sleep(30)
         except CloudError as e:
             self.log('Error attempting to delete the GalleryImageVersion instance.')
             self.fail('Error deleting the GalleryImageVersion instance: {0}'.format(str(e)))

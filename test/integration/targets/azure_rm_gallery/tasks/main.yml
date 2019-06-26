@@ -231,14 +231,8 @@
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
     gallery_image_name: myImage
-    name: myVersion
+    name: 10.1.3
     state: absent
-
-# pause for 1 minute as the service delete image version, but it takes longer for the process to be completed
-# there's no way to figure out whether resources were cleaned up already or not
-# this must be fixed in the service    
-#- pause:
-#    minutes: 3
 
 - name: Delete gallery image
   azure_rm_galleryimage:
@@ -250,7 +244,7 @@
   register: output
   until: output.changed
   delay: 30
-  retries: 20
+  retries: 5
 
 - name: Delete gallery
   azure_rm_gallery:
