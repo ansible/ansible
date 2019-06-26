@@ -250,6 +250,7 @@
   register: output
   until: output.changed
   delay: 30
+  retries: 20
 
 - name: Delete gallery
   azure_rm_gallery:
