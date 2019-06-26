@@ -2452,13 +2452,14 @@ class AnsibleModule(object):
 
             # stringify args for unsafe/direct shell usage
             if isinstance(args, list):
-                args = " ".join([shlex_quote(x) for x in args])
+                args = b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in args])
 
             # not set explicitly, check if set by controller
             if executable:
-                args = [executable, '-c', args]
+                executable = to_bytes(executable, errors='surrogate_or_strict')
+                args = [executable, b'-c', args]
             elif self._shell not in (None, '/bin/sh'):
-                args = [self._shell, '-c', args]
+                args = [to_bytes(self._shell, errors='surrogate_or_strict'), b'-c', args]
             else:
                 shell = True
         else:
@@ -2474,9 +2475,9 @@ class AnsibleModule(object):
 
             # expand ``~`` in paths, and all environment vars
             if expand_user_and_vars:
-                args = [os.path.expanduser(os.path.expandvars(x)) for x in args if x is not None]
+                args = [to_bytes(os.path.expanduser(os.path.expandvars(x)), errors='surrogate_or_strict') for x in args if x is not None]
             else:
-                args = [x for x in args if x is not None]
+                args = [to_bytes(x, errors='surrogate_or_strict') for x in args if x is not None]
 
         prompt_re = None
         if prompt_regex:
@@ -2543,7 +2544,7 @@ class AnsibleModule(object):
 
         # make sure we're in the right working directory
         if cwd and os.path.isdir(cwd):
-            cwd = os.path.abspath(os.path.expanduser(cwd))
+            cwd = to_bytes(os.path.abspath(os.path.expanduser(cwd)), errors='surrogate_or_strict')
             kwargs['cwd'] = cwd
             try:
                 os.chdir(cwd)
