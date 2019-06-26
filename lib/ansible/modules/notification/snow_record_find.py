@@ -79,7 +79,6 @@ options:
               fields will be returned.
         type: list
         required: false
-        default: None
 
 requirements:
     - python pysnow (pysnow)
