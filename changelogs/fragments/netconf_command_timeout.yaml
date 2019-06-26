@@ -1,0 +1,2 @@
+bugfixes:
+- Fix netconf connection command timeout issue (https://github.com/ansible/ansible/pull/58322)
