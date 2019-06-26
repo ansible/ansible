@@ -331,7 +331,7 @@ def main():
         if os.path.lexists(b_path) and b_path not in b_expanded_exclude_paths:
             b_archive_paths.append(b_path)
         else:
-            b_missing.append(path)
+            b_missing.append(b_path)
 
     # No source files were found but the named archive exists: are we 'compress' or 'archive' now?
     if len(b_missing) == len(b_expanded_paths) and b_dest and os.path.exists(b_dest):
@@ -455,7 +455,7 @@ def main():
             for b_path in b_successes:
                 try:
                     if os.path.isdir(b_path):
-                        shutil.rmtree(v_path)
+                        shutil.rmtree(b_path)
                     elif not check_mode:
                         os.remove(b_path)
                 except OSError as e:
