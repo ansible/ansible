@@ -54,7 +54,7 @@ Use ``ansible-doc -t become <plugin name>`` to see specific documentation and ex
 
 .. seealso::
 
-   :ref:`playbooks_intro`
+   :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`inventory_plugins`
        Ansible inventory plugins
