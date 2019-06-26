@@ -90,4 +90,4 @@
 
 - assert:
     that:
-      - "'not verify ssl with non-https protocol' in result.exception"
+      - "'not verify ssl with non-https protocol' in (result.module_stdout + result.module_stderr)"
