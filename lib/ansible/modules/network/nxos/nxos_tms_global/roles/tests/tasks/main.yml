@@ -1,0 +1,11 @@
+---
+- name: Configure Global Level Telemetry Settings
+  nxos_tms_global:
+    config:
+      - certificate:
+          key: /bootflash/server.key
+          hostname: chris_host
+        destination_profile_compression: gzip
+        destination_profile_source_interface: Ethernet1/4
+        destination_profile_vrf: red
+    state: overridden 

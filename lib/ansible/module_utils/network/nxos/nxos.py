@@ -38,6 +38,7 @@ from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.six import iteritems, string_types, PY2, PY3
 from ansible.module_utils.urls import fetch_url
 
@@ -741,6 +742,7 @@ class NxosCmdRef:
         self._module = module
         self._check_imports()
         self._yaml_load(cmd_ref_str)
+        self.cache_existing = None
         ref = self._ref
 
         # Create a list of supported commands based on ref keys
@@ -931,31 +933,37 @@ class NxosCmdRef:
         # Last key in context is the resource key
         ref['_resource_key'] = context[-1] if context else ref['_resource_key']
 
-    def get_existing(self):
+    def get_existing(self, cache_output=None):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
         """
         ref = self._ref
         if ref.get('_cli_is_feature_disabled'):
             # Add context to proposed if state is present
-            if 'present' in ref['_state']:
+            if 'present' in ref['_state'] or 'merged' in ref['_state']:
                 [ref['_proposed'].append(ctx) for ctx in ref['_context']]
             return
 
         show_cmd = ref['_template']['get_command']
-        # Add additional command context if needed.
-        for filter in ref['_context']:
-            show_cmd = show_cmd + " | section '{0}'".format(filter)
+        if cache_output:
+            output = cache_output
+        else:
+            output = self.execute_show_command(show_cmd, 'text') or []
+            self.cache_existing = output
 
-        output = self.execute_show_command(show_cmd, 'text') or []
+        # Add additional command context if needed.
+        if ref['_context']:
+            output = CustomNetworkConfig(indent=2, contents=output)
+            output = output.get_section(ref['_context'])
+
         if not output:
             # Add context to proposed if state is present
-            if 'present' in ref['_state']:
+            if 'present' in ref['_state'] or 'merged' in ref['_state']:
                 [ref['_proposed'].append(ctx) for ctx in ref['_context']]
             return
 
         # We need to remove the last item in context for state absent case.
-        if 'absent' in ref['_state'] and ref['_context']:
+        if 'absent' in ref['_state'] or 'deleted' in ref['_state'] and ref['_context']:
             if ref['_resource_key'] and ref['_resource_key'] == ref['_context'][-1]:
                 if ref['_context'][-1] in output:
                     ref['_context'][-1] = 'no ' + ref['_context'][-1]
@@ -996,9 +1004,14 @@ class NxosCmdRef:
         """
         ref = self._ref
         module = self._module
+        if module.params.get('config'):
+            # Resource module builder packs playvals under 'config' key
+            params = module.params.get('config')[0]
+        else:
+            params = module.params
         for k in ref.keys():
-            if k in module.params and module.params[k] is not None:
-                playval = module.params[k]
+            if k in params and params[k] is not None:
+                playval = params[k]
                 # Normalize each value
                 if 'int' == ref[k]['kind']:
                     playval = int(playval)
@@ -1036,7 +1049,7 @@ class NxosCmdRef:
         else:
             raise ValueError("get_proposed: unknown 'kind' value specified for key '{0}'".format(k))
         if cmd:
-            if 'absent' == ref['_state'] and not re.search(r'^no', cmd):
+            if 'absent' in ref['_state'] or 'deleted' in ref['_state'] and not re.search(r'^no', cmd):
                 cmd = 'no ' + cmd
             # Commands may require parent commands for proper context.
             # Global _template context is replaced by parameter context
@@ -1061,7 +1074,7 @@ class NxosCmdRef:
         play_keys = [k for k in ref['commands'] if 'playval' in ref[k]]
 
         def compare(playval, existing):
-            if 'present' in ref['_state']:
+            if 'present' in ref['_state'] or 'merged' in ref['_state']:
                 if existing is None:
                     return False
                 elif playval == existing:
@@ -1069,7 +1082,7 @@ class NxosCmdRef:
                 elif isinstance(existing, dict) and playval in existing.values():
                     return True
 
-            if 'absent' in ref['_state']:
+            if 'absent' in ref['_state'] or 'deleted' in ref['_state']:
                 if isinstance(existing, dict) and all(x is None for x in existing.values()):
                     existing = None
                 if existing is None or playval not in existing.values():
