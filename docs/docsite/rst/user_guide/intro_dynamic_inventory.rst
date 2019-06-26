@@ -356,7 +356,7 @@ the dynamic groups as empty in the static inventory file. For example::
 
 .. seealso::
 
-   :doc:`intro_inventory`
+   :ref:`intro_inventory`
        All about static inventory files
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

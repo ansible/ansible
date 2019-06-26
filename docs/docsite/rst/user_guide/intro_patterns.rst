@@ -6,9 +6,9 @@ Working with Patterns
 .. contents:: Topics
 
 Patterns in Ansible are how we decide which hosts to manage.  This can mean what hosts to communicate with, but in terms
-of :doc:`playbooks` it actually means what hosts to apply a particular configuration or IT process to.
+of :ref:`playbooks<playbooks_intro>` it actually means what hosts to apply a particular configuration or IT process to.
 
-We'll go over how to use the command line in :doc:`intro_adhoc` section, however, basically it looks like this::
+We'll go over how to use the command line in :ref:`intro_adhoc` section, however, basically it looks like this::
 
     ansible <pattern_goes_here> -m <module_name> -a <arguments>
 
@@ -100,15 +100,15 @@ And if you want to read the list of hosts from a file, prefix the file name with
 
     ansible-playbook site.yml --limit @retry_hosts.txt
 
-Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply this knowledge.
+Easy enough.  See :ref:`intro_adhoc` and then :ref:`playbooks_intro` for how to apply this knowledge.
 
 .. note:: You can use ',' instead of ':' as a host list separator. The ',' is preferred specially when dealing with ranges and ipv6.
 
 .. seealso::
 
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning ansible's configuration management language
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
