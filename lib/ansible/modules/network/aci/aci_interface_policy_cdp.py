@@ -64,7 +64,7 @@ EXAMPLES = r'''
 - name: Remove CDP Test Policy
   aci_interface_policy_cdp:
     name: Ansible_CDP_Test_Policy
-    host: apic.acmecorp.com
+    host: apic.example.com
 	  username: admin
 	  password: adminpass
 	  output_level: debug
