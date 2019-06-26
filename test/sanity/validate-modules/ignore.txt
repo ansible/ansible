@@ -3563,7 +3563,7 @@ lib/ansible/modules/system/dconf.py E338
 lib/ansible/modules/system/filesystem.py E338
 lib/ansible/modules/system/gconftool2.py E337
 lib/ansible/modules/system/getent.py E337
-lib/ansible/modules/system/hostname.py E338
+lib/ansible/modules/system/hostname.py E337
 lib/ansible/modules/system/interfaces_file.py E337
 lib/ansible/modules/system/java_keystore.py E338
 lib/ansible/modules/system/kernel_blacklist.py E337
