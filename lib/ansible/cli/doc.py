@@ -185,6 +185,11 @@ class DocCLI(CLI):
                 dump = {}
                 for plugin in context.CLIARGS['args']:
                     doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, plugin_type, search_paths)
+                    try:
+                        returndocs = yaml.load(returndocs)
+                        plainexamples = yaml.load(plainexamples)
+                    except Exception:
+                        pass
                     if doc:
                         dump[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
                 jdump(dump)
