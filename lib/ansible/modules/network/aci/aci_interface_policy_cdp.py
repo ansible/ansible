@@ -18,7 +18,7 @@ module: aci_interface_policy_cdp
 short_description: Manage CDP interface policies (cdp:IfPol)
 description:
 - Manage CDP interface policies on Cisco ACI fabrics.
-version_added: '2.8'
+version_added: '2.9'
 options:
   cdp_policy:
     description:
@@ -52,16 +52,30 @@ author:
 - Tim Knipper (@tknipper11)
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_interface_policy_cdp:
-    host: '{{ hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    cdp_policy: '{{ cdp_policy }}'
-    description: '{{ description }}'
-    admin_state: '{{ admin_state }}'
-  delegate_to: localhost
+- name: Create CDP Test Policy
+  aci_interface_policy_cdp:
+    name: Ansible_CDP_Test_Policy
+    host: apic.example.com
+    username: admin
+    password: adminpass
+    state: present
+
+- name: Remove CDP Test Policy
+  aci_interface_policy_cdp:
+    name: Ansible_CDP_Test_Policy
+    host: apic.example.com
+    username: admin
+    password: adminpass
+    output_level: debug
+    state: absent
+
+- name: Query CDP Policy
+  aci_interface_policy_cdp:
+    host: apic.example.com
+    username: admin
+    password: adminpass
+    state: query
 '''
 
 RETURN = r'''
