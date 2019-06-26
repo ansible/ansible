@@ -388,24 +388,29 @@ The YAML specification considers the following `escape sequences <http://yaml.or
 
 Here are some examples on how to write Windows paths::
 
-    GOOD
+    # GOOD
     tempdir: C:\Windows\Temp
 
-    WORKS
+    # WORKS
     tempdir: 'C:\Windows\Temp'
     tempdir: "C:\\Windows\\Temp"
 
-    BAD, BUT SOMETIMES WORKS
+    # BAD, BUT SOMETIMES WORKS
     tempdir: C:\\Windows\\Temp
     tempdir: 'C:\\Windows\\Temp'
     tempdir: C:/Windows/Temp
 
-    FAILS
+This is an example which will fail:
+
+.. code-block:: text
+
+    # FAILS
     tempdir: "C:\Windows\Temp"
 
+This example shows the use of single quotes when they are required::
+
     ---
-    # example of single quotes when they are required
-    - name: copy tomcat config
+    - name: Copy tomcat config
       win_copy:
         src: log4j.xml
         dest: '{{tc_home}}\lib\log4j.xml'
