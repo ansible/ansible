@@ -319,7 +319,7 @@ def main():
         # Don't allow archives to be created anywhere within paths to be removed
         if remove and os.path.isdir(b_path):
             b_path_dir = b_path
-            if chr(b_path[-1]) != '/':
+            if not b_path.endswith(b'/'):
                 b_path_dir += b'/'
 
             if b_dest.startswith(b_path_dir):
