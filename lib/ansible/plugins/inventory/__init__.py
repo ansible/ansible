@@ -159,6 +159,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
+        self.templar = None
 
     def get_option(self, option):
 
