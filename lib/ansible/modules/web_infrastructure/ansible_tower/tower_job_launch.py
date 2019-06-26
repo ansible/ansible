@@ -125,6 +125,7 @@ def main():
 
     json_output = {}
     tags = module.params.get('tags')
+    credential = module.params.get('credential')
 
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
@@ -135,7 +136,10 @@ def main():
                 params['tags'] = ','.join(tags)
             job = tower_cli.get_resource('job')
 
-            lookup_fields = ('job_template', 'inventory', 'credential')
+            lookup_fields = ['job_template', 'inventory']
+            if credential is not None:
+                lookup_fields.append('credential')
+
             for field in lookup_fields:
                 try:
                     name = params.pop(field)
