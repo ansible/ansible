@@ -89,6 +89,7 @@ options:
           - How many times to check whether the service has become stable. This parameter is valid only when used with 'wait'.
         required: false
         default: 8
+        version_added: 2.9
     force_new_deployment:
         description:
           - Force deployment of service even if there are no changes
@@ -476,12 +477,12 @@ class EcsServiceManager:
     def wait_for_stable(self, service_name, cluster_name, delay, max_attempts):
         params = dict(
             cluster=cluster_name,
-            services=[ service_name ],
+            services=[service_name],
             WaiterConfig={
                 'Delay': delay,
                 'MaxAttempts': max_attempts
-                }
-            )
+            }
+        )
         waiter = self.ecs.get_waiter('services_stable')
         try:
             response = waiter.wait(**params)
