@@ -1,0 +1,4 @@
+PLAY_DIR [all]
+PLAY_DIR [testgroup]
+INV_DIR [testhost]
+PLAY_DIR [testhost]

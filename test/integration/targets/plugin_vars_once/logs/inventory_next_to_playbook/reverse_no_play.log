@@ -1,0 +1,3 @@
+PLAY_DIR [testgroup]
+PLAY_DIR [all]
+PLAY_DIR [testhost]

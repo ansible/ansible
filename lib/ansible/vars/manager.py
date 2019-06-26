@@ -204,6 +204,34 @@ class VariableManager:
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
+            inventory_dirs = tuple(
+                inventory_dir if os.path.isdir(to_bytes(inventory_dir))
+                else os.path.dirname(inventory_dir)
+
+                for inventory_dir in self._inventory._sources
+                # skip host lists
+                if ',' not in inventory_dir or os.path.exists(inventory_dir)
+            )
+
+            def cfg_load_play_after_inventory(category):
+                return (
+                    category + '_plugins_play' in C.VARIABLE_PRECEDENCE
+                    and
+                    C.VARIABLE_PRECEDENCE.index(category + '_plugins_inventory')
+                    <
+                    C.VARIABLE_PRECEDENCE.index(category + '_plugins_play')
+                )
+
+            def cfg_load_inventory_after_play(category):
+                return (
+                    category + '_plugins_inventory' in C.VARIABLE_PRECEDENCE
+                    and
+                    C.VARIABLE_PRECEDENCE.index(category + '_plugins_play')
+                    <
+                    C.VARIABLE_PRECEDENCE.index(category + '_plugins_inventory')
+                )
+
+
             def _get_plugin_vars(plugin, path, entities):
                 data = {}
                 try:
@@ -223,26 +251,29 @@ class VariableManager:
                 return data
 
             # internal fuctions that actually do the work
-            def _plugins_inventory(entities):
+            def _plugins_inventory(entities, load_play_after_inventory=True):
                 ''' merges all entities by inventory source '''
                 data = {}
-                for inventory_dir in self._inventory._sources:
-                    if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
+                for inventory_dir in inventory_dirs:
+                    if load_play_after_inventory and inventory_dir in basedirs:
+                        # post pone the loading into _plugins_play()
                         continue
-                    elif not os.path.isdir(to_bytes(inventory_dir)):  # always pass 'inventory directory'
-                        inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
 
                         data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
                 return data
 
-            def _plugins_play(entities):
+            def _plugins_play(entities, load_inventory_after_play=False):
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
 
                     for path in basedirs:
+                        if load_inventory_after_play and path in inventory_dirs:
+                            # post pone the loading into _plugins_inventory()
+                            continue
+
                         data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
                 return data
 
@@ -251,10 +282,10 @@ class VariableManager:
                 return all_group.get_vars()
 
             def all_plugins_inventory():
-                return _plugins_inventory([all_group])
+                return _plugins_inventory([all_group], cfg_load_play_after_inventory('all'))
 
             def all_plugins_play():
-                return _plugins_play([all_group])
+                return _plugins_play([all_group], cfg_load_inventory_after_play('all'))
 
             def groups_inventory():
                 ''' gets group vars from inventory '''
@@ -262,11 +293,11 @@ class VariableManager:
 
             def groups_plugins_inventory():
                 ''' gets plugin sources from inventory for groups '''
-                return _plugins_inventory(host_groups)
+                return _plugins_inventory(host_groups, cfg_load_play_after_inventory('groups'))
 
             def groups_plugins_play():
                 ''' gets plugin sources from play for groups '''
-                return _plugins_play(host_groups)
+                return _plugins_play(host_groups, cfg_load_inventory_after_play('groups'))
 
             def plugins_by_groups():
                 '''

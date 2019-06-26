@@ -1,0 +1,7 @@
+---
+
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: dummy
+      ping:

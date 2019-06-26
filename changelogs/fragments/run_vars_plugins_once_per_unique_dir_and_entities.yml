@@ -1,0 +1,2 @@
+bugfixes:
+  - run vars plugins once per unique directory and entities.
