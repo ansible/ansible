@@ -64,7 +64,7 @@ def get_return_data(key, value):
         returns_info[key]['sample'] = value
         # override python unicode type to set to string for docs
         if returns_info[key]['type'] == 'unicode':
-            returns_info[key]['type'] = 'string'
+            returns_info[key]['type'] = 'str'
     return returns_info
 
 

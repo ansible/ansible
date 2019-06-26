@@ -183,7 +183,90 @@
           that:
             - result.changed
 
+      - name: take a snapshot
+        rds_snapshot:
+          db_instance_identifier: '{{ instance_id }}'
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: present
+          wait: yes
+          <<: *aws_connection_info
+
+      - name: take a snapshot - idempotence
+        rds_snapshot:
+          db_instance_identifier: '{{ instance_id }}'
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: present
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: check snapshot is ok
+        rds_snapshot_info:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - (result.snapshots | length) == 1
+
+      - name: remove a snapshot without wait
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: remove a snapshot without wait - idempotence
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          wait: yes
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: remove a snapshot with wait - idempotence
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          wait: yes
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: check snapshot is removed
+        rds_snapshot_info:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.snapshots
+
     always:
+
+      - name: remove snapshot
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          wait: yes
+          <<: *aws_connection_info
+        ignore_errors: yes
 
       - name: Remove DB instance
         rds_instance:
@@ -191,8 +274,4 @@
           state: absent
           skip_final_snapshot: True
           <<: *aws_connection_info
-        register: result
-
-      - assert:
-          that:
-            - result.changed
+        ignore_errors: yes
