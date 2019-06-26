@@ -72,7 +72,7 @@ EXAMPLES = r'''
 
 - name: Query CDP Policy
   aci_interface_policy_cdp:
-    host: apic.acmecorp.com
+    host: apic.example.com
     username: admin
     password: adminpass
     state: query
