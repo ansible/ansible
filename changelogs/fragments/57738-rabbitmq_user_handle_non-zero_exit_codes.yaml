@@ -1,0 +1,2 @@
+bugfixes:
+  - rabbitmq_user - Handle non-zero rabbitmqctl exit codes (https://github.com/ansible/ansible/issues/56164)
