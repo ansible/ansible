@@ -212,7 +212,7 @@ class GalaxyAPI(object):
                 results += data['results']
                 done = (data.get('next_link', None) is None)
         except Exception as e:
-            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s" % (role_id, related, to_native(e)))
+            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s" % (role_id, related, to_text(e)))
         return results
 
     @g_connect
