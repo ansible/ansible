@@ -1521,9 +1521,7 @@ lib/ansible/modules/monitoring/datadog_event.py E327
 lib/ansible/modules/monitoring/datadog_event.py E337
 lib/ansible/modules/monitoring/datadog_event.py E338
 lib/ansible/modules/monitoring/datadog_monitor.py E324
-lib/ansible/modules/monitoring/datadog_monitor.py E326
 lib/ansible/modules/monitoring/datadog_monitor.py E337
-lib/ansible/modules/monitoring/datadog_monitor.py E338
 lib/ansible/modules/monitoring/grafana_dashboard.py E337
 lib/ansible/modules/monitoring/grafana_dashboard.py E338
 lib/ansible/modules/monitoring/grafana_datasource.py E324
