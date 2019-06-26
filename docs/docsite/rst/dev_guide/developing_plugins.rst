@@ -453,11 +453,11 @@ For example vars plugins, see the source code for the `vars plugins included wit
 
    :ref:`all_modules`
        List of all modules
-   :doc:`developing_api`
+   :ref:`developing_api`
        Learn about the Python API for task execution
-   :doc:`developing_inventory`
+   :ref:`developing_inventory`
        Learn about how to develop dynamic inventory sources
-   :doc:`developing_modules`
+   :ref:`developing_modules_general`
        Learn about how to write Ansible modules
    `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
