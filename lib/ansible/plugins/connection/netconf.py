@@ -321,6 +321,8 @@ class Connection(NetworkConnectionBase):
                 timeout=self.get_option('persistent_connect_timeout'),
                 ssh_config=self._ssh_config
             )
+
+            self._manager._timeout = self.get_option('persistent_command_timeout')
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
         except ImportError as exc:
