@@ -19,7 +19,7 @@ options:
     password:
         description:
             - Active Directory user password. Use when authenticating with an Active Directory user rather than service
-              principal
+              principal.
         type: str
     profile:
         description:
