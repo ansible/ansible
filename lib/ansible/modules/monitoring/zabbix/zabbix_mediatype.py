@@ -34,7 +34,7 @@ options:
         type: 'str'
         description:
             - Desired state of the mediatype.
-            - On C(present), it will create a medatype if it does not exist or update the mediatype if the associated data is different.
+            - On C(present), it will create a mediatype if it does not exist or update the mediatype if the associated data is different.
             - On C(absent), it will remove the mediatype if it exists.
         choices:
             - present
@@ -131,7 +131,7 @@ options:
     smtp_authentication:
         type: 'bool'
         description:
-            - Whether SMTP authetication with username and password should be enabled or not.
+            - Whether SMTP authentication with username and password should be enabled or not.
             - If set to C(true), C(username) and C(password) should be specified.
         default: false
     smtp_security:
@@ -476,7 +476,6 @@ def delete_mediatype(module, zbx, mediatype_id):
 
 def update_mediatype(module, zbx, **kwargs):
     try:
-        pass
         mediatype_id = zbx.mediatype.update(kwargs)
     except Exception as e:
         module.fail_json(msg="Failed to update mediatype '{_id}': {e}".format(_id=kwargs['mediatypeid'], e=e))
