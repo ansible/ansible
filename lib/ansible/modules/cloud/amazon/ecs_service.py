@@ -81,14 +81,14 @@ options:
         version_added: 2.9
     delay:
         description:
-          - The time to wait before checking that the service is deployed. This parameter is valid only when used with 'wait'.
+          - How many seconds to wait for service to become stable. This parameter is valid only when used with 'wait'.
         required: false
-        default: 10
-    repeat:
+        default: 15
+    max_attempts:
         description:
-          - The number of times to check that the service is deployed. This parameter is valid only when used with 'wait'.
+          - How many times to check whether the service has become stable. This parameter is valid only when used with 'wait'.
         required: false
-        default: 10
+        default: 8
     force_new_deployment:
         description:
           - Force deployment of service even if there are no changes
@@ -473,6 +473,25 @@ class EcsServiceManager:
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
+    def wait_for_stable(self, service_name, cluster_name, delay, max_attempts):
+        params = dict(
+            cluster=cluster_name,
+            services=[ service_name ],
+            WaiterConfig={
+                'Delay': delay,
+                'MaxAttempts': max_attempts
+                }
+            )
+        waiter = self.ecs.get_waiter('services_stable')
+        try:
+            response = waiter.wait(**params)
+        except (botocore.exceptions.WaiterError) as e:
+            existing = self.describe_service(cluster_name, service_name)
+            message = "Service not stable after " + str(delay * (max_attempts - 1)) + " seconds."
+            if existing['events'] and existing['events'][0] and existing['events'][0]['message']:
+                message += " Latest event: " + existing['events'][0]['message']
+            self.module.fail_json(msg=message)
+
     def jsonize(self, service):
         # some fields are datetime which is not JSON serializable
         # make them strings
@@ -517,8 +536,8 @@ def main():
         client_token=dict(required=False, default='', type='str'),
         role=dict(required=False, default='', type='str'),
         wait=dict(required=False, default=False, type='bool'),
-        delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10),
+        delay=dict(required=False, type='int', default=15),
+        max_attempts=dict(required=False, type='int', default=8),
         force_new_deployment=dict(required=False, default=False, type='bool'),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
@@ -543,6 +562,9 @@ def main():
     if module.params['state'] == 'present' and module.params['scheduling_strategy'] == 'REPLICA':
         if module.params['desired_count'] is None:
             module.fail_json(msg='state is present, scheduling_strategy is REPLICA; missing desired_count')
+    if module.params['state'] == 'present' and module.params['wait']:
+        if (module.params['max_attempts'] < 1 or module.params['delay'] < 1):
+            module.fail_json(msg='state is present, wait is true; max_attempts and delay should be > 0')
 
     service_mgr = EcsServiceManager(module)
     if module.params['network_configuration']:
@@ -632,27 +654,6 @@ def main():
                                                           network_configuration,
                                                           module.params['health_check_grace_period_seconds'],
                                                           module.params['force_new_deployment'])
-
-                    # if 'wait' is set, wait until desiredCount and runningCount of the PRIMARY deployment are matching
-                    # in case of successful deploy, return info about the cluster deployed
-                    # in case if deploy is failed, return the message from latest event
-                    if module.params['wait']:
-                        delay = module.params['delay']
-                        repeat = module.params['repeat']
-                        successful_deploy = False
-                        for i in range(repeat):
-                            existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
-                            status = existing['status']
-                            for deployment in existing['deployments']:
-                                if deployment['status'] == 'PRIMARY':
-                                    desired_count = deployment['desiredCount']
-                                    running_count = deployment['runningCount']
-                                    break
-                            if status == "ACTIVE" and desired_count == running_count:
-                                results['service'] = service_mgr.jsonize(existing)
-                                successful_deploy = True
-                                break
-                            time.sleep(delay)
                 else:
                     try:
                         response = service_mgr.create_service(module.params['name'],
@@ -675,12 +676,16 @@ def main():
                         module.fail_json_aws(e, msg="Couldn't create service")
 
                 results['service'] = response
+                # if 'wait' is set, wait until desiredCount and runningCount of the PRIMARY deployment are matching
+                # in case if service is unstable, return the message from latest event
+                if module.params['wait']:
+                    service_mgr.wait_for_stable(module.params['name'],
+                                                module.params['cluster'],
+                                                module.params['delay'],
+                                                module.params['max_attempts']
+                                                )
 
             results['changed'] = True
-            if module.params['wait'] and not successful_deploy:
-                module.fail_json(
-                    msg="Service still not deployed after " + str(repeat * delay) +
-                    " seconds. Failure message: " + existing['events'][0]['message'])
 
     elif module.params['state'] == 'absent':
         if not existing:
