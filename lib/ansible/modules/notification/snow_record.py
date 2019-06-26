@@ -17,7 +17,7 @@ module: snow_record
 
 short_description: Create/Delete/Update records in ServiceNow
 
-version_added: "2.9"
+version_added: "2.5"
 
 description:
     - Creates/Deletes/Updates a single record in ServiceNow
