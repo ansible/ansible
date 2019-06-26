@@ -20,8 +20,8 @@ function fail {
     let EXIT_CODE++
 }
 
-PLAY_DIR="$PWD"
-EXIT_CODE=
+PLAY_DIR="/test/integration/targets/plugin_vars_once"
+EXIT_CODE=0
 
 PLUGIN_VARS_LOG_PATH=$(mktemp)
 export PLUGIN_VARS_LOG_PATH
@@ -31,11 +31,11 @@ for ANSIBLE_CONFIG in configs/* ; do
     LOG_NAME=$(basename -s .cfg "$ANSIBLE_CONFIG").log
 
     ## inventory dir == playbook dir
-    INV_DIR="$PWD"
-    echo CONFIG: "$ANSIBLE_CONFIG" INVENTORY: "$INV_DIR"/inventory
+    INV_DIR="$PLAY_DIR"
+    echo CONFIG: "$ANSIBLE_CONFIG" INVENTORY: "$INV_DIR"/inventory >&2
 
     clear_log
-    ansible-playbook playbook.yml -i inventory > /dev/null
+    ansible-playbook playbook.yml -i inventory "$@"
 
     TEMPLATE=logs/inventory_next_to_playbook/"$LOG_NAME"
 
@@ -44,11 +44,11 @@ for ANSIBLE_CONFIG in configs/* ; do
     fi
 
     ## inventory dir != playbook dir
-    INV_DIR=$(dirname "$(readlink -f inventory)")
-    echo CONFIG: "$ANSIBLE_CONFIG" INVENTORY: "$INV_DIR"/inventory
+    INV_DIR="/test/integration"
+    echo CONFIG: "$ANSIBLE_CONFIG" INVENTORY: "$INV_DIR"/inventory >&2
 
     clear_log
-    ansible-playbook playbook.yml -i ../../inventory > /dev/null
+    ansible-playbook playbook.yml -i ../../inventory "$@"
 
     TEMPLATE=logs/remote_inventory/"$LOG_NAME"
 
