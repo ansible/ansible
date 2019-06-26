@@ -233,6 +233,11 @@
     gallery_image_name: myImage
     name: 10.1.3
     state: absent
+  register: output
+
+- assert:
+    that: 
+      - output.changed
 
 - name: Delete gallery image
   azure_rm_galleryimage:
@@ -240,14 +245,19 @@
     gallery_name: myGallery{{ rpfx }}
     name: myImage
     state: absent
-  ignore_errors: yes
   register: output
-  until: output.changed
-  delay: 30
-  retries: 5
+
+- assert:
+    that: 
+      - output.changed
 
 - name: Delete gallery
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
     name: myGallery{{ rpfx }}
     state: absent
+  register: output
+
+- assert:
+    that: 
+      - output.changed
