@@ -226,7 +226,7 @@
     that: 
       - output.changed
 
-- name: Delete gallery Image Version.
+- name: Delete gallery image Version.
   azure_rm_galleryimageversion:
     resource_group: "{{ resource_group }}"
     gallery_name: myGallery{{ rpfx }}
@@ -247,15 +247,11 @@
     name: myImage
     state: absent
   ignore_errors: yes
+  register: output
+  until: output.changed
+  delay: 30
 
-- name: Delete gallery image
-  azure_rm_galleryimage:
-    resource_group: "{{ resource_group }}"
-    gallery_name: myGallery{{ rpfx }}
-    name: myImage
-    state: absent
-
-- name: Delete a simple gallery.
+- name: Delete gallery
   azure_rm_gallery:
     resource_group: "{{ resource_group }}"
     name: myGallery{{ rpfx }}
