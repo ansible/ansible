@@ -3,6 +3,16 @@
     - ansible_facts.virtualization_type != 'docker'
     - ansible_facts.distribution in ['RedHat', 'Fedora']
   block:
+
+    - name: Delete all container leftovers from tests if exist
+      podman_container:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "alpine:3.7"
+        - "container"
+        - "container2"
+
     - name: Test no image with default action
       podman_container:
         name: container
@@ -324,3 +334,12 @@
             '/tmp' in test.ansible_facts.podman_container['Mounts'] | map(attribute='Source') | list
         fail_msg: Parameters container test failed!
         success_msg: Parameters container test passed!
+
+    - name: Delete all container leftovers from tests
+      podman_container:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "alpine:3.7"
+        - "container"
+        - "container2"
