@@ -89,7 +89,7 @@ def main():
 
                 dirname = os.path.dirname(path)
 
-                if dirname.endswith('/library') or dirname in (
+                if dirname.endswith('/library') or dirname.endswith('/plugins/modules') or dirname in (
                     # non-standard module library directories
                     'test/integration/targets/module_precedence/lib_no_extension',
                     'test/integration/targets/module_precedence/lib_with_extension',
