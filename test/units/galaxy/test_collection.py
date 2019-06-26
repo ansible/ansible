@@ -23,7 +23,7 @@ import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import collection
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
@@ -38,7 +38,7 @@ def reset_cli_args():
 
 @pytest.fixture()
 def collection_input(tmp_path_factory):
-    test_dir = str(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
     namespace = 'ansible_namespace'
     collection = 'collection'
     skeleton = os.path.join(os.path.dirname(os.path.split(__file__)[0]), 'cli', 'test_data', 'collection_skeleton')
@@ -47,7 +47,7 @@ def collection_input(tmp_path_factory):
                    '-c', '--init-path', test_dir, '--collection-skeleton', skeleton]
     GalaxyCLI(args=galaxy_args).run()
     collection_dir = os.path.join(test_dir, namespace, collection)
-    output_dir = str(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Output'))
+    output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Output'))
 
     return collection_dir, output_dir
 
@@ -61,7 +61,7 @@ def publish_artifact(monkeypatch, tmp_path):
     mock_uuid.return_value.hex = 'uuid'
     monkeypatch.setattr(uuid, 'uuid4', mock_uuid)
 
-    input_file = str(tmp_path / 'collection.tar.gz')
+    input_file = to_text(tmp_path / 'collection.tar.gz')
 
     with tarfile.open(input_file, 'w:gz') as tfile:
         b_io = BytesIO(b"\x00\x01\x02\x03")
@@ -71,6 +71,20 @@ def publish_artifact(monkeypatch, tmp_path):
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
     return input_file, mock_open
+
+
+@pytest.fixture()
+def requirements_file(request, tmp_path_factory):
+    content = request.param
+
+    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Requirements'))
+    requirements_file = os.path.join(test_dir, 'requirements.yml')
+
+    if content:
+        with open(requirements_file, 'wb') as req_obj:
+            req_obj.write(to_bytes(content))
+
+    yield requirements_file
 
 
 def test_build_collection_no_galaxy_yaml():
@@ -87,7 +101,7 @@ def test_build_existing_output_file(collection_input):
     os.makedirs(existing_output_dir)
 
     expected = "The output collection artifact '%s' already exists, but is a directory - aborting" \
-               % existing_output_dir
+               % to_native(existing_output_dir)
     with pytest.raises(AnsibleError, match=expected):
         collection.build_collection(input_dir, output_dir, False)
 
@@ -101,7 +115,7 @@ def test_build_existing_output_without_force(collection_input):
         out_file.flush()
 
     expected = "The file '%s' already exists. You can use --force to re-create the collection artifact." \
-               % existing_output
+               % to_native(existing_output)
     with pytest.raises(AnsibleError, match=expected):
         collection.build_collection(input_dir, output_dir, False)
 
@@ -616,3 +630,59 @@ def test_publish_with_wait_and_failure_and_no_error(publish_artifact, monkeypatc
 
     assert mock_err.call_count == 1
     assert mock_err.mock_calls[0][1][0] == 'Galaxy import error message: Some error'
+
+
+@pytest.mark.parametrize('requirements_file', [None], indirect=True)
+def test_parse_requirements_file_that_doesnt_exist(requirements_file):
+    expected = "The requirements file '%s' does not exist." % to_native(requirements_file)
+    with pytest.raises(AnsibleError, match=expected):
+        collection.parse_collections_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', ['not a valid yml file: hi: world'], indirect=True)
+def test_parse_requirements_file_that_isnt_yaml(requirements_file):
+    expected = "Failed to parse the collection requirements yml at '%s' with the following error" \
+               % to_native(requirements_file)
+    with pytest.raises(AnsibleError, match=expected):
+        collection.parse_collections_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', [
+    '- galaxy.role\n- anotherrole',  # Older role based requirements.yml
+    'roles:\n- galaxy.role\n- anotherrole'  # Doesn't have collections key
+], indirect=True)
+def test_parse_requirements_in_invalid_format(requirements_file):
+    expected = "Expecting collections requirements file to be a dict with the key collections that contains a list " \
+               "of collections to install."
+    with pytest.raises(AnsibleError, match=expected):
+        collection.parse_collections_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', ['collections:\n- version: 1.0.0'], indirect=True)
+def test_parse_requirements_without_mandatory_name_key(requirements_file):
+    expected = "Collections requirement entry should contain the key name."
+    with pytest.raises(AnsibleError, match=expected):
+        collection.parse_collections_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', [
+    'collections:\n- namespace.collection1\n- namespace.collection2',
+    'collections:\n- name: namespace.collection1\n- name: namespace.collection2'
+], indirect=True)
+def test_parse_requirements(requirements_file):
+    expected = [('namespace.collection1', '*', None), ('namespace.collection2', '*', None)]
+    actual = collection.parse_collections_requirements_file(requirements_file)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize('requirements_file', [
+    'collections:\n- name: namespace.collection1\n  version: ">=1.0.0,<=2.0.0"\n'
+    '  source: https://galaxy-dev.ansible.com\n- namespace.collection2'
+], indirect=True)
+def test_parse_requirements_with_extra_info(requirements_file):
+    expected = [('namespace.collection1', '>=1.0.0,<=2.0.0', 'https://galaxy-dev.ansible.com'),
+                ('namespace.collection2', '*', None)]
+    actual = collection.parse_collections_requirements_file(requirements_file)
+
+    assert actual == expected

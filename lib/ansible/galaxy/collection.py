@@ -44,7 +44,7 @@ class CollectionRequirement(object):
 
     _FILE_MAPPING = [('MANIFEST.json', 'manifest'), ('FILES.json', 'files')]
 
-    def __init__(self, namespace, name, path, source, versions, requirement, parent=None, validate_certs=True,
+    def __init__(self, namespace, name, path, source, versions, requirement, force, parent=None, validate_certs=True,
                  metadata=None, files=None, skip=False):
         """
         Represents a collection requirement, the versions that are available to be installed as well as any
@@ -56,6 +56,7 @@ class CollectionRequirement(object):
         :param source: The Galaxy server URL to download if the collection from Galaxy.
         :param versions: A list of versions of the collection that is available
         :param requirement: The version requirement string used to verify the list of versions fit the requirements.
+        :param force: Whether the force flag applied to the collection.
         :param parent: The name of the parent the collection is a dependency of.
         :param validate_certs: Whether to validate the Galaxy server certificate.
         :param metadata: The collection metadata dict if it has already been retrieved.
@@ -69,7 +70,9 @@ class CollectionRequirement(object):
         self.path = path
         self.source = source
         self.versions = set(versions)
+        self.force = force
         self.skip = skip
+        self.required_by = []
         self._validate_certs = validate_certs
 
         self._metadata = metadata
@@ -85,7 +88,7 @@ class CollectionRequirement(object):
     def latest_version(self):
         versions = [v for v in self.versions if v != '*']
         if versions:
-            sorted(versions, key=LooseVersion)
+            versions = sorted(versions, key=LooseVersion)
             return versions[-1]
         else:
             return '*'
@@ -97,29 +100,31 @@ class CollectionRequirement(object):
         elif len(self.versions) > 1:
             return None
 
-        collection_url = _urljoin(*[self.source, 'api', 'v2', 'collections', self.namespace, self.name, 'versions',
-                                    self.latest_version])
-        details = json.load(open_url(collection_url, validate_certs=self._validate_certs))
-        self._galaxy_info = details
-        self._metadata = details['metadata']
-
+        self._get_metadata()
         return self._metadata['dependencies']
 
     def add_requirement(self, parent, requirement):
+        self.required_by.append((parent, requirement))
         new_versions = set([v for v in self.versions if self._meets_requirements(v, requirement)])
         if len(new_versions) == 0:
             if self.skip:
                 force_flag = '--force-with-deps' if parent else '--force'
-                msg = "Cannot meet requirement %s for dependency %s as it is already installed. Use %s to overwrite" \
-                      % (requirement, str(self), force_flag)
+                msg = "Cannot meet requirement %s:%s as it is already installed. Use %s to overwrite" \
+                      % (str(self), requirement, force_flag)
+                raise AnsibleError(msg)
             elif parent is None:
                 msg = "Cannot meet requirement %s for dependency %s" % (requirement, str(self))
             else:
                 msg = "Cannot meet dependency requirement '%s:%s' for collection %s" % (str(self), requirement, parent)
 
             collection_source = self.path or self.source
-            raise AnsibleError("%s from source '%s'. Available versions: %s" % (msg, collection_source,
-                                                                                ", ".join(self.versions)))
+            req_by = "\n".join(
+                ["\t%s - '%s:%s'" % (to_text(p) if p else 'base', str(self), r) for p, r in self.required_by]
+            )
+            raise AnsibleError(
+                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s"
+                % (msg, collection_source, ", ".join(self.versions), req_by)
+            )
 
         self.versions = new_versions
 
@@ -144,8 +149,8 @@ class CollectionRequirement(object):
 
         with tarfile.open(self.path, mode='r') as collection_tar:
             files_member_obj = collection_tar.getmember('FILES.json')
-            with collection_tar.extractfile(files_member_obj) as files_obj:
-                files = json.load(files_obj)
+            with _tarfile_extract(collection_tar, files_member_obj) as files_obj:
+                files = json.loads(to_text(files_obj.read()))
 
             _extract_tar_file(collection_tar, 'MANIFEST.json', collection_path, temp_path)
             _extract_tar_file(collection_tar, 'FILES.json', collection_path, temp_path)
@@ -163,6 +168,17 @@ class CollectionRequirement(object):
 
     def set_latest_version(self):
         self.versions = {self.latest_version}
+        self._get_metadata()
+
+    def _get_metadata(self):
+        if self._metadata:
+            return
+
+        collection_url = _urljoin(*[self.source, 'api', 'v2', 'collections', self.namespace, self.name, 'versions',
+                                    self.latest_version])
+        details = json.load(open_url(collection_url, validate_certs=self._validate_certs))
+        self._galaxy_info = details
+        self._metadata = details['metadata']
 
     def _meets_requirements(self, version, requirements):
         """
@@ -175,12 +191,12 @@ class CollectionRequirement(object):
             elif req.startswith('>'):
                 if req[1] == '=' and LooseVersion(version) < LooseVersion(req[2:]):
                     break
-                elif req[1] != '=' and LooseVersion(version) <= LooseVersion(req[2:]):
+                elif req[1] != '=' and LooseVersion(version) <= LooseVersion(req[1:]):
                     break
             elif req.startswith('<'):
                 if req[1] == '=' and LooseVersion(version) > LooseVersion(req[2:]):
                     break
-                elif req[1] != '=' and LooseVersion(version) >= LooseVersion(req[2:]):
+                elif req[1] != '=' and LooseVersion(version) >= LooseVersion(req[1:]):
                     break
             elif req != '*':
                 # Either prefixed with '==' or just the version, we want to match the exact version.
@@ -194,9 +210,9 @@ class CollectionRequirement(object):
         return False
 
     @staticmethod
-    def from_tar(path, validate_certs, parent=None):
+    def from_tar(path, validate_certs, force, parent=None):
         if not tarfile.is_tarfile(path):
-            raise AnsibleError("Collection artifact at '%s' is not a valid tar file." % path)
+            raise AnsibleError("Collection artifact at '%s' is not a valid tar file." % to_native(path))
 
         info = {}
         with tarfile.open(path, mode='r') as collection_tar:
@@ -205,13 +221,13 @@ class CollectionRequirement(object):
                     member = collection_tar.getmember(member_name)
                 except KeyError:
                     raise AnsibleError("Collection at '%s' does not contain the required file %s."
-                                       % (path, member_name))
+                                       % (to_native(path), to_native(member_name)))
 
-                with collection_tar.extractfile(member) as member_obj:
+                with _tarfile_extract(collection_tar, member) as member_obj:
                     try:
-                        info[property_name] = json.load(member_obj)
+                        info[property_name] = json.loads(to_text(member_obj.read()))
                     except ValueError:
-                        raise AnsibleError("Collection tar file %s is not a valid json string." % member_name)
+                        raise AnsibleError("Collection tar file %s is not a valid json string." % to_native(member_name))
 
         meta = info['manifest']['collection_info']
         files = info['files']['files']
@@ -220,16 +236,16 @@ class CollectionRequirement(object):
         name = meta['name']
         version = meta['version']
 
-        return CollectionRequirement(namespace, name, path, None, [version], version, parent=parent,
+        return CollectionRequirement(namespace, name, path, None, [version], version, force, parent=parent,
                                      validate_certs=validate_certs, metadata=meta, files=files)
 
     @staticmethod
-    def from_path(path, validate_certs, parent=None):
+    def from_path(path, validate_certs, force, parent=None):
         info = {}
         for file_name, property_name in CollectionRequirement._FILE_MAPPING:
             file_path = os.path.join(path, file_name)
             if os.path.exists(file_path):
-                with open(file_path, 'rb') as file_obj:
+                with open(file_path, 'r') as file_obj:
                     try:
                         info[property_name] = json.load(file_obj)
                     except ValueError:
@@ -238,13 +254,14 @@ class CollectionRequirement(object):
         if 'manifest' in info:
             meta = info['manifest']['collection_info']
         else:
+            display.warning("Collection at '%s' does not have a MANIFEST.json file, cannot detect version."
+                            % to_text(path))
             parent_dir, name = os.path.split(path)
             namespace = os.path.split(parent_dir)[1]
-            version = '*'
             meta = {
                 'namespace': namespace,
                 'name': name,
-                'version': version,
+                'version': '*',
                 'dependencies': {},
             }
 
@@ -254,11 +271,11 @@ class CollectionRequirement(object):
 
         files = info.get('files', {}).get('files', {})
 
-        return CollectionRequirement(namespace, name, path, None, [version], version, parent=parent,
+        return CollectionRequirement(namespace, name, path, None, [version], version, force, parent=parent,
                                      validate_certs=validate_certs, metadata=meta, files=files, skip=True)
 
     @staticmethod
-    def from_name(collection, servers, requirement, validate_certs, parent=None):
+    def from_name(collection, servers, requirement, validate_certs, force, parent=None):
         namespace, name = collection.split('.', 1)
         galaxy_info = None
         galaxy_meta = None
@@ -267,7 +284,11 @@ class CollectionRequirement(object):
             collection_url_paths = [server, 'api', 'v2', 'collections', namespace, name, 'versions']
 
             is_single = False
-            if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>')):
+            if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
+                    requirement.startswith('!=')):
+                if requirement.startswith('='):
+                    requirement = requirement.lstrip('=')
+
                 collection_url_paths.append(requirement)
                 is_single = True
 
@@ -295,7 +316,7 @@ class CollectionRequirement(object):
         else:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
-        req = CollectionRequirement(namespace, name, None, server, versions, requirement, parent=parent,
+        req = CollectionRequirement(namespace, name, None, server, versions, requirement, force, parent=parent,
                                     validate_certs=validate_certs, metadata=galaxy_meta)
         req._galaxy_info = galaxy_info
         return req
@@ -313,7 +334,7 @@ def build_collection(collection_path, output_path, force):
     """
     galaxy_path = os.path.join(collection_path, 'galaxy.yml')
     if not os.path.exists(galaxy_path):
-        raise AnsibleError("The collection galaxy.yml path '%s' does not exist." % galaxy_path)
+        raise AnsibleError("The collection galaxy.yml path '%s' does not exist." % to_native(galaxy_path))
 
     collection_meta = _get_galaxy_yml(galaxy_path)
     file_manifest = _build_files_manifest(collection_path)
@@ -326,10 +347,10 @@ def build_collection(collection_path, output_path, force):
     if os.path.exists(collection_output):
         if os.path.isdir(collection_output):
             raise AnsibleError("The output collection artifact '%s' already exists, "
-                               "but is a directory - aborting" % collection_output)
+                               "but is a directory - aborting" % to_native(collection_output))
         elif not force:
             raise AnsibleError("The file '%s' already exists. You can use --force to re-create "
-                               "the collection artifact." % collection_output)
+                               "the collection artifact." % to_native(collection_output))
 
     _build_collection_tar(collection_path, collection_output, collection_manifest, file_manifest)
 
@@ -344,10 +365,10 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
     :param ignore_certs: Whether to ignore certificate validation when interacting with the server.
     """
     if not os.path.exists(collection_path):
-        raise AnsibleError("The collection path specified '%s' does not exist." % collection_path)
+        raise AnsibleError("The collection path specified '%s' does not exist." % to_native(collection_path))
     elif not tarfile.is_tarfile(collection_path):
         raise AnsibleError("The collection path specified '%s' is not a tarball, use 'ansible-galaxy collection "
-                           "build' to create a proper release artifact." % collection_path)
+                           "build' to create a proper release artifact." % to_native(collection_path))
 
     display.display("Publishing collection artifact '%s' to %s" % (to_text(collection_path), server))
 
@@ -435,13 +456,18 @@ def parse_collections_requirements_file(requirements_file):
 
     requirements_file = os.path.expanduser(os.path.expandvars(requirements_file))
     if not os.path.exists(requirements_file):
-        raise AnsibleError("The requirements file '%s' does not exist." % requirements_file)
+        raise AnsibleError("The requirements file '%s' does not exist." % to_native(requirements_file))
 
     display.vvv("Reading collection requirement file at '%s'" % requirements_file)
     with open(requirements_file, 'rb') as req_obj:
-        requirements = yaml.safe_load(req_obj)
+        try:
+            requirements = yaml.safe_load(req_obj)
+        except YAMLError as err:
+            raise AnsibleError("Failed to parse the collection requirements yml at '%s' with the following error:\n%s"
+                               % (to_native(requirements_file), to_native(err)))
 
     if not isinstance(requirements, dict) or 'collections' not in requirements:
+        # TODO: Link to documentation page that documents the requirements.yml format for collections.
         raise AnsibleError("Expecting collections requirements file to be a dict with the key "
                            "collections that contains a list of collections to install.")
 
@@ -451,7 +477,7 @@ def parse_collections_requirements_file(requirements_file):
             if req_name is None:
                 raise AnsibleError("Collections requirement entry should contain the key name.")
 
-            req_version = collection_req.get('version', None)
+            req_version = collection_req.get('version', '*')
             req_source = collection_req.get('source', None)
 
             collection_info.append((req_name, req_version, req_source))
@@ -466,6 +492,13 @@ def _tempdir():
     temp_path = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
     yield temp_path
     shutil.rmtree(temp_path)
+
+
+@contextmanager
+def _tarfile_extract(tar, member):
+    tar_obj = tar.extractfile(member)
+    yield tar_obj
+    tar_obj.close()
 
 
 def _get_galaxy_yml(galaxy_yml_path):
@@ -734,9 +767,9 @@ def _find_existing_collections(path):
         for collection in os.listdir(namespace_path):
             collection_path = os.path.join(namespace_path, collection)
             if os.path.isdir(collection_path):
-                req = CollectionRequirement.from_path(collection_path, True)
+                req = CollectionRequirement.from_path(collection_path, True, False)
                 display.vvv("Found installed collection %s:%s at '%s'" % (str(req), req.latest_version,
-                                                                          collection_path))
+                                                                          to_text(collection_path)))
                 collections.append(req)
 
     return collections
@@ -751,38 +784,35 @@ def _build_dependency_map(collections, existing_collections, temp_path, servers,
         _get_collection_info(dependency_map, existing_collections, name, version, source, temp_path, servers,
                              validate_certs, (force or force_deps))
 
-    # Now parse the dependency requirements if no_deps was not set
-    if not no_deps:
-        checked_parents = set([str(c) for c in dependency_map.values() if c.skip])
+    checked_parents = set([str(c) for c in dependency_map.values() if c.skip])
+    while len(dependency_map) != len(checked_parents):
+        while not no_deps:  # Only parse dependencies if no_deps was not set
+            parents_to_check = set(dependency_map.keys()).difference(checked_parents)
 
-        while len(dependency_map) != len(checked_parents):
-            while True:
-                parents_to_check = set(dependency_map.keys()).difference(checked_parents)
+            deps_exhausted = True
+            for parent in parents_to_check:
+                parent_info = dependency_map[parent]
 
-                deps_exhausted = True
-                for parent in parents_to_check:
-                    parent_info = dependency_map[parent]
+                if parent_info.dependencies:
+                    deps_exhausted = False
+                    for dep_name, dep_requirement in parent_info.dependencies.items():
+                        _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
+                                             parent_info.source, temp_path, servers, validate_certs, force_deps,
+                                             parent=parent)
 
-                    if parent_info.dependencies:
-                        deps_exhausted = False
-                        for dep_name, dep_requirement in parent_info.dependencies.items():
-                            _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
-                                                 parent_info.source, temp_path, servers, validate_certs, force_deps,
-                                                 parent=parent)
+                    checked_parents.add(parent)
 
-                        checked_parents.add(parent)
+            # No extra dependencies were resolved, exit loop
+            if deps_exhausted:
+                break
 
-                # No extra dependencies were resolved, exit loop
-                if deps_exhausted:
-                    break
-
-            # Now we have resolved the deps to our best extent, now select the latest version for collections with
-            # multiple versions found and go from there
-            deps_not_checked = set(dependency_map.keys()).difference(checked_parents)
-            for collection in deps_not_checked:
-                dependency_map[collection].set_latest_version()
-                if len(dependency_map[collection].dependencies) == 0:
-                    checked_parents.add(collection)
+        # Now we have resolved the deps to our best extent, now select the latest version for collections with
+        # multiple versions found and go from there
+        deps_not_checked = set(dependency_map.keys()).difference(checked_parents)
+        for collection in deps_not_checked:
+            dependency_map[collection].set_latest_version()
+            if no_deps or len(dependency_map[collection].dependencies) == 0:
+                checked_parents.add(collection)
 
     return dependency_map
 
@@ -792,18 +822,18 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
     dep_msg = ""
     if parent:
         dep_msg = " - as dependency of %s" % parent
-    display.vvv("Processing requirement collection '%s'%s" % (collection, dep_msg))
+    display.vvv("Processing requirement collection '%s'%s" % (to_text(collection), dep_msg))
 
     tar_path = None
     if os.path.isfile(collection):
-        display.vvvv("Collection requirement '%s' is a tar artifact" % collection)
+        display.vvvv("Collection requirement '%s' is a tar artifact" % to_text(collection))
         tar_path = collection
     elif urlparse(collection).scheme:
         display.vvvv("Collection requirement '%s' is a URL to a tar artifact" % collection)
         tar_path = _download_file(collection, temp_path, None, validate_certs)
 
     if tar_path:
-        req = CollectionRequirement.from_tar(tar_path, validate_certs, parent=parent)
+        req = CollectionRequirement.from_tar(tar_path, validate_certs, force, arent=parent)
 
         collection_name = str(req)
         if collection_name in dep_map:
@@ -818,11 +848,12 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             collection_info.add_requirement(parent, requirement)
         else:
             servers = [source] if source else server_list
-            collection_info = CollectionRequirement.from_name(collection, servers, requirement, validate_certs,
+            collection_info = CollectionRequirement.from_name(collection, servers, requirement, validate_certs, force,
                                                               parent=parent)
 
     existing = [c for c in existing_collections if str(c) == str(collection_info)]
-    if existing and not force:
+    if existing and not collection_info.force:
+        existing[0].add_requirement(parent, requirement)  # Test that the installed collection fits the requirement
         collection_info = existing[0]
 
     dep_map[str(collection_info)] = collection_info
@@ -862,12 +893,13 @@ def _extract_tar_file(tar, filename, dest, temp_path, expected_hash=None):
     try:
         member = tar.getmember(filename)
     except KeyError:
-        raise AnsibleError("Collection tar at '%s' does not contain the expected file %s." % (tar.name, filename))
+        raise AnsibleError("Collection tar at '%s' does not contain the expected file %s." % (to_native(tar.name),
+                                                                                              to_native(filename)))
 
     with tempfile.NamedTemporaryFile(dir=temp_path, delete=False) as tmpfile:
         bufsize = 65536
         sha256_digest = sha256()
-        with tar.extractfile(member) as tar_obj:
+        with _tarfile_extract(tar, member) as tar_obj:
             data = tar_obj.read(bufsize)
             while data:
                 tmpfile.write(data)
@@ -879,7 +911,7 @@ def _extract_tar_file(tar, filename, dest, temp_path, expected_hash=None):
 
         if expected_hash and actual_hash != expected_hash:
             raise AnsibleError("Checksum mismatch for '%s' inside collection at '%s'"
-                               % (filename, tar.name))
+                               % (to_native(filename), to_native(tar.name)))
 
         dest_filepath = os.path.join(dest, filename)
         parent_dir = os.path.split(dest_filepath)[0]
@@ -888,4 +920,4 @@ def _extract_tar_file(tar, filename, dest, temp_path, expected_hash=None):
             # makes sure we create the parent directory even if it wasn't set in the metadata.
             os.makedirs(parent_dir)
 
-        os.rename(tmpfile.name, dest_filepath)
+        shutil.move(tmpfile.name, dest_filepath)
