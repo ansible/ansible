@@ -501,11 +501,9 @@ guides for Windows modules differ substantially from those for standard standard
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

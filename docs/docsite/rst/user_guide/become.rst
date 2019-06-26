@@ -74,7 +74,7 @@ ansible_become_user
     set the user you become through privilege escalation; does not imply ``ansible_become: yes``
 
 ansible_become_password
-    set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
+    set the privilege escalation password. See :ref:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
 
@@ -302,7 +302,7 @@ If you need a password to enter ``enable`` mode, you can specify it in one of tw
 
 .. warning::
 
-   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
+   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :ref:`vault`.
 
 authorize and auth_pass
 -----------------------
