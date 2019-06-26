@@ -1,0 +1,2 @@
+minor_changes:
+  - fix exception when tower_verify_ssl parameter is used in tower_role module (https://github.com/ansible/ansible/pull/57518).
