@@ -633,7 +633,7 @@ class PgHbaRule(dict):
             return 1
         if isinstance(sourceobj, str):
             return 0
-        raise PgHbaValueError('This source {1} is of an unknown type...'.format(sourceobj))
+        raise PgHbaValueError('This source {0} is of an unknown type...'.format(sourceobj))
 
     def db_weight(self):
         """Report the weight of the database.
