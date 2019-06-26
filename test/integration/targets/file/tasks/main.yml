@@ -515,7 +515,7 @@
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access output_dir at all
 - name: create file as root with all write permissions
-  file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user}}
+  file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user_id}}
 
 - name: Pause to ensure stat times are not the exact same
   pause:
