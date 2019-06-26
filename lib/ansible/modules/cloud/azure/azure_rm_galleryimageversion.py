@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimageversion
 version_added: '2.9'
-short_description: Manage Azure GalleryImageVersion instance.
+short_description: Manage Azure SIG Image Version instance.
 description:
-  - 'Create, update and delete instance of Azure GalleryImageVersion.'
+  - 'Create, update and delete instance of Azure SIG Image Version.'
 options:
   resource_group:
     description:
@@ -347,10 +347,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
             response = self.create_update_resource()
 
-            # if not old_response:
             self.results['changed'] = True
-            # else:
-            #     self.results['changed'] = old_response.__ne__(response)
             self.log('Creation / Update done')
         elif self.to_do == Actions.Delete:
             self.log('GalleryImageVersion instance deleted')
@@ -372,6 +369,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
         if response:
             self.results["id"] = response["id"]
+            self.results["old_response"] = response
 
         return self.results
 
@@ -396,6 +394,10 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
         except Exception:
             response = {'text': response.text}
             pass
+
+        while response['properties']['provisioningState'] == 'Creating':
+            time.sleep(60)
+            response = self.get_resource()
 
         return response
 
