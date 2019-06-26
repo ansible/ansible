@@ -237,8 +237,16 @@
 # pause for 1 minute as the service delete image version, but it takes longer for the process to be completed
 # there's no way to figure out whether resources were cleaned up already or not
 # this must be fixed in the service    
-- pause:
-    minutes: 3
+#- pause:
+#    minutes: 3
+
+- name: Delete gallery image
+  azure_rm_galleryimage:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+    state: absent
+  ignore_errors: yes
 
 - name: Delete gallery image
   azure_rm_galleryimage:
