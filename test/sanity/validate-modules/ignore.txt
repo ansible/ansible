@@ -379,7 +379,6 @@ lib/ansible/modules/monitoring/circonus_annotation.py E327
 lib/ansible/modules/monitoring/datadog_event.py E324
 lib/ansible/modules/monitoring/datadog_event.py E327
 lib/ansible/modules/monitoring/datadog_monitor.py E324
-lib/ansible/modules/monitoring/datadog_monitor.py E326
 lib/ansible/modules/monitoring/grafana_datasource.py E324
 lib/ansible/modules/monitoring/icinga2_host.py E322
 lib/ansible/modules/monitoring/icinga2_host.py E324
