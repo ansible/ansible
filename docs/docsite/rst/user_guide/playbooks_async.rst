@@ -42,7 +42,7 @@ poll value is set by the ``DEFAULT_POLL_INTERVAL`` setting if you do not specify
 
 .. note::
   As of Ansible 2.3, async does not support check mode and will fail the
-  task when run in check mode. See :doc:`playbooks_checkmode` on how to
+  task when run in check mode. See :ref:`check_mode_dry` on how to
   skip a task in check mode.
 
 
@@ -149,7 +149,7 @@ of tasks running concurrently, you can do it this way::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

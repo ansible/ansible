@@ -2,7 +2,7 @@ Prompts
 =======
 
 When running a playbook, you may wish to prompt the user for certain input, and can
-do so with the 'vars_prompt' section.  
+do so with the 'vars_prompt' section.
 
 A common use for this might be for asking for sensitive data that you do not want to record.
 
@@ -23,9 +23,9 @@ Here is a most basic example::
         - name: password
           prompt: "What is your password?"
 
-      tasks: 
+      tasks:
 
-        - debug: 
+        - debug:
             msg: 'Logging in as {{ username }}'
 
 The user input is hidden by default but it can be made visible by setting ``private: no``.
@@ -101,11 +101,11 @@ If you need to put in special characters (i.e `{%`) that might create templating
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

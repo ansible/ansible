@@ -6,7 +6,7 @@ Setting the Environment (and Working With Proxies)
 .. versionadded:: 1.1
 
 It is quite possible that you may need to get package updates through a proxy, or even get some package
-updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to 
+updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to
 call may also need certain environment variables set to run properly.
 
 Ansible makes it easy for you to configure the remote execution environment by using the 'environment' keyword.  Here is an example::
@@ -124,11 +124,9 @@ You might also want to simply specify the environment for a single task::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
