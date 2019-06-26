@@ -1,0 +1,2 @@
+minor_changes:
+- vmware_cluster - Refactor into several modules (vmware_cluster, vmware_cluster_drs, vmware_cluster_ha and vmware_cluster_vsan)
