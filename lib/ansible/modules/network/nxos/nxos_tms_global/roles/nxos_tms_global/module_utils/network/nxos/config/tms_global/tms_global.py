@@ -58,12 +58,19 @@ class Tms_global(ConfigBase, Tms_globalArgs):
         result = {'changed': False}
         commands = list()
         warnings = list()
+        module_params = self._module.params['config'][0]
+
+        # Normalize interface name.
+        int = module_params.get('destination_profile_source_interface')
+        if int:
+            module_params['destination_profile_source_interface'] = normalize_interface(int)
 
         existing_tms_global_facts = self.get_tms_global_facts()
         commands.extend(self.set_config(existing_tms_global_facts))
         if commands:
             if not self._module.check_mode:
-                self._connection.edit_config(commands)
+                # self._connection.edit_config(commands)
+                self._connection.load_config(commands)
             result['changed'] = True
         result['commands'] = commands
 

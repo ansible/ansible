@@ -1,0 +1,71 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_tms_global sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: set facts common
+  # nd_* vars are "non-default" values
+  set_fact:
+    certificate:
+      key: /bootflash/server.key
+      hostname: localhost
+    destination_profile_compression: gzip
+    destination_profile_source_interface: Loopback55
+    destination_profile_vrf: management
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: telemetry
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
+- block:
+  - name: TMS non defaults - merged
+    nxos_tms_global: &tms_non_def
+      state: 'merged'
+      config:
+        - certificate: "{{ certificate }}"
+          destination_profile_compression: "{{ destination_profile_compression }}"
+          destination_profile_source_interface: "{{ destination_profile_source_interface }}"
+          destination_profile_vrf: "{{ destination_profile_vrf }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: TMS non defaults - merged - idempotence
+    nxos_tms_global: *tms_non_def
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: TMS defaults - deleted
+    nxos_tms_global: &tms_def
+      state: 'deleted'
+      config:
+        - certificate: "{{ certificate }}"
+          destination_profile_compression: "{{ destination_profile_compression }}"
+          destination_profile_source_interface: "{{ destination_profile_source_interface }}"
+          destination_profile_vrf: "{{ destination_profile_vrf }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: TMS defaults - deleted - idempotence
+    nxos_tms_global: *tms_def
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_tms_global sanity test"

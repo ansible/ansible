@@ -8,6 +8,7 @@ The base class for all nxos resource modules
 """
 
 from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.nxos.nxos import Cli, LocalNxapi, HttpApi, get_connection
 
 
 class ConfigBase(object):  # pylint: disable=R0903
@@ -17,7 +18,8 @@ class ConfigBase(object):  # pylint: disable=R0903
 
     def __init__(self, module):
         self._module = module
-        self._connection = self._get_connection()
+        #self._connection = self._get_connection()
+        self._connection = get_connection(module)
 
     def _get_connection(self):
         if self._connection:
