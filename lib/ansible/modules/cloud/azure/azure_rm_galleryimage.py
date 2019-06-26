@@ -87,7 +87,7 @@ options:
       - >-
         The end of life date of the gallery Image Definition. This property can
         be used for decommissioning purposes. This property is updatable.
-    type: datetime
+    type: str
   identifier:
     description:
       - undefined
@@ -122,11 +122,11 @@ options:
           min:
             description:
               - The minimum number of the resource.
-            type: number
+            type: int
           max:
             description:
               - The maximum number of the resource.
-            type: number
+            type: int
       memory:
         description:
           - undefined
@@ -135,14 +135,15 @@ options:
           min:
             description:
               - The minimum number of the resource.
-            type: number
+            type: int
           max:
             description:
               - The maximum number of the resource.
-            type: number
+            type: int
   disallowed:
     description:
       - undefined
+    type: dict
     suboptions:
       disk_types:
         description:
@@ -151,6 +152,7 @@ options:
   purchase_plan:
     description:
       - undefined
+    type: dict
     suboptions:
       name:
         description:
@@ -280,7 +282,7 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
                          'specialized']
             ),
             end_of_life_date=dict(
-                type='datetime',
+                type='str',
                 disposition='/properties/endOfLifeDate'
             ),
             identifier=dict(
@@ -311,10 +313,10 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
                         disposition='vCPUs',
                         options=dict(
                             min=dict(
-                                type='number'
+                                type='int'
                             ),
                             max=dict(
-                                type='number'
+                                type='int'
                             )
                         )
                     ),
@@ -322,10 +324,10 @@ class AzureRMGalleryImages(AzureRMModuleBaseExt):
                         type='dict',
                         options=dict(
                             min=dict(
-                                type='number'
+                                type='int'
                             ),
                             max=dict(
-                                type='number'
+                                type='int'
                             )
                         )
                     )

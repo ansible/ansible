@@ -38,6 +38,7 @@ options:
     description:
       - Resource location
     required: true
+    type: str
   description:
     description:
       - >-

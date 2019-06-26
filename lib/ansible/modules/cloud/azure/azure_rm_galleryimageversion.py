@@ -105,7 +105,7 @@ options:
           - >-
             The end of life date of the gallery Image Version. This property can
             be used for decommissioning purposes. This property is updatable.
-        type: datetime
+        type: str
       storage_account_type:
         description:
           - >-
@@ -427,10 +427,11 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                                               self.status_code,
                                               600,
                                               30)
+            # allow some time for proper clean up
+            time.sleep(30)
         except CloudError as e:
             self.log('Error attempting to delete the GalleryImageVersion instance.')
             self.fail('Error deleting the GalleryImageVersion instance: {0}'.format(str(e)))
-
         return True
 
     def get_resource(self):
