@@ -208,7 +208,7 @@ def run_module():
         attachment=dict(default=None, required=False, type='str')
     )
     module_required_together = [
-        ['client_id','client_secret']
+        ['client_id', 'client_secret']
     ]
     module_required_if = [
         ['state', 'absent', ['number']],
