@@ -68,7 +68,7 @@ options:
     groups:
         type: list
         description:
-            -  User groups to add the user to.
+            - User groups to add the user to.
     password:
         type: str
         description:
@@ -76,9 +76,8 @@ options:
     language:
         type: str
         description:
-            -  Language code of the user's language.
-        choices:
-            - en_GB
+            - "Language code of the user's language."
+            - "Examples: C(en_US), C(fr_FR), C(ja_JP)."
         default: en_GB
     theme:
         type: 'str'
@@ -136,7 +135,7 @@ options:
             status:
                 type: str
                 description:
-                    -  Whether the media is enabled.
+                    - Whether the media is enabled.
                 choices: [enabled, disabled]
                 default: enabled
             severities:
@@ -155,14 +154,14 @@ options:
             period:
                 type: str
                 description:
-                    - Time when the notifications can be sent as a time period or user macros separated by a semicolon.
-                    - To set a time period, the following format has to be used: C(d-d,hh:mm-hh:mm),
-                    - where the symbols stand for the following:
-                    - d - Day of the week: C(1 - Monday, 2 - Tuesday, ... , 7 - Sunday)
-                    - hh - Hours: C(00-24)
-                    - mm - Minutes: C(00-59)
-                    - You can specify more than one time period using a semicolon C(;) separator: C(d-d,hh:mm-hh:mm;d-d,hh:mm-hh:mm...)
-                default: 1-7,00:00-24:00
+                    - "Time when the notifications can be sent as a time period or user macros separated by a semicolon."
+                    - "To set a time period, the following format has to be used: C(d-d,hh:mm-hh:mm),"
+                    - "where the symbols stand for the following:"
+                    - "d - Day of the week: C(1 - Monday, 2 - Tuesday, ... , 7 - Sunday)"
+                    - "hh - Hours: C(00-24)"
+                    - "mm - Minutes: C(00-59)"
+                    - "You can specify more than one time period using a semicolon C(;) separator: C(d-d,hh:mm-hh:mm;d-d,hh:mm-hh:mm...)"
+                default: '1-7,00:00-24:00'
 extends_documentation_fragment:
     - zabbix
 
@@ -183,7 +182,7 @@ from ansible.module_utils.common.text.converters import container_to_bytes
 
 
 try:
-    from zabbix_api import ZabbixAPI
+    from zabbix_api import ZabbixAPI, ZabbixAPIException
     HAS_ZABBIX_API = True
 except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
@@ -194,12 +193,25 @@ def to_numeric_value(value, strs):
     return strs.get(value)
 
 
-def check_user_password(module, zbx, user_id, username, password):
+def check_user_password(zbx, user_id, username, password):
+    """Login with the user using the password provided as a module argument
+    to check if password parameter needs to be updated.
+
+    Args:
+        zbx: Instance of ZabbixAPI class used for checking user's password
+        user_id (int): ID of the user to be updated
+        username (str): User's username
+        password (str): User's password
+
+    Returns:
+        (bool): True if login is successful, and False otherwise.
+    """
     try:
         zbx.login(username, password)
         return True
-    except Exception as e:
+    except ZabbixAPIException as e:
         return False
+
 
 def get_mediatype_id_by_name(module, zbx, mediatype_name):
     """Returns mediatype ID if exists
@@ -218,11 +230,20 @@ def get_mediatype_id_by_name(module, zbx, mediatype_name):
             'filter': {'description': [mediatype_name]}
         })
         if len(mediatype_list) < 1:
-            module.fail_json(msg="Mediatype '{mediatype_name}' does not exist".format(mediatype_name=mediatype_name))
+            module.fail_json(
+                msg="Mediatype '{mediatype_name}' does not exist".format(
+                    mediatype_name=mediatype_name
+                )
+            )
         else:
             return mediatype_list[0]['mediatypeid']
     except Exception as e:
-        module.fail_json(msg="Failed to get ID of the mediatype '{mediatype_name}': {e}".format(mediatype_name=mediatype_name, e=e))
+        module.fail_json(
+            msg="Failed to get ID of the mediatype '{mediatype_name}': {e}".format(
+                mediatype_name=mediatype_name,
+                e=e
+            )
+        )
 
 
 def get_group_id_by_name(module, zbx, group_name):
@@ -242,14 +263,23 @@ def get_group_id_by_name(module, zbx, group_name):
             'filter': {'name': [group_name]}
         })
         if len(group_list) < 1:
-            module.fail_json(msg="User group '{group_name}' does not exist".format(group_name=group_name))
+            module.fail_json(
+                msg="User group '{group_name}' does not exist".format(
+                    group_name=group_name
+                )
+            )
         else:
             return group_list[0]['usrgrpid']
     except Exception as e:
-        module.fail_json(msg="Failed to get ID of the user group '{group_name}': {e}".format(group_name=group_name, e=e))
+        module.fail_json(
+            msg="Failed to get ID of the user group '{group_name}': {e}".format(
+                group_name=group_name,
+                e=e
+            )
+        )
 
 
-def construct_media_severity(module, zbx, severities):
+def construct_media_severity(severities):
     """Converts the list of desired severiries provided
     by the user to an integer suitable for Zabbix API.
 
@@ -260,8 +290,6 @@ def construct_media_severity(module, zbx, severities):
     severities 'warning' and 'average'.
 
     Args:
-        module: AnsibleModule object
-        zbx: ZabbixAPI object
         severities (list): List of severities
 
     Returns:
@@ -292,6 +320,8 @@ def construct_media_parameters(module, zbx, medias):
     to a format suitable for Zabbix API.
 
     Args:
+        module: AnsibleModule object
+        zbx: ZabbixAPI object
         medias (list): List of medias passed to the module.
 
     Yields:
@@ -300,17 +330,26 @@ def construct_media_parameters(module, zbx, medias):
     """
     for media in medias:
         send_to = media['send_to']
-        if float(zbx.api_version().rsplit('.', 1)[0]) >= 4.0:
-            if isinstance(send_to, str):
-                send_to = [send_to]
+        try:
+            if float(zbx.api_version().rsplit('.', 1)[0]) >= 4.0:
+                if isinstance(send_to, str):
+                    send_to = [send_to]
+        except Exception as e:
+            module.fail_json(
+                msg="Failed to get Zabbix version due to: {e}".format(
+                    e=e
+                )
+            )
 
         yield dict(
-            mediatypeid=get_mediatype_id_by_name(module, zbx, media['mediatype']),
+            mediatypeid=get_mediatype_id_by_name(module,
+                                                 zbx,
+                                                 media['mediatype']),
             sendto=send_to,
             active=to_numeric_value(media['status'],
                                     {'enabled': '0',
                                      'disabled': '1'}),
-            severity=str(construct_media_severity(module, zbx, media['severities'])),
+            severity=str(construct_media_severity(media['severities'])),
             period=media['period']
         )
 
@@ -320,16 +359,18 @@ def construct_group_parameters(module, zbx, groups):
     to a format suitable for Zabbix API.
 
     Args:
+        module: AnsibleModule object
+        zbx: ZabbixAPI object
         groups: List of group names.
 
     Yields:
         (dict): A dictionary in the following format: {'usrgrpid': `group_id`}.
     """
     if groups is None:
-        raise StopIteration()
-        yield
+        return
+
     if len(groups) < 1:
-            module.fail_json(msg="Parameter 'groups' cannot be empty")
+        module.fail_json(msg="Parameter 'groups' cannot be empty")
     for group in groups:
         group_id = get_group_id_by_name(module, zbx, group)
         yield {'usrgrpid': group_id}
@@ -339,6 +380,8 @@ def construct_parameters(module, zbx, **kwargs):
     """Translates data to a format suitable for Zabbix API.
 
     Args:
+        module: AnsibleModule object
+        zbx: ZabbixAPI object
         **kwargs: Arguments passed to the module.
 
     Returns:
@@ -362,8 +405,8 @@ def construct_parameters(module, zbx, **kwargs):
         lang=kwargs['language'],
         theme=kwargs['theme'],
         autologin=to_numeric_value(str(kwargs['auto_login']),
-                                             {'False': '0',
-                                              'True': '1'}),
+                                   {'False': '0',
+                                    'True': '1'}),
         autologout=kwargs['auto_logout'],
         refresh=kwargs['refresh'],
         rows_per_page=str(kwargs['rows_per_page']),
@@ -393,7 +436,12 @@ def check_if_user_exists(module, zbx, username):
         else:
             return True, user_list[0]['userid']
     except Exception as e:
-        module.fail_json(msg="Failed to get the ID of the user '{username}': {e}".format(username=username, e=e))
+        module.fail_json(
+            msg="Failed to get the ID of the user '{username}': {e}".format(
+                username=username,
+                e=e
+            )
+        )
 
 
 def diff(existing, new):
@@ -412,8 +460,6 @@ def diff(existing, new):
     for key in new:
         if key == 'user_medias':
             before['user_medias'] = existing['medias']
-        # elif key == 'passwd':
-            # continue
         else:
             before[key] = existing[key]
         if new[key] is None:
@@ -423,13 +469,14 @@ def diff(existing, new):
     return {'before': before, 'after': after}
 
 
-def get_update_params(module, zbx, user_id, check_password, **kwargs):
+def get_update_params(module, zbx, user_id, check_passwd_inst, **kwargs):
     """Filters only the parameters that are different and need to be updated.
 
     Args:
         module: AnsibleModule object.
         zbx: ZabbixAPI object.
         user_id (int): ID of the user to be updated.
+        check_passwd_inst: Instance of ZabbixAPI class used for checking user's password
         **kwargs: Parameters for the new user.
 
     Returns:
@@ -457,12 +504,12 @@ def get_update_params(module, zbx, user_id, check_password, **kwargs):
     if new_medias != existing_medias:
         params_to_update['user_medias'] = new_medias
 
-    password_valid = check_user_password(module, check_password, user_id,
+    password_valid = check_user_password(check_passwd_inst, user_id,
                                          kwargs['alias'], kwargs['passwd'])
 
     if not password_valid:
         params_to_update['passwd'] = kwargs['passwd']
-        existing_user['passwd'] = ''
+        existing_user['passwd'] = 'OLD_PASSWORD_PLACEHOLDER'  # This is needed for the 'diff' option to show that the password is being changed.
     else:
         existing_user['passwd'] = kwargs['passwd']
 
@@ -480,25 +527,40 @@ def get_update_params(module, zbx, user_id, check_password, **kwargs):
     return params_to_update, diff(existing_user, kwargs)
 
 
-def delete_user(module, zbx, user_id):
+def delete_user(module, zbx, username, user_id):
     try:
         return zbx.user.delete([user_id])['userids'][0]
     except Exception as e:
-        module.fail_json(msg="Failed to delete user '{username}': {e}".format(username=kwargs['alias'], e=e))
+        module.fail_json(
+            msg="Failed to delete user '{username}': {e}".format(
+                username=username,
+                e=e
+            )
+        )
 
 
 def update_user(module, zbx, username, **kwargs):
     try:
         return zbx.user.update(kwargs)['userids'][0]
     except Exception as e:
-        module.fail_json(msg="Failed to update user '{username}': {e}".format(username=username, e=e))
+        module.fail_json(
+            msg="Failed to update user '{username}': {e}".format(
+                username=username,
+                e=e
+            )
+        )
 
 
 def create_user(module, zbx, **kwargs):
     try:
         return zbx.user.create(kwargs)['userids'][0]
     except Exception as e:
-        module.fail_json(msg="Failed to create user '{username}': {e}".format(username=kwargs['alias'], e=e))
+        module.fail_json(
+            msg="Failed to create user '{username}': {e}".format(
+                username=kwargs['alias'],
+                e=e
+            )
+        )
 
 
 def main():
@@ -526,7 +588,7 @@ def main():
         theme=dict(
             type='str',
             default='default',
-            choices=['default','blue-theme','dark-theme'],
+            choices=['default', 'blue-theme', 'dark-theme'],
             required=False
         ),
         auto_login=dict(type='bool', default=False, required=False),
@@ -574,7 +636,9 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
+        module.fail_json(
+            msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR
+        )
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -603,10 +667,12 @@ def main():
 
     # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+        zbx = ZabbixAPI(server_url, timeout=timeout,
+                        user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
-        check_password = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                        validate_certs=validate_certs)
+        check_passwd_inst = ZabbixAPI(server_url, timeout=timeout,
+                                      user=http_login_user, passwd=http_login_password,
+                                      validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
@@ -641,7 +707,7 @@ def main():
                         _id=user_id
                     )
                 )
-            user_id = delete_user(module, zbx, user_id)
+            user_id = delete_user(module, zbx, username, user_id)
             module.exit_json(
                 changed=True,
                 msg="User {username} has been deleted. ID: {_id}".format(
@@ -650,7 +716,8 @@ def main():
                 )
             )
         else:
-            params_to_update, diff = get_update_params(module, zbx, user_id, check_password, **parameters)
+            params_to_update, diff = get_update_params(module, zbx, user_id,
+                                                       check_passwd_inst, **parameters)
             if params_to_update == {}:
                 module.exit_json(
                     changed=False,
