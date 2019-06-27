@@ -105,7 +105,7 @@ options:
             - present
     public_access:
         description:
-            - Determine a container's level of public access. By default containers are private.
+            - A container's level of public access. By default containers are private.
             - Can only be set at time of container creation.
         choices:
             - container

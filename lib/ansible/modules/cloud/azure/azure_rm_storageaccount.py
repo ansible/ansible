@@ -67,7 +67,7 @@ options:
             - custom_dns_domain_suffix
     kind:
         description:
-            - The I(kind) of storage.
+            - The kind of storage.
         default: 'Storage'
         choices:
             - Storage
@@ -76,7 +76,7 @@ options:
         version_added: "2.2"
     access_tier:
         description:
-            - The access tier for this storage account. Required for a storage account of I(kind=BlobStorage).
+            - The access tier for this storage account. Required when I(kind=BlobStorage).
         choices:
             - Hot
             - Cool
@@ -89,14 +89,14 @@ options:
             - force
     https_only:
         description:
-            -  Allows https traffic only to storage service if sets to C(true).
+            -  Allows https traffic only to storage service when set to C(true).
         type: bool
         version_added: "2.8"
     blob_cors:
         description:
             - Specifies CORS rules for the Blob service.
             - You can include up to five CorsRule elements in the request.
-            - If no I(blob_cors) elements are included in the argument list, nothing about CORS will be changed.
+            - If no blob_cors elements are included in the argument list, nothing about CORS will be changed.
             - If you want to delete all CORS rules and disable CORS for the Blob service, explicitly set I(blob_cors=[]).
         type: list
         version_added: "2.8"
@@ -212,7 +212,7 @@ state:
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/clh0003"
         location:
             description:
-                - Valid azure location. defaults to location of the resource group.
+                - Valid Azure location. defaults to location of the resource group.
             returned: always
             type: str
             sample: eastus2
@@ -224,7 +224,7 @@ state:
             sample: clh0003
         primary_endpoints:
             description:
-                - The URLs that are used to perform a retrieval of a public I(blob), I(queue), or I(table) object from the primary location.
+                - The URLs to retrieve the public I(blob), I(queue), or I(table) object from the primary location.
             returned: always
             type: dict
             sample: {
@@ -253,7 +253,7 @@ state:
             sample: Testing
         secondary_endpoints:
             description:
-                - The URLs that are used to perform a retrieval of a public I(blob), I(queue), or I(table) object from the secondary location.
+                - The URLs retrieve the public I(blob), I(queue), or I(table) object from the secondary location.
             returned: always
             type: dict
             sample: {
@@ -269,13 +269,13 @@ state:
             sample: centralus
         status_of_primary:
             description:
-                - The status indicating whether the primary location of the storage account is C(available) or C(unavailable).
+                - The status of the primary location of the storage account is C(available) or C(unavailable).
             returned: always
             type: str
             sample: available
         status_of_secondary:
             description:
-                - The status indicating whether the secondary location of the storage account is C(available) or C(unavailable).
+                - The status of the secondary location of the storage account is C(available) or C(unavailable).
             returned: always
             type: str
             sample: available
