@@ -1419,7 +1419,7 @@ def detect_changes_shippable(args):
     :type args: TestConfig
     :rtype: list[str] | None
     """
-    git = Git(args)
+    git = Git()
     result = ShippableChanges(args, git)
 
     if result.is_pr:
@@ -1442,7 +1442,7 @@ def detect_changes_local(args):
     :type args: TestConfig
     :rtype: list[str]
     """
-    git = Git(args)
+    git = Git()
     result = LocalChanges(args, git)
 
     display.info('Detected branch %s forked from %s at commit %s' % (
