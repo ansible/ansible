@@ -279,6 +279,21 @@ EXAMPLES = '''
     managed_disk_type: Standard_LRS
     image: customimage001
 
+- name: Create a VMSS with over 100 instances
+  azure_rm_virtualmachinescaleset:
+    resource_group: myResourceGroup
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 120
+    single_placement_group: False
+    virtual_network_name: testvnet
+    upgrade_policy: Manual
+    subnet_name: testsubnet
+    admin_username: adminUser
+    admin_password: password01
+    managed_disk_type: Standard_LRS
+    image: customimage001
+
 - name: Create a VMSS with a custom image from a particular resource group
   azure_rm_virtualmachinescaleset:
     resource_group: myResourceGroup
@@ -517,11 +532,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         if not self.virtual_network_resource_group:
             self.virtual_network_resource_group = self.resource_group
 
-        if self.capacity > 100:
-            self.single_placement_group = False
-        else
-            self.single_placement_group = True
-
+        #if self.capacity > 100:
+        #    self.single_placement_group = False
+        
         changed = False
         results = dict()
         vmss = None
