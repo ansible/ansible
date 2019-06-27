@@ -197,8 +197,7 @@ class ZipArchive(object):
 
     def __init__(self, src, dest, file_args, module):
         self.src = src
-        self.dest = dest
-        self.b_dest = to_bytes(dest, errors='surrogate_or_strict')
+        self.b_dest = dest
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
@@ -436,7 +435,7 @@ class ZipArchive(object):
             # DEBUG
 #            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
 
-            dest = os.path.join(self.dest, path)
+            dest = os.path.join(self.b_dest, to_bytes(path, errors='surrogate_or_strict'))
             try:
                 st = os.lstat(dest)
             except Exception:
@@ -621,8 +620,7 @@ class TgzArchive(object):
 
     def __init__(self, src, dest, file_args, module):
         self.src = src
-        self.dest = dest
-        self.b_dest = to_bytes(dest, errors='surrogate_or_strict')
+        self.b_dest = dest
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
@@ -835,7 +833,7 @@ def main():
     )
 
     src = module.params['src']
-    dest = module.params['dest']
+    b_dest = to_bytes(module.params['dest'], errors='surrogate_or_strict')
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 
@@ -859,12 +857,12 @@ def main():
         module.fail_json(msg="Source '%s' not readable, %s" % (src, to_native(e)))
 
     # is dest OK to receive tar file?
-    if not os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')):
-        module.fail_json(msg="Destination '%s' is not a directory" % dest)
+    if not os.path.isdir(b_dest):
+        module.fail_json(msg="Destination '%s' is not a directory" % b_dest)
 
-    handler = pick_handler(src, dest, file_args, module)
+    handler = pick_handler(src, b_dest, file_args, module)
 
-    res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
+    res_args = dict(handler=handler.__class__.__name__, dest=b_dest, src=src)
 
     # do we need to do unpack?
     check_results = handler.is_unarchived()
@@ -881,9 +879,9 @@ def main():
         try:
             res_args['extract_results'] = handler.unarchive()
             if res_args['extract_results']['rc'] != 0:
-                module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+                module.fail_json(msg="failed to unpack %s to %s" % (src, b_dest), **res_args)
         except IOError:
-            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
+            module.fail_json(msg="failed to unpack %s to %s" % (src, b_dest), **res_args)
         else:
             res_args['changed'] = True
 
@@ -895,7 +893,7 @@ def main():
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
         for filename in handler.files_in_archive:
-            file_args['path'] = os.path.join(dest, filename)
+            file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
