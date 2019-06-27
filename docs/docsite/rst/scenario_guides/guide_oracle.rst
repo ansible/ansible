@@ -28,7 +28,7 @@ Installation
 
         pip install oci
 
-2.  You can use either of the following two methods to install OCI Ansible Modules:
+2.  Install the Ansible OCI Modules in one of two ways:
 
 a.	From Galaxy: 
 
