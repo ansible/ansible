@@ -161,7 +161,7 @@ Try {
     # Workaround to handle special use case 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES' and
     # 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES'- can't translate fully qualified name (win32 API bug/oddity)
     # 'ALL APPLICATION PACKAGES' exists only on Win2k12 and Win2k16 and 'ALL RESTRICTED APPLICATION PACKAGES' exists only in Win2k16
-    $specialIdRefPrefixes = "APPLICATION PACKAGE AUTHORITY"
+    $specialIdRefPrefixes = @("APPLICATION PACKAGE AUTHORITY")
     ForEach($rule in $objACL.Access){
         $idRefShortPrefix = ($rule.IdentityReference.Value).split('\')[0]
         $idRefShortValue = ($rule.IdentityReference.Value).split('\')[-1]
