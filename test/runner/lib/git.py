@@ -2,21 +2,25 @@
 
 from __future__ import absolute_import, print_function
 
+try:
+    # noinspection PyUnresolvedReferences
+    from typing import (
+        Optional,
+    )
+except ImportError:
+    pass
+
 from lib.util import (
-    CommonConfig,
     SubprocessError,
-    run_command,
+    raw_command,
 )
 
 
 class Git(object):
     """Wrapper around git command-line tools."""
-    def __init__(self, args):
-        """
-        :type args: CommonConfig
-        """
-        self.args = args
+    def __init__(self, root=None):  # type: (Optional[str]) -> None
         self.git = 'git'
+        self.root = root
 
     def get_diff(self, args, git_options=None):
         """
@@ -117,4 +121,4 @@ class Git(object):
         :type str_errors: str
         :rtype: str
         """
-        return run_command(self.args, [self.git] + cmd, capture=True, always=True, str_errors=str_errors)[0]
+        return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]
