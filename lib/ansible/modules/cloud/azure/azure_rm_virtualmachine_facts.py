@@ -65,7 +65,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-vms:
+azure_virtualmachine:
     description: List of virtual machines.
     returned: always
     type: complex
@@ -254,7 +254,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            vms=[]
+            ansible_facts=dict(azure_virtualmachine=[])
         )
 
         self.resource_group = None
@@ -273,11 +273,11 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
         if self.name:
-            self.results['vms'] = self.get_item()
+            self.results['ansible_facts']['azure_virtualmachine'] = self.get_item()
         elif self.resource_group:
-            self.results['vms'] = self.list_items_by_resourcegroup()
+            self.results['ansible_facts']['azure_virtualmachine'] = self.list_items_by_resourcegroup()
         else:
-            self.results['vms'] = self.list_all_items()
+            self.results['ansible_facts']['azure_virtualmachine'] = self.list_all_items()
 
         return self.results
 
