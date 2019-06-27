@@ -49,20 +49,18 @@ def get_distribution_version():
     :returns: A string representation of the version of the distribution. If it cannot determine
         the version, it returns empty string. If this is not run on a Linux machine it returns None
     '''
-    needs_munging = set([
-        'centos',
-        'ubuntu'
-    ])
     version = None
+
     if platform.system() == 'Linux':
-        distribution = distro.id()
         version = distro.version(best=True)
+
         if version:
-            if distribution in needs_munging:
-                if distribution in ['centos', 'ubuntu']:
-                    version = '.'.join(version.split('.')[:2])
+            if distro.id() in ['centos', 'ubuntu']:
+                version = '.'.join(version.split('.')[:2])
+
         else:
             version = ''
+
     return version
 
 
