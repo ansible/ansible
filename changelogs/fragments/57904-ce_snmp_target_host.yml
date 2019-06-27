@@ -1,3 +1,3 @@
 ---
 bugfixes:
-  - fix bug - None has no 'lower()' function.It will be a string or None, however!.
+  - ce_snmp_target_host - None has no 'lower()' attribute.
