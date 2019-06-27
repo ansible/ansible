@@ -9,6 +9,7 @@ __metaclass__ = type
 import json
 import os
 import pytest
+import re
 import tarfile
 
 from io import BytesIO, StringIO
@@ -21,6 +22,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import collection
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
+from ansible.utils.display import Display
 
 
 def call_galaxy_cli(args):
@@ -81,7 +83,7 @@ def collection_artifact(tmp_path_factory):
     call_galaxy_cli(['build', collection_path, '--output-path', test_dir])
 
     collection_tar = os.path.join(test_dir, '%s-%s-0.1.0.tar.gz' % (namespace, collection))
-    return collection_path, collection_tar
+    return to_bytes(collection_path), to_bytes(collection_tar)
 
 
 def test_build_requirement_from_path(collection_artifact):
@@ -89,7 +91,7 @@ def test_build_requirement_from_path(collection_artifact):
 
     assert actual.namespace == u'ansible_namespace'
     assert actual.name == u'collection'
-    assert actual.path == collection_artifact[0]
+    assert actual.b_path == collection_artifact[0]
     assert actual.source is None
     assert actual.skip is True
     assert actual.versions == set([u'*'])
@@ -98,7 +100,7 @@ def test_build_requirement_from_path(collection_artifact):
 
 
 def test_build_requirement_from_path_with_manifest(collection_artifact):
-    manifest_path = os.path.join(collection_artifact[0], 'MANIFEST.json')
+    manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
     manifest_value = json.dumps({
         'collection_info': {
             'namespace': 'namespace',
@@ -117,7 +119,7 @@ def test_build_requirement_from_path_with_manifest(collection_artifact):
     # While the folder name suggests a different collection, we treat MANIFEST.json as the source of truth.
     assert actual.namespace == u'namespace'
     assert actual.name == u'name'
-    assert actual.path == collection_artifact[0]
+    assert actual.b_path == collection_artifact[0]
     assert actual.source is None
     assert actual.skip is True
     assert actual.versions == set([u'1.1.1'])
@@ -126,7 +128,7 @@ def test_build_requirement_from_path_with_manifest(collection_artifact):
 
 
 def test_build_requirement_from_path_invalid_manifest(collection_artifact):
-    manifest_path = os.path.join(collection_artifact[0], 'MANIFEST.json')
+    manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
     with open(manifest_path, 'wb') as manifest_obj:
         manifest_obj.write(b"not json")
 
@@ -140,7 +142,7 @@ def test_build_requirement_from_tar(collection_artifact):
 
     assert actual.namespace == u'ansible_namespace'
     assert actual.name == u'collection'
-    assert actual.path == collection_artifact[1]
+    assert actual.b_path == collection_artifact[1]
     assert actual.source is None
     assert actual.skip is False
     assert actual.versions == set([u'0.1.0'])
@@ -149,8 +151,8 @@ def test_build_requirement_from_tar(collection_artifact):
 
 
 def test_build_requirement_from_tar_fail_not_tar(tmp_path_factory):
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
-    test_file = os.path.join(test_dir, 'fake.tar.gz')
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    test_file = os.path.join(test_dir, b'fake.tar.gz')
     with open(test_file, 'wb') as test_obj:
         test_obj.write(b"\x00\x01\x02\x03")
 
@@ -160,7 +162,7 @@ def test_build_requirement_from_tar_fail_not_tar(tmp_path_factory):
 
 
 def test_build_requirement_from_tar_no_manifest(tmp_path_factory):
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
 
     json_data = to_bytes(json.dumps(
         {
@@ -169,7 +171,7 @@ def test_build_requirement_from_tar_no_manifest(tmp_path_factory):
         }
     ))
 
-    tar_path = os.path.join(test_dir, 'ansible-collections.tar.gz')
+    tar_path = os.path.join(test_dir, b'ansible-collections.tar.gz')
     with tarfile.open(tar_path, 'w:gz') as tfile:
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('FILES.json')
@@ -183,7 +185,7 @@ def test_build_requirement_from_tar_no_manifest(tmp_path_factory):
 
 
 def test_build_requirement_from_tar_no_files(tmp_path_factory):
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
 
     json_data = to_bytes(json.dumps(
         {
@@ -191,7 +193,7 @@ def test_build_requirement_from_tar_no_files(tmp_path_factory):
         }
     ))
 
-    tar_path = os.path.join(test_dir, 'ansible-collections.tar.gz')
+    tar_path = os.path.join(test_dir, b'ansible-collections.tar.gz')
     with tarfile.open(tar_path, 'w:gz') as tfile:
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
@@ -205,11 +207,11 @@ def test_build_requirement_from_tar_no_files(tmp_path_factory):
 
 
 def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
+    test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
 
     json_data = b"not a json"
 
-    tar_path = os.path.join(test_dir, 'ansible-collections.tar.gz')
+    tar_path = os.path.join(test_dir, b'ansible-collections.tar.gz')
     with tarfile.open(tar_path, 'w:gz') as tfile:
         b_io = BytesIO(json_data)
         tar_info = tarfile.TarInfo('MANIFEST.json')
@@ -233,7 +235,7 @@ def test_build_requirement_from_name(monkeypatch):
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
-    assert actual.path is None
+    assert actual.b_path is None
     assert actual.source == to_text(galaxy_server)
     assert actual.skip is False
     assert actual.versions == set([u'2.1.9', u'2.1.10'])
@@ -261,7 +263,7 @@ def test_build_requirement_from_name_second_server(monkeypatch):
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
-    assert actual.path is None
+    assert actual.b_path is None
     assert actual.source == to_text(galaxy_server)
     assert actual.skip is False
     assert actual.versions == set([u'1.0.2', u'1.0.3'])
@@ -299,7 +301,7 @@ def test_build_requirement_from_name_single_version(monkeypatch):
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
-    assert actual.path is None
+    assert actual.b_path is None
     assert actual.source == to_text(galaxy_server)
     assert actual.skip is False
     assert actual.versions == set([u'2.0.0'])
@@ -326,7 +328,7 @@ def test_build_requirement_from_name_multiple_versions_one_match(monkeypatch):
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
-    assert actual.path is None
+    assert actual.b_path is None
     assert actual.source == to_text(galaxy_server)
     assert actual.skip is False
     assert actual.versions == set([u'2.0.1'])
@@ -392,7 +394,7 @@ def test_build_requirement_from_name_multiple_version_results(monkeypatch):
 
     assert actual.namespace == u'namespace'
     assert actual.name == u'collection'
-    assert actual.path is None
+    assert actual.b_path is None
     assert actual.source == to_text(galaxy_server)
     assert actual.skip is False
     assert actual.versions == set([u'2.0.0', u'2.0.1', u'2.0.3', u'2.0.4', u'2.0.5'])
@@ -405,3 +407,145 @@ def test_build_requirement_from_name_multiple_version_results(monkeypatch):
     assert mock_open.mock_calls[1][1][0] == u"%s/api/v2/collections/namespace/collection/versions/?page=2" \
         % galaxy_server
     assert mock_open.mock_calls[1][2] == {'validate_certs': True}
+
+
+@pytest.mark.parametrize('versions, requirement, expected_filter, expected_latest', [
+    [['1.0.0', '1.0.1'], '*', ['1.0.0', '1.0.1'], '1.0.1'],
+    [['1.0.0', '1.0.5', '1.1.0'], '>1.0.0,<1.1.0', ['1.0.5'], '1.0.5'],
+    [['1.0.0', '1.0.5', '1.1.0'], '>1.0.0,<=1.0.5', ['1.0.5'], '1.0.5'],
+    [['1.0.0', '1.0.5', '1.1.0'], '>=1.1.0', ['1.1.0'], '1.1.0'],
+    [['1.0.0', '1.0.5', '1.1.0'], '!=1.1.0', ['1.0.0', '1.0.5'], '1.0.5'],
+    [['1.0.0', '1.0.5', '1.1.0'], '==1.0.5', ['1.0.5'], '1.0.5'],
+    [['1.0.0', '1.0.5', '1.1.0'], '1.0.5', ['1.0.5'], '1.0.5'],
+])
+def test_add_collection_requirements(versions, requirement, expected_filter, expected_latest):
+    req = collection.CollectionRequirement('namespace', 'name', None, 'https://galaxy.com', versions, requirement,
+                                           False)
+    assert req.versions == set(expected_filter)
+    assert req.latest_version == expected_latest
+
+
+def test_add_collection_requirement_with_conflict():
+    source = 'https://galaxy.ansible.com'
+
+    expected = "Cannot meet requirement ==1.0.2 for dependency namespace.name from source '%s'. Available versions " \
+               "before last requirement added: 1.0.0, 1.0.1\n" \
+               "Requirements from:\n" \
+               "\tbase - 'namespace.name:==1.0.2'" % source
+    with pytest.raises(AnsibleError, match=expected):
+        collection.CollectionRequirement('namespace', 'name', None, source, ['1.0.0', '1.0.1'], '==1.0.2', False)
+
+
+def test_add_requirement_to_existing_collection_with_conflict():
+    source = 'https://galaxy.ansible.com'
+    req = collection.CollectionRequirement('namespace', 'name', None, source, ['1.0.0', '1.0.1'], '*', False)
+
+    expected = "Cannot meet dependency requirement 'namespace.name:1.0.2' for collection namespace.collection2 from " \
+               "source '%s'. Available versions before last requirement added: 1.0.0, 1.0.1\n" \
+               "Requirements from:\n" \
+               "\tbase - 'namespace.name:*'\n" \
+               "\tnamespace.collection2 - 'namespace.name:1.0.2'" % source
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        req.add_requirement('namespace.collection2', '1.0.2')
+
+
+def test_add_requirement_to_installed_collection_with_conflict():
+    source = 'https://galaxy.ansible.com'
+    req = collection.CollectionRequirement('namespace', 'name', None, source, ['1.0.0', '1.0.1'], '*', False,
+                                           skip=True)
+
+    expected = "Cannot meet requirement namespace.name:1.0.2 as it is already installed. Use --force to overwrite"
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        req.add_requirement(None, '1.0.2')
+
+
+def test_add_requirement_to_installed_collection_with_conflict_as_dep():
+    source = 'https://galaxy.ansible.com'
+    req = collection.CollectionRequirement('namespace', 'name', None, source, ['1.0.0', '1.0.1'], '*', False,
+                                           skip=True)
+
+    expected = "Cannot meet requirement namespace.name:1.0.2 as it is already installed. Use --force-with-deps to " \
+               "overwrite"
+    with pytest.raises(AnsibleError, match=re.escape(expected)):
+        req.add_requirement('namespace.collection2', '1.0.2')
+
+
+def test_install_skipped_collection(monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    req = collection.CollectionRequirement('namespace', 'name', None, 'source', ['1.0.0'], '*', False, skip=True)
+    req.install(None, None)
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Skipping 'namespace.name' as it is already installed"
+
+
+def test_install_collection(collection_artifact, monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    collection_tar = collection_artifact[1]
+    output_path = os.path.join(os.path.split(collection_tar)[0], b'output')
+    collection_path = os.path.join(output_path, b'ansible_namespace', b'collection')
+    os.makedirs(os.path.join(collection_path, b'delete_me'))  # Create a folder to verify the install cleans out the dir
+
+    temp_path = os.path.join(os.path.split(collection_tar)[0], b'temp')
+    os.makedirs(temp_path)
+
+    req = collection.CollectionRequirement.from_tar(collection_tar, True, True)
+    req.install(to_text(output_path), temp_path)
+
+    # Ensure the temp directory is empty, nothing is left behind
+    assert os.listdir(temp_path) == []
+
+    actual_files = os.listdir(collection_path)
+    actual_files.sort()
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
+        % to_text(collection_path)
+
+
+def test_install_collection_with_download(collection_artifact, monkeypatch):
+    collection_tar = collection_artifact[1]
+    output_path = os.path.join(os.path.split(collection_tar)[0], b'output')
+    collection_path = os.path.join(output_path, b'ansible_namespace', b'collection')
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_download = MagicMock()
+    mock_download.return_value = collection_tar
+    monkeypatch.setattr(collection, '_download_file', mock_download)
+
+    temp_path = os.path.join(os.path.split(collection_tar)[0], b'temp')
+    os.makedirs(temp_path)
+
+    req = collection.CollectionRequirement('ansible_namespace', 'collection', None, ['https://galaxy.ansible.com'],
+                                           ['0.1.0'], '*', False)
+    req._galaxy_info = {
+        'download_url': 'https://downloadme.com',
+        'artifact': {
+            'sha256': 'myhash',
+        },
+    }
+    req.install(to_text(output_path), temp_path)
+
+    # Ensure the temp directory is empty, nothing is left behind
+    assert os.listdir(temp_path) == []
+
+    actual_files = os.listdir(collection_path)
+    actual_files.sort()
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
+        % to_text(collection_path)
+
+    assert mock_download.call_count == 1
+    assert mock_download.mock_calls[0][1][0] == 'https://downloadme.com'
+    assert mock_download.mock_calls[0][1][1] == temp_path
+    assert mock_download.mock_calls[0][1][2] == 'myhash'
+    assert mock_download.mock_calls[0][1][3] is True

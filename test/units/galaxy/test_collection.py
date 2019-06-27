@@ -53,7 +53,7 @@ def collection_input(tmp_path_factory):
 
 
 @pytest.fixture()
-def publish_artifact(monkeypatch, tmp_path):
+def publish_artifact(monkeypatch, tmp_path_factory):
     mock_open = MagicMock()
     monkeypatch.setattr(collection, 'open_url', mock_open)
 
@@ -61,6 +61,7 @@ def publish_artifact(monkeypatch, tmp_path):
     mock_uuid.return_value.hex = 'uuid'
     monkeypatch.setattr(uuid, 'uuid4', mock_uuid)
 
+    tmp_path = tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections')
     input_file = to_text(tmp_path / 'collection.tar.gz')
 
     with tarfile.open(input_file, 'w:gz') as tfile:
@@ -87,11 +88,22 @@ def requirements_file(request, tmp_path_factory):
     yield requirements_file
 
 
+@pytest.fixture()
+def galaxy_yml(request, tmp_path_factory):
+    b_test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+    b_galaxy_yml = os.path.join(b_test_dir, b'galaxy.yml')
+    with open(b_galaxy_yml, 'wb') as galaxy_obj:
+        galaxy_obj.write(to_bytes(request.param))
+
+    yield b_galaxy_yml
+
+
 def test_build_collection_no_galaxy_yaml():
-    expected = "The collection galaxy.yml path '/fake/path/galaxy.yml' does not exist."
+    fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
+    expected = to_native("The collection galaxy.yml path '%s/galaxy.yml' does not exist." % fake_path)
 
     with pytest.raises(AnsibleError, match=expected):
-        collection.build_collection('/fake/path', 'output', False)
+        collection.build_collection(fake_path, 'output', False)
 
 
 def test_build_existing_output_file(collection_input):
@@ -134,51 +146,49 @@ def test_build_existing_output_with_force(collection_input):
     assert tarfile.is_tarfile(existing_output)
 
 
-def test_invalid_yaml_galaxy_file():
-    expected = "Failed to parse the galaxy.yml at '{0}' with the following error:"
+@pytest.mark.parametrize('galaxy_yml', [b'namespace: value: broken'], indirect=True)
+def test_invalid_yaml_galaxy_file(galaxy_yml):
+    expected = to_native(b"Failed to parse the galaxy.yml at '%s' with the following error:" % galaxy_yml)
 
-    with tempfile.NamedTemporaryFile(suffix='-ÅÑŚÌβŁÈ galaxy.yml') as galaxy_yml:
-        galaxy_yml.write(b"namespace: value: broken")
-        galaxy_yml.flush()
-
-        with pytest.raises(AnsibleError, match=expected.format(galaxy_yml.name)):
-            collection._get_galaxy_yml(galaxy_yml.name)
+    with pytest.raises(AnsibleError, match=expected):
+        collection._get_galaxy_yml(galaxy_yml)
 
 
-def test_missing_required_galaxy_key():
-    expected = "The collection galaxy.yml at '{0}' is missing the following mandatory keys: authors, name, readme, " \
-               "version"
+@pytest.mark.parametrize('galaxy_yml', [b'namespace: test_namespace'], indirect=True)
+def test_missing_required_galaxy_key(galaxy_yml):
+    expected = "The collection galaxy.yml at '%s' is missing the following mandatory keys: authors, name, " \
+               "readme, version" % to_native(galaxy_yml)
 
-    with tempfile.NamedTemporaryFile(suffix='-ÅÑŚÌβŁÈ galaxy.yml') as galaxy_yml:
-        galaxy_yml.write(b"namespace: test_namespace")
-        galaxy_yml.flush()
-
-        with pytest.raises(AnsibleError, match=expected.format(galaxy_yml.name)):
-            collection._get_galaxy_yml(galaxy_yml.name)
+    with pytest.raises(AnsibleError, match=expected):
+        collection._get_galaxy_yml(galaxy_yml)
 
 
-def test_warning_extra_keys(monkeypatch):
+@pytest.mark.parametrize('galaxy_yml', [b"""
+namespace: namespace
+name: collection
+authors: Jordan
+version: 0.1.0
+readme: README.md
+invalid: value"""], indirect=True)
+def test_warning_extra_keys(galaxy_yml, monkeypatch):
     display_mock = MagicMock()
     monkeypatch.setattr(Display, 'warning', display_mock)
 
-    with tempfile.NamedTemporaryFile(suffix='-ÅÑŚÌβŁÈ galaxy.yml') as galaxy_yml:
-        galaxy_yml.write(b"namespace: namespace\nname: collection\nauthors: Jordan\nversion: 0.1.0\n"
-                         b"readme: README.md\ninvalid: value")
-        galaxy_yml.flush()
-
-        collection._get_galaxy_yml(galaxy_yml.name)
+    collection._get_galaxy_yml(galaxy_yml)
 
     assert display_mock.call_count == 1
-    assert display_mock.call_args[0][0] == \
-        "Found unknown keys in collection galaxy.yml at '{0}': invalid".format(galaxy_yml.name)
+    assert display_mock.call_args[0][0] == "Found unknown keys in collection galaxy.yml at '%s': invalid"\
+        % to_text(galaxy_yml)
 
 
-def test_defaults_galaxy_yml():
-    with tempfile.NamedTemporaryFile(suffix='-ÅÑŚÌβŁÈ galaxy.yml') as galaxy_yml:
-        galaxy_yml.write(b"namespace: namespace\nname: collection\nauthors: Jordan\nversion: 0.1.0\nreadme: README.md")
-        galaxy_yml.flush()
-
-        actual = collection._get_galaxy_yml(galaxy_yml.name)
+@pytest.mark.parametrize('galaxy_yml', [b"""
+namespace: namespace
+name: collection
+authors: Jordan
+version: 0.1.0
+readme: README.md"""], indirect=True)
+def test_defaults_galaxy_yml(galaxy_yml):
+    actual = collection._get_galaxy_yml(galaxy_yml)
 
     assert sorted(list(actual.keys())) == [
         'authors', 'dependencies', 'description', 'documentation', 'homepage', 'issues', 'license_file', 'license_ids',
@@ -200,25 +210,22 @@ def test_defaults_galaxy_yml():
     assert actual['license_ids'] == []
 
 
-def test_galaxy_yml_list_value_as_str():
-    with tempfile.NamedTemporaryFile(suffix='-ÅÑŚÌβŁÈ galaxy.yml') as galaxy_yml:
-        galaxy_yml.write(b"namespace: namespace\nname: collection\nauthors: Jordan\nversion: 0.1.0\n"
-                         b"readme: README.md\nlicense: MIT\n")
-        galaxy_yml.flush()
-
-        actual = collection._get_galaxy_yml(galaxy_yml.name)
-
-    assert actual['license_ids'] == ['MIT']
-
-
-def test_galaxy_yml_list_val_as_list():
-    with tempfile.NamedTemporaryFile(suffix='-ÅÑŚÌβŁÈ galaxy.yml') as galaxy_yml:
-        galaxy_yml.write(b"namespace: namespace\nname: collection\nauthors: Jordan\nversion: 0.1.0\n"
-                         b"readme: README.md\nlicense:\n- MIT")
-        galaxy_yml.flush()
-
-        actual = collection._get_galaxy_yml(galaxy_yml.name)
-
+@pytest.mark.parametrize('galaxy_yml', [(b"""
+namespace: namespace
+name: collection
+authors: Jordan
+version: 0.1.0
+readme: README.md
+license: MIT"""), (b"""
+namespace: namespace
+name: collection
+authors: Jordan
+version: 0.1.0
+readme: README.md
+license:
+- MIT""")], indirect=True)
+def test_galaxy_yml_list_value(galaxy_yml):
+    actual = collection._get_galaxy_yml(galaxy_yml)
     assert actual['license_ids'] == ['MIT']
 
 
@@ -236,7 +243,7 @@ def test_build_ignore_files_and_folders(collection_input, monkeypatch):
         ignore_file.write('random')
         ignore_file.flush()
 
-    actual = collection._build_files_manifest(input_dir)
+    actual = collection._build_files_manifest(to_bytes(input_dir))
 
     assert actual['format'] == 1
     for manifest_entry in actual['files']:
@@ -260,7 +267,7 @@ def test_build_ignore_symlink_target_outside_collection(collection_input, monkey
     link_path = os.path.join(input_dir, 'plugins', 'connection')
     os.symlink(outside_dir, link_path)
 
-    actual = collection._build_files_manifest(input_dir)
+    actual = collection._build_files_manifest(to_bytes(input_dir))
     for manifest_entry in actual['files']:
         assert manifest_entry['name'] != 'plugins/connection'
 
@@ -284,7 +291,7 @@ def test_build_copy_symlink_target_inside_collection(collection_input):
 
     os.symlink(roles_target, roles_link)
 
-    actual = collection._build_files_manifest(input_dir)
+    actual = collection._build_files_manifest(to_bytes(input_dir))
 
     linked_entries = [e for e in actual['files'] if e['name'].startswith('playbooks/roles/linked')]
     assert len(linked_entries) == 3
@@ -336,20 +343,21 @@ def test_build_with_symlink_inside_collection(collection_input):
 
 
 def test_publish_missing_file():
-    expected = "The collection path specified '/fake/path' does not exist."
+    fake_path = u'/fake/ÅÑŚÌβŁÈ/path'
+    expected = to_native("The collection path specified '%s' does not exist." % fake_path)
 
     with pytest.raises(AnsibleError, match=expected):
-        collection.publish_collection('/fake/path', None, None, False, True)
+        collection.publish_collection(fake_path, None, None, False, True)
 
 
 def test_publish_not_a_tarball():
     expected = "The collection path specified '{0}' is not a tarball, use 'ansible-galaxy collection build' to " \
                "create a proper release artifact."
 
-    with tempfile.NamedTemporaryFile() as temp_file:
+    with tempfile.NamedTemporaryFile(prefix=u'ÅÑŚÌβŁÈ') as temp_file:
         temp_file.write(b"\x00")
         temp_file.flush()
-        with pytest.raises(AnsibleError, match=expected.format(temp_file.name)):
+        with pytest.raises(AnsibleError, match=expected.format(to_native(temp_file.name))):
             collection.publish_collection(temp_file.name, None, None, False, True)
 
 
@@ -362,7 +370,7 @@ def test_publish_no_wait(publish_artifact, monkeypatch):
     server = 'https://galaxy.com'
 
     mock_open.return_value = StringIO(u'{"task":"%s"}' % fake_import_uri)
-    expected_form, expected_content_type = collection._get_mime_data(artifact_path)
+    expected_form, expected_content_type = collection._get_mime_data(to_bytes(artifact_path))
 
     collection.publish_collection(artifact_path, server, 'key', False, False)
 
@@ -647,10 +655,16 @@ def test_parse_requirements_file_that_isnt_yaml(requirements_file):
         collection.parse_collections_requirements_file(requirements_file)
 
 
-@pytest.mark.parametrize('requirements_file', [
-    '- galaxy.role\n- anotherrole',  # Older role based requirements.yml
-    'roles:\n- galaxy.role\n- anotherrole'  # Doesn't have collections key
-], indirect=True)
+@pytest.mark.parametrize('requirements_file', [('''
+# Older role based requirements.yml
+- galaxy.role
+- anotherrole
+'''), ('''
+# Doesn't have collections key
+roles:
+- galaxy.role
+- anotherole
+''')], indirect=True)
 def test_parse_requirements_in_invalid_format(requirements_file):
     expected = "Expecting collections requirements file to be a dict with the key collections that contains a list " \
                "of collections to install."
@@ -658,17 +672,25 @@ def test_parse_requirements_in_invalid_format(requirements_file):
         collection.parse_collections_requirements_file(requirements_file)
 
 
-@pytest.mark.parametrize('requirements_file', ['collections:\n- version: 1.0.0'], indirect=True)
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- version: 1.0.0
+'''], indirect=True)
 def test_parse_requirements_without_mandatory_name_key(requirements_file):
     expected = "Collections requirement entry should contain the key name."
     with pytest.raises(AnsibleError, match=expected):
         collection.parse_collections_requirements_file(requirements_file)
 
 
-@pytest.mark.parametrize('requirements_file', [
-    'collections:\n- namespace.collection1\n- namespace.collection2',
-    'collections:\n- name: namespace.collection1\n- name: namespace.collection2'
-], indirect=True)
+@pytest.mark.parametrize('requirements_file', [('''
+collections:
+- namespace.collection1
+- namespace.collection2
+'''), ('''
+collections:
+- name: namespace.collection1
+- name: namespace.collection2
+''')], indirect=True)
 def test_parse_requirements(requirements_file):
     expected = [('namespace.collection1', '*', None), ('namespace.collection2', '*', None)]
     actual = collection.parse_collections_requirements_file(requirements_file)
@@ -676,10 +698,12 @@ def test_parse_requirements(requirements_file):
     assert actual == expected
 
 
-@pytest.mark.parametrize('requirements_file', [
-    'collections:\n- name: namespace.collection1\n  version: ">=1.0.0,<=2.0.0"\n'
-    '  source: https://galaxy-dev.ansible.com\n- namespace.collection2'
-], indirect=True)
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- name: namespace.collection1
+  version: ">=1.0.0,<=2.0.0"
+  source: https://galaxy-dev.ansible.com
+- namespace.collection2'''], indirect=True)
 def test_parse_requirements_with_extra_info(requirements_file):
     expected = [('namespace.collection1', '>=1.0.0,<=2.0.0', 'https://galaxy-dev.ansible.com'),
                 ('namespace.collection2', '*', None)]

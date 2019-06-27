@@ -26,7 +26,7 @@ from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils.ansible_release import __version__ as ansible_version
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.collection_loader import is_collection_ref
 from ansible.utils.display import Display
@@ -298,6 +298,10 @@ class GalaxyCLI(CLI):
         return u'\n'.join(text)
 
     @staticmethod
+    def _resolve_path(path):
+        return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+
+    @staticmethod
     def _validate_collection_name(name):
         if not is_collection_ref('ansible_collections.{0}'.format(name)):
             raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
@@ -329,20 +333,16 @@ class GalaxyCLI(CLI):
         Build an Ansible Galaxy collection artifact that can be stored in a central repository like Ansible Galaxy.
         """
         force = context.CLIARGS['force']
-        output_path = os.path.expanduser(os.path.expandvars(context.CLIARGS['output_path']))
-        if not os.path.isabs(output_path):
-            output_path = os.path.abspath(output_path)
+        output_path = GalaxyCLI._resolve_path(context.CLIARGS['output_path'])
+        b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
 
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-        elif os.path.isfile(output_path):
-            raise AnsibleError("- the output collection directory %s is a file - aborting" % output_path)
+        if not os.path.exists(b_output_path):
+            os.makedirs(b_output_path)
+        elif os.path.isfile(b_output_path):
+            raise AnsibleError("- the output collection directory %s is a file - aborting" % to_native(output_path))
 
         for collection_path in context.CLIARGS['args']:
-            collection_path = os.path.expanduser(os.path.expandvars(collection_path))
-            if not os.path.isabs(collection_path):
-                collection_path = os.path.abspath(collection_path)
-
+            collection_path = GalaxyCLI._resolve_path(collection_path)
             build_collection(collection_path, output_path, force)
 
     def execute_init(self):
@@ -380,15 +380,16 @@ class GalaxyCLI(CLI):
             inject_data['namespace'] = namespace
             inject_data['collection_name'] = collection_name
             obj_path = os.path.join(init_path, namespace, collection_name)
+        b_obj_path = to_bytes(obj_path, errors='surrogate_or_strict')
 
-        if os.path.exists(obj_path):
+        if os.path.exists(b_obj_path):
             if os.path.isfile(obj_path):
-                raise AnsibleError("- the path %s already exists, but is a file - aborting" % obj_path)
+                raise AnsibleError("- the path %s already exists, but is a file - aborting" % to_native(obj_path))
             elif not force:
                 raise AnsibleError("- the directory %s already exists."
                                    "You can use --force to re-initialize this directory,\n"
                                    "however it will reset any main.yml files that may have\n"
-                                   "been modified there already." % obj_path)
+                                   "been modified there already." % to_native(obj_path))
 
         if obj_skeleton is not None:
             skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
@@ -401,14 +402,14 @@ class GalaxyCLI(CLI):
 
         if not os.path.exists(obj_skeleton):
             raise AnsibleError("- the skeleton path '{0}' does not exist, cannot init {1}".format(
-                to_native(obj_skeleton, errors='surrogate_then_replace'), galaxy_type)
+                to_native(obj_skeleton), galaxy_type)
             )
 
         template_env = Environment(loader=FileSystemLoader(obj_skeleton))
 
         # create role directory
-        if not os.path.exists(obj_path):
-            os.makedirs(obj_path)
+        if not os.path.exists(b_obj_path):
+            os.makedirs(b_obj_path)
 
         for root, dirs, files in os.walk(obj_skeleton, topdown=True):
             rel_root = os.path.relpath(root, obj_skeleton)
@@ -435,9 +436,9 @@ class GalaxyCLI(CLI):
                     shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
 
             for d in dirs:
-                dir_path = os.path.join(obj_path, rel_root, d)
-                if not os.path.exists(dir_path):
-                    os.makedirs(dir_path)
+                b_dir_path = to_bytes(os.path.join(obj_path, rel_root, d), errors='surrogate_or_strict')
+                if not os.path.exists(b_dir_path):
+                    os.makedirs(b_dir_path)
 
         display.display("- %s was created successfully" % obj_name)
 
@@ -507,10 +508,7 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("You must specify a collection name or a requirements file.")
 
             if requirements_file:
-                requirements_file = os.path.expanduser(os.path.expandvars(requirements_file))
-                if not os.path.isabs(requirements_file):
-                    requirements_file = os.path.abspath(requirements_file)
-
+                requirements_file = GalaxyCLI._resolve_path(requirements_file)
                 collection_requirements = parse_collections_requirements_file(requirements_file)
             else:
                 collection_requirements = []
@@ -522,22 +520,20 @@ class GalaxyCLI(CLI):
                         requirement = '*'
                     collection_requirements.append((name, requirement, None))
 
-            output_path = os.path.expanduser(os.path.expandvars(output_path))
-            if not os.path.isabs(output_path):
-                output_path = os.path.abspath(output_path)
-
+            output_path = GalaxyCLI._resolve_path(output_path)
             collections_path = C.COLLECTIONS_PATHS
 
             if len([p for p in collections_path if p.startswith(output_path)]) == 0:
                 display.warning("The specified collections path '%s' is not part of the configured Ansible "
                                 "collections paths '%s'. The installed collection won't be picked up in an Ansible "
-                                "run." % (output_path, ":".join(collections_path)))
+                                "run." % (to_text(output_path), to_text(":".join(collections_path))))
 
             if os.path.split(output_path)[1] != 'ansible_collections':
                 output_path = os.path.join(output_path, 'ansible_collections')
 
-            if not os.path.exists(output_path):
-                os.makedirs(output_path)
+            b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
+            if not os.path.exists(b_output_path):
+                os.makedirs(b_output_path)
 
             install_collections(collection_requirements, output_path, servers, (not ignore_certs), ignore_errors,
                                 no_deps, force, force_deps)
@@ -750,10 +746,9 @@ class GalaxyCLI(CLI):
         api_key = context.CLIARGS['api_key']
         if not api_key:
             api_key = GalaxyToken().get()
-        api_server = to_native(context.CLIARGS['api_server'])
-        collection_path = os.path.expanduser(os.path.expandvars(context.CLIARGS['args']))
-        if not os.path.isabs(collection_path):
-            collection_path = os.path.abspath(collection_path)
+
+        api_server = context.CLIARGS['api_server']
+        collection_path = GalaxyCLI._resolve_path(context.CLIARGS['args'])
         ignore_certs = context.CLIARGS['ignore_certs']
         wait = context.CLIARGS['wait']
 
