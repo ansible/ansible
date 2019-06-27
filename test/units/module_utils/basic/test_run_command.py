@@ -96,7 +96,7 @@ class TestRunCommandArgs:
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
     # pylint: disable=undefined-variable
-    @pytest.mark.parametrize('cmd, expected, shell, stdin',
+    @pytest.mark.parametrize(b'cmd, expected, shell, stdin',
                              ((arg, cmd_str if sh else cmd_lst, sh, {})
                               for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
                              indirect=['stdin'])
@@ -119,13 +119,13 @@ class TestRunCommandCwd:
     def test_cwd(self, mocker, rc_am):
         rc_am._os.getcwd.return_value = '/old'
         rc_am.run_command('/bin/ls', cwd='/new')
-        assert rc_am._os.chdir.mock_calls == [mocker.call('/new'), mocker.call('/old'), ]
+        assert rc_am._os.chdir.mock_calls == [mocker.call(b'/new'), mocker.call('/old'), ]
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_relative_path(self, mocker, rc_am):
         rc_am._os.getcwd.return_value = '/old'
         rc_am.run_command('/bin/ls', cwd='sub-dir')
-        assert rc_am._os.chdir.mock_calls == [mocker.call('/old/sub-dir'), mocker.call('/old'), ]
+        assert rc_am._os.chdir.mock_calls == [mocker.call(b'/old/sub-dir'), mocker.call('/old'), ]
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_not_a_dir(self, mocker, rc_am):
@@ -133,14 +133,6 @@ class TestRunCommandCwd:
         rc_am._os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
         rc_am.run_command('/bin/ls', cwd='/not-a-dir')
         assert rc_am._os.chdir.mock_calls == [mocker.call('/old'), ]
-
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-    def test_cwd_inaccessible(self, rc_am):
-        with pytest.raises(SystemExit):
-            rc_am.run_command('/bin/ls', cwd='/inaccessible')
-        assert rc_am.fail_json.called
-        args, kwargs = rc_am.fail_json.call_args
-        assert kwargs['rc'] == errno.EPERM
 
 
 class TestRunCommandPrompt:
