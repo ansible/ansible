@@ -475,12 +475,13 @@ class EcsServiceManager:
         return self.jsonize(response['service'])
 
     def wait_for_stable(self, service_name, cluster_name, delay, max_attempts):
+        # Since first attempt happens immediately, setting MaxAttempts=max_attempts + 1 for simplicity
         params = dict(
             cluster=cluster_name,
             services=[service_name],
             WaiterConfig={
                 'Delay': delay,
-                'MaxAttempts': max_attempts
+                'MaxAttempts': max_attempts + 1
             }
         )
         waiter = self.ecs.get_waiter('services_stable')
@@ -488,7 +489,7 @@ class EcsServiceManager:
             response = waiter.wait(**params)
         except (botocore.exceptions.WaiterError) as e:
             existing = self.describe_service(cluster_name, service_name)
-            message = "Service not stable after " + str(delay * (max_attempts - 1)) + " seconds."
+            message = "Service not stable after " + str(delay * (max_attempts)) + " seconds."
             if existing['events'] and existing['events'][0] and existing['events'][0]['message']:
                 message += " Latest event: " + existing['events'][0]['message']
             self.module.fail_json(msg=message)
