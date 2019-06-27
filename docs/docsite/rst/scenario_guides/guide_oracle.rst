@@ -36,7 +36,7 @@ a.	From Galaxy:
 
  ansible-galaxy install oracle.oci_ansible_modules
 
-b.	From github:
+b.	From GitHub:
 
 .. code-block:: bash
 
