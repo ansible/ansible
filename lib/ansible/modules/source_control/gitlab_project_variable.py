@@ -13,12 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: gitlab_project_variable
-short_description: Creates/updates/deletes Gitlab Projects Variables
+short_description: Creates/updates/deletes GitLab Projects Variables
 description:
   - When a project variable does not exists, it will be created.
   - When a project variable does exists, its value will be updated when the values are different.
   - Variables which are presented in the playbook, but are not presented in the Gitlab project,
-    they stay untouched (purged_vars = False) or will be deleted (purged_vars = True).
+    they stay untouched (I(purged_vars) is C(false)) or will be deleted (I(purged_vars) is C(true)).
 version_added: "2.9"
 author:
     - "Markus Bergholz (@markuman)"
@@ -37,7 +37,7 @@ options:
     choices: ["present", "absent"]
   api_token:
     description:
-      - Gitlab access token with api permissions.
+      - Gitlab access token with API permissions.
     required: true
     type: str
   project:
@@ -71,7 +71,7 @@ EXAMPLES = '''
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
 
-- name: delete one variable
+- name: Delete one variable
   gitlab_project_variable:
     api_url: https://gitlab.com
     api_token: secret_access_token
@@ -89,12 +89,12 @@ msg:
   sample: "Success"
 
 result:
-  description: json parsed response from the server
+  description: JSON parsed response from the server
   returned: always
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: The error message returned by the Gitlab API
   returned: failed
   type: str
   sample: "Failed to connect to Gitlab server: 401: 401 Unauthorized"
