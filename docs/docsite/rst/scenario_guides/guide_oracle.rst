@@ -71,7 +71,7 @@ When creating and configuring Oracle Cloud Infrastructure resources, Ansible mod
 *******
 Samples
 *******
-Launch a Compute Instance
+Launch a compute instance
 =========================
 This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/compute/launch_compute_instance>`_
 shows how to launch a public Compute instance and then access the instance from an Ansible module over an SSH connection. The sample illustrates how to do the following:
