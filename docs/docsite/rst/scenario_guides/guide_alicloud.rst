@@ -26,7 +26,7 @@ Normally, you'll use the following pattern for plays that provision Alicloud res
 
 Authentication
 ``````````````
-   
+
 You can specify your Alicloud authentication credentials (access key and secret key) by passing them as
 environment variables or by storing them in a vars file.
 
@@ -35,7 +35,7 @@ To pass authentication credentials as environment variables::
     export ALICLOUD_ACCESS_KEY='Alicloud123'
     export ALICLOUD_SECRET_KEY='AlicloudSecret123'
 
-To store authentication credentials in a vars_file, encrypt them with :doc:`Ansible Vault<../user_guide/vault>` to keep them secure, then list them::
+To store authentication credentials in a vars_file, encrypt them with :ref:`Ansible Vault<vault>` to keep them secure, then list them::
 
     ---
     alicloud_access_key: "--REMOVED--"
