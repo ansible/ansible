@@ -519,6 +519,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         if self.capacity > 100:
             self.single_placement_group = False
+        else
+            self.single_placement_group = True
 
         changed = False
         results = dict()
