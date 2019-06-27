@@ -102,7 +102,7 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     contract: Contract 1
-    scope: global
+    contract_scope: global
     filter: Filter 1
     state: present
   delegate_to: localhost
