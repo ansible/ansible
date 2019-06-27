@@ -218,7 +218,7 @@ options:
         description:
         - The password to use for HTTP basic authentication to the master endpoint.
           Because the master endpoint is open to the Internet, you should create a
-          strong password.
+          strong password with a minimum of 16 characters.
         required: false
       client_certificate_config:
         description:
