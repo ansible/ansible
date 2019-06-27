@@ -68,12 +68,12 @@ Configuration
 When creating and configuring Oracle Cloud Infrastructure resources, Ansible modules use the authentication information outlined `here <https://docs.cloud.oracle.com/iaas/Content/API/Concepts/sdkconfig.htm>`_.
 .
  
-*******
+********
 Examples
-*******
+********
 Launch a compute instance
 =========================
-This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/compute/launch_compute_instance>`_
+This `playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/compute/launch_compute_instance>`_
 launches a public Compute instance and then accesses the instance from an Ansible module over an SSH connection. The sample illustrates how to:
 
 - Generate a temporary, host-specific SSH key pair.
@@ -81,7 +81,7 @@ launches a public Compute instance and then accesses the instance from an Ansibl
 - Connect to the newly launched instance using SSH.
 
 Create and manage Autonomous Data Warehouses
-===========================================
+============================================
 This `playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_data_warehouse>`_
 creates an Autonomous Data Warehouse and manage its lifecycle. The sample shows how to:
 - Set up an Autonomous Data Warehouse.
@@ -92,7 +92,7 @@ creates an Autonomous Data Warehouse and manage its lifecycle. The sample shows 
 
 Create and manage Autonomous Transaction Processing
 ===================================================
-This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_database>`_
+This `playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_database>`_
   creates an Autonomous Transaction Processing database and manage its lifecycle. The sample shows how to:
 
 - Set up an Autonomous Transaction Processing database instance.
