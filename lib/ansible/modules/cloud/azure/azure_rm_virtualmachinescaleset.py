@@ -531,7 +531,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         # default virtual_network_resource_group to resource_group
         if not self.virtual_network_resource_group:
             self.virtual_network_resource_group = self.resource_group
-        
+
         changed = False
         results = dict()
         vmss = None
