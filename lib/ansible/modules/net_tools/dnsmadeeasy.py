@@ -623,23 +623,9 @@ def main():
         new_record["port"] = new_record["value"].split(" ")[2]
         new_record["value"] = new_record["value"].split(" ")[3]
 
-    # Fetch existing monitor if the A record indicates it should exist and build the new monitor
-    current_monitor = dict()
-    new_monitor = dict()
+    # monitor creation
     monitor_changed = False
-    if current_record and current_record['type'] in ['A', 'CNAME']:
-        # mark monitor as changed if passed parameter does not match current value
-        if current_record['monitor'] != module.params['monitor']:
-            monitor_changed = True
-
-        if current_record['monitor']:
-            current_monitor = DME.getMonitor(current_record['id'])
-
-            # Compare new monitor against existing one
-            for i in new_monitor:
-                if str(current_monitor.get(i)) != str(new_monitor[i]):
-                    monitor_changed = True
-
+    new_monitor = dict()
     # if record_type param matches A or CNAME, we need to build monitor with necessary parameters
     if module.params['record_type'] in ['A', 'CNAME']:
         # Build the monitor
@@ -665,6 +651,21 @@ def main():
                 else:
                     # The module option names match the API field names
                     new_monitor[i] = module.params[i]
+
+    # Fetch existing monitor if the A record indicates it should exist and build the new monitor
+    current_monitor = dict()
+    if current_record and current_record['type'] in ['A', 'CNAME']:
+        # mark monitor as changed if passed parameter does not match current value
+        if current_record['monitor'] != module.params['monitor']:
+            monitor_changed = True
+
+        if current_record['monitor']:
+            current_monitor = DME.getMonitor(current_record['id'])
+
+            # Compare new monitor against existing one
+            for i in new_monitor:
+                if str(current_monitor.get(i)) != str(new_monitor[i]):
+                    monitor_changed = True
 
     # Compare new record against existing one
     record_changed = False
