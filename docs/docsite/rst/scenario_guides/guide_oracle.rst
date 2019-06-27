@@ -83,6 +83,7 @@ launches a public Compute instance and then accesses the instance from an Ansibl
 Create and manage Autonomous Data Warehouses
 ============================================
 This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_data_warehouse>`_ creates an Autonomous Data Warehouse and manage its lifecycle. The sample shows how to:
+
 - Set up an Autonomous Data Warehouse.
 - List all of the Autonomous Data Warehouse instances available in a compartment, filtered by the display name.
 - Get the "facts" for a specified Autonomous Data Warehouse.
@@ -92,7 +93,7 @@ This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master
 Create and manage Autonomous Transaction Processing
 ===================================================
 This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_database>`_
-  creates an Autonomous Transaction Processing database and manage its lifecycle. The sample shows how to:
+creates an Autonomous Transaction Processing database and manage its lifecycle. The sample shows how to:
 
 - Set up an Autonomous Transaction Processing database instance.
 - List all of the Autonomous Transaction Processing instances in a compartment, filtered by the display name.
