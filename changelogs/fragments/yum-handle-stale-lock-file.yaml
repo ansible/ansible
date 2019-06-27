@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - handle stale/invalid yum.pid lock file (https://github.com/ansible/ansible/issues/57189)
