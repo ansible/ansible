@@ -49,7 +49,7 @@ b.	From GitHub:
 
 Run one of the following commands:
 
-- If Ansible is installed as a user: 
+- If Ansible is installed only for your user: 
 
 .. code-block:: bash
 
