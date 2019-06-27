@@ -88,12 +88,6 @@ msg:
   type: str
   sample: "Success"
 
-error:
-  description: The error message returned by the Gitlab API
-  returned: failed
-  type: str
-  sample: "Failed to connect to Gitlab server: 401: 401 Unauthorized"
-
 project_variable:
   description: three lists of the variablenames which were added, updated or removed.
   returned: always
