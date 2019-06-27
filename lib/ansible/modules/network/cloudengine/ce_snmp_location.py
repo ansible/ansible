@@ -171,8 +171,9 @@ class SnmpLocation(object):
         tmp_cfg = self.cli_get_config()
         if tmp_cfg:
             temp_data = tmp_cfg.split(r"location ")
-            self.cur_cfg["location"] = temp_data[1]
-            self.existing["location"] = temp_data[1]
+            if len(temp_data) > 1:
+                self.cur_cfg["location"] = temp_data[1]
+                self.existing["location"] = temp_data[1]
 
     def get_end_state(self):
         """ Get end state """
@@ -180,7 +181,8 @@ class SnmpLocation(object):
         tmp_cfg = self.cli_get_config()
         if tmp_cfg:
             temp_data = tmp_cfg.split(r"location ")
-            self.end_state["location"] = temp_data[1]
+            if len(temp_data) > 1:
+                self.end_state["location"] = temp_data[1]
 
     def cli_load_config(self, commands):
         """ Load config by cli """
