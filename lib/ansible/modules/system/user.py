@@ -871,8 +871,9 @@ class User(object):
 
             if not exists:
                 self.module.warn(
-                    "'local: true' specified and user was not found in {file}. "
-                    "The local user account may already exist if the local account database exists somewhere other than {file}.".format(file=self.PASSWORDFILE))
+                    "'local: true' specified and user '{name}' was not found in {file}. "
+                    "The local user account may already exist if the local account database exists "
+                    "somewhere other than {file}.".format(file=self.PASSWORDFILE, name=self.name))
 
             return exists
 

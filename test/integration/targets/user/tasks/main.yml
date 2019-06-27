@@ -872,6 +872,18 @@
   tags:
     - user_test_local_mode
 
+- name: Create local account that already exists to check for warning
+  user:
+    name: root
+    local: yes
+  register: local_existing
+
+- name: Ensure no warning was issued
+  assert:
+    msg: A warning was issued and it should not be
+    that:
+      - local_existing.warnings is not defined
+
 - name: Create local_ansibulluser
   user:
     name: local_ansibulluser
@@ -942,6 +954,8 @@
   assert:
     that:
       - local_user_test_1 is changed
+      - local_user_test_1.warnings is defined
+      - local_user_test_1.warnings | first is search('The local user account may already exist')
       - local_user_test_2 is not changed
       - local_user_test_3 is failed
       - "local_user_test_3['msg'] is search('parameters are mutually exclusive: groups|local')"
