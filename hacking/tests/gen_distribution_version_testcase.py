@@ -16,6 +16,7 @@ import json
 import sys
 
 from ansible.module_utils import distro
+from ansible.module_utils._text import to_text
 
 
 filelist = [
@@ -53,14 +54,15 @@ dist = distro.linux_distribution(full_distribution_name=False)
 facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version', 'os_family']
 
 try:
-    ansible_out = subprocess.check_output(
+    b_ansible_out = subprocess.check_output(
         ['ansible', 'localhost', '-m', 'setup'])
 except subprocess.CalledProcessError as e:
     print("ERROR: ansible run failed, output was: \n")
     print(e.output)
     sys.exit(e.returncode)
 
-parsed = json.loads(ansible_out[ansible_out.index(b'{'):])
+ansible_out = to_text(b_ansible_out)
+parsed = json.loads(ansible_out[ansible_out.index('{'):])
 ansible_facts = {}
 for fact in facts:
     try:
