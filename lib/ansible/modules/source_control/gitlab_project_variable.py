@@ -53,7 +53,7 @@ options:
     type: bool
   vars:
     description:
-      - A list of key value pairs
+      - A list of key value pairs.
     default: {}
     required: false
     type: dict
