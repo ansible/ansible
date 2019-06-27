@@ -96,7 +96,7 @@ class TestRunCommandArgs:
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
     # pylint: disable=undefined-variable
-    @pytest.mark.parametrize(b'cmd, expected, shell, stdin',
+    @pytest.mark.parametrize('cmd, expected, shell, stdin',
                              ((arg, cmd_str if sh else cmd_lst, sh, {})
                               for (arg, cmd_lst, cmd_str), sh in product(ARGS_DATA, (True, False))),
                              indirect=['stdin'])
