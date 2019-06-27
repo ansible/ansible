@@ -60,12 +60,14 @@ options:
               C(null), or C(~), the user is removed from all groups except the
               primary group. (C(~) means C(null) in YAML)
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
+            - Has no effect when C(local) is C(True)
         type: list
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
             - If C(no), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
+            - Has no effect when C(local) is C(True)
         type: bool
         default: no
     shell:
@@ -616,7 +618,7 @@ class User(object):
             else:
                 cmd.append('-N')
 
-        if self.groups is not None and len(self.groups):
+        if self.groups is not None and not self.local and len(self.groups):
             groups = self.get_groups_set()
             cmd.append('-G')
             cmd.append(','.join(groups))
@@ -737,7 +739,7 @@ class User(object):
                     else:
                         groups_need_mod = True
 
-            if groups_need_mod:
+            if groups_need_mod and not self.local:
                 if self.append and not has_append:
                     cmd.append('-A')
                     cmd.append(','.join(group_diff))
