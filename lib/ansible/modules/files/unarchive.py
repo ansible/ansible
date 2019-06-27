@@ -863,7 +863,7 @@ def main():
 
     handler = pick_handler(src, b_dest, file_args, module)
 
-    res_args = dict(handler=handler.__class__.__name__, b_dest=b_dest, src=src)
+    res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
     # do we need to do unpack?
     check_results = handler.is_unarchived()
