@@ -2453,6 +2453,8 @@ class AnsibleModule(object):
             # stringify args for unsafe/direct shell usage
             if isinstance(args, list):
                 args = b" ".join([to_bytes(shlex_quote(x), errors='surrogate_or_strict') for x in args])
+            else:
+                args = to_bytes(args, errors='surrogate_or_strict')
 
             # not set explicitly, check if set by controller
             if executable:

@@ -90,8 +90,8 @@ def rc_am(mocker, am, mock_os, mock_subprocess):
 class TestRunCommandArgs:
     # Format is command as passed to run_command, command to Popen as list, command to Popen as string
     ARGS_DATA = (
-                (['/bin/ls', 'a', 'b', 'c'], ['/bin/ls', 'a', 'b', 'c'], '/bin/ls a b c'),
-                ('/bin/ls a " b" "c "', ['/bin/ls', 'a', ' b', 'c '], '/bin/ls a " b" "c "'),
+                (['/bin/ls', 'a', 'b', 'c'], [b'/bin/ls', b'a', b'b', b'c'], b'/bin/ls a b c'),
+                ('/bin/ls a " b" "c "', [b'/bin/ls', b'a', b' b', b'c '], b'/bin/ls a " b" "c "'),
     )
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
