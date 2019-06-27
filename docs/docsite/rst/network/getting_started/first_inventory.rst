@@ -45,7 +45,7 @@ This tiny example data center illustrates a basic group structure. You can group
 Add Variables to Inventory
 ================================================================================
 
-Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ansible-playbook command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary. 
+Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ansible-playbook command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary.
 
 .. code-block:: ini
 
@@ -109,12 +109,12 @@ When devices in a group share the same variable values, such as OS or SSH user, 
 Variable Syntax
 ================================================================================
 
-The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files, which are covered below. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each. 
+The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files, which are covered below. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each.
 
-- In an ini-style inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``. 
+- In an ini-style inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``.
 - In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``
 
-  - In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``. 
+  - In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``.
   - In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos``
 
 
@@ -155,14 +155,14 @@ As your inventory grows, you may want to group devices by platform. This allows 
 
 With this setup, you can run first_playbook.yml with only two flags:
 
-.. code-block:: console 
+.. code-block:: console
 
    ansible-playbook -i inventory -k first_playbook.yml
 
-With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``. 
+With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``.
 
 
-Protecting Sensitive Variables with ``ansible-vault`` 
+Protecting Sensitive Variables with ``ansible-vault``
 ================================================================================
 
 The ``ansible-vault`` command provides encryption for files and/or individual variables like passwords. This tutorial will show you how to encrypt a single SSH password. You can use the commands below to encrypt other sensitive information, such as database passwords, privilege-escalation passwords and more.
@@ -187,7 +187,7 @@ If you prefer to type your ansible-vault password rather than store it in a file
 
    ansible-vault encrypt_string --vault-id my_user@prompt 'VyOS_SSH_password' --name 'ansible_password'
 
-and type in the vault password for ``my_user``. 
+and type in the vault password for ``my_user``.
 
 The :option:`--vault-id <ansible-playbook --vault-id>` flag allows different vault passwords for different users or different levels of access. The output includes the user name ``my_user`` from your ``ansible-vault`` command and uses the YAML syntax ``key: value``:
 
@@ -238,7 +238,7 @@ Or with a prompt instead of the vault password file:
 
    ansible-playbook -i inventory --vault-id my_user@prompt first_playbook.yml
 
-To see the original value, you can use the debug module. Please note if your YAML file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this, please make a copy of the file without the ansible_connection variable. 
+To see the original value, you can use the debug module. Please note if your YAML file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this, please make a copy of the file without the ansible_connection variable.
 
 .. code-block:: console
 
@@ -253,9 +253,9 @@ To see the original value, you can use the debug module. Please note if your YAM
 
 
 .. warning::
-   
+
    Vault content can only be decrypted with the password that was used to encrypt it. If you want to stop using one password and move to a new one, you can update and re-encrypt existing vault content with ``ansible-vault rekey myfile``, then provide the old password and the new password. Copies of vault content still encrypted with the old password can still be decrypted with old password.
 
-For more details on building inventory files, see :doc:`the introduction to inventory<../../user_guide/intro_inventory>`; for more details on ansible-vault, see :doc:`the full Ansible Vault documentation<../../user_guide/vault>`.
+For more details on building inventory files, see :ref:`the introduction to inventory<intro_inventory>`; for more details on ansible-vault, see :ref:`the full Ansible Vault documentation<vault>`.
 
-Now that you understand the basics of commands, playbooks, and inventory, it's time to explore some more complex Ansible Network examples. 
+Now that you understand the basics of commands, playbooks, and inventory, it's time to explore some more complex Ansible Network examples.
