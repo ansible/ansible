@@ -126,16 +126,19 @@ state:
         address_prefix:
             description:
                 - IP address CIDR.
+            returned: always
             type: str
             example: "10.1.0.0/16"
         id:
             description:
                 - Subnet resource path.
+            returned: always
             type: str
             example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/mySubnet"
         name:
             description:
                 - Subnet name.
+            returned: always
             type: str
             example: "foobar"
         network_security_group:
