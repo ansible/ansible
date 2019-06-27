@@ -1,0 +1,3 @@
+bugfixes:
+  - ce_interface - It is not a good way to find data from a xml tree by regular. lin379 line405.
+  - ce_interface - line 750,779 Some attributes of interfaces are missing, 'ifAdminStatus', 'ifDescr', 'isL2SwitchPort'.So add them when get interface status.
