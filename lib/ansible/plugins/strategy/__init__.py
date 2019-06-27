@@ -350,6 +350,10 @@ class StrategyBase:
 
         return [actual_host]
 
+    def get_handler_templar(self, handler_task, iterator):
+        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+        return Templar(loader=self._loader, variables=handler_vars)
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -373,8 +377,7 @@ class StrategyBase:
                 for handler_task in handler_block.block:
                     if handler_task.name:
                         if not handler_task.cached_name:
-                            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
-                            templar = Templar(loader=self._loader, variables=handler_vars)
+                            templar = self.get_handler_templar(handler_task, iterator)
                             handler_task.name = templar.template(handler_task.name)
                             handler_task.cached_name = True
 
@@ -530,6 +533,10 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
+                                        templar = self.get_handler_templar(listening_handler, iterator)
+                                        listeners = listening_handler.get_validated_value(
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, templar
+                                        )
                                         if handler_name not in listeners:
                                             continue
                                         else:
