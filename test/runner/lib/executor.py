@@ -79,7 +79,6 @@ from lib.ansible_util import (
 
 from lib.target import (
     IntegrationTarget,
-    walk_external_targets,
     walk_internal_targets,
     walk_posix_integration_targets,
     walk_network_integration_targets,
@@ -1302,7 +1301,7 @@ def command_units(args):
     """
     changes = get_changes_filter(args)
     require = args.require + changes
-    include, exclude = walk_external_targets(walk_units_targets(), args.include, args.exclude, require)
+    include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
 
     if not include:
         raise AllTargetsSkipped()
@@ -1338,9 +1337,6 @@ def command_units(args):
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
-
-        if exclude:
-            cmd += ['--ignore=%s' % target.path for target in exclude]
 
         cmd += [target.path for target in include]
 

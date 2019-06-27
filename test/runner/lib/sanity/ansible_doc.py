@@ -52,9 +52,7 @@ class AnsibleDocTest(SanityMultipleVersion):
             'test',
         ])
 
-        modules = sorted(set(m for i in targets.include_external for m in i.modules) -
-                         set(m for i in targets.exclude_external for m in i.modules) -
-                         skip_modules)
+        modules = sorted(set(m for i in targets.include for m in i.modules) - skip_modules)
 
         plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
                    os.path.basename(i.path) != '__init__.py' and

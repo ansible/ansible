@@ -27,7 +27,6 @@ from lib.ansible_util import (
 )
 
 from lib.target import (
-    walk_external_targets,
     walk_internal_targets,
     walk_sanity_targets,
 )
@@ -204,7 +203,6 @@ class SanityTargets(object):
         self.all = not include
         self.targets = tuple(sorted(walk_sanity_targets()))
         self.include = walk_internal_targets(self.targets, include, exclude, require)
-        self.include_external, self.exclude_external = walk_external_targets(self.targets, include, exclude, require)
 
 
 class SanityTest(ABC):
