@@ -80,7 +80,7 @@ shows how to launch a public Compute instance and then access the instance from 
 - Specify the public key from the key pair for connecting to the instance, and then launch the instance.
 - Connect to the newly launched instance using SSH.
 
-Create and Manage Autonomous Data Warehouse
+Create and manage Autonomous Data Warehouses
 ===========================================
 This `playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_data_warehouse>`_
 shows how to create an Autonomous Data Warehouse and manage its lifecycle. The sample shows how to do the following:
