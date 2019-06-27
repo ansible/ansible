@@ -18,7 +18,7 @@ description:
   - When a project variable does not exists, it will be created.
   - When a project variable does exists, its value will be updated when the values are different.
   - Variables which are presented in the playbook, but are not presented in the Gitlab project,
-    they stay untouched (I(purged_vars) is C(false)) or will be deleted (I(purged_vars) is C(true)).
+    they stay untouched (I(purged) is C(false)) or will be deleted (I(purged) is C(true)).
 version_added: "2.9"
 author:
     - "Markus Bergholz (@markuman)"
