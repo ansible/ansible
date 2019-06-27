@@ -16,6 +16,7 @@ To use the OCI Ansible modules, you must have the following prerequisites on you
 1. `An Oracle Cloud Infrastructure account. <https://cloud.oracle.com/en_US/tryit>`_
 
 2. A user created in that account, in a security group with a policy that grants the necessary permissions for working with resources in those compartments. For guidance, see `How Policies Work <https://docs.cloud.oracle.com/iaas/Content/Identity/Concepts/policies.htm>`_.
+
 3. The necessary credentials and OCID information.
 
 ************
