@@ -329,6 +329,11 @@ class DnfModule(YumDnf):
         except AttributeError:
             self.with_modules = False
 
+    def is_lockfile_pid_valid(self):
+        # FIXME? it looks like DNF takes care of invalid lock files itself?
+        # https://github.com/ansible/ansible/issues/57189
+        return True
+
     def _sanitize_dnf_error_msg(self, spec, error):
         """
         For unhandled dnf.exceptions.Error scenarios, there are certain error
