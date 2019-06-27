@@ -33,7 +33,7 @@ options:
     host_name:
         description:
             - Name of the host in Zabbix.
-            - host_name is the unique identifier used and cannot be updated using this module.
+            - I(host_name) is the unique identifier used and cannot be updated using this module.
         required: true
     visible_name:
         description:
@@ -58,7 +58,7 @@ options:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
             - Please review the interface documentation for more information on the supported properties
-            - 'https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory'
+            - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory)
         version_added: '2.5'
     status:
         description:
@@ -76,13 +76,65 @@ options:
         description:
             - The name of the Zabbix proxy to be used.
     interfaces:
+        type: list
         description:
             - List of interfaces to be created for the host (see example below).
-            - 'Available keys are: I(dns), I(ip), I(main), I(port), I(type), I(useip), and I(bulk).'
-            - Please review the interface documentation for more information on the supported properties
-            - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
-            - If an interface definition is incomplete, this module will attempt to fill in sensible values.
-            - I(type) can also be C(agent), C(snmp), C(ipmi), or C(jmx) instead of its numerical value.
+            - For more information, review host interface documentation at
+            - U(https://www.zabbix.com/documentation/4.0/manual/api/reference/hostinterface/object)
+        suboptions:
+            type:
+                description:
+                    - Interface type to add
+                    - Numerical values are also accepted for interface type
+                    - 1 = agent
+                    - 2 = snmp
+                    - 3 = ipmi
+                    - 4 = jmx
+                choices: ['agent', 'snmp', 'ipmi', 'jmx']
+                required: true
+            main:
+                type: int
+                description:
+                    - Whether the interface is used as default.
+                    - If multiple interfaces with the same type are provided, only one can be default.
+                    - 0 (not default), 1 (default)
+                default: 0
+                choices: [0, 1]
+            useip:
+                type: int
+                description:
+                    - Connect to host interface with IP address instead of DNS name.
+                    - 0 (don't use ip), 1 (use ip)
+                default: 0
+                choices: [0, 1]
+            ip:
+                type: str
+                description:
+                    - IP address used by host interface.
+                    - Required if I(useip=1).
+                default: ''
+            dns:
+                type: str
+                description:
+                    - DNS name of the host interface.
+                    - Required if I(useip=0).
+                default: ''
+            port:
+                type: str
+                description:
+                    - Port used by host interface.
+                    - If not specified, default port for each type of interface is used
+                    - 10050 if I(type='agent')
+                    - 161 if I(type='snmp')
+                    - 623 if I(type='ipmi')
+                    - 12345 if I(type='jmx')
+            bulk:
+                type: int
+                description:
+                    - Whether to use bulk SNMP requests.
+                    - 0 (don't use bulk requests), 1 (use bulk requests)
+                choices: [0, 1]
+                default: 1
         default: []
     tls_connect:
         description:
@@ -109,7 +161,7 @@ options:
     tls_psk:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
-            - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
+            - The preshared key, at least 32 hex digits. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
     ca_cert:
