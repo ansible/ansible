@@ -11,7 +11,7 @@ Oracle provides a number of Ansible modules to interact with Oracle Cloud Infras
 ************
 Requirements
 ************
-In order to use the OCI Ansible modules, you must have the following prerequisites on your controller computer, which is the computer from which Ansible playbooks are executed.
+To use the OCI Ansible modules, you must have the following prerequisites on your control node, the computer from which Ansible playbooks are executed.
 
 1. `An Oracle Cloud Infrastructure account. <https://cloud.oracle.com/en_US/tryit>`_
 
