@@ -90,7 +90,7 @@ shows how to create an Autonomous Data Warehouse and manage its lifecycle. The s
 - Stop and start an Autonomous Data Warehouse instance.
 - Delete an Autonomous Data Warehouse instance.
 
-Create and Manage Autonomous Transaction Processing
+Create and manage Autonomous Transaction Processing
 ===================================================
 This `sample playbook <https://github.com/oracle/oci-ansible-modules/tree/master/samples/database/autonomous_database>`_
   creates an Autonomous Transaction Processing database and manage its lifecycle. The sample shows how to:
