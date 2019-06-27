@@ -1,3 +1,3 @@
 ---
 bugfixes:
-  - fix bug - out of array index.There should be a judgement about array length before the value of the array is taken out.
+  - ce_snmp_location - fixed an out of array index error.
