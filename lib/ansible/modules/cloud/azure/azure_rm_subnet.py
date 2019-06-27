@@ -143,7 +143,7 @@ state:
             example: "foobar"
         network_security_group:
             description:
-                - An network securtiy group resource.
+                - Associated network securtiy group of subnets.
             returned: always
             type: complex
             contains:
