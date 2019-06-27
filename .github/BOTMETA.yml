@@ -269,7 +269,7 @@ files:
   $modules/monitoring/monit.py: brian-brazil
   $modules/monitoring/pagerduty.py:
     ignored: bpennypacker
-  $modules/monitoring/zabbix/: eikef D3DeFi
+  $modules/monitoring/zabbix/: eikef D3DeFi rubentsirunyan
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py:
@@ -1485,7 +1485,7 @@ files:
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
-    maintainers: eikef D3DeFi
+    maintainers: eikef D3DeFi rubentsirunyan
   test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
