@@ -68,7 +68,7 @@ class TestSlackModule(ModuleTestCase):
         set_module_args({
             'token': 'XXXX/YYYY/ZZZZ',
             'msg': 'test',
-            'thread_id': 100.00
+            'thread_id': '100.00'
         })
 
         with patch.object(slack, "fetch_url") as fetch_url_mock:
@@ -80,7 +80,7 @@ class TestSlackModule(ModuleTestCase):
             call_data = json.loads(fetch_url_mock.call_args[1]['data'])
             assert call_data['username'] == "Ansible"
             assert call_data['text'] == "test"
-            assert call_data['thread_ts'] == 100.00
+            assert call_data['thread_ts'] == "100.00"
             assert fetch_url_mock.call_args[1]['url'] == "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
 
     def test_message_with_invalid_color(self):
