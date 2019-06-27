@@ -442,7 +442,6 @@ lib/ansible/modules/cloud/azure/azure_rm_loadbalancer.py E337
 lib/ansible/modules/cloud/azure/azure_rm_loganalyticsworkspace_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_loganalyticsworkspace.py E337
 lib/ansible/modules/cloud/azure/azure_rm_manageddisk_facts.py E325
-lib/ansible/modules/cloud/azure/azure_rm_manageddisk_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_manageddisk.py E337
 lib/ansible/modules/cloud/azure/azure_rm_mariadbconfiguration_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_mariadbconfiguration.py E337
