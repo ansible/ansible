@@ -10,7 +10,9 @@ import json
 import os
 import pytest
 import re
+import shutil
 import tarfile
+import yaml
 
 from io import BytesIO, StringIO
 from units.compat.mock import MagicMock
@@ -70,7 +72,7 @@ def artifact_versions_json(namespace, name, versions, server):
 
 
 @pytest.fixture()
-def collection_artifact(tmp_path_factory):
+def collection_artifact(request, tmp_path_factory):
     test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
     namespace = 'ansible_namespace'
     collection = 'collection'
@@ -80,6 +82,17 @@ def collection_artifact(tmp_path_factory):
 
     call_galaxy_cli(['init', '%s.%s' % (namespace, collection), '-c', '--init-path', test_dir,
                      '--collection-skeleton', skeleton_path])
+    dependencies = getattr(request, 'param', None)
+    if dependencies:
+        galaxy_yml = os.path.join(collection_path, 'galaxy.yml')
+        with open(galaxy_yml, 'rb+') as galaxy_obj:
+            existing_yaml = yaml.safe_load(galaxy_obj)
+            existing_yaml['dependencies'] = dependencies
+
+            galaxy_obj.seek(0)
+            galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
+            galaxy_obj.truncate()
+
     call_galaxy_cli(['build', collection_path, '--output-path', test_dir])
 
     collection_tar = os.path.join(test_dir, '%s-%s-0.1.0.tar.gz' % (namespace, collection))
@@ -549,3 +562,88 @@ def test_install_collection_with_download(collection_artifact, monkeypatch):
     assert mock_download.mock_calls[0][1][1] == temp_path
     assert mock_download.mock_calls[0][1][2] == 'myhash'
     assert mock_download.mock_calls[0][1][3] is True
+
+
+def test_install_collections_from_tar(collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    temp_path = os.path.split(collection_tar)[0]
+    shutil.rmtree(collection_path)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+                                   [u'https://galaxy.ansible.com'], True, False, False, False, False)
+
+    assert os.path.isdir(collection_path)
+
+    actual_files = os.listdir(collection_path)
+    actual_files.sort()
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+
+    with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
+        actual_manifest = json.loads(to_text(manifest_obj.read()))
+
+    assert actual_manifest['collection_info']['namespace'] == 'ansible_namespace'
+    assert actual_manifest['collection_info']['name'] == 'collection'
+    assert actual_manifest['collection_info']['version'] == '0.1.0'
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
+        % to_text(collection_path)
+
+
+def test_install_collections_existing_without_force(collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    temp_path = os.path.split(collection_tar)[0]
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    # If we don't delete collection_path it will think the original build skeleton is installed so we expect a skip
+    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+                                   [u'https://galaxy.ansible.com'], True, False, False, False, False)
+
+    assert os.path.isdir(collection_path)
+
+    actual_files = os.listdir(collection_path)
+    actual_files.sort()
+    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles']
+
+    assert mock_display.call_count == 2
+    # Msg1 is the warning about not MANIFEST.json, cannot really check message as it has line breaks which varies based
+    # on the path size
+    assert mock_display.mock_calls[1][1][0] == "Skipping 'ansible_namespace.collection' as it is already installed"
+
+
+# Makes sure we don't get stuck in some recursive loop
+@pytest.mark.parametrize('collection_artifact', [
+    {'ansible_namespace.collection': '>=0.0.1'},
+], indirect=True)
+def test_install_collection_with_circular_dependency(collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    temp_path = os.path.split(collection_tar)[0]
+    shutil.rmtree(collection_path)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+                                   [u'https://galaxy.ansible.com'], True, False, False, False, False)
+
+    assert os.path.isdir(collection_path)
+
+    actual_files = os.listdir(collection_path)
+    actual_files.sort()
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+
+    with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
+        actual_manifest = json.loads(to_text(manifest_obj.read()))
+
+    assert actual_manifest['collection_info']['namespace'] == 'ansible_namespace'
+    assert actual_manifest['collection_info']['name'] == 'collection'
+    assert actual_manifest['collection_info']['version'] == '0.1.0'
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
+        % to_text(collection_path)

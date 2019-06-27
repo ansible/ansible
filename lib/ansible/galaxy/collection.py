@@ -177,9 +177,9 @@ class CollectionRequirement(object):
         if self._metadata:
             return
 
-        collection_url = _urljoin(*[self.source, 'api', 'v2', 'collections', self.namespace, self.name, 'versions',
-                                    self.latest_version])
-        details = json.load(open_url(collection_url, validate_certs=self._validate_certs))
+        n_collection_url = _urljoin(*[self.source, 'api', 'v2', 'collections', self.namespace, self.name, 'versions',
+                                      self.latest_version])
+        details = json.load(open_url(n_collection_url, validate_certs=self._validate_certs))
         self._galaxy_info = details
         self._metadata = details['metadata']
 
@@ -297,9 +297,9 @@ class CollectionRequirement(object):
                 collection_url_paths.append(requirement)
                 is_single = True
 
-            collection_uri = _urljoin(*collection_url_paths)
+            n_collection_url = _urljoin(*collection_url_paths)
             try:
-                resp = json.load(open_url(collection_uri, validate_certs=validate_certs))
+                resp = json.load(open_url(n_collection_url, validate_certs=validate_certs))
             except urllib_error.HTTPError as err:
                 if err.code == 404:
                     continue
@@ -315,7 +315,8 @@ class CollectionRequirement(object):
                     versions += [v['version'] for v in resp['results']]
                     if resp['next'] is None:
                         break
-                    resp = json.load(open_url(resp['next'], validate_certs=validate_certs))
+                    resp = json.load(open_url(to_native(resp['next'], errors='surrogate_or_strict'),
+                                              validate_certs=validate_certs))
 
             break
         else:
@@ -380,7 +381,7 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
 
     display.display("Publishing collection artifact '%s' to %s" % (collection_path, server))
 
-    url = _urljoin(server, 'api', 'v2', 'collections')
+    n_url = _urljoin(server, 'api', 'v2', 'collections')
 
     data, content_type = _get_mime_data(b_collection_path)
     headers = {
@@ -392,8 +393,7 @@ def publish_collection(collection_path, server, key, ignore_certs, wait):
     validate_certs = not ignore_certs
 
     try:
-        resp = json.load(open_url(to_native(url), data=data, headers=headers, method='POST',
-                                  validate_certs=validate_certs))
+        resp = json.load(open_url(n_url, data=data, headers=headers, method='POST', validate_certs=validate_certs))
     except urllib_error.HTTPError as err:
         try:
             err_info = json.load(err)
@@ -742,7 +742,8 @@ def _wait_import(task_url, key, validate_certs):
     display.vvv('Waiting until galaxy import task %s has completed' % task_url)
 
     while True:
-        resp = json.load(open_url(task_url, headers=headers, method='GET', validate_certs=validate_certs))
+        resp = json.load(open_url(to_native(task_url, errors='surrogate_or_strict'), headers=headers, method='GET',
+                                  validate_certs=validate_certs))
 
         if resp.get('finished_at', None):
             break
@@ -871,7 +872,7 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
 
 
 def _urljoin(*args):
-    return '/'.join(to_text(a, errors='surrogate_or_strict').rstrip('/') for a in args + ('',))
+    return '/'.join(to_native(a, errors='surrogate_or_strict').rstrip('/') for a in args + ('',))
 
 
 def _download_file(url, b_path, expected_hash, validate_certs):
@@ -884,7 +885,7 @@ def _download_file(url, b_path, expected_hash, validate_certs):
     b_file_path = tempfile.NamedTemporaryFile(dir=b_path, prefix=b_file_name, suffix=b_file_ext, delete=False).name
 
     display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
-    resp = open_url(url, validate_certs=validate_certs)
+    resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs)
 
     with open(b_file_path, 'wb') as download_file:
         data = resp.read(bufsize)
@@ -907,8 +908,8 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
     try:
         member = tar.getmember(n_filename)
     except KeyError:
-        raise AnsibleError("Collection tar at '%s' does not contain the expected file %s." % (to_native(tar.name),
-                                                                                              n_filename))
+        raise AnsibleError("Collection tar at '%s' does not contain the expected file '%s'." % (to_native(tar.name),
+                                                                                                n_filename))
 
     with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
         bufsize = 65536

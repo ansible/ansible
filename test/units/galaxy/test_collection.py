@@ -15,6 +15,7 @@ import tempfile
 import time
 import uuid
 
+from hashlib import sha256
 from io import BytesIO, StringIO
 from units.compat.mock import MagicMock
 
@@ -38,6 +39,7 @@ def reset_cli_args():
 
 @pytest.fixture()
 def collection_input(tmp_path_factory):
+    ''' Creates a collection skeleton directory for build tests '''
     test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
     namespace = 'ansible_namespace'
     collection = 'collection'
@@ -53,7 +55,8 @@ def collection_input(tmp_path_factory):
 
 
 @pytest.fixture()
-def publish_artifact(monkeypatch, tmp_path_factory):
+def collection_artifact(monkeypatch, tmp_path_factory):
+    ''' Creates a temp collection artifact and mocked open_url instance for publishing tests '''
     mock_open = MagicMock()
     monkeypatch.setattr(collection, 'open_url', mock_open)
 
@@ -96,6 +99,28 @@ def galaxy_yml(request, tmp_path_factory):
         galaxy_obj.write(to_bytes(request.param))
 
     yield b_galaxy_yml
+
+
+@pytest.fixture()
+def tmp_tarfile(tmp_path_factory):
+    ''' Creates a temporary tar file for _extract_tar_file tests '''
+    filename = u'ÅÑŚÌβŁÈ'
+    temp_dir = to_bytes(tmp_path_factory.mktemp('test-%s Collections' % to_native(filename)))
+    tar_file = os.path.join(temp_dir, to_bytes('%s.tar.gz' % filename))
+    data = os.urandom(8)
+
+    with tarfile.open(tar_file, 'w:gz') as tfile:
+        b_io = BytesIO(data)
+        tar_info = tarfile.TarInfo(filename)
+        tar_info.size = len(data)
+        tar_info.mode = 0o0644
+        tfile.addfile(tarinfo=tar_info, fileobj=b_io)
+
+    sha256_hash = sha256()
+    sha256_hash.update(data)
+
+    with tarfile.open(tar_file, 'r') as tfile:
+        yield temp_dir, tfile, filename, sha256_hash.hexdigest()
 
 
 def test_build_collection_no_galaxy_yaml():
@@ -361,11 +386,11 @@ def test_publish_not_a_tarball():
             collection.publish_collection(temp_file.name, None, None, False, True)
 
 
-def test_publish_no_wait(publish_artifact, monkeypatch):
+def test_publish_no_wait(collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
-    artifact_path, mock_open = publish_artifact
+    artifact_path, mock_open = collection_artifact
     fake_import_uri = 'https://galaxy.server.com/api/v2/import/1234'
     server = 'https://galaxy.com'
 
@@ -390,8 +415,8 @@ def test_publish_no_wait(publish_artifact, monkeypatch):
         "being set. Import task results can be found at %s" % fake_import_uri
 
 
-def test_publish_dont_validate_cert(publish_artifact):
-    artifact_path, mock_open = publish_artifact
+def test_publish_dont_validate_cert(collection_artifact):
+    artifact_path, mock_open = collection_artifact
 
     mock_open.return_value = StringIO(u'{"task":"https://galaxy.server.com/api/v2/import/1234"}')
 
@@ -401,8 +426,8 @@ def test_publish_dont_validate_cert(publish_artifact):
     assert mock_open.mock_calls[0][2]['validate_certs'] is False
 
 
-def test_publish_failure(publish_artifact):
-    artifact_path, mock_open = publish_artifact
+def test_publish_failure(collection_artifact):
+    artifact_path, mock_open = collection_artifact
 
     mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 500, 'msg', {}, StringIO())
 
@@ -412,8 +437,8 @@ def test_publish_failure(publish_artifact):
         collection.publish_collection(artifact_path, 'https://galaxy.server.com', 'key', False, True)
 
 
-def test_publish_failure_with_json_info(publish_artifact):
-    artifact_path, mock_open = publish_artifact
+def test_publish_failure_with_json_info(collection_artifact):
+    artifact_path, mock_open = collection_artifact
 
     return_content = StringIO(u'{"message":"Galaxy error message","code":"GWE002"}')
     mock_open.side_effect = urllib_error.HTTPError('https://galaxy.server.com', 503, 'msg', {}, return_content)
@@ -423,7 +448,7 @@ def test_publish_failure_with_json_info(publish_artifact):
         collection.publish_collection(artifact_path, 'https://galaxy.server.com', 'key', False, True)
 
 
-def test_publish_with_wait(publish_artifact, monkeypatch):
+def test_publish_with_wait(collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -433,7 +458,7 @@ def test_publish_with_wait(publish_artifact, monkeypatch):
     fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
     server = 'https://galaxy.server.com'
 
-    artifact_path, mock_open = publish_artifact
+    artifact_path, mock_open = collection_artifact
 
     mock_open.side_effect = (
         StringIO(u'{"task":"%s"}' % fake_import_uri),
@@ -457,7 +482,7 @@ def test_publish_with_wait(publish_artifact, monkeypatch):
     assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
 
 
-def test_publish_with_wait_timeout(publish_artifact, monkeypatch):
+def test_publish_with_wait_timeout(collection_artifact, monkeypatch):
     monkeypatch.setattr(time, 'sleep', MagicMock())
 
     mock_display = MagicMock()
@@ -469,7 +494,7 @@ def test_publish_with_wait_timeout(publish_artifact, monkeypatch):
     fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
     server = 'https://galaxy.server.com'
 
-    artifact_path, mock_open = publish_artifact
+    artifact_path, mock_open = collection_artifact
 
     mock_open.side_effect = (
         StringIO(u'{"task":"%s"}' % fake_import_uri),
@@ -500,7 +525,7 @@ def test_publish_with_wait_timeout(publish_artifact, monkeypatch):
         'Galaxy import process has a status of waiting, wait 2 seconds before trying again'
 
 
-def test_publish_with_wait_and_failure(publish_artifact, monkeypatch):
+def test_publish_with_wait_and_failure(collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -516,7 +541,7 @@ def test_publish_with_wait_and_failure(publish_artifact, monkeypatch):
     fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
     server = 'https://galaxy.server.com'
 
-    artifact_path, mock_open = publish_artifact
+    artifact_path, mock_open = collection_artifact
 
     import_stat = {
         'finished_at': 'some_time',
@@ -572,7 +597,7 @@ def test_publish_with_wait_and_failure(publish_artifact, monkeypatch):
     assert mock_err.mock_calls[0][1][0] == 'Galaxy import error message: Some error'
 
 
-def test_publish_with_wait_and_failure_and_no_error(publish_artifact, monkeypatch):
+def test_publish_with_wait_and_failure_and_no_error(collection_artifact, monkeypatch):
     mock_display = MagicMock()
     monkeypatch.setattr(Display, 'display', mock_display)
 
@@ -588,7 +613,7 @@ def test_publish_with_wait_and_failure_and_no_error(publish_artifact, monkeypatc
     fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
     server = 'https://galaxy.server.com'
 
-    artifact_path, mock_open = publish_artifact
+    artifact_path, mock_open = collection_artifact
 
     import_stat = {
         'finished_at': 'some_time',
@@ -710,3 +735,123 @@ def test_parse_requirements_with_extra_info(requirements_file):
     actual = collection.parse_collections_requirements_file(requirements_file)
 
     assert actual == expected
+
+
+def test_find_existing_collections(tmp_path_factory, monkeypatch):
+    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+    collection1 = os.path.join(test_dir, 'namespace1', 'collection1')
+    collection2 = os.path.join(test_dir, 'namespace2', 'collection2')
+    fake_collection1 = os.path.join(test_dir, 'namespace3', 'collection3')
+    fake_collection2 = os.path.join(test_dir, 'namespace4')
+    os.makedirs(collection1)
+    os.makedirs(collection2)
+    os.makedirs(os.path.split(fake_collection1)[0])
+
+    open(fake_collection1, 'wb+').close()
+    open(fake_collection2, 'wb+').close()
+
+    collection1_manifest = json.dumps({
+        'collection_info': {
+            'namespace': 'namespace1',
+            'name': 'collection1',
+            'version': '1.2.3',
+            'authors': ['Jordan Borean'],
+            'readme': 'README.md',
+            'dependencies': {},
+        },
+        'format': 1,
+    })
+    with open(os.path.join(collection1, 'MANIFEST.json'), 'wb') as manifest_obj:
+        manifest_obj.write(to_bytes(collection1_manifest))
+
+    mock_warning = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_warning)
+
+    actual = collection._find_existing_collections(test_dir)
+
+    assert len(actual) == 2
+    for actual_collection in actual:
+        assert actual_collection.skip is True
+
+        if str(actual_collection) == 'namespace1.collection1':
+            assert actual_collection.namespace == 'namespace1'
+            assert actual_collection.name == 'collection1'
+            assert actual_collection.b_path == to_bytes(collection1)
+            assert actual_collection.source is None
+            assert actual_collection.versions == set(['1.2.3'])
+            assert actual_collection.latest_version == '1.2.3'
+            assert actual_collection.dependencies == {}
+        else:
+            assert actual_collection.namespace == 'namespace2'
+            assert actual_collection.name == 'collection2'
+            assert actual_collection.b_path == to_bytes(collection2)
+            assert actual_collection.source is None
+            assert actual_collection.versions == set(['*'])
+            assert actual_collection.latest_version == '*'
+            assert actual_collection.dependencies == {}
+
+    assert mock_warning.call_count == 1
+    assert mock_warning.mock_calls[0][1][0] == "Collection at '%s' does not have a MANIFEST.json file, cannot " \
+                                               "detect version." % to_text(collection2)
+
+
+def test_download_file(tmp_path_factory, monkeypatch):
+    temp_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+
+    data = b"\x00\x01\x02\x03"
+    sha256_hash = sha256()
+    sha256_hash.update(data)
+
+    mock_open = MagicMock()
+    mock_open.return_value = BytesIO(data)
+    monkeypatch.setattr(collection, 'open_url', mock_open)
+
+    expected = os.path.join(temp_dir, b'file')
+    actual = collection._download_file('http://google.com/file', temp_dir, sha256_hash.hexdigest(), True)
+
+    assert actual.startswith(expected)
+    assert os.path.isfile(actual)
+    with open(actual, 'rb') as file_obj:
+        assert file_obj.read() == data
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == 'http://google.com/file'
+
+
+def test_download_file_hash_mismatch(tmp_path_factory, monkeypatch):
+    temp_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+
+    data = b"\x00\x01\x02\x03"
+
+    mock_open = MagicMock()
+    mock_open.return_value = BytesIO(data)
+    monkeypatch.setattr(collection, 'open_url', mock_open)
+
+    expected = "Mismatch artifact hash with downloaded file"
+    with pytest.raises(AnsibleError, match=expected):
+        collection._download_file('http://google.com/file', temp_dir, 'bad', True)
+
+
+def test_extract_tar_file_invalid_hash(tmp_tarfile):
+    temp_dir, tfile, filename, dummy = tmp_tarfile
+
+    expected = "Checksum mismatch for '%s' inside collection at '%s'" % (to_native(filename), to_native(tfile.name))
+    with pytest.raises(AnsibleError, match=expected):
+        collection._extract_tar_file(tfile, filename, temp_dir, temp_dir, "fakehash")
+
+
+def test_extract_tar_file_missing_member(tmp_tarfile):
+    temp_dir, tfile, dummy, dummy = tmp_tarfile
+
+    expected = "Collection tar at '%s' does not contain the expected file 'missing'." % to_native(tfile.name)
+    with pytest.raises(AnsibleError, match=expected):
+        collection._extract_tar_file(tfile, 'missing', temp_dir, temp_dir)
+
+
+def test_extract_tar_file_missing_parent_dir(tmp_tarfile):
+    temp_dir, tfile, filename, checksum = tmp_tarfile
+    output_dir = os.path.join(temp_dir, b'output')
+    output_file = os.path.join(output_dir, to_bytes(filename))
+
+    collection._extract_tar_file(tfile, filename, output_dir, temp_dir, checksum)
+    os.path.isfile(output_file)
