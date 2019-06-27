@@ -195,9 +195,9 @@ class UnarchiveError(Exception):
 
 class ZipArchive(object):
 
-    def __init__(self, src, dest, file_args, module):
+    def __init__(self, src, b_dest, file_args, module):
         self.src = src
-        self.b_dest = dest
+        self.b_dest = b_dest
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
@@ -435,9 +435,9 @@ class ZipArchive(object):
             # DEBUG
 #            err += "%s%s %10d %s\n" % (ztype, permstr, size, path)
 
-            dest = os.path.join(self.b_dest, to_bytes(path, errors='surrogate_or_strict'))
+            b_dest = os.path.join(self.b_dest, to_bytes(path, errors='surrogate_or_strict'))
             try:
-                st = os.lstat(dest)
+                st = os.lstat(b_dest)
             except Exception:
                 change = True
                 self.includes.append(path)
@@ -504,7 +504,7 @@ class ZipArchive(object):
 
             # Compare file checksums
             if stat.S_ISREG(st.st_mode):
-                crc = crc32(dest)
+                crc = crc32(b_dest)
                 if crc != self._crc32(path):
                     change = True
                     err += 'File %s differs in CRC32 checksum (0x%08x vs 0x%08x)\n' % (path, self._crc32(path), crc)
@@ -618,9 +618,9 @@ class ZipArchive(object):
 
 class TgzArchive(object):
 
-    def __init__(self, src, dest, file_args, module):
+    def __init__(self, src, b_dest, file_args, module):
         self.src = src
-        self.b_dest = dest
+        self.b_dest = b_dest
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
@@ -779,23 +779,23 @@ class TgzArchive(object):
 
 # Class to handle tar files that aren't compressed
 class TarArchive(TgzArchive):
-    def __init__(self, src, dest, file_args, module):
-        super(TarArchive, self).__init__(src, dest, file_args, module)
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarArchive, self).__init__(src, b_dest, file_args, module)
         # argument to tar
         self.zipflag = ''
 
 
 # Class to handle bzip2 compressed tar files
 class TarBzipArchive(TgzArchive):
-    def __init__(self, src, dest, file_args, module):
-        super(TarBzipArchive, self).__init__(src, dest, file_args, module)
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarBzipArchive, self).__init__(src, b_dest, file_args, module)
         self.zipflag = '-j'
 
 
 # Class to handle xz compressed tar files
 class TarXzArchive(TgzArchive):
-    def __init__(self, src, dest, file_args, module):
-        super(TarXzArchive, self).__init__(src, dest, file_args, module)
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarXzArchive, self).__init__(src, b_dest, file_args, module)
         self.zipflag = '-J'
 
 
@@ -833,7 +833,8 @@ def main():
     )
 
     src = module.params['src']
-    b_dest = to_bytes(module.params['dest'], errors='surrogate_or_strict')
+    dest = module.params['dest']
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
 
@@ -858,11 +859,11 @@ def main():
 
     # is dest OK to receive tar file?
     if not os.path.isdir(b_dest):
-        module.fail_json(msg="Destination '%s' is not a directory" % b_dest)
+        module.fail_json(msg="Destination '%s' is not a directory" % dest)
 
     handler = pick_handler(src, b_dest, file_args, module)
 
-    res_args = dict(handler=handler.__class__.__name__, dest=b_dest, src=src)
+    res_args = dict(handler=handler.__class__.__name__, b_dest=b_dest, src=src)
 
     # do we need to do unpack?
     check_results = handler.is_unarchived()
@@ -879,9 +880,9 @@ def main():
         try:
             res_args['extract_results'] = handler.unarchive()
             if res_args['extract_results']['rc'] != 0:
-                module.fail_json(msg="failed to unpack %s to %s" % (src, b_dest), **res_args)
+                module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
         except IOError:
-            module.fail_json(msg="failed to unpack %s to %s" % (src, b_dest), **res_args)
+            module.fail_json(msg="failed to unpack %s to %s" % (src, dest), **res_args)
         else:
             res_args['changed'] = True
 
