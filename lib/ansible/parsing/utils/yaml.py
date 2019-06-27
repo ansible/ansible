@@ -54,7 +54,7 @@ def _safe_load(stream, file_name=None, vault_secrets=None):
             pass  # older versions of yaml don't have dispose function, ignore
 
 
-def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None):
+def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None, json_only=False):
     '''
     Creates a python datastructure from the given data, which can be either
     a JSON or YAML string.
@@ -68,8 +68,13 @@ def from_yaml(data, file_name='<string>', show_content=True, vault_secrets=None)
         # we first try to load this data as JSON.
         # Fixes issues with extra vars json strings not being parsed correctly by the yaml parser
         new_data = json.loads(data, cls=AnsibleJSONDecoder)
-    except Exception:
+    except Exception as e:
+
+        if json_only:
+            raise AnsibleParserError(to_native(e), orig_exc=e)
+
         # must not be JSON, let the rest try
+        # TODO: still keep json error
         try:
             new_data = _safe_load(data, file_name=file_name, vault_secrets=vault_secrets)
         except YAMLError as yaml_exc:
