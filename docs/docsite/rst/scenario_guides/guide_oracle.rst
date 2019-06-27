@@ -22,7 +22,7 @@ To use the OCI Ansible modules, you must have the following prerequisites on you
 ************
 Installation
 ************ 
-1. Install the Oracle Cloud Infrastructure Python SDK (more details `here <https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/installation.html>`_):
+1. Install the Oracle Cloud Infrastructure Python SDK (`detailed installation instructions <https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/installation.html>`_):
 
 .. code-block:: bash
 
