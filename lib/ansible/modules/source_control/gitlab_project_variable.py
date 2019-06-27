@@ -84,14 +84,9 @@ EXAMPLES = '''
 RETURN = '''
 msg:
   description: Success or failure message
-  returned: always
+  returned: failed
   type: str
   sample: "Success"
-
-result:
-  description: JSON parsed response from the server
-  returned: always
-  type: dict
 
 error:
   description: The error message returned by the Gitlab API
