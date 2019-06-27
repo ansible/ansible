@@ -531,9 +531,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         # default virtual_network_resource_group to resource_group
         if not self.virtual_network_resource_group:
             self.virtual_network_resource_group = self.resource_group
-
-        #if self.capacity > 100:
-        #    self.single_placement_group = False
         
         changed = False
         results = dict()
