@@ -65,6 +65,7 @@ options:
     type: str
     choices: [ AVE, native ]
     default: native
+    version_added: '2.9'
   epg:
     description:
     - Name of the end point group.
