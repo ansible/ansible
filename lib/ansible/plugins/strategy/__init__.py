@@ -814,7 +814,7 @@ class StrategyBase:
 
         except AnsibleError as e:
             if isinstance(e, AnsibleFileNotFound):
-                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(included_file._filename)
+                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
             else:
                 reason = to_text(e)
 
