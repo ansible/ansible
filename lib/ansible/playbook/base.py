@@ -334,6 +334,57 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         return new_me
 
+    def get_validated_value(self, name, attribute, value, templar):
+        if attribute.isa == 'string':
+            value = to_text(value)
+        elif attribute.isa == 'int':
+            value = int(value)
+        elif attribute.isa == 'float':
+            value = float(value)
+        elif attribute.isa == 'bool':
+            value = boolean(value, strict=False)
+        elif attribute.isa == 'percent':
+            # special value, which may be an integer or float
+            # with an optional '%' at the end
+            if isinstance(value, string_types) and '%' in value:
+                value = value.replace('%', '')
+            value = float(value)
+        elif attribute.isa == 'list':
+            if value is None:
+                value = []
+            elif not isinstance(value, list):
+                value = [value]
+            if attribute.listof is not None:
+                for item in value:
+                    if not isinstance(item, attribute.listof):
+                        raise AnsibleParserError("the field '%s' should be a list of %s, "
+                                                 "but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                    elif attribute.required and attribute.listof == string_types:
+                        if item is None or item.strip() == "":
+                            raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
+        elif attribute.isa == 'set':
+            if value is None:
+                value = set()
+            elif not isinstance(value, (list, set)):
+                if isinstance(value, string_types):
+                    value = value.split(',')
+                else:
+                    # Making a list like this handles strings of
+                    # text and bytes properly
+                    value = [value]
+            if not isinstance(value, set):
+                value = set(value)
+        elif attribute.isa == 'dict':
+            if value is None:
+                value = dict()
+            elif not isinstance(value, dict):
+                raise TypeError("%s is not a dictionary" % value)
+        elif attribute.isa == 'class':
+            if not isinstance(value, attribute.class_type):
+                raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+            value.post_validate(templar=templar)
+        return value
+
     def post_validate(self, templar):
         '''
         we can't tell that everything is of the right type until we have
@@ -389,54 +440,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
                 # and make sure the attribute is of the type it should be
                 if value is not None:
-                    if attribute.isa == 'string':
-                        value = to_text(value)
-                    elif attribute.isa == 'int':
-                        value = int(value)
-                    elif attribute.isa == 'float':
-                        value = float(value)
-                    elif attribute.isa == 'bool':
-                        value = boolean(value, strict=False)
-                    elif attribute.isa == 'percent':
-                        # special value, which may be an integer or float
-                        # with an optional '%' at the end
-                        if isinstance(value, string_types) and '%' in value:
-                            value = value.replace('%', '')
-                        value = float(value)
-                    elif attribute.isa == 'list':
-                        if value is None:
-                            value = []
-                        elif not isinstance(value, list):
-                            value = [value]
-                        if attribute.listof is not None:
-                            for item in value:
-                                if not isinstance(item, attribute.listof):
-                                    raise AnsibleParserError("the field '%s' should be a list of %s, "
-                                                             "but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
-                                elif attribute.required and attribute.listof == string_types:
-                                    if item is None or item.strip() == "":
-                                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
-                    elif attribute.isa == 'set':
-                        if value is None:
-                            value = set()
-                        elif not isinstance(value, (list, set)):
-                            if isinstance(value, string_types):
-                                value = value.split(',')
-                            else:
-                                # Making a list like this handles strings of
-                                # text and bytes properly
-                                value = [value]
-                        if not isinstance(value, set):
-                            value = set(value)
-                    elif attribute.isa == 'dict':
-                        if value is None:
-                            value = dict()
-                        elif not isinstance(value, dict):
-                            raise TypeError("%s is not a dictionary" % value)
-                    elif attribute.isa == 'class':
-                        if not isinstance(value, attribute.class_type):
-                            raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
-                        value.post_validate(templar=templar)
+                    value = self.get_validated_value(name, attribute, value, templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)

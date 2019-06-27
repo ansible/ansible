@@ -21,11 +21,12 @@ __metaclass__ = type
 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.task import Task
+from ansible.module_utils.six import string_types
 
 
 class Handler(Task):
 
-    _listen = FieldAttribute(isa='list', default=list)
+    _listen = FieldAttribute(isa='list', default=list, listof=string_types, static=True)
 
     def __init__(self, block=None, role=None, task_include=None):
         self.notified_hosts = []

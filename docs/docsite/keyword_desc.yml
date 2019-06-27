@@ -34,7 +34,7 @@ force_handlers: Will force notified handler execution for hosts even if they fai
 gather_facts: "A boolean that controls if the play will automatically run the 'setup' task to gather facts for the hosts."
 gather_subset: Allows you to pass subset options to the  fact gathering plugin controlled by :term:`gather_facts`.
 gather_timeout: Allows you to set the timeout for the fact gathering plugin controlled by :term:`gather_facts`.
-handlers: "A section with tasks that are treated as handlers, these won't get executed normally, only when notified after each section of tasks is complete."
+handlers: "A section with tasks that are treated as handlers, these won't get executed normally, only when notified after each section of tasks is complete. A handler's `listen` field is not templatable."
 hosts: "A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target."
 ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
 ignore_unreachable: Boolean that allows you to ignore unreachable hosts and continue with play. This does not affect other task errors (see :term:`ignore_errors`) but is useful for groups of volatile/ephemeral hosts.
