@@ -51,10 +51,10 @@ def get_distribution_version():
     '''
     version = None
 
-    needs_best_version = set([
-        'centos',
-        'debian',
-    ])
+    needs_best_version = frozenset((
+        u'centos',
+        u'debian',
+    ))
 
     if platform.system() == 'Linux':
         version = distro.version()
@@ -65,17 +65,19 @@ def get_distribution_version():
                 version_best = distro.version(best=True)
 
                 # CentoOS maintainers believe only the major version is appropriate
-                # but Ansible users desire minor version information, e.g., 7.5
-                if distro_id == 'centos':
-                    version = '.'.join(version_best.split('.')[:2])
+                # but Ansible users desire minor version information, e.g., 7.5.
+                # https://github.com/ansible/ansible/issues/50141#issuecomment-449452781
+                if distro_id == u'centos':
+                    version = u'.'.join(version_best.split(u'.')[:2])
 
-                # Debian does not include minor version in /etc/os-release. This could
-                # change if Debian maintainers are convinced to include this information.
-                if distro_id == 'debian':
+                # Debian does not include minor version in /etc/os-release.
+                # Bug report filed upstream requesting this be added to /etc/os-release
+                # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=931197
+                if distro_id == u'debian':
                     version = version_best
 
         else:
-            version = ''
+            version = u''
 
     return version
 
