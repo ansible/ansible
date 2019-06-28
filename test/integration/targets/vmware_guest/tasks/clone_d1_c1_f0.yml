@@ -9,7 +9,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: new_vm_1
-    template: "{{ infra.vm_list[0] }}"
+    template: "{{ virtual_machines[0].name }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     folder: D1/C1/F0
@@ -32,7 +32,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: new_vm_2
-    template: "{{ infra.vm_list[0] }}"
+    template: "{{ virtual_machines[0].name }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     folder: D1/C1/F0
