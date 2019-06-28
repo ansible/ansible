@@ -11,11 +11,11 @@
   no_log: yes
 
 # Preconditions to run this tests:
-# 1. Create a TLS certificate on AWS ACM (Amazon Certificate Manager), Cosole link: https://console.aws.amazon.com/acm/home
+# 1. Create a TLS certificate on AWS ACM (Amazon Certificate Manager), Console link: https://console.aws.amazon.com/acm/home
 # 2. Set the domain name in ../defaults/main.yml to the one of your certificate
 # 3. Set the ARN in ../defaults/main.yml to the one of your certificate
 
-# NOTE: This could also be done by a Ansible ACM module in the future
+# NOTE: This could also be done by a Ansible ACM module in the future,
 # but for now we don't have one.
 
 - block:
