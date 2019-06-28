@@ -100,7 +100,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         :rtype: dict[str, set[int]]
         """
         if not self._shippable_test_groups:
-            matches = [re.search(r'^[ #]+- env: T=(?P<group>[^/]+)/(?P<params>.+)/(?P<number>[1-9])$', line) for line in self.shippable_yml_lines]
+            matches = [re.search(r'^[ #]+- env: T=(?P<group>[^/]+)/(?P<params>.+)/(?P<number>[1-9][0-9]?)$', line) for line in self.shippable_yml_lines]
             entries = [(match.group('group'), int(match.group('number'))) for match in matches if match]
 
             for key, value in entries:
@@ -126,7 +126,9 @@ class IntegrationAliasesTest(SanitySingleVersion):
             if max(group_numbers) != len(group_numbers):
                 display.warning('Max test group "%s" in shippable.yml is %d instead of %d.' % (name, max(group_numbers), len(group_numbers)), unique=True)
 
-            if len(group_numbers) > 1:
+            if max(group_numbers) > 9:
+                alias = 'shippable/%s/group(%s)/' % (name, '|'.join(str(i) for i in range(min(group_numbers), max(group_numbers) + 1)))
+            elif len(group_numbers) > 1:
                 alias = 'shippable/%s/group[%d-%d]/' % (name, min(group_numbers), max(group_numbers))
             else:
                 alias = 'shippable/%s/group%d/' % (name, min(group_numbers))
