@@ -89,9 +89,30 @@ msg:
   sample: "Success"
 
 project_variable:
-  description: three lists of the variablenames which were added, updated or removed.
+  description: Four lists of the variablenames which were added, updated, removed or exist.
   returned: always
   type: dict
+  contains:
+    added:
+      description: A list of variables which were created.
+      returned: always
+      type: list
+      sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
+    present:
+      description: A list of variables which exist.
+      returned: always
+      type: list
+      sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
+    removed:
+      description: A list of variables which were deleted.
+      returned: always
+      type: list
+      sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
+    updated:
+      description: A list of variables where their values has changed.
+      returned: always
+      type: list
+      sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
 '''
 
 import traceback
