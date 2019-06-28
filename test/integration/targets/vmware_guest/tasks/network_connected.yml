@@ -59,7 +59,7 @@
 
 - debug: var=disconnect_network
 
-- name: assert that no changes were made and no errors occured
+- name: assert that network state did not change and no errors occured
   assert:
     that:
       - "not disconnect_network.changed"
@@ -91,7 +91,7 @@
 
 - debug: var=connect_network
 
-- name: assert that no errors occured and network state changed
+- name: assert that network state changed and no errors occured
   assert:
     that:
       - "connect_network.changed"
@@ -123,7 +123,7 @@
 
 - debug: var=connect_network
 
-- name: assert that no errors occured and network state did not change
+- name: assert that network state did not change and no errors occured
   assert:
     that:
       - "not connect_network.changed"
