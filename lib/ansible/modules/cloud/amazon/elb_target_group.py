@@ -112,7 +112,7 @@ options:
       - The type of target that you must specify when registering targets with this target group. The possible values are
         C(instance) (targets are specified by instance ID), C(ip) (targets are specified by IP address) or C(lambda) (target is specified by ARN).
         Note that you can't specify targets for a target group using more than one type. Target type lambda only accept one target. When more than
-        one target is specified, only the first one is used. All follow targets are ignored.
+        one target is specified, only the first one is used. All additional targets are ignored.
         If the target type is ip, specify IP addresses from the subnets of the virtual private cloud (VPC) for the target
         group, the RFC 1918 range (10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16), and the RFC 6598 range (100.64.0.0/10).
         You can't specify publicly routable IP addresses.
