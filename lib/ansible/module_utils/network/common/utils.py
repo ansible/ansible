@@ -447,7 +447,7 @@ def generate_dict(spec):
     """
     Generate dictionary which is in sync with argspec
 
-    :param spec: A dictionary which the argspec of module
+    :param spec: A dictionary that is the argspec of the module
     :rtype: A dictionary
     :returns: A dictionary in sync with argspec with default value
     """
@@ -507,18 +507,18 @@ def parse_conf_cmd_arg(cfg, cmd, res1, res2=None, delete_str='no'):
     return None
 
 
-def get_xml_conf_arg(cfg, path, type='text'):
+def get_xml_conf_arg(cfg, path, data='text'):
     """
     :param cfg: The top level configuration lxml Element tree object
     :param path: The relative xpath w.r.t to top level element (cfg)
-           to be serached in the xml hierarchy
-    :param type: The type of data to be returned for the matched xml node.
+           to be searched in the xml hierarchy
+    :param data: The type of data to be returned for the matched xml node.
         Valid values are text, tag, attrib.
     :return: Returns the required type for the matched xml node or else None
     """
     match = cfg.xpath(path)
-    if len(match):
-        result = getattr(match[0], type)
+    if match and len(match):
+        result = getattr(match[0], data)
     else:
         result = None
     return result

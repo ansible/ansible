@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
-The junos facts base class
+The facts base class
 this contains methods common to all facts subsets
 """
 from ansible.module_utils.network.common.network import get_resource_connection
@@ -78,22 +78,22 @@ class FactsBase(object):
 
         return runable_subsets
 
-    def get_network_resources_facts(self, netres_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
+    def get_network_resources_facts(self, net_res_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
         """
-        :param netres_choices:
+        :param net_res_choices:
         :param fact_resource_subsets:
         :param data: previously collected configuration
         :return:
         """
-        if netres_choices:
-            if 'all' in netres_choices:
-                netres_choices.remove('all')
+        if net_res_choices:
+            if 'all' in net_res_choices:
+                net_res_choices.remove('all')
 
-        if netres_choices:
+        if net_res_choices:
             if not resource_facts_type:
                 resource_facts_type = self._gather_network_resources
 
-            restorun_subsets = self.gen_runable(resource_facts_type, netres_choices)
+            restorun_subsets = self.gen_runable(resource_facts_type, frozenset(net_res_choices))
             if restorun_subsets:
                 self.ansible_facts['gather_network_resources'] = list(restorun_subsets)
                 instances = list()
@@ -111,7 +111,7 @@ class FactsBase(object):
         if not legacy_facts_type:
             legacy_facts_type = self._gather_subset
 
-        runable_subsets = self.gen_runable(legacy_facts_type, fact_legacy_obj_map.keys())
+        runable_subsets = self.gen_runable(legacy_facts_type, frozenset(fact_legacy_obj_map.keys()))
         if runable_subsets:
             facts = dict()
             facts['gather_subset'] = list(runable_subsets)
