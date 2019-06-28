@@ -261,7 +261,7 @@
       that:
       - result.changed == true
 
-  - name: postgresql_ext_version - check that extension exists
+  - name: postgresql_ext_version - check that extension doesn't exist after the prev step
     <<: *task_parameters
     postgresql_query:
       <<: *pg_parameters
