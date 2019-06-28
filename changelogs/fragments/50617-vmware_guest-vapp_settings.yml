@@ -1,0 +1,2 @@
+minor_changes:
+- vApp setting can be set while VM creation in vmware_guest (https://github.com/ansible/ansible/issues/50617).
