@@ -39,9 +39,12 @@
         path: /etc/sudoers.d
       register: etc_sudoers
 
+    - name: Set sudoers.d path fact
+        sudoers_d_file: "{{ '/etc/sudoers.d' if etc_sudoers.stat.exists else '/usr/local/etc/sudoers.d' }}/{{ remote_unprivileged_user }}"
+
     - name: Create sudoers file
       copy:
-        dest: "{{ '/etc/sudoers.d' if etc_sudoers.stat.exists else '/usr/local/etc/sudoers.d' }}/{{ remote_unprivileged_user }}"
+        dest: "{{ sudoers_d_file }}"
         content: "{{ remote_unprivileged_user }} ALL=(ALL) NOPASSWD: ALL"
 
     - file:
@@ -103,3 +106,8 @@
         name: '{{ remote_unprivileged_user }}'
         state: absent
         remove: yes
+
+    - name: Remove sudoers.d file
+      file:
+        path: "{{ sudoers_d_file }}"
+        state: absent
