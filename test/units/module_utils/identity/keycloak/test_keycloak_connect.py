@@ -4,7 +4,7 @@ import pytest
 from itertools import count
 
 from ansible.module_utils.identity.keycloak.keycloak import (
-    KeycloakAuthorizationHeader,
+    get_token,
     KeycloakError,
 )
 from ansible.module_utils.six import StringIO
@@ -58,7 +58,7 @@ def mock_good_connection(mocker):
 
 
 def test_connect_to_keycloak(mock_good_connection):
-    keycloak_header = KeycloakAuthorizationHeader(
+    keycloak_header = get_token(
         base_url='http://keycloak.url/auth',
         validate_certs=True,
         auth_realm='master',
@@ -67,7 +67,7 @@ def test_connect_to_keycloak(mock_good_connection):
         auth_password='admin',
         client_secret=None
     )
-    assert keycloak_header.header == {
+    assert keycloak_header == {
         'Authorization': 'Bearer alongtoken',
         'Content-Type': 'application/json'
     }
@@ -86,7 +86,7 @@ def mock_bad_json_returned(mocker):
 
 def test_bad_json_returned(mock_bad_json_returned):
     with pytest.raises(KeycloakError) as raised_error:
-        KeycloakAuthorizationHeader(
+        get_token(
             base_url='http://keycloak.url/auth',
             validate_certs=True,
             auth_realm='master',
@@ -124,7 +124,7 @@ def mock_401_returned(mocker):
 
 def test_error_returned(mock_401_returned):
     with pytest.raises(KeycloakError) as raised_error:
-        KeycloakAuthorizationHeader(
+        get_token(
             base_url='http://keycloak.url/auth',
             validate_certs=True,
             auth_realm='master',
@@ -153,7 +153,7 @@ def mock_json_without_token_returned(mocker):
 
 def test_json_without_token_returned(mock_json_without_token_returned):
     with pytest.raises(KeycloakError) as raised_error:
-        KeycloakAuthorizationHeader(
+        get_token(
             base_url='http://keycloak.url/auth',
             validate_certs=True,
             auth_realm='master',

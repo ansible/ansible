@@ -72,45 +72,39 @@ class KeycloakError(Exception):
     pass
 
 
-class KeycloakAuthorizationHeader(object):
-    def __init__(self, base_url, validate_certs, auth_realm, client_id,
+def get_token(base_url, validate_certs, auth_realm, client_id,
                  auth_username, auth_password, client_secret):
-        self.validate_certs = validate_certs
-        self.auth_url = URL_TOKEN.format(url=base_url, realm=auth_realm)
-        temp_payload = {
-            'grant_type': 'password',
-            'client_id': client_id,
-            'client_secret': client_secret,
-            'username': auth_username,
-            'password': auth_password,
+    auth_url = URL_TOKEN.format(url=base_url, realm=auth_realm)
+    temp_payload = {
+        'grant_type': 'password',
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'username': auth_username,
+        'password': auth_password,
+    }
+    # Remove empty items, for instance missing client_secret
+    payload = dict(
+        (k, v) for k, v in temp_payload.items() if v is not None)
+    try:
+        r = json.load(open_url(auth_url, method='POST',
+                               validate_certs=validate_certs,
+                               data=urlencode(payload)))
+    except ValueError as e:
+        raise KeycloakError(
+            'API returned invalid JSON when trying to obtain access token from %s: %s'
+            % (auth_url, str(e)))
+    except Exception as e:
+        raise KeycloakError('Could not obtain access token from %s: %s'
+                            % (auth_url, str(e)))
+
+    try:
+        return {
+            'Authorization': 'Bearer ' + r['access_token'],
+            'Content-Type': 'application/json'
         }
-        # Remove empty items, for instance missing client_secret
-        self.payload = dict(
-            (k, v) for k, v in temp_payload.items() if v is not None)
-        self.header = {}
-        self.refresh_token()
-
-    def refresh_token(self):
-        try:
-            r = json.load(open_url(self.auth_url, method='POST',
-                                   validate_certs=self.validate_certs,
-                                   data=urlencode(self.payload)))
-        except ValueError as e:
-            raise KeycloakError(
-                'API returned invalid JSON when trying to obtain access token from %s: %s'
-                % (self.auth_url, str(e)))
-        except Exception as e:
-            raise KeycloakError('Could not obtain access token from %s: %s'
-                                % (self.auth_url, str(e)))
-
-        try:
-            self.header = {
-                'Authorization': 'Bearer ' + r['access_token'],
-                'Content-Type': 'application/json'
-            }
-        except KeyError:
-            raise KeycloakError(
-                'Could not obtain access token from %s' % self.auth_url)
+    except KeyError:
+        raise KeycloakError(
+            'Could not obtain access token from %s' % auth_url)
 
 
 class KeycloakAPI(object):
@@ -135,7 +129,7 @@ class KeycloakAPI(object):
             clientlist_url += '?clientId=%s' % filter
 
         try:
-            return json.load(open_url(clientlist_url, method='GET', headers=self.restheaders.header,
+            return json.load(open_url(clientlist_url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
         except ValueError as e:
             self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of clients for realm %s: %s'
@@ -166,7 +160,7 @@ class KeycloakAPI(object):
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
 
         try:
-            return json.load(open_url(client_url, method='GET', headers=self.restheaders.header,
+            return json.load(open_url(client_url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
 
         except HTTPError as e:
@@ -205,7 +199,7 @@ class KeycloakAPI(object):
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
 
         try:
-            return open_url(client_url, method='PUT', headers=self.restheaders.header,
+            return open_url(client_url, method='PUT', headers=self.restheaders,
                             data=json.dumps(clientrep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not update client %s in realm %s: %s'
@@ -220,7 +214,7 @@ class KeycloakAPI(object):
         client_url = URL_CLIENTS.format(url=self.baseurl, realm=realm)
 
         try:
-            return open_url(client_url, method='POST', headers=self.restheaders.header,
+            return open_url(client_url, method='POST', headers=self.restheaders,
                             data=json.dumps(clientrep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not create client %s in realm %s: %s'
@@ -236,7 +230,7 @@ class KeycloakAPI(object):
         client_url = URL_CLIENT.format(url=self.baseurl, realm=realm, id=id)
 
         try:
-            return open_url(client_url, method='DELETE', headers=self.restheaders.header,
+            return open_url(client_url, method='DELETE', headers=self.restheaders,
                             validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not delete client %s in realm %s: %s'
@@ -251,7 +245,7 @@ class KeycloakAPI(object):
         url = URL_CLIENTTEMPLATES.format(url=self.baseurl, realm=realm)
 
         try:
-            return json.load(open_url(url, method='GET', headers=self.restheaders.header,
+            return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
         except ValueError as e:
             self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of client templates for realm %s: %s'
@@ -270,7 +264,7 @@ class KeycloakAPI(object):
         url = URL_CLIENTTEMPLATE.format(url=self.baseurl, id=id, realm=realm)
 
         try:
-            return json.load(open_url(url, method='GET', headers=self.restheaders.header,
+            return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
         except ValueError as e:
             self.module.fail_json(msg='API returned incorrect JSON when trying to obtain client templates %s for realm %s: %s'
@@ -316,7 +310,7 @@ class KeycloakAPI(object):
         url = URL_CLIENTTEMPLATE.format(url=self.baseurl, realm=realm, id=id)
 
         try:
-            return open_url(url, method='PUT', headers=self.restheaders.header,
+            return open_url(url, method='PUT', headers=self.restheaders,
                             data=json.dumps(clienttrep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not update client template %s in realm %s: %s'
@@ -331,7 +325,7 @@ class KeycloakAPI(object):
         url = URL_CLIENTTEMPLATES.format(url=self.baseurl, realm=realm)
 
         try:
-            return open_url(url, method='POST', headers=self.restheaders.header,
+            return open_url(url, method='POST', headers=self.restheaders,
                             data=json.dumps(clienttrep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not create client template %s in realm %s: %s'
@@ -347,7 +341,7 @@ class KeycloakAPI(object):
         url = URL_CLIENTTEMPLATE.format(url=self.baseurl, realm=realm, id=id)
 
         try:
-            return open_url(url, method='DELETE', headers=self.restheaders.header,
+            return open_url(url, method='DELETE', headers=self.restheaders,
                             validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not delete client template %s in realm %s: %s'
@@ -363,7 +357,7 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUPS.format(url=self.baseurl, realm=realm)
         try:
-            return json.load(open_url(groups_url, method="GET", headers=self.restheaders.header,
+            return json.load(open_url(groups_url, method="GET", headers=self.restheaders,
                                       validate_certs=self.validate_certs))
         except Exception as e:
             self.module.fail_json(msg="Could not fetch list of groups in realm %s: %s"
@@ -380,7 +374,7 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUP.format(url=self.baseurl, realm=realm, groupid=gid)
         try:
-            return json.load(open_url(groups_url, method="GET", headers=self.restheaders.header,
+            return json.load(open_url(groups_url, method="GET", headers=self.restheaders,
                                       validate_certs=self.validate_certs))
 
         except HTTPError as e:
@@ -426,7 +420,7 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUPS.format(url=self.baseurl, realm=realm)
         try:
-            return open_url(groups_url, method='POST', headers=self.restheaders.header,
+            return open_url(groups_url, method='POST', headers=self.restheaders,
                             data=json.dumps(grouprep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg="Could not create group %s in realm %s: %s"
@@ -441,7 +435,7 @@ class KeycloakAPI(object):
         group_url = URL_GROUP.format(url=self.baseurl, realm=realm, groupid=grouprep['id'])
 
         try:
-            return open_url(group_url, method='PUT', headers=self.restheaders.header,
+            return open_url(group_url, method='PUT', headers=self.restheaders,
                             data=json.dumps(grouprep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not update group %s in realm %s: %s'
@@ -478,7 +472,7 @@ class KeycloakAPI(object):
         # should have a good groupid by here.
         group_url = URL_GROUP.format(realm=realm, groupid=groupid, url=self.baseurl)
         try:
-            return open_url(group_url, method='DELETE', headers=self.restheaders.header,
+            return open_url(group_url, method='DELETE', headers=self.restheaders,
                             validate_certs=self.validate_certs)
 
         except Exception as e:

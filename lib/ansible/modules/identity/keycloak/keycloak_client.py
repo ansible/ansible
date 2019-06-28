@@ -629,7 +629,7 @@ end_state:
 '''
 
 from ansible.module_utils.identity.keycloak.keycloak import KeycloakAPI, camel, \
-    keycloak_argument_spec, KeycloakAuthorizationHeader
+    keycloak_argument_spec, get_token
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -716,7 +716,7 @@ def main():
     result = dict(changed=False, msg='', diff={}, proposed={}, existing={}, end_state={})
 
     # Obtain access token, initialize API
-    connection_header = KeycloakAuthorizationHeader(
+    connection_header = get_token(
         base_url=module.params.get('auth_keycloak_url'),
         validate_certs=module.params.get('validate_certs'),
         auth_realm=module.params.get('auth_realm'),
