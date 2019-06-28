@@ -19,7 +19,7 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
+ * hash_behaviour now also affects inventory sources, so if you have it set to 'merge' the data you get from inventory might change and you will have to update playbooks accordingly. Those using the default (overwrite) will see no changes as inventory was ignoring this setting.
 
 
 Command Line
