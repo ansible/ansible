@@ -93,6 +93,18 @@ tasks:
       wait_for:
         - result[0] contains Cisco Controller
         - result[1] contains Loopback0
+
+  - name: Assign multiple APs to an AP-GROUP. (Assign AP to AP-GROUP will result a prompt from the WLC. Take note to escape the special characters, if not it will result in timeout.)
+    aireos_command:
+      commands: 
+        - command: "config ap group-name wireless_test_group {{ item }}"
+          prompt: 'Are you sure you want to continue\? \(y/n\)'
+          answer: "y"
+    register: result1
+    with_items:
+      - AP1
+      - AP2
+      - AP3
 """
 
 RETURN = """
