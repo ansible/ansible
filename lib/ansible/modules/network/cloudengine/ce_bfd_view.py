@@ -284,13 +284,13 @@ class BfdView(object):
         root = ElementTree.fromstring(xml_str)
 
         # get bfd global info
-        glb = root.find("data/bfd/bfdSchGlobal")
+        glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
                 bfd_dict["global"][attr.tag] = attr.text
 
         # get bfd session info
-        sess = root.find("data/bfd/bfdCfgSessions/bfdCfgSession")
+        sess = root.find("bfd/bfdCfgSessions/bfdCfgSession")
         if sess:
             for attr in sess:
                 bfd_dict["session"][attr.tag] = attr.text
@@ -497,6 +497,8 @@ class BfdView(object):
             return
 
         self.end_state["session"] = bfd_dict.get("session")
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""
