@@ -657,7 +657,7 @@ class ScientificHostname(Hostname):
 
 class OracleLinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Ol'
+    distribution = 'Oracle'
     strategy_class = RedHatStrategy
 
 
