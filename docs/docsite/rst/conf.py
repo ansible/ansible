@@ -144,7 +144,11 @@ html_context = {
     'github_user': 'ansible',
     'github_repo': 'ansible',
     'github_version': 'devel/docs/docsite/rst/',
-    'github_module_version': 'devel/lib/ansible/modules/'
+    'github_module_version': 'devel/lib/ansible/modules/',
+    'current_version': version,
+    'latest_version': '2.8',
+    # list specifically out of order to make latest work
+    'available_versions': ('latest', '2.7', '2.6', 'devel')
 }
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
@@ -263,9 +267,3 @@ autoclass_content = 'both'
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2-2.7.13.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3-3.6.2.inv')),
                        'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja2-2.9.7.inv'))}
-
-# list specifically out of order to make latest work
-html_context = {
-    'current_version': version,
-    'available_versions': ('latest', '2.7', '2.6', 'devel')
-}
