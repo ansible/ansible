@@ -1410,51 +1410,84 @@ class PyVmomiHelper(PyVmomi):
 
         new_vmconfig_spec = vim.vApp.VmConfigSpec()
 
-        # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
-        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+        if vm_obj:
+            # VM exists
+            # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
+            orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
 
-        vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
-        vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
+            vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
+            vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
 
-        # each property must have a unique key
-        # init key counter with max value + 1
-        all_keys = [x.key for x in orig_spec.property]
-        new_property_index = max(all_keys) + 1 if all_keys else 0
+            # each property must have a unique key
+            # init key counter with max value + 1
+            all_keys = [x.key for x in orig_spec.property]
+            new_property_index = max(all_keys) + 1 if all_keys else 0
 
-        for property_id, property_spec in vapp_properties_to_change.items():
-            is_property_changed = False
-            new_vapp_property_spec = vim.vApp.PropertySpec()
+            for property_id, property_spec in vapp_properties_to_change.items():
+                is_property_changed = False
+                new_vapp_property_spec = vim.vApp.PropertySpec()
 
-            if property_id in vapp_properties_current:
-                if property_spec.get('operation') == 'remove':
-                    new_vapp_property_spec.operation = 'remove'
-                    new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
-                    is_property_changed = True
+                if property_id in vapp_properties_current:
+                    if property_spec.get('operation') == 'remove':
+                        new_vapp_property_spec.operation = 'remove'
+                        new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
+                        is_property_changed = True
+                    else:
+                        # this is 'edit' branch
+                        new_vapp_property_spec.operation = 'edit'
+                        new_vapp_property_spec.info = vapp_properties_current[property_id]
+                        try:
+                            for property_name, property_value in property_spec.items():
+
+                                if property_name == 'operation':
+                                    # operation is not an info object property
+                                    # if set to anything other than 'remove' we don't fail
+                                    continue
+
+                                # Updating attributes only if needed
+                                if getattr(new_vapp_property_spec.info, property_name) != property_value:
+                                    setattr(new_vapp_property_spec.info, property_name, property_value)
+                                    is_property_changed = True
+
+                        except Exception as e:
+                            msg = "Failed to set vApp property field='%s' and value='%s'. Error: %s" % (property_name, property_value, to_text(e))
+                            self.module.fail_json(msg=msg)
                 else:
-                    # this is 'edit' branch
-                    new_vapp_property_spec.operation = 'edit'
-                    new_vapp_property_spec.info = vapp_properties_current[property_id]
-                    try:
-                        for property_name, property_value in property_spec.items():
+                    if property_spec.get('operation') == 'remove':
+                        # attempt to delete non-existent property
+                        continue
 
-                            if property_name == 'operation':
-                                # operation is not an info object property
-                                # if set to anything other than 'remove' we don't fail
-                                continue
+                    # this is add new property branch
+                    new_vapp_property_spec.operation = 'add'
 
-                            # Updating attributes only if needed
-                            if getattr(new_vapp_property_spec.info, property_name) != property_value:
-                                setattr(new_vapp_property_spec.info, property_name, property_value)
-                                is_property_changed = True
+                    property_info = vim.vApp.PropertyInfo()
+                    property_info.classId = property_spec.get('classId')
+                    property_info.instanceId = property_spec.get('instanceId')
+                    property_info.id = property_spec.get('id')
+                    property_info.category = property_spec.get('category')
+                    property_info.label = property_spec.get('label')
+                    property_info.type = property_spec.get('type', 'string')
+                    property_info.userConfigurable = property_spec.get('userConfigurable', True)
+                    property_info.defaultValue = property_spec.get('defaultValue')
+                    property_info.value = property_spec.get('value', '')
+                    property_info.description = property_spec.get('description')
 
-                    except Exception as e:
-                        self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error: %s"
-                                              % (property_name, property_value, to_text(e)))
-            else:
-                if property_spec.get('operation') == 'remove':
-                    # attemp to delete non-existent property
-                    continue
+                    new_vapp_property_spec.info = property_info
+                    new_vapp_property_spec.info.key = new_property_index
+                    new_property_index += 1
+                    is_property_changed = True
 
+                if is_property_changed:
+                    new_vmconfig_spec.property.append(new_vapp_property_spec)
+        else:
+            # New VM
+            all_keys = [x.key for x in new_vmconfig_spec.property]
+            new_property_index = max(all_keys) + 1 if all_keys else 0
+            vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
+            is_property_changed = False
+
+            for property_id, property_spec in vapp_properties_to_change.items():
+                new_vapp_property_spec = vim.vApp.PropertySpec()
                 # this is add new property branch
                 new_vapp_property_spec.operation = 'add'
 
@@ -1474,8 +1507,10 @@ class PyVmomiHelper(PyVmomi):
                 new_vapp_property_spec.info.key = new_property_index
                 new_property_index += 1
                 is_property_changed = True
-            if is_property_changed:
-                new_vmconfig_spec.property.append(new_vapp_property_spec)
+
+                if is_property_changed:
+                    new_vmconfig_spec.property.append(new_vapp_property_spec)
+
         if new_vmconfig_spec.property:
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
@@ -2132,6 +2167,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_resource_alloc_info(vm_obj=vm_obj)
+        self.configure_vapp_properties(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
