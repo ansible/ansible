@@ -195,8 +195,8 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
             try:
                 version = iam.create_policy_version(PolicyArn=policy['Arn'], PolicyDocument=policy_document)['PolicyVersion']
                 return version, True
-            except botocore.exceptions.ClientError as e:
-                pass
+            except botocore.exceptions.ClientError as second_e:
+                e = second_e
         # Handle both when the exception isn't LimitExceeded or
         # the second attempt still failed
         module.fail_json(msg="Couldn't create policy version: %s" % str(e),
