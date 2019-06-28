@@ -137,7 +137,7 @@ class TestSlxosVlanModule(TestSlxosModule):
         result = self.execute_module(failed=True)
         self.assertEqual(result['failed'], True)
         self.assertTrue(re.match(
-            r'Unsupported parameters for \((basic.py|basic.pyc)\) module: '
+            r'Unsupported parameters for \(ansible-module-basic\) module: '
             'shawshank Supported parameters include: aggregate, delay, '
             'interfaces, name, purge, state, vlan_id',
             result['msg']

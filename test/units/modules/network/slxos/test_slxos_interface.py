@@ -147,7 +147,7 @@ class TestSlxosInterfaceModule(TestSlxosModule):
         result = self.execute_module(failed=True)
         self.assertEqual(result['failed'], True)
         self.assertTrue(re.match(
-            r'Unsupported parameters for \((basic.py|basic.pyc)\) module: '
+            r'Unsupported parameters for \(ansible-module-basic\) module: '
             'shawshank Supported parameters include: aggregate, '
             'delay, description, enabled, mtu, name, neighbors, '
             'rx_rate, speed, state, tx_rate',
