@@ -144,7 +144,7 @@ EXAMPLES = r'''
   file:
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
-    state: link
+    state: hard
   with_items:
     - { src: x, dest: y }
     - { src: z, dest: k }
