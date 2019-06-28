@@ -86,7 +86,8 @@
                 "ec2:ModifyVpcAttribute",
                 "ec2:RegisterImage",
                 "ec2:ReleaseAddress",
-                "ec2:ReplaceRouteTableAssociation"
+                "ec2:ReplaceRouteTableAssociation",
+                "ec2:ReportInstanceStatus"
             ],
             "Resource": "*"
         },
