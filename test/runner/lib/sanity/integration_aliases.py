@@ -126,7 +126,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
             if max(group_numbers) != len(group_numbers):
                 display.warning('Max test group "%s" in shippable.yml is %d instead of %d.' % (name, max(group_numbers), len(group_numbers)), unique=True)
 
-            if len(group_numbers) > 9:
+            if max(group_numbers) > 9:
                 alias = 'shippable/%s/group(%s)/' % (name, '|'.join(str(i) for i in range(min(group_numbers), max(group_numbers) + 1)))
             elif len(group_numbers) > 1:
                 alias = 'shippable/%s/group[%d-%d]/' % (name, min(group_numbers), max(group_numbers))
