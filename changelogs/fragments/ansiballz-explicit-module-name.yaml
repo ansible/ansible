@@ -1,0 +1,5 @@
+bugfixes:
+- basic - Make Ansiballz pass the module name explicitly to basic for
+  an intermediate module name until arguments can be parsed. This should
+  be correct in almost all cases, but will fall back to ansible-module-basic
+  in the event arguments are not parsed, and the _name attribute is needed.
