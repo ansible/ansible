@@ -19,6 +19,7 @@ platforms, products, and technologies. They explore particular use cases in grea
    guide_gce
    guide_azure
    guide_online
+   guide_oracle
    guide_packet
    guide_rax
    guide_scaleway
