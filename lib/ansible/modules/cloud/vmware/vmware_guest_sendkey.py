@@ -110,7 +110,7 @@ EXAMPLES = '''
 '''
 
 RETURN = """
-sendkey_facts:
+sendkey_info:
     description: display the keys and the number of keys sent to the virtual machine
     returned: always
     type: dict
