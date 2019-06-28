@@ -6,6 +6,7 @@
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
   no_log: true
+
 - name: New instance with an extra block device
   ec2_instance:
     name: "{{ resource_prefix }}-test-ebs-vols"
@@ -20,12 +21,12 @@
     tags:
       TestId: "{{ resource_prefix }}"
     instance_type: t2.micro
-    wait: false
+    wait: true
     <<: *aws_connection_info
   register: in_test_vpc
 
-- name: Gather instance facts
-  ec2_instance_facts:
+- name: Gather instance info
+  ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
     <<: *aws_connection_info
@@ -60,6 +61,7 @@
   ec2_instance_info:
     filters:
       "tag:Name": "{{ resource_prefix }}-test-ebs-vols"
+      "instance-state-name": "running"
     <<: *aws_connection_info
   register: presented_instance_fact
 
