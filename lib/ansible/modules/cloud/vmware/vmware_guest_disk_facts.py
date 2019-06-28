@@ -43,7 +43,7 @@ options:
      - This is required parameter, if parameter C(name) is not supplied.
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
