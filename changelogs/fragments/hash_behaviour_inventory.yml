@@ -1,0 +1,2 @@
+bugfixes:
+    - Inventory sources now respects hash_behaviour, previouslly each source would always overwrite existing vars.
