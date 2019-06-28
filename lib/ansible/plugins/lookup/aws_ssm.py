@@ -100,7 +100,7 @@ EXAMPLES = '''
   debug: msg='Key contains {{ item.key }} , with value {{ item.value }}'
   loop: '{{ lookup("aws_ssm", "/demo/", region="ap-southeast-2", bypath=True) | dict2items }}'
 
-- name: Iterate over multiple paths (one iteration per path)
+- name: Iterate over multiple paths as dictionaries (one iteration per path)
   debug: msg='Path contains {{ item }}'
   loop: '{{ lookup("aws_ssm", "/demo/", "/demo1/", bypath=True)}}'
 
