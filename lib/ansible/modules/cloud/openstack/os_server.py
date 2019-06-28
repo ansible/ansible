@@ -510,16 +510,28 @@ def _create_server(module, cloud):
 
     module.params['meta'] = _parse_meta(module.params['meta'])
 
-    bootkwargs = dict(
-        name=module.params['name'],
-        image=image_id,
-        flavor=flavor_dict['id'],
-        nics=nics,
-        meta=module.params['meta'],
-        security_groups=module.params['security_groups'],
-        userdata=module.params['userdata'],
-        config_drive=module.params['config_drive'],
-    )
+    if module.params['security_groups']:
+        bootkwargs = dict(
+            name=module.params['name'],
+            image=image_id,
+            flavor=flavor_dict['id'],
+            nics=nics,
+            meta=module.params['meta'],
+            security_groups=module.params['security_groups'],
+            userdata=module.params['userdata'],
+            config_drive=module.params['config_drive'],
+        )
+    else:
+        bootkwargs = dict(
+            name=module.params['name'],
+            image=image_id,
+            flavor=flavor_dict['id'],
+            nics=nics,
+            meta=module.params['meta'],
+            userdata=module.params['userdata'],
+            config_drive=module.params['config_drive'],
+        )
+
     for optional_param in (
             'key_name', 'availability_zone', 'network',
             'scheduler_hints', 'volume_size', 'volumes'):
@@ -663,10 +675,15 @@ def _get_server_state(module, cloud):
             module.fail_json(
                 msg="The instance is available but not Active state: " + server.status)
         (ip_changed, server) = _check_ips(module, cloud, server)
-        (sg_changed, server) = _check_security_groups(module, cloud, server)
+        if module.params['security_groups']:
+            (sg_changed, server) = _check_security_groups(module, cloud, server)
         (server_changed, server) = _update_server(module, cloud, server)
-        _exit_hostvars(module, cloud, server,
-                       ip_changed or sg_changed or server_changed)
+        if module.params['security_groups']:
+            _exit_hostvars(module, cloud, server,
+                           ip_changed or sg_changed or server_changed)
+        else :
+            _exit_hostvars(module, cloud, server,
+                           ip_changed or server_changed)
     if server and state == 'absent':
         return True
     if state == 'absent':
@@ -684,7 +701,7 @@ def main():
         flavor_ram=dict(default=None, type='int'),
         flavor_include=dict(default=None),
         key_name=dict(default=None),
-        security_groups=dict(default=['default'], type='list'),
+        security_groups=dict(default=None, type='list'),
         network=dict(default=None),
         nics=dict(default=[], type='list'),
         meta=dict(default=None, type='raw'),
@@ -712,6 +729,7 @@ def main():
             ['image', 'boot_volume'],
             ['boot_from_volume', 'boot_volume'],
             ['nics', 'network'],
+            ['nics', 'security_groups'],
         ],
         required_if=[
             ('boot_from_volume', True, ['volume_size', 'image']),
