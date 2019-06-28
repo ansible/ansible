@@ -46,14 +46,6 @@ DOCUMENTATION = '''
               - Complex filter combinations similar to contrib/scripts/ec2.py are possible.  See examples.
           type: list
           default: []
-        filter_syntax:
-          description:
-              - Specifies whether to enable legacy-style contrib/scripts/inventory/ec2.ini filter behaviour.
-              - This makes AND/OR filters possible.
-              - To enable, use 'ec2_ini'. Any other value results in the standard plugin behaviour, which is inclusive AND.
-              - AND filters must be provided to the filters key in subkey ec2ini_filters
-          type: string
-          default: boto3
         include_extra_api_calls:
           description:
               - Add two additional API calls for every instance to include 'persistent' and 'events' host variables.
@@ -625,10 +617,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 cache_needs_update = True
 
         if not cache or cache_needs_update:
-            if isinstance(filters, AnsibleSequence):
-                results = self._ec2_ini_query(regions, filters, strict_permissions)
-            else:
-                results = self._query(regions, filters, strict_permissions)
+            results = self._query(regions, filters, strict_permissions)
 
         self._populate(results, hostnames)
 
