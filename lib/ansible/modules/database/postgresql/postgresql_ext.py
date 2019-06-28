@@ -134,16 +134,16 @@ EXAMPLES = r'''
     cascade: yes
     state: absent
 
-- name: Create extension dummy of version 1.2 or update it if it's already created
+- name: Create extension foo of version 1.2 or update it if it's already created
   postgresql_ext:
     db: acme
-    name: dummy
+    name: foo
     version: 1.2
 
-- name: Assuming the extension dummy is created, update it to the latest version
+- name: Assuming extension foo is created, update it to the latest version
   postgresql_ext:
     db: acme
-    name: dummy
+    name: foo
     version: latest
 '''
 
