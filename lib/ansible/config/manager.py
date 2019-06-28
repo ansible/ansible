@@ -215,7 +215,8 @@ def find_ini_config_file(warnings=None):
     potential_paths.append("/etc/ansible/ansible.cfg")
 
     for path in potential_paths:
-        if os.path.exists(to_bytes(path)):
+        b_path = to_bytes(path)
+        if os.path.exists(b_path) and os.access(b_path, os.R_OK):
             break
     else:
         path = None
@@ -255,9 +256,8 @@ class ConfigManager(object):
 
         # consume configuration
         if self._config_file:
-            if os.path.exists(to_bytes(self._config_file)):
-                # initialize parser and read config
-                self._parse_config_file()
+            # initialize parser and read config
+            self._parse_config_file()
 
         # update constants
         self.update_config_data()
