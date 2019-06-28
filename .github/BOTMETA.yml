@@ -490,7 +490,6 @@ files:
   $modules/system/selinux.py: samdoran
   $modules/system/service.py: $team_ansible
   $modules/system/setup.py:
-    ignored: david_obrien
     maintainers: $team_ansible
   $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde

@@ -86,7 +86,6 @@ notes:
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
-    - "David O'Brien (@davidobrien1985)"
 '''
 
 EXAMPLES = """
