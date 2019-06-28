@@ -203,6 +203,8 @@ def _ansiballz_main():
         # Monkeypatch the parameters into basic
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = json_params
+        # Monkeypatch the module name into basic
+        basic._MODULE_NAME = '%(ansible_module)s'
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
         if sys.version_info >= (3,):

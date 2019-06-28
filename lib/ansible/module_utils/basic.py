@@ -226,6 +226,12 @@ _literal_eval = literal_eval
 # is an internal implementation detail
 _ANSIBLE_ARGS = None
 
+# Internal global holding the name of the module. Do not use or rely on
+# this variable from other code as it is an internal implementation detail.
+# This variable is an internal mechanism for relaying the module name for
+# intermediate use in AnsibleModule until module arguments are parsed
+_MODULE_NAME = None
+
 FILE_COMMON_ARGUMENTS = dict(
     # These are things we want. About setting metadata (mode, ownership, permissions in general) on
     # created files (these are used by set_fs_attributes_if_different and included in
@@ -588,7 +594,10 @@ class AnsibleModule(object):
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         '''
 
-        self._name = os.path.basename(__file__)  # initialize name until we can parse from options
+        # initialize name until we can parse from options
+        # we'll fall back to ansible-module-basic as a last resort
+        self._name = _MODULE_NAME or 'ansible-module-basic'
+
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
