@@ -145,9 +145,9 @@ html_context = {
     'github_repo': 'ansible',
     'github_version': 'devel/docs/docsite/rst/',
     'github_module_version': 'devel/lib/ansible/modules/',
-# list specifically out of order to make latest work
     'current_version': version,
     'latest_version' : '2.8',
+# list specifically out of order to make latest work
     'available_versions': ('latest', '2.7', '2.6', 'devel')
 }
 
