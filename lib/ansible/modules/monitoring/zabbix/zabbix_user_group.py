@@ -71,7 +71,7 @@ options:
                 choices: [denied, RO, RW]
     users:
         description:
-            -List of users to add in the group
+            -List of user aliases to add in the group
         required: false
         type: list
     state:
@@ -211,9 +211,9 @@ class UserGroup(object):
 
         userids = []
         for user in users:
-            user_array = self._zapi.user.get({'filter': {'name': user}})
+            user_array = self._zapi.user.get({'filter': {'alias': user}})
             if not user_array:
-                self._module.fail_json(msg="User %s not found" % user)
+                self._module.fail_json(msg="User with alias %s not found" % user)
             userids.append(user_array[0]['userid'])
 
         request = {
