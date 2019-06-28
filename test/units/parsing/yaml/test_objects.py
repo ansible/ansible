@@ -24,6 +24,8 @@ from units.compat import unittest
 
 from ansible.errors import AnsibleError
 
+from ansible.module_utils._text import to_native
+
 from ansible.parsing import vault
 from ansible.parsing.yaml.loader import AnsibleLoader
 
@@ -155,3 +157,8 @@ class TestAnsibleVaultEncryptedUnicode(unittest.TestCase, YamlTestUtils):
         seq = u"aöffü"
         avu = self._from_plaintext(seq)
         self.assert_values(avu, seq)
+
+    def test_str_vaulted_utf8_value_37258(self):
+        seq = u"aöffü"
+        avu = self._from_plaintext(seq)
+        assert str(avu) == to_native(seq)
