@@ -34,6 +34,16 @@
         name: '{{ remote_unprivileged_user }}'
       register: user
 
+    - name: Check sudoers dir
+      stat:
+        path: /etc/sudoers.d
+      register: etc_sudoers
+
+    - name: Create sudoers file
+      copy:
+        dest: "{{ '/etc/sudoers.d' if etc_sudoers.stat.exists else '/usr/local/etc/sudoers.d' }}/{{ remote_unprivileged_user }}"
+        content: "{{ remote_unprivileged_user }} ALL=(ALL) NOPASSWD: ALL"
+
     - file:
         path: "{{ user.home }}/.ssh"
         owner: '{{ remote_unprivileged_user }}'
