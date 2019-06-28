@@ -187,7 +187,6 @@ class DocCLI(CLI):
                     doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, plugin_type, search_paths)
                     try:
                         returndocs = yaml.load(returndocs)
-                        plainexamples = yaml.load(plainexamples)
                     except Exception:
                         pass
                     if doc:
