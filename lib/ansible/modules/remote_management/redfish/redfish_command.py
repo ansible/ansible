@@ -51,31 +51,28 @@ options:
     type: str
   id:
     required: false
-    aliases: [ target_id ]
+    aliases: [ account_id ]
     description:
       - ID of account to delete/modify
     type: str
     version_added: "2.8"
-  target_username:
-    required: false
-    description:
-      - Username of account to delete/modify
-    type: str
-    version_added: "2.9"
   new_username:
     required: false
+    aliases: [ account_username ]
     description:
-      - Username of account to add
+      - Username of account to add/delete/modify
     type: str
     version_added: "2.8"
   new_password:
     required: false
+    aliases: [ account_password ]
     description:
       - New password of account to add/modify
     type: str
     version_added: "2.8"
   roleid:
     required: false
+    aliases: [ account_roleid ]
     description:
       - Role of account to add/modify
     type: str
@@ -164,6 +161,17 @@ EXAMPLES = '''
       new_password: "{{ new_password }}"
       roleid: "{{ roleid }}"
 
+  - name: Add user using new option aliases
+    redfish_command:
+      category: Accounts
+      command: AddUser
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      account_username: "{{ account_username }}"
+      account_password: "{{ account_password }}"
+      account_roleid: "{{ account_roleid }}"
+
   - name: Add user on service where existing account Id needs to be PATCHed
     redfish_command:
       category: Accounts
@@ -171,7 +179,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_id: "{{ target_id }}"
+      account_id: "{{ account_id }}"
       new_username: "{{ new_username }}"
       new_password: "{{ new_password }}"
       roleid: "{{ roleid }}"
@@ -183,16 +191,16 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_username: "{{ target_username }}"
+      account_username: "{{ account_username }}"
 
-  - name: Delete user with Id property of target_id
+  - name: Delete user with Id property of account_id
     redfish_command:
       category: Accounts
       command: DeleteUser
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_id: "{{ target_id }}"
+      account_id: "{{ account_id }}"
 
   - name: Disable user
     redfish_command:
@@ -201,7 +209,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_username: "{{ target_username }}"
+      account_username: "{{ account_username }}"
 
   - name: Enable user
     redfish_command:
@@ -210,7 +218,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_username: "{{ target_username }}"
+      account_username: "{{ account_username }}"
 
   - name: Add and enable user
     redfish_command:
@@ -219,7 +227,8 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_username: "{{ target_username }}"
+      new_username: "{{ new_username }}"
+      new_password: "{{ new_password }}"
       roleid: "{{ roleid }}"
 
   - name: Update user password
@@ -229,8 +238,8 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_username: "{{ target_username }}"
-      new_password: "{{ new_password }}"
+      account_username: "{{ account_username }}"
+      account_password: "{{ account_password }}"
 
   - name: Update user role
     redfish_command:
@@ -239,7 +248,7 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      target_username: "{{ target_username }}"
+      account_username: "{{ account_username }}"
       roleid: "{{ roleid }}"
 
   - name: Clear Manager Logs with a timeout of 20 seconds
@@ -285,11 +294,10 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            id=dict(aliases=["target_id"]),
-            target_username=dict(),
-            new_username=dict(),
-            new_password=dict(no_log=True),
-            roleid=dict(),
+            id=dict(aliases=["account_id"]),
+            new_username=dict(aliases=["account_username"]),
+            new_password=dict(aliases=["account_password"], no_log=True),
+            roleid=dict(aliases=["account_roleid"]),
             bootdevice=dict(),
             timeout=dict(type='int', default=10),
             uefi_target=dict(),
@@ -306,11 +314,10 @@ def main():
              'pswd': module.params['password']}
 
     # user to add/modify/delete
-    user = {'target_id': module.params['id'],
-            'target_username': module.params['target_username'],
-            'new_username': module.params['new_username'],
-            'new_password': module.params['new_password'],
-            'roleid': module.params['roleid']}
+    user = {'account_id': module.params['id'],
+            'account_username': module.params['new_username'],
+            'account_password': module.params['new_password'],
+            'account_roleid': module.params['roleid']}
 
     # timeout
     timeout = module.params['timeout']

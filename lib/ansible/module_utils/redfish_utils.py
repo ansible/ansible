@@ -672,7 +672,7 @@ class RedfishUtils(object):
     def _find_account_uri(self, username=None, acct_id=None):
         if not any((username, acct_id)):
             return {'ret': False, 'msg':
-                    'Must provide either target_id or target_username'}
+                    'Must provide either account_id or account_username'}
 
         response = self.get_request(self.root_uri + self.accounts_uri)
         if response['ret'] is False:
@@ -696,7 +696,7 @@ class RedfishUtils(object):
                             'headers': headers, 'uri': uri}
 
         return {'ret': False, 'no_match': True, 'msg':
-                'No account with the given target_id or target_username found'}
+                'No account with the given account_id or account_username found'}
 
     def list_users(self):
         result = {}
@@ -732,15 +732,15 @@ class RedfishUtils(object):
         return result
 
     def add_user_via_patch(self, user):
-        response = self._find_account_uri(username=user.get('target_username'),
-                                          acct_id=user.get('target_id'))
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
         if not response['ret']:
             return response
         uri = response['uri']
         payloads = [
-            {'UserName': user.get('new_username')},
-            {'Password': user.get('new_password')},
-            {'RoleId': user.get('roleid')}
+            {'UserName': user.get('account_username')},
+            {'Password': user.get('account_password')},
+            {'RoleId': user.get('account_roleid')}
         ]
         for payload in payloads:
             response = self.patch_request(self.root_uri + uri, payload)
@@ -749,13 +749,13 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def add_user(self, user):
-        if not user.get('new_username'):
+        if not user.get('account_username'):
             return {'ret': False, 'msg':
-                    'Must provide new_username for AddUser command'}
+                    'Must provide account_username for AddUser command'}
 
-        response = self._find_account_uri(username=user.get('new_username'))
+        response = self._find_account_uri(username=user.get('account_username'))
         if response['ret']:
-            # new_username already exists, nothing to do
+            # account_username already exists, nothing to do
             return {'ret': True, 'changed': False}
 
         response = self.get_request(self.root_uri + self.accounts_uri)
@@ -770,12 +770,12 @@ class RedfishUtils(object):
                 return self.add_user_via_patch(user)
 
         payload = {}
-        if user.get('new_username'):
-            payload['UserName'] = user.get('new_username')
-        if user.get('new_password'):
-            payload['Password'] = user.get('new_password')
-        if user.get('roleid'):
-            payload['RoleId'] = user.get('roleid')
+        if user.get('account_username'):
+            payload['UserName'] = user.get('account_username')
+        if user.get('account_password'):
+            payload['Password'] = user.get('account_password')
+        if user.get('account_roleid'):
+            payload['RoleId'] = user.get('account_roleid')
 
         response = self.post_request(self.root_uri + self.accounts_uri, payload)
         if not response['ret']:
@@ -787,8 +787,8 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def enable_user(self, user):
-        response = self._find_account_uri(username=user.get('target_username'),
-                                          acct_id=user.get('target_id'))
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
         if not response['ret']:
             return response
         uri = response['uri']
@@ -806,8 +806,8 @@ class RedfishUtils(object):
 
     def delete_user_via_patch(self, user, uri=None, data=None):
         if not uri:
-            response = self._find_account_uri(username=user.get('target_username'),
-                                              acct_id=user.get('target_id'))
+            response = self._find_account_uri(username=user.get('account_username'),
+                                              acct_id=user.get('account_id'))
             if not response['ret']:
                 return response
             uri = response['uri']
@@ -824,8 +824,8 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def delete_user(self, user):
-        response = self._find_account_uri(username=user.get('target_username'),
-                                          acct_id=user.get('target_id'))
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
         if not response['ret']:
             if response.get('no_match'):
                 # account does not exist, nothing to do
@@ -854,8 +854,8 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def disable_user(self, user):
-        response = self._find_account_uri(username=user.get('target_username'),
-                                          acct_id=user.get('target_id'))
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
         if not response['ret']:
             return response
         uri = response['uri']
@@ -872,34 +872,34 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def update_user_role(self, user):
-        if not user.get('roleid'):
+        if not user.get('account_roleid'):
             return {'ret': False, 'msg':
-                    'Must provide roleid for UpdateUserRole command'}
+                    'Must provide account_roleid for UpdateUserRole command'}
 
-        response = self._find_account_uri(username=user.get('target_username'),
-                                          acct_id=user.get('target_id'))
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
         if not response['ret']:
             return response
         uri = response['uri']
         data = response['data']
 
-        if data.get('RoleId') == user.get('roleid'):
+        if data.get('RoleId') == user.get('account_roleid'):
             # account already has RoleId , nothing to do
             return {'ret': True, 'changed': False}
 
-        payload = {'RoleId': user.get('roleid')}
+        payload = {'RoleId': user.get('account_roleid')}
         response = self.patch_request(self.root_uri + uri, payload)
         if response['ret'] is False:
             return response
         return {'ret': True}
 
     def update_user_password(self, user):
-        response = self._find_account_uri(username=user.get('target_username'),
-                                          acct_id=user.get('target_id'))
+        response = self._find_account_uri(username=user.get('account_username'),
+                                          acct_id=user.get('account_id'))
         if not response['ret']:
             return response
         uri = response['uri']
-        payload = {'Password': user['new_password']}
+        payload = {'Password': user['account_password']}
         response = self.patch_request(self.root_uri + uri, payload)
         if response['ret'] is False:
             return response
