@@ -20,11 +20,11 @@ extends_documentation_fragment:
 version_added: '2.8'
 author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Create/Delete ONTAP snapshot policies
+- Create/Modify/Delete ONTAP snapshot policies
 options:
   state:
     description:
-    - If you want to create or delete a snapshot policy.
+    - If you want to create, modify or delete a snapshot policy.
     choices: ['present', 'absent']
     default: present
   name:
@@ -46,41 +46,53 @@ options:
     type: list
   schedule:
     description:
-    - schedule to be added inside the policy.
+    - Schedule to be added inside the policy.
     type: list
 '''
 EXAMPLES = """
-    - name: create Snapshot policy
+    - name: Create Snapshot policy
       na_ontap_snapshot_policy:
         state: present
         name: ansible2
         schedule: hourly
         count: 150
         enabled: True
-        username: "{{ netapp username }}"
-        password: "{{ netapp password }}"
-        hostname: "{{ netapp hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
         https: False
 
     - name: Create Snapshot policy with multiple schedules
       na_ontap_snapshot_policy:
         state: present
         name: ansible2
-        schedule: ['hourly', 'daily', 'weekly', monthly', '5min']
+        schedule: ['hourly', 'daily', 'weekly', 'monthly', '5min']
         count: [1, 2, 3, 4, 5]
         enabled: True
-        username: "{{ netapp username }}"
-        password: "{{ netapp password }}"
-        hostname: "{{ netapp hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
         https: False
 
-    - name: delete Snapshot policy
+    - name: Modify Snapshot policy with multiple schedules
+      na_ontap_snapshot_policy:
+        state: present
+        name: ansible2
+        schedule: ['daily', 'weekly']
+        count: [20, 30]
+        enabled: True
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
+        https: False
+
+    - name: Delete Snapshot policy
       na_ontap_snapshot_policy:
         state: absent
         name: ansible2
-        username: "{{ netapp username }}"
-        password: "{{ netapp password }}"
-        hostname: "{{ netapp hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
         https: False
 """
 
@@ -147,7 +159,23 @@ class NetAppOntapSnapshotPolicy(object):
             result = self.server.invoke_successfully(snapshot_obj, True)
             if result.get_child_by_name('num-records') and \
                     int(result.get_child_content('num-records')) == 1:
-                return result
+
+                snapshot_policy = result.get_child_by_name('attributes-list').get_child_by_name('snapshot-policy-info')
+                current = {}
+                if snapshot_policy.get_child_by_name('policy'):
+                    current['name'] = snapshot_policy['policy']
+                if snapshot_policy.get_child_by_name('enabled'):
+                    current['enabled'] = False if snapshot_policy['enabled'].lower() == 'false' else True
+                if snapshot_policy.get_child_by_name('snapshot-policy-schedules'):
+                    current['schedule'] = []
+                    current['count'] = []
+                    for schedule in snapshot_policy['snapshot-policy-schedules'].get_children():
+                        current['schedule'].append(schedule['schedule'])
+                        current['count'].append(int(schedule['count']))
+                if snapshot_policy.get_child_by_name('comment'):
+                    current['comment'] = snapshot_policy['comment']
+
+                return current
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg=to_native(error), exception=traceback.format_exc())
         return None
@@ -157,10 +185,75 @@ class NetAppOntapSnapshotPolicy(object):
         Validate if each schedule has a count associated
         :return: None
         """
-        if len(self.parameters['count']) > 5 or len(self.parameters['schedule']) > 5 or \
+        if 'count' not in self.parameters or 'schedule' not in self.parameters or \
+                len(self.parameters['count']) > 5 or len(self.parameters['schedule']) > 5 or \
+                len(self.parameters['count']) < 1 or len(self.parameters['schedule']) < 1 or \
                 len(self.parameters['count']) != len(self.parameters['schedule']):
-            self.module.fail_json(msg="Error: A Snapshot policy can have up to a maximum of 5 schedules,"
-                                      "and a count representing maximum number of Snapshot copies for each schedule")
+            self.module.fail_json(msg="Error: A Snapshot policy must have at least 1 "
+                "schedule and can have up to a maximum of 5 schedules, with a count "
+                "representing the maximum number of Snapshot copies for each schedule")
+
+    def modify_snapshot_policy(self, current):
+        """
+        Modifies an existing snapshot policy
+        """
+        # Set up required variables to modify snapshot policy
+        options = {'policy': self.parameters['name'],
+                   'enabled': str(self.parameters['enabled']),
+                   }
+        snapshot_obj = netapp_utils.zapi.NaElement.create_node_with_children('snapshot-policy-modify', **options)
+
+        # Set up optional variables to modify snapshot policy
+        if self.parameters.get('comment'):
+            snapshot_obj.add_new_child("comment", self.parameters['comment'])
+        try:
+            self.server.invoke_successfully(snapshot_obj, True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error modifying snapshot policy %s: %s' %
+                                  (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
+        # Modify schedules
+        self.modify_snapshot_policy_schedules(current)
+
+    def modify_snapshot_policy_schedules(self, current):
+        """
+        Modify existing schedules in snapshot policy
+        :return: None
+        """
+        self.validate_parameters()
+
+        # Modify existing or add new schedules
+        for schedule, count in zip(self.parameters['schedule'], self.parameters['count']):
+            schedule.strip()
+            options = {'policy': current['name'],
+                       'schedule': schedule}
+
+            if schedule in current['schedule']:
+                options['new-count'] = str(count)
+                self.modify_snapshot_policy_schedule(options, 'snapshot-policy-modify-schedule')
+            else:
+                options['count'] = str(count)
+                self.modify_snapshot_policy_schedule(options, 'snapshot-policy-add-schedule')
+
+        # Delete schedules no longer required
+        for schedule in current['schedule']:
+            schedule.strip()
+            if schedule not in [item.strip() for item in self.parameters['schedule']]:
+                options = {'policy': current['name'],
+                            'schedule': schedule}
+                self.modify_snapshot_policy_schedule(options, 'snapshot-policy-remove-schedule')
+
+    def modify_snapshot_policy_schedule(self, options, zapi):
+        """
+        Add, modify or remove a schedule to/from a snapshot policy
+        """
+        snapshot_obj = netapp_utils.zapi.NaElement.create_node_with_children(zapi, **options)
+        try:
+            self.server.invoke_successfully(snapshot_obj, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error modifying snapshot policy schedule %s: %s' %
+                                  (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
 
     def create_snapshot_policy(self):
         """
@@ -220,7 +313,11 @@ class NetAppOntapSnapshotPolicy(object):
         """
         self.asup_log_for_cserver("na_ontap_snapshot_policy")
         current = self.get_snapshot_policy()
+        cd_action, modify = None, None
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        if cd_action is None and self.parameters['state'] == 'present':
+            modify = self.na_helper.get_modified_attributes(current, self.parameters)
+
         if self.na_helper.changed:
             if self.module.check_mode:
                 pass
@@ -229,6 +326,8 @@ class NetAppOntapSnapshotPolicy(object):
                     self.create_snapshot_policy()
                 elif cd_action == 'delete':
                     self.delete_snapshot_policy()
+                if modify:
+                    self.modify_snapshot_policy(current)
         self.module.exit_json(changed=self.na_helper.changed)
 
 
