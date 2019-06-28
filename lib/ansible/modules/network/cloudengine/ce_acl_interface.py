@@ -169,7 +169,7 @@ class AclInterface(object):
                         msg='Error: The len of acl_name is out of [1 - 32].')
 
         if self.interface:
-            cmd = "display current-configuration | ignore-case section include ^interface %s$" % self.interface
+            cmd = "display current-configuration | ignore-case section include interface %s" % self.interface
             rc, out, err = exec_command(self.module, cmd)
             if rc != 0:
                 self.module.fail_json(msg=err)
@@ -199,7 +199,7 @@ class AclInterface(object):
     def get_existing(self):
         """ Get existing config """
 
-        cmd = "display current-configuration | ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
+        cmd = "display current-configuration | ignore-case section include interface %s | include traffic-filter" % self.interface
         rc, out, err = exec_command(self.module, cmd)
         if rc != 0:
             self.module.fail_json(msg=err)
@@ -217,7 +217,7 @@ class AclInterface(object):
     def get_end_state(self):
         """ Get config end state """
 
-        cmd = "display current-configuration | ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
+        cmd = "display current-configuration | ignore-case section include interface %s | include traffic-filter" % self.interface
         rc, out, err = exec_command(self.module, cmd)
         if rc != 0:
             self.module.fail_json(msg=err)
