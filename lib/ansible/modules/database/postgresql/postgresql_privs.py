@@ -161,12 +161,6 @@ options:
     - ssl_rootcert
 
 notes:
-- Default authentication assumes that postgresql_privs is run by the
-  C(postgres) user on the remote host. (Ansible's C(user) or C(sudo-user)).
-- This module requires Python package I(psycopg2) to be installed on the
-  remote host. In the default case of the remote host also being the
-  PostgreSQL server, PostgreSQL has to be installed there as well, obviously.
-  For Debian/Ubuntu-based systems, install packages I(postgresql) and I(python-psycopg2).
 - Parameters that accept comma separated lists (I(privs), I(objs), I(roles))
   have singular alias names (I(priv), I(obj), I(role)).
 - To revoke only C(GRANT OPTION) for a specific object, set I(state) to
@@ -177,10 +171,6 @@ notes:
   specified via I(login). If R has been granted the same privileges by
   another user also, R can still access database objects via these privileges.
 - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
-- The ca_cert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
-
-requirements:
-- psycopg2
 
 extends_documentation_fragment:
 - postgres
