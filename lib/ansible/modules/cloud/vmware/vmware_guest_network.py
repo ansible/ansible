@@ -69,7 +69,7 @@ options:
    gather_network_facts:
      description:
      - If set to True, return settings of all network adapters, other parameters are ignored.
-     - If set to False, will add, reconfigure or remove network adapters according to the parameters in C(networks).
+     - If set to C(False), will add, reconfigure or remove network adapters according to the parameters in C(networks).
      type: bool
      default: False
    networks:
