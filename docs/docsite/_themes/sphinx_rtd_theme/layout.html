@@ -17,7 +17,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <script type="text/javascript" src="//www.redhat.com/dtm.js"></script>
-  <meta class="swiftype" name="published_at" data-type="date" content="2017-12-13" /> 
+  <meta class="swiftype" name="published_at" data-type="date" content="2017-12-13" />
   <meta class="swiftype" name="version" data-type="string" content="3.2.2">
 
   <!-- Google Tag Manager Data Layer -->
@@ -113,7 +113,7 @@
 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
 
   <!-- Google Tag Manager -->
   <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PSB293" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -131,7 +131,7 @@
     </div>
 
   <a class="DocSite-nav" href="/" style="padding-bottom: 30px;">
-      
+
     <img class="DocSiteNav-logo"
       src="{{ pathto('_static/', 1) }}images/logo_invert.png"
       alt="Ansible Logo">
@@ -145,7 +145,7 @@
 
     {# SIDE NAV, TOGGLES ON MOBILE #}
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      
+
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search">
           {% block sidebartitle %}
@@ -154,7 +154,7 @@
         <a class="DocSiteProduct-header DocSiteProduct-header--core" href="/">
             <div class="DocSiteProduct-productName">
                 <div class="DocSiteProduct-logoText">
-                    Ansible  
+                    Ansible
                     <div class="DocSiteProduct-CurrentVersion" align="right">
                       2.5
                   </div>
@@ -170,7 +170,7 @@
       {% include "searchbox.html" %}
     </div>
 
-    
+
           {% endblock %}
         </div>
 
@@ -237,6 +237,9 @@
         </div> -->
 
           {% include "breadcrumbs.html" %}
+          <div id='banner' class='Admonition caution'>
+            <p>You are reading an unsupported version of the Ansible documentation. Unsupported Ansible verions can contain unfixed security vulnerabilities (CVE). Please upgrade to a maintained version. See <a href="https://docs.ansible.com/">the latest Ansible documentation</a></p>
+          </div>
           <div id="page-content">
           {% block body %}{% endblock %}
           </div>
