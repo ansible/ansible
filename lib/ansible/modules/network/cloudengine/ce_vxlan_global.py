@@ -239,7 +239,7 @@ class VxlanGlobal(object):
         if not bd_str:
             return bd_info
         bd_num = re.findall(r'bridge-domain\s*([0-9]+)', bd_str)
-        bd_info.append(bd_num)
+        bd_info.extend(bd_num)
         return bd_info
 
     def config_bridge_domain(self):
@@ -420,7 +420,7 @@ class VxlanGlobal(object):
         cmd = "assign forward nvo3 ecmp hash enable"
         exist = is_config_exist(self.config, cmd)
         if exist:
-            self.existing["nvo3_ecmp_hash"] = "disable"
+            self.existing["nvo3_ecmp_hash"] = "enable"
         else:
             self.existing["nvo3_ecmp_hash"] = "disable"
 
@@ -474,6 +474,8 @@ class VxlanGlobal(object):
             self.end_state["nvo3_ecmp_hash"] = "enable"
         else:
             self.end_state["nvo3_ecmp_hash"] = "disable"
+        if self.existing == self.end_state:
+            self.changed = True
 
     def work(self):
         """worker"""
