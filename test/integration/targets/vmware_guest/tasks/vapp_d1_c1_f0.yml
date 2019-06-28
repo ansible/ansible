@@ -59,6 +59,7 @@
     folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
     name: vApp-Test
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    state: present
     vapp_properties:
     - id: prop_id1
       category: category
@@ -70,7 +71,6 @@
       label: prop_label2
       type: string
       value: prop_value2
-    state: present
   register: vapp_vm
 
 - debug: var=vapp_vm
