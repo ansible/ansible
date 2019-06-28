@@ -203,13 +203,13 @@ class OnePass(object):
         data = json.loads(data_json)
         if section_title is None:
             for field_data in data['details'].get('fields', []):
-                if field_data.get('name').lower() == field_name.lower():
+                if field_data.get('name', '').lower() == field_name.lower():
                     return field_data.get('value', '')
         for section_data in data['details'].get('sections', []):
             if section_title is not None and section_title.lower() != section_data['title'].lower():
                 continue
             for field_data in section_data.get('fields', []):
-                if field_data.get('t').lower() == field_name.lower():
+                if field_data.get('t', '').lower() == field_name.lower():
                     return field_data.get('v', '')
         return ''
 
