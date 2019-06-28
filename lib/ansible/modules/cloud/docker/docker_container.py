@@ -835,8 +835,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: "true"
-      - arg2: "whatever"
+      arg1: "true"
+      arg2: "whatever"
     volumes:
       - /tmp:/tmp
     comparisons:
@@ -849,8 +849,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: "true"
-      - arg2: "whatever"
+      arg1: "true"
+      arg2: "whatever"
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
