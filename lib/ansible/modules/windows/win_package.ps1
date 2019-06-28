@@ -321,6 +321,8 @@ if ($state -eq "absent") {
             } elseif ($program_metadata.location_type -eq [LocationType]::Empty -and $program_metadata.msi -ne $true) {
                 # TODO validate the uninstall_string to see if there are extra args in there
                 $local_path = $program_metadata.uninstall_string.Replace('"','')
+                $string_parts = $local_path.Split("`"",[System.StringSplitOptions]::RemoveEmptyEntries)
+                $local_path.Replace("`"$($string_parts[0])`"","$($string_parts[0])")
             } else {
                 $local_path = $path
             }
