@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import shutil
 
 from errno import EEXIST
 from ansible.errors import AnsibleError
@@ -97,3 +98,29 @@ def basedir(source):
         dname = os.path.abspath(dname)
 
     return to_text(dname, errors='surrogate_or_strict')
+
+
+def cleanup_tmp_file(path, warn=False):
+    """
+    Removes temporary file or directory. Optionally display a warning if unable
+    to remove the file or directory.
+
+    :arg path: Path to file or directory to be removed
+    :kwarg warn: Whether or not to display a warning when the file or directory
+        cannot be removed
+    """
+    try:
+        if os.path.exists(path):
+            try:
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                elif os.path.isfile(path):
+                    os.unlink(path)
+            except Exception as e:
+                if warn:
+                    # Importing here to avoid circular import
+                    from ansible.utils.display import Display
+                    display = Display()
+                    display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
+    except Exception:
+        pass
