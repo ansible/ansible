@@ -318,7 +318,7 @@ class PyVmomiHelper(PyVmomi):
         if num_keys_returned != self.num_keys_send:
             results = {'changed': self.change_detected, 'failed': True, 'sendkey_info': sendkey_facts}
         else:
-            results = {'changed': self.change_detected, 'failed': False, 'sendkey_facts': sendkey_facts}
+            results = {'changed': self.change_detected, 'failed': False, 'sendkey_info': sendkey_facts}
 
         return results
 
