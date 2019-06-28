@@ -40,6 +40,12 @@ extends_documentation_fragment:
   - k8s_resource_options
   - k8s_auth_options
 
+notes:
+  - If you are trying to remove an item from an associative array/dictionary,
+    for example a label or an annotation, you will need to explicitly set the
+    value of the item to be removed to `null`. Simply deleting the entry in the
+    dictionary will not remove it from openshift or kubernetes.
+
 options:
   merge_type:
     description:
