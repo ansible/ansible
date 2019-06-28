@@ -3,6 +3,71 @@
     name: python-gitlab
     state: present
 
+- name: purge all variables for check_mode test
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    purge: True
+
+- name: add a variable value in check_mode
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID: checkmode
+  check_mode: yes
+  register: gitlab_project_variable_state
+
+- name: check_mode state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: apply add value from check_mode test
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is changed
+
+- name: change a variable value in check_mode again
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID: checkmode
+  check_mode: yes
+  register: gitlab_project_variable_state
+
+- name: check_mode state must not be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
+- name: apply again the value change from check_mode test
+  gitlab_project_variable:
+    api_url: "{{ gitlab_host }}"
+    api_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    vars:
+      ACCESS_KEY_ID: checkmode
+  register: gitlab_project_variable_state
+
+- name: state must not be changed
+  assert:
+    that:
+      - gitlab_project_variable_state is not changed
+
 - name: purge all variables at the beginning
   gitlab_project_variable:
     api_url: "{{ gitlab_host }}"
