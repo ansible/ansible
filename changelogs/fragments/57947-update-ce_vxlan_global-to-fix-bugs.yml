@@ -1,0 +1,4 @@
+bugfixes:
+  - ce_vxlan_global - line 242 , bd_info is a string array,and it should be 'extend' operation.
+  - ce_vxlan_global - line 423, 'if' and 'else' should set a different value. if 'exist', that value is 'enable'.
+  - ce_vxlan_global - line 477. To get state of result, if it is changed or not.
