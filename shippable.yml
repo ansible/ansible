@@ -150,6 +150,12 @@ matrix:
     - env: T=azure/2.7/8
     - env: T=azure/3.6/8
 
+    - env: T=azure/2.7/9
+    - env: T=azure/3.6/9
+
+    - env: T=azure/2.7/10
+    - env: T=azure/3.6/10
+
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
 
