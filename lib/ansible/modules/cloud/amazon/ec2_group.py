@@ -305,6 +305,7 @@ from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
+from ansible.module_utils.compat.ipaddress import ip_network, IPv6Network
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
@@ -723,14 +724,18 @@ def validate_ip(module, cidr_ip):
     split_addr = cidr_ip.split('/')
     if len(split_addr) == 2:
         # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
-        # Get the network bits.
+        # Get the network bits if IPv4, and validate if IPv6.
         try:
             ip = to_subnet(split_addr[0], split_addr[1])
+            if ip != cidr_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
         except ValueError:
-            ip = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
-        if ip != cidr_ip:
-            module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
-                        "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
+            # IPv6 works a little differently. We don't want to modify the cidr_ip, just make sure it's valid.
+            if not isinstance(ip_network(cidr_ip), IPv6Network):
+                # TODO: warn or fail?  probably better to let aws decide what it'll accept?
+                module.fail_json("One of your IPv6 CIDR addresses is invalid: {0}".format(cidr_ip))
+            ip = cidr_ip
         return ip
     return cidr_ip
 
