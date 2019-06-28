@@ -15,13 +15,13 @@ DOCUMENTATION = '''
 module: gitlab_project_variable
 short_description: Creates/updates/deletes GitLab Projects Variables
 description:
-  - When a project variable does not exists, it will be created.
-  - When a project variable does exists, its value will be updated when the values are different.
+  - When a project variable does not exist, it will be created.
+  - When a project variable does exist, its value will be updated when the values are different.
   - Variables which are present in the playbook, but are not present in the Gitlab project,
     they stay untouched (I(purge) is C(false)) or will be deleted (I(purge) is C(true)).
 version_added: "2.9"
 author:
-    - "Markus Bergholz (@markuman)"
+  - "Markus Bergholz (@markuman)"
 requirements:
   - python >= 2.7
   - python-gitlab python module
