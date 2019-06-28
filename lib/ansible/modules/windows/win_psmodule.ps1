@@ -69,7 +69,11 @@ Function Install-PrereqModule {
             }
             else {
                 try {
-                    Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -SkipPublisherCheck -WhatIf:$CheckMode | Out-Null
+                    if($host.Version -ge "5.1") {
+                        Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -SkipPublisherCheck -WhatIf:$CheckMode | Out-Null
+                    } else {
+                        Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
+                    }
 
                     if ( $Name -eq 'PowerShellGet' ) {
                         # An order has to be reverted due to dependency
