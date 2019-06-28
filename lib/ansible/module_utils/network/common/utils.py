@@ -32,6 +32,7 @@ import re
 import ast
 import operator
 import socket
+import json
 
 from itertools import chain
 from socket import inet_aton
@@ -40,7 +41,7 @@ from json import dumps
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils.basic import AnsibleFallbackNotFound, _ANSIBLE_ARGS, AnsibleModule
+from ansible.module_utils import basic
 from ansible.module_utils.parsing.convert_bool import boolean
 
 # Backwards compatibility for 3rd party modules
@@ -196,7 +197,7 @@ class Entity(object):
                             fallback_args = item
                     try:
                         value[name] = fallback_strategy(*fallback_args, **fallback_kwargs)
-                    except AnsibleFallbackNotFound:
+                    except basic.AnsibleFallbackNotFound:
                         continue
 
             if attr.get('required') and value.get(name) is None:
@@ -439,7 +440,7 @@ def _fallback(fallback):
             args = item
     try:
         return strategy(*args, **kwargs)
-    except AnsibleFallbackNotFound:
+    except basic.AnsibleFallbackNotFound:
         pass
 
 
@@ -513,12 +514,17 @@ def get_xml_conf_arg(cfg, path, data='text'):
     :param path: The relative xpath w.r.t to top level element (cfg)
            to be searched in the xml hierarchy
     :param data: The type of data to be returned for the matched xml node.
-        Valid values are text, tag, attrib.
+        Valid values are text, tag, attrib, with default as text.
     :return: Returns the required type for the matched xml node or else None
     """
     match = cfg.xpath(path)
-    if match and len(match):
-        result = getattr(match[0], data)
+    if len(match):
+        if data == 'tag':
+            result = getattr(match[0], 'tag')
+        elif data == 'attrib':
+            result = getattr(match[0], 'attrib')
+        else:
+            result = getattr(match[0], 'text')
     else:
         result = None
     return result
@@ -554,10 +560,18 @@ def remove_empties(cfg_dict):
     return final_cfg
 
 
-def validate_config(spec, params):
-    global _ANSIBLE_ARGS
-    _ANSIBLE_ARGS = to_bytes(dumps({'ANSIBLE_MODULE_ARGS': {'config': params}}))
-    return AnsibleModule(spec).params
+def validate_config(spec, data):
+    """
+    Validate if the input data against the AnsibleModule spec format
+    :param spec: Ansible argument spec
+    :param data: Data to be validated
+    :return:
+    """
+    params = basic._ANSIBLE_ARGS
+    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': data}))
+    validated_data = basic.AnsibleModule(spec).params
+    basic._ANSIBLE_ARGS = params
+    return validated_data
 
 
 class Template:
