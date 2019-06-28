@@ -334,6 +334,7 @@ def test_build_with_symlink_inside_collection(collection_input):
 
     os.makedirs(os.path.join(input_dir, 'playbooks', 'roles'))
     roles_link = os.path.join(input_dir, 'playbooks', 'roles', 'linked')
+    file_link = os.path.join(input_dir, 'docs', 'README.md')
 
     roles_target = os.path.join(input_dir, 'roles', 'linked')
     roles_target_tasks = os.path.join(roles_target, 'tasks')
@@ -343,6 +344,7 @@ def test_build_with_symlink_inside_collection(collection_input):
         tasks_main.flush()
 
     os.symlink(roles_target, roles_link)
+    os.symlink(os.path.join(input_dir, 'README.md'), file_link)
 
     collection.build_collection(input_dir, output_dir, False)
 
@@ -365,6 +367,16 @@ def test_build_with_symlink_inside_collection(collection_input):
         linked_task.close()
 
         assert actual_task == 'f4dcc52576b6c2cd8ac2832c52493881c4e54226'
+
+        linked_file = [m for m in members if m.path == 'docs/README.md']
+        assert len(linked_file) == 1
+        assert linked_file[0].isreg()
+
+        linked_file_obj = actual.extractfile(linked_file[0].name)
+        actual_file = secure_hash_s(linked_file_obj.read())
+        linked_file_obj.close()
+
+        assert actual_file == '63444bfc766154e1bc7557ef6280de20d03fcd81'
 
 
 def test_publish_missing_file():
@@ -523,6 +535,59 @@ def test_publish_with_wait_timeout(collection_artifact, monkeypatch):
     assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
     assert mock_vvv.mock_calls[2][1][0] == \
         'Galaxy import process has a status of waiting, wait 2 seconds before trying again'
+
+
+def test_publish_with_wait_timeout(collection_artifact, monkeypatch):
+    monkeypatch.setattr(time, 'sleep', MagicMock())
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    mock_vvv = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_vvv)
+
+    fake_import_uri = 'https://galaxy-server/api/v2/import/1234'
+    server = 'https://galaxy.server.com'
+
+    artifact_path, mock_open = collection_artifact
+
+    mock_open.side_effect = (
+        StringIO(u'{"task":"%s"}' % fake_import_uri),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":null}'),
+        StringIO(u'{"finished_at":null}'),
+    )
+
+    expected = "Timeout while waiting for the Galaxy import process to finish, check progress at '%s'" \
+        % fake_import_uri
+    with pytest.raises(AnsibleError, match=expected):
+        collection.publish_collection(artifact_path, server, 'key', True, True)
+
+    assert mock_open.call_count == 8
+    for i in range(7):
+        mock_call = mock_open.mock_calls[i + 1]
+        assert mock_call[1][0] == fake_import_uri
+        assert mock_call[2]['headers']['Authorization'] == 'Token key'
+        assert mock_call[2]['validate_certs'] is False
+        assert mock_call[2]['method'] == 'GET'
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Publishing collection artifact '%s' to %s" % (artifact_path, server)
+
+    expected_wait_msg = 'Galaxy import process has a status of waiting, wait {0} seconds before trying again'
+    assert mock_vvv.call_count == 8
+    assert mock_vvv.mock_calls[0][1][0] == 'Collection has been pushed to the Galaxy server %s' % server
+    assert mock_vvv.mock_calls[1][1][0] == 'Waiting until galaxy import task %s has completed' % fake_import_uri
+    assert mock_vvv.mock_calls[2][1][0] == expected_wait_msg.format(2)
+    assert mock_vvv.mock_calls[3][1][0] == expected_wait_msg.format(3)
+    assert mock_vvv.mock_calls[4][1][0] == expected_wait_msg.format(4)
+    assert mock_vvv.mock_calls[5][1][0] == expected_wait_msg.format(6)
+    assert mock_vvv.mock_calls[6][1][0] == expected_wait_msg.format(10)
+    assert mock_vvv.mock_calls[7][1][0] == expected_wait_msg.format(15)
 
 
 def test_publish_with_wait_and_failure(collection_artifact, monkeypatch):

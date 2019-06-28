@@ -120,7 +120,8 @@ class GalaxyCLI(CLI):
         cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', default='./',
                                      help='The path to the directory containing your collections.')
         cinstall_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                                     help='Ignore errors and continue with the next specified collection.')
+                                     help='Ignore errors during installation and continue with the next specified '
+                                          'collection. This will not ignore dependency conflict errors.')
         cinstall_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                      help='A file containing a list of collections to be installed.')
 
@@ -128,7 +129,7 @@ class GalaxyCLI(CLI):
         cinstall_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
                                         help="Don't download collections listed as dependencies")
         cinstall_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
-                                        help="Force overwriting an existing collection and it's dependencies")
+                                        help="Force overwriting an existing collection and its dependencies")
 
         publish_parser = collection_parser.add_parser(
             'publish', help='Publish a collection artifact to Ansible Galaxy.',
@@ -303,10 +304,10 @@ class GalaxyCLI(CLI):
 
     @staticmethod
     def _validate_collection_name(name):
-        if not is_collection_ref('ansible_collections.{0}'.format(name)):
-            raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
+        if is_collection_ref('ansible_collections.{0}'.format(name)):
+            return name
 
-        return name
+        raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
 
 ############################
 # execute actions
@@ -373,12 +374,14 @@ class GalaxyCLI(CLI):
         if galaxy_type == 'role':
             inject_data['role_name'] = obj_name
             inject_data['role_type'] = context.CLIARGS['role_type']
+            inject_data['license'] = 'license (GPL-2.0-or-later, MIT, etc)'
             obj_path = os.path.join(init_path, obj_name)
         elif galaxy_type == 'collection':
             namespace, collection_name = obj_name.split('.', 1)
 
             inject_data['namespace'] = namespace
             inject_data['collection_name'] = collection_name
+            inject_data['license'] = 'GPL-2.0-or-later'
             obj_path = os.path.join(init_path, namespace, collection_name)
         b_obj_path = to_bytes(obj_path, errors='surrogate_or_strict')
 
@@ -386,7 +389,7 @@ class GalaxyCLI(CLI):
             if os.path.isfile(obj_path):
                 raise AnsibleError("- the path %s already exists, but is a file - aborting" % to_native(obj_path))
             elif not force:
-                raise AnsibleError("- the directory %s already exists."
+                raise AnsibleError("- the directory %s already exists. "
                                    "You can use --force to re-initialize this directory,\n"
                                    "however it will reset any main.yml files that may have\n"
                                    "been modified there already." % to_native(obj_path))
@@ -513,12 +516,8 @@ class GalaxyCLI(CLI):
             else:
                 collection_requirements = []
                 for collection_input in collections:
-                    if ':' in collection_input:
-                        name, requirement = collection_input.split(':', 1)
-                    else:
-                        name = collection_input
-                        requirement = '*'
-                    collection_requirements.append((name, requirement, None))
+                    name, dummy, requirement = collection_input.partition(':')
+                    collection_requirements.append((name, requirement or '*', None))
 
             output_path = GalaxyCLI._resolve_path(output_path)
             collections_path = C.COLLECTIONS_PATHS
@@ -538,7 +537,7 @@ class GalaxyCLI(CLI):
             install_collections(collection_requirements, output_path, servers, (not ignore_certs), ignore_errors,
                                 no_deps, force, force_deps)
 
-            return
+            return 0
 
         role_file = context.CLIARGS['role_file']
 
@@ -741,12 +740,9 @@ class GalaxyCLI(CLI):
 
     def execute_publish(self):
         """
-        Published a collection into Ansible Galaxy.
+        Publish a collection into Ansible Galaxy.
         """
-        api_key = context.CLIARGS['api_key']
-        if not api_key:
-            api_key = GalaxyToken().get()
-
+        api_key = context.CLIARGS['api_key'] or GalaxyToken().get()
         api_server = context.CLIARGS['api_server']
         collection_path = GalaxyCLI._resolve_path(context.CLIARGS['args'])
         ignore_certs = context.CLIARGS['ignore_certs']

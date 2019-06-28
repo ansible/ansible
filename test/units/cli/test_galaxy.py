@@ -496,7 +496,7 @@ def test_collection_default(collection_skeleton):
     assert metadata['readme'] == 'README.md'
     assert metadata['version'] == '1.0.0'
     assert metadata['description'] == 'your description'
-    assert metadata['license'] == 'license (GPL-2.0-or-later, MIT, etc)'
+    assert metadata['license'] == 'GPL-2.0-or-later'
     assert metadata['tags'] == []
     assert metadata['dependencies'] == {}
     assert metadata['documentation'] == 'http://docs.example.com'
@@ -554,7 +554,8 @@ def test_collection_skeleton(collection_skeleton):
 
 
 @pytest.fixture()
-def collection_build(collection_skeleton, tmp_path_factory):
+def collection_artifact(collection_skeleton, tmp_path_factory):
+    ''' Creates a collection artifact tarball that is ready to be published and installed '''
     output_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Output'))
 
     # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
@@ -581,6 +582,7 @@ def test_invalid_skeleton_path():
 
 
 @pytest.mark.parametrize("name", [
+    "",
     "invalid",
     "hypen-ns.collection",
     "ns.hyphen-collection",
@@ -597,15 +599,15 @@ def test_invalid_collection_name(name):
 @pytest.mark.parametrize('collection_skeleton', [
     ('ansible_test.build_collection', None),
 ], indirect=True)
-def test_collection_build(collection_build):
-    tar_path = os.path.join(collection_build, 'ansible_test-build_collection-1.0.0.tar.gz')
+def test_collection_build(collection_artifact):
+    tar_path = os.path.join(collection_artifact, 'ansible_test-build_collection-1.0.0.tar.gz')
     assert tarfile.is_tarfile(tar_path)
 
     with tarfile.open(tar_path, mode='r') as tar:
         tar_members = tar.getmembers()
 
-        valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md']
-        assert len(tar_members) == 6
+        valid_files = ['MANIFEST.json', 'FILES.json', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md']
+        assert len(tar_members) == 7
 
         # Verify the uid and gid is 0 and the correct perms are set
         for member in tar_members:
@@ -638,7 +640,7 @@ def test_collection_build(collection_build):
         assert coll_info['readme'] == 'README.md'
         assert coll_info['tags'] == []
         assert coll_info['description'] == 'your description'
-        assert coll_info['license'] == ['license (GPL-2.0-or-later, MIT, etc)']
+        assert coll_info['license'] == ['GPL-2.0-or-later']
         assert coll_info['license_file'] is None
         assert coll_info['dependencies'] == {}
         assert coll_info['repository'] == 'http://example.com/repository'
@@ -660,11 +662,11 @@ def test_collection_build(collection_build):
         finally:
             files_file.close()
 
-        assert len(files['files']) == 5
+        assert len(files['files']) == 6
         assert files['format'] == 1
         assert len(files.keys()) == 2
 
-        valid_files_entries = ['.', 'roles', 'docs', 'plugins', 'plugins/README.md']
+        valid_files_entries = ['.', 'roles', 'docs', 'plugins', 'plugins/README.md', 'README.md']
         for file_entry in files['files']:
             assert file_entry['name'] in valid_files_entries
             assert file_entry['format'] == 1
@@ -673,6 +675,10 @@ def test_collection_build(collection_build):
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
                 assert file_entry['chksum_sha256'] == '5be7ec7b71096d56e1cc48311b6a2266b77b5fdb9d1985b5bc625787b1e857c5'
+            elif file_entry['name'] == 'README.md':
+                assert file_entry['ftype'] == 'file'
+                assert file_entry['chksum_type'] == 'sha256'
+                assert file_entry['chksum_sha256'] == '45923ca2ece0e8ce31d29e5df9d8b649fe55e2f5b5b61c9724d7cc187bd6ad4a'
             else:
                 assert file_entry['ftype'] == 'dir'
                 assert file_entry['chksum_type'] is None
@@ -724,7 +730,12 @@ def test_collection_install_with_requirements_file(collection_install):
 
     requirements_file = os.path.join(output_dir, 'requirements.yml')
     with open(requirements_file, 'wb') as req_obj:
-        req_obj.write(b'---\ncollections:\n- namespace.coll\n- name: namespace2.coll\n  version: \'>2.0.1\'\n')
+        req_obj.write(b'''---
+collections:
+- namespace.coll
+- name: namespace2.coll
+  version: '>2.0.1'
+''')
 
     galaxy_args = ['ansible-galaxy', 'collection', 'install', '--requirements-file', requirements_file,
                    '--collections-path', output_dir]

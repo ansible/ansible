@@ -145,7 +145,7 @@ def test_build_requirement_from_path_invalid_manifest(collection_artifact):
     with open(manifest_path, 'wb') as manifest_obj:
         manifest_obj.write(b"not json")
 
-    expected = "Collection file at '%s' is not a valid json string." % to_native(manifest_path)
+    expected = "Collection file at '%s' does not contain a valid json string." % to_native(manifest_path)
     with pytest.raises(AnsibleError, match=expected):
         collection.CollectionRequirement.from_path(collection_artifact[0], True, True)
 
@@ -232,7 +232,7 @@ def test_build_requirement_from_tar_invalid_manifest(tmp_path_factory):
         tar_info.mode = 0o0644
         tfile.addfile(tarinfo=tar_info, fileobj=b_io)
 
-    expected = "Collection tar file MANIFEST.json is not a valid json string."
+    expected = "Collection tar file member MANIFEST.json does not contain a valid json string."
     with pytest.raises(AnsibleError, match=expected):
         collection.CollectionRequirement.from_tar(tar_path, True, True)
 
@@ -430,12 +430,31 @@ def test_build_requirement_from_name_multiple_version_results(monkeypatch):
     [['1.0.0', '1.0.5', '1.1.0'], '!=1.1.0', ['1.0.0', '1.0.5'], '1.0.5'],
     [['1.0.0', '1.0.5', '1.1.0'], '==1.0.5', ['1.0.5'], '1.0.5'],
     [['1.0.0', '1.0.5', '1.1.0'], '1.0.5', ['1.0.5'], '1.0.5'],
+    [['1.0.0', '2.0.0', '3.0.0'], '>=2', ['2.0.0', '3.0.0'], '3.0.0'],
 ])
 def test_add_collection_requirements(versions, requirement, expected_filter, expected_latest):
     req = collection.CollectionRequirement('namespace', 'name', None, 'https://galaxy.com', versions, requirement,
                                            False)
     assert req.versions == set(expected_filter)
     assert req.latest_version == expected_latest
+
+
+def test_add_collection_requirement_to_unknown_installed_version():
+    req = collection.CollectionRequirement('namespace', 'name', None, 'https://galaxy.com', ['*'], '*', False,
+                                           skip=True)
+
+    expected = "Cannot meet requirement namespace.name:1.0.0 as it is already installed at version 'unknown'."
+    with pytest.raises(AnsibleError, match=expected):
+        req.add_requirement(str(req), '1.0.0')
+
+
+def test_add_collection_wildcard_requirement_to_unknown_installed_version():
+    req = collection.CollectionRequirement('namespace', 'name', None, 'https://galaxy.com', ['*'], '*', False,
+                                           skip=True)
+    req.add_requirement(str(req), '*')
+
+    assert req.versions == set('*')
+    assert req.latest_version == '*'
 
 
 def test_add_collection_requirement_with_conflict():
@@ -467,7 +486,8 @@ def test_add_requirement_to_installed_collection_with_conflict():
     req = collection.CollectionRequirement('namespace', 'name', None, source, ['1.0.0', '1.0.1'], '*', False,
                                            skip=True)
 
-    expected = "Cannot meet requirement namespace.name:1.0.2 as it is already installed. Use --force to overwrite"
+    expected = "Cannot meet requirement namespace.name:1.0.2 as it is already installed at version '1.0.1'. " \
+               "Use --force to overwrite"
     with pytest.raises(AnsibleError, match=re.escape(expected)):
         req.add_requirement(None, '1.0.2')
 
@@ -477,8 +497,8 @@ def test_add_requirement_to_installed_collection_with_conflict_as_dep():
     req = collection.CollectionRequirement('namespace', 'name', None, source, ['1.0.0', '1.0.1'], '*', False,
                                            skip=True)
 
-    expected = "Cannot meet requirement namespace.name:1.0.2 as it is already installed. Use --force-with-deps to " \
-               "overwrite"
+    expected = "Cannot meet requirement namespace.name:1.0.2 as it is already installed at version '1.0.1'. " \
+               "Use --force-with-deps to overwrite"
     with pytest.raises(AnsibleError, match=re.escape(expected)):
         req.add_requirement('namespace.collection2', '1.0.2')
 
