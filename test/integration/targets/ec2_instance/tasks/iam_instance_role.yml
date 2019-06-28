@@ -50,7 +50,7 @@
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
-        instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
+        instance_role: "{{ iam_role.arn }}"
         <<: *aws_connection_info
       check_mode: yes
 
@@ -80,7 +80,7 @@
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
-        instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
+        instance_role: "{{ iam_role_2.arn }}"
         <<: *aws_connection_info
       register: instance_with_updated_role
       until: instance_with_updated_role is not failed
