@@ -74,7 +74,7 @@ DOCUMENTATION = '''
             type: string
             env:
                 - name: GCP_SERVICE_ACCOUNT_CONTENTS
-                  version_added: "2.8.2"
+            version_added: "2.8.2"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
