@@ -73,7 +73,7 @@ class KeycloakError(Exception):
 
 
 def get_token(base_url, validate_certs, auth_realm, client_id,
-                 auth_username, auth_password, client_secret):
+              auth_username, auth_password, client_secret):
     auth_url = URL_TOKEN.format(url=base_url, realm=auth_realm)
     temp_payload = {
         'grant_type': 'password',
