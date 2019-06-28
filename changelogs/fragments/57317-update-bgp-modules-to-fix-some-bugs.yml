@@ -1,0 +1,5 @@
+bugfixes:
+  - Fixed ce_bgp,first the pattern to be searched is need to change, otherwise there is no data to be found.then after running a task with this module,it will not show 'changed' correctly.
+  - Fixed ce_bgp_af,'changed' of module run restult is not showed, however the module run correctly,and update coommands of result is not correct.
+  - Fixed ce_bgp_neighbor, find specify bgp as information, as number is necessary and so on.
+  - Fixed ce_bgp_neighbor_af,update commands should be showed correctly, and xml for filter and edit are also re-factor as the software version upgrade and update.

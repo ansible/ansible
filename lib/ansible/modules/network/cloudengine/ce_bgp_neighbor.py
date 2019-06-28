@@ -261,7 +261,7 @@ CE_GET_BGP_PEER_HEADER = """
               <vrfName>%s</vrfName>
               <bgpPeers>
                 <bgpPeer>
-                  <peerAddr></peerAddr>
+                  <peerAddr>%s</peerAddr>
 """
 CE_GET_BGP_PEER_TAIL = """
                 </bgpPeer>
@@ -272,7 +272,6 @@ CE_GET_BGP_PEER_TAIL = """
       </bgp>
     </filter>
 """
-
 
 # merge bgp peer
 CE_MERGE_BGP_PEER_HEADER = """
@@ -475,6 +474,7 @@ class BgpNeighbor(object):
         result = dict()
         need_cfg = False
 
+        peerip = module.params['peer_addr']
         vrf_name = module.params['vrf_name']
         if vrf_name:
             if len(vrf_name) > 31 or len(vrf_name) == 0:
@@ -487,7 +487,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The len of description %s is out of [1 - 80].' % description)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<description></description>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -510,7 +510,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The len of fake_as %s is out of [1 - 11].' % fake_as)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<fakeAs></fakeAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -530,7 +530,7 @@ class BgpNeighbor(object):
         dual_as = module.params['dual_as']
         if dual_as != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<dualAs></dualAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -542,7 +542,7 @@ class BgpNeighbor(object):
 
                 if re_find:
                     result["dual_as"] = re_find
-                    if re_find[0] != fake_as:
+                    if re_find[0] != dual_as:
                         need_cfg = True
                 else:
                     need_cfg = True
@@ -550,10 +550,9 @@ class BgpNeighbor(object):
         conventional = module.params['conventional']
         if conventional != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<conventional></conventional>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
-
             if "<data/>" in recv_xml:
                 need_cfg = True
             else:
@@ -570,7 +569,7 @@ class BgpNeighbor(object):
         route_refresh = module.params['route_refresh']
         if route_refresh != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<routeRefresh></routeRefresh>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -590,7 +589,7 @@ class BgpNeighbor(object):
         four_byte_as = module.params['four_byte_as']
         if four_byte_as != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<fourByteAs></fourByteAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -610,7 +609,7 @@ class BgpNeighbor(object):
         is_ignore = module.params['is_ignore']
         if is_ignore != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<isIgnore></isIgnore>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -633,7 +632,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The len of local_if_name %s is out of [1 - 63].' % local_if_name)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<localIfName></localIfName>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -645,7 +644,7 @@ class BgpNeighbor(object):
 
                 if re_find:
                     result["local_if_name"] = re_find
-                    if re_find[0] != local_if_name:
+                    if re_find[0].lower() != local_if_name.lower():
                         need_cfg = True
                 else:
                     need_cfg = True
@@ -656,7 +655,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The value of ebgp_max_hop %s is out of [1 - 255].' % ebgp_max_hop)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<ebgpMaxHop></ebgpMaxHop>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -679,7 +678,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The value of valid_ttl_hops %s is out of [1 - 255].' % valid_ttl_hops)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<validTtlHops></validTtlHops>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -699,7 +698,7 @@ class BgpNeighbor(object):
         connect_mode = module.params['connect_mode']
         if connect_mode:
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<connectMode></connectMode>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -719,7 +718,7 @@ class BgpNeighbor(object):
         is_log_change = module.params['is_log_change']
         if is_log_change != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<isLogChange></isLogChange>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -739,7 +738,7 @@ class BgpNeighbor(object):
         pswd_type = module.params['pswd_type']
         if pswd_type:
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<pswdType></pswdType>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -762,7 +761,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The len of pswd_cipher_text %s is out of [1 - 255].' % pswd_cipher_text)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<pswdCipherText></pswdCipherText>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -785,7 +784,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The len of keep_alive_time %s is out of [0 - 21845].' % keep_alive_time)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<keepAliveTime></keepAliveTime>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -808,7 +807,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The value of hold_time %s is out of [0 or 3 - 65535].' % hold_time)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<holdTime></holdTime>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -831,7 +830,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The value of min_hold_time %s is out of [0 or 20 - 65535].' % min_hold_time)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<minHoldTime></minHoldTime>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -854,7 +853,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The len of key_chain_name %s is out of [1 - 47].' % key_chain_name)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<keyChainName></keyChainName>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -877,7 +876,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The value of conn_retry_time %s is out of [1 - 65535].' % conn_retry_time)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<connRetryTime></connRetryTime>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -900,7 +899,7 @@ class BgpNeighbor(object):
                 module.fail_json(
                     msg='Error: The value of tcp_mss %s is out of [176 - 4096].' % tcp_mss)
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<tcpMSS></tcpMSS>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -920,7 +919,7 @@ class BgpNeighbor(object):
         mpls_local_ifnet_disable = module.params['mpls_local_ifnet_disable']
         if mpls_local_ifnet_disable != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<mplsLocalIfnetDisable></mplsLocalIfnetDisable>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -940,7 +939,7 @@ class BgpNeighbor(object):
         prepend_global_as = module.params['prepend_global_as']
         if prepend_global_as != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<prependGlobalAs></prependGlobalAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -960,7 +959,7 @@ class BgpNeighbor(object):
         prepend_fake_as = module.params['prepend_fake_as']
         if prepend_fake_as != 'no_use':
 
-            conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+            conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
                 "<prependFakeAs></prependFakeAs>" + CE_GET_BGP_PEER_TAIL
             recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1276,14 +1275,14 @@ class BgpNeighbor(object):
         """ get_bgp_peer """
 
         module = kwargs["module"]
-
+        peerip = module.params['peer_addr']
         vrf_name = module.params['vrf_name']
         if vrf_name:
             if len(vrf_name) > 31 or len(vrf_name) == 0:
                 module.fail_json(
                     msg='Error: The len of vrf_name %s is out of [1 - 31].' % vrf_name)
 
-        conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + \
+        conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + \
             "<remoteAs></remoteAs>" + CE_GET_BGP_PEER_TAIL
 
         xml_str = self.netconf_get_config(module=module, conf_str=conf_str)
@@ -1305,14 +1304,14 @@ class BgpNeighbor(object):
         """ get_bgp_del_peer """
 
         module = kwargs["module"]
-
+        peerip = module.params['peer_addr']
         vrf_name = module.params['vrf_name']
         if vrf_name:
             if len(vrf_name) > 31 or len(vrf_name) == 0:
                 module.fail_json(
                     msg='Error: The len of vrf_name %s is out of [1 - 31].' % vrf_name)
 
-        conf_str = CE_GET_BGP_PEER_HEADER % vrf_name + CE_GET_BGP_PEER_TAIL
+        conf_str = CE_GET_BGP_PEER_HEADER % (vrf_name, peerip) + CE_GET_BGP_PEER_TAIL
 
         xml_str = self.netconf_get_config(module=module, conf_str=conf_str)
 
@@ -1434,7 +1433,6 @@ class BgpNeighbor(object):
         conventional = module.params['conventional']
         if conventional != 'no_use':
             conf_str += "<conventional>%s</conventional>" % conventional
-
             if conventional == "true":
                 cmd = "peer %s capability-advertise conventional" % peer_addr
             else:
@@ -1494,7 +1492,6 @@ class BgpNeighbor(object):
 
         connect_mode = module.params['connect_mode']
         if connect_mode:
-            conf_str += "<connectMode>%s</connectMode>" % connect_mode
 
             if connect_mode == "listenOnly":
                 cmd = "peer %s listen-only" % peer_addr
@@ -1502,11 +1499,13 @@ class BgpNeighbor(object):
             elif connect_mode == "connectOnly":
                 cmd = "peer %s connect-only" % peer_addr
                 cmds.append(cmd)
-            elif connect_mode == "null":
+            elif connect_mode == "both":
+                connect_mode = "null"
                 cmd = "peer %s listen-only" % peer_addr
                 cmds.append(cmd)
                 cmd = "peer %s connect-only" % peer_addr
                 cmds.append(cmd)
+            conf_str += "<connectMode>%s</connectMode>" % connect_mode
 
         is_log_change = module.params['is_log_change']
         if is_log_change != 'no_use':
@@ -1594,6 +1593,12 @@ class BgpNeighbor(object):
         prepend_fake_as = module.params['prepend_fake_as']
         if prepend_fake_as != 'no_use':
             conf_str += "<prependFakeAs>%s</prependFakeAs>" % prepend_fake_as
+
+            if prepend_fake_as == "true":
+                cmd = "peer %s prepend-local-as" % peer_addr
+            else:
+                cmd = "undo peer %s prepend-local-as" % peer_addr
+            cmds.append(cmd)
 
         conf_str += CE_MERGE_BGP_PEER_TAIL
 
@@ -1759,7 +1764,7 @@ def main():
         local_if_name=dict(type='str'),
         ebgp_max_hop=dict(type='str'),
         valid_ttl_hops=dict(type='str'),
-        connect_mode=dict(choices=['listenOnly', 'connectOnly', 'null']),
+        connect_mode=dict(choices=['listenOnly', 'connectOnly', 'both']),
         is_log_change=dict(type='str', default='no_use', choices=['no_use', 'true', 'false']),
         pswd_type=dict(choices=['null', 'cipher', 'simple']),
         pswd_cipher_text=dict(type='str', no_log=True),
@@ -1913,7 +1918,6 @@ def main():
                 existing["bgp peer"] = bgp_peer_exist
 
                 bgp_peer_new = (peer_addr, remote_as)
-
                 if len(bgp_peer_exist) == 0:
                     cmd = ce_bgp_peer_obj.create_bgp_peer(module=module)
                     changed = True
