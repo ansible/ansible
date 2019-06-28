@@ -109,7 +109,7 @@ project_variable:
       type: list
       sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
     updated:
-      description: A list of variables where their values has changed.
+      description: A list of variables whose values were changed.
       returned: always
       type: list
       sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
