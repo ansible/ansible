@@ -1,0 +1,2 @@
+minor_changes:
+  - Handle user unauthorization errors in VMware REST API code for tagging (https://github.com/ansible/ansible/issues/58326).
