@@ -32,14 +32,16 @@ import re
 import ast
 import operator
 import socket
+import json
 
 from itertools import chain
 from socket import inet_aton
+from json import dumps
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils import basic
 from ansible.module_utils.parsing.convert_bool import boolean
 
 # Backwards compatibility for 3rd party modules
@@ -195,7 +197,7 @@ class Entity(object):
                             fallback_args = item
                     try:
                         value[name] = fallback_strategy(*fallback_args, **fallback_kwargs)
-                    except AnsibleFallbackNotFound:
+                    except basic.AnsibleFallbackNotFound:
                         continue
 
             if attr.get('required') and value.get(name) is None:
@@ -438,8 +440,138 @@ def _fallback(fallback):
             args = item
     try:
         return strategy(*args, **kwargs)
-    except AnsibleFallbackNotFound:
+    except basic.AnsibleFallbackNotFound:
         pass
+
+
+def generate_dict(spec):
+    """
+    Generate dictionary which is in sync with argspec
+
+    :param spec: A dictionary that is the argspec of the module
+    :rtype: A dictionary
+    :returns: A dictionary in sync with argspec with default value
+    """
+    obj = {}
+    if not spec:
+        return obj
+
+    for key, val in iteritems(spec):
+        if 'default' in val:
+            dct = {key: val['default']}
+        elif 'type' in val and val['type'] == 'dict':
+            dct = {key: generate_dict(val['options'])}
+        else:
+            dct = {key: None}
+        obj.update(dct)
+    return obj
+
+
+def parse_conf_arg(cfg, arg):
+    """
+    Parse config based on argument
+
+    :param cfg: A text string which is a line of configuration.
+    :param arg: A text string which is to be matched.
+    :rtype: A text string
+    :returns: A text string if match is found
+    """
+    match = re.search(r'%s (.+)(\n|$)' % arg, cfg, re.M)
+    if match:
+        result = match.group(1).strip()
+    else:
+        result = None
+    return result
+
+
+def parse_conf_cmd_arg(cfg, cmd, res1, res2=None, delete_str='no'):
+    """
+    Parse config based on command
+
+    :param cfg: A text string which is a line of configuration.
+    :param cmd: A text string which is the command to be matched
+    :param res1: A text string to be returned if the command is present
+    :param res2: A text string to be returned if the negate command
+                 is present
+    :param delete_str: A text string to identify the start of the
+                 negate command
+    :rtype: A text string
+    :returns: A text string if match is found
+    """
+    match = re.search(r'\n\s+%s(\n|$)' % cmd, cfg)
+    if match:
+        return res1
+    if res2 is not None:
+        match = re.search(r'\n\s+%s %s(\n|$)' % (delete_str, cmd), cfg)
+        if match:
+            return res2
+    return None
+
+
+def get_xml_conf_arg(cfg, path, data='text'):
+    """
+    :param cfg: The top level configuration lxml Element tree object
+    :param path: The relative xpath w.r.t to top level element (cfg)
+           to be searched in the xml hierarchy
+    :param data: The type of data to be returned for the matched xml node.
+        Valid values are text, tag, attrib, with default as text.
+    :return: Returns the required type for the matched xml node or else None
+    """
+    match = cfg.xpath(path)
+    if len(match):
+        if data == 'tag':
+            result = getattr(match[0], 'tag')
+        elif data == 'attrib':
+            result = getattr(match[0], 'attrib')
+        else:
+            result = getattr(match[0], 'text')
+    else:
+        result = None
+    return result
+
+
+def remove_empties(cfg_dict):
+    """
+    Generate final config dictionary
+
+    :param cfg_dict: A dictionary parsed in the facts system
+    :rtype: A dictionary
+    :returns: A dictionary by eliminating keys that have null values
+    """
+    final_cfg = {}
+    if not cfg_dict:
+        return final_cfg
+
+    for key, val in iteritems(cfg_dict):
+        dct = None
+        if isinstance(val, dict):
+            child_val = remove_empties(val)
+            if child_val:
+                dct = {key: child_val}
+        elif (isinstance(val, list) and val
+              and all([isinstance(x, dict) for x in val])):
+            child_val = [remove_empties(x) for x in val]
+            if child_val:
+                dct = {key: child_val}
+        elif val not in [None, [], {}, (), '']:
+            dct = {key: val}
+        if dct:
+            final_cfg.update(dct)
+    return final_cfg
+
+
+def validate_config(spec, data):
+    """
+    Validate if the input data against the AnsibleModule spec format
+    :param spec: Ansible argument spec
+    :param data: Data to be validated
+    :return:
+    """
+    params = basic._ANSIBLE_ARGS
+    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': data}))
+    validated_data = basic.AnsibleModule(spec).params
+    basic._ANSIBLE_ARGS = params
+    return validated_data
 
 
 class Template:
