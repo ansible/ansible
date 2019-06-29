@@ -39,6 +39,8 @@
     login_port: 3001
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset1 }}"
+    heartbeat_timeout_secs: 1
+    election_timeout_millis: 1000
     members:
      - "localhost:3001"
      - "localhost:3002"
@@ -105,6 +107,7 @@
     login_port: 3001
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset1 }}"
+    election_timeout_millis: 1000
     members:
      - "localhost:3001"
      - "localhost:3002"
@@ -123,6 +126,7 @@
     login_port: 3001
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset1 }}"
+    election_timeout_millis: 1000
     members:
      - "localhost:3001"
      - "localhost:3002"
@@ -159,6 +163,8 @@
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset2 }}"
     members: [ "localhost:3001", "localhost:3002", "localhost:3003" ]
+    election_timeout_millis: 1000
+    heartbeat_timeout_secs: 1
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -196,6 +202,7 @@
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset3 }}"
     members: "localhost:3001,localhost:3002,localhost:3003"
+    election_timeout_millis: 1000
 
 - name: Get replicaset info
   command: mongo admin --eval "rs.status()" --port 3001
@@ -234,6 +241,7 @@
     arbiter_at_index: 2
     replica_set: "{{ mongodb_replicaset4 }}"
     members: "localhost:3001,localhost:3002,localhost:3003"
+    election_timeout_millis: 1000
 
 - name: Ensure host reaches primary before proceeding 3001
   command: mongo admin --port 3001 "{{ remote_tmp_dir }}/tests/is_primary.js"
@@ -275,6 +283,7 @@
     login_database: "admin"
     chaining_allowed: no
     replica_set: "{{ mongodb_replicaset5 }}"
+    election_timeout_millis: 1000
     members:
       - localhost:3001
       - localhost:3002
@@ -319,6 +328,7 @@
     login_port: 3001
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset6 }}"
+    election_timeout_millis: 1000
     members:
       - localhost:3001
       - localhost:3002
@@ -407,6 +417,7 @@
     protocol_version: 0
     heartbeat_timeout_secs: 9
     replica_set: "{{ mongodb_replicaset8 }}"
+    election_timeout_millis: 1000
     members:
       - localhost:3001
       - localhost:3002
@@ -466,6 +477,7 @@
     protocol_version: 0
     heartbeat_timeout_secs: 9
     replica_set: "{{ mongodb_replicaset8 }}"
+    election_timeout_millis: 1000
     members:
       - idonotexist:3001
       - idonotexist:3002

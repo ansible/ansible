@@ -14,3 +14,10 @@ mongodb_packages:
   mongod: mongodb-org-server
   mongos: mongodb-org-mongos
   mongo: mongodb-org-shell
+
+yum:
+  name: mongodb-org
+  description: "Official MongoDB {{mongodb_version}} yum repo"
+  baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/{{mongodb_version}}/x86_64/
+  gpgcheck: 1
+  gpgkey: https://www.mongodb.org/static/pgp/server-{{mongodb_version}}.asc

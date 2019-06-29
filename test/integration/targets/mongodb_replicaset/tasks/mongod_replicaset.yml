@@ -1,9 +1,14 @@
+- name: Set mongodb_user user for redhat
+  set_fact:
+    mongodb_user: "mongod"
+  when: ansible_os_family == "RedHat"
+
 - name: Create directories for mongod processes
   file:
     path: "{{ remote_tmp_dir }}/mongod{{ item }}"
     state: directory
-    owner: mongodb
-    group: mongodb
+    owner: "{{ mongodb_user }}"
+    group: "{{ mongodb_user }}"
     mode: 0755
     recurse: yes
   with_items: "{{ mongodb_nodes }}"
@@ -13,8 +18,8 @@
     dest: "{{ remote_tmp_dir }}/my.key"
     content: |
       fd2CUrbXBJpB4rt74A6F
-    owner: mongodb
-    group: mongodb
+    owner: "{{ mongodb_user }}"
+    group: "{{ mongodb_user }}"
     mode: 0600
   when: mongod_auth == True
 

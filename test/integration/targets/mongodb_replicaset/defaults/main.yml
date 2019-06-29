@@ -21,3 +21,4 @@ kill_signal: SIGTERM
 # Should be one of
 mongod_storage_engine_opts: "--storageEngine wiredTiger --wiredTigerEngineConfigString='cache_size=200M'"
 #mongod_storage_engine_opts: "--storageEngine mmapv1 --nojournal"
+mongodb_user: mongodb

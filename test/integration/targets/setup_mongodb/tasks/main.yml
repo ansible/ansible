@@ -1,4 +1,3 @@
-# test code for the mysql_db module
 # (c) 2019,  Rhys Campbell <rhys.james.campbell@googlemail.com>
 
 # This file is part of Ansible
@@ -18,38 +17,51 @@
 
 # ============================================================
 
+# https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+# Support for Ubuntu 14.04 has been removed from MongoDB 4.0.10+, 3.6.13+, and 3.4.21+.
+# CentOS6 has python version issues
 - meta: end_play
-  when: ansible_distribution != 'Ubuntu'
-    or (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04')
-    or (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '18.04')
+  when: (ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04')
+    or (ansible_os_family == "RedHat" and ansible_distribution_major_version == '6')
 
+# Ubuntu
 - name: Import MongoDB public GPG Key xenial
   apt_key:
     keyserver: "{{ apt_xenial.keyserver }}"
     id: "{{ apt_xenial.keyserver_id }}"
-  when: ansible_distribution_version == "16.04"
+  when:
+    - ansible_distribution_version == "16.04"
+    - ansible_distribution == 'Ubuntu'
 
 - name: Add MongoDB repository into sources list xenial
   apt_repository:
     repo: "{{ apt_xenial.repo }}"
     state: present
-  when: ansible_distribution_version == "16.04"
+  when:
+    - ansible_distribution_version == "16.04"
+    - ansible_distribution == 'Ubuntu'
 
 - name: Import MongoDB public GPG Key bionic
   apt_key:
     keyserver: "{{ apt_bionic.keyserver }}"
     id: "{{ apt_bionic.keyserver_id }}"
-  when: ansible_distribution_version == "18.04"
+  when:
+    - ansible_distribution_version == "18.04"
+    - ansible_distribution == 'Ubuntu'
 
 - name: Add MongoDB repository into sources list bionic
   apt_repository:
     repo: "{{ apt_bionic.repo }}"
     state: present
-  when: ansible_distribution_version == "18.04"
+  when:
+    - ansible_distribution_version == "18.04"
+    - ansible_distribution == 'Ubuntu'
 
 - name: Update apt keys
   shell: apt-key update && apt-get update
-  when: mongodb_version != "4.0"
+  when:
+    - mongodb_version != "4.0"
+    - ansible_distribution == 'Ubuntu'
 
 # Need to handle various platforms here. Package name will not always be the same
 - name: Ensure mongod package is installed
@@ -57,20 +69,59 @@
     name: "{{ mongodb_packages.mongod }}"
     state: present
     force: yes
+  when:
+    - ansible_distribution == 'Ubuntu'
 
 - name: Ensure mongos package is installed
   apt:
     name: "{{ mongodb_packages.mongos }}"
     state: present
     force: yes
+  when:
+    - ansible_distribution == 'Ubuntu'
 
 - name: Ensure mongo client is installed
   apt:
     name: "{{ mongodb_packages.mongo }}"
     state: present
     force: yes
+  when:
+    - ansible_distribution == 'Ubuntu'
+# EOF Ubuntu
 
-- name: Install pymongo
-  pip:
-    name: pymongo
+# Redhat
+- name: Add MongopDB repo
+  yum_repository:
+    name: "{{ yum.name }}"
+    description: "{{ yum.description }}"
+    baseurl: "{{ yum.baseurl }}"
+    gpgcheck: "{{ yum.gpgcheck }}"
+    gpgkey: "{{ yum.gpgkey }}"
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Ensure mongod package is installed
+  yum:
+    name: "{{ mongodb_packages.mongod }}"
     state: present
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Ensure mongos package is installed
+  yum:
+    name: "{{ mongodb_packages.mongos }}"
+    state: present
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Ensure mongo client is installed
+  yum:
+    name: "{{ mongodb_packages.mongo }}"
+    state: present
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+# EOF Redhat
+
+- name: Install pip packages
+  pip:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - requests[security]
+    - pymongo
