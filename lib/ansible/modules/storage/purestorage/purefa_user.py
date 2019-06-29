@@ -44,7 +44,7 @@ options:
     description:
     - If changing an existing password, you must provide the old password for security
     type: str
-  api_token:
+  api:
     description:
     - Define whether to create an API token for this user
     - Token can be exposed using the I(debug) module
@@ -92,7 +92,7 @@ EXAMPLES = r'''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
   debug:
-    msg: "API Token: {{ ansible_facts['api_token'] }}"
+    msg: "API Token: {{ ansible_facts['user_api'] }}"
 '''
 
 RETURN = r'''
@@ -128,9 +128,11 @@ def create_user(module, array):
                 role = 'readonly'
             array.create_admin(module.params['name'], role=role,
                                password=module.params['password'])
-            if module.params['api_token']:
+            if module.params['api']:
                 try:
-                    user_token['api_token'] = array.create_api_token(module.params['name'])['api_token']
+                    user_token['user_api'] = array.create_api_token(module.params['name'])['api_token']
+                    # Added for 2.8.2: Not breaking user's playbooks in minor releases.
+                    user_token['api_token'] = user_token['user_api']
                 except Exception:
                     array.delete_user(module.params['name'])
                     module.fail_json(msg='Local User {0}: Creation failed'.format(module.params['name']))
@@ -153,11 +155,13 @@ def create_user(module, array):
             else:
                 module.fail_json(msg='Local User Account {0}: Password change failed - '
                                  'Check both old and new passwords'.format(module.params['name']))
-        if module.params['api_token']:
+        if module.params['api']:
             try:
                 if not array.get_api_token(module.params['name'])['api_token'] is None:
                     array.delete_api_token(module.params['name'])
-                user_token['api_token'] = array.create_api_token(module.params['name'])['api_token']
+                user_token['user_api'] = array.create_api_token(module.params['name'])['api_token']
+                # Added for 2.8.2: Not breaking user's playbooks in minor releases.
+                user_token['api_token'] = user_token['user_api']
                 api_changed = True
             except Exception:
                 module.fail_json(msg='Local User {0}: API token change failed'.format(module.params['name']))
@@ -192,7 +196,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present']),
         password=dict(type='str', no_log=True),
         old_password=dict(type='str', no_log=True),
-        api_token=dict(type='bool', default=False),
+        api=dict(type='bool', default=False),
     ))
 
     module = AnsibleModule(argument_spec,
