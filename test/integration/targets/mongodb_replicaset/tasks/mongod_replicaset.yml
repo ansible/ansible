@@ -1,7 +1,7 @@
 - name: Set mongodb_user user for redhat
   set_fact:
     mongodb_user: "mongod"
-  when: ansible_os_family == "RedHat"
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
 - name: Create directories for mongod processes
   file:
