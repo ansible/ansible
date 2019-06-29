@@ -137,6 +137,7 @@ options:
           - Whether notifications from this monitor automatically inserts its triggering tags into the title.
         version_added: "2.9"
         type: bool
+        default: yes
     id:
         description:
           - The ID of the alert.
