@@ -97,25 +97,25 @@
     baseurl: "{{ yum.baseurl }}"
     gpgcheck: "{{ yum.gpgcheck }}"
     gpgkey: "{{ yum.gpgkey }}"
-  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  when: ansible_os_family == "RedHat"
 
 - name: Ensure mongod package is installed
   yum:
     name: "{{ mongodb_packages.mongod }}"
     state: present
-  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  when: ansible_os_family == "RedHat"
 
 - name: Ensure mongos package is installed
   yum:
     name: "{{ mongodb_packages.mongos }}"
     state: present
-  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  when: ansible_os_family == "RedHat"
 
 - name: Ensure mongo client is installed
   yum:
     name: "{{ mongodb_packages.mongo }}"
     state: present
-  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  when: ansible_os_family == "RedHat"
 # EOF Redhat
 
 - name: Install pip packages
