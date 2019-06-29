@@ -681,7 +681,7 @@ def _get_server_state(module, cloud):
         if module.params['security_groups']:
             _exit_hostvars(module, cloud, server,
                            ip_changed or sg_changed or server_changed)
-        else :
+        else:
             _exit_hostvars(module, cloud, server,
                            ip_changed or server_changed)
     if server and state == 'absent':
