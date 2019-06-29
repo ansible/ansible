@@ -1,0 +1,6 @@
+---
+bugfixes:
+- facts - Restore the minor version number for CentOS and Debian.  Debian has
+  a minor release number but doesn't put it in os-release.  CentOS doesn't have
+  a minor version number but users want to try to match CentOS versions to RHEL
+  equivalents so we grab the RHEL version instead.
