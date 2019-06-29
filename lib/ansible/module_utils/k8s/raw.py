@@ -91,6 +91,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
         mutually_exclusive = [
             ('resource_definition', 'src'),
+            ('merge_type', 'apply'),
         ]
 
         KubernetesAnsibleModule.__init__(self, *args,
