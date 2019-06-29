@@ -493,7 +493,10 @@ class SnmpTargetHost(object):
                                 same_flag = False
 
                         if "interface-name" in tmp.keys():
-                            if tmp["interface-name"].lower() != self.interface_name.lower():
+                            if tmp.get("interface-name") is not None:
+                                if tmp["interface-name"].lower() != self.interface_name.lower():
+                                    same_flag = False
+                            else:
                                 same_flag = False
 
                         if same_flag:

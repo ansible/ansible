@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ce_snmp_target_host - None has no 'lower()' attribute.
