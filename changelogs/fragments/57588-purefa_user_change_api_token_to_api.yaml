@@ -1,3 +1,4 @@
 minor_changes:
-  - purefa_user - change module parameter I(api_token) to I(api) and to stop clash with known variable.
-  - purefa_user - change resulting facts from I(api_token) to I(user_api) for clarity (https://github.com/ansible/ansible/pull/57588)
+  - purefa_user - change module parameter ``api_token`` to ``api`` and to stop clash with known variable.
+  - purefa_user - change resulting facts from ``api_token`` to ``user_api`` for clarity.
+    An facts alias has been added, but will be removed in 2.9. (https://github.com/ansible/ansible/pull/57588)
