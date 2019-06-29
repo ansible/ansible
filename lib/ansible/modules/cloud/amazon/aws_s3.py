@@ -85,10 +85,10 @@ options:
   mode:
     description:
       - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
-        getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket),
+        getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), listextended (list keys with extended information, Ansible 2.0+), create (bucket), delete (bucket),
         and delobj (delete object, Ansible 2.0+).
     required: true
-    choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
+    choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list', 'listextended']
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
@@ -225,6 +225,11 @@ EXAMPLES = '''
     bucket: mybucket
     mode: list
 
+- name: List keys and return extended object information
+  aws_s3:
+    bucket: mybucket
+    mode: listextended
+
 - name: List keys all options
   aws_s3:
     bucket: mybucket
@@ -295,6 +300,27 @@ s3_keys:
   - prefix1/
   - prefix1/key1
   - prefix1/key2
+s3_keys:
+  description: list of object keys
+  returned: (for listextended operation)
+  type: list
+  sample:
+        "s3_keys": [
+            {
+                "...": "...",
+                "Key": "file1.csv",
+                "LastModified": "2018-09-14T00:39:32+00:00",
+                "Size": 12836751,
+                "...": "..."
+            },
+            {
+                "...": "...",
+                "Key": "file2.csv",
+                "LastModified": "2018-09-14T00:26:51+00:00",
+                "Size": 1978,
+                "...": "..."
+            }
+        ]
 '''
 
 import hashlib
@@ -312,7 +338,7 @@ except ImportError:
     pass  # will be detected by imported AnsibleAWSModule
 
 IGNORE_S3_DROP_IN_EXCEPTIONS = ['XNotImplemented', 'NotImplemented']
-
+LIST_EXTENDED = False
 
 class Sigv4Required(Exception):
     pass
@@ -427,7 +453,10 @@ def create_bucket(module, s3, bucket, location=None):
 def paginated_list(s3, **pagination_params):
     pg = s3.get_paginator('list_objects_v2')
     for page in pg.paginate(**pagination_params):
-        yield [data['Key'] for data in page.get('Contents', [])]
+        if LIST_EXTENDED == True:
+            yield [data for data in page.get('Contents', [])]
+        else:
+            yield [data['Key'] for data in page.get('Contents', [])]
 
 
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
@@ -670,6 +699,7 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=F
 
 
 def main():
+    global LIST_EXTENDED
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
@@ -682,7 +712,7 @@ def main():
             marker=dict(default=""),
             max_keys=dict(default=1000, type='int'),
             metadata=dict(type='dict'),
-            mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
+            mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list', 'listextended'], required=True),
             object=dict(),
             permission=dict(type='list', default=['private']),
             version=dict(default=None),
@@ -904,12 +934,15 @@ def main():
             module.fail_json(msg="Bucket parameter is required.")
 
     # Support for listing a set of keys
-    if mode == 'list':
+    if mode == 'list' or mode == 'listextended':
         exists = bucket_check(module, s3, bucket)
 
         # If the bucket does not exist then bail out
         if not exists:
             module.fail_json(msg="Target bucket (%s) cannot be found" % bucket)
+
+        if mode == 'listextended':
+            LIST_EXTENDED = True
 
         list_keys(module, s3, bucket, prefix, marker, max_keys)
 

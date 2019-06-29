@@ -1,0 +1,2 @@
+minor_changes:
+    - aws_s3 use mode listextended to return object attributes other than just the Key value itself (https://github.com/ansible/ansible/issues/48624)
