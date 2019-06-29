@@ -131,6 +131,8 @@ def create_user(module, array):
             if module.params['api']:
                 try:
                     user_token['user_api'] = array.create_api_token(module.params['name'])['api_token']
+                    # Added for 2.8.2: Not breaking user's playbooks in minor releases.
+                    user_token['api_token'] = user_token['user_api']
                 except Exception:
                     array.delete_user(module.params['name'])
                     module.fail_json(msg='Local User {0}: Creation failed'.format(module.params['name']))
@@ -158,6 +160,8 @@ def create_user(module, array):
                 if not array.get_api_token(module.params['name'])['api_token'] is None:
                     array.delete_api_token(module.params['name'])
                 user_token['user_api'] = array.create_api_token(module.params['name'])['api_token']
+                # Added for 2.8.2: Not breaking user's playbooks in minor releases.
+                user_token['api_token'] = user_token['user_api']
                 api_changed = True
             except Exception:
                 module.fail_json(msg='Local User {0}: API token change failed'.format(module.params['name']))
