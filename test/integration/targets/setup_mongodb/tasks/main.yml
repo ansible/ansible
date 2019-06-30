@@ -183,7 +183,3 @@
   pip:
     name: "{{ pip_packages }}"
     state: present
-
-#- name: Install python pip_packages
-#  command: "python -m pip install {{ item }}"
-#  with_items: "{{ pip_packages }}"
