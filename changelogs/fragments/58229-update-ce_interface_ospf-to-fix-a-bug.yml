@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_interface_ospf - remove the 'data' tag to fix a bug,.(https://github.com/ansible/ansible/pull/58229)
