@@ -98,7 +98,7 @@ tasks:
     aireos_command:
       commands: 
         - command: "config ap group-name wireless_test_group {{ item }}"
-          prompt: 'Are you sure you want to continue\? \(y/n\)'
+          prompt: 'Are you sure you want to continue\\? \(y/n\\)'
           answer: "y"
     register: result1
     with_items:
