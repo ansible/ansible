@@ -53,7 +53,7 @@ class VcenterProvider(CloudProvider):
             self.image = 'quay.io/ansible/vcenter-test-container:1.5.0'
         self.container_name = ''
 
-        # VMWare tests can be run on govcsim or baremetal, either BYO with a static config
+        # VMware tests can be run on govcsim or baremetal, either BYO with a static config
         # file or hosted in worldstream.  Using an env var value of 'worldstream' with appropriate
         # CI credentials will deploy a dynamic baremetal environment. The simulator is the default
         # if no other config if provided.
@@ -226,7 +226,7 @@ class VcenterProvider(CloudProvider):
         self._wait_for_service()
 
     def _wait_for_service(self):
-        """Wait for the VCenter service endpoint to accept connections."""
+        """Wait for the vCenter service endpoint to accept connections."""
         if self.args.explain:
             return
 
@@ -234,7 +234,7 @@ class VcenterProvider(CloudProvider):
         endpoint = 'https://%s:%s' % (self.endpoint, self.port)
 
         for i in range(1, 30):
-            display.info('Waiting for VCenter service: %s' % endpoint, verbosity=1)
+            display.info('Waiting for vCenter service: %s' % endpoint, verbosity=1)
 
             try:
                 client.get(endpoint)
@@ -244,7 +244,7 @@ class VcenterProvider(CloudProvider):
 
             time.sleep(10)
 
-        raise ApplicationError('Timeout waiting for VCenter service.')
+        raise ApplicationError('Timeout waiting for vCenter service.')
 
 
 class VcenterEnvironment(CloudEnvironment):

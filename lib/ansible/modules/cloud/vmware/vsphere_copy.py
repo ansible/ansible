@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: vsphere_copy
 short_description: Copy a file to a VMware datastore
 description:
-    - Upload files to a VMware datastore through a VCenter REST API.
+    - Upload files to a VMware datastore through a vCenter REST API.
 version_added: 2.0
 author:
 - Dag Wieers (@dagwieers)

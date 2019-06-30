@@ -68,7 +68,7 @@ options:
     type: bool
   is_dynamically_scalable:
     description:
-      - Register the template having XS/VMWare tools installed in order to support dynamic scaling of VM CPU/memory.
+      - Register the template having XS/VMware tools installed in order to support dynamic scaling of VM CPU/memory.
       - Only used if I(state) is C(present).
     type: bool
   cross_zones:

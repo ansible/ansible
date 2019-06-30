@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: vmware_cluster_facts
 short_description: Gather facts about clusters available in given vCenter
 description:
-    - This module can be used to gather facts about clusters in VMWare infrastructure.
+    - This module can be used to gather facts about clusters in VMware infrastructure.
     - All values and VMware object names are case sensitive.
 version_added: '2.6'
 author:

@@ -265,9 +265,9 @@
     that:
       - "result is changed"
 
-- name: Create a valid VMWare credential
+- name: Create a valid VMware credential
   tower_credential:
-    name: VMWare Credential
+    name: VMware Credential
     organization: Default
     state: present
     kind: vmware
@@ -280,9 +280,9 @@
     that:
       - "result is changed"
 
-- name: Delete an VMWare credential
+- name: Delete an VMware credential
   tower_credential:
-    name: VMWare Credential
+    name: VMware Credential
     organization: Default
     state: absent
     kind: vmware
