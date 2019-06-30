@@ -84,7 +84,7 @@ options:
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
   use_instance_uuid:
     description:
-    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: no
     type: bool
     version_added: '2.8'
@@ -598,7 +598,7 @@ from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs
 
 
 class PyVmomiDeviceHelper(object):
-    """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
+    """ This class is a helper to create easily VMware Objects for PyVmomiHelper """
 
     def __init__(self, module):
         self.module = module
@@ -1333,7 +1333,7 @@ class PyVmomiHelper(PyVmomi):
                                               "The failing new MAC address is %s" % nic.device.macAddress)
 
             else:
-                # Default device type is vmxnet3, VMWare best practice
+                # Default device type is vmxnet3, VMware best practice
                 device_type = network_devices[key].get('device_type', 'vmxnet3')
                 nic = self.device_helper.create_nic(device_type,
                                                     'Network Adapter %s' % (key + 1),
@@ -1872,7 +1872,7 @@ class PyVmomiHelper(PyVmomi):
                 pass
 
             kb = self.get_configured_disk_size(expected_disk_spec)
-            # VMWare doesn't allow to reduce disk sizes
+            # VMware doesn't allow to reduce disk sizes
             if kb < diskspec.device.capacityInKB:
                 self.module.fail_json(
                     msg="Given disk size is smaller than found (%d < %d). Reducing disks is not allowed." %
@@ -2383,7 +2383,7 @@ class PyVmomiHelper(PyVmomi):
                 if task.info.state == 'error':
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}
 
-        # Only send VMWare task if we see a modification
+        # Only send VMware task if we see a modification
         if self.change_detected:
             task = None
             try:
@@ -2441,7 +2441,7 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Failed to convert template to virtual machine"
                                           " due to generic error : %s" % to_native(generic_exc))
 
-            # Automatically update VMWare UUID when converting template to VM.
+            # Automatically update VMware UUID when converting template to VM.
             # This avoids an interactive prompt during VM startup.
             uuid_action = [x for x in self.current_vm_obj.config.extraConfig if x.key == "uuid.action"]
             if not uuid_action:

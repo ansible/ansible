@@ -77,7 +77,7 @@ EXAMPLES = '''
     mtu: 9000
   delegate_to: localhost
 
-- name: Add a VMWare vSwitch without any physical NIC attached
+- name: Add a VMware vSwitch without any physical NIC attached
   vmware_vswitch:
     hostname: '{{ esxi_hostname }}'
     username: '{{ esxi_username }}'
@@ -86,7 +86,7 @@ EXAMPLES = '''
     mtu: 9000
   delegate_to: localhost
 
-- name: Add a VMWare vSwitch with multiple NICs
+- name: Add a VMware vSwitch with multiple NICs
   vmware_vswitch:
     hostname: '{{ esxi_hostname }}'
     username: '{{ esxi_username }}'

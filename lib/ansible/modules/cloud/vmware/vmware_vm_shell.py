@@ -238,7 +238,7 @@ class VMwareShellManager(PyVmomi):
 
         tools_status = vm.guest.toolsStatus
         if tools_status in ['toolsNotInstalled', 'toolsNotRunning']:
-            self.module.fail_json(msg="VMWareTools is not installed or is not running in the guest."
+            self.module.fail_json(msg="VMwareTools is not installed or is not running in the guest."
                                       " VMware Tools are necessary to run this module.")
 
         try:
