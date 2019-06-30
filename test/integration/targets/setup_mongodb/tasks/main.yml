@@ -145,10 +145,33 @@
   when: ansible_os_family == "RedHat"
 # EOF Redhat
 
+- name: Install debian_packages
+  apt:
+    name: "{{ debian_packages_py2 }}"
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_distribution_version == "16.04"
+  notify: Remove debian_packages_py2
+
+- name: Install debian_packages
+  apt:
+    name: "{{ debian_packages_py36 }}"
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_distribution_version == "18.04"
+  notify: Remove debian_packages_py36
+
+- name: Install redhat_packages
+  yum:
+    name: "{{ redhat_packages }}"
+  when: ansible_os_family == "RedHat"
+  notify: Remove redhat_packages
+
 - name: Install pip packages
   pip:
-    name: "{{ item }}"
+    name: "{{ pip_packages }}"
     state: present
-  with_items:
-    - requests[security]
-    - pymongo
+
+#- name: Install python pip_packages
+#  command: "python -m pip install {{ item }}"
+#  with_items: "{{ pip_packages }}"

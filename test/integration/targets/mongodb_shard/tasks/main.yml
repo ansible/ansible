@@ -301,18 +301,16 @@
 - name: Murder all mongod processes
   shell: pkill -{{ kill_signal }} mongod || true;
 
-- name: Ensure mongod instances have drained
+- name: Getting pids for mongod
+  pids:
+      name: mongod
+  register: pids_of_mongod
+
+- name: Wait for all mongod processes to exit
   wait_for:
-    host: localhost
-    port: "{{ item }}"
-    state: drained
-  with_items:
-    - 3001
-    - 3002
-    - 3003
-    - 3004
-    - 3005
-    - 3006
+    path: "/proc/{{ item }}/status"
+    state: absent
+  with_items: "{{ pids_of_mongod }}"
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"

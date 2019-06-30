@@ -2,15 +2,16 @@
   command: pkill  -{{ kill_signal }} mongod
   ignore_errors: true
 
-- name: Ensure mongod instances have drained
+- name: Getting pids for mongod
+  pids:
+      name: mongod
+  register: pids_of_mongod
+
+- name: Wait for all mongod processes to exit
   wait_for:
-    host: localhost
-    port: "{{ item }}"
-    state: drained
-  with_items:
-    - 3001
-    - 3002
-    - 3003
+    path: "/proc/{{ item }}/status"
+    state: absent
+  with_items: "{{ pids_of_mongod }}"
 
 - name: Remove all mongod folders
   file:

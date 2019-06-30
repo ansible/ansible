@@ -23,3 +23,23 @@ yum:
   gpgkey: https://www.mongodb.org/static/pgp/server-{{mongodb_version}}.asc
   redhat8url: https://repo.mongodb.org/yum/redhat/7/mongodb-org/{{mongodb_version}}/x86_64/
   fedoraurl: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/{{mongodb_version}}/x86_64/
+
+debian_packages_py2:
+  - python-dev
+  - python-setuptools
+  - python-pip
+
+debian_packages_py36:
+  - python3.6-dev
+  - python3-setuptools
+  - python3-pip
+
+redhat_packages:
+  - python-devel
+  - python-setuptools
+  - python-pip
+
+pip_packages:
+  - psutil
+  - requests[security]
+  - pymongo
