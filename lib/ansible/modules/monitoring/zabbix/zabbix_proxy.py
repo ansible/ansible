@@ -126,6 +126,7 @@ RETURN = ''' # '''
 
 
 import traceback
+import atexit
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 try:
@@ -157,7 +158,6 @@ class Proxy(object):
     def add_proxy(self, data):
         try:
             if self._module.check_mode:
-                self._zapi.logout()
                 self._module.exit_json(changed=True)
 
             parameters = {}
@@ -166,29 +166,24 @@ class Proxy(object):
                     parameters[item] = data[item]
 
             proxy_ids_list = self._zapi.proxy.create(parameters)
-            self._zapi.logout()
             self._module.exit_json(changed=True,
                                    result="Successfully added proxy %s (%s)" %
                                           (data['host'], data['status']))
             if len(proxy_ids_list) >= 1:
                 return proxy_ids_list['proxyids'][0]
         except Exception as e:
-            self._zapi.logout()
             self._module.fail_json(msg="Failed to create proxy %s: %s" %
                                    (data['host'], e))
 
     def delete_proxy(self, proxy_id, proxy_name):
         try:
             if self._module.check_mode:
-                self._zapi.logout()
                 self._module.exit_json(changed=True)
             self._zapi.proxy.delete([proxy_id])
-            self._zapi.logout()
             self._module.exit_json(changed=True,
                                    result="Successfully deleted"
                                           + " proxy %s" % proxy_name)
         except Exception as e:
-            self._zapi.logout()
             self._module.fail_json(msg="Failed to delete proxy %s: %s" %
                                        (proxy_name, str(e)))
 
@@ -210,7 +205,6 @@ class Proxy(object):
     def update_proxy(self, proxy_id, data):
         try:
             if self._module.check_mode:
-                self._zapi.logout()
                 self._module.exit_json(changed=True)
             parameters = {'proxyid': proxy_id}
 
@@ -229,17 +223,14 @@ class Proxy(object):
 
             if len(parameters) > 1:
                 self._zapi.proxy.update(parameters)
-                self._zapi.logout()
                 self._module.exit_json(
                     changed=True,
                     result="Successfully updated proxy %s (%s)" %
                            (data['host'], proxy_id)
                 )
             else:
-                self._zapi.logout()
                 self._module.exit_json(changed=False)
         except Exception as e:
-            self._zapi.logout()
             self._module.fail_json(msg="Failed to update proxy %s: %s" %
                                        (data['host'], e))
 
@@ -319,6 +310,7 @@ def main():
                         passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
