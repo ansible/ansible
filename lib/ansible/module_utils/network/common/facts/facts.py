@@ -23,7 +23,7 @@ class FactsBase(object):
         self._connection = get_resource_connection(module)
 
         self.ansible_facts = {'ansible_network_resources': {}}
-        self.ansible_facts['ansible_gather_network_resources'] = list()
+        self.ansible_facts['ansible_net_gather_network_resources'] = list()
         self.ansible_facts['ansible_net_gather_subset'] = list()
 
         if not self._gather_subset:
@@ -65,7 +65,8 @@ class FactsBase(object):
                 exclude = False
 
             if subset not in valid_subsets:
-                self._module.fail_json(msg='Bad subset')
+                self._module.fail_json(msg='Subset must be one of [%s], got %s' %
+                                           (', '.join(sorted([subset for subset in valid_subsets])), subset))
 
             if exclude:
                 exclude_subsets.add(subset)
