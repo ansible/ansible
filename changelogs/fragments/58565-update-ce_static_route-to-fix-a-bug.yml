@@ -1,0 +1,7 @@
+bugfixes:
+  - ce_static_route 
+    The IPv6 binary system has a length of 128 bits and is grouped by 16 bits.
+    Each group is separated by a colon ":" and can be divided into 8 groups, each group being represented by 4 hexadecimal.
+    You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once.
+    Divisible compatible with Python2 and Python3.
+    To find all elements, Data root node that is taged 'data' should be removed.(https://github.com/ansible/ansible/pull/58251)
