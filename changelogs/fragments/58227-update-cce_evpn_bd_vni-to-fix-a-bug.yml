@@ -1,2 +1,2 @@
 bugfixes:
-  - ce_evpn_bd_vni: modify xml function to find data.(https://github.com/ansible/ansible/pull/58227)
+  - ce_evpn_bd_vni - modify xml function to find data.(https://github.com/ansible/ansible/pull/58227)
