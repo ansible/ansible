@@ -168,7 +168,7 @@
   when:
     - ansible_os_family == "RedHat"
     - ansible_distribution_version|float < 8
-    - not (ansible_os_family == "RedHat" and ansible_distribution_version == "7.4")
+    - not (ansible_os_family == "RedHat" and ansible_distribution_version|float < 8)
   notify: Remove redhat_packages_py2
 
 - name: Install redhat_packages_py3
