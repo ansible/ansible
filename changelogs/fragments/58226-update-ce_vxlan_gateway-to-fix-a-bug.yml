@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_vxlan_gateway: update the regular expression to match the more.(https://github.com/ansible/ansible/pull/58226)
