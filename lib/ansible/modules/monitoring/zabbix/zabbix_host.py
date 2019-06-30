@@ -276,6 +276,7 @@ EXAMPLES = '''
 '''
 
 
+import atexit
 import copy
 import traceback
 
