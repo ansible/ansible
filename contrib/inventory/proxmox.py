@@ -78,7 +78,7 @@ class ProxmoxPoolList(list):
 
 class ProxmoxPool(dict):
     def get_members_name(self):
-        return [member['name'] for member in self['members'] if member['type'] == 'qemu' and member['template'] != 1]
+        return [member['name'] for member in self['members'] if (member['type'] == 'qemu' or member['type'] == 'lxc') and member['template'] != 1]
 
 
 class ProxmoxAPI(object):
@@ -98,14 +98,14 @@ class ProxmoxAPI(object):
 
         request_params = urlencode({
             'username': self.options.username,
-            'password': self.options.password,
+            'password': self.options.password
         })
 
         data = json.load(open_url(request_path, data=request_params))
 
         self.credentials = {
             'ticket': data['data']['ticket'],
-            'CSRFPreventionToken': data['data']['CSRFPreventionToken'],
+            'CSRFPreventionToken': data['data']['CSRFPreventionToken']
         }
 
     def get(self, url, data=None):
