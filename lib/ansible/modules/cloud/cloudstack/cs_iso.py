@@ -53,7 +53,7 @@ options:
     type: bool
   is_dynamically_scalable:
     description:
-      - Register the ISO having XS/VMWare tools installed inorder to support dynamic scaling of VM cpu/memory. Only used if I(state) is present.
+      - Register the ISO having XS/VMware tools installed inorder to support dynamic scaling of VM cpu/memory. Only used if I(state) is present.
     type: bool
   checksum:
     description:

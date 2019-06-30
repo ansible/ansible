@@ -20,7 +20,7 @@ module: vmware_guest_tools_upgrade
 short_description: Module to upgrade VMTools
 version_added: 2.8
 description:
-    - This module upgrades the VMWare Tools on Windows and Linux guests.
+    - This module upgrades the VMware Tools on Windows and Linux guests.
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -66,7 +66,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Upgrade VMWare Tools
+- name: Upgrade VMware Tools
   vmware_guest_tools_upgrade:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -134,7 +134,7 @@ class PyVmomiHelper(PyVmomi):
         else:
             result.update(
                 failed=True,
-                msg="VMWare tools could not be upgraded",
+                msg="VMware tools could not be upgraded",
             )
             return result
 
