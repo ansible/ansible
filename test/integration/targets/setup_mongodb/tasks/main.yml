@@ -162,6 +162,12 @@
     - ansible_distribution_version == "18.04"
   notify: Remove debian_packages_py36
 
+- name: Ensure epel is available
+  yum:
+    name: epel-release
+  when:
+    - ansible_os_family == "RedHat"
+
 - name: Install redhat_packages_py2
   yum:
     name: "{{ redhat_packages_py2 }}"
