@@ -46,16 +46,16 @@ testcase_module_params = {
 
 
 @pytest.mark.parametrize('patch_ansible_module', testcase_module_params['params'], ids=testcase_module_params['ids'], indirect=True)
-def test_xenserver_guest_facts(mocker, capfd, XenAPI, xenserver_guest_facts):
+def test_xenserver_guest_info(mocker, capfd, XenAPI, xenserver_guest_info):
     """
     Tests regular module invocation including parsing and propagation of
     module params and module output.
     """
     fake_vm_facts = {"fake-vm-fact": True}
 
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_facts.get_object_ref', return_value=None)
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_facts.gather_vm_params', return_value=None)
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_facts.gather_vm_facts', return_value=fake_vm_facts)
+    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_info.get_object_ref', return_value=None)
+    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_info.gather_vm_params', return_value=None)
+    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_info.gather_vm_facts', return_value=fake_vm_facts)
 
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
@@ -69,7 +69,7 @@ def test_xenserver_guest_facts(mocker, capfd, XenAPI, xenserver_guest_facts):
     mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
 
     with pytest.raises(SystemExit):
-        xenserver_guest_facts.main()
+        xenserver_guest_info.main()
 
     out, err = capfd.readouterr()
     result = json.loads(out)
