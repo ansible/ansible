@@ -437,6 +437,9 @@ msg:
     sample: 'Action Deleted: Register webservers, ID: 0001'
 '''
 
+
+import atexit
+
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
@@ -1996,6 +1999,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user,
                         passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

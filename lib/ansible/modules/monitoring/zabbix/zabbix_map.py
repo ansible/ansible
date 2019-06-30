@@ -172,6 +172,8 @@ ANSIBLE_METADATA = {
     'status': ['preview']
 }
 
+
+import atexit
 import base64
 from io import BytesIO
 from operator import itemgetter
@@ -784,6 +786,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

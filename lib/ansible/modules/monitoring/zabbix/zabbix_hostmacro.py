@@ -71,6 +71,9 @@ EXAMPLES = '''
     state: present
 '''
 
+
+import atexit
+
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
@@ -196,6 +199,7 @@ def main():
         zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                                validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
