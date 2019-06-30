@@ -13,8 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: xenserver_guest_facts
-short_description: Gathers facts for virtual machines running on Citrix XenServer host or pool
+module: xenserver_guest_info
+short_description: Gathers information for virtual machines running on Citrix XenServer host or pool
 description: >
    This module can be used to gather essential VM facts.
 version_added: '2.8'
@@ -30,6 +30,7 @@ notes:
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
    which requires XenAPI library from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
+- This module was called C(xenserver_guest_facts) before Ansible 2.9. The usage did not change.
 requirements:
 - python >= 2.6
 - XenAPI
@@ -53,7 +54,7 @@ extends_documentation_fragment: xenserver.documentation
 
 EXAMPLES = r'''
 - name: Gather facts
-  xenserver_guest_facts:
+  xenserver_guest_info:
     hostname: "{{ xenserver_hostname }}"
     username: "{{ xenserver_username }}"
     password: "{{ xenserver_password }}"
@@ -205,6 +206,8 @@ def main():
                                ['name', 'uuid'],
                            ],
                            )
+    if module._name == 'xenserver_guest_facts':
+        module.deprecate("The 'xenserver_guest_facts' module has been renamed to 'xenserver_guest_info'", version='2.13')
 
     result = {'failed': False, 'changed': False}
 
