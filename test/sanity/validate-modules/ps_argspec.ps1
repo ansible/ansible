@@ -52,6 +52,7 @@ $powershell = [PowerShell]::Create()
 $powershell.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 
 # Load the PowerShell module utils as the module may be using them to refer to shared module options
+# FUTURE: Lookup utils in the role or collection's module_utils dir based on #AnsibleRequires
 $script_requirements = [ScriptBlock]::Create($module_code).Ast.ScriptRequirements
 $required_modules = @()
 if ($null -ne $script_requirements) {
@@ -62,7 +63,6 @@ foreach ($required_module in $required_modules) {
         continue
     }
 
-    # FUTURE: Lookup utils in the role or collection's module_utils dir.
     $module_util_path = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($module_path, '..', '..', '..',
         'module_utils', 'powershell', "$($required_module.Name).psm1"))
     if (-not (Test-Path -LiteralPath $module_util_path -PathType Leaf)) {
