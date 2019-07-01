@@ -84,6 +84,10 @@ ansible_net_python_version:
   description: The Python version Ansible controller is using
   returned: always
   type: str
+ansible_net_model:
+  description: The model name returned from the device
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
