@@ -33,6 +33,7 @@ options:
     description:
     - the name of the data vserver to use.
     required: true
+    type: str
 '''
 
 EXAMPLES = """
