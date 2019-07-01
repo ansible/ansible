@@ -138,6 +138,44 @@
   assert:
     that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout or 'digests signatures OK' in sl_check.stdout"
 
+- name: Issue 20325 - Verify fingerprint of key, invalid fingerprint - EXPECTED FAILURE
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111
+  register: result
+  failed_when: result is success
+
+- name: Issue 20325 - Assert Verify fingerprint of key, invalid fingerprint
+  assert:
+    that:
+       - result is success
+       - result is not changed
+       - "'does not match the key fingerprint' in result.msg"
+
+- name: Issue 20325 - Verify fingerprint of key, valid fingerprint
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
+  register: result
+
+- name: Issue 20325 - Assert Verify fingerprint of key, valid fingerprint
+  assert:
+    that:
+      - result is success
+      - result is changed
+
+- name: Issue 20325 - Verify fingerprint of key, valid fingerprint - Idempotent check
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
+  register: result
+
+- name: Issue 20325 - Assert Verify fingerprint of key, valid fingerprint - Idempotent check
+  assert:
+    that:
+      - result is success
+      - result is not changed
+
 #
 # Cleanup
 #
