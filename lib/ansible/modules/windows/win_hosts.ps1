@@ -13,7 +13,7 @@ $spec = @{
         state = @{ type = "str"; choices = "absent", "present"; default = "present" }
         aliases = @{ type = "list"; elements = "str" }
         canonical_name = @{ type = "str" }
-        ip_address = @{ type = "str"; default = "" }
+        ip_address = @{ type = "str" }
         action = @{ type = "str"; choices = "add", "remove", "set"; default = "set" }
     }
     required_if = @(,@( "state", "present", @("canonical_name", "ip_address")))
