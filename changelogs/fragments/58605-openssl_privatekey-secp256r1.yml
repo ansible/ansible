@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_privatekey - ``secp256r1`` got accidentally forgotten in the curve list."
