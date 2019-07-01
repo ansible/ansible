@@ -1,77 +1,68 @@
-.. contents:: Topics
+.. _connection_precedence_rules:
 
+Controlling how Ansible connects to managed nodes
+=================================================
 
-How Ansible resolves configuration, data and keywords
-=====================================================
+To give you maximum flexibility in managing your environments, Ansible supports many ways to specify connection information.
+If you use Ansible to manage a large number of servers, network devices, and cloud resources, you may define connection details for managed nodes in several different places and pass them to Ansible in several different ways.
+This flexibility is convenient, but it can backfire if you do not understand the precedence rules and how to override them.
 
-Ansible has many ways to specify certain information, especially when dealing with 'connections'
-as this information can be very sensitive to different factors and users have many different contexts to
-deal with.
+.. contents::
+   :local:
 
-This design allows Ansible to deal with heterogeneous environments, that is, when a host or group of hosts have different 'connection' information than the others and should always be accessed in this way.
-You are not required to use the variables, but most people do out of convenience and then can get confused by their 'high precedence' and how to override them.
+Precedence categories
+---------------------
 
-In general the precedence is simple - the higher precedence overwrites the lower ones. When things are defined in the same precedence category, 'last defined' wins and overwrites previous definitions.
-this is the most general list, from least to most:
+Ansible supports five categories of connection information. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
 
-   Configuration
-   Command Line options
-   Playbooks
+   Configuration settings
+   Command-line options
+   Playbook keywords
    Connection variables
+   ``-e`` extra variables
 
-Some of these entries are not self evident and others also have their own internal levels and precedence, see them expanded below.
+Each category overrides any information from all lower-precedence categories. For example, a playbook keyword will override any configuration setting.
 
+Within each precedence category, specific rules apply. However, generally speaking, 'last defined' wins and overrides any previous definitions.
 
-.. _what_is_configuration:
+Configuration settings
+----------------------
 
-Configuration
-`````````````
+Configuration settings include both values from the ``ansible.cfg`` file and environment variables. Within this category, values set in configuration files have lower precedence. Ansible uses the first ``ansible.cfg`` file it finds, looking in these locations in order:
 
-This mainly reffers to 2 things, 'the ansible configuration file' and environment variables. The internal precedence is as follows (from least to most):
+   #. the file specified by the value of ``ANSIBLE_CONFIG``
+   #. config in the current working directory: `./ansible.cfg`
+   #. config in the current user's home directory: `~/.ansible.cfg`
+   #. global config: `/etc/ansible/ansible.cfg`
 
-   configuration file (only first found used, they don't merge)
-   "value of ANSIBLE_CONFIG"
-   `./ansible.cfg`
-   `~/.ansible.cfg`
-   `/etc/ansible/ansible.cfg`
-
-- environment variable (this just follows normal shell precedence, last time defined overwrites previous values)
+Environment variables have a higher precedence than entries in ``ansible.cfg``. If you have environment variables set, they override the settings in whichever ``ansible.cfg`` file Ansible loads. The value of any given environment variable follows normal shell precedence: the last value defined overwrites previous values.
 
 You can use the ``ansible-config`` command line utility to see the current value of a configuration item and where it came from.
 
+Command-line options
+--------------------
 
-.. _command_line_options_precedence:
+Any command-line option will override any configuration setting.
 
-Command line options
-`````````````````````
-
-The internal precedence is simple, but depends on the parameter used, 'last defined' wins (connects as carol, not mike)::
+At the command line, if you pass multiple values for a parameter that accepts only a single value, the 'last defined' value wins. For example, this ad-hoc task will connect as ``carol``, not as ``mike``::
 
       ansible -u mike -m ping myhost -u carol
 
-Unless the parameter allows for multiple entries and then they get appended (hosts are from inventory1 + inventory2)::
+Some parameters allow multiple values. In this case, Ansible will append all values from the hosts listed in inventory files inventory1 and inventory2)::
 
    ansible -i /path/inventory1 -i /path/inventory2 -m ping all
 
 The help for each tool specifies which parameters allow for multiple entries.
 
-Most of these options are supposed to deal with generic settings, but over time some very connection and strategy specific ones were added, they are also the main source of confusion as most of them have low precedence,
-they are mostly meant to override configuration (which does NOT include playboks, inventory nor variables).
-
-The one exception is 'extra vars' which sets variables with the highest precedence .. and since 'conneciton variables' are also the highest precedence it creates a short circut to it's own options::
-
-   ansible -u myuser -e 'ansible_user=notmyuser' -a whoami all
-
-This is the main source of confusion for people using Ansible, the above statement makes a redundant use of `-u` since it will be overriden by `ansible_user`. There is a reason for this and it has mostly to do with
-how varied different installations are, `-u` makes sense when you don't use ``ansible_user`` anywhere, it allows you to override the 'current user' or configuration entries, but once you start using variables, you need
-to keep in mind that they have high precedence making these options less useful in your context.
-
-
-.. _playbook_precedence:
+Most command-line options deal with generic settings, but some settings are specific to connections and strategies.
+Passing these options at the command-line may feel like the highest-precedence options, but command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
 
 Playbook keywords
-`````````````````
-This is probably the simplest one as it flows with the playbook itself, the more specific wins against the more general:
+-----------------
+
+Any playbook keyword will override any command-line option (but not extra variables passed at the command line with ``-e``) and any configuration setting.
+
+Within playbook keywords, precedence is probably the simplest, as it flows with the playbook itself; the more specific wins against the more general:
 
 - play (most general)
 - blocks/includes/imports/roles (optional and can contain tasks and each other)
@@ -89,20 +80,17 @@ A simple example::
          connection: paramiko
          ping:
 
-The connection keyword is set at play level, all objects inside the play inherit it, but can also override it, the example above shows us doing so in a task, but a block/role will also work,
-anything that can be contained in a play and that contains tasks itself is in the inheritance path.
+In this example, the ``connection`` keyword is set to ``ssh`` at the play level. The first task inherits that value, and connects using ``ssh``. The second task inherits that value, overrides it, and connects using ``paramiko``.
+The same logic applies to a block or role: all tasks, blocks, and roles within a play inherit play-level keywords; any task, block, or role can override any play-level keyword by defining a different value for that keyword.
 
-Just to note these are KEYWORDS, not variables, both playbooks and variable files are defined in YAML but they have different significance.
-Playbooks are the command or 'state description' strucutre for Ansible, variables are data we use to help make the playbooks more dynamic.
+Remember that these are KEYWORDS, not variables. Both playbooks and variable files are defined in YAML but they have different significance.
+Playbooks are the command or 'state description' structure for Ansible, variables are data we use to help make playbooks more dynamic.
 
-
-.. _connection_variables_flexible_confusion:
-
-Connection Variables
-````````````````````
+Connection variables
+--------------------
 
 Connection variables are 'normal variables' with specific names we have set as overrides for specific play keywords and configuration entries.
-They are still just variables, data, not keywords nor configuration items. These variables are used to override host/group specific information needed to execute the actions.
+However, they are still variables - they are data, not keywords or configuration settings. These variables override host/group specific information needed to execute the actions.
 Originally this was just 'connection parameters' but has been expanded to things like selecting the correct temporary directory to use and the correct python/ruby/powershell/etc interpreter to invoke for a module.
 
 In the end they are just variables and follow normal variable precedence. See :ref:`ansible_variable_precedence`.
@@ -133,4 +121,11 @@ These variables don't survive the playbook object they were defined in and will 
 
 And there is also a 'host scope' - variables that are directly associated with the host (also available via the `hostvars[]` dictionary). The host  scope variables are  available across plays and are  defined in inventory, vars plugins, or from modules (set_fact, include_vars).
 
-All of the above makes knowing where to define a variable and its overrides a complex subject, but only if you start using many different ways to define a variable. Normally you only use a few and just need to know the interactions between those methods.
+Using ``-e`` extra variables at the command line
+------------------------------------------------
+
+To override all other settings in all other categories, you can use extra variables: ``--extra-vars`` or ``-e`` at the command line. Values passed with ``-e`` are variables, not command-line options, and they will override command-line options as well as variables set elsewhere. For example this task will connect as ``brian`` not as ``carol``::
+
+   ansible -u carol -e 'ansible_user=brian' -a whoami all
+
+You must specify both the variable name and the value with ``--extra-vars``.
