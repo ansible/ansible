@@ -1348,8 +1348,6 @@ lib/ansible/modules/clustering/consul_acl.py E338
 lib/ansible/modules/clustering/consul_kv.py E337
 lib/ansible/modules/clustering/consul.py E322
 lib/ansible/modules/clustering/consul.py E338
-lib/ansible/modules/clustering/consul_session.py E322
-lib/ansible/modules/clustering/consul_session.py E337
 lib/ansible/modules/clustering/etcd3.py E326
 lib/ansible/modules/clustering/etcd3.py E337
 lib/ansible/modules/clustering/k8s/k8s_auth.py E337
