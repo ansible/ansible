@@ -87,13 +87,8 @@ galleries:
           description:
             - Resource tags
           returned: always
-          type: >-
-            unknown[DictionaryType
-            {"$id":"70","$type":"DictionaryType","valueType":{"$id":"71","$type":"PrimaryType","knownPrimaryType":"string","name":{"$id":"72","fixed":false,"raw":"String"},"deprecated":false},"supportsAdditionalProperties":false,"name":{"$id":"73","fixed":false},"deprecated":false}]
           sample: null
         properties:
-          description:
-            - !<tag:yaml.org,2002:js/undefined> ''
           returned: always
           type: dict
           sample: null

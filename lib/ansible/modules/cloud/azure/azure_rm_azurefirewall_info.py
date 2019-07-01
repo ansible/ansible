@@ -87,13 +87,8 @@ azure_firewalls:
           description:
             - Resource tags.
           returned: always
-          type: >-
-            unknown[DictionaryType
-            {"$id":"440","$type":"DictionaryType","valueType":{"$id":"441","$type":"PrimaryType","knownPrimaryType":"string","name":{"$id":"442","fixed":false,"raw":"String"},"deprecated":false},"supportsAdditionalProperties":false,"name":{"$id":"443","fixed":false},"deprecated":false}]
           sample: null
         properties:
-          description:
-            - !<tag:yaml.org,2002:js/undefined> ''
           returned: always
           type: dict
           sample: null
