@@ -283,6 +283,7 @@ options:
     - This will cause the client applications to crash and thus prevent access to stale data.
     - To get out of this situation, the admin needs to manually clear the 'in-nvfailed-state' on the volume's constituents.
     type: bool
+    version_added: '2.9'
 '''
 
 EXAMPLES = """
