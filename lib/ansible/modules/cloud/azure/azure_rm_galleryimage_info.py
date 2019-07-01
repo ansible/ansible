@@ -107,7 +107,11 @@ import json
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-from msrestazure.azure_exceptions import CloudError
+try:
+    from msrestazure.azure_exceptions import CloudError
+except Exception:
+    # handled in azure_rm_common
+    pass
 
 
 class AzureRMGalleryImagesInfo(AzureRMModuleBase):
@@ -157,8 +161,8 @@ class AzureRMGalleryImagesInfo(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
-            self.gallery_name is not None and
-            self.name is not None):
+                self.gallery_name is not None and
+                self.name is not None):
             # self.results['gallery_images'] = self.format_item(self.get())
             self.results['gallery_images'] = self.get()
         elif (self.resource_group is not None and

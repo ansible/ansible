@@ -24,9 +24,11 @@ options:
   resource_group:
     description:
       - The name of the resource group.
+    type: str
   name:
     description:
       - Resource name.
+    type: str
 extends_documentation_fragment:
   - azure
 author:
@@ -36,7 +38,7 @@ author:
 
 EXAMPLES = '''
 - name: List all Azure Firewalls for a given subscription
-  azure_rm_azurefirewall_info: 
+  azure_rm_azurefirewall_info:
 - name: List all Azure Firewalls for a given resource group
   azure_rm_azurefirewall_info:
     resource_group: myResourceGroup
@@ -108,8 +110,11 @@ import json
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-from msrestazure.azure_exceptions import CloudError
-
+try:
+    from msrestazure.azure_exceptions import CloudError
+except Exception:
+    # handled in azure_rm_common
+    pass
 
 class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
     def __init__(self):
@@ -147,8 +152,7 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.resource_group is not None and
-            self.name is not None):
+        if (self.resource_group is not None and self.name is not None):
             # self.results['azure_firewalls'] = self.format_item(self.get())
             self.results['azure_firewalls'] = self.get()
         elif (self.resource_group is not None):

@@ -24,22 +24,26 @@ options:
   resource_group:
     description:
       - The name of the resource group.
+    type: str
     required: true
   gallery_name:
     description:
       - >-
         The name of the Shared Image Gallery in which the Image Definition
         resides.
+    type: str
     required: true
   gallery_image_name:
     description:
       - >-
         The name of the gallery Image Definition in which the Image Version
         resides.
+    type: str
     required: true
   name:
     description:
       - Resource name
+    type: str
 extends_documentation_fragment:
   - azure
 author:
@@ -121,7 +125,11 @@ import json
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-from msrestazure.azure_exceptions import CloudError
+try:
+    from msrestazure.azure_exceptions import CloudError
+except Exception:
+    # handled in azure_rm_common
+    pass
 
 
 class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
@@ -176,9 +184,9 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.resource_group is not None and
-            self.gallery_name is not None and
-            self.gallery_image_name is not None and
-            self.name is not None):
+                self.gallery_name is not None and
+                self.gallery_image_name is not None and
+                self.name is not None):
             # self.results['gallery_image_versions'] = self.format_item(self.get())
             self.results['gallery_image_versions'] = self.get()
         elif (self.resource_group is not None and
