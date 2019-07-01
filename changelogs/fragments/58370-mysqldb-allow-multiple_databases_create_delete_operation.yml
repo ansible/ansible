@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_db now supports creation and deletion of multiple databases (https://github.com/ansible/ansible/issues/58370)
