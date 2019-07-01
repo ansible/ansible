@@ -15,6 +15,7 @@
   wait_for:
     path: "/proc/{{ item }}/status"
     state: absent
+    delay: 1
   with_items: "{{ pids_of_mongod }}"
 
 - name: Remove all mongod folders
