@@ -212,7 +212,7 @@ state:
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/clh0003"
         location:
             description:
-                - Valid Azure location. defaults to location of the resource group.
+                - Valid Azure location. Defaults to location of the resource group.
             returned: always
             type: str
             sample: eastus2
@@ -253,7 +253,7 @@ state:
             sample: Testing
         secondary_endpoints:
             description:
-                - The URLs retrieve the public I(blob), I(queue), or I(table) object from the secondary location.
+                - The URLs to retrieve the public I(blob), I(queue), or I(table) object from the secondary location.
             returned: always
             type: dict
             sample: {
@@ -269,13 +269,13 @@ state:
             sample: centralus
         status_of_primary:
             description:
-                - The status of the primary location of the storage account is C(available) or C(unavailable).
+                - The status of the primary location of the storage account; either C(available) or C(unavailable).
             returned: always
             type: str
             sample: available
         status_of_secondary:
             description:
-                - The status of the secondary location of the storage account is C(available) or C(unavailable).
+                - The status of the secondary location of the storage account; either C(available) or C(unavailable).
             returned: always
             type: str
             sample: available

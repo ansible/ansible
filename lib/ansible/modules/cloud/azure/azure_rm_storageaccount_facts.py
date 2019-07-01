@@ -189,13 +189,13 @@ storageaccounts:
             sample: westus
         status_of_primary:
             description:
-                - Status of the primary location of the storage account. Possible values are C(available) or C(unavailable).
+                - Status of the primary location of the storage account; either C(available) or C(unavailable).
             returned: always
             type: str
             sample: available
         status_of_secondary:
             description:
-                - Status of the secondary location of the storage account. Possible values are C(available) or C(unavailable).
+                - Status of the secondary location of the storage account; either C(available) or C(unavailable).
             returned: always
             type: str
             sample: available
@@ -274,7 +274,7 @@ storageaccounts:
                     sample: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         secondary_endpoints:
             description:
-                - The URLs that are used to perform a retrieval of a public I(blob), I(queue), or I(table) object from the secondary location.
+                - The URLs to retrieve a public I(blob), I(queue), or I(table) object from the secondary location.
                 - Only available if the SKU I(name=Standard_RAGRS).
             returned: always
             type: complex
