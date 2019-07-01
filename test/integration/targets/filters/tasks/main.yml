@@ -354,8 +354,9 @@
     - assert:
         that:
           - "combined.key2 == 'is_defined'"
-- name: Test OpenBSD bcrypt algorithm
+
+- name: Test OpenBSD bcrypt algorithm (#54071)
   assert:
     that:
-      "algotithms['bcrypt'] == algo(crypt_id='2b', salt_size=22, implicit_rounds=None)"
-  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import platform; print(platform.system)\"')  is "OpenBSD" ) }}"
+      - "'{{ 'sample' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912unE0GeDfx0eAsIsscM2jcQtjpIY2LVuy'"
+      - "'{{ 'café' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912uDZsaKh/j7qZkKps5QEOGP4UfpxNa56S'"
