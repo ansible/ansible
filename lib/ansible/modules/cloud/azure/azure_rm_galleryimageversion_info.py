@@ -112,6 +112,7 @@ gallery_image_versions:
           description:
             - Resource tags
           returned: always
+          type: dict
           sample: null
         properties:
           returned: always

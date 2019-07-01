@@ -89,6 +89,7 @@ galleries:
           description:
             - Resource tags
           returned: always
+          type: dict
           sample: null
         properties:
           returned: always

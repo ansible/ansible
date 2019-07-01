@@ -24,16 +24,19 @@ options:
   resource_group:
     description:
       - The name of the resource group.
+    type: str
     required: true
   gallery_name:
     description:
       - >-
         The name of the Shared Image Gallery from which the Image Definitions
         are to be retrieved.
+    type: str
     required: true
   name:
     description:
       - Resource name
+    type: str
 extends_documentation_fragment:
   - azure
 author:
@@ -94,6 +97,7 @@ gallery_images:
           description:
             - Resource tags
           returned: always
+          type: dict
           sample: null
         properties:
           returned: always
