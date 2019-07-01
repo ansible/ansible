@@ -67,6 +67,9 @@
     - curve: secp192r1
       openssl_name: prime192v1
       min_cryptography_version: "0.5"
+    - curve: secp256r1
+      openssl_name: secp256r1
+      min_cryptography_version: "0.5"
     - curve: secp256k1
       openssl_name: secp256k1
       min_cryptography_version: "0.9"
