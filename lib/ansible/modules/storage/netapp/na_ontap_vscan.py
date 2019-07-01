@@ -84,7 +84,7 @@ class NetAppOntapVscan(object):
         self.parameters = self.na_helper.set_parameters(self.module.params)
 
         # API should be used for ONTAP 9.6 or higher, Zapi for lower version
-        self.restApi = OntapRestAPI(self.parameters['username'], self.parameters['password'], self.parameters['hostname'], self.parameters['validate_certs'])
+        self.restApi = OntapRestAPI(self.module)
         if self.restApi.is_rest():
             self.use_rest = True
         else:
@@ -95,12 +95,12 @@ class NetAppOntapVscan(object):
 
     def get_vscan(self):
         if self.use_rest:
-            params = {'fields': '*',
+            params = {'fields': 'svm,enabled',
                       "svm.name": self.parameters['vserver']}
             api = "protocols/vscan"
-            message = self.restApi.get(api, params)
-            if message.get('error'):
-                self.module.fail_json(msg="%s" % message)
+            message, error = self.restApi.get(api, params)
+            if error:
+                self.module.fail_json(msg=error)
             return message['records'][0]
         else:
             vscan_status_iter = netapp_utils.zapi.NaElement('vscan-status-get-iter')
@@ -123,15 +123,15 @@ class NetAppOntapVscan(object):
             params = {"svm.name": self.parameters['vserver']}
             data = {"enabled": self.parameters['enable']}
             api = "protocols/vscan/" + uuid
-            message = self.restApi.patch(api, data, params)
-            if message.get('error'):
-                self.module.fail_json(msg="%s" % message)
-            return message
+            message, error = self.restApi.patch(api, data, params)
+            if error is not None:
+                self.module.fail_json(msg=error)
+                # self.module.fail_json(msg=repr(self.restApi.errors), log=repr(self.restApi.debug_logs))
         else:
             vscan_status_obj = netapp_utils.zapi.NaElement("vscan-status-modify")
             vscan_status_obj.add_new_child('is-vscan-enabled', str(self.parameters['enable']))
             try:
-                result = self.server.invoke_successfully(vscan_status_obj, True)
+                self.server.invoke_successfully(vscan_status_obj, True)
             except netapp_utils.zapi.NaApiError as error:
                 self.module.fail_json(msg="Error Enable/Disabling Vscan: %s" % to_native(error), exception=traceback.format_exc())
 
@@ -140,18 +140,29 @@ class NetAppOntapVscan(object):
             # TODO: logging for Rest
             return
         else:
-            netapp_utils.ems_log_event("na_ontap_volume_autosize", self.server)
+            # Either we are using ZAPI, or REST failed when it should not
+            try:
+                netapp_utils.ems_log_event("na_ontap_vscan", self.server)
+            except Exception:
+                # TODO: we may fail to connect to REST or ZAPI, the line below shows REST issues only
+                # self.module.fail_json(msg=repr(self.restApi.errors), log=repr(self.restApi.debug_logs))
+                pass
 
     def apply(self):
+        changed = False
         self.asup_log()
         current = self.get_vscan()
         if self.use_rest:
             if current['enabled'] != self.parameters['enable']:
-                self.enable_vscan(current['svm']['uuid'])
+                if not self.module.check_mode:
+                    self.enable_vscan(current['svm']['uuid'])
+                changed = True
         else:
-            if current.get_child_by_name('is-vscan-enabled') != str(self.parameters['enable']).lower():
-                self.enable_vscan()
-        self.module.exit_json(changed=self.na_helper.changed)
+            if current.get_child_content('is-vscan-enabled') != str(self.parameters['enable']).lower():
+                if not self.module.check_mode:
+                    self.enable_vscan()
+                changed = True
+        self.module.exit_json(changed=changed)
 
 
 def main():

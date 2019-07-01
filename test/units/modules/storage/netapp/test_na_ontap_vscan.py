@@ -21,6 +21,20 @@ if not netapp_utils.has_netapp_lib():
 HAS_NETAPP_ZAPI_MSG = "pip install netapp_lib is required"
 
 
+# REST API canned responses when mocking send_request
+SRR = {
+    # common responses
+    'is_rest': (200, None),
+    'is_zapi': (400, "Unreachable"),
+    'empty_good': ({}, None),
+    'end_of_sequence': (None, "Ooops, the UT needs one more SRR response"),
+    'generic_error': (None, "Expected error"),
+    # module specific responses
+    'enabled': ({'records': [{'enabled': True, 'svm': {'uuid': 'testuuid'}}]}, None),
+    'disabled': ({'records': [{'enabled': False, 'svm': {'uuid': 'testuuid'}}]}, None),
+}
+
+
 def set_module_args(args):
     """prepare arguments so that they will be picked up during module creation"""
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
@@ -63,16 +77,16 @@ class MockONTAPConnection(object):
     def invoke_successfully(self, xml, enable_tunneling):  # pylint: disable=unused-argument
         ''' mock invoke_successfully returning xml data '''
         self.xml_in = xml
-        if self.kind == 'vscan':
-            xml = self.build_access_policy_info(self.params)
+        if self.kind == 'enable':
+            xml = self.build_vscan_status_info(self.params)
         self.xml_out = xml
         return xml
 
     @staticmethod
-    def build_access_policy_info(policy_details):
+    def build_vscan_status_info(status):
         xml = netapp_utils.zapi.NaElement('xml')
         attributes = {'num-records': 1,
-                      'attributes-list': {'vscan-on-access-policy-info': {'policy-name': policy_details['policy_name']}}}
+                      'attributes-list': {'vscan-status-info': {'is-vscan-enabled': status}}}
         xml.translate_struct(attributes)
         return xml
 
@@ -86,26 +100,24 @@ class TestMyModule(unittest.TestCase):
                                                  fail_json=fail_json)
         self.mock_module_helper.start()
         self.addCleanup(self.mock_module_helper.stop)
-        self.mock_vscan = {
-            'enable': 'False',
-            'vserver': 'test_vserver',
-        }
 
     def mock_args(self):
         return {
-            'enable': self.mock_vscan['enable'],
-            'vserver': self.mock_vscan['vserver'],
+            'enable': False,
+            'vserver': 'vserver',
             'hostname': 'test',
             'username': 'test_user',
             'password': 'test_pass!'
         }
 
-    def get_vscan_mock_object(self, kind=None):
+    def get_vscan_mock_object(self, type='zapi', kind=None, status=None):
         vscan_obj = vscan_module()
-        if kind is None:
-            vscan_obj.server = MockONTAPConnection()
-        else:
-            vscan_obj.server = MockONTAPConnection(kind='vscan', data=self.mock_vscan)
+        if type == 'zapi':
+            if kind is None:
+                vscan_obj.server = MockONTAPConnection()
+            else:
+                vscan_obj.server = MockONTAPConnection(kind=kind, data=status)
+        # For rest, mocking is achieved through side_effect
         return vscan_obj
 
     def test_module_fail_when_required_args_missing(self):
@@ -117,8 +129,103 @@ class TestMyModule(unittest.TestCase):
 
     def test_successfully_enable(self):
         data = self.mock_args()
-        data['enable'] = 'True'
+        data['enable'] = True
         set_module_args(data)
         with pytest.raises(AnsibleExitJson) as exc:
-            self.get_vscan_mock_object().apply()
+            self.get_vscan_mock_object('zapi', 'enable', 'false').apply()
+        assert exc.value.args[0]['changed']
+
+    def test_idempotently_enable(self):
+        data = self.mock_args()
+        data['enable'] = True
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object('zapi', 'enable', 'true').apply()
+        assert not exc.value.args[0]['changed']
+
+    def test_successfully_disable(self):
+        data = self.mock_args()
+        data['enable'] = False
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object('zapi', 'enable', 'true').apply()
+        assert exc.value.args[0]['changed']
+
+    def test_idempotently_disable(self):
+        data = self.mock_args()
+        data['enable'] = False
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object('zapi', 'enable', 'false').apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.module_utils.netapp.OntapRestAPI.send_request')
+    def test_rest_error(self, mock_request):
+        data = self.mock_args()
+        set_module_args(data)
+        mock_request.side_effect = [
+            SRR['is_rest'],
+            SRR['generic_error'],
+            SRR['end_of_sequence']
+        ]
+        with pytest.raises(AnsibleFailJson) as exc:
+            self.get_vscan_mock_object(type='rest').apply()
+        assert exc.value.args[0]['msg'] == SRR['generic_error'][1]
+
+    @patch('ansible.module_utils.netapp.OntapRestAPI.send_request')
+    def test_rest_successly_enable(self, mock_request):
+        data = self.mock_args()
+        data['enable'] = True
+        set_module_args(data)
+        mock_request.side_effect = [
+            SRR['is_rest'],
+            SRR['disabled'],
+            SRR['empty_good'],
+            SRR['end_of_sequence']
+        ]
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object(type='rest').apply()
+        assert exc.value.args[0]['changed']
+
+    @patch('ansible.module_utils.netapp.OntapRestAPI.send_request')
+    def test_rest_idempotently_enable(self, mock_request):
+        data = self.mock_args()
+        data['enable'] = True
+        set_module_args(data)
+        mock_request.side_effect = [
+            SRR['is_rest'],
+            SRR['enabled'],
+            SRR['end_of_sequence']
+        ]
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object(type='rest').apply()
+        assert not exc.value.args[0]['changed']
+
+    @patch('ansible.module_utils.netapp.OntapRestAPI.send_request')
+    def test_rest_successly_disable(self, mock_request):
+        data = self.mock_args()
+        data['enable'] = False
+        set_module_args(data)
+        mock_request.side_effect = [
+            SRR['is_rest'],
+            SRR['enabled'],
+            SRR['empty_good'],
+            SRR['end_of_sequence']
+        ]
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object(type='rest').apply()
+        assert exc.value.args[0]['changed']
+
+    @patch('ansible.module_utils.netapp.OntapRestAPI.send_request')
+    def test_rest_idempotently_disable(self, mock_request):
+        data = self.mock_args()
+        data['enable'] = False
+        set_module_args(data)
+        mock_request.side_effect = [
+            SRR['is_rest'],
+            SRR['disabled'],
+            SRR['end_of_sequence']
+        ]
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_vscan_mock_object(type='rest').apply()
         assert not exc.value.args[0]['changed']
