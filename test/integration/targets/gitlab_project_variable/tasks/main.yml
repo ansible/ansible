@@ -90,7 +90,7 @@
     that:
       - gitlab_project_variable_state is changed
       - gitlab_project_variable_state.project_variable.added|length == 2
-      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0
 
@@ -109,7 +109,7 @@
     that:
       - gitlab_project_variable_state is not changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 2
+      - gitlab_project_variable_state.project_variable.untouched|length == 2
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0
 
@@ -128,7 +128,7 @@
     that:
       - gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 1
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 1
       - gitlab_project_variable_state.project_variable.updated[0] == "ACCESS_KEY_ID"
@@ -148,7 +148,7 @@
     that:
       - gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 1
-      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 2
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0
       - gitlab_project_variable_state.project_variable.added[0] == "some"
@@ -169,7 +169,7 @@
     that:
       - not gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 3
+      - gitlab_project_variable_state.project_variable.untouched|length == 3
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0
 
@@ -188,7 +188,7 @@
     that:
       - gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 1
+      - gitlab_project_variable_state.project_variable.untouched|length == 1
       - gitlab_project_variable_state.project_variable.removed|length == 2
       - gitlab_project_variable_state.project_variable.updated|length == 0
 
@@ -207,10 +207,10 @@
     that:
       - not gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 1
+      - gitlab_project_variable_state.project_variable.untouched|length == 1
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0
-      - gitlab_project_variable_state.project_variable.present[0] == "some"
+      - gitlab_project_variable_state.project_variable.untouched[0] == "some"
 
 - name: delete the last left variable
   gitlab_project_variable:
@@ -227,7 +227,7 @@
     that:
       - gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
       - gitlab_project_variable_state.project_variable.removed|length == 1
       - gitlab_project_variable_state.project_variable.updated|length == 0
       - gitlab_project_variable_state.project_variable.removed[0] == "some"
@@ -240,11 +240,11 @@
     purge: True
   register: gitlab_project_variable_state
 
-- name: check that no variables are presented state must be changed
+- name: check that no variables are untoucheded state must be changed
   assert:
     that:
       - not gitlab_project_variable_state.changed
       - gitlab_project_variable_state.project_variable.added|length == 0
-      - gitlab_project_variable_state.project_variable.present|length == 0
+      - gitlab_project_variable_state.project_variable.untouched|length == 0
       - gitlab_project_variable_state.project_variable.removed|length == 0
       - gitlab_project_variable_state.project_variable.updated|length == 0

@@ -17,7 +17,7 @@ short_description: Creates/updates/deletes GitLab Projects Variables
 description:
   - When a project variable does not exist, it will be created.
   - When a project variable does exist, its value will be updated when the values are different.
-  - Variables which are present in the playbook, but are not present in the Gitlab project,
+  - Variables which are untouched in the playbook, but are not untouched in the GitLab project,
     they stay untouched (I(purge) is C(false)) or will be deleted (I(purge) is C(true)).
 version_added: "2.9"
 author:
@@ -30,32 +30,30 @@ extends_documentation_fragment:
 options:
   state:
     description:
-      - create or delete project variable.
+      - Create or delete project variable.
       - Possible values are present and absent.
     default: present
     type: str
     choices: ["present", "absent"]
   api_token:
     description:
-      - Gitlab access token with API permissions.
+      - GitLab access token with API permissions.
     required: true
     type: str
   project:
     description:
-      - The path and name of the project
+      - The path and name of the project.
     required: true
     type: str
   purge:
     description:
-      - When set to true, all variables which are not presented in the task will be deleted.
+      - When set to true, all variables which are not untoucheded in the task will be deleted.
     default: false
-    required: false
     type: bool
   vars:
     description:
       - A list of key value pairs.
     default: {}
-    required: false
     type: dict
 '''
 
@@ -66,7 +64,7 @@ EXAMPLES = '''
     api_url: https://gitlab.com
     api_token: secret_access_token
     project: markuman/dotfiles
-    purge: False
+    purge: false
     vars:
       ACCESS_KEY_ID: abc123
       SECRET_ACCESS_KEY: 321cba
@@ -82,12 +80,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg:
-  description: Success or failure message
-  returned: failed
-  type: str
-  sample: "Success"
-
 project_variable:
   description: Four lists of the variablenames which were added, updated, removed or exist.
   returned: always
@@ -98,7 +90,7 @@ project_variable:
       returned: always
       type: list
       sample: "['ACCESS_KEY_ID', 'SECRET_ACCESS_KEY']"
-    present:
+    untouched:
       description: A list of variables which exist.
       returned: always
       type: list
@@ -131,7 +123,7 @@ except Exception:
     HAS_GITLAB_PACKAGE = False
 
 
-class gitlab_project_variables(object):
+class GitlabProjectVariables(object):
 
     def __init__(self, module):
         self.repo = gitlab.Gitlab(module.params['api_url'],
@@ -156,7 +148,7 @@ class gitlab_project_variables(object):
     def update_variable(self, var, value):
         if var.value == value:
             return False
-        if self._module.check_mode and var.value != value:
+        if self._module.check_mode:
             return True
         var.value = value
         var.save()
@@ -171,37 +163,43 @@ class gitlab_project_variables(object):
 def native_python_main(this_gitlab, purge, var_list, state):
 
     change = False
-    return_value = dict(added=list(), updated=list(), removed=list(), present=list())
+    return_value = dict(added=list(), updated=list(), removed=list(), untouched=list())
 
     gitlab_keys = this_gitlab.list_all_project_variables()
     existing_variables = [x.get_id() for x in gitlab_keys]
 
     for key in var_list:
-        if key in existing_variables and state == 'present':
+        if key in existing_variables:
             index = existing_variables.index(key)
-            single_change = this_gitlab.update_variable(
-                gitlab_keys[index], var_list[key])
-            change = single_change or change
             existing_variables[index] = None
-            if single_change:
-                return_value['updated'].append(key)
-            else:
-                return_value['present'].append(key)
+
+            if state == 'present':
+                single_change = this_gitlab.update_variable(
+                    gitlab_keys[index], var_list[key])
+                change = single_change or change
+                if single_change:
+                    return_value['updated'].append(key)
+                else:
+                    return_value['untouched'].append(key)
+
+            elif state == 'absent':
+                this_gitlab.delete_variable(key)
+                change = True
+                return_value['removed'].append(key)
+
         elif key not in existing_variables and state == 'present':
             this_gitlab.create_variable(key, var_list[key])
             change = True
             return_value['added'].append(key)
-        elif key in existing_variables and state == 'absent':
-            this_gitlab.delete_variable(key)
-            change = True
-            return_value['removed'].append(key)
 
     existing_variables = list(filter(None, existing_variables))
-    if len(existing_variables) > 0 and purge:
+    if purge:
         for item in existing_variables:
             this_gitlab.delete_variable(item)
             change = True
             return_value['removed'].append(item)
+    else:
+        return_value['untouched'].extend(existing_variables)
 
     return change, return_value
 
@@ -235,10 +233,10 @@ def main():
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     try:
-        this_gitlab = gitlab_project_variables(module=module)
+        this_gitlab = GitlabProjectVariables(module=module)
         this_gitlab.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s. \
             Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
