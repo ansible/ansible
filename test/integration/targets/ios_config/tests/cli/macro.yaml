@@ -1,0 +1,54 @@
+---
+
+- debug: msg="START cli/cli_macro.yaml on connection={{ ansible_connection }}"
+
+- name: "Define macro name"
+  set_fact:
+    macro_name: 'MACRO_ANSIBLE_TEST'
+
+- name: "setup - remove configuration"
+  ios_config:
+    lines:
+      - 'no macro name {{ macro_name }}'
+      - 'do show clock'
+    match: none
+
+- name: "configure macro"
+  ios_config:
+    parents: "macro name {{ macro_name }}"
+    # before: [ 'no macro name ...']
+    multiline_delimiter: '@'
+    after: '@'
+    match: line
+    replace: block
+    lines: "{{ lookup('template', 'basic/macro.j2') }}"
+  register: result
+
+- name: "Check if macro has been added"
+  assert:
+    that:
+      - "result.changed == true"
+
+- name: "configure macro again - idempotent check"
+  ios_config:
+    parents: "macro name {{ macro_name }}"
+    multiline_delimiter: '@'
+    after: '@'
+    match: line
+    replace: block
+    lines: "{{ lookup('template', 'basic/macro.j2') }}"
+  register: result
+
+- name: "macro already/correctly configured ?"
+  assert:
+    that:
+      - "result.changed == false"
+                  
+- name: "teardown"
+  ios_config:
+    lines:
+      - "no macro name {{ macro_name }}"
+      - 'do show clock'
+    match: none
+
+- debug: msg="END cli/cli_macro.yaml on connection={{ ansible_connection }}"
