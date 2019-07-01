@@ -16,12 +16,12 @@ provider="${P:-default}"
 # python versions to test in order
 # python 2.7 runs full tests while other versions run minimal tests
 python_versions=(
-    2.6
-    3.5
-    3.6
-    3.7
+#    2.6
+#    3.5
+#    3.6
+#    3.7
     3.8
-    2.7
+#    2.7
 )
 
 # version to test when only testing a single version

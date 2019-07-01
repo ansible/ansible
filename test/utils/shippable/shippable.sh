@@ -91,30 +91,6 @@ function cleanup
         # shellcheck disable=SC2086
         ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
-
-        # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
-            for file in test/results/reports/coverage=*.xml; do
-                flags="${file##*/coverage=}"
-                flags="${flags%.xml}"
-                # remove numbered component from stub files when converting to tags
-                flags="${flags//stub-[0-9]*/stub}"
-                flags="${flags//=/,}"
-                flags="${flags//[^a-zA-Z0-9_,]/_}"
-
-                bash <(curl -s https://codecov.io/bash) \
-                    -f "${file}" \
-                    -F "${flags}" \
-                    -n "${test}" \
-                    -t 83cd8957-dc76-488c-9ada-210dcea51633 \
-                    -X coveragepy \
-                    -X gcov \
-                    -X fix \
-                    -X search \
-                    -X xcode \
-                || echo "Failed to upload code coverage report to codecov.io: ${file}"
-            done
-        fi
     fi
 
     rmdir shippable/testresults/
