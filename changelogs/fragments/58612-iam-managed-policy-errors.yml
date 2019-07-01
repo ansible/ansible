@@ -1,0 +1,2 @@
+bugfixes:
+  - iam_managed_policy - improve error reporting for policy update problems
