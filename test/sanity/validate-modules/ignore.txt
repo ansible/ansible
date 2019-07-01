@@ -3438,7 +3438,6 @@ lib/ansible/modules/storage/netapp/na_ontap_nvme_subsystem.py E337
 lib/ansible/modules/storage/netapp/na_ontap_portset.py E337
 lib/ansible/modules/storage/netapp/na_ontap_portset.py E338
 lib/ansible/modules/storage/netapp/na_ontap_qos_policy_group.py E337
-lib/ansible/modules/storage/netapp/na_ontap_qtree.py E337
 lib/ansible/modules/storage/netapp/na_ontap_qtree.py E338
 lib/ansible/modules/storage/netapp/na_ontap_security_key_manager.py E337
 lib/ansible/modules/storage/netapp/na_ontap_security_key_manager.py E338
