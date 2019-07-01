@@ -452,3 +452,6 @@
     that:
       - "host_does_not_exist.changed == False"
       - "'unable to connect to database: idonotexist:27017: [Errno -2] Name or service not known' == host_does_not_exist.msg"
+
+# Final clean up to prevent "directory not empty" error
+- include_tasks: mongod_teardown.yml

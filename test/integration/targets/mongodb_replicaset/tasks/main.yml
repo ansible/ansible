@@ -491,3 +491,6 @@
     that:
       - "host_does_not_exist.rc == 1"
       - "'Name or service not known' in host_does_not_exist.module_stderr"
+
+# Final clean up to prevent "directory not empty" error
+- include_tasks: mongod_teardown.yml
