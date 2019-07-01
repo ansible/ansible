@@ -52,7 +52,11 @@ $powershell = [PowerShell]::Create()
 $powershell.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 
 # Load the PowerShell module utils as the module may be using them to refer to shared module options
-$required_modules = [ScriptBlock]::Create($module_code).Ast.ScriptRequirements.RequiredModules
+$script_requirements = [ScriptBlock]::Create($module_code).Ast.ScriptRequirements
+$required_modules = @()
+if ($null -ne $script_requirements) {
+    $required_modules = $script_requirements.RequiredModules
+}
 foreach ($required_module in $required_modules) {
     if (-not $required_module.Name.StartsWith('Ansible.ModuleUtils.')) {
         continue
