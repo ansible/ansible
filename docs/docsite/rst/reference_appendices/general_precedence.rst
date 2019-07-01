@@ -1,11 +1,13 @@
 .. _connection_precedence_rules:
 
-Controlling how Ansible connects to managed nodes
+Controlling Ansible connections: precedence rules
 =================================================
 
 To give you maximum flexibility in managing your environments, Ansible supports many ways to specify connection information.
 If you use Ansible to manage a large number of servers, network devices, and cloud resources, you may define connection details for managed nodes in several different places and pass them to Ansible in several different ways.
 This flexibility is convenient, but it can backfire if you do not understand the precedence rules and how to override them.
+
+These precedence rules apply to other settings that can be defined in configuration or in variables, including selecting a temporary directory and choosing the correct python/ruby/powershell/etc interpreter to invoke for a module.
 
 .. contents::
    :local:
@@ -89,13 +91,9 @@ Playbooks are the command or 'state description' structure for Ansible, variable
 Connection variables
 --------------------
 
-Connection variables are 'normal variables' with specific names we have set as overrides for specific play keywords and configuration entries.
-However, they are still variables - they are data, not keywords or configuration settings. These variables override host/group specific information needed to execute the actions.
-Originally this was just 'connection parameters' but has been expanded to things like selecting the correct temporary directory to use and the correct python/ruby/powershell/etc interpreter to invoke for a module.
+Ansible lets you use connection variables to override specific play keywords and configuration entries. You can define connection variables for hosts and groups in inventory. You can define connection variables for tasks and plays in ``vars:`` blocks in playbooks. However, they are still variables - they are data, not keywords or configuration settings. Connection variables follow the same rules of :ref:`variable precedence <ansible_variable_precedence>` as any other variables.
 
-In the end they are just variables and follow normal variable precedence. See :ref:`ansible_variable_precedence`.
-
-You also need to keep in mind there are a couple of levels of scoping in playbooks. The first is 'playbook object scope'::
+When setting connection variables in playbooks, remember that there are a couple of levels of scoping in playbooks. The first is 'playbook object scope'::
 
    - hosts: localhost
      gather_facts: false
