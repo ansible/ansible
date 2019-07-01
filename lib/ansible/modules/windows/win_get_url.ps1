@@ -8,13 +8,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#Requires -Module Ansible.ModuleUtils.AddType
 #Requires -Module Ansible.ModuleUtils.FileUtil
 #Requires -Module Ansible.ModuleUtils.WebRequest
 
 $spec = @{
     options = @{
-        url = @{ type='str'; required=$true }
         dest = @{ type='path'; required=$true }
         force = @{ type='bool'; default=$true }
         checksum = @{ type='str' }
@@ -29,8 +27,6 @@ $spec = @{
 $spec.options += $ansible_web_request_options
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
-
-Register-AnsibleWebRequestParams -Module $module
 
 $url = $module.Params.url
 $dest = $module.Params.dest
@@ -159,7 +155,7 @@ Function Get-ChecksumFromUri {
 
         Write-Output -InputObject $hash_from_file
     }
-    $web_request = Get-AnsibleWebRequest -Uri $Uri
+    $web_request = Get-AnsibleWebRequest -Uri $Uri -Module $Module
 
     try {
         Invoke-WithWebRequest -Module $Module -Request $web_request -Script $script
@@ -187,7 +183,7 @@ Function Compare-ModifiedFile {
     if ($Uri.IsFile) {
         $src_last_mod = (Get-AnsibleItem -Path $Uri.AbsolutePath).LastWriteTimeUtc
     } else {
-        $web_request = Get-AnsibleWebRequest -Uri $Uri
+        $web_request = Get-AnsibleWebRequest -Uri $Uri -Module $Module
         $web_request.Method = switch ($web_request.GetType().Name) {
             FtpWebRequest { [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp }
             HttpWebRequest { [System.Net.WebRequestMethods+Http]::Head }
@@ -283,7 +279,7 @@ Function Invoke-DownloadFile {
             $Module.Result.changed = $true
         }
     }
-    $web_request = Get-AnsibleWebRequest -Uri $Uri
+    $web_request = Get-AnsibleWebRequest -Uri $Uri -Module $Module
 
     try {
         Invoke-WithWebRequest -Module $Module -Request $web_request -Script $download_script

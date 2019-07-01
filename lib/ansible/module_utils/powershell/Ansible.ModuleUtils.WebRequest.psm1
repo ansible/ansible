@@ -4,52 +4,48 @@
 Function Get-AnsibleWebRequest {
     <#
     .SYNOPSIS
-    Creates a System.Net.WebRequest object based on common module options for use in modules.
+    Creates a System.Net.WebRequest object based on common URL module options in Ansible.
 
     .DESCRIPTION
-    Will create a WebRequest for use with Invoke-WithWebRequest or even just manually in a module based on common
-    module options.
+    Will create a WebRequest based on common input options within Ansible. This can be used manually or with
+    Invoke-WithWebRequest.
 
     .PARAMETER Uri
-    The URI to create the web request for. This must be manually passed in and is not registered as part of the module
-    options.
+    The URI to create the web request for.
 
     .PARAMETER Method
-    The protocol method to use, if omitted, will use the default value for the protocol specified.
-
-    .PARAMETER Module
-    The AnsibleBasic module that is used to display any warnings to the user.
+    The protocol method to use, if omitted, will use the default value for the URI protocol specified.
 
     .PARAMETER FollowRedirects
-    Whether to follow redirect reponses. This is only valid when the URI specifies a HTTP address.
+    Whether to follow redirect reponses. This is only valid when using a HTTP URI.
         all - Will follow all redirects
         none - Will follow no redirects
         safe - Will only follow redirects when GET or HEAD is used as the Method
 
     .PARAMETER Headers
-    A hashtable or dictionary or header values to set on the request. This is only valid for HTTP addresses.
+    A hashtable or dictionary of header values to set on the request. This is only valid for a HTTP URI.
 
     .PARAMETER HttpAgent
-    A string to set for the 'User-Agent' header. This is only valid for HTTP addresses.
+    A string to set for the 'User-Agent' header. This is only valid for a HTTP URI.
 
     .PARAMETER MaximumRedirection
-    The maximum number of redirections that will be followed. This is only valid for HTTP addresses.
+    The maximum number of redirections that will be followed. This is only valid for a HTTP URI.
 
     .PARAMETER Timeout
     The timeout in seconds that defines how long to wait until the request times out.
 
     .PARAMETER ValidateCerts
-    Whether to validate SSL certificates, default to $true.
+    Whether to validate SSL certificates, default to True.
 
     .PARAMETER ClientCert
-    The path to PFX file to use for X509 authentication. This is only valid for HTTP addresses.
+    The path to PFX file to use for X509 authentication. This is only valid for a HTTP URI.
 
     .PARAMETER ClientCertPassword
-    The password for the PFX certificate if required. This is only valid for HTTP addresses.
+    The password for the PFX certificate if required. This is only valid for a HTTP URI.
 
     .PARAMETER ForceBasicAuth
-    Whether to set the Basic auth header on the first request instead of when required. This is only valid for HTTP
-    addresses.
+    Whether to set the Basic auth header on the first request instead of when required. This is only valid for a
+    HTTP URI.
 
     .PARAMETER UrlUsername
     The username to use for authenticating with the target.
@@ -59,15 +55,15 @@ Function Get-AnsibleWebRequest {
 
     .PARAMETER UseDefaultCredential
     Whether to use the current user's credentials if available. This will only work when using Become or the WinRM
-    auth was CredSSP.
+    auth was CredSSP. TODO: Verify whether Kerberos also works here
 
     .PARAMETER UseProxy
-    Whether to use the default proxy defined in IE (WinINet) for the user or set no proxy at all. This should not be
-    set to $true when ProxyUrl is also defined.
+    Whether to use the default proxy defined in IE (WinINet) for the user or set no proxy at all. This should not
+    be set to True when ProxyUrl is also defined.
 
     .PARAMETER ProxyUrl
-    An explicit proxy server to use for the request instead of relying on the default proxy in IE. This is only valid
-    for HTTP addresses.
+    An explicit proxy server to use for the request instead of relying on the default proxy in IE. This is only
+    valid for a HTTP URI.
 
     .PARAMETER ProxyUsername
     An optional username to use for proxy authentication.
@@ -76,8 +72,12 @@ Function Get-AnsibleWebRequest {
     The password for ProxyUsername.
 
     .PARAMETER ProxyUseDefaultCredential
-    Whether to use the current user's credentials for proxy authentication if available. This will only work when using
-    become or the WinRM auth was CredSSP.
+    Whether to use the current user's credentials for proxy authentication if available. This will only work when
+    using become or the WinRM auth was CredSSP.  TODO: Verify whether Kerberos also works here
+
+    .PARAMETER Module
+    The AnsibleBasic module that can be used as a backup parameter source or a way to return warnings back to the
+    Ansible controller.
 
     .EXAMPLE
     $spec = @{
@@ -86,71 +86,109 @@ Function Get-AnsibleWebRequest {
     $spec.options += $ansible_web_request_options
     $module = Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-    Register-AnsibleWebRequestParams -Module $module
-    $web_request = Get-AnsibleWebRequest -Uri "http://www.google.com"
+    $web_request = Get-AnsibleWebRequest -Module $module
     #>
     [CmdletBinding()]
     [OutputType([System.Net.WebRequest])]
-    param (
-        # Uri and Method do not have an alias as a module may need to create multiple requests with different URIs and
-        # methods. These details are down to the module to define and not an input from the user.
-        [Parameter(Mandatory=$true)]
-        [System.Uri]$Uri,
-        [System.String]$Method,
-        [Ansible.Basic.AnsibleModule]$Module,
+    Param (
+        [Alias("url")]
+        [System.Uri]
+        $Uri,
+
+        [System.String]
+        $Method,
 
         [Alias("follow_redirects")]
         [ValidateSet("all", "none", "safe")]
-        [System.String]$FollowRedirects = "safe",
+        [System.String]
+        $FollowRedirects = "safe",
 
-        [System.Collections.IDictionary]$Headers,
+        [System.Collections.IDictionary]
+        $Headers,
 
         [Alias("http_agent")]
-        [System.String]$HttpAgent = "ansible-httpget",
+        [System.String]
+        $HttpAgent = "ansible-httpget",
 
         [Alias("maximum_redirection")]
-        [System.Int32]$MaximumRedirection = 50,
+        [System.Int32]
+        $MaximumRedirection = 50,
 
-        [System.Int32]$Timeout = 30,
+        [System.Int32]
+        $Timeout = 30,
 
         [Alias("validate_certs")]
-        [System.Boolean]$ValidateCerts = $true,
+        [System.Boolean]
+        $ValidateCerts = $true,
 
         # Credential params
         [Alias("client_cert")]
-        [System.String]$ClientCert,
+        [System.String]
+        $ClientCert,
 
         [Alias("client_cert_password")]
-        [System.String]$ClientCertPassword,
+        [System.String]
+        $ClientCertPassword,
 
         [Alias("force_basic_auth")]
-        [Switch]$ForceBasicAuth,
+        [Switch]
+        $ForceBasicAuth,
 
         [Alias("url_username")]
-        [System.String]$UrlUsername,
+        [System.String]
+        $UrlUsername,
 
         [Alias("url_password")]
-        [System.String]$UrlPassword,
+        [System.String]
+        $UrlPassword,
 
         [Alias("use_default_credential")]
-        [Switch]$UseDefaultCredential,
+        [Switch]
+        $UseDefaultCredential,
 
         # Proxy params
         [Alias("use_proxy")]
-        [System.Boolean]$UseProxy = $true,
+        [System.Boolean]
+        $UseProxy = $true,
 
         [Alias("proxy_url")]
-        [System.String]$ProxyUrl,
+        [System.String]
+        $ProxyUrl,
 
         [Alias("proxy_username")]
-        [System.String]$ProxyUsername,
+        [System.String]
+        $ProxyUsername,
 
         [Alias("proxy_password")]
-        [System.String]$ProxyPassword,
+        [System.String]
+        $ProxyPassword,
 
         [Alias("proxy_use_default_credential")]
-        [Switch]$ProxyUseDefaultCredential
+        [Switch]
+        $ProxyUseDefaultCredential,
+
+        [ValidateScript({ $_.GetType().FullName -eq 'Ansible.Basic.AnsibleModule' })]
+        [System.Object]
+        $Module
     )
+
+    # Set module options for parameters unless they were explicitly passed in.
+    if ($Module) {
+        foreach ($param in $PSCmdlet.MyInvocation.MyCommand.Parameters.GetEnumerator()) {
+            if ($PSBoundParameters.ContainsKey($param.Key)) {
+                # Was set explicitly we want to use that value
+                continue
+            }
+
+            foreach ($alias in @($Param.Key) + $param.Value.Aliases) {
+                if ($Module.Params.ContainsKey($alias)) {
+                    $var_value = $Module.Params.$alias -as $param.Value.ParameterType
+                    Set-Variable -Name $param.Key -Value $var_value
+                    break
+                }
+            }
+        }
+    }
 
     # Disable certificate validation if requested
     # TODO: set this on ServerCertificateValidationCallback of the HttpWebRequest once .NET 4.5 is the minimum
@@ -216,8 +254,6 @@ Function Get-AnsibleWebRequest {
     # Some parameters only apply when dealing with a HttpWebRequest
     if ($web_request -is [System.Net.HttpWebRequest]) {
         if ($Headers) {
-            $request_headers = New-Object -TypeName System.Net.WebHeaderCollection
-
             foreach ($header in $Headers.GetEnumerator()) {
                 switch ($header.Key) {
                     Accept { $web_request.Accept = $header.Value }
@@ -234,13 +270,23 @@ Function Get-AnsibleWebRequest {
                         $web_request.SendChunked = $true
                         $web_request.TransferEncoding = $header.Value
                     }
-                    User-Agent { continue }  # does nothing as this is explicitly set below
-                    default { $request_headers.Add($header.Key, $header.Value) }
+                    User-Agent { continue }
+                    default { $web_request.Headers.Add($header.Key, $header.Value) }
                 }
             }
-            $web_request.Headers = $request_headers
         }
-        $web_request.UserAgent = $HttpAgent
+
+        # For backwards compatibility we need to support setting the User-Agent if the header was set in the task.
+        # We just need to make sure that if an explicit http_agent module was set then that takes priority.
+        if ($Headers -and $Headers.ContainsKey("User-Agent")) {
+            if ($HttpAgent -eq "ansible-httpget") {
+                $web_request.UserAgent = $Headers['User-Agent']
+            } else {
+                $Module.Warn("The 'User-Agent' header and the 'http_agent' was set, using the 'http_agent' for web request")
+            }
+        } else {
+            $web_request.UserAgent = $HttpAgent
+        }
 
         switch ($FollowRedirects) {
             none { $web_request.AllowAutoRedirect = $false }
@@ -267,7 +313,7 @@ Function Get-AnsibleWebRequest {
 Function Invoke-WithWebRequest {
     <#
     .SYNOPSIS
-    Invokes a predefined ScriptBlock with the WebRequest.
+    Invokes a ScriptBlock with the WebRequest.
 
     .DESCRIPTION
     Invokes the ScriptBlock and handle extra information like accessing the response stream, closing those streams
@@ -280,14 +326,13 @@ Function Invoke-WithWebRequest {
         status_code - An int that is the response status code
 
     .PARAMETER Request
-    The System.Net.WebRequest to call. This can either be manually crafted or created with 'Get-AnsibleWebRequest'.
+    The System.Net.WebRequest to call. This can either be manually crafted or created with Get-AnsibleWebRequest.
 
     .PARAMETER Script
     The ScriptBlock to invoke during the web request. This ScriptBlock should take in the params
-        param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
+        Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-    The work to process the response based on the module requires are done in this block but it does not need to
-    dispose of any response streams, only what is defined in the ScriptBlock itself.
+    This scriptblock should manage the response based on what it need to do.
 
     .PARAMETER Body
     An optional Stream to send to the target during the request.
@@ -296,23 +341,19 @@ Function Invoke-WithWebRequest {
     By default a WebException will be raised for a non 2xx status code and the Script will not be invoked. This
     parameter can be set to process all responses regardless of the status code.
 
-    .EXAMPLE
-    # A very basic module to download a file to a path
-
+    .EXAMPLE Basic module that downloads a file
     $spec = @{
         options = @{
-            url = @{ type = "str"; required = $true }
             path = @{ type = "path"; required = $true }
         }
     }
     $spec.options += $ansible_web_request_options
     $module = Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-    Register-AnsibleWebRequestParams -Module $module
-    $web_request = Get-AnsibleWebRequest -Uri $module.Params.url
+    $web_request = Get-AnsibleWebRequest -Module $module
 
-    $script = {
-        param([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
+    Invoke-WithWebRequest -Module $module -Request $web_request -Script {
+        Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
         $fs = [System.IO.File]::Create($module.Params.path)
         try {
@@ -322,23 +363,28 @@ Function Invoke-WithWebRequest {
             $fs.Dispose()
         }
     }
-    Invoke-WithWebRequest -Module $module -Request $web_request -Script $script
     #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]
-        [Ansible.Basic.AnsibleModule]$Module,
+        [System.Object]
+        [ValidateScript({ $_.GetType().FullName -eq 'Ansible.Basic.AnsibleModule' })]
+        $Module,
 
         [Parameter(Mandatory=$true)]
-        [System.Net.WebRequest]$Request,
+        [System.Net.WebRequest]
+        $Request,
 
         [Parameter(Mandatory=$true)]
-        [ScriptBlock]$Script,
+        [ScriptBlock]
+        $Script,
 
         [AllowNull()]
-        [System.IO.Stream]$Body,
+        [System.IO.Stream]
+        $Body,
 
-        [Switch]$IgnoreBadResponse
+        [Switch]
+        $IgnoreBadResponse
     )
 
     $start = Get-Date
@@ -346,8 +392,8 @@ Function Invoke-WithWebRequest {
         $request_st = $Request.GetRequestStream()
         try {
             $Body.CopyTo($request_st)
-        } finally {
             $request_st.Flush()
+        } finally {
             $request_st.Close()
         }
     }
@@ -357,8 +403,8 @@ Function Invoke-WithWebRequest {
             $web_response = $Request.GetResponse()
         } catch [System.Net.WebException] {
             # A WebResponse with a status code not in the 200 range will raise a WebException. We check if the
-            # exception raised contains the actual response and continue on if IgnoreBadResponse is set. We also make
-            # sure we set the status_code return value on the Module object if possible
+            # exception raised contains the actual response and continue on if IgnoreBadResponse is set. We also
+            # make sure we set the status_code return value on the Module object if possible
 
             if ($_.Exception.PSObject.Properties.Name -match "Response") {
                 $web_response = $_.Exception.Response
@@ -397,40 +443,14 @@ Function Invoke-WithWebRequest {
     }
 }
 
-Function Register-AnsibleWebRequestParams {
-    <#
-    .SYNOPSIS
-    Scans through the module options passed in from Ansible and set's them as the default parameter value for the
-    Get-AnsibleWebRequest cmdlet. This allows a user to register common module options for this cmdlet without
-    repeating the arguments.
-
-    .PARAMETER Module
-    [Ansible.Basic.AnsibleModule] The instance of an AnsibleModule that contains the parameters to set.
-
-    .EXAMPLE
-    Register-AnsibleWebRequestParams -Module $module
-    #>
-    param (
-        [Parameter(Mandatory=$true)]
-        [Ansible.Basic.AnsibleModule]$Module
-    )
-
-    foreach ($option in $ansible_web_request_options.Keys) {
-        if ($Module.Params.ContainsKey($option) -and $null -ne $Module.Params.$option) {
-            # Need to set in the global scope so it applies to the parent calls. Because modules are run in their own
-            # Runspace, this does not persist after the module has completed it's run.
-            $global:PSDefaultParameterValues["Get-AnsibleWebRequest:$option"] = $Module.Params.$option
-        }
-    }
-    $global:PSDefaultParameterValues["Get-AnsibleWebRequest:Module"] = $Module
-}
-
 $ansible_web_request_options = @{
+    url = @{ type="str"; required=$true }
+    method = @{ type="str" }
     follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }
     headers = @{ type="dict" }
     http_agent = @{ type="str"; default="ansible-httpget" }
     maximum_redirection = @{ type="int"; default=50 }
-    timeout = @{ type="int"; default=30 }  # Defaulted to 10 in win_get_url but 30 in win_uri
+    timeout = @{ type="int"; default=30 }  # Was defaulted to 10 in win_get_url but 30 in win_uri so we use 30
     validate_certs = @{ type="bool"; default=$true }
 
     # Credential options
@@ -449,6 +469,8 @@ $ansible_web_request_options = @{
     proxy_use_default_credential = @{ type="bool"; default=$false }
 }
 
-Export-ModuleMember -Function Get-AnsibleWebRequest, Invoke-WithWebRequest, Register-AnsibleWebRequestParams `
-    -Variable ansible_web_request_options
-
+$export_members = @{
+    Function = "Get-AnsibleWebRequest", "Invoke-WithWebRequest"
+    Variable = "ansible_web_request_options"
+}
+Export-ModuleMember @export_members

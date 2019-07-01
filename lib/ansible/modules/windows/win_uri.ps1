@@ -12,11 +12,6 @@
 
 $spec = @{
     options = @{
-        url = @{ type = "str"; required = $true }
-        method = @{
-            type = "str"
-            default = "GET"
-       }
        content_type = @{ type = "str" }
        body = @{ type = "raw" }
        dest = @{ type = "path" }
@@ -28,9 +23,9 @@ $spec = @{
     supports_check_mode = $true
 }
 $spec.options += $ansible_web_request_options
-$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+$spec.options.method.default = "GET"
 
-Register-AnsibleWebRequestParams -Module $module
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $url = $module.Params.url
 $method = $module.Params.method.ToUpper()
@@ -63,7 +58,7 @@ if ($removes -and -not (Test-AnsiblePath -Path $removes)) {
     $module.ExitJson()
 }
 
-$client = Get-AnsibleWebRequest -Uri $url -Method $method
+$client = Get-AnsibleWebRequest -Module $module
 
 if ($null -ne $content_type) {
     $client.ContentType = $content_type
