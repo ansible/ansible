@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixed issue where `ansible_net_model` was not being populated in iosxr_facts (https://github.com/ansible/ansible/pull/58488)
