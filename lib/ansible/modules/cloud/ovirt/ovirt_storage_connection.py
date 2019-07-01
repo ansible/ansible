@@ -134,7 +134,7 @@ class StorageConnectionModule(BaseModule):
             address=self.param('address'),
             path=self.param('path'),
             nfs_version=otypes.NfsVersion(
-               self.param('nfs_version')
+                self.param('nfs_version')
             ) if self.param('nfs_version') is not None else None,
             nfs_timeo=self.param('nfs_timeout'),
             nfs_retrans=self.param('nfs_retrans'),
