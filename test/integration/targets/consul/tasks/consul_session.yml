@@ -1,0 +1,81 @@
+- name: list sessions
+  consul_session:
+    state: list
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      - "'sessions' in result"
+
+- name: create a session
+  consul_session:
+    state: present
+    name: testsession
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      - result['name'] == 'testsession'
+      - "'session_id' in result"
+
+- set_fact:
+    session_id: "{{ result['session_id'] }}"
+
+- name: list sessions after creation
+  consul_session:
+    state: list
+  register: result
+
+- set_fact:
+    session_count: "{{ result['sessions'] | length }}"
+
+- assert:
+    that:
+      - result is changed
+      # selectattr not available on Jinja 2.2 provided by CentOS 6
+      # hence the two following tasks (set_fact/assert) are used
+      # - (result['sessions'] | selectattr('ID', 'match', '^' ~ session_id ~ '$') | first)['Name'] == 'testsession'
+
+- name: search created session
+  set_fact:
+    test_session_found: True
+  loop: "{{ result['sessions'] }}"
+  when: "item.get('ID') == session_id and item.get('Name') == 'testsession'"
+
+- name: ensure session was created
+  assert:
+    that:
+      - test_session_found|default(False)
+
+- name: fetch info about a session
+  consul_session:
+    state: info
+    id: '{{ session_id }}'
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: ensure 'id' parameter is required when state=info
+  consul_session:
+    state: info
+    name: test
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result is failed
+
+- name: delete a session
+  consul_session:
+    state: absent
+    id: '{{ session_id }}'
+  register: result
+
+- assert:
+    that:
+      - result is changed
