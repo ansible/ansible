@@ -437,21 +437,22 @@
       - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' not in mongo_output.stdout"
       - "'balancer' in mongo_output.stdout"
 
-- name: Run test with unknown host
-  mongodb_shard:
-    login_user: "{{ mongodb_admin_user }}"
-    login_password: "{{ mongodb_admin_password }}"
-    login_host: "idonotexist"
-    shard: "{{ mongodb_replicaset2 }}"
-    state: absent
-  ignore_errors: True
-  register: host_does_not_exist
+# TODO - Readd this test once we support serverSelectionTimeoutMS / connectTimeoutMS
+#- name: Run test with unknown host
+#  mongodb_shard:
+#    login_user: "{{ mongodb_admin_user }}"
+#    login_password: "{{ mongodb_admin_password }}"
+#    login_host: "idonotexist"
+#    shard: "{{ mongodb_replicaset2 }}"
+#    state: absent
+#  ignore_errors: True
+#  register: host_does_not_exist
 
-- name: Assert that "Name or service not known" is in error
-  assert:
-    that:
-      - "host_does_not_exist.changed == False"
-      - "'unable to connect to database: idonotexist:27017: [Errno -2] Name or service not known' == host_does_not_exist.msg"
+#- name: Assert that "Name or service not known" is in error
+#  assert:
+#    that:
+#      - "host_does_not_exist.changed == False"
+#      - "'unable to connect to database: idonotexist:27017: [Errno -2] Name or service not known' == host_does_not_exist.msg"
 
 # Final clean up to prevent "directory not empty" error
 - include_tasks: mongod_teardown.yml

@@ -467,30 +467,30 @@
       - "'electionTimeoutMillis\" : 9000,' in mongo_output.stdout"
   when: mongodb_version.startswith('4') == True
 
-# Test with heartbeatTimeoutSecs
-- name: Run test with unknown host
-  mongodb_replicaset:
-    login_user: admin
-    login_password: secret
-    login_host: "idonotexist"
-    login_port: 3001
-    login_database: "admin"
-    protocol_version: 0
-    heartbeat_timeout_secs: 9
-    replica_set: "{{ mongodb_replicaset8 }}"
-    election_timeout_millis: 1000
-    members:
-      - idonotexist:3001
-      - idonotexist:3002
-      - idonotexist:3003
-  ignore_errors: True
-  register: host_does_not_exist
+# TODO - Readd this test once we support serverSelectionTimeoutMS / connectTimeoutMS
+#- name: Run test with unknown host
+#  mongodb_replicaset:
+#    login_user: admin
+#    login_password: secret
+#    login_host: "idonotexist"
+#    login_port: 3001
+#    login_database: "admin"
+#    protocol_version: 0
+#    heartbeat_timeout_secs: 9
+#    replica_set: "{{ mongodb_replicaset8 }}"
+#    election_timeout_millis: 1000
+#    members:
+#      - idonotexist:3001
+#      - idonotexist:3002
+#      - idonotexist:3003
+#  ignore_errors: True
+#  register: host_does_not_exist
 
-- name: Assert that "Name or service not known" is in error
-  assert:
-    that:
-      - "host_does_not_exist.rc == 1"
-      - "'Name or service not known' in host_does_not_exist.module_stderr"
+#- name: Assert that "Name or service not known" is in error
+#  assert:
+#    that:
+#      - "host_does_not_exist.rc == 1"
+#      - "'Name or service not known' in host_does_not_exist.module_stderr"
 
 # Final clean up to prevent "directory not empty" error
 - include_tasks: mongod_teardown.yml
