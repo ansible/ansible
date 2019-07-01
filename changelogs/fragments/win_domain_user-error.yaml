@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain_user - Do not hide error and stacktrace on failures
