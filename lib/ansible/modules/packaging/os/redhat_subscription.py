@@ -227,6 +227,9 @@ SUBMAN_CMD = None
 
 
 class RegistrationBase(object):
+
+    REDHAT_REPO = "/etc/yum.repos.d/redhat.repo"
+
     def __init__(self, module, username=None, password=None):
         self.module = module
         self.username = username
@@ -237,9 +240,8 @@ class RegistrationBase(object):
 
     def enable(self):
         # Remove any existing redhat.repo
-        redhat_repo = '/etc/yum.repos.d/redhat.repo'
-        if os.path.isfile(redhat_repo):
-            os.unlink(redhat_repo)
+        if os.path.isfile(self.REDHAT_REPO):
+            os.unlink(self.REDHAT_REPO)
 
     def register(self):
         raise NotImplementedError("Must be implemented by a sub-class")
@@ -754,8 +756,10 @@ def main():
                               server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password, release)
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
-                else:
+                elif pool != '^$':
                     subscribed_pool_ids = rhsm.subscribe(pool)
+                else:
+                    subscribed_pool_ids = []
             except Exception as e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, to_native(e)))
             else:
