@@ -44,3 +44,8 @@
     chdir: "{{ remote_tmp_dir }}"
   with_items: "{{ mongodb_nodes | sort }}"
   when: mongod_auth == True
+
+- name: Wait for mongod to start responding
+  wait_for:
+    port: "{{ item }}"
+  with_items: "{{ mongodb_nodes }}"

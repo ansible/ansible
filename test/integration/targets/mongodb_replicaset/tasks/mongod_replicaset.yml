@@ -37,3 +37,8 @@
   with_items: "{{ mongodb_nodes | sort }}"
   when: mongod_auth == True
   ignore_errors: yes
+
+- name: Wait for mongod to start responding
+  wait_for:
+    port: "{{ item }}"
+  with_items: "{{ mongodb_nodes }}"
