@@ -157,10 +157,7 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
         self.gallery_name = None
         self.gallery_image_name = None
         self.name = None
-        self.type = None
-        self.location = None
-        self.tags = None
-        self.properties = None
+       
 
         self.results = dict(changed=False)
         self.mgmt_client = None
