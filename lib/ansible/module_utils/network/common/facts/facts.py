@@ -66,7 +66,7 @@ class FactsBase(object):
 
             if subset not in valid_subsets:
                 self._module.fail_json(msg='Subset must be one of [%s], got %s' %
-                                           (', '.join(sorted([subset for subset in valid_subsets])), subset))
+                                           (', '.join(sorted([item for item in valid_subsets])), subset))
 
             if exclude:
                 exclude_subsets.add(subset)
@@ -76,7 +76,6 @@ class FactsBase(object):
         if not runable_subsets:
             runable_subsets.update(valid_subsets)
         runable_subsets.difference_update(exclude_subsets)
-
         return runable_subsets
 
     def get_network_resources_facts(self, net_res_choices, facts_resource_obj_map, resource_facts_type=None, data=None):
@@ -113,6 +112,7 @@ class FactsBase(object):
             legacy_facts_type = self._gather_subset
 
         runable_subsets = self.gen_runable(legacy_facts_type, frozenset(fact_legacy_obj_map.keys()))
+        runable_subsets.add('default')
         if runable_subsets:
             facts = dict()
             facts['gather_subset'] = list(runable_subsets)

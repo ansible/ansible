@@ -42,7 +42,7 @@ options:
         junos-eznc library to be installed on control node and the device login credentials
         must be given in C(provider) option.
     required: false
-    default: ['!config', '!ofacts']
+    default: ['!config']
     version_added: "2.3"
   config_format:
     description:
@@ -111,9 +111,7 @@ def main():
     """ Main entry point for AnsibleModule
     """
     argument_spec = FactsArgs.argument_spec
-
     argument_spec.update(junos_argument_spec)
-    argument_spec['gather_subset']['default'].append('!ofacts')
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
