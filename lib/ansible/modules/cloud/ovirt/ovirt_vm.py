@@ -770,7 +770,7 @@ options:
         version_added: "2.8"
     force_migrate:
         description:
-            - "If I(true), the VM will migrate even if it is defined as non-migratable."
+            - "If I(true), the VM will migrate when vm is user-migratable."
         version_added: "2.8"
         type: bool
     migrate:
