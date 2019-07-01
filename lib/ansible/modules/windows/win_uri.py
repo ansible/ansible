@@ -68,6 +68,34 @@ options:
     type: list
     default: [ 200 ]
     version_added: '2.4'
+  url_username:
+    description:
+    - The username to use for authentication.
+    - Was originally called I(user) but was changed to I(url_username) in
+      Ansible 2.9.
+    version_added: "2.4"
+  url_password:
+    description:
+    - The password for I(url_username).
+    - Was originally called I(password) but was changed to I(url_password) in
+      Ansible 2.9.
+    version_added: "2.4"
+  follow_redirects:
+    version_added: "2.4"
+  maximum_redirection:
+    version_added: "2.4"
+  client_cert:
+    version_added: "2.4"
+  client_cert_password:
+    version_added: "2.5"
+  use_proxy:
+    version_added: "2.9"
+  proxy_url:
+    version_added: "2.9"
+  proxy_username:
+    version_added: "2.9"
+  proxy_password:
+    version_added: "2.9"
 extends_documentation_fragment:
 - url_windows
 seealso:

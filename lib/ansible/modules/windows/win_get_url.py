@@ -73,6 +73,28 @@ options:
       - This option cannot be set with I(checksum).
     type: str
     version_added: "2.8"
+  proxy_url:
+    version_added: "2.0"
+  proxy_username:
+    version_added: "2.0"
+  proxy_password:
+    version_added: "2.0"
+  headers:
+    version_added: "2.4"
+  use_proxy:
+    version_added: "2.4"
+  follow_redirects:
+    version_added: "2.9"
+  maximum_redirection:
+    version_added: "2.9"
+  client_cert:
+    version_added: "2.9"
+  client_cert_password:
+    version_added: "2.9"
+  method:
+    description:
+    - This option is not for use with C(win_get_url) and should be ignored.
+    version_added: "2.9"
 notes:
 - If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
   This is a result of the behaviour of the System.Uri class as described in
