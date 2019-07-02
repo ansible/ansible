@@ -29,12 +29,12 @@ options:
     uniqueid:
         description:
             - Used to specify the uniqueid of the disk to be initialized.
-        type: int
+        type: str
         required: true
     path:
         description:
             - Used to specify the path to the disk to be initialized.
-        type: int
+        type: str
         required: true
     style:
         description:
