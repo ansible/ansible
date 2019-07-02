@@ -83,7 +83,7 @@ A simple example::
          ping:
 
 In this example, the ``connection`` keyword is set to ``ssh`` at the play level. The first task inherits that value, and connects using ``ssh``. The second task inherits that value, overrides it, and connects using ``paramiko``.
-The same logic applies to a block or role: all tasks, blocks, and roles within a play inherit play-level keywords; any task, block, or role can override any play-level keyword by defining a different value for that keyword within the task, block, or role.
+The same logic applies to blocks and roles as well. All tasks, blocks, and roles within a play inherit play-level keywords; any task, block, or role can override any play-level keyword by defining a different value for that keyword within the task, block, or role.
 
 Remember that these are KEYWORDS, not variables. Both playbooks and variable files are defined in YAML but they have different significance.
 Playbooks are the command or 'state description' structure for Ansible, variables are data we use to help make playbooks more dynamic.
