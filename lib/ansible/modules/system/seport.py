@@ -280,7 +280,7 @@ def main():
     if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
-    ports = module.params['ports']
+    ports = list(map(str, module.params['ports']))
     proto = module.params['proto']
     setype = module.params['setype']
     state = module.params['state']
