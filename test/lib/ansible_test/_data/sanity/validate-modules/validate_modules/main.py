@@ -1358,50 +1358,22 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
-            doc_type = doc_options_arg.get('type')
-            if 'type' in data and data['type'] is not None:
-                if doc_type is None:
-                    if not arg.startswith('_'):  # hidden parameter, for example _raw_params
-                        msg = "Argument '%s' in argument_spec" % arg
-                        if context:
-                            msg += " found in %s" % " -> ".join(context)
-                        msg += " defines type as %r but documentation doesn't define type" % (data['type'])
-                        self.reporter.error(
-                            path=self.object_path,
-                            code='parameter-type-not-in-doc',
-                            msg=msg
-                        )
-                elif data['type'] != doc_type:
-                    msg = "Argument '%s' in argument_spec" % arg
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += " defines type as %r but documentation defines type as %r" % (data['type'], doc_type)
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='doc-type-does-not-match-spec',
-                        msg=msg
-                    )
-            else:
-                if doc_type is None:
-                    msg = "Argument '%s' in argument_spec" % arg
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += " uses default type ('str') but documentation doesn't define type"
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='doc-missing-type',
-                        msg=msg
-                    )
-                elif doc_type != 'str':
-                    msg = "Argument '%s' in argument_spec" % arg
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += "implies type as 'str' but documentation defines as %r" % doc_type
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='implied-parameter-type-mismatch',
-                        msg=msg
-                    )
+            doc_type = doc_options_arg.get('type', 'str')
+            arg_type = data.get('type', 'str')
+            if doc_type is None:
+                doc_type == 'str'
+            if arg_type is None:
+                arg_type == 'str'
+            if arg_type != doc_type and not arg.startswith('_'):  # hidden parameter, for example _raw_params
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines type as %r but documentation defines type as %r" % (data['type'], doc_type)
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-type-does-not-match-spec',
+                    msg=msg
+                )
 
             doc_choices = []
             try:
