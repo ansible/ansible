@@ -341,7 +341,11 @@ def main():
     if pp_size is None:
         pp_size = ''
     else:
+        if pp_size > 0 and (pp_size & (pp_size - 1)) == 0:
         pp_size = "-s %s" % pp_size
+        else:
+            msg = "pp_size must be >0 and a multiple of 2 (supplied: '%s')." % pp_size
+            module.fail_json(msg=msg)
 
     vg_validation = _validate_vg(module, vg)
 
