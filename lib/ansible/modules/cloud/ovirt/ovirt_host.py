@@ -330,9 +330,6 @@ class HostsModule(BaseModule):
             )
         )
 
-    def pre_create(self, entity):
-        self.start_event = self._connection.system_service().events_service().list(max=1)[0]
-
     def pre_remove(self, entity):
         self.action(
             entity=entity,
