@@ -1,0 +1,873 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=emulateIE7" />
+    <title>Coverage for lib/ansible/playbook/helpers.py: 53%</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="jquery.isonscreen.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.pyfile_ready);
+    </script>
+</head>
+<body class="pyfile">
+
+<div id="header">
+    <div class="content">
+        <h1>Coverage for <b>lib/ansible/playbook/helpers.py</b> :
+            <span class="pc_cov">53%</span>
+        </h1>
+
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+
+        <h2 class="stats">
+            187 statements &nbsp;
+            <span class="run hide_run shortkey_r button_toggle_run">108 run</span>
+            <span class="mis shortkey_m button_toggle_mis">79 missing</span>
+            <span class="exc shortkey_x button_toggle_exc">0 excluded</span>
+
+            
+                <span class="par run hide_run shortkey_p button_toggle_par">22 partial</span>
+            
+        </h2>
+    </div>
+</div>
+
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">r</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        <span class="key">p</span> &nbsp; toggle line displays
+    </p>
+    <p class="keyhelp">
+        <span class="key">j</span>
+        <span class="key">k</span> &nbsp; next/prev highlighted chunk
+    </p>
+    <p class="keyhelp">
+        <span class="key">0</span> &nbsp; (zero) top of page
+    </p>
+    <p class="keyhelp">
+        <span class="key">1</span> &nbsp; (one) first highlighted chunk
+    </p>
+    </div>
+</div>
+
+<div id="source">
+    <table>
+        <tr>
+            <td class="linenos">
+<p id="n1" class="pln"><a href="#n1">1</a></p>
+<p id="n2" class="pln"><a href="#n2">2</a></p>
+<p id="n3" class="pln"><a href="#n3">3</a></p>
+<p id="n4" class="pln"><a href="#n4">4</a></p>
+<p id="n5" class="pln"><a href="#n5">5</a></p>
+<p id="n6" class="pln"><a href="#n6">6</a></p>
+<p id="n7" class="pln"><a href="#n7">7</a></p>
+<p id="n8" class="pln"><a href="#n8">8</a></p>
+<p id="n9" class="pln"><a href="#n9">9</a></p>
+<p id="n10" class="pln"><a href="#n10">10</a></p>
+<p id="n11" class="pln"><a href="#n11">11</a></p>
+<p id="n12" class="pln"><a href="#n12">12</a></p>
+<p id="n13" class="pln"><a href="#n13">13</a></p>
+<p id="n14" class="pln"><a href="#n14">14</a></p>
+<p id="n15" class="pln"><a href="#n15">15</a></p>
+<p id="n16" class="pln"><a href="#n16">16</a></p>
+<p id="n17" class="pln"><a href="#n17">17</a></p>
+<p id="n18" class="stm run hide_run"><a href="#n18">18</a></p>
+<p id="n19" class="stm run hide_run"><a href="#n19">19</a></p>
+<p id="n20" class="pln"><a href="#n20">20</a></p>
+<p id="n21" class="stm run hide_run"><a href="#n21">21</a></p>
+<p id="n22" class="pln"><a href="#n22">22</a></p>
+<p id="n23" class="stm run hide_run"><a href="#n23">23</a></p>
+<p id="n24" class="stm run hide_run"><a href="#n24">24</a></p>
+<p id="n25" class="stm run hide_run"><a href="#n25">25</a></p>
+<p id="n26" class="stm run hide_run"><a href="#n26">26</a></p>
+<p id="n27" class="stm run hide_run"><a href="#n27">27</a></p>
+<p id="n28" class="pln"><a href="#n28">28</a></p>
+<p id="n29" class="stm run hide_run"><a href="#n29">29</a></p>
+<p id="n30" class="stm run hide_run"><a href="#n30">30</a></p>
+<p id="n31" class="stm run hide_run"><a href="#n31">31</a></p>
+<p id="n32" class="stm run hide_run"><a href="#n32">32</a></p>
+<p id="n33" class="stm run hide_run"><a href="#n33">33</a></p>
+<p id="n34" class="pln"><a href="#n34">34</a></p>
+<p id="n35" class="pln"><a href="#n35">35</a></p>
+<p id="n36" class="stm run hide_run"><a href="#n36">36</a></p>
+<p id="n37" class="pln"><a href="#n37">37</a></p>
+<p id="n38" class="pln"><a href="#n38">38</a></p>
+<p id="n39" class="pln"><a href="#n39">39</a></p>
+<p id="n40" class="pln"><a href="#n40">40</a></p>
+<p id="n41" class="pln"><a href="#n41">41</a></p>
+<p id="n42" class="pln"><a href="#n42">42</a></p>
+<p id="n43" class="pln"><a href="#n43">43</a></p>
+<p id="n44" class="stm run hide_run"><a href="#n44">44</a></p>
+<p id="n45" class="pln"><a href="#n45">45</a></p>
+<p id="n46" class="stm par run hide_run"><a href="#n46">46</a></p>
+<p id="n47" class="stm mis"><a href="#n47">47</a></p>
+<p id="n48" class="pln"><a href="#n48">48</a></p>
+<p id="n49" class="stm run hide_run"><a href="#n49">49</a></p>
+<p id="n50" class="stm par run hide_run"><a href="#n50">50</a></p>
+<p id="n51" class="stm run hide_run"><a href="#n51">51</a></p>
+<p id="n52" class="stm run hide_run"><a href="#n52">52</a></p>
+<p id="n53" class="stm run hide_run"><a href="#n53">53</a></p>
+<p id="n54" class="pln"><a href="#n54">54</a></p>
+<p id="n55" class="pln"><a href="#n55">55</a></p>
+<p id="n56" class="pln"><a href="#n56">56</a></p>
+<p id="n57" class="stm run hide_run"><a href="#n57">57</a></p>
+<p id="n58" class="stm run hide_run"><a href="#n58">58</a></p>
+<p id="n59" class="stm run hide_run"><a href="#n59">59</a></p>
+<p id="n60" class="stm run hide_run"><a href="#n60">60</a></p>
+<p id="n61" class="pln"><a href="#n61">61</a></p>
+<p id="n62" class="stm run hide_run"><a href="#n62">62</a></p>
+<p id="n63" class="stm run hide_run"><a href="#n63">63</a></p>
+<p id="n64" class="stm run hide_run"><a href="#n64">64</a></p>
+<p id="n65" class="stm run hide_run"><a href="#n65">65</a></p>
+<p id="n66" class="stm run hide_run"><a href="#n66">66</a></p>
+<p id="n67" class="pln"><a href="#n67">67</a></p>
+<p id="n68" class="pln"><a href="#n68">68</a></p>
+<p id="n69" class="stm run hide_run"><a href="#n69">69</a></p>
+<p id="n70" class="stm run hide_run"><a href="#n70">70</a></p>
+<p id="n71" class="stm run hide_run"><a href="#n71">71</a></p>
+<p id="n72" class="pln"><a href="#n72">72</a></p>
+<p id="n73" class="pln"><a href="#n73">73</a></p>
+<p id="n74" class="pln"><a href="#n74">74</a></p>
+<p id="n75" class="pln"><a href="#n75">75</a></p>
+<p id="n76" class="pln"><a href="#n76">76</a></p>
+<p id="n77" class="pln"><a href="#n77">77</a></p>
+<p id="n78" class="pln"><a href="#n78">78</a></p>
+<p id="n79" class="pln"><a href="#n79">79</a></p>
+<p id="n80" class="pln"><a href="#n80">80</a></p>
+<p id="n81" class="pln"><a href="#n81">81</a></p>
+<p id="n82" class="pln"><a href="#n82">82</a></p>
+<p id="n83" class="pln"><a href="#n83">83</a></p>
+<p id="n84" class="stm run hide_run"><a href="#n84">84</a></p>
+<p id="n85" class="pln"><a href="#n85">85</a></p>
+<p id="n86" class="pln"><a href="#n86">86</a></p>
+<p id="n87" class="stm run hide_run"><a href="#n87">87</a></p>
+<p id="n88" class="pln"><a href="#n88">88</a></p>
+<p id="n89" class="pln"><a href="#n89">89</a></p>
+<p id="n90" class="pln"><a href="#n90">90</a></p>
+<p id="n91" class="pln"><a href="#n91">91</a></p>
+<p id="n92" class="pln"><a href="#n92">92</a></p>
+<p id="n93" class="pln"><a href="#n93">93</a></p>
+<p id="n94" class="stm run hide_run"><a href="#n94">94</a></p>
+<p id="n95" class="stm run hide_run"><a href="#n95">95</a></p>
+<p id="n96" class="stm run hide_run"><a href="#n96">96</a></p>
+<p id="n97" class="stm run hide_run"><a href="#n97">97</a></p>
+<p id="n98" class="stm run hide_run"><a href="#n98">98</a></p>
+<p id="n99" class="stm run hide_run"><a href="#n99">99</a></p>
+<p id="n100" class="stm run hide_run"><a href="#n100">100</a></p>
+<p id="n101" class="pln"><a href="#n101">101</a></p>
+<p id="n102" class="stm par run hide_run"><a href="#n102">102</a></p>
+<p id="n103" class="stm mis"><a href="#n103">103</a></p>
+<p id="n104" class="pln"><a href="#n104">104</a></p>
+<p id="n105" class="stm run hide_run"><a href="#n105">105</a></p>
+<p id="n106" class="stm run hide_run"><a href="#n106">106</a></p>
+<p id="n107" class="stm par run hide_run"><a href="#n107">107</a></p>
+<p id="n108" class="stm mis"><a href="#n108">108</a></p>
+<p id="n109" class="pln"><a href="#n109">109</a></p>
+<p id="n110" class="stm par run hide_run"><a href="#n110">110</a></p>
+<p id="n111" class="stm mis"><a href="#n111">111</a></p>
+<p id="n112" class="pln"><a href="#n112">112</a></p>
+<p id="n113" class="pln"><a href="#n113">113</a></p>
+<p id="n114" class="pln"><a href="#n114">114</a></p>
+<p id="n115" class="pln"><a href="#n115">115</a></p>
+<p id="n116" class="pln"><a href="#n116">116</a></p>
+<p id="n117" class="pln"><a href="#n117">117</a></p>
+<p id="n118" class="pln"><a href="#n118">118</a></p>
+<p id="n119" class="pln"><a href="#n119">119</a></p>
+<p id="n120" class="pln"><a href="#n120">120</a></p>
+<p id="n121" class="stm mis"><a href="#n121">121</a></p>
+<p id="n122" class="pln"><a href="#n122">122</a></p>
+<p id="n123" class="stm run hide_run"><a href="#n123">123</a></p>
+<p id="n124" class="stm run hide_run"><a href="#n124">124</a></p>
+<p id="n125" class="stm run hide_run"><a href="#n125">125</a></p>
+<p id="n126" class="stm mis"><a href="#n126">126</a></p>
+<p id="n127" class="pln"><a href="#n127">127</a></p>
+<p id="n128" class="pln"><a href="#n128">128</a></p>
+<p id="n129" class="stm mis"><a href="#n129">129</a></p>
+<p id="n130" class="stm mis"><a href="#n130">130</a></p>
+<p id="n131" class="pln"><a href="#n131">131</a></p>
+<p id="n132" class="stm mis"><a href="#n132">132</a></p>
+<p id="n133" class="pln"><a href="#n133">133</a></p>
+<p id="n134" class="stm run hide_run"><a href="#n134">134</a></p>
+<p id="n135" class="pln"><a href="#n135">135</a></p>
+<p id="n136" class="stm par run hide_run"><a href="#n136">136</a></p>
+<p id="n137" class="stm mis"><a href="#n137">137</a></p>
+<p id="n138" class="pln"><a href="#n138">138</a></p>
+<p id="n139" class="stm run hide_run"><a href="#n139">139</a></p>
+<p id="n140" class="pln"><a href="#n140">140</a></p>
+<p id="n141" class="stm run hide_run"><a href="#n141">141</a></p>
+<p id="n142" class="pln"><a href="#n142">142</a></p>
+<p id="n143" class="pln"><a href="#n143">143</a></p>
+<p id="n144" class="pln"><a href="#n144">144</a></p>
+<p id="n145" class="pln"><a href="#n145">145</a></p>
+<p id="n146" class="pln"><a href="#n146">146</a></p>
+<p id="n147" class="pln"><a href="#n147">147</a></p>
+<p id="n148" class="pln"><a href="#n148">148</a></p>
+<p id="n149" class="pln"><a href="#n149">149</a></p>
+<p id="n150" class="stm run hide_run"><a href="#n150">150</a></p>
+<p id="n151" class="stm run hide_run"><a href="#n151">151</a></p>
+<p id="n152" class="pln"><a href="#n152">152</a></p>
+<p id="n153" class="pln"><a href="#n153">153</a></p>
+<p id="n154" class="pln"><a href="#n154">154</a></p>
+<p id="n155" class="pln"><a href="#n155">155</a></p>
+<p id="n156" class="stm par run hide_run"><a href="#n156">156</a></p>
+<p id="n157" class="stm mis"><a href="#n157">157</a></p>
+<p id="n158" class="stm par run hide_run"><a href="#n158">158</a></p>
+<p id="n159" class="stm mis"><a href="#n159">159</a></p>
+<p id="n160" class="stm par run hide_run"><a href="#n160">160</a></p>
+<p id="n161" class="stm mis"><a href="#n161">161</a></p>
+<p id="n162" class="pln"><a href="#n162">162</a></p>
+<p id="n163" class="stm mis"><a href="#n163">163</a></p>
+<p id="n164" class="pln"><a href="#n164">164</a></p>
+<p id="n165" class="stm run hide_run"><a href="#n165">165</a></p>
+<p id="n166" class="pln"><a href="#n166">166</a></p>
+<p id="n167" class="pln"><a href="#n167">167</a></p>
+<p id="n168" class="pln"><a href="#n168">168</a></p>
+<p id="n169" class="stm run hide_run"><a href="#n169">169</a></p>
+<p id="n170" class="stm par run hide_run"><a href="#n170">170</a></p>
+<p id="n171" class="stm mis"><a href="#n171">171</a></p>
+<p id="n172" class="stm mis"><a href="#n172">172</a></p>
+<p id="n173" class="pln"><a href="#n173">173</a></p>
+<p id="n174" class="stm mis"><a href="#n174">174</a></p>
+<p id="n175" class="pln"><a href="#n175">175</a></p>
+<p id="n176" class="pln"><a href="#n176">176</a></p>
+<p id="n177" class="stm run hide_run"><a href="#n177">177</a></p>
+<p id="n178" class="pln"><a href="#n178">178</a></p>
+<p id="n179" class="pln"><a href="#n179">179</a></p>
+<p id="n180" class="pln"><a href="#n180">180</a></p>
+<p id="n181" class="stm run hide_run"><a href="#n181">181</a></p>
+<p id="n182" class="stm run hide_run"><a href="#n182">182</a></p>
+<p id="n183" class="pln"><a href="#n183">183</a></p>
+<p id="n184" class="stm run hide_run"><a href="#n184">184</a></p>
+<p id="n185" class="stm run hide_run"><a href="#n185">185</a></p>
+<p id="n186" class="stm par run hide_run"><a href="#n186">186</a></p>
+<p id="n187" class="stm mis"><a href="#n187">187</a></p>
+<p id="n188" class="stm run hide_run"><a href="#n188">188</a></p>
+<p id="n189" class="stm par run hide_run"><a href="#n189">189</a></p>
+<p id="n190" class="stm run hide_run"><a href="#n190">190</a></p>
+<p id="n191" class="stm run hide_run"><a href="#n191">191</a></p>
+<p id="n192" class="stm mis"><a href="#n192">192</a></p>
+<p id="n193" class="stm mis"><a href="#n193">193</a></p>
+<p id="n194" class="stm mis"><a href="#n194">194</a></p>
+<p id="n195" class="stm mis"><a href="#n195">195</a></p>
+<p id="n196" class="stm mis"><a href="#n196">196</a></p>
+<p id="n197" class="pln"><a href="#n197">197</a></p>
+<p id="n198" class="pln"><a href="#n198">198</a></p>
+<p id="n199" class="pln"><a href="#n199">199</a></p>
+<p id="n200" class="pln"><a href="#n200">200</a></p>
+<p id="n201" class="pln"><a href="#n201">201</a></p>
+<p id="n202" class="pln"><a href="#n202">202</a></p>
+<p id="n203" class="pln"><a href="#n203">203</a></p>
+<p id="n204" class="stm mis"><a href="#n204">204</a></p>
+<p id="n205" class="stm mis"><a href="#n205">205</a></p>
+<p id="n206" class="stm mis"><a href="#n206">206</a></p>
+<p id="n207" class="stm mis"><a href="#n207">207</a></p>
+<p id="n208" class="stm mis"><a href="#n208">208</a></p>
+<p id="n209" class="stm mis"><a href="#n209">209</a></p>
+<p id="n210" class="stm mis"><a href="#n210">210</a></p>
+<p id="n211" class="stm mis"><a href="#n211">211</a></p>
+<p id="n212" class="stm mis"><a href="#n212">212</a></p>
+<p id="n213" class="pln"><a href="#n213">213</a></p>
+<p id="n214" class="stm mis"><a href="#n214">214</a></p>
+<p id="n215" class="pln"><a href="#n215">215</a></p>
+<p id="n216" class="stm mis"><a href="#n216">216</a></p>
+<p id="n217" class="stm mis"><a href="#n217">217</a></p>
+<p id="n218" class="stm mis"><a href="#n218">218</a></p>
+<p id="n219" class="pln"><a href="#n219">219</a></p>
+<p id="n220" class="stm mis"><a href="#n220">220</a></p>
+<p id="n221" class="pln"><a href="#n221">221</a></p>
+<p id="n222" class="stm par run hide_run"><a href="#n222">222</a></p>
+<p id="n223" class="stm run hide_run"><a href="#n223">223</a></p>
+<p id="n224" class="stm run hide_run"><a href="#n224">224</a></p>
+<p id="n225" class="stm mis"><a href="#n225">225</a></p>
+<p id="n226" class="stm mis"><a href="#n226">226</a></p>
+<p id="n227" class="pln"><a href="#n227">227</a></p>
+<p id="n228" class="pln"><a href="#n228">228</a></p>
+<p id="n229" class="pln"><a href="#n229">229</a></p>
+<p id="n230" class="pln"><a href="#n230">230</a></p>
+<p id="n231" class="pln"><a href="#n231">231</a></p>
+<p id="n232" class="pln"><a href="#n232">232</a></p>
+<p id="n233" class="pln"><a href="#n233">233</a></p>
+<p id="n234" class="stm par run hide_run"><a href="#n234">234</a></p>
+<p id="n235" class="stm run hide_run"><a href="#n235">235</a></p>
+<p id="n236" class="pln"><a href="#n236">236</a></p>
+<p id="n237" class="stm mis"><a href="#n237">237</a></p>
+<p id="n238" class="pln"><a href="#n238">238</a></p>
+<p id="n239" class="stm run hide_run"><a href="#n239">239</a></p>
+<p id="n240" class="stm run hide_run"><a href="#n240">240</a></p>
+<p id="n241" class="stm par run hide_run"><a href="#n241">241</a></p>
+<p id="n242" class="stm mis"><a href="#n242">242</a></p>
+<p id="n243" class="stm mis"><a href="#n243">243</a></p>
+<p id="n244" class="stm par run hide_run"><a href="#n244">244</a></p>
+<p id="n245" class="stm mis"><a href="#n245">245</a></p>
+<p id="n246" class="pln"><a href="#n246">246</a></p>
+<p id="n247" class="pln"><a href="#n247">247</a></p>
+<p id="n248" class="pln"><a href="#n248">248</a></p>
+<p id="n249" class="pln"><a href="#n249">249</a></p>
+<p id="n250" class="pln"><a href="#n250">250</a></p>
+<p id="n251" class="stm run hide_run"><a href="#n251">251</a></p>
+<p id="n252" class="stm mis"><a href="#n252">252</a></p>
+<p id="n253" class="stm mis"><a href="#n253">253</a></p>
+<p id="n254" class="pln"><a href="#n254">254</a></p>
+<p id="n255" class="pln"><a href="#n255">255</a></p>
+<p id="n256" class="stm mis"><a href="#n256">256</a></p>
+<p id="n257" class="stm mis"><a href="#n257">257</a></p>
+<p id="n258" class="pln"><a href="#n258">258</a></p>
+<p id="n259" class="pln"><a href="#n259">259</a></p>
+<p id="n260" class="pln"><a href="#n260">260</a></p>
+<p id="n261" class="pln"><a href="#n261">261</a></p>
+<p id="n262" class="pln"><a href="#n262">262</a></p>
+<p id="n263" class="pln"><a href="#n263">263</a></p>
+<p id="n264" class="pln"><a href="#n264">264</a></p>
+<p id="n265" class="stm mis"><a href="#n265">265</a></p>
+<p id="n266" class="stm mis"><a href="#n266">266</a></p>
+<p id="n267" class="pln"><a href="#n267">267</a></p>
+<p id="n268" class="stm run hide_run"><a href="#n268">268</a></p>
+<p id="n269" class="stm run hide_run"><a href="#n269">269</a></p>
+<p id="n270" class="stm run hide_run"><a href="#n270">270</a></p>
+<p id="n271" class="pln"><a href="#n271">271</a></p>
+<p id="n272" class="pln"><a href="#n272">272</a></p>
+<p id="n273" class="pln"><a href="#n273">273</a></p>
+<p id="n274" class="pln"><a href="#n274">274</a></p>
+<p id="n275" class="pln"><a href="#n275">275</a></p>
+<p id="n276" class="pln"><a href="#n276">276</a></p>
+<p id="n277" class="pln"><a href="#n277">277</a></p>
+<p id="n278" class="pln"><a href="#n278">278</a></p>
+<p id="n279" class="pln"><a href="#n279">279</a></p>
+<p id="n280" class="pln"><a href="#n280">280</a></p>
+<p id="n281" class="pln"><a href="#n281">281</a></p>
+<p id="n282" class="pln"><a href="#n282">282</a></p>
+<p id="n283" class="pln"><a href="#n283">283</a></p>
+<p id="n284" class="pln"><a href="#n284">284</a></p>
+<p id="n285" class="stm run hide_run"><a href="#n285">285</a></p>
+<p id="n286" class="stm par run hide_run"><a href="#n286">286</a></p>
+<p id="n287" class="stm mis"><a href="#n287">287</a></p>
+<p id="n288" class="pln"><a href="#n288">288</a></p>
+<p id="n289" class="stm par run hide_run"><a href="#n289">289</a></p>
+<p id="n290" class="stm mis"><a href="#n290">290</a></p>
+<p id="n291" class="stm mis"><a href="#n291">291</a></p>
+<p id="n292" class="stm mis"><a href="#n292">292</a></p>
+<p id="n293" class="stm mis"><a href="#n293">293</a></p>
+<p id="n294" class="pln"><a href="#n294">294</a></p>
+<p id="n295" class="pln"><a href="#n295">295</a></p>
+<p id="n296" class="pln"><a href="#n296">296</a></p>
+<p id="n297" class="pln"><a href="#n297">297</a></p>
+<p id="n298" class="pln"><a href="#n298">298</a></p>
+<p id="n299" class="stm mis"><a href="#n299">299</a></p>
+<p id="n300" class="pln"><a href="#n300">300</a></p>
+<p id="n301" class="pln"><a href="#n301">301</a></p>
+<p id="n302" class="stm run hide_run"><a href="#n302">302</a></p>
+<p id="n303" class="pln"><a href="#n303">303</a></p>
+<p id="n304" class="pln"><a href="#n304">304</a></p>
+<p id="n305" class="stm run hide_run"><a href="#n305">305</a></p>
+<p id="n306" class="stm run hide_run"><a href="#n306">306</a></p>
+<p id="n307" class="pln"><a href="#n307">307</a></p>
+<p id="n308" class="pln"><a href="#n308">308</a></p>
+<p id="n309" class="pln"><a href="#n309">309</a></p>
+<p id="n310" class="pln"><a href="#n310">310</a></p>
+<p id="n311" class="stm par run hide_run"><a href="#n311">311</a></p>
+<p id="n312" class="stm mis"><a href="#n312">312</a></p>
+<p id="n313" class="stm mis"><a href="#n313">313</a></p>
+<p id="n314" class="pln"><a href="#n314">314</a></p>
+<p id="n315" class="stm run hide_run"><a href="#n315">315</a></p>
+<p id="n316" class="pln"><a href="#n316">316</a></p>
+<p id="n317" class="stm run hide_run"><a href="#n317">317</a></p>
+<p id="n318" class="stm run hide_run"><a href="#n318">318</a></p>
+<p id="n319" class="pln"><a href="#n319">319</a></p>
+<p id="n320" class="stm par run hide_run"><a href="#n320">320</a></p>
+<p id="n321" class="stm mis"><a href="#n321">321</a></p>
+<p id="n322" class="pln"><a href="#n322">322</a></p>
+<p id="n323" class="pln"><a href="#n323">323</a></p>
+<p id="n324" class="pln"><a href="#n324">324</a></p>
+<p id="n325" class="pln"><a href="#n325">325</a></p>
+<p id="n326" class="pln"><a href="#n326">326</a></p>
+<p id="n327" class="pln"><a href="#n327">327</a></p>
+<p id="n328" class="pln"><a href="#n328">328</a></p>
+<p id="n329" class="pln"><a href="#n329">329</a></p>
+<p id="n330" class="pln"><a href="#n330">330</a></p>
+<p id="n331" class="pln"><a href="#n331">331</a></p>
+<p id="n332" class="stm mis"><a href="#n332">332</a></p>
+<p id="n333" class="stm mis"><a href="#n333">333</a></p>
+<p id="n334" class="stm mis"><a href="#n334">334</a></p>
+<p id="n335" class="pln"><a href="#n335">335</a></p>
+<p id="n336" class="stm mis"><a href="#n336">336</a></p>
+<p id="n337" class="stm mis"><a href="#n337">337</a></p>
+<p id="n338" class="pln"><a href="#n338">338</a></p>
+<p id="n339" class="stm mis"><a href="#n339">339</a></p>
+<p id="n340" class="pln"><a href="#n340">340</a></p>
+<p id="n341" class="stm mis"><a href="#n341">341</a></p>
+<p id="n342" class="stm mis"><a href="#n342">342</a></p>
+<p id="n343" class="stm mis"><a href="#n343">343</a></p>
+<p id="n344" class="stm mis"><a href="#n344">344</a></p>
+<p id="n345" class="pln"><a href="#n345">345</a></p>
+<p id="n346" class="stm mis"><a href="#n346">346</a></p>
+<p id="n347" class="pln"><a href="#n347">347</a></p>
+<p id="n348" class="pln"><a href="#n348">348</a></p>
+<p id="n349" class="stm mis"><a href="#n349">349</a></p>
+<p id="n350" class="pln"><a href="#n350">350</a></p>
+<p id="n351" class="pln"><a href="#n351">351</a></p>
+<p id="n352" class="stm mis"><a href="#n352">352</a></p>
+<p id="n353" class="stm mis"><a href="#n353">353</a></p>
+<p id="n354" class="stm mis"><a href="#n354">354</a></p>
+<p id="n355" class="stm mis"><a href="#n355">355</a></p>
+<p id="n356" class="pln"><a href="#n356">356</a></p>
+<p id="n357" class="pln"><a href="#n357">357</a></p>
+<p id="n358" class="stm mis"><a href="#n358">358</a></p>
+<p id="n359" class="stm mis"><a href="#n359">359</a></p>
+<p id="n360" class="pln"><a href="#n360">360</a></p>
+<p id="n361" class="pln"><a href="#n361">361</a></p>
+<p id="n362" class="stm mis"><a href="#n362">362</a></p>
+<p id="n363" class="pln"><a href="#n363">363</a></p>
+<p id="n364" class="stm par run hide_run"><a href="#n364">364</a></p>
+<p id="n365" class="stm mis"><a href="#n365">365</a></p>
+<p id="n366" class="pln"><a href="#n366">366</a></p>
+<p id="n367" class="stm run hide_run"><a href="#n367">367</a></p>
+<p id="n368" class="pln"><a href="#n368">368</a></p>
+<p id="n369" class="stm run hide_run"><a href="#n369">369</a></p>
+<p id="n370" class="pln"><a href="#n370">370</a></p>
+<p id="n371" class="stm run hide_run"><a href="#n371">371</a></p>
+<p id="n372" class="pln"><a href="#n372">372</a></p>
+<p id="n373" class="pln"><a href="#n373">373</a></p>
+<p id="n374" class="stm run hide_run"><a href="#n374">374</a></p>
+<p id="n375" class="pln"><a href="#n375">375</a></p>
+<p id="n376" class="pln"><a href="#n376">376</a></p>
+<p id="n377" class="pln"><a href="#n377">377</a></p>
+<p id="n378" class="pln"><a href="#n378">378</a></p>
+<p id="n379" class="pln"><a href="#n379">379</a></p>
+<p id="n380" class="pln"><a href="#n380">380</a></p>
+<p id="n381" class="stm run hide_run"><a href="#n381">381</a></p>
+<p id="n382" class="pln"><a href="#n382">382</a></p>
+<p id="n383" class="stm par run hide_run"><a href="#n383">383</a></p>
+<p id="n384" class="stm mis"><a href="#n384">384</a></p>
+<p id="n385" class="pln"><a href="#n385">385</a></p>
+<p id="n386" class="stm run hide_run"><a href="#n386">386</a></p>
+<p id="n387" class="stm run hide_run"><a href="#n387">387</a></p>
+<p id="n388" class="stm run hide_run"><a href="#n388">388</a></p>
+<p id="n389" class="stm run hide_run"><a href="#n389">389</a></p>
+<p id="n390" class="pln"><a href="#n390">390</a></p>
+<p id="n391" class="stm run hide_run"><a href="#n391">391</a></p>
+
+            </td>
+            <td class="text">
+<p id="t1" class="pln"><span class="com"># (c) 2012-2014, Michael DeHaan &lt;michael.dehaan@gmail.com></span><span class="strut">&nbsp;</span></p>
+<p id="t2" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t3" class="pln"><span class="com"># This file is part of Ansible</span><span class="strut">&nbsp;</span></p>
+<p id="t4" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t5" class="pln"><span class="com"># Ansible is free software: you can redistribute it and/or modify</span><span class="strut">&nbsp;</span></p>
+<p id="t6" class="pln"><span class="com"># it under the terms of the GNU General Public License as published by</span><span class="strut">&nbsp;</span></p>
+<p id="t7" class="pln"><span class="com"># the Free Software Foundation, either version 3 of the License, or</span><span class="strut">&nbsp;</span></p>
+<p id="t8" class="pln"><span class="com"># (at your option) any later version.</span><span class="strut">&nbsp;</span></p>
+<p id="t9" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t10" class="pln"><span class="com"># Ansible is distributed in the hope that it will be useful,</span><span class="strut">&nbsp;</span></p>
+<p id="t11" class="pln"><span class="com"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span><span class="strut">&nbsp;</span></p>
+<p id="t12" class="pln"><span class="com"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span><span class="strut">&nbsp;</span></p>
+<p id="t13" class="pln"><span class="com"># GNU General Public License for more details.</span><span class="strut">&nbsp;</span></p>
+<p id="t14" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t15" class="pln"><span class="com"># You should have received a copy of the GNU General Public License</span><span class="strut">&nbsp;</span></p>
+<p id="t16" class="pln"><span class="com"># along with Ansible.  If not, see &lt;http://www.gnu.org/licenses/>.</span><span class="strut">&nbsp;</span></p>
+<p id="t17" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t18" class="stm run hide_run"><span class="key">from</span> <span class="nam">__future__</span> <span class="key">import</span> <span class="op">(</span><span class="nam">absolute_import</span><span class="op">,</span> <span class="nam">division</span><span class="op">,</span> <span class="nam">print_function</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t19" class="stm run hide_run"><span class="nam">__metaclass__</span> <span class="op">=</span> <span class="nam">type</span><span class="strut">&nbsp;</span></p>
+<p id="t20" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t21" class="stm run hide_run"><span class="key">import</span> <span class="nam">os</span><span class="strut">&nbsp;</span></p>
+<p id="t22" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t23" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span> <span class="key">import</span> <span class="nam">constants</span> <span class="key">as</span> <span class="nam">C</span><span class="strut">&nbsp;</span></p>
+<p id="t24" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">errors</span> <span class="key">import</span> <span class="nam">AnsibleParserError</span><span class="op">,</span> <span class="nam">AnsibleUndefinedVariable</span><span class="op">,</span> <span class="nam">AnsibleFileNotFound</span><span class="op">,</span> <span class="nam">AnsibleAssertionError</span><span class="strut">&nbsp;</span></p>
+<p id="t25" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">module_utils</span><span class="op">.</span><span class="nam">_text</span> <span class="key">import</span> <span class="nam">to_native</span><span class="strut">&nbsp;</span></p>
+<p id="t26" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">module_utils</span><span class="op">.</span><span class="nam">six</span> <span class="key">import</span> <span class="nam">string_types</span><span class="strut">&nbsp;</span></p>
+<p id="t27" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">parsing</span><span class="op">.</span><span class="nam">mod_args</span> <span class="key">import</span> <span class="nam">ModuleArgsParser</span><span class="strut">&nbsp;</span></p>
+<p id="t28" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t29" class="stm run hide_run"><span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t30" class="stm run hide_run">    <span class="key">from</span> <span class="nam">__main__</span> <span class="key">import</span> <span class="nam">display</span><span class="strut">&nbsp;</span></p>
+<p id="t31" class="stm run hide_run"><span class="key">except</span> <span class="nam">ImportError</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t32" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">utils</span><span class="op">.</span><span class="nam">display</span> <span class="key">import</span> <span class="nam">Display</span><span class="strut">&nbsp;</span></p>
+<p id="t33" class="stm run hide_run">    <span class="nam">display</span> <span class="op">=</span> <span class="nam">Display</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t34" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t35" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t36" class="stm run hide_run"><span class="key">def</span> <span class="nam">load_list_of_blocks</span><span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">play</span><span class="op">,</span> <span class="nam">parent_block</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">role</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">task_include</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">use_handlers</span><span class="op">=</span><span class="nam">False</span><span class="op">,</span> <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">None</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t37" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t38" class="pln"><span class="str">    Given a list of mixed task/block data (parsed from YAML),</span><span class="strut">&nbsp;</span></p>
+<p id="t39" class="pln"><span class="str">    return a list of Block() objects, where implicit blocks</span><span class="strut">&nbsp;</span></p>
+<p id="t40" class="pln"><span class="str">    are created for each bare Task.</span><span class="strut">&nbsp;</span></p>
+<p id="t41" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t42" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t43" class="pln">    <span class="com"># we import here to prevent a circular dependency with imports</span><span class="strut">&nbsp;</span></p>
+<p id="t44" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">block</span> <span class="key">import</span> <span class="nam">Block</span><span class="strut">&nbsp;</span></p>
+<p id="t45" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t46" class="stm par run hide_run"><span class="annotate short">46&#x202F;&#x219B;&#x202F;47</span><span class="annotate long">line 46 didn't jump to line 47, because the condition on line 46 was never true</span>    <span class="key">if</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="op">(</span><span class="nam">list</span><span class="op">,</span> <span class="nam">type</span><span class="op">(</span><span class="nam">None</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t47" class="stm mis">        <span class="key">raise</span> <span class="nam">AnsibleAssertionError</span><span class="op">(</span><span class="str">'%s should be a list or None but is %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">type</span><span class="op">(</span><span class="nam">ds</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t48" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t49" class="stm run hide_run">    <span class="nam">block_list</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t50" class="stm par run hide_run"><span class="annotate short">50&#x202F;&#x219B;&#x202F;84</span><span class="annotate long">line 50 didn't jump to line 84, because the condition on line 50 was never false</span>    <span class="key">if</span> <span class="nam">ds</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t51" class="stm run hide_run">        <span class="nam">count</span> <span class="op">=</span> <span class="nam">iter</span><span class="op">(</span><span class="nam">range</span><span class="op">(</span><span class="nam">len</span><span class="op">(</span><span class="nam">ds</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t52" class="stm run hide_run">        <span class="key">for</span> <span class="nam">i</span> <span class="key">in</span> <span class="nam">count</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t53" class="stm run hide_run">            <span class="nam">block_ds</span> <span class="op">=</span> <span class="nam">ds</span><span class="op">[</span><span class="nam">i</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t54" class="pln">            <span class="com"># Implicit blocks are created by bare tasks listed in a play without</span><span class="strut">&nbsp;</span></p>
+<p id="t55" class="pln">            <span class="com"># an explicit block statement. If we have two implicit blocks in a row,</span><span class="strut">&nbsp;</span></p>
+<p id="t56" class="pln">            <span class="com"># squash them down to a single block to save processing time later.</span><span class="strut">&nbsp;</span></p>
+<p id="t57" class="stm run hide_run">            <span class="nam">implicit_blocks</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t58" class="stm run hide_run">            <span class="key">while</span> <span class="nam">block_ds</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">Block</span><span class="op">.</span><span class="nam">is_block</span><span class="op">(</span><span class="nam">block_ds</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t59" class="stm run hide_run">                <span class="nam">implicit_blocks</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">block_ds</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t60" class="stm run hide_run">                <span class="nam">i</span> <span class="op">+=</span> <span class="num">1</span><span class="strut">&nbsp;</span></p>
+<p id="t61" class="pln">                <span class="com"># Advance the iterator, so we don't repeat</span><span class="strut">&nbsp;</span></p>
+<p id="t62" class="stm run hide_run">                <span class="nam">next</span><span class="op">(</span><span class="nam">count</span><span class="op">,</span> <span class="nam">None</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t63" class="stm run hide_run">                <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t64" class="stm run hide_run">                    <span class="nam">block_ds</span> <span class="op">=</span> <span class="nam">ds</span><span class="op">[</span><span class="nam">i</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t65" class="stm run hide_run">                <span class="key">except</span> <span class="nam">IndexError</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t66" class="stm run hide_run">                    <span class="nam">block_ds</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t67" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t68" class="pln">            <span class="com"># Loop both implicit blocks and block_ds as block_ds is the next in the list</span><span class="strut">&nbsp;</span></p>
+<p id="t69" class="stm run hide_run">            <span class="key">for</span> <span class="nam">b</span> <span class="key">in</span> <span class="op">(</span><span class="nam">implicit_blocks</span><span class="op">,</span> <span class="nam">block_ds</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t70" class="stm run hide_run">                <span class="key">if</span> <span class="nam">b</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t71" class="stm run hide_run">                    <span class="nam">block_list</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t72" class="pln">                        <span class="nam">Block</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t73" class="pln">                            <span class="nam">b</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t74" class="pln">                            <span class="nam">play</span><span class="op">=</span><span class="nam">play</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t75" class="pln">                            <span class="nam">parent_block</span><span class="op">=</span><span class="nam">parent_block</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t76" class="pln">                            <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t77" class="pln">                            <span class="nam">task_include</span><span class="op">=</span><span class="nam">task_include</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t78" class="pln">                            <span class="nam">use_handlers</span><span class="op">=</span><span class="nam">use_handlers</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t79" class="pln">                            <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t80" class="pln">                            <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t81" class="pln">                        <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t82" class="pln">                    <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t83" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t84" class="stm run hide_run">    <span class="key">return</span> <span class="nam">block_list</span><span class="strut">&nbsp;</span></p>
+<p id="t85" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t86" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t87" class="stm run hide_run"><span class="key">def</span> <span class="nam">load_list_of_tasks</span><span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">play</span><span class="op">,</span> <span class="nam">block</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">role</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">task_include</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">use_handlers</span><span class="op">=</span><span class="nam">False</span><span class="op">,</span> <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">None</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t88" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t89" class="pln"><span class="str">    Given a list of task datastructures (parsed from YAML),</span><span class="strut">&nbsp;</span></p>
+<p id="t90" class="pln"><span class="str">    return a list of Task() or TaskInclude() objects.</span><span class="strut">&nbsp;</span></p>
+<p id="t91" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t92" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t93" class="pln">    <span class="com"># we import here to prevent a circular dependency with imports</span><span class="strut">&nbsp;</span></p>
+<p id="t94" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">block</span> <span class="key">import</span> <span class="nam">Block</span><span class="strut">&nbsp;</span></p>
+<p id="t95" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">handler</span> <span class="key">import</span> <span class="nam">Handler</span><span class="strut">&nbsp;</span></p>
+<p id="t96" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">task</span> <span class="key">import</span> <span class="nam">Task</span><span class="strut">&nbsp;</span></p>
+<p id="t97" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">task_include</span> <span class="key">import</span> <span class="nam">TaskInclude</span><span class="strut">&nbsp;</span></p>
+<p id="t98" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">role_include</span> <span class="key">import</span> <span class="nam">IncludeRole</span><span class="strut">&nbsp;</span></p>
+<p id="t99" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">handler_task_include</span> <span class="key">import</span> <span class="nam">HandlerTaskInclude</span><span class="strut">&nbsp;</span></p>
+<p id="t100" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">template</span> <span class="key">import</span> <span class="nam">Templar</span><span class="strut">&nbsp;</span></p>
+<p id="t101" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t102" class="stm par run hide_run"><span class="annotate short">102&#x202F;&#x219B;&#x202F;103</span><span class="annotate long">line 102 didn't jump to line 103, because the condition on line 102 was never true</span>    <span class="key">if</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t103" class="stm mis">        <span class="key">raise</span> <span class="nam">AnsibleAssertionError</span><span class="op">(</span><span class="str">'The ds (%s) should be a list but was a %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">type</span><span class="op">(</span><span class="nam">ds</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t104" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t105" class="stm run hide_run">    <span class="nam">task_list</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t106" class="stm run hide_run">    <span class="key">for</span> <span class="nam">task_ds</span> <span class="key">in</span> <span class="nam">ds</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t107" class="stm par run hide_run"><span class="annotate short">107&#x202F;&#x219B;&#x202F;108</span><span class="annotate long">line 107 didn't jump to line 108, because the condition on line 107 was never true</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">task_ds</span><span class="op">,</span> <span class="nam">dict</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t108" class="stm mis">            <span class="nam">AnsibleAssertionError</span><span class="op">(</span><span class="str">'The ds (%s) should be a dict but was a %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">type</span><span class="op">(</span><span class="nam">ds</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t109" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t110" class="stm par run hide_run"><span class="annotate short">110&#x202F;&#x219B;&#x202F;111</span><span class="annotate long">line 110 didn't jump to line 111, because the condition on line 110 was never true</span>        <span class="key">if</span> <span class="str">'block'</span> <span class="key">in</span> <span class="nam">task_ds</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t111" class="stm mis">            <span class="nam">t</span> <span class="op">=</span> <span class="nam">Block</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t112" class="pln">                <span class="nam">task_ds</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t113" class="pln">                <span class="nam">play</span><span class="op">=</span><span class="nam">play</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t114" class="pln">                <span class="nam">parent_block</span><span class="op">=</span><span class="nam">block</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t115" class="pln">                <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t116" class="pln">                <span class="nam">task_include</span><span class="op">=</span><span class="nam">task_include</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t117" class="pln">                <span class="nam">use_handlers</span><span class="op">=</span><span class="nam">use_handlers</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t118" class="pln">                <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t119" class="pln">                <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t120" class="pln">            <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t121" class="stm mis">            <span class="nam">task_list</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">t</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t122" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t123" class="stm run hide_run">            <span class="nam">args_parser</span> <span class="op">=</span> <span class="nam">ModuleArgsParser</span><span class="op">(</span><span class="nam">task_ds</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t124" class="stm run hide_run">            <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t125" class="stm run hide_run">                <span class="op">(</span><span class="nam">action</span><span class="op">,</span> <span class="nam">args</span><span class="op">,</span> <span class="nam">delegate_to</span><span class="op">)</span> <span class="op">=</span> <span class="nam">args_parser</span><span class="op">.</span><span class="nam">parse</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t126" class="stm mis">            <span class="key">except</span> <span class="nam">AnsibleParserError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t127" class="pln">                <span class="com"># if the raises exception was created with obj=ds args, then it includes the detail</span><span class="strut">&nbsp;</span></p>
+<p id="t128" class="pln">                <span class="com"># so we dont need to add it so we can just re raise.</span><span class="strut">&nbsp;</span></p>
+<p id="t129" class="stm mis">                <span class="key">if</span> <span class="nam">e</span><span class="op">.</span><span class="nam">_obj</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t130" class="stm mis">                    <span class="key">raise</span><span class="strut">&nbsp;</span></p>
+<p id="t131" class="pln">                <span class="com"># But if it wasn't, we can add the yaml object now to get more detail</span><span class="strut">&nbsp;</span></p>
+<p id="t132" class="stm mis">                <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="nam">to_native</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="op">,</span> <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">,</span> <span class="nam">orig_exc</span><span class="op">=</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t133" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t134" class="stm run hide_run">            <span class="key">if</span> <span class="nam">action</span> <span class="key">in</span> <span class="op">(</span><span class="str">'include'</span><span class="op">,</span> <span class="str">'import_tasks'</span><span class="op">,</span> <span class="str">'include_tasks'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t135" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t136" class="stm par run hide_run"><span class="annotate short">136&#x202F;&#x219B;&#x202F;137</span><span class="annotate long">line 136 didn't jump to line 137, because the condition on line 136 was never true</span>                <span class="key">if</span> <span class="nam">use_handlers</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t137" class="stm mis">                    <span class="nam">include_class</span> <span class="op">=</span> <span class="nam">HandlerTaskInclude</span><span class="strut">&nbsp;</span></p>
+<p id="t138" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t139" class="stm run hide_run">                    <span class="nam">include_class</span> <span class="op">=</span> <span class="nam">TaskInclude</span><span class="strut">&nbsp;</span></p>
+<p id="t140" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t141" class="stm run hide_run">                <span class="nam">t</span> <span class="op">=</span> <span class="nam">include_class</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t142" class="pln">                    <span class="nam">task_ds</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t143" class="pln">                    <span class="nam">block</span><span class="op">=</span><span class="nam">block</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t144" class="pln">                    <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t145" class="pln">                    <span class="nam">task_include</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t146" class="pln">                    <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t147" class="pln">                    <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="strut">&nbsp;</span></p>
+<p id="t148" class="pln">                <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t149" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t150" class="stm run hide_run">                <span class="nam">all_vars</span> <span class="op">=</span> <span class="nam">variable_manager</span><span class="op">.</span><span class="nam">get_vars</span><span class="op">(</span><span class="nam">play</span><span class="op">=</span><span class="nam">play</span><span class="op">,</span> <span class="nam">task</span><span class="op">=</span><span class="nam">t</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t151" class="stm run hide_run">                <span class="nam">templar</span> <span class="op">=</span> <span class="nam">Templar</span><span class="op">(</span><span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">,</span> <span class="nam">variables</span><span class="op">=</span><span class="nam">all_vars</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t152" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t153" class="pln">                <span class="com"># check to see if this include is dynamic or static:</span><span class="strut">&nbsp;</span></p>
+<p id="t154" class="pln">                <span class="com"># 1. the user has set the 'static' option to false or true</span><span class="strut">&nbsp;</span></p>
+<p id="t155" class="pln">                <span class="com"># 2. one of the appropriate config options was set</span><span class="strut">&nbsp;</span></p>
+<p id="t156" class="stm par run hide_run"><span class="annotate short">156&#x202F;&#x219B;&#x202F;157</span><span class="annotate long">line 156 didn't jump to line 157, because the condition on line 156 was never true</span>                <span class="key">if</span> <span class="nam">action</span> <span class="op">==</span> <span class="str">'include_tasks'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t157" class="stm mis">                    <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t158" class="stm par run hide_run"><span class="annotate short">158&#x202F;&#x219B;&#x202F;159</span><span class="annotate long">line 158 didn't jump to line 159, because the condition on line 158 was never true</span>                <span class="key">elif</span> <span class="nam">action</span> <span class="op">==</span> <span class="str">'import_tasks'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t159" class="stm mis">                    <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t160" class="stm par run hide_run"><span class="annotate short">160&#x202F;&#x219B;&#x202F;161</span><span class="annotate long">line 160 didn't jump to line 161, because the condition on line 160 was never true</span>                <span class="key">elif</span> <span class="nam">t</span><span class="op">.</span><span class="nam">static</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t161" class="stm mis">                    <span class="nam">display</span><span class="op">.</span><span class="nam">deprecated</span><span class="op">(</span><span class="str">"The use of 'static' has been deprecated. "</span><span class="strut">&nbsp;</span></p>
+<p id="t162" class="pln">                                       <span class="str">"Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion"</span><span class="op">,</span> <span class="nam">version</span><span class="op">=</span><span class="str">'2.12'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t163" class="stm mis">                    <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">t</span><span class="op">.</span><span class="nam">static</span><span class="strut">&nbsp;</span></p>
+<p id="t164" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t165" class="stm run hide_run">                    <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">C</span><span class="op">.</span><span class="nam">DEFAULT_TASK_INCLUDES_STATIC</span> <span class="key">or</span> <span class="xx">\</span><span class="strut">&nbsp;</span></p>
+<p id="t166" class="pln">                        <span class="op">(</span><span class="nam">use_handlers</span> <span class="key">and</span> <span class="nam">C</span><span class="op">.</span><span class="nam">DEFAULT_HANDLER_INCLUDES_STATIC</span><span class="op">)</span> <span class="key">or</span> <span class="xx">\</span><span class="strut">&nbsp;</span></p>
+<p id="t167" class="pln">                        <span class="op">(</span><span class="key">not</span> <span class="nam">templar</span><span class="op">.</span><span class="nam">_contains_vars</span><span class="op">(</span><span class="nam">t</span><span class="op">.</span><span class="nam">args</span><span class="op">[</span><span class="str">'_raw_params'</span><span class="op">]</span><span class="op">)</span> <span class="key">and</span> <span class="nam">t</span><span class="op">.</span><span class="nam">all_parents_static</span><span class="op">(</span><span class="op">)</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">t</span><span class="op">.</span><span class="nam">loop</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t168" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t169" class="stm run hide_run">                <span class="key">if</span> <span class="nam">is_static</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t170" class="stm par run hide_run"><span class="annotate short">170&#x202F;&#x219B;&#x202F;171</span><span class="annotate long">line 170 didn't jump to line 171, because the condition on line 170 was never true</span>                    <span class="key">if</span> <span class="nam">t</span><span class="op">.</span><span class="nam">loop</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t171" class="stm mis">                        <span class="key">if</span> <span class="nam">action</span> <span class="op">==</span> <span class="str">'import_tasks'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t172" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">"You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead."</span><span class="op">,</span> <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t173" class="pln">                        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t174" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">"You cannot use 'static' on an include with a loop"</span><span class="op">,</span> <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t175" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t176" class="pln">                    <span class="com"># we set a flag to indicate this include was static</span><span class="strut">&nbsp;</span></p>
+<p id="t177" class="stm run hide_run">                    <span class="nam">t</span><span class="op">.</span><span class="nam">statically_loaded</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t178" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t179" class="pln">                    <span class="com"># handle relative includes by walking up the list of parent include</span><span class="strut">&nbsp;</span></p>
+<p id="t180" class="pln">                    <span class="com"># tasks and checking the relative result to see if it exists</span><span class="strut">&nbsp;</span></p>
+<p id="t181" class="stm run hide_run">                    <span class="nam">parent_include</span> <span class="op">=</span> <span class="nam">block</span><span class="strut">&nbsp;</span></p>
+<p id="t182" class="stm run hide_run">                    <span class="nam">cumulative_path</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t183" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t184" class="stm run hide_run">                    <span class="nam">found</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t185" class="stm run hide_run">                    <span class="nam">subdir</span> <span class="op">=</span> <span class="str">'tasks'</span><span class="strut">&nbsp;</span></p>
+<p id="t186" class="stm par run hide_run"><span class="annotate short">186&#x202F;&#x219B;&#x202F;187</span><span class="annotate long">line 186 didn't jump to line 187, because the condition on line 186 was never true</span>                    <span class="key">if</span> <span class="nam">use_handlers</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t187" class="stm mis">                        <span class="nam">subdir</span> <span class="op">=</span> <span class="str">'handlers'</span><span class="strut">&nbsp;</span></p>
+<p id="t188" class="stm run hide_run">                    <span class="key">while</span> <span class="nam">parent_include</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t189" class="stm par run hide_run"><span class="annotate short">189&#x202F;&#x219B;&#x202F;192</span><span class="annotate long">line 189 didn't jump to line 192, because the condition on line 189 was never false</span>                        <span class="key">if</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">parent_include</span><span class="op">,</span> <span class="nam">TaskInclude</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t190" class="stm run hide_run">                            <span class="nam">parent_include</span> <span class="op">=</span> <span class="nam">parent_include</span><span class="op">.</span><span class="nam">_parent</span><span class="strut">&nbsp;</span></p>
+<p id="t191" class="stm run hide_run">                            <span class="key">continue</span><span class="strut">&nbsp;</span></p>
+<p id="t192" class="stm mis">                        <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t193" class="stm mis">                            <span class="nam">parent_include_dir</span> <span class="op">=</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">dirname</span><span class="op">(</span><span class="nam">templar</span><span class="op">.</span><span class="nam">template</span><span class="op">(</span><span class="nam">parent_include</span><span class="op">.</span><span class="nam">args</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">'_raw_params'</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t194" class="stm mis">                        <span class="key">except</span> <span class="nam">AnsibleUndefinedVariable</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t195" class="stm mis">                            <span class="key">if</span> <span class="key">not</span> <span class="nam">parent_include</span><span class="op">.</span><span class="nam">statically_loaded</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t196" class="stm mis">                                <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t197" class="pln">                                    <span class="str">"Error when evaluating variable in dynamic parent include path: %s. "</span><span class="strut">&nbsp;</span></p>
+<p id="t198" class="pln">                                    <span class="str">"When using static imports, the parent dynamic include cannot utilize host facts "</span><span class="strut">&nbsp;</span></p>
+<p id="t199" class="pln">                                    <span class="str">"or variables from inventory"</span> <span class="op">%</span> <span class="nam">parent_include</span><span class="op">.</span><span class="nam">args</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">'_raw_params'</span><span class="op">)</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t200" class="pln">                                    <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t201" class="pln">                                    <span class="nam">suppress_extended_error</span><span class="op">=</span><span class="nam">True</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t202" class="pln">                                    <span class="nam">orig_exc</span><span class="op">=</span><span class="nam">e</span><span class="strut">&nbsp;</span></p>
+<p id="t203" class="pln">                                <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t204" class="stm mis">                            <span class="key">raise</span><span class="strut">&nbsp;</span></p>
+<p id="t205" class="stm mis">                        <span class="key">if</span> <span class="nam">cumulative_path</span> <span class="key">is</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t206" class="stm mis">                            <span class="nam">cumulative_path</span> <span class="op">=</span> <span class="nam">parent_include_dir</span><span class="strut">&nbsp;</span></p>
+<p id="t207" class="stm mis">                        <span class="key">elif</span> <span class="key">not</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">isabs</span><span class="op">(</span><span class="nam">cumulative_path</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t208" class="stm mis">                            <span class="nam">cumulative_path</span> <span class="op">=</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">parent_include_dir</span><span class="op">,</span> <span class="nam">cumulative_path</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t209" class="stm mis">                        <span class="nam">include_target</span> <span class="op">=</span> <span class="nam">templar</span><span class="op">.</span><span class="nam">template</span><span class="op">(</span><span class="nam">t</span><span class="op">.</span><span class="nam">args</span><span class="op">[</span><span class="str">'_raw_params'</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t210" class="stm mis">                        <span class="key">if</span> <span class="nam">t</span><span class="op">.</span><span class="nam">_role</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t211" class="stm mis">                            <span class="nam">new_basedir</span> <span class="op">=</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">t</span><span class="op">.</span><span class="nam">_role</span><span class="op">.</span><span class="nam">_role_path</span><span class="op">,</span> <span class="nam">subdir</span><span class="op">,</span> <span class="nam">cumulative_path</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t212" class="stm mis">                            <span class="nam">include_file</span> <span class="op">=</span> <span class="nam">loader</span><span class="op">.</span><span class="nam">path_dwim_relative</span><span class="op">(</span><span class="nam">new_basedir</span><span class="op">,</span> <span class="nam">subdir</span><span class="op">,</span> <span class="nam">include_target</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t213" class="pln">                        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t214" class="stm mis">                            <span class="nam">include_file</span> <span class="op">=</span> <span class="nam">loader</span><span class="op">.</span><span class="nam">path_dwim_relative</span><span class="op">(</span><span class="nam">loader</span><span class="op">.</span><span class="nam">get_basedir</span><span class="op">(</span><span class="op">)</span><span class="op">,</span> <span class="nam">cumulative_path</span><span class="op">,</span> <span class="nam">include_target</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t215" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t216" class="stm mis">                        <span class="key">if</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">exists</span><span class="op">(</span><span class="nam">include_file</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t217" class="stm mis">                            <span class="nam">found</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t218" class="stm mis">                            <span class="key">break</span><span class="strut">&nbsp;</span></p>
+<p id="t219" class="pln">                        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t220" class="stm mis">                            <span class="nam">parent_include</span> <span class="op">=</span> <span class="nam">parent_include</span><span class="op">.</span><span class="nam">_parent</span><span class="strut">&nbsp;</span></p>
+<p id="t221" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t222" class="stm par run hide_run"><span class="annotate short">222&#x202F;&#x219B;&#x202F;239</span><span class="annotate long">line 222 didn't jump to line 239, because the condition on line 222 was never false</span>                    <span class="key">if</span> <span class="key">not</span> <span class="nam">found</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t223" class="stm run hide_run">                        <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t224" class="stm run hide_run">                            <span class="nam">include_target</span> <span class="op">=</span> <span class="nam">templar</span><span class="op">.</span><span class="nam">template</span><span class="op">(</span><span class="nam">t</span><span class="op">.</span><span class="nam">args</span><span class="op">[</span><span class="str">'_raw_params'</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t225" class="stm mis">                        <span class="key">except</span> <span class="nam">AnsibleUndefinedVariable</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t226" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t227" class="pln">                                <span class="str">"Error when evaluating variable in import path: %s.\n\n"</span><span class="strut">&nbsp;</span></p>
+<p id="t228" class="pln">                                <span class="str">"When using static imports, ensure that any variables used in their names are defined in vars/vars_files\n"</span><span class="strut">&nbsp;</span></p>
+<p id="t229" class="pln">                                <span class="str">"or extra-vars passed in from the command line. Static imports cannot use variables from facts or inventory\n"</span><span class="strut">&nbsp;</span></p>
+<p id="t230" class="pln">                                <span class="str">"sources like group or host vars."</span> <span class="op">%</span> <span class="nam">t</span><span class="op">.</span><span class="nam">args</span><span class="op">[</span><span class="str">'_raw_params'</span><span class="op">]</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t231" class="pln">                                <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t232" class="pln">                                <span class="nam">suppress_extended_error</span><span class="op">=</span><span class="nam">True</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t233" class="pln">                                <span class="nam">orig_exc</span><span class="op">=</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t234" class="stm par run hide_run"><span class="annotate short">234&#x202F;&#x219B;&#x202F;237</span><span class="annotate long">line 234 didn't jump to line 237, because the condition on line 234 was never false</span>                        <span class="key">if</span> <span class="nam">t</span><span class="op">.</span><span class="nam">_role</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t235" class="stm run hide_run">                            <span class="nam">include_file</span> <span class="op">=</span> <span class="nam">loader</span><span class="op">.</span><span class="nam">path_dwim_relative</span><span class="op">(</span><span class="nam">t</span><span class="op">.</span><span class="nam">_role</span><span class="op">.</span><span class="nam">_role_path</span><span class="op">,</span> <span class="nam">subdir</span><span class="op">,</span> <span class="nam">include_target</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t236" class="pln">                        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t237" class="stm mis">                            <span class="nam">include_file</span> <span class="op">=</span> <span class="nam">loader</span><span class="op">.</span><span class="nam">path_dwim</span><span class="op">(</span><span class="nam">include_target</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t238" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t239" class="stm run hide_run">                    <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t240" class="stm run hide_run">                        <span class="nam">data</span> <span class="op">=</span> <span class="nam">loader</span><span class="op">.</span><span class="nam">load_from_file</span><span class="op">(</span><span class="nam">include_file</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t241" class="stm par run hide_run"><span class="annotate short">241&#x202F;&#x219B;&#x202F;242</span><span class="annotate long">line 241 didn't jump to line 242, because the condition on line 241 was never true</span>                        <span class="key">if</span> <span class="nam">data</span> <span class="key">is</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t242" class="stm mis">                            <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">'file %s is empty and had no tasks to include'</span> <span class="op">%</span> <span class="nam">include_file</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t243" class="stm mis">                            <span class="key">continue</span><span class="strut">&nbsp;</span></p>
+<p id="t244" class="stm par run hide_run"><span class="annotate short">244&#x202F;&#x219B;&#x202F;245</span><span class="annotate long">line 244 didn't jump to line 245, because the condition on line 244 was never true</span>                        <span class="key">elif</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">data</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t245" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">"included task files must contain a list of tasks"</span><span class="op">,</span> <span class="nam">obj</span><span class="op">=</span><span class="nam">data</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t246" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t247" class="pln">                        <span class="com"># since we can't send callbacks here, we display a message directly in</span><span class="strut">&nbsp;</span></p>
+<p id="t248" class="pln">                        <span class="com"># the same fashion used by the on_include callback. We also do it here,</span><span class="strut">&nbsp;</span></p>
+<p id="t249" class="pln">                        <span class="com"># because the recursive nature of helper methods means we may be loading</span><span class="strut">&nbsp;</span></p>
+<p id="t250" class="pln">                        <span class="com"># nested includes, and we want the include order printed correctly</span><span class="strut">&nbsp;</span></p>
+<p id="t251" class="stm run hide_run">                        <span class="nam">display</span><span class="op">.</span><span class="nam">vv</span><span class="op">(</span><span class="str">"statically imported: %s"</span> <span class="op">%</span> <span class="nam">include_file</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t252" class="stm mis">                    <span class="key">except</span> <span class="nam">AnsibleFileNotFound</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t253" class="stm mis">                        <span class="key">if</span> <span class="nam">action</span> <span class="op">!=</span> <span class="str">'include'</span> <span class="key">or</span> <span class="nam">t</span><span class="op">.</span><span class="nam">static</span> <span class="key">or</span> <span class="xx">\</span><span class="strut">&nbsp;</span></p>
+<p id="t254" class="pln">                           <span class="nam">C</span><span class="op">.</span><span class="nam">DEFAULT_TASK_INCLUDES_STATIC</span> <span class="key">or</span> <span class="xx">\</span><span class="strut">&nbsp;</span></p>
+<p id="t255" class="pln">                           <span class="nam">C</span><span class="op">.</span><span class="nam">DEFAULT_HANDLER_INCLUDES_STATIC</span> <span class="key">and</span> <span class="nam">use_handlers</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t256" class="stm mis">                            <span class="key">raise</span><span class="strut">&nbsp;</span></p>
+<p id="t257" class="stm mis">                        <span class="nam">display</span><span class="op">.</span><span class="nam">deprecated</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t258" class="pln">                            <span class="str">"Included file '%s' not found, however since this include is not "</span><span class="strut">&nbsp;</span></p>
+<p id="t259" class="pln">                            <span class="str">"explicitly marked as 'static: yes', we will try and include it dynamically "</span><span class="strut">&nbsp;</span></p>
+<p id="t260" class="pln">                            <span class="str">"later. In the future, this will be an error unless 'static: no' is used "</span><span class="strut">&nbsp;</span></p>
+<p id="t261" class="pln">                            <span class="str">"on the include task. If you do not want missing includes to be considered "</span><span class="strut">&nbsp;</span></p>
+<p id="t262" class="pln">                            <span class="str">"dynamic, use 'static: yes' on the include or set the global ansible.cfg "</span><span class="strut">&nbsp;</span></p>
+<p id="t263" class="pln">                            <span class="str">"options to make all includes static for tasks and/or handlers"</span> <span class="op">%</span> <span class="nam">include_file</span><span class="op">,</span> <span class="nam">version</span><span class="op">=</span><span class="str">"2.12"</span><span class="strut">&nbsp;</span></p>
+<p id="t264" class="pln">                        <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t265" class="stm mis">                        <span class="nam">task_list</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">t</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t266" class="stm mis">                        <span class="key">continue</span><span class="strut">&nbsp;</span></p>
+<p id="t267" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t268" class="stm run hide_run">                    <span class="nam">ti_copy</span> <span class="op">=</span> <span class="nam">t</span><span class="op">.</span><span class="nam">copy</span><span class="op">(</span><span class="nam">exclude_parent</span><span class="op">=</span><span class="nam">True</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t269" class="stm run hide_run">                    <span class="nam">ti_copy</span><span class="op">.</span><span class="nam">_parent</span> <span class="op">=</span> <span class="nam">block</span><span class="strut">&nbsp;</span></p>
+<p id="t270" class="stm run hide_run">                    <span class="nam">included_blocks</span> <span class="op">=</span> <span class="nam">load_list_of_blocks</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t271" class="pln">                        <span class="nam">data</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t272" class="pln">                        <span class="nam">play</span><span class="op">=</span><span class="nam">play</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t273" class="pln">                        <span class="nam">parent_block</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t274" class="pln">                        <span class="nam">task_include</span><span class="op">=</span><span class="nam">ti_copy</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t275" class="pln">                        <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t276" class="pln">                        <span class="nam">use_handlers</span><span class="op">=</span><span class="nam">use_handlers</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t277" class="pln">                        <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t278" class="pln">                        <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t279" class="pln">                    <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t280" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t281" class="pln">                    <span class="com"># FIXME: remove once 'include' is removed</span><span class="strut">&nbsp;</span></p>
+<p id="t282" class="pln">                    <span class="com"># pop tags out of the include args, if they were specified there, and assign</span><span class="strut">&nbsp;</span></p>
+<p id="t283" class="pln">                    <span class="com"># them to the include. If the include already had tags specified, we raise an</span><span class="strut">&nbsp;</span></p>
+<p id="t284" class="pln">                    <span class="com"># error so that users know not to specify them both ways</span><span class="strut">&nbsp;</span></p>
+<p id="t285" class="stm run hide_run">                    <span class="nam">tags</span> <span class="op">=</span> <span class="nam">ti_copy</span><span class="op">.</span><span class="nam">vars</span><span class="op">.</span><span class="nam">pop</span><span class="op">(</span><span class="str">'tags'</span><span class="op">,</span> <span class="op">[</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t286" class="stm par run hide_run"><span class="annotate short">286&#x202F;&#x219B;&#x202F;287</span><span class="annotate long">line 286 didn't jump to line 287, because the condition on line 286 was never true</span>                    <span class="key">if</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">tags</span><span class="op">,</span> <span class="nam">string_types</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t287" class="stm mis">                        <span class="nam">tags</span> <span class="op">=</span> <span class="nam">tags</span><span class="op">.</span><span class="nam">split</span><span class="op">(</span><span class="str">','</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t288" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t289" class="stm par run hide_run"><span class="annotate short">289&#x202F;&#x219B;&#x202F;290</span><span class="annotate long">line 289 didn't jump to line 290, because the condition on line 289 was never true</span>                    <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">tags</span><span class="op">)</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t290" class="stm mis">                        <span class="key">if</span> <span class="nam">action</span> <span class="key">in</span> <span class="op">(</span><span class="str">'include_tasks'</span><span class="op">,</span> <span class="str">'import_tasks'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t291" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">'You cannot specify "tags" inline to the task, it is a task keyword'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t292" class="stm mis">                        <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">ti_copy</span><span class="op">.</span><span class="nam">tags</span><span class="op">)</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t293" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t294" class="pln">                                <span class="str">"Include tasks should not specify tags in more than one way (both via args and directly on the task). "</span><span class="strut">&nbsp;</span></p>
+<p id="t295" class="pln">                                <span class="str">"Mixing styles in which tags are specified is prohibited for whole import hierarchy, not only for single import statement"</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t296" class="pln">                                <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t297" class="pln">                                <span class="nam">suppress_extended_error</span><span class="op">=</span><span class="nam">True</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t298" class="pln">                            <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t299" class="stm mis">                        <span class="nam">display</span><span class="op">.</span><span class="nam">deprecated</span><span class="op">(</span><span class="str">"You should not specify tags in the include parameters. All tags should be specified using the task-level option"</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t300" class="pln">                                           <span class="nam">version</span><span class="op">=</span><span class="str">"2.12"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t301" class="pln">                    <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t302" class="stm run hide_run">                        <span class="nam">tags</span> <span class="op">=</span> <span class="nam">ti_copy</span><span class="op">.</span><span class="nam">tags</span><span class="op">[</span><span class="op">:</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t303" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t304" class="pln">                    <span class="com"># now we extend the tags on each of the included blocks</span><span class="strut">&nbsp;</span></p>
+<p id="t305" class="stm run hide_run">                    <span class="key">for</span> <span class="nam">b</span> <span class="key">in</span> <span class="nam">included_blocks</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t306" class="stm run hide_run">                        <span class="nam">b</span><span class="op">.</span><span class="nam">tags</span> <span class="op">=</span> <span class="nam">list</span><span class="op">(</span><span class="nam">set</span><span class="op">(</span><span class="nam">b</span><span class="op">.</span><span class="nam">tags</span><span class="op">)</span><span class="op">.</span><span class="nam">union</span><span class="op">(</span><span class="nam">tags</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t307" class="pln">                    <span class="com"># END FIXME</span><span class="strut">&nbsp;</span></p>
+<p id="t308" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t309" class="pln">                    <span class="com"># FIXME: handlers shouldn't need this special handling, but do</span><span class="strut">&nbsp;</span></p>
+<p id="t310" class="pln">                    <span class="com">#        right now because they don't iterate blocks correctly</span><span class="strut">&nbsp;</span></p>
+<p id="t311" class="stm par run hide_run"><span class="annotate short">311&#x202F;&#x219B;&#x202F;312</span><span class="annotate long">line 311 didn't jump to line 312, because the condition on line 311 was never true</span>                    <span class="key">if</span> <span class="nam">use_handlers</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t312" class="stm mis">                        <span class="key">for</span> <span class="nam">b</span> <span class="key">in</span> <span class="nam">included_blocks</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t313" class="stm mis">                            <span class="nam">task_list</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="nam">b</span><span class="op">.</span><span class="nam">block</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t314" class="pln">                    <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t315" class="stm run hide_run">                        <span class="nam">task_list</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="nam">included_blocks</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t316" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t317" class="stm run hide_run">                    <span class="nam">t</span><span class="op">.</span><span class="nam">is_static</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t318" class="stm run hide_run">                    <span class="nam">task_list</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">t</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t319" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t320" class="stm par run hide_run"><span class="annotate short">320&#x202F;&#x219B;&#x202F;321</span><span class="annotate long">line 320 didn't jump to line 321, because the condition on line 320 was never true</span>            <span class="key">elif</span> <span class="nam">action</span> <span class="key">in</span> <span class="op">(</span><span class="str">'include_role'</span><span class="op">,</span> <span class="str">'import_role'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t321" class="stm mis">                <span class="nam">ir</span> <span class="op">=</span> <span class="nam">IncludeRole</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t322" class="pln">                    <span class="nam">task_ds</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t323" class="pln">                    <span class="nam">block</span><span class="op">=</span><span class="nam">block</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t324" class="pln">                    <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t325" class="pln">                    <span class="nam">task_include</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t326" class="pln">                    <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t327" class="pln">                    <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">,</span><span class="strut">&nbsp;</span></p>
+<p id="t328" class="pln">                <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t329" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t330" class="pln">                <span class="com">#   1. the user has set the 'static' option to false or true</span><span class="strut">&nbsp;</span></p>
+<p id="t331" class="pln">                <span class="com">#   2. one of the appropriate config options was set</span><span class="strut">&nbsp;</span></p>
+<p id="t332" class="stm mis">                <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t333" class="stm mis">                <span class="key">if</span> <span class="nam">action</span> <span class="op">==</span> <span class="str">'import_role'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t334" class="stm mis">                    <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t335" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t336" class="stm mis">                <span class="key">elif</span> <span class="nam">ir</span><span class="op">.</span><span class="nam">static</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t337" class="stm mis">                    <span class="nam">display</span><span class="op">.</span><span class="nam">deprecated</span><span class="op">(</span><span class="str">"The use of 'static' for 'include_role' has been deprecated. "</span><span class="strut">&nbsp;</span></p>
+<p id="t338" class="pln">                                       <span class="str">"Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion"</span><span class="op">,</span> <span class="nam">version</span><span class="op">=</span><span class="str">'2.12'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t339" class="stm mis">                    <span class="nam">is_static</span> <span class="op">=</span> <span class="nam">ir</span><span class="op">.</span><span class="nam">static</span><span class="strut">&nbsp;</span></p>
+<p id="t340" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t341" class="stm mis">                <span class="key">if</span> <span class="nam">is_static</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t342" class="stm mis">                    <span class="key">if</span> <span class="nam">ir</span><span class="op">.</span><span class="nam">loop</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t343" class="stm mis">                        <span class="key">if</span> <span class="nam">action</span> <span class="op">==</span> <span class="str">'import_role'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t344" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">"You cannot use loops on 'import_role' statements. You should use 'include_role' instead."</span><span class="op">,</span> <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t345" class="pln">                        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t346" class="stm mis">                            <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">"You cannot use 'static' on an include_role with a loop"</span><span class="op">,</span> <span class="nam">obj</span><span class="op">=</span><span class="nam">task_ds</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t347" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t348" class="pln">                    <span class="com"># we set a flag to indicate this include was static</span><span class="strut">&nbsp;</span></p>
+<p id="t349" class="stm mis">                    <span class="nam">ir</span><span class="op">.</span><span class="nam">statically_loaded</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t350" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t351" class="pln">                    <span class="com"># template the role name now, if needed</span><span class="strut">&nbsp;</span></p>
+<p id="t352" class="stm mis">                    <span class="nam">all_vars</span> <span class="op">=</span> <span class="nam">variable_manager</span><span class="op">.</span><span class="nam">get_vars</span><span class="op">(</span><span class="nam">play</span><span class="op">=</span><span class="nam">play</span><span class="op">,</span> <span class="nam">task</span><span class="op">=</span><span class="nam">ir</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t353" class="stm mis">                    <span class="nam">templar</span> <span class="op">=</span> <span class="nam">Templar</span><span class="op">(</span><span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">,</span> <span class="nam">variables</span><span class="op">=</span><span class="nam">all_vars</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t354" class="stm mis">                    <span class="key">if</span> <span class="nam">templar</span><span class="op">.</span><span class="nam">_contains_vars</span><span class="op">(</span><span class="nam">ir</span><span class="op">.</span><span class="nam">_role_name</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t355" class="stm mis">                        <span class="nam">ir</span><span class="op">.</span><span class="nam">_role_name</span> <span class="op">=</span> <span class="nam">templar</span><span class="op">.</span><span class="nam">template</span><span class="op">(</span><span class="nam">ir</span><span class="op">.</span><span class="nam">_role_name</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t356" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t357" class="pln">                    <span class="com"># uses compiled list from object</span><span class="strut">&nbsp;</span></p>
+<p id="t358" class="stm mis">                    <span class="nam">blocks</span><span class="op">,</span> <span class="nam">_</span> <span class="op">=</span> <span class="nam">ir</span><span class="op">.</span><span class="nam">get_block_list</span><span class="op">(</span><span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t359" class="stm mis">                    <span class="nam">task_list</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="nam">blocks</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t360" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t361" class="pln">                    <span class="com"># passes task object itself for latter generation of list</span><span class="strut">&nbsp;</span></p>
+<p id="t362" class="stm mis">                    <span class="nam">task_list</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">ir</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t363" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t364" class="stm par run hide_run"><span class="annotate short">364&#x202F;&#x219B;&#x202F;365</span><span class="annotate long">line 364 didn't jump to line 365, because the condition on line 364 was never true</span>                <span class="key">if</span> <span class="nam">use_handlers</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t365" class="stm mis">                    <span class="nam">t</span> <span class="op">=</span> <span class="nam">Handler</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="nam">task_ds</span><span class="op">,</span> <span class="nam">block</span><span class="op">=</span><span class="nam">block</span><span class="op">,</span> <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span> <span class="nam">task_include</span><span class="op">=</span><span class="nam">task_include</span><span class="op">,</span> <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t366" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t367" class="stm run hide_run">                    <span class="nam">t</span> <span class="op">=</span> <span class="nam">Task</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="nam">task_ds</span><span class="op">,</span> <span class="nam">block</span><span class="op">=</span><span class="nam">block</span><span class="op">,</span> <span class="nam">role</span><span class="op">=</span><span class="nam">role</span><span class="op">,</span> <span class="nam">task_include</span><span class="op">=</span><span class="nam">task_include</span><span class="op">,</span> <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t368" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t369" class="stm run hide_run">                <span class="nam">task_list</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">t</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t370" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t371" class="stm run hide_run">    <span class="key">return</span> <span class="nam">task_list</span><span class="strut">&nbsp;</span></p>
+<p id="t372" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t373" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t374" class="stm run hide_run"><span class="key">def</span> <span class="nam">load_list_of_roles</span><span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">play</span><span class="op">,</span> <span class="nam">current_role_path</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">None</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t375" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t376" class="pln"><span class="str">    Loads and returns a list of RoleInclude objects from the datastructure</span><span class="strut">&nbsp;</span></p>
+<p id="t377" class="pln"><span class="str">    list of role definitions</span><span class="strut">&nbsp;</span></p>
+<p id="t378" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t379" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t380" class="pln">    <span class="com"># we import here to prevent a circular dependency with imports</span><span class="strut">&nbsp;</span></p>
+<p id="t381" class="stm run hide_run">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">playbook</span><span class="op">.</span><span class="nam">role</span><span class="op">.</span><span class="nam">include</span> <span class="key">import</span> <span class="nam">RoleInclude</span><span class="strut">&nbsp;</span></p>
+<p id="t382" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t383" class="stm par run hide_run"><span class="annotate short">383&#x202F;&#x219B;&#x202F;384</span><span class="annotate long">line 383 didn't jump to line 384, because the condition on line 383 was never true</span>    <span class="key">if</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t384" class="stm mis">        <span class="key">raise</span> <span class="nam">AnsibleAssertionError</span><span class="op">(</span><span class="str">'ds (%s) should be a list but was a %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">ds</span><span class="op">,</span> <span class="nam">type</span><span class="op">(</span><span class="nam">ds</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t385" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t386" class="stm run hide_run">    <span class="nam">roles</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t387" class="stm run hide_run">    <span class="key">for</span> <span class="nam">role_def</span> <span class="key">in</span> <span class="nam">ds</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t388" class="stm run hide_run">        <span class="nam">i</span> <span class="op">=</span> <span class="nam">RoleInclude</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="nam">role_def</span><span class="op">,</span> <span class="nam">play</span><span class="op">=</span><span class="nam">play</span><span class="op">,</span> <span class="nam">current_role_path</span><span class="op">=</span><span class="nam">current_role_path</span><span class="op">,</span> <span class="nam">variable_manager</span><span class="op">=</span><span class="nam">variable_manager</span><span class="op">,</span> <span class="nam">loader</span><span class="op">=</span><span class="nam">loader</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t389" class="stm run hide_run">        <span class="nam">roles</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">i</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t390" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t391" class="stm run hide_run">    <span class="key">return</span> <span class="nam">roles</span><span class="strut">&nbsp;</span></p>
+
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.2</a>,
+            created at 2019-05-13 15:45
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

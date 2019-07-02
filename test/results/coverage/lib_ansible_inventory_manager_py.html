@@ -1,0 +1,1313 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=emulateIE7" />
+    <title>Coverage for lib/ansible/inventory/manager.py: 59%</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="jquery.isonscreen.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.pyfile_ready);
+    </script>
+</head>
+<body class="pyfile">
+
+<div id="header">
+    <div class="content">
+        <h1>Coverage for <b>lib/ansible/inventory/manager.py</b> :
+            <span class="pc_cov">59%</span>
+        </h1>
+
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+
+        <h2 class="stats">
+            307 statements &nbsp;
+            <span class="run hide_run shortkey_r button_toggle_run">199 run</span>
+            <span class="mis shortkey_m button_toggle_mis">108 missing</span>
+            <span class="exc shortkey_x button_toggle_exc">0 excluded</span>
+
+            
+                <span class="par run hide_run shortkey_p button_toggle_par">41 partial</span>
+            
+        </h2>
+    </div>
+</div>
+
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">r</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        <span class="key">p</span> &nbsp; toggle line displays
+    </p>
+    <p class="keyhelp">
+        <span class="key">j</span>
+        <span class="key">k</span> &nbsp; next/prev highlighted chunk
+    </p>
+    <p class="keyhelp">
+        <span class="key">0</span> &nbsp; (zero) top of page
+    </p>
+    <p class="keyhelp">
+        <span class="key">1</span> &nbsp; (one) first highlighted chunk
+    </p>
+    </div>
+</div>
+
+<div id="source">
+    <table>
+        <tr>
+            <td class="linenos">
+<p id="n1" class="pln"><a href="#n1">1</a></p>
+<p id="n2" class="pln"><a href="#n2">2</a></p>
+<p id="n3" class="pln"><a href="#n3">3</a></p>
+<p id="n4" class="pln"><a href="#n4">4</a></p>
+<p id="n5" class="pln"><a href="#n5">5</a></p>
+<p id="n6" class="pln"><a href="#n6">6</a></p>
+<p id="n7" class="pln"><a href="#n7">7</a></p>
+<p id="n8" class="pln"><a href="#n8">8</a></p>
+<p id="n9" class="pln"><a href="#n9">9</a></p>
+<p id="n10" class="pln"><a href="#n10">10</a></p>
+<p id="n11" class="pln"><a href="#n11">11</a></p>
+<p id="n12" class="pln"><a href="#n12">12</a></p>
+<p id="n13" class="pln"><a href="#n13">13</a></p>
+<p id="n14" class="pln"><a href="#n14">14</a></p>
+<p id="n15" class="pln"><a href="#n15">15</a></p>
+<p id="n16" class="pln"><a href="#n16">16</a></p>
+<p id="n17" class="pln"><a href="#n17">17</a></p>
+<p id="n18" class="pln"><a href="#n18">18</a></p>
+<p id="n19" class="stm run hide_run"><a href="#n19">19</a></p>
+<p id="n20" class="stm run hide_run"><a href="#n20">20</a></p>
+<p id="n21" class="pln"><a href="#n21">21</a></p>
+<p id="n22" class="stm run hide_run"><a href="#n22">22</a></p>
+<p id="n23" class="stm run hide_run"><a href="#n23">23</a></p>
+<p id="n24" class="stm run hide_run"><a href="#n24">24</a></p>
+<p id="n25" class="stm run hide_run"><a href="#n25">25</a></p>
+<p id="n26" class="pln"><a href="#n26">26</a></p>
+<p id="n27" class="stm run hide_run"><a href="#n27">27</a></p>
+<p id="n28" class="stm run hide_run"><a href="#n28">28</a></p>
+<p id="n29" class="pln"><a href="#n29">29</a></p>
+<p id="n30" class="stm run hide_run"><a href="#n30">30</a></p>
+<p id="n31" class="stm run hide_run"><a href="#n31">31</a></p>
+<p id="n32" class="stm run hide_run"><a href="#n32">32</a></p>
+<p id="n33" class="stm run hide_run"><a href="#n33">33</a></p>
+<p id="n34" class="stm run hide_run"><a href="#n34">34</a></p>
+<p id="n35" class="stm run hide_run"><a href="#n35">35</a></p>
+<p id="n36" class="stm run hide_run"><a href="#n36">36</a></p>
+<p id="n37" class="stm run hide_run"><a href="#n37">37</a></p>
+<p id="n38" class="pln"><a href="#n38">38</a></p>
+<p id="n39" class="stm run hide_run"><a href="#n39">39</a></p>
+<p id="n40" class="stm run hide_run"><a href="#n40">40</a></p>
+<p id="n41" class="stm mis"><a href="#n41">41</a></p>
+<p id="n42" class="stm mis"><a href="#n42">42</a></p>
+<p id="n43" class="stm mis"><a href="#n43">43</a></p>
+<p id="n44" class="pln"><a href="#n44">44</a></p>
+<p id="n45" class="stm run hide_run"><a href="#n45">45</a></p>
+<p id="n46" class="stm run hide_run"><a href="#n46">46</a></p>
+<p id="n47" class="stm run hide_run"><a href="#n47">47</a></p>
+<p id="n48" class="pln"><a href="#n48">48</a></p>
+<p id="n49" class="stm run hide_run"><a href="#n49">49</a></p>
+<p id="n50" class="pln"><a href="#n50">50</a></p>
+<p id="n51" class="pln"><a href="#n51">51</a></p>
+<p id="n52" class="stm run hide_run"><a href="#n52">52</a></p>
+<p id="n53" class="pln"><a href="#n53">53</a></p>
+<p id="n54" class="pln"><a href="#n54">54</a></p>
+<p id="n55" class="pln"><a href="#n55">55</a></p>
+<p id="n56" class="stm run hide_run"><a href="#n56">56</a></p>
+<p id="n57" class="stm run hide_run"><a href="#n57">57</a></p>
+<p id="n58" class="stm run hide_run"><a href="#n58">58</a></p>
+<p id="n59" class="stm run hide_run"><a href="#n59">59</a></p>
+<p id="n60" class="stm par run hide_run"><a href="#n60">60</a></p>
+<p id="n61" class="stm mis"><a href="#n61">61</a></p>
+<p id="n62" class="stm par run hide_run"><a href="#n62">62</a></p>
+<p id="n63" class="stm mis"><a href="#n63">63</a></p>
+<p id="n64" class="stm par run hide_run"><a href="#n64">64</a></p>
+<p id="n65" class="stm run hide_run"><a href="#n65">65</a></p>
+<p id="n66" class="pln"><a href="#n66">66</a></p>
+<p id="n67" class="pln"><a href="#n67">67</a></p>
+<p id="n68" class="pln"><a href="#n68">68</a></p>
+<p id="n69" class="stm par run hide_run"><a href="#n69">69</a></p>
+<p id="n70" class="stm mis"><a href="#n70">70</a></p>
+<p id="n71" class="pln"><a href="#n71">71</a></p>
+<p id="n72" class="pln"><a href="#n72">72</a></p>
+<p id="n73" class="pln"><a href="#n73">73</a></p>
+<p id="n74" class="stm run hide_run"><a href="#n74">74</a></p>
+<p id="n75" class="pln"><a href="#n75">75</a></p>
+<p id="n76" class="pln"><a href="#n76">76</a></p>
+<p id="n77" class="stm run hide_run"><a href="#n77">77</a></p>
+<p id="n78" class="pln"><a href="#n78">78</a></p>
+<p id="n79" class="pln"><a href="#n79">79</a></p>
+<p id="n80" class="pln"><a href="#n80">80</a></p>
+<p id="n81" class="pln"><a href="#n81">81</a></p>
+<p id="n82" class="pln"><a href="#n82">82</a></p>
+<p id="n83" class="pln"><a href="#n83">83</a></p>
+<p id="n84" class="pln"><a href="#n84">84</a></p>
+<p id="n85" class="pln"><a href="#n85">85</a></p>
+<p id="n86" class="pln"><a href="#n86">86</a></p>
+<p id="n87" class="pln"><a href="#n87">87</a></p>
+<p id="n88" class="pln"><a href="#n88">88</a></p>
+<p id="n89" class="stm run hide_run"><a href="#n89">89</a></p>
+<p id="n90" class="stm run hide_run"><a href="#n90">90</a></p>
+<p id="n91" class="stm par run hide_run"><a href="#n91">91</a></p>
+<p id="n92" class="stm mis"><a href="#n92">92</a></p>
+<p id="n93" class="pln"><a href="#n93">93</a></p>
+<p id="n94" class="pln"><a href="#n94">94</a></p>
+<p id="n95" class="pln"><a href="#n95">95</a></p>
+<p id="n96" class="stm par run hide_run"><a href="#n96">96</a></p>
+<p id="n97" class="stm mis"><a href="#n97">97</a></p>
+<p id="n98" class="pln"><a href="#n98">98</a></p>
+<p id="n99" class="pln"><a href="#n99">99</a></p>
+<p id="n100" class="pln"><a href="#n100">100</a></p>
+<p id="n101" class="pln"><a href="#n101">101</a></p>
+<p id="n102" class="stm run hide_run"><a href="#n102">102</a></p>
+<p id="n103" class="stm run hide_run"><a href="#n103">103</a></p>
+<p id="n104" class="stm run hide_run"><a href="#n104">104</a></p>
+<p id="n105" class="stm mis"><a href="#n105">105</a></p>
+<p id="n106" class="pln"><a href="#n106">106</a></p>
+<p id="n107" class="pln"><a href="#n107">107</a></p>
+<p id="n108" class="pln"><a href="#n108">108</a></p>
+<p id="n109" class="stm mis"><a href="#n109">109</a></p>
+<p id="n110" class="pln"><a href="#n110">110</a></p>
+<p id="n111" class="pln"><a href="#n111">111</a></p>
+<p id="n112" class="pln"><a href="#n112">112</a></p>
+<p id="n113" class="pln"><a href="#n113">113</a></p>
+<p id="n114" class="pln"><a href="#n114">114</a></p>
+<p id="n115" class="pln"><a href="#n115">115</a></p>
+<p id="n116" class="pln"><a href="#n116">116</a></p>
+<p id="n117" class="pln"><a href="#n117">117</a></p>
+<p id="n118" class="stm run hide_run"><a href="#n118">118</a></p>
+<p id="n119" class="pln"><a href="#n119">119</a></p>
+<p id="n120" class="pln"><a href="#n120">120</a></p>
+<p id="n121" class="stm run hide_run"><a href="#n121">121</a></p>
+<p id="n122" class="pln"><a href="#n122">122</a></p>
+<p id="n123" class="pln"><a href="#n123">123</a></p>
+<p id="n124" class="stm run hide_run"><a href="#n124">124</a></p>
+<p id="n125" class="pln"><a href="#n125">125</a></p>
+<p id="n126" class="pln"><a href="#n126">126</a></p>
+<p id="n127" class="stm run hide_run"><a href="#n127">127</a></p>
+<p id="n128" class="stm run hide_run"><a href="#n128">128</a></p>
+<p id="n129" class="pln"><a href="#n129">129</a></p>
+<p id="n130" class="pln"><a href="#n130">130</a></p>
+<p id="n131" class="stm run hide_run"><a href="#n131">131</a></p>
+<p id="n132" class="stm run hide_run"><a href="#n132">132</a></p>
+<p id="n133" class="pln"><a href="#n133">133</a></p>
+<p id="n134" class="pln"><a href="#n134">134</a></p>
+<p id="n135" class="stm run hide_run"><a href="#n135">135</a></p>
+<p id="n136" class="stm run hide_run"><a href="#n136">136</a></p>
+<p id="n137" class="stm run hide_run"><a href="#n137">137</a></p>
+<p id="n138" class="pln"><a href="#n138">138</a></p>
+<p id="n139" class="pln"><a href="#n139">139</a></p>
+<p id="n140" class="stm par run hide_run"><a href="#n140">140</a></p>
+<p id="n141" class="stm mis"><a href="#n141">141</a></p>
+<p id="n142" class="stm par run hide_run"><a href="#n142">142</a></p>
+<p id="n143" class="stm mis"><a href="#n143">143</a></p>
+<p id="n144" class="pln"><a href="#n144">144</a></p>
+<p id="n145" class="stm run hide_run"><a href="#n145">145</a></p>
+<p id="n146" class="pln"><a href="#n146">146</a></p>
+<p id="n147" class="pln"><a href="#n147">147</a></p>
+<p id="n148" class="stm run hide_run"><a href="#n148">148</a></p>
+<p id="n149" class="pln"><a href="#n149">149</a></p>
+<p id="n150" class="stm run hide_run"><a href="#n150">150</a></p>
+<p id="n151" class="pln"><a href="#n151">151</a></p>
+<p id="n152" class="stm mis"><a href="#n152">152</a></p>
+<p id="n153" class="pln"><a href="#n153">153</a></p>
+<p id="n154" class="stm run hide_run"><a href="#n154">154</a></p>
+<p id="n155" class="pln"><a href="#n155">155</a></p>
+<p id="n156" class="stm run hide_run"><a href="#n156">156</a></p>
+<p id="n157" class="pln"><a href="#n157">157</a></p>
+<p id="n158" class="stm run hide_run"><a href="#n158">158</a></p>
+<p id="n159" class="pln"><a href="#n159">159</a></p>
+<p id="n160" class="stm run hide_run"><a href="#n160">160</a></p>
+<p id="n161" class="pln"><a href="#n161">161</a></p>
+<p id="n162" class="stm run hide_run"><a href="#n162">162</a></p>
+<p id="n163" class="stm mis"><a href="#n163">163</a></p>
+<p id="n164" class="pln"><a href="#n164">164</a></p>
+<p id="n165" class="stm run hide_run"><a href="#n165">165</a></p>
+<p id="n166" class="stm mis"><a href="#n166">166</a></p>
+<p id="n167" class="pln"><a href="#n167">167</a></p>
+<p id="n168" class="stm run hide_run"><a href="#n168">168</a></p>
+<p id="n169" class="stm mis"><a href="#n169">169</a></p>
+<p id="n170" class="pln"><a href="#n170">170</a></p>
+<p id="n171" class="stm run hide_run"><a href="#n171">171</a></p>
+<p id="n172" class="stm run hide_run"><a href="#n172">172</a></p>
+<p id="n173" class="pln"><a href="#n173">173</a></p>
+<p id="n174" class="stm run hide_run"><a href="#n174">174</a></p>
+<p id="n175" class="stm mis"><a href="#n175">175</a></p>
+<p id="n176" class="stm mis"><a href="#n176">176</a></p>
+<p id="n177" class="pln"><a href="#n177">177</a></p>
+<p id="n178" class="stm run hide_run"><a href="#n178">178</a></p>
+<p id="n179" class="stm run hide_run"><a href="#n179">179</a></p>
+<p id="n180" class="pln"><a href="#n180">180</a></p>
+<p id="n181" class="stm run hide_run"><a href="#n181">181</a></p>
+<p id="n182" class="pln"><a href="#n182">182</a></p>
+<p id="n183" class="pln"><a href="#n183">183</a></p>
+<p id="n184" class="stm run hide_run"><a href="#n184">184</a></p>
+<p id="n185" class="pln"><a href="#n185">185</a></p>
+<p id="n186" class="stm run hide_run"><a href="#n186">186</a></p>
+<p id="n187" class="stm run hide_run"><a href="#n187">187</a></p>
+<p id="n188" class="stm par run hide_run"><a href="#n188">188</a></p>
+<p id="n189" class="stm run hide_run"><a href="#n189">189</a></p>
+<p id="n190" class="pln"><a href="#n190">190</a></p>
+<p id="n191" class="stm mis"><a href="#n191">191</a></p>
+<p id="n192" class="pln"><a href="#n192">192</a></p>
+<p id="n193" class="stm par run hide_run"><a href="#n193">193</a></p>
+<p id="n194" class="stm mis"><a href="#n194">194</a></p>
+<p id="n195" class="pln"><a href="#n195">195</a></p>
+<p id="n196" class="stm run hide_run"><a href="#n196">196</a></p>
+<p id="n197" class="pln"><a href="#n197">197</a></p>
+<p id="n198" class="pln"><a href="#n198">198</a></p>
+<p id="n199" class="stm run hide_run"><a href="#n199">199</a></p>
+<p id="n200" class="pln"><a href="#n200">200</a></p>
+<p id="n201" class="stm run hide_run"><a href="#n201">201</a></p>
+<p id="n202" class="pln"><a href="#n202">202</a></p>
+<p id="n203" class="stm run hide_run"><a href="#n203">203</a></p>
+<p id="n204" class="pln"><a href="#n204">204</a></p>
+<p id="n205" class="stm par run hide_run"><a href="#n205">205</a></p>
+<p id="n206" class="stm par run hide_run"><a href="#n206">206</a></p>
+<p id="n207" class="stm run hide_run"><a href="#n207">207</a></p>
+<p id="n208" class="stm run hide_run"><a href="#n208">208</a></p>
+<p id="n209" class="stm par run hide_run"><a href="#n209">209</a></p>
+<p id="n210" class="stm run hide_run"><a href="#n210">210</a></p>
+<p id="n211" class="pln"><a href="#n211">211</a></p>
+<p id="n212" class="stm par run hide_run"><a href="#n212">212</a></p>
+<p id="n213" class="pln"><a href="#n213">213</a></p>
+<p id="n214" class="stm run hide_run"><a href="#n214">214</a></p>
+<p id="n215" class="pln"><a href="#n215">215</a></p>
+<p id="n216" class="stm mis"><a href="#n216">216</a></p>
+<p id="n217" class="stm mis"><a href="#n217">217</a></p>
+<p id="n218" class="pln"><a href="#n218">218</a></p>
+<p id="n219" class="stm mis"><a href="#n219">219</a></p>
+<p id="n220" class="pln"><a href="#n220">220</a></p>
+<p id="n221" class="stm run hide_run"><a href="#n221">221</a></p>
+<p id="n222" class="pln"><a href="#n222">222</a></p>
+<p id="n223" class="stm run hide_run"><a href="#n223">223</a></p>
+<p id="n224" class="pln"><a href="#n224">224</a></p>
+<p id="n225" class="pln"><a href="#n225">225</a></p>
+<p id="n226" class="stm run hide_run"><a href="#n226">226</a></p>
+<p id="n227" class="stm run hide_run"><a href="#n227">227</a></p>
+<p id="n228" class="pln"><a href="#n228">228</a></p>
+<p id="n229" class="pln"><a href="#n229">229</a></p>
+<p id="n230" class="stm run hide_run"><a href="#n230">230</a></p>
+<p id="n231" class="pln"><a href="#n231">231</a></p>
+<p id="n232" class="pln"><a href="#n232">232</a></p>
+<p id="n233" class="stm par run hide_run"><a href="#n233">233</a></p>
+<p id="n234" class="stm mis"><a href="#n234">234</a></p>
+<p id="n235" class="stm mis"><a href="#n235">235</a></p>
+<p id="n236" class="pln"><a href="#n236">236</a></p>
+<p id="n237" class="stm mis"><a href="#n237">237</a></p>
+<p id="n238" class="pln"><a href="#n238">238</a></p>
+<p id="n239" class="stm mis"><a href="#n239">239</a></p>
+<p id="n240" class="stm mis"><a href="#n240">240</a></p>
+<p id="n241" class="pln"><a href="#n241">241</a></p>
+<p id="n242" class="pln"><a href="#n242">242</a></p>
+<p id="n243" class="stm mis"><a href="#n243">243</a></p>
+<p id="n244" class="stm mis"><a href="#n244">244</a></p>
+<p id="n245" class="stm mis"><a href="#n245">245</a></p>
+<p id="n246" class="stm mis"><a href="#n246">246</a></p>
+<p id="n247" class="stm mis"><a href="#n247">247</a></p>
+<p id="n248" class="pln"><a href="#n248">248</a></p>
+<p id="n249" class="pln"><a href="#n249">249</a></p>
+<p id="n250" class="pln"><a href="#n250">250</a></p>
+<p id="n251" class="pln"><a href="#n251">251</a></p>
+<p id="n252" class="stm run hide_run"><a href="#n252">252</a></p>
+<p id="n253" class="pln"><a href="#n253">253</a></p>
+<p id="n254" class="pln"><a href="#n254">254</a></p>
+<p id="n255" class="stm par run hide_run"><a href="#n255">255</a></p>
+<p id="n256" class="stm mis"><a href="#n256">256</a></p>
+<p id="n257" class="pln"><a href="#n257">257</a></p>
+<p id="n258" class="pln"><a href="#n258">258</a></p>
+<p id="n259" class="stm run hide_run"><a href="#n259">259</a></p>
+<p id="n260" class="stm par run hide_run"><a href="#n260">260</a></p>
+<p id="n261" class="stm run hide_run"><a href="#n261">261</a></p>
+<p id="n262" class="stm run hide_run"><a href="#n262">262</a></p>
+<p id="n263" class="pln"><a href="#n263">263</a></p>
+<p id="n264" class="pln"><a href="#n264">264</a></p>
+<p id="n265" class="stm run hide_run"><a href="#n265">265</a></p>
+<p id="n266" class="stm run hide_run"><a href="#n266">266</a></p>
+<p id="n267" class="stm mis"><a href="#n267">267</a></p>
+<p id="n268" class="stm mis"><a href="#n268">268</a></p>
+<p id="n269" class="pln"><a href="#n269">269</a></p>
+<p id="n270" class="stm run hide_run"><a href="#n270">270</a></p>
+<p id="n271" class="stm run hide_run"><a href="#n271">271</a></p>
+<p id="n272" class="pln"><a href="#n272">272</a></p>
+<p id="n273" class="stm run hide_run"><a href="#n273">273</a></p>
+<p id="n274" class="stm run hide_run"><a href="#n274">274</a></p>
+<p id="n275" class="stm run hide_run"><a href="#n275">275</a></p>
+<p id="n276" class="stm run hide_run"><a href="#n276">276</a></p>
+<p id="n277" class="stm mis"><a href="#n277">277</a></p>
+<p id="n278" class="stm mis"><a href="#n278">278</a></p>
+<p id="n279" class="stm mis"><a href="#n279">279</a></p>
+<p id="n280" class="stm mis"><a href="#n280">280</a></p>
+<p id="n281" class="stm mis"><a href="#n281">281</a></p>
+<p id="n282" class="stm mis"><a href="#n282">282</a></p>
+<p id="n283" class="pln"><a href="#n283">283</a></p>
+<p id="n284" class="stm run hide_run"><a href="#n284">284</a></p>
+<p id="n285" class="pln"><a href="#n285">285</a></p>
+<p id="n286" class="stm mis"><a href="#n286">286</a></p>
+<p id="n287" class="pln"><a href="#n287">287</a></p>
+<p id="n288" class="stm mis"><a href="#n288">288</a></p>
+<p id="n289" class="stm mis"><a href="#n289">289</a></p>
+<p id="n290" class="stm mis"><a href="#n290">290</a></p>
+<p id="n291" class="stm mis"><a href="#n291">291</a></p>
+<p id="n292" class="stm mis"><a href="#n292">292</a></p>
+<p id="n293" class="stm mis"><a href="#n293">293</a></p>
+<p id="n294" class="stm par run hide_run"><a href="#n294">294</a></p>
+<p id="n295" class="stm mis"><a href="#n295">295</a></p>
+<p id="n296" class="pln"><a href="#n296">296</a></p>
+<p id="n297" class="pln"><a href="#n297">297</a></p>
+<p id="n298" class="stm run hide_run"><a href="#n298">298</a></p>
+<p id="n299" class="pln"><a href="#n299">299</a></p>
+<p id="n300" class="stm run hide_run"><a href="#n300">300</a></p>
+<p id="n301" class="pln"><a href="#n301">301</a></p>
+<p id="n302" class="stm run hide_run"><a href="#n302">302</a></p>
+<p id="n303" class="pln"><a href="#n303">303</a></p>
+<p id="n304" class="stm mis"><a href="#n304">304</a></p>
+<p id="n305" class="stm mis"><a href="#n305">305</a></p>
+<p id="n306" class="pln"><a href="#n306">306</a></p>
+<p id="n307" class="pln"><a href="#n307">307</a></p>
+<p id="n308" class="stm run hide_run"><a href="#n308">308</a></p>
+<p id="n309" class="pln"><a href="#n309">309</a></p>
+<p id="n310" class="pln"><a href="#n310">310</a></p>
+<p id="n311" class="stm mis"><a href="#n311">311</a></p>
+<p id="n312" class="stm mis"><a href="#n312">312</a></p>
+<p id="n313" class="stm mis"><a href="#n313">313</a></p>
+<p id="n314" class="pln"><a href="#n314">314</a></p>
+<p id="n315" class="stm run hide_run"><a href="#n315">315</a></p>
+<p id="n316" class="pln"><a href="#n316">316</a></p>
+<p id="n317" class="stm run hide_run"><a href="#n317">317</a></p>
+<p id="n318" class="stm par run hide_run"><a href="#n318">318</a></p>
+<p id="n319" class="stm run hide_run"><a href="#n319">319</a></p>
+<p id="n320" class="pln"><a href="#n320">320</a></p>
+<p id="n321" class="stm mis"><a href="#n321">321</a></p>
+<p id="n322" class="stm mis"><a href="#n322">322</a></p>
+<p id="n323" class="stm mis"><a href="#n323">323</a></p>
+<p id="n324" class="pln"><a href="#n324">324</a></p>
+<p id="n325" class="pln"><a href="#n325">325</a></p>
+<p id="n326" class="stm run hide_run"><a href="#n326">326</a></p>
+<p id="n327" class="stm run hide_run"><a href="#n327">327</a></p>
+<p id="n328" class="stm run hide_run"><a href="#n328">328</a></p>
+<p id="n329" class="stm run hide_run"><a href="#n329">329</a></p>
+<p id="n330" class="stm run hide_run"><a href="#n330">330</a></p>
+<p id="n331" class="pln"><a href="#n331">331</a></p>
+<p id="n332" class="stm run hide_run"><a href="#n332">332</a></p>
+<p id="n333" class="pln"><a href="#n333">333</a></p>
+<p id="n334" class="pln"><a href="#n334">334</a></p>
+<p id="n335" class="pln"><a href="#n335">335</a></p>
+<p id="n336" class="pln"><a href="#n336">336</a></p>
+<p id="n337" class="pln"><a href="#n337">337</a></p>
+<p id="n338" class="pln"><a href="#n338">338</a></p>
+<p id="n339" class="stm run hide_run"><a href="#n339">339</a></p>
+<p id="n340" class="pln"><a href="#n340">340</a></p>
+<p id="n341" class="pln"><a href="#n341">341</a></p>
+<p id="n342" class="stm run hide_run"><a href="#n342">342</a></p>
+<p id="n343" class="stm run hide_run"><a href="#n343">343</a></p>
+<p id="n344" class="pln"><a href="#n344">344</a></p>
+<p id="n345" class="stm run hide_run"><a href="#n345">345</a></p>
+<p id="n346" class="pln"><a href="#n346">346</a></p>
+<p id="n347" class="stm par run hide_run"><a href="#n347">347</a></p>
+<p id="n348" class="stm par run hide_run"><a href="#n348">348</a></p>
+<p id="n349" class="stm mis"><a href="#n349">349</a></p>
+<p id="n350" class="pln"><a href="#n350">350</a></p>
+<p id="n351" class="stm run hide_run"><a href="#n351">351</a></p>
+<p id="n352" class="stm run hide_run"><a href="#n352">352</a></p>
+<p id="n353" class="pln"><a href="#n353">353</a></p>
+<p id="n354" class="stm run hide_run"><a href="#n354">354</a></p>
+<p id="n355" class="pln"><a href="#n355">355</a></p>
+<p id="n356" class="stm run hide_run"><a href="#n356">356</a></p>
+<p id="n357" class="stm run hide_run"><a href="#n357">357</a></p>
+<p id="n358" class="pln"><a href="#n358">358</a></p>
+<p id="n359" class="pln"><a href="#n359">359</a></p>
+<p id="n360" class="stm par run hide_run"><a href="#n360">360</a></p>
+<p id="n361" class="pln"><a href="#n361">361</a></p>
+<p id="n362" class="stm mis"><a href="#n362">362</a></p>
+<p id="n363" class="stm mis"><a href="#n363">363</a></p>
+<p id="n364" class="pln"><a href="#n364">364</a></p>
+<p id="n365" class="stm run hide_run"><a href="#n365">365</a></p>
+<p id="n366" class="pln"><a href="#n366">366</a></p>
+<p id="n367" class="stm run hide_run"><a href="#n367">367</a></p>
+<p id="n368" class="pln"><a href="#n368">368</a></p>
+<p id="n369" class="stm run hide_run"><a href="#n369">369</a></p>
+<p id="n370" class="stm run hide_run"><a href="#n370">370</a></p>
+<p id="n371" class="pln"><a href="#n371">371</a></p>
+<p id="n372" class="pln"><a href="#n372">372</a></p>
+<p id="n373" class="stm par run hide_run"><a href="#n373">373</a></p>
+<p id="n374" class="stm mis"><a href="#n374">374</a></p>
+<p id="n375" class="stm par run hide_run"><a href="#n375">375</a></p>
+<p id="n376" class="stm mis"><a href="#n376">376</a></p>
+<p id="n377" class="pln"><a href="#n377">377</a></p>
+<p id="n378" class="stm run hide_run"><a href="#n378">378</a></p>
+<p id="n379" class="stm par run hide_run"><a href="#n379">379</a></p>
+<p id="n380" class="stm mis"><a href="#n380">380</a></p>
+<p id="n381" class="stm par run hide_run"><a href="#n381">381</a></p>
+<p id="n382" class="stm mis"><a href="#n382">382</a></p>
+<p id="n383" class="pln"><a href="#n383">383</a></p>
+<p id="n384" class="stm run hide_run"><a href="#n384">384</a></p>
+<p id="n385" class="pln"><a href="#n385">385</a></p>
+<p id="n386" class="stm run hide_run"><a href="#n386">386</a></p>
+<p id="n387" class="pln"><a href="#n387">387</a></p>
+<p id="n388" class="pln"><a href="#n388">388</a></p>
+<p id="n389" class="pln"><a href="#n389">389</a></p>
+<p id="n390" class="pln"><a href="#n390">390</a></p>
+<p id="n391" class="pln"><a href="#n391">391</a></p>
+<p id="n392" class="stm run hide_run"><a href="#n392">392</a></p>
+<p id="n393" class="stm run hide_run"><a href="#n393">393</a></p>
+<p id="n394" class="pln"><a href="#n394">394</a></p>
+<p id="n395" class="stm run hide_run"><a href="#n395">395</a></p>
+<p id="n396" class="pln"><a href="#n396">396</a></p>
+<p id="n397" class="stm par run hide_run"><a href="#n397">397</a></p>
+<p id="n398" class="stm mis"><a href="#n398">398</a></p>
+<p id="n399" class="pln"><a href="#n399">399</a></p>
+<p id="n400" class="stm run hide_run"><a href="#n400">400</a></p>
+<p id="n401" class="stm par run hide_run"><a href="#n401">401</a></p>
+<p id="n402" class="stm mis"><a href="#n402">402</a></p>
+<p id="n403" class="stm par run hide_run"><a href="#n403">403</a></p>
+<p id="n404" class="stm mis"><a href="#n404">404</a></p>
+<p id="n405" class="pln"><a href="#n405">405</a></p>
+<p id="n406" class="stm run hide_run"><a href="#n406">406</a></p>
+<p id="n407" class="stm run hide_run"><a href="#n407">407</a></p>
+<p id="n408" class="pln"><a href="#n408">408</a></p>
+<p id="n409" class="stm run hide_run"><a href="#n409">409</a></p>
+<p id="n410" class="pln"><a href="#n410">410</a></p>
+<p id="n411" class="pln"><a href="#n411">411</a></p>
+<p id="n412" class="pln"><a href="#n412">412</a></p>
+<p id="n413" class="pln"><a href="#n413">413</a></p>
+<p id="n414" class="pln"><a href="#n414">414</a></p>
+<p id="n415" class="pln"><a href="#n415">415</a></p>
+<p id="n416" class="pln"><a href="#n416">416</a></p>
+<p id="n417" class="pln"><a href="#n417">417</a></p>
+<p id="n418" class="pln"><a href="#n418">418</a></p>
+<p id="n419" class="pln"><a href="#n419">419</a></p>
+<p id="n420" class="pln"><a href="#n420">420</a></p>
+<p id="n421" class="pln"><a href="#n421">421</a></p>
+<p id="n422" class="pln"><a href="#n422">422</a></p>
+<p id="n423" class="pln"><a href="#n423">423</a></p>
+<p id="n424" class="pln"><a href="#n424">424</a></p>
+<p id="n425" class="pln"><a href="#n425">425</a></p>
+<p id="n426" class="pln"><a href="#n426">426</a></p>
+<p id="n427" class="pln"><a href="#n427">427</a></p>
+<p id="n428" class="pln"><a href="#n428">428</a></p>
+<p id="n429" class="pln"><a href="#n429">429</a></p>
+<p id="n430" class="pln"><a href="#n430">430</a></p>
+<p id="n431" class="pln"><a href="#n431">431</a></p>
+<p id="n432" class="pln"><a href="#n432">432</a></p>
+<p id="n433" class="pln"><a href="#n433">433</a></p>
+<p id="n434" class="pln"><a href="#n434">434</a></p>
+<p id="n435" class="pln"><a href="#n435">435</a></p>
+<p id="n436" class="pln"><a href="#n436">436</a></p>
+<p id="n437" class="pln"><a href="#n437">437</a></p>
+<p id="n438" class="pln"><a href="#n438">438</a></p>
+<p id="n439" class="pln"><a href="#n439">439</a></p>
+<p id="n440" class="pln"><a href="#n440">440</a></p>
+<p id="n441" class="pln"><a href="#n441">441</a></p>
+<p id="n442" class="pln"><a href="#n442">442</a></p>
+<p id="n443" class="pln"><a href="#n443">443</a></p>
+<p id="n444" class="pln"><a href="#n444">444</a></p>
+<p id="n445" class="pln"><a href="#n445">445</a></p>
+<p id="n446" class="pln"><a href="#n446">446</a></p>
+<p id="n447" class="stm par run hide_run"><a href="#n447">447</a></p>
+<p id="n448" class="stm mis"><a href="#n448">448</a></p>
+<p id="n449" class="pln"><a href="#n449">449</a></p>
+<p id="n450" class="stm run hide_run"><a href="#n450">450</a></p>
+<p id="n451" class="stm run hide_run"><a href="#n451">451</a></p>
+<p id="n452" class="stm run hide_run"><a href="#n452">452</a></p>
+<p id="n453" class="stm run hide_run"><a href="#n453">453</a></p>
+<p id="n454" class="stm run hide_run"><a href="#n454">454</a></p>
+<p id="n455" class="stm mis"><a href="#n455">455</a></p>
+<p id="n456" class="stm mis"><a href="#n456">456</a></p>
+<p id="n457" class="stm run hide_run"><a href="#n457">457</a></p>
+<p id="n458" class="pln"><a href="#n458">458</a></p>
+<p id="n459" class="stm run hide_run"><a href="#n459">459</a></p>
+<p id="n460" class="pln"><a href="#n460">460</a></p>
+<p id="n461" class="stm run hide_run"><a href="#n461">461</a></p>
+<p id="n462" class="pln"><a href="#n462">462</a></p>
+<p id="n463" class="pln"><a href="#n463">463</a></p>
+<p id="n464" class="pln"><a href="#n464">464</a></p>
+<p id="n465" class="pln"><a href="#n465">465</a></p>
+<p id="n466" class="pln"><a href="#n466">466</a></p>
+<p id="n467" class="pln"><a href="#n467">467</a></p>
+<p id="n468" class="pln"><a href="#n468">468</a></p>
+<p id="n469" class="pln"><a href="#n469">469</a></p>
+<p id="n470" class="pln"><a href="#n470">470</a></p>
+<p id="n471" class="pln"><a href="#n471">471</a></p>
+<p id="n472" class="stm par run hide_run"><a href="#n472">472</a></p>
+<p id="n473" class="stm mis"><a href="#n473">473</a></p>
+<p id="n474" class="pln"><a href="#n474">474</a></p>
+<p id="n475" class="pln"><a href="#n475">475</a></p>
+<p id="n476" class="pln"><a href="#n476">476</a></p>
+<p id="n477" class="pln"><a href="#n477">477</a></p>
+<p id="n478" class="pln"><a href="#n478">478</a></p>
+<p id="n479" class="stm run hide_run"><a href="#n479">479</a></p>
+<p id="n480" class="pln"><a href="#n480">480</a></p>
+<p id="n481" class="pln"><a href="#n481">481</a></p>
+<p id="n482" class="pln"><a href="#n482">482</a></p>
+<p id="n483" class="pln"><a href="#n483">483</a></p>
+<p id="n484" class="pln"><a href="#n484">484</a></p>
+<p id="n485" class="pln"><a href="#n485">485</a></p>
+<p id="n486" class="pln"><a href="#n486">486</a></p>
+<p id="n487" class="pln"><a href="#n487">487</a></p>
+<p id="n488" class="pln"><a href="#n488">488</a></p>
+<p id="n489" class="pln"><a href="#n489">489</a></p>
+<p id="n490" class="pln"><a href="#n490">490</a></p>
+<p id="n491" class="stm run hide_run"><a href="#n491">491</a></p>
+<p id="n492" class="stm run hide_run"><a href="#n492">492</a></p>
+<p id="n493" class="stm par run hide_run"><a href="#n493">493</a></p>
+<p id="n494" class="stm mis"><a href="#n494">494</a></p>
+<p id="n495" class="stm mis"><a href="#n495">495</a></p>
+<p id="n496" class="stm mis"><a href="#n496">496</a></p>
+<p id="n497" class="pln"><a href="#n497">497</a></p>
+<p id="n498" class="stm mis"><a href="#n498">498</a></p>
+<p id="n499" class="stm mis"><a href="#n499">499</a></p>
+<p id="n500" class="stm mis"><a href="#n500">500</a></p>
+<p id="n501" class="stm mis"><a href="#n501">501</a></p>
+<p id="n502" class="stm mis"><a href="#n502">502</a></p>
+<p id="n503" class="pln"><a href="#n503">503</a></p>
+<p id="n504" class="stm run hide_run"><a href="#n504">504</a></p>
+<p id="n505" class="pln"><a href="#n505">505</a></p>
+<p id="n506" class="stm run hide_run"><a href="#n506">506</a></p>
+<p id="n507" class="pln"><a href="#n507">507</a></p>
+<p id="n508" class="pln"><a href="#n508">508</a></p>
+<p id="n509" class="pln"><a href="#n509">509</a></p>
+<p id="n510" class="pln"><a href="#n510">510</a></p>
+<p id="n511" class="pln"><a href="#n511">511</a></p>
+<p id="n512" class="stm par run hide_run"><a href="#n512">512</a></p>
+<p id="n513" class="stm run hide_run"><a href="#n513">513</a></p>
+<p id="n514" class="pln"><a href="#n514">514</a></p>
+<p id="n515" class="stm mis"><a href="#n515">515</a></p>
+<p id="n516" class="pln"><a href="#n516">516</a></p>
+<p id="n517" class="stm mis"><a href="#n517">517</a></p>
+<p id="n518" class="stm mis"><a href="#n518">518</a></p>
+<p id="n519" class="stm mis"><a href="#n519">519</a></p>
+<p id="n520" class="stm mis"><a href="#n520">520</a></p>
+<p id="n521" class="pln"><a href="#n521">521</a></p>
+<p id="n522" class="stm mis"><a href="#n522">522</a></p>
+<p id="n523" class="pln"><a href="#n523">523</a></p>
+<p id="n524" class="stm run hide_run"><a href="#n524">524</a></p>
+<p id="n525" class="pln"><a href="#n525">525</a></p>
+<p id="n526" class="pln"><a href="#n526">526</a></p>
+<p id="n527" class="pln"><a href="#n527">527</a></p>
+<p id="n528" class="pln"><a href="#n528">528</a></p>
+<p id="n529" class="pln"><a href="#n529">529</a></p>
+<p id="n530" class="stm run hide_run"><a href="#n530">530</a></p>
+<p id="n531" class="pln"><a href="#n531">531</a></p>
+<p id="n532" class="stm run hide_run"><a href="#n532">532</a></p>
+<p id="n533" class="stm par run hide_run"><a href="#n533">533</a></p>
+<p id="n534" class="stm run hide_run"><a href="#n534">534</a></p>
+<p id="n535" class="stm run hide_run"><a href="#n535">535</a></p>
+<p id="n536" class="pln"><a href="#n536">536</a></p>
+<p id="n537" class="pln"><a href="#n537">537</a></p>
+<p id="n538" class="stm par run hide_run"><a href="#n538">538</a></p>
+<p id="n539" class="pln"><a href="#n539">539</a></p>
+<p id="n540" class="stm mis"><a href="#n540">540</a></p>
+<p id="n541" class="stm mis"><a href="#n541">541</a></p>
+<p id="n542" class="stm mis"><a href="#n542">542</a></p>
+<p id="n543" class="stm mis"><a href="#n543">543</a></p>
+<p id="n544" class="pln"><a href="#n544">544</a></p>
+<p id="n545" class="stm par run hide_run"><a href="#n545">545</a></p>
+<p id="n546" class="pln"><a href="#n546">546</a></p>
+<p id="n547" class="stm mis"><a href="#n547">547</a></p>
+<p id="n548" class="stm mis"><a href="#n548">548</a></p>
+<p id="n549" class="stm mis"><a href="#n549">549</a></p>
+<p id="n550" class="pln"><a href="#n550">550</a></p>
+<p id="n551" class="pln"><a href="#n551">551</a></p>
+<p id="n552" class="stm par run hide_run"><a href="#n552">552</a></p>
+<p id="n553" class="stm mis"><a href="#n553">553</a></p>
+<p id="n554" class="pln"><a href="#n554">554</a></p>
+<p id="n555" class="stm run hide_run"><a href="#n555">555</a></p>
+<p id="n556" class="pln"><a href="#n556">556</a></p>
+<p id="n557" class="stm run hide_run"><a href="#n557">557</a></p>
+<p id="n558" class="pln"><a href="#n558">558</a></p>
+<p id="n559" class="pln"><a href="#n559">559</a></p>
+<p id="n560" class="stm run hide_run"><a href="#n560">560</a></p>
+<p id="n561" class="pln"><a href="#n561">561</a></p>
+<p id="n562" class="pln"><a href="#n562">562</a></p>
+<p id="n563" class="stm par run hide_run"><a href="#n563">563</a></p>
+<p id="n564" class="stm mis"><a href="#n564">564</a></p>
+<p id="n565" class="pln"><a href="#n565">565</a></p>
+<p id="n566" class="stm run hide_run"><a href="#n566">566</a></p>
+<p id="n567" class="pln"><a href="#n567">567</a></p>
+<p id="n568" class="stm run hide_run"><a href="#n568">568</a></p>
+<p id="n569" class="pln"><a href="#n569">569</a></p>
+<p id="n570" class="stm mis"><a href="#n570">570</a></p>
+<p id="n571" class="pln"><a href="#n571">571</a></p>
+<p id="n572" class="stm run hide_run"><a href="#n572">572</a></p>
+<p id="n573" class="pln"><a href="#n573">573</a></p>
+<p id="n574" class="pln"><a href="#n574">574</a></p>
+<p id="n575" class="pln"><a href="#n575">575</a></p>
+<p id="n576" class="pln"><a href="#n576">576</a></p>
+<p id="n577" class="pln"><a href="#n577">577</a></p>
+<p id="n578" class="stm par run hide_run"><a href="#n578">578</a></p>
+<p id="n579" class="stm mis"><a href="#n579">579</a></p>
+<p id="n580" class="stm par run hide_run"><a href="#n580">580</a></p>
+<p id="n581" class="stm mis"><a href="#n581">581</a></p>
+<p id="n582" class="stm run hide_run"><a href="#n582">582</a></p>
+<p id="n583" class="pln"><a href="#n583">583</a></p>
+<p id="n584" class="stm run hide_run"><a href="#n584">584</a></p>
+<p id="n585" class="pln"><a href="#n585">585</a></p>
+<p id="n586" class="pln"><a href="#n586">586</a></p>
+<p id="n587" class="pln"><a href="#n587">587</a></p>
+<p id="n588" class="pln"><a href="#n588">588</a></p>
+<p id="n589" class="pln"><a href="#n589">589</a></p>
+<p id="n590" class="pln"><a href="#n590">590</a></p>
+<p id="n591" class="stm par run hide_run"><a href="#n591">591</a></p>
+<p id="n592" class="stm run hide_run"><a href="#n592">592</a></p>
+<p id="n593" class="pln"><a href="#n593">593</a></p>
+<p id="n594" class="stm mis"><a href="#n594">594</a></p>
+<p id="n595" class="stm mis"><a href="#n595">595</a></p>
+<p id="n596" class="pln"><a href="#n596">596</a></p>
+<p id="n597" class="stm mis"><a href="#n597">597</a></p>
+<p id="n598" class="stm mis"><a href="#n598">598</a></p>
+<p id="n599" class="stm mis"><a href="#n599">599</a></p>
+<p id="n600" class="stm mis"><a href="#n600">600</a></p>
+<p id="n601" class="stm mis"><a href="#n601">601</a></p>
+<p id="n602" class="pln"><a href="#n602">602</a></p>
+<p id="n603" class="stm mis"><a href="#n603">603</a></p>
+<p id="n604" class="stm mis"><a href="#n604">604</a></p>
+<p id="n605" class="pln"><a href="#n605">605</a></p>
+<p id="n606" class="stm run hide_run"><a href="#n606">606</a></p>
+<p id="n607" class="pln"><a href="#n607">607</a></p>
+<p id="n608" class="stm run hide_run"><a href="#n608">608</a></p>
+<p id="n609" class="pln"><a href="#n609">609</a></p>
+<p id="n610" class="stm run hide_run"><a href="#n610">610</a></p>
+<p id="n611" class="stm mis"><a href="#n611">611</a></p>
+
+            </td>
+            <td class="text">
+<p id="t1" class="pln"><span class="com"># (c) 2012-2014, Michael DeHaan &lt;michael.dehaan@gmail.com></span><span class="strut">&nbsp;</span></p>
+<p id="t2" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t3" class="pln"><span class="com"># This file is part of Ansible</span><span class="strut">&nbsp;</span></p>
+<p id="t4" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t5" class="pln"><span class="com"># Ansible is free software: you can redistribute it and/or modify</span><span class="strut">&nbsp;</span></p>
+<p id="t6" class="pln"><span class="com"># it under the terms of the GNU General Public License as published by</span><span class="strut">&nbsp;</span></p>
+<p id="t7" class="pln"><span class="com"># the Free Software Foundation, either version 3 of the License, or</span><span class="strut">&nbsp;</span></p>
+<p id="t8" class="pln"><span class="com"># (at your option) any later version.</span><span class="strut">&nbsp;</span></p>
+<p id="t9" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t10" class="pln"><span class="com"># Ansible is distributed in the hope that it will be useful,</span><span class="strut">&nbsp;</span></p>
+<p id="t11" class="pln"><span class="com"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span><span class="strut">&nbsp;</span></p>
+<p id="t12" class="pln"><span class="com"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span><span class="strut">&nbsp;</span></p>
+<p id="t13" class="pln"><span class="com"># GNU General Public License for more details.</span><span class="strut">&nbsp;</span></p>
+<p id="t14" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t15" class="pln"><span class="com"># You should have received a copy of the GNU General Public License</span><span class="strut">&nbsp;</span></p>
+<p id="t16" class="pln"><span class="com"># along with Ansible.  If not, see &lt;http://www.gnu.org/licenses/>.</span><span class="strut">&nbsp;</span></p>
+<p id="t17" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t18" class="pln"><span class="com">#############################################</span><span class="strut">&nbsp;</span></p>
+<p id="t19" class="stm run hide_run"><span class="key">from</span> <span class="nam">__future__</span> <span class="key">import</span> <span class="op">(</span><span class="nam">absolute_import</span><span class="op">,</span> <span class="nam">division</span><span class="op">,</span> <span class="nam">print_function</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t20" class="stm run hide_run"><span class="nam">__metaclass__</span> <span class="op">=</span> <span class="nam">type</span><span class="strut">&nbsp;</span></p>
+<p id="t21" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t22" class="stm run hide_run"><span class="key">import</span> <span class="nam">fnmatch</span><span class="strut">&nbsp;</span></p>
+<p id="t23" class="stm run hide_run"><span class="key">import</span> <span class="nam">os</span><span class="strut">&nbsp;</span></p>
+<p id="t24" class="stm run hide_run"><span class="key">import</span> <span class="nam">re</span><span class="strut">&nbsp;</span></p>
+<p id="t25" class="stm run hide_run"><span class="key">import</span> <span class="nam">itertools</span><span class="strut">&nbsp;</span></p>
+<p id="t26" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t27" class="stm run hide_run"><span class="key">from</span> <span class="nam">operator</span> <span class="key">import</span> <span class="nam">attrgetter</span><span class="strut">&nbsp;</span></p>
+<p id="t28" class="stm run hide_run"><span class="key">from</span> <span class="nam">random</span> <span class="key">import</span> <span class="nam">shuffle</span><span class="strut">&nbsp;</span></p>
+<p id="t29" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t30" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span> <span class="key">import</span> <span class="nam">constants</span> <span class="key">as</span> <span class="nam">C</span><span class="strut">&nbsp;</span></p>
+<p id="t31" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">errors</span> <span class="key">import</span> <span class="nam">AnsibleError</span><span class="op">,</span> <span class="nam">AnsibleOptionsError</span><span class="op">,</span> <span class="nam">AnsibleParserError</span><span class="strut">&nbsp;</span></p>
+<p id="t32" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">inventory</span><span class="op">.</span><span class="nam">data</span> <span class="key">import</span> <span class="nam">InventoryData</span><span class="strut">&nbsp;</span></p>
+<p id="t33" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">module_utils</span><span class="op">.</span><span class="nam">six</span> <span class="key">import</span> <span class="nam">string_types</span><span class="strut">&nbsp;</span></p>
+<p id="t34" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">module_utils</span><span class="op">.</span><span class="nam">_text</span> <span class="key">import</span> <span class="nam">to_bytes</span><span class="op">,</span> <span class="nam">to_text</span><span class="strut">&nbsp;</span></p>
+<p id="t35" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">parsing</span><span class="op">.</span><span class="nam">utils</span><span class="op">.</span><span class="nam">addresses</span> <span class="key">import</span> <span class="nam">parse_address</span><span class="strut">&nbsp;</span></p>
+<p id="t36" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">plugins</span><span class="op">.</span><span class="nam">loader</span> <span class="key">import</span> <span class="nam">inventory_loader</span><span class="strut">&nbsp;</span></p>
+<p id="t37" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">utils</span><span class="op">.</span><span class="nam">path</span> <span class="key">import</span> <span class="nam">unfrackpath</span><span class="strut">&nbsp;</span></p>
+<p id="t38" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t39" class="stm run hide_run"><span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t40" class="stm run hide_run">    <span class="key">from</span> <span class="nam">__main__</span> <span class="key">import</span> <span class="nam">display</span><span class="strut">&nbsp;</span></p>
+<p id="t41" class="stm mis"><span class="key">except</span> <span class="nam">ImportError</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t42" class="stm mis">    <span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">utils</span><span class="op">.</span><span class="nam">display</span> <span class="key">import</span> <span class="nam">Display</span><span class="strut">&nbsp;</span></p>
+<p id="t43" class="stm mis">    <span class="nam">display</span> <span class="op">=</span> <span class="nam">Display</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t44" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t45" class="stm run hide_run"><span class="nam">IGNORED_ALWAYS</span> <span class="op">=</span> <span class="op">[</span><span class="str">br"^\."</span><span class="op">,</span> <span class="str">b"^host_vars$"</span><span class="op">,</span> <span class="str">b"^group_vars$"</span><span class="op">,</span> <span class="str">b"^vars_plugins$"</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t46" class="stm run hide_run"><span class="nam">IGNORED_PATTERNS</span> <span class="op">=</span> <span class="op">[</span><span class="nam">to_bytes</span><span class="op">(</span><span class="nam">x</span><span class="op">)</span> <span class="key">for</span> <span class="nam">x</span> <span class="key">in</span> <span class="nam">C</span><span class="op">.</span><span class="nam">INVENTORY_IGNORE_PATTERNS</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t47" class="stm run hide_run"><span class="nam">IGNORED_EXTS</span> <span class="op">=</span> <span class="op">[</span><span class="str">b'%s$'</span> <span class="op">%</span> <span class="nam">to_bytes</span><span class="op">(</span><span class="nam">re</span><span class="op">.</span><span class="nam">escape</span><span class="op">(</span><span class="nam">x</span><span class="op">)</span><span class="op">)</span> <span class="key">for</span> <span class="nam">x</span> <span class="key">in</span> <span class="nam">C</span><span class="op">.</span><span class="nam">INVENTORY_IGNORE_EXTS</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t48" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t49" class="stm run hide_run"><span class="nam">IGNORED</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">compile</span><span class="op">(</span><span class="str">b'|'</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">IGNORED_ALWAYS</span> <span class="op">+</span> <span class="nam">IGNORED_PATTERNS</span> <span class="op">+</span> <span class="nam">IGNORED_EXTS</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t50" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t51" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t52" class="stm run hide_run"><span class="key">def</span> <span class="nam">order_patterns</span><span class="op">(</span><span class="nam">patterns</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t53" class="pln">    <span class="str">''' takes a list of patterns and reorders them by modifier to apply them consistently '''</span><span class="strut">&nbsp;</span></p>
+<p id="t54" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t55" class="pln">    <span class="com"># FIXME: this goes away if we apply patterns incrementally or by groups</span><span class="strut">&nbsp;</span></p>
+<p id="t56" class="stm run hide_run">    <span class="nam">pattern_regular</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t57" class="stm run hide_run">    <span class="nam">pattern_intersection</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t58" class="stm run hide_run">    <span class="nam">pattern_exclude</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t59" class="stm run hide_run">    <span class="key">for</span> <span class="nam">p</span> <span class="key">in</span> <span class="nam">patterns</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t60" class="stm par run hide_run"><span class="annotate short">60&#x202F;&#x219B;&#x202F;61</span><span class="annotate long">line 60 didn't jump to line 61, because the condition on line 60 was never true</span>        <span class="key">if</span> <span class="nam">p</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"!"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t61" class="stm mis">            <span class="nam">pattern_exclude</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">p</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t62" class="stm par run hide_run"><span class="annotate short">62&#x202F;&#x219B;&#x202F;63</span><span class="annotate long">line 62 didn't jump to line 63, because the condition on line 62 was never true</span>        <span class="key">elif</span> <span class="nam">p</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"&amp;"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t63" class="stm mis">            <span class="nam">pattern_intersection</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">p</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t64" class="stm par run hide_run"><span class="annotate short">64&#x202F;&#x219B;&#x202F;59</span><span class="annotate long">line 64 didn't jump to line 59, because the condition on line 64 was never false</span>        <span class="key">elif</span> <span class="nam">p</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t65" class="stm run hide_run">            <span class="nam">pattern_regular</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">p</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t66" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t67" class="pln">    <span class="com"># if no regular pattern was given, hence only exclude and/or intersection</span><span class="strut">&nbsp;</span></p>
+<p id="t68" class="pln">    <span class="com"># make that magically work</span><span class="strut">&nbsp;</span></p>
+<p id="t69" class="stm par run hide_run"><span class="annotate short">69&#x202F;&#x219B;&#x202F;70</span><span class="annotate long">line 69 didn't jump to line 70, because the condition on line 69 was never true</span>    <span class="key">if</span> <span class="nam">pattern_regular</span> <span class="op">==</span> <span class="op">[</span><span class="op">]</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t70" class="stm mis">        <span class="nam">pattern_regular</span> <span class="op">=</span> <span class="op">[</span><span class="str">'all'</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t71" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t72" class="pln">    <span class="com"># when applying the host selectors, run those without the "&amp;" or "!"</span><span class="strut">&nbsp;</span></p>
+<p id="t73" class="pln">    <span class="com"># first, then the &amp;s, then the !s.</span><span class="strut">&nbsp;</span></p>
+<p id="t74" class="stm run hide_run">    <span class="key">return</span> <span class="nam">pattern_regular</span> <span class="op">+</span> <span class="nam">pattern_intersection</span> <span class="op">+</span> <span class="nam">pattern_exclude</span><span class="strut">&nbsp;</span></p>
+<p id="t75" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t76" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t77" class="stm run hide_run"><span class="key">def</span> <span class="nam">split_host_pattern</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t78" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t79" class="pln"><span class="str">    Takes a string containing host patterns separated by commas (or a list</span><span class="strut">&nbsp;</span></p>
+<p id="t80" class="pln"><span class="str">    thereof) and returns a list of single patterns (which may not contain</span><span class="strut">&nbsp;</span></p>
+<p id="t81" class="pln"><span class="str">    commas). Whitespace is ignored.</span><span class="strut">&nbsp;</span></p>
+<p id="t82" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t83" class="pln"><span class="str">    Also accepts ':' as a separator for backwards compatibility, but it is</span><span class="strut">&nbsp;</span></p>
+<p id="t84" class="pln"><span class="str">    not recommended due to the conflict with IPv6 addresses and host ranges.</span><span class="strut">&nbsp;</span></p>
+<p id="t85" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t86" class="pln"><span class="str">    Example: 'a,b[1], c[2:3] , d' -> ['a', 'b[1]', 'c[2:3]', 'd']</span><span class="strut">&nbsp;</span></p>
+<p id="t87" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
+<p id="t88" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t89" class="stm run hide_run">    <span class="key">if</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t90" class="stm run hide_run">        <span class="key">return</span> <span class="nam">list</span><span class="op">(</span><span class="nam">itertools</span><span class="op">.</span><span class="nam">chain</span><span class="op">(</span><span class="op">*</span><span class="nam">map</span><span class="op">(</span><span class="nam">split_host_pattern</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t91" class="stm par run hide_run"><span class="annotate short">91&#x202F;&#x219B;&#x202F;92</span><span class="annotate long">line 91 didn't jump to line 92, because the condition on line 91 was never true</span>    <span class="key">elif</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">string_types</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t92" class="stm mis">        <span class="nam">pattern</span> <span class="op">=</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">errors</span><span class="op">=</span><span class="str">'surrogate_or_strict'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t93" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t94" class="pln">    <span class="com"># If it's got commas in it, we'll treat it as a straightforward</span><span class="strut">&nbsp;</span></p>
+<p id="t95" class="pln">    <span class="com"># comma-separated list of patterns.</span><span class="strut">&nbsp;</span></p>
+<p id="t96" class="stm par run hide_run"><span class="annotate short">96&#x202F;&#x219B;&#x202F;97</span><span class="annotate long">line 96 didn't jump to line 97, because the condition on line 96 was never true</span>    <span class="key">if</span> <span class="str">u','</span> <span class="key">in</span> <span class="nam">pattern</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t97" class="stm mis">        <span class="nam">patterns</span> <span class="op">=</span> <span class="nam">pattern</span><span class="op">.</span><span class="nam">split</span><span class="op">(</span><span class="str">u','</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t98" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t99" class="pln">    <span class="com"># If it doesn't, it could still be a single pattern. This accounts for</span><span class="strut">&nbsp;</span></p>
+<p id="t100" class="pln">    <span class="com"># non-separator uses of colons: IPv6 addresses and [x:y] host ranges.</span><span class="strut">&nbsp;</span></p>
+<p id="t101" class="pln">    <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t102" class="stm run hide_run">        <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t103" class="stm run hide_run">            <span class="op">(</span><span class="nam">base</span><span class="op">,</span> <span class="nam">port</span><span class="op">)</span> <span class="op">=</span> <span class="nam">parse_address</span><span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">allow_ranges</span><span class="op">=</span><span class="nam">True</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t104" class="stm run hide_run">            <span class="nam">patterns</span> <span class="op">=</span> <span class="op">[</span><span class="nam">pattern</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t105" class="stm mis">        <span class="key">except</span> <span class="nam">Exception</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t106" class="pln">            <span class="com"># The only other case we accept is a ':'-separated list of patterns.</span><span class="strut">&nbsp;</span></p>
+<p id="t107" class="pln">            <span class="com"># This mishandles IPv6 addresses, and is retained only for backwards</span><span class="strut">&nbsp;</span></p>
+<p id="t108" class="pln">            <span class="com"># compatibility.</span><span class="strut">&nbsp;</span></p>
+<p id="t109" class="stm mis">            <span class="nam">patterns</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">findall</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t110" class="pln">                <span class="nam">to_text</span><span class="op">(</span><span class="str">r'''(?:     # We want to match something comprising:</span><span class="strut">&nbsp;</span></p>
+<p id="t111" class="pln"><span class="str">                        [^\s:\[\]]  # (anything other than whitespace or ':[]'</span><span class="strut">&nbsp;</span></p>
+<p id="t112" class="pln"><span class="str">                        |           # ...or...</span><span class="strut">&nbsp;</span></p>
+<p id="t113" class="pln"><span class="str">                        \[[^\]]*\]  # a single complete bracketed expression)</span><span class="strut">&nbsp;</span></p>
+<p id="t114" class="pln"><span class="str">                    )+              # occurring once or more</span><span class="strut">&nbsp;</span></p>
+<p id="t115" class="pln"><span class="str">                '''</span><span class="op">)</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">,</span> <span class="nam">re</span><span class="op">.</span><span class="nam">X</span><span class="strut">&nbsp;</span></p>
+<p id="t116" class="pln">            <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t117" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t118" class="stm run hide_run">    <span class="key">return</span> <span class="op">[</span><span class="nam">p</span><span class="op">.</span><span class="nam">strip</span><span class="op">(</span><span class="op">)</span> <span class="key">for</span> <span class="nam">p</span> <span class="key">in</span> <span class="nam">patterns</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t119" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t120" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t121" class="stm run hide_run"><span class="key">class</span> <span class="nam">InventoryManager</span><span class="op">(</span><span class="nam">object</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t122" class="pln">    <span class="str">''' Creates and manages inventory '''</span><span class="strut">&nbsp;</span></p>
+<p id="t123" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t124" class="stm run hide_run">    <span class="key">def</span> <span class="nam">__init__</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">loader</span><span class="op">,</span> <span class="nam">sources</span><span class="op">=</span><span class="nam">None</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t125" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t126" class="pln">        <span class="com"># base objects</span><span class="strut">&nbsp;</span></p>
+<p id="t127" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_loader</span> <span class="op">=</span> <span class="nam">loader</span><span class="strut">&nbsp;</span></p>
+<p id="t128" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span> <span class="op">=</span> <span class="nam">InventoryData</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t129" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t130" class="pln">        <span class="com"># a list of host(names) to contain current inquiries to</span><span class="strut">&nbsp;</span></p>
+<p id="t131" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t132" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t133" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t134" class="pln">        <span class="com"># caches</span><span class="strut">&nbsp;</span></p>
+<p id="t135" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span> <span class="op">=</span> <span class="op">{</span><span class="op">}</span>  <span class="com"># resolved full patterns</span><span class="strut">&nbsp;</span></p>
+<p id="t136" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_pattern_cache</span> <span class="op">=</span> <span class="op">{</span><span class="op">}</span>  <span class="com"># resolved individual patterns</span><span class="strut">&nbsp;</span></p>
+<p id="t137" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory_plugins</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span>  <span class="com"># for generating inventory</span><span class="strut">&nbsp;</span></p>
+<p id="t138" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t139" class="pln">        <span class="com"># the inventory dirs, files, script paths or lists of hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t140" class="stm par run hide_run"><span class="annotate short">140&#x202F;&#x219B;&#x202F;141</span><span class="annotate long">line 140 didn't jump to line 141, because the condition on line 140 was never true</span>        <span class="key">if</span> <span class="nam">sources</span> <span class="key">is</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t141" class="stm mis">            <span class="nam">self</span><span class="op">.</span><span class="nam">_sources</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t142" class="stm par run hide_run"><span class="annotate short">142&#x202F;&#x219B;&#x202F;143</span><span class="annotate long">line 142 didn't jump to line 143, because the condition on line 142 was never true</span>        <span class="key">elif</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">sources</span><span class="op">,</span> <span class="nam">string_types</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t143" class="stm mis">            <span class="nam">self</span><span class="op">.</span><span class="nam">_sources</span> <span class="op">=</span> <span class="op">[</span><span class="nam">sources</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t144" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t145" class="stm run hide_run">            <span class="nam">self</span><span class="op">.</span><span class="nam">_sources</span> <span class="op">=</span> <span class="nam">sources</span><span class="strut">&nbsp;</span></p>
+<p id="t146" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t147" class="pln">        <span class="com"># get to work!</span><span class="strut">&nbsp;</span></p>
+<p id="t148" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">parse_sources</span><span class="op">(</span><span class="nam">cache</span><span class="op">=</span><span class="nam">True</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t149" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t150" class="stm run hide_run">    <span class="op">@</span><span class="nam">property</span><span class="strut">&nbsp;</span></p>
+<p id="t151" class="pln">    <span class="key">def</span> <span class="nam">localhost</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t152" class="stm mis">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">localhost</span><span class="strut">&nbsp;</span></p>
+<p id="t153" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t154" class="stm run hide_run">    <span class="op">@</span><span class="nam">property</span><span class="strut">&nbsp;</span></p>
+<p id="t155" class="pln">    <span class="key">def</span> <span class="nam">groups</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t156" class="stm run hide_run">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">groups</span><span class="strut">&nbsp;</span></p>
+<p id="t157" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t158" class="stm run hide_run">    <span class="op">@</span><span class="nam">property</span><span class="strut">&nbsp;</span></p>
+<p id="t159" class="pln">    <span class="key">def</span> <span class="nam">hosts</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t160" class="stm run hide_run">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t161" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t162" class="stm run hide_run">    <span class="key">def</span> <span class="nam">get_vars</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="op">*</span><span class="nam">args</span><span class="op">,</span> <span class="op">**</span><span class="nam">kwargs</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t163" class="stm mis">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">get_vars</span><span class="op">(</span><span class="nam">args</span><span class="op">,</span> <span class="nam">kwargs</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t164" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t165" class="stm run hide_run">    <span class="key">def</span> <span class="nam">add_host</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">host</span><span class="op">,</span> <span class="nam">group</span><span class="op">=</span><span class="nam">None</span><span class="op">,</span> <span class="nam">port</span><span class="op">=</span><span class="nam">None</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t166" class="stm mis">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">add_host</span><span class="op">(</span><span class="nam">host</span><span class="op">,</span> <span class="nam">group</span><span class="op">,</span> <span class="nam">port</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t167" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t168" class="stm run hide_run">    <span class="key">def</span> <span class="nam">add_group</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">group</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t169" class="stm mis">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">add_group</span><span class="op">(</span><span class="nam">group</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t170" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t171" class="stm run hide_run">    <span class="key">def</span> <span class="nam">get_groups_dict</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t172" class="stm run hide_run">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">get_groups_dict</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t173" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t174" class="stm run hide_run">    <span class="key">def</span> <span class="nam">reconcile_inventory</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t175" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">clear_caches</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t176" class="stm mis">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">reconcile_inventory</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t177" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t178" class="stm run hide_run">    <span class="key">def</span> <span class="nam">get_host</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">hostname</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t179" class="stm run hide_run">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">get_host</span><span class="op">(</span><span class="nam">hostname</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t180" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t181" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_setup_inventory_plugins</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t182" class="pln">        <span class="str">''' sets up loaded inventory plugins for usage '''</span><span class="strut">&nbsp;</span></p>
+<p id="t183" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t184" class="stm run hide_run">        <span class="nam">display</span><span class="op">.</span><span class="nam">vvvv</span><span class="op">(</span><span class="str">'setting up inventory plugins'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t185" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t186" class="stm run hide_run">        <span class="key">for</span> <span class="nam">name</span> <span class="key">in</span> <span class="nam">C</span><span class="op">.</span><span class="nam">INVENTORY_ENABLED</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t187" class="stm run hide_run">            <span class="nam">plugin</span> <span class="op">=</span> <span class="nam">inventory_loader</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="nam">name</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t188" class="stm par run hide_run"><span class="annotate short">188&#x202F;&#x219B;&#x202F;191</span><span class="annotate long">line 188 didn't jump to line 191, because the condition on line 188 was never false</span>            <span class="key">if</span> <span class="nam">plugin</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t189" class="stm run hide_run">                <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory_plugins</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">plugin</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t190" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t191" class="stm mis">                <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">'Failed to load inventory plugin, skipping %s'</span> <span class="op">%</span> <span class="nam">name</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t192" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t193" class="stm par run hide_run"><span class="annotate short">193&#x202F;&#x219B;&#x202F;194</span><span class="annotate long">line 193 didn't jump to line 194, because the condition on line 193 was never true</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory_plugins</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t194" class="stm mis">            <span class="key">raise</span> <span class="nam">AnsibleError</span><span class="op">(</span><span class="str">"No inventory plugins available to generate inventory, make sure you have at least one whitelisted."</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t195" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t196" class="stm run hide_run">    <span class="key">def</span> <span class="nam">parse_sources</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">cache</span><span class="op">=</span><span class="nam">False</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t197" class="pln">        <span class="str">''' iterate over inventory sources and parse each one to populate it'''</span><span class="strut">&nbsp;</span></p>
+<p id="t198" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t199" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_setup_inventory_plugins</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t200" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t201" class="stm run hide_run">        <span class="nam">parsed</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t202" class="pln">        <span class="com"># allow for multiple inventory parsing</span><span class="strut">&nbsp;</span></p>
+<p id="t203" class="stm run hide_run">        <span class="key">for</span> <span class="nam">source</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_sources</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t204" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t205" class="stm par run hide_run"><span class="annotate short">205&#x202F;&#x219B;&#x202F;203</span><span class="annotate long">line 205 didn't jump to line 203, because the condition on line 205 was never false</span>            <span class="key">if</span> <span class="nam">source</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t206" class="stm par run hide_run"><span class="annotate short">206&#x202F;&#x219B;&#x202F;208</span><span class="annotate long">line 206 didn't jump to line 208, because the condition on line 206 was never false</span>                <span class="key">if</span> <span class="str">','</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">source</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t207" class="stm run hide_run">                    <span class="nam">source</span> <span class="op">=</span> <span class="nam">unfrackpath</span><span class="op">(</span><span class="nam">source</span><span class="op">,</span> <span class="nam">follow</span><span class="op">=</span><span class="nam">False</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t208" class="stm run hide_run">                <span class="nam">parse</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">parse_source</span><span class="op">(</span><span class="nam">source</span><span class="op">,</span> <span class="nam">cache</span><span class="op">=</span><span class="nam">cache</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t209" class="stm par run hide_run"><span class="annotate short">209&#x202F;&#x219B;&#x202F;203</span><span class="annotate long">line 209 didn't jump to line 203, because the condition on line 209 was never false</span>                <span class="key">if</span> <span class="nam">parse</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">parsed</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t210" class="stm run hide_run">                    <span class="nam">parsed</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t211" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t212" class="stm par run hide_run"><span class="annotate short">212&#x202F;&#x219B;&#x202F;216</span><span class="annotate long">line 212 didn't jump to line 216, because the condition on line 212 was never false</span>        <span class="key">if</span> <span class="nam">parsed</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t213" class="pln">            <span class="com"># do post processing</span><span class="strut">&nbsp;</span></p>
+<p id="t214" class="stm run hide_run">            <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">reconcile_inventory</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t215" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t216" class="stm mis">            <span class="key">if</span> <span class="nam">C</span><span class="op">.</span><span class="nam">INVENTORY_UNPARSED_IS_FAILED</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t217" class="stm mis">                <span class="key">raise</span> <span class="nam">AnsibleError</span><span class="op">(</span><span class="str">"No inventory was parsed, please check your configuration and options."</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t218" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t219" class="stm mis">                <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">"No inventory was parsed, only implicit localhost is available"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t220" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t221" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory_plugins</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t222" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t223" class="stm run hide_run">    <span class="key">def</span> <span class="nam">parse_source</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">source</span><span class="op">,</span> <span class="nam">cache</span><span class="op">=</span><span class="nam">False</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t224" class="pln">        <span class="str">''' Generate or update inventory for the source provided '''</span><span class="strut">&nbsp;</span></p>
+<p id="t225" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t226" class="stm run hide_run">        <span class="nam">parsed</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t227" class="stm run hide_run">        <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">u'Examining possible inventory source: %s'</span> <span class="op">%</span> <span class="nam">source</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t228" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t229" class="pln">        <span class="com"># use binary for path functions</span><span class="strut">&nbsp;</span></p>
+<p id="t230" class="stm run hide_run">        <span class="nam">b_source</span> <span class="op">=</span> <span class="nam">to_bytes</span><span class="op">(</span><span class="nam">source</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t231" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t232" class="pln">        <span class="com"># process directories as a collection of inventories</span><span class="strut">&nbsp;</span></p>
+<p id="t233" class="stm par run hide_run"><span class="annotate short">233&#x202F;&#x219B;&#x202F;234</span><span class="annotate long">line 233 didn't jump to line 234, because the condition on line 233 was never true</span>        <span class="key">if</span> <span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">isdir</span><span class="op">(</span><span class="nam">b_source</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t234" class="stm mis">            <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">u'Searching for inventory files in directory: %s'</span> <span class="op">%</span> <span class="nam">source</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t235" class="stm mis">            <span class="key">for</span> <span class="nam">i</span> <span class="key">in</span> <span class="nam">sorted</span><span class="op">(</span><span class="nam">os</span><span class="op">.</span><span class="nam">listdir</span><span class="op">(</span><span class="nam">b_source</span><span class="op">)</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t236" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t237" class="stm mis">                <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">u'Considering %s'</span> <span class="op">%</span> <span class="nam">i</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t238" class="pln">                <span class="com"># Skip hidden files and stuff we explicitly ignore</span><span class="strut">&nbsp;</span></p>
+<p id="t239" class="stm mis">                <span class="key">if</span> <span class="nam">IGNORED</span><span class="op">.</span><span class="nam">search</span><span class="op">(</span><span class="nam">i</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t240" class="stm mis">                    <span class="key">continue</span><span class="strut">&nbsp;</span></p>
+<p id="t241" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t242" class="pln">                <span class="com"># recursively deal with directory entries</span><span class="strut">&nbsp;</span></p>
+<p id="t243" class="stm mis">                <span class="nam">fullpath</span> <span class="op">=</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">os</span><span class="op">.</span><span class="nam">path</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">b_source</span><span class="op">,</span> <span class="nam">i</span><span class="op">)</span><span class="op">,</span> <span class="nam">errors</span><span class="op">=</span><span class="str">'surrogate_or_strict'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t244" class="stm mis">                <span class="nam">parsed_this_one</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">parse_source</span><span class="op">(</span><span class="nam">fullpath</span><span class="op">,</span> <span class="nam">cache</span><span class="op">=</span><span class="nam">cache</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t245" class="stm mis">                <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">u'parsed %s as %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">fullpath</span><span class="op">,</span> <span class="nam">parsed_this_one</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t246" class="stm mis">                <span class="key">if</span> <span class="key">not</span> <span class="nam">parsed</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t247" class="stm mis">                    <span class="nam">parsed</span> <span class="op">=</span> <span class="nam">parsed_this_one</span><span class="strut">&nbsp;</span></p>
+<p id="t248" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t249" class="pln">            <span class="com"># left with strings or files, let plugins figure it out</span><span class="strut">&nbsp;</span></p>
+<p id="t250" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t251" class="pln">            <span class="com"># set so new hosts can use for inventory_file/dir vasr</span><span class="strut">&nbsp;</span></p>
+<p id="t252" class="stm run hide_run">            <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">current_source</span> <span class="op">=</span> <span class="nam">source</span><span class="strut">&nbsp;</span></p>
+<p id="t253" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t254" class="pln">            <span class="com"># get inventory plugins if needed, there should always be at least one generator</span><span class="strut">&nbsp;</span></p>
+<p id="t255" class="stm par run hide_run"><span class="annotate short">255&#x202F;&#x219B;&#x202F;256</span><span class="annotate long">line 255 didn't jump to line 256, because the condition on line 255 was never true</span>            <span class="key">if</span> <span class="key">not</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory_plugins</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t256" class="stm mis">                <span class="nam">self</span><span class="op">.</span><span class="nam">_setup_inventory_plugins</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t257" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t258" class="pln">            <span class="com"># try source with each plugin</span><span class="strut">&nbsp;</span></p>
+<p id="t259" class="stm run hide_run">            <span class="nam">failures</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t260" class="stm par run hide_run"><span class="annotate short">260&#x202F;&#x219B;&#x202F;286</span><span class="annotate long">line 260 didn't jump to line 286, because the loop on line 260 didn't complete</span>            <span class="key">for</span> <span class="nam">plugin</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory_plugins</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t261" class="stm run hide_run">                <span class="nam">plugin_name</span> <span class="op">=</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">getattr</span><span class="op">(</span><span class="nam">plugin</span><span class="op">,</span> <span class="str">'_load_name'</span><span class="op">,</span> <span class="nam">getattr</span><span class="op">(</span><span class="nam">plugin</span><span class="op">,</span> <span class="str">'_original_path'</span><span class="op">,</span> <span class="str">''</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t262" class="stm run hide_run">                <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">u'Attempting to use plugin %s (%s)'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">plugin_name</span><span class="op">,</span> <span class="nam">plugin</span><span class="op">.</span><span class="nam">_original_path</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t263" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t264" class="pln">                <span class="com"># initialize and figure out if plugin wants to attempt parsing this file</span><span class="strut">&nbsp;</span></p>
+<p id="t265" class="stm run hide_run">                <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t266" class="stm run hide_run">                    <span class="nam">plugin_wants</span> <span class="op">=</span> <span class="nam">bool</span><span class="op">(</span><span class="nam">plugin</span><span class="op">.</span><span class="nam">verify_file</span><span class="op">(</span><span class="nam">source</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t267" class="stm mis">                <span class="key">except</span> <span class="nam">Exception</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t268" class="stm mis">                    <span class="nam">plugin_wants</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t269" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t270" class="stm run hide_run">                <span class="key">if</span> <span class="nam">plugin_wants</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t271" class="stm run hide_run">                    <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t272" class="pln">                        <span class="com"># in case plugin fails 1/2 way we dont want partial inventory</span><span class="strut">&nbsp;</span></p>
+<p id="t273" class="stm run hide_run">                        <span class="nam">plugin</span><span class="op">.</span><span class="nam">parse</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_loader</span><span class="op">,</span> <span class="nam">source</span><span class="op">,</span> <span class="nam">cache</span><span class="op">=</span><span class="nam">cache</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t274" class="stm run hide_run">                        <span class="nam">parsed</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t275" class="stm run hide_run">                        <span class="nam">display</span><span class="op">.</span><span class="nam">vvv</span><span class="op">(</span><span class="str">'Parsed %s inventory source with %s plugin'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">source</span><span class="op">,</span> <span class="nam">plugin_name</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t276" class="stm run hide_run">                        <span class="key">break</span><span class="strut">&nbsp;</span></p>
+<p id="t277" class="stm mis">                    <span class="key">except</span> <span class="nam">AnsibleParserError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t278" class="stm mis">                        <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">'%s was not parsable by %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">source</span><span class="op">,</span> <span class="nam">plugin_name</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t279" class="stm mis">                        <span class="nam">failures</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="op">{</span><span class="str">'src'</span><span class="op">:</span> <span class="nam">source</span><span class="op">,</span> <span class="str">'plugin'</span><span class="op">:</span> <span class="nam">plugin_name</span><span class="op">,</span> <span class="str">'exc'</span><span class="op">:</span> <span class="nam">e</span><span class="op">}</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t280" class="stm mis">                    <span class="key">except</span> <span class="nam">Exception</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t281" class="stm mis">                        <span class="nam">display</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">'%s failed to parse %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">plugin_name</span><span class="op">,</span> <span class="nam">source</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t282" class="stm mis">                        <span class="nam">failures</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="op">{</span><span class="str">'src'</span><span class="op">:</span> <span class="nam">source</span><span class="op">,</span> <span class="str">'plugin'</span><span class="op">:</span> <span class="nam">plugin_name</span><span class="op">,</span> <span class="str">'exc'</span><span class="op">:</span> <span class="nam">AnsibleError</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="op">}</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t283" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t284" class="stm run hide_run">                    <span class="nam">display</span><span class="op">.</span><span class="nam">v</span><span class="op">(</span><span class="str">'%s did not meet %s requirements, check plugin documentation if this is unexpected'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">source</span><span class="op">,</span> <span class="nam">plugin_name</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t285" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t286" class="stm mis">                <span class="key">if</span> <span class="key">not</span> <span class="nam">parsed</span> <span class="key">and</span> <span class="nam">failures</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t287" class="pln">                    <span class="com"># only if no plugin processed files should we show errors.</span><span class="strut">&nbsp;</span></p>
+<p id="t288" class="stm mis">                    <span class="key">for</span> <span class="nam">fail</span> <span class="key">in</span> <span class="nam">failures</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t289" class="stm mis">                        <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">u'\n* Failed to parse %s with %s plugin: %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">to_text</span><span class="op">(</span><span class="nam">fail</span><span class="op">[</span><span class="str">'src'</span><span class="op">]</span><span class="op">)</span><span class="op">,</span> <span class="nam">fail</span><span class="op">[</span><span class="str">'plugin'</span><span class="op">]</span><span class="op">,</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">fail</span><span class="op">[</span><span class="str">'exc'</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t290" class="stm mis">                        <span class="key">if</span> <span class="nam">hasattr</span><span class="op">(</span><span class="nam">fail</span><span class="op">[</span><span class="str">'exc'</span><span class="op">]</span><span class="op">,</span> <span class="str">'tb'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t291" class="stm mis">                            <span class="nam">display</span><span class="op">.</span><span class="nam">vvv</span><span class="op">(</span><span class="nam">to_text</span><span class="op">(</span><span class="nam">fail</span><span class="op">[</span><span class="str">'exc'</span><span class="op">]</span><span class="op">.</span><span class="nam">tb</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t292" class="stm mis">                    <span class="key">if</span> <span class="nam">C</span><span class="op">.</span><span class="nam">INVENTORY_ANY_UNPARSED_IS_FAILED</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t293" class="stm mis">                        <span class="key">raise</span> <span class="nam">AnsibleError</span><span class="op">(</span><span class="str">u'Completely failed to parse inventory source %s'</span> <span class="op">%</span> <span class="op">(</span><span class="nam">source</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t294" class="stm par run hide_run"><span class="annotate short">294&#x202F;&#x219B;&#x202F;295</span><span class="annotate long">line 294 didn't jump to line 295, because the condition on line 294 was never true</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">parsed</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t295" class="stm mis">            <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">"Unable to parse %s as an inventory source"</span> <span class="op">%</span> <span class="nam">source</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t296" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t297" class="pln">        <span class="com"># clear up, jic</span><span class="strut">&nbsp;</span></p>
+<p id="t298" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">current_source</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t299" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t300" class="stm run hide_run">        <span class="key">return</span> <span class="nam">parsed</span><span class="strut">&nbsp;</span></p>
+<p id="t301" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t302" class="stm run hide_run">    <span class="key">def</span> <span class="nam">clear_caches</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t303" class="pln">        <span class="str">''' clear all caches '''</span><span class="strut">&nbsp;</span></p>
+<p id="t304" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span> <span class="op">=</span> <span class="op">{</span><span class="op">}</span><span class="strut">&nbsp;</span></p>
+<p id="t305" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">_pattern_cache</span> <span class="op">=</span> <span class="op">{</span><span class="op">}</span><span class="strut">&nbsp;</span></p>
+<p id="t306" class="pln">        <span class="com"># FIXME: flush inventory cache</span><span class="strut">&nbsp;</span></p>
+<p id="t307" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t308" class="stm run hide_run">    <span class="key">def</span> <span class="nam">refresh_inventory</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t309" class="pln">        <span class="str">''' recalculate inventory '''</span><span class="strut">&nbsp;</span></p>
+<p id="t310" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t311" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">clear_caches</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t312" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span> <span class="op">=</span> <span class="nam">InventoryData</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t313" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">parse_sources</span><span class="op">(</span><span class="nam">cache</span><span class="op">=</span><span class="nam">False</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t314" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t315" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_match_list</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">items</span><span class="op">,</span> <span class="nam">pattern_str</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t316" class="pln">        <span class="com"># compile patterns</span><span class="strut">&nbsp;</span></p>
+<p id="t317" class="stm run hide_run">        <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t318" class="stm par run hide_run"><span class="annotate short">318&#x202F;&#x219B;&#x202F;321</span><span class="annotate long">line 318 didn't jump to line 321, because the condition on line 318 was never false</span>            <span class="key">if</span> <span class="key">not</span> <span class="nam">pattern_str</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">'~'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t319" class="stm run hide_run">                <span class="nam">pattern</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">compile</span><span class="op">(</span><span class="nam">fnmatch</span><span class="op">.</span><span class="nam">translate</span><span class="op">(</span><span class="nam">pattern_str</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t320" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t321" class="stm mis">                <span class="nam">pattern</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">compile</span><span class="op">(</span><span class="nam">pattern_str</span><span class="op">[</span><span class="num">1</span><span class="op">:</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t322" class="stm mis">        <span class="key">except</span> <span class="nam">Exception</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t323" class="stm mis">            <span class="key">raise</span> <span class="nam">AnsibleError</span><span class="op">(</span><span class="str">'Invalid host list pattern: %s'</span> <span class="op">%</span> <span class="nam">pattern_str</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t324" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t325" class="pln">        <span class="com"># apply patterns</span><span class="strut">&nbsp;</span></p>
+<p id="t326" class="stm run hide_run">        <span class="nam">results</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t327" class="stm run hide_run">        <span class="key">for</span> <span class="nam">item</span> <span class="key">in</span> <span class="nam">items</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t328" class="stm run hide_run">            <span class="key">if</span> <span class="nam">pattern</span><span class="op">.</span><span class="nam">match</span><span class="op">(</span><span class="nam">item</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t329" class="stm run hide_run">                <span class="nam">results</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">item</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t330" class="stm run hide_run">        <span class="key">return</span> <span class="nam">results</span><span class="strut">&nbsp;</span></p>
+<p id="t331" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t332" class="stm run hide_run">    <span class="key">def</span> <span class="nam">get_hosts</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">=</span><span class="str">"all"</span><span class="op">,</span> <span class="nam">ignore_limits</span><span class="op">=</span><span class="nam">False</span><span class="op">,</span> <span class="nam">ignore_restrictions</span><span class="op">=</span><span class="nam">False</span><span class="op">,</span> <span class="nam">order</span><span class="op">=</span><span class="nam">None</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t333" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t334" class="pln"><span class="str">        Takes a pattern or list of patterns and returns a list of matching</span><span class="strut">&nbsp;</span></p>
+<p id="t335" class="pln"><span class="str">        inventory host names, taking into account any active restrictions</span><span class="strut">&nbsp;</span></p>
+<p id="t336" class="pln"><span class="str">        or applied subsets</span><span class="strut">&nbsp;</span></p>
+<p id="t337" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t338" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t339" class="stm run hide_run">        <span class="nam">hosts</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t340" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t341" class="pln">        <span class="com"># Check if pattern already computed</span><span class="strut">&nbsp;</span></p>
+<p id="t342" class="stm run hide_run">        <span class="key">if</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t343" class="stm run hide_run">            <span class="nam">pattern_hash</span> <span class="op">=</span> <span class="str">u":"</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t344" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t345" class="stm run hide_run">            <span class="nam">pattern_hash</span> <span class="op">=</span> <span class="nam">pattern</span><span class="strut">&nbsp;</span></p>
+<p id="t346" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t347" class="stm par run hide_run"><span class="annotate short">347&#x202F;&#x219B;&#x202F;384</span><span class="annotate long">line 347 didn't jump to line 384, because the condition on line 347 was never false</span>        <span class="key">if</span> <span class="nam">pattern_hash</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t348" class="stm par run hide_run"><span class="annotate short">348&#x202F;&#x219B;&#x202F;349</span><span class="annotate long">line 348 didn't jump to line 349, because the condition on line 348 was never true</span>            <span class="key">if</span> <span class="key">not</span> <span class="nam">ignore_limits</span> <span class="key">and</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t349" class="stm mis">                <span class="nam">pattern_hash</span> <span class="op">+=</span> <span class="str">u":%s"</span> <span class="op">%</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span><span class="op">,</span> <span class="nam">errors</span><span class="op">=</span><span class="str">'surrogate_or_strict'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t350" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t351" class="stm run hide_run">            <span class="key">if</span> <span class="key">not</span> <span class="nam">ignore_restrictions</span> <span class="key">and</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t352" class="stm run hide_run">                <span class="nam">pattern_hash</span> <span class="op">+=</span> <span class="str">u":%s"</span> <span class="op">%</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span><span class="op">,</span> <span class="nam">errors</span><span class="op">=</span><span class="str">'surrogate_or_strict'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t353" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t354" class="stm run hide_run">            <span class="key">if</span> <span class="nam">pattern_hash</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t355" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t356" class="stm run hide_run">                <span class="nam">patterns</span> <span class="op">=</span> <span class="nam">split_host_pattern</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t357" class="stm run hide_run">                <span class="nam">hosts</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_evaluate_patterns</span><span class="op">(</span><span class="nam">patterns</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t358" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t359" class="pln">                <span class="com"># mainly useful for hostvars[host] access</span><span class="strut">&nbsp;</span></p>
+<p id="t360" class="stm par run hide_run"><span class="annotate short">360&#x202F;&#x219B;&#x202F;362</span><span class="annotate long">line 360 didn't jump to line 362, because the condition on line 360 was never true</span>                <span class="key">if</span> <span class="key">not</span> <span class="nam">ignore_limits</span> <span class="key">and</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t361" class="pln">                    <span class="com"># exclude hosts not in a subset, if defined</span><span class="strut">&nbsp;</span></p>
+<p id="t362" class="stm mis">                    <span class="nam">subset</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_evaluate_patterns</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t363" class="stm mis">                    <span class="nam">hosts</span> <span class="op">=</span> <span class="op">[</span><span class="nam">h</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">hosts</span> <span class="key">if</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">subset</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t364" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t365" class="stm run hide_run">                <span class="key">if</span> <span class="key">not</span> <span class="nam">ignore_restrictions</span> <span class="key">and</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t366" class="pln">                    <span class="com"># exclude hosts mentioned in any restriction (ex: failed hosts)</span><span class="strut">&nbsp;</span></p>
+<p id="t367" class="stm run hide_run">                    <span class="nam">hosts</span> <span class="op">=</span> <span class="op">[</span><span class="nam">h</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">hosts</span> <span class="key">if</span> <span class="nam">h</span><span class="op">.</span><span class="nam">name</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t368" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t369" class="stm run hide_run">                <span class="nam">seen</span> <span class="op">=</span> <span class="nam">set</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t370" class="stm run hide_run">                <span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span><span class="op">[</span><span class="nam">pattern_hash</span><span class="op">]</span> <span class="op">=</span> <span class="op">[</span><span class="nam">x</span> <span class="key">for</span> <span class="nam">x</span> <span class="key">in</span> <span class="nam">hosts</span> <span class="key">if</span> <span class="nam">x</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">seen</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">seen</span><span class="op">.</span><span class="nam">add</span><span class="op">(</span><span class="nam">x</span><span class="op">)</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t371" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t372" class="pln">            <span class="com"># sort hosts list if needed (should only happen when called from strategy)</span><span class="strut">&nbsp;</span></p>
+<p id="t373" class="stm par run hide_run"><span class="annotate short">373&#x202F;&#x219B;&#x202F;374</span><span class="annotate long">line 373 didn't jump to line 374, because the condition on line 373 was never true</span>            <span class="key">if</span> <span class="nam">order</span> <span class="key">in</span> <span class="op">[</span><span class="str">'sorted'</span><span class="op">,</span> <span class="str">'reverse_sorted'</span><span class="op">]</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t374" class="stm mis">                <span class="nam">hosts</span> <span class="op">=</span> <span class="nam">sorted</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span><span class="op">[</span><span class="nam">pattern_hash</span><span class="op">]</span><span class="op">[</span><span class="op">:</span><span class="op">]</span><span class="op">,</span> <span class="nam">key</span><span class="op">=</span><span class="nam">attrgetter</span><span class="op">(</span><span class="str">'name'</span><span class="op">)</span><span class="op">,</span> <span class="nam">reverse</span><span class="op">=</span><span class="op">(</span><span class="nam">order</span> <span class="op">==</span> <span class="str">'reverse_sorted'</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t375" class="stm par run hide_run"><span class="annotate short">375&#x202F;&#x219B;&#x202F;376</span><span class="annotate long">line 375 didn't jump to line 376, because the condition on line 375 was never true</span>            <span class="key">elif</span> <span class="nam">order</span> <span class="op">==</span> <span class="str">'reverse_inventory'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t376" class="stm mis">                <span class="nam">hosts</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span><span class="op">[</span><span class="nam">pattern_hash</span><span class="op">]</span><span class="op">[</span><span class="op">:</span><span class="op">:</span><span class="op">-</span><span class="num">1</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t377" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t378" class="stm run hide_run">                <span class="nam">hosts</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_hosts_patterns_cache</span><span class="op">[</span><span class="nam">pattern_hash</span><span class="op">]</span><span class="op">[</span><span class="op">:</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t379" class="stm par run hide_run"><span class="annotate short">379&#x202F;&#x219B;&#x202F;380</span><span class="annotate long">line 379 didn't jump to line 380, because the condition on line 379 was never true</span>                <span class="key">if</span> <span class="nam">order</span> <span class="op">==</span> <span class="str">'shuffle'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t380" class="stm mis">                    <span class="nam">shuffle</span><span class="op">(</span><span class="nam">hosts</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t381" class="stm par run hide_run"><span class="annotate short">381&#x202F;&#x219B;&#x202F;382</span><span class="annotate long">line 381 didn't jump to line 382, because the condition on line 381 was never true</span>                <span class="key">elif</span> <span class="nam">order</span> <span class="key">not</span> <span class="key">in</span> <span class="op">[</span><span class="nam">None</span><span class="op">,</span> <span class="str">'inventory'</span><span class="op">]</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t382" class="stm mis">                    <span class="key">raise</span> <span class="nam">AnsibleOptionsError</span><span class="op">(</span><span class="str">"Invalid 'order' specified for inventory hosts: %s"</span> <span class="op">%</span> <span class="nam">order</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t383" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t384" class="stm run hide_run">        <span class="key">return</span> <span class="nam">hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t385" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t386" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_evaluate_patterns</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">patterns</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t387" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t388" class="pln"><span class="str">        Takes a list of patterns and returns a list of matching host names,</span><span class="strut">&nbsp;</span></p>
+<p id="t389" class="pln"><span class="str">        taking into account any negative and intersection patterns.</span><span class="strut">&nbsp;</span></p>
+<p id="t390" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t391" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t392" class="stm run hide_run">        <span class="nam">patterns</span> <span class="op">=</span> <span class="nam">order_patterns</span><span class="op">(</span><span class="nam">patterns</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t393" class="stm run hide_run">        <span class="nam">hosts</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t394" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t395" class="stm run hide_run">        <span class="key">for</span> <span class="nam">p</span> <span class="key">in</span> <span class="nam">patterns</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t396" class="pln">            <span class="com"># avoid resolving a pattern that is a plain host</span><span class="strut">&nbsp;</span></p>
+<p id="t397" class="stm par run hide_run"><span class="annotate short">397&#x202F;&#x219B;&#x202F;398</span><span class="annotate long">line 397 didn't jump to line 398, because the condition on line 397 was never true</span>            <span class="key">if</span> <span class="nam">p</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">hosts</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t398" class="stm mis">                <span class="nam">hosts</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">get_host</span><span class="op">(</span><span class="nam">p</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t399" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t400" class="stm run hide_run">                <span class="nam">that</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_match_one_pattern</span><span class="op">(</span><span class="nam">p</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t401" class="stm par run hide_run"><span class="annotate short">401&#x202F;&#x219B;&#x202F;402</span><span class="annotate long">line 401 didn't jump to line 402, because the condition on line 401 was never true</span>                <span class="key">if</span> <span class="nam">p</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"!"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t402" class="stm mis">                    <span class="nam">hosts</span> <span class="op">=</span> <span class="op">[</span><span class="nam">h</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">hosts</span> <span class="key">if</span> <span class="nam">h</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">frozenset</span><span class="op">(</span><span class="nam">that</span><span class="op">)</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t403" class="stm par run hide_run"><span class="annotate short">403&#x202F;&#x219B;&#x202F;404</span><span class="annotate long">line 403 didn't jump to line 404, because the condition on line 403 was never true</span>                <span class="key">elif</span> <span class="nam">p</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"&amp;"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t404" class="stm mis">                    <span class="nam">hosts</span> <span class="op">=</span> <span class="op">[</span><span class="nam">h</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">hosts</span> <span class="key">if</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">frozenset</span><span class="op">(</span><span class="nam">that</span><span class="op">)</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t405" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t406" class="stm run hide_run">                    <span class="nam">hosts</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="op">[</span><span class="nam">h</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">that</span> <span class="key">if</span> <span class="nam">h</span><span class="op">.</span><span class="nam">name</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">frozenset</span><span class="op">(</span><span class="op">[</span><span class="nam">y</span><span class="op">.</span><span class="nam">name</span> <span class="key">for</span> <span class="nam">y</span> <span class="key">in</span> <span class="nam">hosts</span><span class="op">]</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t407" class="stm run hide_run">        <span class="key">return</span> <span class="nam">hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t408" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t409" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_match_one_pattern</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t410" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t411" class="pln"><span class="str">        Takes a single pattern and returns a list of matching host names.</span><span class="strut">&nbsp;</span></p>
+<p id="t412" class="pln"><span class="str">        Ignores intersection (&amp;) and exclusion (!) specifiers.</span><span class="strut">&nbsp;</span></p>
+<p id="t413" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t414" class="pln"><span class="str">        The pattern may be:</span><span class="strut">&nbsp;</span></p>
+<p id="t415" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t416" class="pln"><span class="str">            1. A regex starting with ~, e.g. '~[abc]*'</span><span class="strut">&nbsp;</span></p>
+<p id="t417" class="pln"><span class="str">            2. A shell glob pattern with ?/*/[chars]/[!chars], e.g. 'foo*'</span><span class="strut">&nbsp;</span></p>
+<p id="t418" class="pln"><span class="str">            3. An ordinary word that matches itself only, e.g. 'foo'</span><span class="strut">&nbsp;</span></p>
+<p id="t419" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t420" class="pln"><span class="str">        The pattern is matched using the following rules:</span><span class="strut">&nbsp;</span></p>
+<p id="t421" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t422" class="pln"><span class="str">            1. If it's 'all', it matches all hosts in all groups.</span><span class="strut">&nbsp;</span></p>
+<p id="t423" class="pln"><span class="str">            2. Otherwise, for each known group name:</span><span class="strut">&nbsp;</span></p>
+<p id="t424" class="pln"><span class="str">                (a) if it matches the group name, the results include all hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t425" class="pln"><span class="str">                    in the group or any of its children.</span><span class="strut">&nbsp;</span></p>
+<p id="t426" class="pln"><span class="str">                (b) otherwise, if it matches any hosts in the group, the results</span><span class="strut">&nbsp;</span></p>
+<p id="t427" class="pln"><span class="str">                    include the matching hosts.</span><span class="strut">&nbsp;</span></p>
+<p id="t428" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t429" class="pln"><span class="str">        This means that 'foo*' may match one or more groups (thus including all</span><span class="strut">&nbsp;</span></p>
+<p id="t430" class="pln"><span class="str">        hosts therein) but also hosts in other groups.</span><span class="strut">&nbsp;</span></p>
+<p id="t431" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t432" class="pln"><span class="str">        The built-in groups 'all' and 'ungrouped' are special. No pattern can</span><span class="strut">&nbsp;</span></p>
+<p id="t433" class="pln"><span class="str">        match these group names (though 'all' behaves as though it matches, as</span><span class="strut">&nbsp;</span></p>
+<p id="t434" class="pln"><span class="str">        described above). The word 'ungrouped' can match a host of that name,</span><span class="strut">&nbsp;</span></p>
+<p id="t435" class="pln"><span class="str">        and patterns like 'ungr*' and 'al*' can match either hosts or groups</span><span class="strut">&nbsp;</span></p>
+<p id="t436" class="pln"><span class="str">        other than all and ungrouped.</span><span class="strut">&nbsp;</span></p>
+<p id="t437" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t438" class="pln"><span class="str">        If the pattern matches one or more group names according to these rules,</span><span class="strut">&nbsp;</span></p>
+<p id="t439" class="pln"><span class="str">        it may have an optional range suffix to select a subset of the results.</span><span class="strut">&nbsp;</span></p>
+<p id="t440" class="pln"><span class="str">        This is allowed only if the pattern is not a regex, i.e. '~foo[1]' does</span><span class="strut">&nbsp;</span></p>
+<p id="t441" class="pln"><span class="str">        not work (the [1] is interpreted as part of the regex), but 'foo*[1]'</span><span class="strut">&nbsp;</span></p>
+<p id="t442" class="pln"><span class="str">        would work if 'foo*' matched the name of one or more groups.</span><span class="strut">&nbsp;</span></p>
+<p id="t443" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t444" class="pln"><span class="str">        Duplicate matches are always eliminated from the results.</span><span class="strut">&nbsp;</span></p>
+<p id="t445" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t446" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t447" class="stm par run hide_run"><span class="annotate short">447&#x202F;&#x219B;&#x202F;448</span><span class="annotate long">line 447 didn't jump to line 448, because the condition on line 447 was never true</span>        <span class="key">if</span> <span class="nam">pattern</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"&amp;"</span><span class="op">)</span> <span class="key">or</span> <span class="nam">pattern</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"!"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t448" class="stm mis">            <span class="nam">pattern</span> <span class="op">=</span> <span class="nam">pattern</span><span class="op">[</span><span class="num">1</span><span class="op">:</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t449" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t450" class="stm run hide_run">        <span class="key">if</span> <span class="nam">pattern</span> <span class="key">not</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_pattern_cache</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t451" class="stm run hide_run">            <span class="op">(</span><span class="nam">expr</span><span class="op">,</span> <span class="nam">slice</span><span class="op">)</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_split_subscript</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t452" class="stm run hide_run">            <span class="nam">hosts</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_enumerate_matches</span><span class="op">(</span><span class="nam">expr</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t453" class="stm run hide_run">            <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t454" class="stm run hide_run">                <span class="nam">hosts</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_apply_subscript</span><span class="op">(</span><span class="nam">hosts</span><span class="op">,</span> <span class="nam">slice</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t455" class="stm mis">            <span class="key">except</span> <span class="nam">IndexError</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t456" class="stm mis">                <span class="key">raise</span> <span class="nam">AnsibleError</span><span class="op">(</span><span class="str">"No hosts matched the subscripted pattern '%s'"</span> <span class="op">%</span> <span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t457" class="stm run hide_run">            <span class="nam">self</span><span class="op">.</span><span class="nam">_pattern_cache</span><span class="op">[</span><span class="nam">pattern</span><span class="op">]</span> <span class="op">=</span> <span class="nam">hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t458" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t459" class="stm run hide_run">        <span class="key">return</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_pattern_cache</span><span class="op">[</span><span class="nam">pattern</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t460" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t461" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_split_subscript</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t462" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t463" class="pln"><span class="str">        Takes a pattern, checks if it has a subscript, and returns the pattern</span><span class="strut">&nbsp;</span></p>
+<p id="t464" class="pln"><span class="str">        without the subscript and a (start,end) tuple representing the given</span><span class="strut">&nbsp;</span></p>
+<p id="t465" class="pln"><span class="str">        subscript (or None if there is no subscript).</span><span class="strut">&nbsp;</span></p>
+<p id="t466" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t467" class="pln"><span class="str">        Validates that the subscript is in the right syntax, but doesn't make</span><span class="strut">&nbsp;</span></p>
+<p id="t468" class="pln"><span class="str">        sure the actual indices make sense in context.</span><span class="strut">&nbsp;</span></p>
+<p id="t469" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t470" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t471" class="pln">        <span class="com"># Do not parse regexes for enumeration info</span><span class="strut">&nbsp;</span></p>
+<p id="t472" class="stm par run hide_run"><span class="annotate short">472&#x202F;&#x219B;&#x202F;473</span><span class="annotate long">line 472 didn't jump to line 473, because the condition on line 472 was never true</span>        <span class="key">if</span> <span class="nam">pattern</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">'~'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t473" class="stm mis">            <span class="key">return</span> <span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">None</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t474" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t475" class="pln">        <span class="com"># We want a pattern followed by an integer or range subscript.</span><span class="strut">&nbsp;</span></p>
+<p id="t476" class="pln">        <span class="com"># (We can't be more restrictive about the expression because the</span><span class="strut">&nbsp;</span></p>
+<p id="t477" class="pln">        <span class="com"># fnmatch semantics permit [\[:\]] to occur.)</span><span class="strut">&nbsp;</span></p>
+<p id="t478" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t479" class="stm run hide_run">        <span class="nam">pattern_with_subscript</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">compile</span><span class="op">(</span><span class="strut">&nbsp;</span></p>
+<p id="t480" class="pln">            <span class="str">r'''^</span><span class="strut">&nbsp;</span></p>
+<p id="t481" class="pln"><span class="str">                (.+)                    # A pattern expression ending with...</span><span class="strut">&nbsp;</span></p>
+<p id="t482" class="pln"><span class="str">                \[(?:                   # A [subscript] expression comprising:</span><span class="strut">&nbsp;</span></p>
+<p id="t483" class="pln"><span class="str">                    (-?[0-9]+)|         # A single positive or negative number</span><span class="strut">&nbsp;</span></p>
+<p id="t484" class="pln"><span class="str">                    ([0-9]+)([:-])      # Or an x:y or x: range.</span><span class="strut">&nbsp;</span></p>
+<p id="t485" class="pln"><span class="str">                    ([0-9]*)</span><span class="strut">&nbsp;</span></p>
+<p id="t486" class="pln"><span class="str">                )\]</span><span class="strut">&nbsp;</span></p>
+<p id="t487" class="pln"><span class="str">                $</span><span class="strut">&nbsp;</span></p>
+<p id="t488" class="pln"><span class="str">            '''</span><span class="op">,</span> <span class="nam">re</span><span class="op">.</span><span class="nam">X</span><span class="strut">&nbsp;</span></p>
+<p id="t489" class="pln">        <span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t490" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t491" class="stm run hide_run">        <span class="nam">subscript</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t492" class="stm run hide_run">        <span class="nam">m</span> <span class="op">=</span> <span class="nam">pattern_with_subscript</span><span class="op">.</span><span class="nam">match</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t493" class="stm par run hide_run"><span class="annotate short">493&#x202F;&#x219B;&#x202F;494</span><span class="annotate long">line 493 didn't jump to line 494, because the condition on line 493 was never true</span>        <span class="key">if</span> <span class="nam">m</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t494" class="stm mis">            <span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">idx</span><span class="op">,</span> <span class="nam">start</span><span class="op">,</span> <span class="nam">sep</span><span class="op">,</span> <span class="nam">end</span><span class="op">)</span> <span class="op">=</span> <span class="nam">m</span><span class="op">.</span><span class="nam">groups</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t495" class="stm mis">            <span class="key">if</span> <span class="nam">idx</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t496" class="stm mis">                <span class="nam">subscript</span> <span class="op">=</span> <span class="op">(</span><span class="nam">int</span><span class="op">(</span><span class="nam">idx</span><span class="op">)</span><span class="op">,</span> <span class="nam">None</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t497" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t498" class="stm mis">                <span class="key">if</span> <span class="key">not</span> <span class="nam">end</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t499" class="stm mis">                    <span class="nam">end</span> <span class="op">=</span> <span class="op">-</span><span class="num">1</span><span class="strut">&nbsp;</span></p>
+<p id="t500" class="stm mis">                <span class="nam">subscript</span> <span class="op">=</span> <span class="op">(</span><span class="nam">int</span><span class="op">(</span><span class="nam">start</span><span class="op">)</span><span class="op">,</span> <span class="nam">int</span><span class="op">(</span><span class="nam">end</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t501" class="stm mis">                <span class="key">if</span> <span class="nam">sep</span> <span class="op">==</span> <span class="str">'-'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t502" class="stm mis">                    <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">"Use [x:y] inclusive subscripts instead of [x-y] which has been removed"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t503" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t504" class="stm run hide_run">        <span class="key">return</span> <span class="op">(</span><span class="nam">pattern</span><span class="op">,</span> <span class="nam">subscript</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t505" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t506" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_apply_subscript</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">hosts</span><span class="op">,</span> <span class="nam">subscript</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t507" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t508" class="pln"><span class="str">        Takes a list of hosts and a (start,end) tuple and returns the subset of</span><span class="strut">&nbsp;</span></p>
+<p id="t509" class="pln"><span class="str">        hosts based on the subscript (which may be None to return all hosts).</span><span class="strut">&nbsp;</span></p>
+<p id="t510" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t511" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t512" class="stm par run hide_run"><span class="annotate short">512&#x202F;&#x219B;&#x202F;515</span><span class="annotate long">line 512 didn't jump to line 515, because the condition on line 512 was never false</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">hosts</span> <span class="key">or</span> <span class="key">not</span> <span class="nam">subscript</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t513" class="stm run hide_run">            <span class="key">return</span> <span class="nam">hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t514" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t515" class="stm mis">        <span class="op">(</span><span class="nam">start</span><span class="op">,</span> <span class="nam">end</span><span class="op">)</span> <span class="op">=</span> <span class="nam">subscript</span><span class="strut">&nbsp;</span></p>
+<p id="t516" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t517" class="stm mis">        <span class="key">if</span> <span class="nam">end</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t518" class="stm mis">            <span class="key">if</span> <span class="nam">end</span> <span class="op">==</span> <span class="op">-</span><span class="num">1</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t519" class="stm mis">                <span class="nam">end</span> <span class="op">=</span> <span class="nam">len</span><span class="op">(</span><span class="nam">hosts</span><span class="op">)</span> <span class="op">-</span> <span class="num">1</span><span class="strut">&nbsp;</span></p>
+<p id="t520" class="stm mis">            <span class="key">return</span> <span class="nam">hosts</span><span class="op">[</span><span class="nam">start</span><span class="op">:</span><span class="nam">end</span> <span class="op">+</span> <span class="num">1</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t521" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t522" class="stm mis">            <span class="key">return</span> <span class="op">[</span><span class="nam">hosts</span><span class="op">[</span><span class="nam">start</span><span class="op">]</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t523" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t524" class="stm run hide_run">    <span class="key">def</span> <span class="nam">_enumerate_matches</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t525" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t526" class="pln"><span class="str">        Returns a list of host names matching the given pattern according to the</span><span class="strut">&nbsp;</span></p>
+<p id="t527" class="pln"><span class="str">        rules explained above in _match_one_pattern.</span><span class="strut">&nbsp;</span></p>
+<p id="t528" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t529" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t530" class="stm run hide_run">        <span class="nam">results</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t531" class="pln">        <span class="com"># check if pattern matches group</span><span class="strut">&nbsp;</span></p>
+<p id="t532" class="stm run hide_run">        <span class="nam">matching_groups</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_match_list</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">groups</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t533" class="stm par run hide_run"><span class="annotate short">533&#x202F;&#x219B;&#x202F;538</span><span class="annotate long">line 533 didn't jump to line 538, because the condition on line 533 was never false</span>        <span class="key">if</span> <span class="nam">matching_groups</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t534" class="stm run hide_run">            <span class="key">for</span> <span class="nam">groupname</span> <span class="key">in</span> <span class="nam">matching_groups</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t535" class="stm run hide_run">                <span class="nam">results</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">groups</span><span class="op">[</span><span class="nam">groupname</span><span class="op">]</span><span class="op">.</span><span class="nam">get_hosts</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t536" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t537" class="pln">        <span class="com"># check hosts if no groups matched or it is a regex/glob pattern</span><span class="strut">&nbsp;</span></p>
+<p id="t538" class="stm par run hide_run"><span class="annotate short">538&#x202F;&#x219B;&#x202F;540</span><span class="annotate long">line 538 didn't jump to line 540, because the condition on line 538 was never true</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">matching_groups</span> <span class="key">or</span> <span class="nam">pattern</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">'~'</span><span class="op">)</span> <span class="key">or</span> <span class="nam">any</span><span class="op">(</span><span class="nam">special</span> <span class="key">in</span> <span class="nam">pattern</span> <span class="key">for</span> <span class="nam">special</span> <span class="key">in</span> <span class="op">(</span><span class="str">'.'</span><span class="op">,</span> <span class="str">'?'</span><span class="op">,</span> <span class="str">'*'</span><span class="op">,</span> <span class="str">'['</span><span class="op">)</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t539" class="pln">            <span class="com"># pattern might match host</span><span class="strut">&nbsp;</span></p>
+<p id="t540" class="stm mis">            <span class="nam">matching_hosts</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_match_list</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">hosts</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t541" class="stm mis">            <span class="key">if</span> <span class="nam">matching_hosts</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t542" class="stm mis">                <span class="key">for</span> <span class="nam">hostname</span> <span class="key">in</span> <span class="nam">matching_hosts</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t543" class="stm mis">                    <span class="nam">results</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">hosts</span><span class="op">[</span><span class="nam">hostname</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t544" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t545" class="stm par run hide_run"><span class="annotate short">545&#x202F;&#x219B;&#x202F;547</span><span class="annotate long">line 545 didn't jump to line 547, because the condition on line 545 was never true</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">results</span> <span class="key">and</span> <span class="nam">pattern</span> <span class="key">in</span> <span class="nam">C</span><span class="op">.</span><span class="nam">LOCALHOST</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t546" class="pln">            <span class="com"># get_host autocreates implicit when needed</span><span class="strut">&nbsp;</span></p>
+<p id="t547" class="stm mis">            <span class="nam">implicit</span> <span class="op">=</span> <span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">get_host</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t548" class="stm mis">            <span class="key">if</span> <span class="nam">implicit</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t549" class="stm mis">                <span class="nam">results</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">implicit</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t550" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t551" class="pln">        <span class="com"># Display warning if specified host pattern did not match any groups or hosts</span><span class="strut">&nbsp;</span></p>
+<p id="t552" class="stm par run hide_run"><span class="annotate short">552&#x202F;&#x219B;&#x202F;553</span><span class="annotate long">line 552 didn't jump to line 553, because the condition on line 552 was never true</span>        <span class="key">if</span> <span class="key">not</span> <span class="nam">results</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">matching_groups</span> <span class="key">and</span> <span class="nam">pattern</span> <span class="op">!=</span> <span class="str">'all'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t553" class="stm mis">            <span class="nam">display</span><span class="op">.</span><span class="nam">warning</span><span class="op">(</span><span class="str">"Could not match supplied host pattern, ignoring: %s"</span> <span class="op">%</span> <span class="nam">pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t554" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t555" class="stm run hide_run">        <span class="key">return</span> <span class="nam">results</span><span class="strut">&nbsp;</span></p>
+<p id="t556" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t557" class="stm run hide_run">    <span class="key">def</span> <span class="nam">list_hosts</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">pattern</span><span class="op">=</span><span class="str">"all"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t558" class="pln">        <span class="str">""" return a list of hostnames for a pattern """</span><span class="strut">&nbsp;</span></p>
+<p id="t559" class="pln">        <span class="com"># FIXME: cache?</span><span class="strut">&nbsp;</span></p>
+<p id="t560" class="stm run hide_run">        <span class="nam">result</span> <span class="op">=</span> <span class="op">[</span><span class="nam">h</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">self</span><span class="op">.</span><span class="nam">get_hosts</span><span class="op">(</span><span class="nam">pattern</span><span class="op">)</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t561" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t562" class="pln">        <span class="com"># allow implicit localhost if pattern matches and no other results</span><span class="strut">&nbsp;</span></p>
+<p id="t563" class="stm par run hide_run"><span class="annotate short">563&#x202F;&#x219B;&#x202F;564</span><span class="annotate long">line 563 didn't jump to line 564, because the condition on line 563 was never true</span>        <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">result</span><span class="op">)</span> <span class="op">==</span> <span class="num">0</span> <span class="key">and</span> <span class="nam">pattern</span> <span class="key">in</span> <span class="nam">C</span><span class="op">.</span><span class="nam">LOCALHOST</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t564" class="stm mis">            <span class="nam">result</span> <span class="op">=</span> <span class="op">[</span><span class="nam">pattern</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t565" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t566" class="stm run hide_run">        <span class="key">return</span> <span class="nam">result</span><span class="strut">&nbsp;</span></p>
+<p id="t567" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t568" class="stm run hide_run">    <span class="key">def</span> <span class="nam">list_groups</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t569" class="pln">        <span class="com"># FIXME: cache?</span><span class="strut">&nbsp;</span></p>
+<p id="t570" class="stm mis">        <span class="key">return</span> <span class="nam">sorted</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_inventory</span><span class="op">.</span><span class="nam">groups</span><span class="op">.</span><span class="nam">keys</span><span class="op">(</span><span class="op">)</span><span class="op">,</span> <span class="nam">key</span><span class="op">=</span><span class="key">lambda</span> <span class="nam">x</span><span class="op">:</span> <span class="nam">x</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t571" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t572" class="stm run hide_run">    <span class="key">def</span> <span class="nam">restrict_to_hosts</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">restriction</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t573" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t574" class="pln"><span class="str">        Restrict list operations to the hosts given in restriction.  This is used</span><span class="strut">&nbsp;</span></p>
+<p id="t575" class="pln"><span class="str">        to batch serial operations in main playbook code, don't use this for other</span><span class="strut">&nbsp;</span></p>
+<p id="t576" class="pln"><span class="str">        reasons.</span><span class="strut">&nbsp;</span></p>
+<p id="t577" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t578" class="stm par run hide_run"><span class="annotate short">578&#x202F;&#x219B;&#x202F;579</span><span class="annotate long">line 578 didn't jump to line 579, because the condition on line 578 was never true</span>        <span class="key">if</span> <span class="nam">restriction</span> <span class="key">is</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t579" class="stm mis">            <span class="key">return</span><span class="strut">&nbsp;</span></p>
+<p id="t580" class="stm par run hide_run"><span class="annotate short">580&#x202F;&#x219B;&#x202F;581</span><span class="annotate long">line 580 didn't jump to line 581, because the condition on line 580 was never true</span>        <span class="key">elif</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">restriction</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t581" class="stm mis">            <span class="nam">restriction</span> <span class="op">=</span> <span class="op">[</span><span class="nam">restriction</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t582" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span> <span class="op">=</span> <span class="op">[</span><span class="nam">h</span><span class="op">.</span><span class="nam">name</span> <span class="key">for</span> <span class="nam">h</span> <span class="key">in</span> <span class="nam">restriction</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t583" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t584" class="stm run hide_run">    <span class="key">def</span> <span class="nam">subset</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">subset_pattern</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t585" class="pln">        <span class="str">"""</span><span class="strut">&nbsp;</span></p>
+<p id="t586" class="pln"><span class="str">        Limits inventory results to a subset of inventory that matches a given</span><span class="strut">&nbsp;</span></p>
+<p id="t587" class="pln"><span class="str">        pattern, such as to select a given geographic of numeric slice amongst</span><span class="strut">&nbsp;</span></p>
+<p id="t588" class="pln"><span class="str">        a previous 'hosts' selection that only select roles, or vice versa.</span><span class="strut">&nbsp;</span></p>
+<p id="t589" class="pln"><span class="str">        Corresponds to --limit parameter to ansible-playbook</span><span class="strut">&nbsp;</span></p>
+<p id="t590" class="pln"><span class="str">        """</span><span class="strut">&nbsp;</span></p>
+<p id="t591" class="stm par run hide_run"><span class="annotate short">591&#x202F;&#x219B;&#x202F;594</span><span class="annotate long">line 591 didn't jump to line 594, because the condition on line 591 was never false</span>        <span class="key">if</span> <span class="nam">subset_pattern</span> <span class="key">is</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t592" class="stm run hide_run">            <span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t593" class="pln">        <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t594" class="stm mis">            <span class="nam">subset_patterns</span> <span class="op">=</span> <span class="nam">split_host_pattern</span><span class="op">(</span><span class="nam">subset_pattern</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t595" class="stm mis">            <span class="nam">results</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t596" class="pln">            <span class="com"># allow Unix style @filename data</span><span class="strut">&nbsp;</span></p>
+<p id="t597" class="stm mis">            <span class="key">for</span> <span class="nam">x</span> <span class="key">in</span> <span class="nam">subset_patterns</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t598" class="stm mis">                <span class="key">if</span> <span class="nam">x</span><span class="op">.</span><span class="nam">startswith</span><span class="op">(</span><span class="str">"@"</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t599" class="stm mis">                    <span class="nam">fd</span> <span class="op">=</span> <span class="nam">open</span><span class="op">(</span><span class="nam">x</span><span class="op">[</span><span class="num">1</span><span class="op">:</span><span class="op">]</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t600" class="stm mis">                    <span class="nam">results</span><span class="op">.</span><span class="nam">extend</span><span class="op">(</span><span class="nam">fd</span><span class="op">.</span><span class="nam">read</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">split</span><span class="op">(</span><span class="str">"\n"</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t601" class="stm mis">                    <span class="nam">fd</span><span class="op">.</span><span class="nam">close</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t602" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t603" class="stm mis">                    <span class="nam">results</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">x</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t604" class="stm mis">            <span class="nam">self</span><span class="op">.</span><span class="nam">_subset</span> <span class="op">=</span> <span class="nam">results</span><span class="strut">&nbsp;</span></p>
+<p id="t605" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t606" class="stm run hide_run">    <span class="key">def</span> <span class="nam">remove_restriction</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t607" class="pln">        <span class="str">""" Do not restrict list operations """</span><span class="strut">&nbsp;</span></p>
+<p id="t608" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">_restriction</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t609" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t610" class="stm run hide_run">    <span class="key">def</span> <span class="nam">clear_pattern_cache</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t611" class="stm mis">        <span class="nam">self</span><span class="op">.</span><span class="nam">_pattern_cache</span> <span class="op">=</span> <span class="op">{</span><span class="op">}</span><span class="strut">&nbsp;</span></p>
+
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.2</a>,
+            created at 2019-05-13 15:45
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

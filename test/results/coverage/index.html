@@ -1,0 +1,4052 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Coverage report</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.ba-throttle-debounce.min.js"></script>
+    <script type="text/javascript" src="jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.index_ready);
+    </script>
+</head>
+<body class="indexfile">
+
+<div id="header">
+    <div class="content">
+        <h1>Coverage report:
+            <span class="pc_cov">47%</span>
+        </h1>
+
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+
+        <form id="filter_container">
+            <input id="filter" type="text" value="" placeholder="filter..." />
+        </form>
+    </div>
+</div>
+
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">n</span>
+        <span class="key">s</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        
+        <span class="key">b</span>
+        <span class="key">p</span>
+        
+        <span class="key">c</span> &nbsp; change column sorting
+    </p>
+    </div>
+</div>
+
+<div id="index">
+    <table class="index">
+        <thead>
+            
+            <tr class="tablehead" title="Click to sort">
+                <th class="name left headerSortDown shortkey_n">Module</th>
+                <th class="shortkey_s">statements</th>
+                <th class="shortkey_m">missing</th>
+                <th class="shortkey_x">excluded</th>
+                
+                <th class="shortkey_b">branches</th>
+                <th class="shortkey_p">partial</th>
+                
+                <th class="right shortkey_c">coverage</th>
+            </tr>
+        </thead>
+        
+        <tfoot>
+            <tr class="total">
+                <td class="name left">Total</td>
+                <td>33921</td>
+                <td>16343</td>
+                <td>0</td>
+                
+                <td>13605</td>
+                <td>1699</td>
+                
+                <td class="right" data-ratio="22174 47526">47%</td>
+            </tr>
+        </tfoot>
+        <tbody>
+            
+            <tr class="file">
+                <td class="name left"><a href="bin_ansible.html">bin/ansible</a></td>
+                <td>96</td>
+                <td>53</td>
+                <td>0</td>
+                
+                <td>30</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="47 126">37%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="bin_ansible-connection.html">bin/ansible-connection</a></td>
+                <td>213</td>
+                <td>35</td>
+                <td>0</td>
+                
+                <td>42</td>
+                <td>12</td>
+                
+                <td class="right" data-ratio="202 255">79%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible___init___py.html">lib/ansible/__init__.py</a></td>
+                <td>3</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="3 3">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_cli___init___py.html">lib/ansible/cli/__init__.py</a></td>
+                <td>449</td>
+                <td>187</td>
+                <td>0</td>
+                
+                <td>186</td>
+                <td>59</td>
+                
+                <td class="right" data-ratio="327 635">51%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_cli_playbook_py.html">lib/ansible/cli/playbook.py</a></td>
+                <td>103</td>
+                <td>60</td>
+                <td>0</td>
+                
+                <td>46</td>
+                <td>6</td>
+                
+                <td class="right" data-ratio="51 149">34%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_compat___init___py.html">lib/ansible/compat/__init__.py</a></td>
+                <td>3</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="3 3">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_compat_selectors___init___py.html">lib/ansible/compat/selectors/__init__.py</a></td>
+                <td>16</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="16 18">89%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_compat_selectors__selectors2_py.html">lib/ansible/compat/selectors/_selectors2.py</a></td>
+                <td>410</td>
+                <td>333</td>
+                <td>0</td>
+                
+                <td>158</td>
+                <td>9</td>
+                
+                <td class="right" data-ratio="86 568">15%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_compat_tests___init___py.html">lib/ansible/compat/tests/__init__.py</a></td>
+                <td>7</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="5 7">71%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_compat_tests_mock_py.html">lib/ansible/compat/tests/mock.py</a></td>
+                <td>52</td>
+                <td>43</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="10 70">14%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_compat_tests_unittest_py.html">lib/ansible/compat/tests/unittest.py</a></td>
+                <td>9</td>
+                <td>4</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="6 11">55%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_config___init___py.html">lib/ansible/config/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_config_data_py.html">lib/ansible/config/data.py</a></td>
+                <td>28</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="17 42">40%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_config_manager_py.html">lib/ansible/config/manager.py</a></td>
+                <td>300</td>
+                <td>63</td>
+                <td>0</td>
+                
+                <td>158</td>
+                <td>37</td>
+                
+                <td class="right" data-ratio="340 458">74%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_constants_py.html">lib/ansible/constants.py</a></td>
+                <td>84</td>
+                <td>28</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="61 94">65%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_errors___init___py.html">lib/ansible/errors/__init__.py</a></td>
+                <td>131</td>
+                <td>70</td>
+                <td>0</td>
+                
+                <td>44</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="64 175">37%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_errors_yaml_strings_py.html">lib/ansible/errors/yaml_strings.py</a></td>
+                <td>11</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 11">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor___init___py.html">lib/ansible/executor/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_action_write_locks_py.html">lib/ansible/executor/action_write_locks.py</a></td>
+                <td>11</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="16 17">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_module_common_py.html">lib/ansible/executor/module_common.py</a></td>
+                <td>364</td>
+                <td>153</td>
+                <td>0</td>
+                
+                <td>141</td>
+                <td>24</td>
+                
+                <td class="right" data-ratio="272 505">54%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_play_iterator_py.html">lib/ansible/executor/play_iterator.py</a></td>
+                <td>368</td>
+                <td>120</td>
+                <td>0</td>
+                
+                <td>178</td>
+                <td>37</td>
+                
+                <td class="right" data-ratio="335 546">61%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_playbook_executor_py.html">lib/ansible/executor/playbook_executor.py</a></td>
+                <td>161</td>
+                <td>61</td>
+                <td>0</td>
+                
+                <td>73</td>
+                <td>20</td>
+                
+                <td class="right" data-ratio="131 234">56%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_process___init___py.html">lib/ansible/executor/process/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_process_worker_py.html">lib/ansible/executor/process/worker.py</a></td>
+                <td>75</td>
+                <td>25</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="53 85">62%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_stats_py.html">lib/ansible/executor/stats.py</a></td>
+                <td>43</td>
+                <td>21</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="22 57">39%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_task_executor_py.html">lib/ansible/executor/task_executor.py</a></td>
+                <td>555</td>
+                <td>188</td>
+                <td>0</td>
+                
+                <td>297</td>
+                <td>61</td>
+                
+                <td class="right" data-ratio="532 852">62%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_task_queue_manager_py.html">lib/ansible/executor/task_queue_manager.py</a></td>
+                <td>218</td>
+                <td>55</td>
+                <td>0</td>
+                
+                <td>88</td>
+                <td>21</td>
+                
+                <td class="right" data-ratio="210 306">69%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_executor_task_result_py.html">lib/ansible/executor/task_result.py</a></td>
+                <td>83</td>
+                <td>22</td>
+                <td>0</td>
+                
+                <td>51</td>
+                <td>13</td>
+                
+                <td class="right" data-ratio="87 134">65%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_inventory___init___py.html">lib/ansible/inventory/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_inventory_data_py.html">lib/ansible/inventory/data.py</a></td>
+                <td>153</td>
+                <td>47</td>
+                <td>0</td>
+                
+                <td>68</td>
+                <td>20</td>
+                
+                <td class="right" data-ratio="140 221">63%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_inventory_group_py.html">lib/ansible/inventory/group.py</a></td>
+                <td>143</td>
+                <td>47</td>
+                <td>0</td>
+                
+                <td>52</td>
+                <td>13</td>
+                
+                <td class="right" data-ratio="123 195">63%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_inventory_helpers_py.html">lib/ansible/inventory/helpers.py</a></td>
+                <td>10</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="14 14">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_inventory_host_py.html">lib/ansible/inventory/host.py</a></td>
+                <td>86</td>
+                <td>35</td>
+                <td>0</td>
+                
+                <td>34</td>
+                <td>6</td>
+                
+                <td class="right" data-ratio="59 120">49%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_inventory_manager_py.html">lib/ansible/inventory/manager.py</a></td>
+                <td>307</td>
+                <td>108</td>
+                <td>0</td>
+                
+                <td>151</td>
+                <td>41</td>
+                
+                <td class="right" data-ratio="269 458">59%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils___init___py.html">lib/ansible/module_utils/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils__text_py.html">lib/ansible/module_utils/_text.py</a></td>
+                <td>74</td>
+                <td>32</td>
+                <td>0</td>
+                
+                <td>40</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="65 114">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_basic_py.html">lib/ansible/module_utils/basic.py</a></td>
+                <td>1808</td>
+                <td>1156</td>
+                <td>0</td>
+                
+                <td>960</td>
+                <td>83</td>
+                
+                <td class="right" data-ratio="931 2768">34%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_common___init___py.html">lib/ansible/module_utils/common/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_common__collections_compat_py.html">lib/ansible/module_utils/common/_collections_compat.py</a></td>
+                <td>7</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 7">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_common_collections_py.html">lib/ansible/module_utils/common/collections.py</a></td>
+                <td>19</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 23">35%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_common_file_py.html">lib/ansible/module_utils/common/file.py</a></td>
+                <td>70</td>
+                <td>41</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="29 80">36%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_common_process_py.html">lib/ansible/module_utils/common/process.py</a></td>
+                <td>26</td>
+                <td>21</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="5 42">12%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_connection_py.html">lib/ansible/module_utils/connection.py</a></td>
+                <td>103</td>
+                <td>10</td>
+                <td>0</td>
+                
+                <td>22</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="110 125">88%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts___init___py.html">lib/ansible/module_utils/facts/__init__.py</a></td>
+                <td>3</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="3 3">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_ansible_collector_py.html">lib/ansible/module_utils/facts/ansible_collector.py</a></td>
+                <td>53</td>
+                <td>37</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="16 61">26%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_collector_py.html">lib/ansible/module_utils/facts/collector.py</a></td>
+                <td>195</td>
+                <td>162</td>
+                <td>0</td>
+                
+                <td>76</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="33 271">12%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_compat_py.html">lib/ansible/module_utils/facts/compat.py</a></td>
+                <td>18</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 18">39%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_default_collectors_py.html">lib/ansible/module_utils/facts/default_collectors.py</a></td>
+                <td>62</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="62 62">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware___init___py.html">lib/ansible/module_utils/facts/hardware/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_aix_py.html">lib/ansible/module_utils/facts/hardware/aix.py</a></td>
+                <td>140</td>
+                <td>124</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="16 194">8%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_base_py.html">lib/ansible/module_utils/facts/hardware/base.py</a></td>
+                <td>20</td>
+                <td>8</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="12 22">55%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_darwin_py.html">lib/ansible/module_utils/facts/hardware/darwin.py</a></td>
+                <td>54</td>
+                <td>40</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="14 66">21%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_dragonfly_py.html">lib/ansible/module_utils/facts/hardware/dragonfly.py</a></td>
+                <td>7</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 7">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_freebsd_py.html">lib/ansible/module_utils/facts/hardware/freebsd.py</a></td>
+                <td>123</td>
+                <td>103</td>
+                <td>0</td>
+                
+                <td>46</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="20 169">12%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_hpux_py.html">lib/ansible/module_utils/facts/hardware/hpux.py</a></td>
+                <td>106</td>
+                <td>91</td>
+                <td>0</td>
+                
+                <td>34</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="15 140">11%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_hurd_py.html">lib/ansible/module_utils/facts/hardware/hurd.py</a></td>
+                <td>23</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 23">48%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_linux_py.html">lib/ansible/module_utils/facts/hardware/linux.py</a></td>
+                <td>468</td>
+                <td>424</td>
+                <td>0</td>
+                
+                <td>220</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="44 688">6%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_netbsd_py.html">lib/ansible/module_utils/facts/hardware/netbsd.py</a></td>
+                <td>92</td>
+                <td>72</td>
+                <td>0</td>
+                
+                <td>34</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="20 126">16%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_openbsd_py.html">lib/ansible/module_utils/facts/hardware/openbsd.py</a></td>
+                <td>82</td>
+                <td>63</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="19 100">19%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_hardware_sunos_py.html">lib/ansible/module_utils/facts/hardware/sunos.py</a></td>
+                <td>141</td>
+                <td>120</td>
+                <td>0</td>
+                
+                <td>52</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="21 193">11%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_namespace_py.html">lib/ansible/module_utils/facts/namespace.py</a></td>
+                <td>16</td>
+                <td>7</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 16">56%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network___init___py.html">lib/ansible/module_utils/facts/network/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_aix_py.html">lib/ansible/module_utils/facts/network/aix.py</a></td>
+                <td>93</td>
+                <td>80</td>
+                <td>0</td>
+                
+                <td>60</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 153">8%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_base_py.html">lib/ansible/module_utils/facts/network/base.py</a></td>
+                <td>21</td>
+                <td>8</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 23">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_darwin_py.html">lib/ansible/module_utils/facts/network/darwin.py</a></td>
+                <td>19</td>
+                <td>9</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 25">40%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_dragonfly_py.html">lib/ansible/module_utils/facts/network/dragonfly.py</a></td>
+                <td>9</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 9">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_freebsd_py.html">lib/ansible/module_utils/facts/network/freebsd.py</a></td>
+                <td>9</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 9">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_generic_bsd_py.html">lib/ansible/module_utils/facts/network/generic_bsd.py</a></td>
+                <td>182</td>
+                <td>157</td>
+                <td>0</td>
+                
+                <td>102</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="25 284">9%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_hpux_py.html">lib/ansible/module_utils/facts/network/hpux.py</a></td>
+                <td>46</td>
+                <td>35</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 62">18%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_hurd_py.html">lib/ansible/module_utils/facts/network/hurd.py</a></td>
+                <td>41</td>
+                <td>30</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 61">18%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_iscsi_py.html">lib/ansible/module_utils/facts/network/iscsi.py</a></td>
+                <td>25</td>
+                <td>15</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 37">27%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_linux_py.html">lib/ansible/module_utils/facts/network/linux.py</a></td>
+                <td>203</td>
+                <td>183</td>
+                <td>0</td>
+                
+                <td>114</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="20 317">6%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_netbsd_py.html">lib/ansible/module_utils/facts/network/netbsd.py</a></td>
+                <td>15</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 19">53%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_openbsd_py.html">lib/ansible/module_utils/facts/network/openbsd.py</a></td>
+                <td>14</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 14">79%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_network_sunos_py.html">lib/ansible/module_utils/facts/network/sunos.py</a></td>
+                <td>66</td>
+                <td>53</td>
+                <td>0</td>
+                
+                <td>38</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 104">13%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_other___init___py.html">lib/ansible/module_utils/facts/other/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_other_facter_py.html">lib/ansible/module_utils/facts/other/facter.py</a></td>
+                <td>40</td>
+                <td>27</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 50">26%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_other_ohai_py.html">lib/ansible/module_utils/facts/other/ohai.py</a></td>
+                <td>37</td>
+                <td>24</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 45">29%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_sysctl_py.html">lib/ansible/module_utils/facts/sysctl.py</a></td>
+                <td>15</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 21">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system___init___py.html">lib/ansible/module_utils/facts/system/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_apparmor_py.html">lib/ansible/module_utils/facts/system/apparmor.py</a></td>
+                <td>15</td>
+                <td>7</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 17">47%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_caps_py.html">lib/ansible/module_utils/facts/system/caps.py</a></td>
+                <td>26</td>
+                <td>19</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 38">18%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_chroot_py.html">lib/ansible/module_utils/facts/system/chroot.py</a></td>
+                <td>20</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 22">41%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_cmdline_py.html">lib/ansible/module_utils/facts/system/cmdline.py</a></td>
+                <td>28</td>
+                <td>17</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 34">32%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_date_time_py.html">lib/ansible/module_utils/facts/system/date_time.py</a></td>
+                <td>34</td>
+                <td>25</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 36">25%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_distribution_py.html">lib/ansible/module_utils/facts/system/distribution.py</a></td>
+                <td>376</td>
+                <td>324</td>
+                <td>0</td>
+                
+                <td>162</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="56 538">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_dns_py.html">lib/ansible/module_utils/facts/system/dns.py</a></td>
+                <td>42</td>
+                <td>34</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 74">11%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_env_py.html">lib/ansible/module_utils/facts/system/env.py</a></td>
+                <td>14</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 16">56%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_fips_py.html">lib/ansible/module_utils/facts/system/fips.py</a></td>
+                <td>14</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 16">50%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_local_py.html">lib/ansible/module_utils/facts/system/local.py</a></td>
+                <td>52</td>
+                <td>38</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="14 66">21%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_lsb_py.html">lib/ansible/module_utils/facts/system/lsb.py</a></td>
+                <td>59</td>
+                <td>48</td>
+                <td>0</td>
+                
+                <td>38</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 97">11%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_pkg_mgr_py.html">lib/ansible/module_utils/facts/system/pkg_mgr.py</a></td>
+                <td>65</td>
+                <td>46</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="19 97">20%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_platform_py.html">lib/ansible/module_utils/facts/system/platform.py</a></td>
+                <td>54</td>
+                <td>41</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 74">18%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_python_py.html">lib/ansible/module_utils/facts/system/python.py</a></td>
+                <td>25</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 25">52%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_selinux_py.html">lib/ansible/module_utils/facts/system/selinux.py</a></td>
+                <td>49</td>
+                <td>37</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="12 57">21%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_service_mgr_py.html">lib/ansible/module_utils/facts/system/service_mgr.py</a></td>
+                <td>67</td>
+                <td>51</td>
+                <td>0</td>
+                
+                <td>46</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="17 113">15%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_ssh_pub_keys_py.html">lib/ansible/module_utils/facts/system/ssh_pub_keys.py</a></td>
+                <td>21</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 29">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_system_user_py.html">lib/ansible/module_utils/facts/system/user.py</a></td>
+                <td>23</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 23">43%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_timeout_py.html">lib/ansible/module_utils/facts/timeout.py</a></td>
+                <td>28</td>
+                <td>14</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="15 32">47%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_utils_py.html">lib/ansible/module_utils/facts/utils.py</a></td>
+                <td>38</td>
+                <td>34</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="4 46">9%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual___init___py.html">lib/ansible/module_utils/facts/virtual/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_base_py.html">lib/ansible/module_utils/facts/virtual/base.py</a></td>
+                <td>24</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 26">50%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_dragonfly_py.html">lib/ansible/module_utils/facts/virtual/dragonfly.py</a></td>
+                <td>6</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="6 6">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_freebsd_py.html">lib/ansible/module_utils/facts/virtual/freebsd.py</a></td>
+                <td>17</td>
+                <td>7</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 19">53%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_hpux_py.html">lib/ansible/module_utils/facts/virtual/hpux.py</a></td>
+                <td>34</td>
+                <td>23</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 50">22%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_linux_py.html">lib/ansible/module_utils/facts/virtual/linux.py</a></td>
+                <td>181</td>
+                <td>168</td>
+                <td>0</td>
+                
+                <td>108</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 289">4%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_netbsd_py.html">lib/ansible/module_utils/facts/virtual/netbsd.py</a></td>
+                <td>23</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 27">41%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_openbsd_py.html">lib/ansible/module_utils/facts/virtual/openbsd.py</a></td>
+                <td>28</td>
+                <td>15</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 34">38%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_sunos_py.html">lib/ansible/module_utils/facts/virtual/sunos.py</a></td>
+                <td>74</td>
+                <td>64</td>
+                <td>0</td>
+                
+                <td>50</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 124">8%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_facts_virtual_sysctl_py.html">lib/ansible/module_utils/facts/virtual/sysctl.py</a></td>
+                <td>44</td>
+                <td>37</td>
+                <td>0</td>
+                
+                <td>24</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 68">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_json_utils_py.html">lib/ansible/module_utils/json_utils.py</a></td>
+                <td>26</td>
+                <td>9</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="24 42">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network___init___py.html">lib/ansible/module_utils/network/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_common___init___py.html">lib/ansible/module_utils/network/common/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_common_config_py.html">lib/ansible/module_utils/network/common/config.py</a></td>
+                <td>297</td>
+                <td>66</td>
+                <td>0</td>
+                
+                <td>140</td>
+                <td>16</td>
+                
+                <td class="right" data-ratio="327 437">75%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_common_parsing_py.html">lib/ansible/module_utils/network/common/parsing.py</a></td>
+                <td>191</td>
+                <td>104</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>8</td>
+                
+                <td class="right" data-ratio="101 245">41%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_common_utils_py.html">lib/ansible/module_utils/network/common/utils.py</a></td>
+                <td>334</td>
+                <td>196</td>
+                <td>0</td>
+                
+                <td>188</td>
+                <td>19</td>
+                
+                <td class="right" data-ratio="191 522">37%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_eos___init___py.html">lib/ansible/module_utils/network/eos/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_eos_eos_py.html">lib/ansible/module_utils/network/eos/eos.py</a></td>
+                <td>251</td>
+                <td>209</td>
+                <td>0</td>
+                
+                <td>58</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="42 309">14%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_icx___init___py.html">lib/ansible/module_utils/network/icx/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_icx_icx_py.html">lib/ansible/module_utils/network/icx/icx.py</a></td>
+                <td>53</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="47 53">89%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_nxos___init___py.html">lib/ansible/module_utils/network/nxos/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_network_nxos_nxos_py.html">lib/ansible/module_utils/network/nxos/nxos.py</a></td>
+                <td>348</td>
+                <td>298</td>
+                <td>0</td>
+                
+                <td>132</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="50 480">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_parsing___init___py.html">lib/ansible/module_utils/parsing/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_parsing_convert_bool_py.html">lib/ansible/module_utils/parsing/convert_bool.py</a></td>
+                <td>16</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="22 26">85%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_pycompat24_py.html">lib/ansible/module_utils/pycompat24.py</a></td>
+                <td>31</td>
+                <td>26</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="5 51">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_service_py.html">lib/ansible/module_utils/service.py</a></td>
+                <td>123</td>
+                <td>89</td>
+                <td>0</td>
+                
+                <td>70</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="43 193">22%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_six___init___py.html">lib/ansible/module_utils/six/__init__.py</a></td>
+                <td>450</td>
+                <td>201</td>
+                <td>0</td>
+                
+                <td>134</td>
+                <td>20</td>
+                
+                <td class="right" data-ratio="293 584">50%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_module_utils_urls_py.html">lib/ansible/module_utils/urls.py</a></td>
+                <td>661</td>
+                <td>549</td>
+                <td>0</td>
+                
+                <td>254</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="116 915">13%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules___init___py.html">lib/ansible/modules/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_files_find_py.html">lib/ansible/modules/files/find.py</a></td>
+                <td>155</td>
+                <td>78</td>
+                <td>0</td>
+                
+                <td>102</td>
+                <td>17</td>
+                
+                <td class="right" data-ratio="106 257">41%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network___init___py.html">lib/ansible/modules/network/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_cli_cli_command_py.html">lib/ansible/modules/network/cli/cli_command.py</a></td>
+                <td>32</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="34 38">89%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx___init___py.html">lib/ansible/modules/network/icx/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_banner_py.html">lib/ansible/modules/network/icx/icx_banner.py</a></td>
+                <td>85</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="114 117">97%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_command_py.html">lib/ansible/modules/network/icx/icx_command.py</a></td>
+                <td>58</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>24</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="78 82">95%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_config_py.html">lib/ansible/modules/network/icx/icx_config.py</a></td>
+                <td>134</td>
+                <td>17</td>
+                <td>0</td>
+                
+                <td>68</td>
+                <td>16</td>
+                
+                <td class="right" data-ratio="163 202">81%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_copy_py.html">lib/ansible/modules/network/icx/icx_copy.py</a></td>
+                <td>85</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>42</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="120 127">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_facts_py.html">lib/ansible/modules/network/icx/icx_facts.py</a></td>
+                <td>310</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>131</td>
+                <td>31</td>
+                
+                <td class="right" data-ratio="400 441">91%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_interface_py.html">lib/ansible/modules/network/icx/icx_interface.py</a></td>
+                <td>257</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>148</td>
+                <td>10</td>
+                
+                <td class="right" data-ratio="393 405">97%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_l3_interface_py.html">lib/ansible/modules/network/icx/icx_l3_interface.py</a></td>
+                <td>161</td>
+                <td>4</td>
+                <td>0</td>
+                
+                <td>94</td>
+                <td>25</td>
+                
+                <td class="right" data-ratio="226 255">89%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_linkagg_py.html">lib/ansible/modules/network/icx/icx_linkagg.py</a></td>
+                <td>132</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>70</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="198 202">98%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_lldp_py.html">lib/ansible/modules/network/icx/icx_lldp.py</a></td>
+                <td>61</td>
+                <td>4</td>
+                <td>0</td>
+                
+                <td>40</td>
+                <td>10</td>
+                
+                <td class="right" data-ratio="87 101">86%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_logging_py.html">lib/ansible/modules/network/icx/icx_logging.py</a></td>
+                <td>257</td>
+                <td>38</td>
+                <td>0</td>
+                
+                <td>180</td>
+                <td>39</td>
+                
+                <td class="right" data-ratio="328 437">75%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_ping_py.html">lib/ansible/modules/network/icx/icx_ping.py</a></td>
+                <td>96</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>40</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="131 136">96%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_static_route_py.html">lib/ansible/modules/network/icx/icx_static_route.py</a></td>
+                <td>122</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>56</td>
+                <td>9</td>
+                
+                <td class="right" data-ratio="167 178">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_system_py.html">lib/ansible/modules/network/icx/icx_system.py</a></td>
+                <td>213</td>
+                <td>28</td>
+                <td>0</td>
+                
+                <td>146</td>
+                <td>14</td>
+                
+                <td class="right" data-ratio="293 359">82%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_user_py.html">lib/ansible/modules/network/icx/icx_user.py</a></td>
+                <td>140</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>74</td>
+                <td>16</td>
+                
+                <td class="right" data-ratio="196 214">92%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_modules_network_icx_icx_vlan_py.html">lib/ansible/modules/network/icx/icx_vlan.py</a></td>
+                <td>331</td>
+                <td>20</td>
+                <td>0</td>
+                
+                <td>234</td>
+                <td>44</td>
+                
+                <td class="right" data-ratio="493 565">87%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing___init___py.html">lib/ansible/parsing/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_ajson_py.html">lib/ansible/parsing/ajson.py</a></td>
+                <td>39</td>
+                <td>20</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="19 55">35%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_dataloader_py.html">lib/ansible/parsing/dataloader.py</a></td>
+                <td>234</td>
+                <td>71</td>
+                <td>0</td>
+                
+                <td>90</td>
+                <td>21</td>
+                
+                <td class="right" data-ratio="208 324">64%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_metadata_py.html">lib/ansible/parsing/metadata.py</a></td>
+                <td>77</td>
+                <td>46</td>
+                <td>0</td>
+                
+                <td>41</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="45 118">38%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_mod_args_py.html">lib/ansible/parsing/mod_args.py</a></td>
+                <td>110</td>
+                <td>55</td>
+                <td>0</td>
+                
+                <td>58</td>
+                <td>12</td>
+                
+                <td class="right" data-ratio="75 168">45%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_plugin_docs_py.html">lib/ansible/parsing/plugin_docs.py</a></td>
+                <td>65</td>
+                <td>28</td>
+                <td>0</td>
+                
+                <td>34</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="54 99">55%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_quoting_py.html">lib/ansible/parsing/quoting.py</a></td>
+                <td>8</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 10">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_splitter_py.html">lib/ansible/parsing/splitter.py</a></td>
+                <td>120</td>
+                <td>20</td>
+                <td>0</td>
+                
+                <td>56</td>
+                <td>12</td>
+                
+                <td class="right" data-ratio="142 176">81%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_utils___init___py.html">lib/ansible/parsing/utils/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_utils_addresses_py.html">lib/ansible/parsing/utils/addresses.py</a></td>
+                <td>30</td>
+                <td>4</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="36 42">86%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_utils_jsonify_py.html">lib/ansible/parsing/utils/jsonify.py</a></td>
+                <td>13</td>
+                <td>9</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="4 17">24%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_utils_yaml_py.html">lib/ansible/parsing/utils/yaml.py</a></td>
+                <td>37</td>
+                <td>10</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="27 39">69%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_vault___init___py.html">lib/ansible/parsing/vault/__init__.py</a></td>
+                <td>652</td>
+                <td>505</td>
+                <td>0</td>
+                
+                <td>172</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="149 824">18%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_yaml___init___py.html">lib/ansible/parsing/yaml/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_yaml_constructor_py.html">lib/ansible/parsing/yaml/constructor.py</a></td>
+                <td>80</td>
+                <td>14</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="71 90">79%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_yaml_dumper_py.html">lib/ansible/parsing/yaml/dumper.py</a></td>
+                <td>23</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="21 25">84%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_yaml_loader_py.html">lib/ansible/parsing/yaml/loader.py</a></td>
+                <td>27</td>
+                <td>14</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="14 29">48%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_parsing_yaml_objects_py.html">lib/ansible/parsing/yaml/objects.py</a></td>
+                <td>65</td>
+                <td>26</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="39 73">53%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook___init___py.html">lib/ansible/playbook/__init__.py</a></td>
+                <td>64</td>
+                <td>16</td>
+                <td>0</td>
+                
+                <td>21</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="60 85">71%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_attribute_py.html">lib/ansible/playbook/attribute.py</a></td>
+                <td>34</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="29 36">81%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_base_py.html">lib/ansible/playbook/base.py</a></td>
+                <td>349</td>
+                <td>82</td>
+                <td>0</td>
+                
+                <td>190</td>
+                <td>28</td>
+                
+                <td class="right" data-ratio="391 539">73%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_become_py.html">lib/ansible/playbook/become.py</a></td>
+                <td>50</td>
+                <td>23</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="31 70">44%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_block_py.html">lib/ansible/playbook/block.py</a></td>
+                <td>255</td>
+                <td>75</td>
+                <td>0</td>
+                
+                <td>116</td>
+                <td>13</td>
+                
+                <td class="right" data-ratio="253 371">68%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_conditional_py.html">lib/ansible/playbook/conditional.py</a></td>
+                <td>113</td>
+                <td>40</td>
+                <td>0</td>
+                
+                <td>48</td>
+                <td>11</td>
+                
+                <td class="right" data-ratio="98 161">61%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_handler_py.html">lib/ansible/playbook/handler.py</a></td>
+                <td>24</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 26">50%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_handler_task_include_py.html">lib/ansible/playbook/handler_task_include.py</a></td>
+                <td>9</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 9">78%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_helpers_py.html">lib/ansible/playbook/helpers.py</a></td>
+                <td>187</td>
+                <td>79</td>
+                <td>0</td>
+                
+                <td>98</td>
+                <td>22</td>
+                
+                <td class="right" data-ratio="150 285">53%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_included_file_py.html">lib/ansible/playbook/included_file.py</a></td>
+                <td>126</td>
+                <td>33</td>
+                <td>0</td>
+                
+                <td>56</td>
+                <td>20</td>
+                
+                <td class="right" data-ratio="121 182">66%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_loop_control_py.html">lib/ansible/playbook/loop_control.py</a></td>
+                <td>15</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="15 15">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_play_py.html">lib/ansible/playbook/play.py</a></td>
+                <td>178</td>
+                <td>64</td>
+                <td>0</td>
+                
+                <td>48</td>
+                <td>12</td>
+                
+                <td class="right" data-ratio="132 226">58%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_play_context_py.html">lib/ansible/playbook/play_context.py</a></td>
+                <td>304</td>
+                <td>104</td>
+                <td>0</td>
+                
+                <td>182</td>
+                <td>30</td>
+                
+                <td class="right" data-ratio="296 486">61%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_playbook_include_py.html">lib/ansible/playbook/playbook_include.py</a></td>
+                <td>79</td>
+                <td>59</td>
+                <td>0</td>
+                
+                <td>42</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="20 121">17%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_role___init___py.html">lib/ansible/playbook/role/__init__.py</a></td>
+                <td>315</td>
+                <td>93</td>
+                <td>0</td>
+                
+                <td>136</td>
+                <td>24</td>
+                
+                <td class="right" data-ratio="300 451">67%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_role_definition_py.html">lib/ansible/playbook/role/definition.py</a></td>
+                <td>100</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>34</td>
+                <td>10</td>
+                
+                <td class="right" data-ratio="110 134">82%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_role_include_py.html">lib/ansible/playbook/role/include.py</a></td>
+                <td>24</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="24 28">86%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_role_metadata_py.html">lib/ansible/playbook/role/metadata.py</a></td>
+                <td>54</td>
+                <td>15</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="46 68">68%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_role_requirement_py.html">lib/ansible/playbook/role/requirement.py</a></td>
+                <td>123</td>
+                <td>98</td>
+                <td>0</td>
+                
+                <td>58</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="25 181">14%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_role_include_py.html">lib/ansible/playbook/role_include.py</a></td>
+                <td>93</td>
+                <td>66</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="27 121">22%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_taggable_py.html">lib/ansible/playbook/taggable.py</a></td>
+                <td>51</td>
+                <td>22</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="39 83">47%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_task_py.html">lib/ansible/playbook/task.py</a></td>
+                <td>287</td>
+                <td>99</td>
+                <td>0</td>
+                
+                <td>132</td>
+                <td>27</td>
+                
+                <td class="right" data-ratio="243 419">58%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_playbook_task_include_py.html">lib/ansible/playbook/task_include.py</a></td>
+                <td>60</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>9</td>
+                
+                <td class="right" data-ratio="57 78">73%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins___init___py.html">lib/ansible/plugins/__init__.py</a></td>
+                <td>34</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="37 40">93%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action___init___py.html">lib/ansible/plugins/action/__init__.py</a></td>
+                <td>553</td>
+                <td>257</td>
+                <td>0</td>
+                
+                <td>282</td>
+                <td>63</td>
+                
+                <td class="right" data-ratio="391 835">47%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_assert_py.html">lib/ansible/plugins/action/assert.py</a></td>
+                <td>45</td>
+                <td>7</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="47 63">75%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_cli_command_py.html">lib/ansible/plugins/action/cli_command.py</a></td>
+                <td>8</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="8 10">80%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_debug_py.html">lib/ansible/plugins/action/debug.py</a></td>
+                <td>39</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>6</td>
+                
+                <td class="right" data-ratio="34 57">60%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_eos_py.html">lib/ansible/plugins/action/eos.py</a></td>
+                <td>82</td>
+                <td>67</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="15 114">13%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_net_base_py.html">lib/ansible/plugins/action/net_base.py</a></td>
+                <td>116</td>
+                <td>60</td>
+                <td>0</td>
+                
+                <td>44</td>
+                <td>11</td>
+                
+                <td class="right" data-ratio="67 160">42%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_net_system_py.html">lib/ansible/plugins/action/net_system.py</a></td>
+                <td>8</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 8">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_normal_py.html">lib/ansible/plugins/action/normal.py</a></td>
+                <td>20</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="22 28">79%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_nxos_py.html">lib/ansible/plugins/action/nxos.py</a></td>
+                <td>100</td>
+                <td>85</td>
+                <td>0</td>
+                
+                <td>48</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="15 148">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_action_set_fact_py.html">lib/ansible/plugins/action/set_fact.py</a></td>
+                <td>30</td>
+                <td>4</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="33 40">83%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_cache___init___py.html">lib/ansible/plugins/cache/__init__.py</a></td>
+                <td>206</td>
+                <td>137</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="72 260">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_cache_memory_py.html">lib/ansible/plugins/cache/memory.py</a></td>
+                <td>25</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="19 25">76%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback___init___py.html">lib/ansible/plugins/callback/__init__.py</a></td>
+                <td>261</td>
+                <td>107</td>
+                <td>0</td>
+                
+                <td>86</td>
+                <td>24</td>
+                
+                <td class="right" data-ratio="204 347">59%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_actionable_py.html">lib/ansible/plugins/callback/actionable.py</a></td>
+                <td>64</td>
+                <td>40</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="24 78">31%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_cgroup_memory_recap_py.html">lib/ansible/plugins/callback/cgroup_memory_recap.py</a></td>
+                <td>59</td>
+                <td>39</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="20 67">30%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_context_demo_py.html">lib/ansible/plugins/callback/context_demo.py</a></td>
+                <td>25</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="13 29">45%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_counter_enabled_py.html">lib/ansible/plugins/callback/counter_enabled.py</a></td>
+                <td>124</td>
+                <td>96</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="28 178">16%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_debug_py.html">lib/ansible/plugins/callback/debug.py</a></td>
+                <td>21</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 31">29%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_default_py.html">lib/ansible/plugins/callback/default.py</a></td>
+                <td>225</td>
+                <td>99</td>
+                <td>0</td>
+                
+                <td>124</td>
+                <td>27</td>
+                
+                <td class="right" data-ratio="169 349">48%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_dense_py.html">lib/ansible/plugins/callback/dense.py</a></td>
+                <td>283</td>
+                <td>181</td>
+                <td>0</td>
+                
+                <td>80</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="103 363">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_foreman_py.html">lib/ansible/plugins/callback/foreman.py</a></td>
+                <td>114</td>
+                <td>81</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="33 142">23%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_full_skip_py.html">lib/ansible/plugins/callback/full_skip.py</a></td>
+                <td>38</td>
+                <td>22</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="16 46">35%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_grafana_annotations_py.html">lib/ansible/plugins/callback/grafana_annotations.py</a></td>
+                <td>85</td>
+                <td>59</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="26 105">25%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_hipchat_py.html">lib/ansible/plugins/callback/hipchat.py</a></td>
+                <td>102</td>
+                <td>77</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="25 118">21%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_jabber_py.html">lib/ansible/plugins/callback/jabber.py</a></td>
+                <td>61</td>
+                <td>40</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="21 73">29%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_json_py.html">lib/ansible/plugins/callback/json.py</a></td>
+                <td>62</td>
+                <td>38</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="24 74">32%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_junit_py.html">lib/ansible/plugins/callback/junit.py</a></td>
+                <td>171</td>
+                <td>112</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="62 225">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_log_plays_py.html">lib/ansible/plugins/callback/log_plays.py</a></td>
+                <td>49</td>
+                <td>23</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="26 57">46%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_logdna_py.html">lib/ansible/plugins/callback/logdna.py</a></td>
+                <td>117</td>
+                <td>82</td>
+                <td>0</td>
+                
+                <td>22</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="35 139">25%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_logentries_py.html">lib/ansible/plugins/callback/logentries.py</a></td>
+                <td>167</td>
+                <td>119</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="48 185">26%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_logstash_py.html">lib/ansible/plugins/callback/logstash.py</a></td>
+                <td>71</td>
+                <td>42</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="29 77">38%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_mail_py.html">lib/ansible/plugins/callback/mail.py</a></td>
+                <td>131</td>
+                <td>103</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="28 185">15%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_minimal_py.html">lib/ansible/plugins/callback/minimal.py</a></td>
+                <td>39</td>
+                <td>24</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="15 47">32%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_null_py.html">lib/ansible/plugins/callback/null.py</a></td>
+                <td>8</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="8 8">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_oneline_py.html">lib/ansible/plugins/callback/oneline.py</a></td>
+                <td>38</td>
+                <td>24</td>
+                <td>0</td>
+                
+                <td>12</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="14 50">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_osx_say_py.html">lib/ansible/plugins/callback/osx_say.py</a></td>
+                <td>49</td>
+                <td>19</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="30 53">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_profile_roles_py.html">lib/ansible/plugins/callback/profile_roles.py</a></td>
+                <td>65</td>
+                <td>42</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="23 75">31%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_profile_tasks_py.html">lib/ansible/plugins/callback/profile_tasks.py</a></td>
+                <td>83</td>
+                <td>58</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="25 111">23%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_selective_py.html">lib/ansible/plugins/callback/selective.py</a></td>
+                <td>146</td>
+                <td>114</td>
+                <td>0</td>
+                
+                <td>50</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="32 196">16%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_skippy_py.html">lib/ansible/plugins/callback/skippy.py</a></td>
+                <td>12</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 12">83%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_slack_py.html">lib/ansible/plugins/callback/slack.py</a></td>
+                <td>104</td>
+                <td>79</td>
+                <td>0</td>
+                
+                <td>24</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="25 128">20%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_splunk_py.html">lib/ansible/plugins/callback/splunk.py</a></td>
+                <td>88</td>
+                <td>56</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="32 98">33%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_stderr_py.html">lib/ansible/plugins/callback/stderr.py</a></td>
+                <td>26</td>
+                <td>15</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 34">32%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_sumologic_py.html">lib/ansible/plugins/callback/sumologic.py</a></td>
+                <td>81</td>
+                <td>49</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="32 89">36%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_syslog_json_py.html">lib/ansible/plugins/callback/syslog_json.py</a></td>
+                <td>35</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="22 35">63%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_timer_py.html">lib/ansible/plugins/callback/timer.py</a></td>
+                <td>23</td>
+                <td>9</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="14 23">61%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_tree_py.html">lib/ansible/plugins/callback/tree.py</a></td>
+                <td>37</td>
+                <td>18</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="19 41">46%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_unixy_py.html">lib/ansible/plugins/callback/unixy.py</a></td>
+                <td>112</td>
+                <td>83</td>
+                <td>0</td>
+                
+                <td>46</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="29 158">18%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_callback_yaml_py.html">lib/ansible/plugins/callback/yaml.py</a></td>
+                <td>63</td>
+                <td>42</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="21 91">23%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_cliconf___init___py.html">lib/ansible/plugins/cliconf/__init__.py</a></td>
+                <td>111</td>
+                <td>42</td>
+                <td>0</td>
+                
+                <td>34</td>
+                <td>9</td>
+                
+                <td class="right" data-ratio="82 145">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_cliconf_icx_py.html">lib/ansible/plugins/cliconf/icx.py</a></td>
+                <td>172</td>
+                <td>38</td>
+                <td>0</td>
+                
+                <td>70</td>
+                <td>22</td>
+                
+                <td class="right" data-ratio="170 242">70%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_connection___init___py.html">lib/ansible/plugins/connection/__init__.py</a></td>
+                <td>189</td>
+                <td>47</td>
+                <td>0</td>
+                
+                <td>54</td>
+                <td>11</td>
+                
+                <td class="right" data-ratio="167 243">69%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_connection_local_py.html">lib/ansible/plugins/connection/local.py</a></td>
+                <td>88</td>
+                <td>38</td>
+                <td>0</td>
+                
+                <td>26</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="54 114">47%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_connection_network_cli_py.html">lib/ansible/plugins/connection/network_cli.py</a></td>
+                <td>265</td>
+                <td>29</td>
+                <td>0</td>
+                
+                <td>96</td>
+                <td>18</td>
+                
+                <td class="right" data-ratio="312 361">86%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_connection_paramiko_ssh_py.html">lib/ansible/plugins/connection/paramiko_ssh.py</a></td>
+                <td>287</td>
+                <td>175</td>
+                <td>0</td>
+                
+                <td>102</td>
+                <td>19</td>
+                
+                <td class="right" data-ratio="135 389">35%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_connection_ssh_py.html">lib/ansible/plugins/connection/ssh.py</a></td>
+                <td>489</td>
+                <td>417</td>
+                <td>0</td>
+                
+                <td>243</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="74 732">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter___init___py.html">lib/ansible/plugins/filter/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter_core_py.html">lib/ansible/plugins/filter/core.py</a></td>
+                <td>305</td>
+                <td>233</td>
+                <td>0</td>
+                
+                <td>132</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="73 437">17%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter_ipaddr_py.html">lib/ansible/plugins/filter/ipaddr.py</a></td>
+                <td>599</td>
+                <td>512</td>
+                <td>0</td>
+                
+                <td>292</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="88 891">10%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter_json_query_py.html">lib/ansible/plugins/filter/json_query.py</a></td>
+                <td>20</td>
+                <td>10</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 24">42%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter_mathstuff_py.html">lib/ansible/plugins/filter/mathstuff.py</a></td>
+                <td>102</td>
+                <td>75</td>
+                <td>0</td>
+                
+                <td>36</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="27 138">20%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter_network_py.html">lib/ansible/plugins/filter/network.py</a></td>
+                <td>271</td>
+                <td>233</td>
+                <td>0</td>
+                
+                <td>136</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="38 407">9%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_filter_urlsplit_py.html">lib/ansible/plugins/filter/urlsplit.py</a></td>
+                <td>16</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 20">50%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_inventory___init___py.html">lib/ansible/plugins/inventory/__init__.py</a></td>
+                <td>189</td>
+                <td>126</td>
+                <td>0</td>
+                
+                <td>78</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="69 267">26%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_inventory_auto_py.html">lib/ansible/plugins/inventory/auto.py</a></td>
+                <td>24</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="11 32">34%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_inventory_host_list_py.html">lib/ansible/plugins/inventory/host_list.py</a></td>
+                <td>33</td>
+                <td>16</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="18 41">44%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_inventory_ini_py.html">lib/ansible/plugins/inventory/ini.py</a></td>
+                <td>141</td>
+                <td>43</td>
+                <td>0</td>
+                
+                <td>58</td>
+                <td>11</td>
+                
+                <td class="right" data-ratio="125 199">63%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_inventory_script_py.html">lib/ansible/plugins/inventory/script.py</a></td>
+                <td>115</td>
+                <td>85</td>
+                <td>0</td>
+                
+                <td>51</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="33 166">20%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_inventory_yaml_py.html">lib/ansible/plugins/inventory/yaml.py</a></td>
+                <td>76</td>
+                <td>51</td>
+                <td>0</td>
+                
+                <td>42</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="27 118">23%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_loader_py.html">lib/ansible/plugins/loader.py</a></td>
+                <td>355</td>
+                <td>90</td>
+                <td>0</td>
+                
+                <td>146</td>
+                <td>28</td>
+                
+                <td class="right" data-ratio="365 501">73%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_lookup___init___py.html">lib/ansible/plugins/lookup/__init__.py</a></td>
+                <td>53</td>
+                <td>21</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="36 69">52%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_lookup_env_py.html">lib/ansible/plugins/lookup/env.py</a></td>
+                <td>14</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="16 16">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_lookup_file_py.html">lib/ansible/plugins/lookup/file.py</a></td>
+                <td>33</td>
+                <td>7</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="31 41">76%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_lookup_items_py.html">lib/ansible/plugins/lookup/items.py</a></td>
+                <td>9</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 9">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_shell___init___py.html">lib/ansible/plugins/shell/__init__.py</a></td>
+                <td>112</td>
+                <td>29</td>
+                <td>0</td>
+                
+                <td>31</td>
+                <td>13</td>
+                
+                <td class="right" data-ratio="97 143">68%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_shell_powershell_py.html">lib/ansible/plugins/shell/powershell.py</a></td>
+                <td>139</td>
+                <td>95</td>
+                <td>0</td>
+                
+                <td>44</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="45 183">25%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_shell_sh_py.html">lib/ansible/plugins/shell/sh.py</a></td>
+                <td>23</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="17 23">74%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_strategy___init___py.html">lib/ansible/plugins/strategy/__init__.py</a></td>
+                <td>762</td>
+                <td>407</td>
+                <td>0</td>
+                
+                <td>344</td>
+                <td>39</td>
+                
+                <td class="right" data-ratio="462 1106">42%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_strategy_linear_py.html">lib/ansible/plugins/strategy/linear.py</a></td>
+                <td>267</td>
+                <td>72</td>
+                <td>0</td>
+                
+                <td>114</td>
+                <td>25</td>
+                
+                <td class="right" data-ratio="262 381">69%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_terminal___init___py.html">lib/ansible/plugins/terminal/__init__.py</a></td>
+                <td>31</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="26 31">84%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_terminal_icx_py.html">lib/ansible/plugins/terminal/icx.py</a></td>
+                <td>40</td>
+                <td>16</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="26 50">52%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_test___init___py.html">lib/ansible/plugins/test/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_test_core_py.html">lib/ansible/plugins/test/core.py</a></td>
+                <td>83</td>
+                <td>59</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="24 115">21%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_test_files_py.html">lib/ansible/plugins/test/files.py</a></td>
+                <td>7</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="7 7">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_test_mathstuff_py.html">lib/ansible/plugins/test/mathstuff.py</a></td>
+                <td>15</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="9 15">60%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_vars___init___py.html">lib/ansible/plugins/vars/__init__.py</a></td>
+                <td>13</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="10 13">77%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_plugins_vars_host_group_vars_py.html">lib/ansible/plugins/vars/host_group_vars.py</a></td>
+                <td>45</td>
+                <td>8</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="50 65">77%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_release_py.html">lib/ansible/release.py</a></td>
+                <td>5</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="5 5">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_template___init___py.html">lib/ansible/template/__init__.py</a></td>
+                <td>423</td>
+                <td>168</td>
+                <td>0</td>
+                
+                <td>200</td>
+                <td>35</td>
+                
+                <td class="right" data-ratio="354 623">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_template_safe_eval_py.html">lib/ansible/template/safe_eval.py</a></td>
+                <td>55</td>
+                <td>17</td>
+                <td>0</td>
+                
+                <td>30</td>
+                <td>7</td>
+                
+                <td class="right" data-ratio="51 85">60%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_template_template_py.html">lib/ansible/template/template.py</a></td>
+                <td>13</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="12 19">63%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_template_vars_py.html">lib/ansible/template/vars.py</a></td>
+                <td>69</td>
+                <td>28</td>
+                <td>0</td>
+                
+                <td>36</td>
+                <td>8</td>
+                
+                <td class="right" data-ratio="55 105">52%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils___init___py.html">lib/ansible/utils/__init__.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_color_py.html">lib/ansible/utils/color.py</a></td>
+                <td>50</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="54 78">69%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_display_py.html">lib/ansible/utils/display.py</a></td>
+                <td>227</td>
+                <td>103</td>
+                <td>0</td>
+                
+                <td>98</td>
+                <td>14</td>
+                
+                <td class="right" data-ratio="160 325">49%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_encrypt_py.html">lib/ansible/utils/encrypt.py</a></td>
+                <td>116</td>
+                <td>73</td>
+                <td>0</td>
+                
+                <td>38</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="43 154">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_hashing_py.html">lib/ansible/utils/hashing.py</a></td>
+                <td>46</td>
+                <td>31</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="15 54">28%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_helpers_py.html">lib/ansible/utils/helpers.py</a></td>
+                <td>12</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="8 18">44%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_jsonrpc_py.html">lib/ansible/utils/jsonrpc.py</a></td>
+                <td>74</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="84 92">91%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_listify_py.html">lib/ansible/utils/listify.py</a></td>
+                <td>13</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="15 17">88%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_module_docs_fragments___init___py.html">lib/ansible/utils/module_docs_fragments/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_module_docs_fragments_default_callback_py.html">lib/ansible/utils/module_docs_fragments/default_callback.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_module_docs_fragments_shell_common_py.html">lib/ansible/utils/module_docs_fragments/shell_common.py</a></td>
+                <td>2</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="2 2">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_path_py.html">lib/ansible/utils/path.py</a></td>
+                <td>41</td>
+                <td>8</td>
+                <td>0</td>
+                
+                <td>22</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="46 63">73%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_plugin_docs_py.html">lib/ansible/utils/plugin_docs.py</a></td>
+                <td>69</td>
+                <td>30</td>
+                <td>0</td>
+                
+                <td>36</td>
+                <td>8</td>
+                
+                <td class="right" data-ratio="51 105">49%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_py3compat_py.html">lib/ansible/utils/py3compat.py</a></td>
+                <td>31</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="30 37">81%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_shlex_py.html">lib/ansible/utils/shlex.py</a></td>
+                <td>10</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="10 12">83%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_ssh_functions_py.html">lib/ansible/utils/ssh_functions.py</a></td>
+                <td>21</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="19 23">83%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_unicode_py.html">lib/ansible/utils/unicode.py</a></td>
+                <td>6</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="5 6">83%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_unsafe_proxy_py.html">lib/ansible/utils/unsafe_proxy.py</a></td>
+                <td>38</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="52 58">90%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_utils_vars_py.html">lib/ansible/utils/vars.py</a></td>
+                <td>86</td>
+                <td>24</td>
+                <td>0</td>
+                
+                <td>38</td>
+                <td>12</td>
+                
+                <td class="right" data-ratio="82 124">66%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_vars___init___py.html">lib/ansible/vars/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_vars_clean_py.html">lib/ansible/vars/clean.py</a></td>
+                <td>86</td>
+                <td>15</td>
+                <td>0</td>
+                
+                <td>52</td>
+                <td>7</td>
+                
+                <td class="right" data-ratio="112 138">81%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_vars_hostvars_py.html">lib/ansible/vars/hostvars.py</a></td>
+                <td>72</td>
+                <td>35</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="37 82">45%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_vars_manager_py.html">lib/ansible/vars/manager.py</a></td>
+                <td>356</td>
+                <td>138</td>
+                <td>0</td>
+                
+                <td>162</td>
+                <td>38</td>
+                
+                <td class="right" data-ratio="294 518">57%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="lib_ansible_vars_reserved_py.html">lib/ansible/vars/reserved.py</a></td>
+                <td>38</td>
+                <td>6</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="41 52">79%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units___init___py.html">test/units/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_conftest_py.html">test/units/conftest.py</a></td>
+                <td>33</td>
+                <td>13</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="28 47">60%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules___init___py.html">test/units/modules/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_conftest_py.html">test/units/modules/conftest.py</a></td>
+                <td>18</td>
+                <td>12</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="6 28">21%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network___init___py.html">test/units/modules/network/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx___init___py.html">test/units/modules/network/icx/__init__.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_icx_module_py.html">test/units/modules/network/icx/icx_module.py</a></td>
+                <td>62</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="77 82">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_banner_py.html">test/units/modules/network/icx/test_icx_banner.py</a></td>
+                <td>79</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="96 99">97%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_command_py.html">test/units/modules/network/icx/test_icx_command.py</a></td>
+                <td>79</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="82 83">99%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_config_py.html">test/units/modules/network/icx/test_icx_config.py</a></td>
+                <td>177</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="177 177">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_copy_py.html">test/units/modules/network/icx/test_icx_copy.py</a></td>
+                <td>90</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="92 92">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_facts_py.html">test/units/modules/network/icx/test_icx_facts.py</a></td>
+                <td>72</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>1</td>
+                
+                <td class="right" data-ratio="77 78">99%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_interface_py.html">test/units/modules/network/icx/test_icx_interface.py</a></td>
+                <td>118</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>26</td>
+                <td>6</td>
+                
+                <td class="right" data-ratio="135 144">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_l3_interface_py.html">test/units/modules/network/icx/test_icx_l3_interface.py</a></td>
+                <td>67</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="79 81">98%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_linkagg_py.html">test/units/modules/network/icx/test_icx_linkagg.py</a></td>
+                <td>74</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="88 94">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_lldp_py.html">test/units/modules/network/icx/test_icx_lldp.py</a></td>
+                <td>82</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="97 100">97%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_logging_py.html">test/units/modules/network/icx/test_icx_logging.py</a></td>
+                <td>101</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td>24</td>
+                <td>8</td>
+                
+                <td class="right" data-ratio="112 125">90%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_ping_py.html">test/units/modules/network/icx/test_icx_ping.py</a></td>
+                <td>58</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="60 60">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_static_route_py.html">test/units/modules/network/icx/test_icx_static_route.py</a></td>
+                <td>81</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="92 99">93%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_system_py.html">test/units/modules/network/icx/test_icx_system.py</a></td>
+                <td>69</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>3</td>
+                
+                <td class="right" data-ratio="84 87">97%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_user_py.html">test/units/modules/network/icx/test_icx_user.py</a></td>
+                <td>108</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>6</td>
+                
+                <td class="right" data-ratio="128 136">94%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_network_icx_test_icx_vlan_py.html">test/units/modules/network/icx/test_icx_vlan.py</a></td>
+                <td>147</td>
+                <td>11</td>
+                <td>0</td>
+                
+                <td>30</td>
+                <td>11</td>
+                
+                <td class="right" data-ratio="155 177">88%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="test_units_modules_utils_py.html">test/units/modules/utils.py</a></td>
+                <td>29</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="33 35">94%</td>
+            </tr>
+            
+        </tbody>
+    </table>
+
+    <p id="no_rows">
+        No items found using the specified filter.
+    </p>
+</div>
+
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.2</a>,
+            created at 2019-05-29 12:41
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

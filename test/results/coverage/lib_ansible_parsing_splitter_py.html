@@ -1,0 +1,623 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=emulateIE7" />
+    <title>Coverage for lib/ansible/parsing/splitter.py: 81%</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="jquery.isonscreen.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.pyfile_ready);
+    </script>
+</head>
+<body class="pyfile">
+
+<div id="header">
+    <div class="content">
+        <h1>Coverage for <b>lib/ansible/parsing/splitter.py</b> :
+            <span class="pc_cov">81%</span>
+        </h1>
+
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+
+        <h2 class="stats">
+            120 statements &nbsp;
+            <span class="run hide_run shortkey_r button_toggle_run">100 run</span>
+            <span class="mis shortkey_m button_toggle_mis">20 missing</span>
+            <span class="exc shortkey_x button_toggle_exc">0 excluded</span>
+
+            
+                <span class="par run hide_run shortkey_p button_toggle_par">12 partial</span>
+            
+        </h2>
+    </div>
+</div>
+
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">r</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        <span class="key">p</span> &nbsp; toggle line displays
+    </p>
+    <p class="keyhelp">
+        <span class="key">j</span>
+        <span class="key">k</span> &nbsp; next/prev highlighted chunk
+    </p>
+    <p class="keyhelp">
+        <span class="key">0</span> &nbsp; (zero) top of page
+    </p>
+    <p class="keyhelp">
+        <span class="key">1</span> &nbsp; (one) first highlighted chunk
+    </p>
+    </div>
+</div>
+
+<div id="source">
+    <table>
+        <tr>
+            <td class="linenos">
+<p id="n1" class="pln"><a href="#n1">1</a></p>
+<p id="n2" class="pln"><a href="#n2">2</a></p>
+<p id="n3" class="pln"><a href="#n3">3</a></p>
+<p id="n4" class="pln"><a href="#n4">4</a></p>
+<p id="n5" class="pln"><a href="#n5">5</a></p>
+<p id="n6" class="pln"><a href="#n6">6</a></p>
+<p id="n7" class="pln"><a href="#n7">7</a></p>
+<p id="n8" class="pln"><a href="#n8">8</a></p>
+<p id="n9" class="pln"><a href="#n9">9</a></p>
+<p id="n10" class="pln"><a href="#n10">10</a></p>
+<p id="n11" class="pln"><a href="#n11">11</a></p>
+<p id="n12" class="pln"><a href="#n12">12</a></p>
+<p id="n13" class="pln"><a href="#n13">13</a></p>
+<p id="n14" class="pln"><a href="#n14">14</a></p>
+<p id="n15" class="pln"><a href="#n15">15</a></p>
+<p id="n16" class="pln"><a href="#n16">16</a></p>
+<p id="n17" class="pln"><a href="#n17">17</a></p>
+<p id="n18" class="pln"><a href="#n18">18</a></p>
+<p id="n19" class="stm run hide_run"><a href="#n19">19</a></p>
+<p id="n20" class="stm run hide_run"><a href="#n20">20</a></p>
+<p id="n21" class="pln"><a href="#n21">21</a></p>
+<p id="n22" class="stm run hide_run"><a href="#n22">22</a></p>
+<p id="n23" class="stm run hide_run"><a href="#n23">23</a></p>
+<p id="n24" class="pln"><a href="#n24">24</a></p>
+<p id="n25" class="stm run hide_run"><a href="#n25">25</a></p>
+<p id="n26" class="stm run hide_run"><a href="#n26">26</a></p>
+<p id="n27" class="stm run hide_run"><a href="#n27">27</a></p>
+<p id="n28" class="pln"><a href="#n28">28</a></p>
+<p id="n29" class="pln"><a href="#n29">29</a></p>
+<p id="n30" class="pln"><a href="#n30">30</a></p>
+<p id="n31" class="pln"><a href="#n31">31</a></p>
+<p id="n32" class="stm run hide_run"><a href="#n32">32</a></p>
+<p id="n33" class="stm run hide_run"><a href="#n33">33</a></p>
+<p id="n34" class="pln"><a href="#n34">34</a></p>
+<p id="n35" class="pln"><a href="#n35">35</a></p>
+<p id="n36" class="pln"><a href="#n36">36</a></p>
+<p id="n37" class="pln"><a href="#n37">37</a></p>
+<p id="n38" class="pln"><a href="#n38">38</a></p>
+<p id="n39" class="pln"><a href="#n39">39</a></p>
+<p id="n40" class="pln"><a href="#n40">40</a></p>
+<p id="n41" class="pln"><a href="#n41">41</a></p>
+<p id="n42" class="stm run hide_run"><a href="#n42">42</a></p>
+<p id="n43" class="stm run hide_run"><a href="#n43">43</a></p>
+<p id="n44" class="stm mis"><a href="#n44">44</a></p>
+<p id="n45" class="pln"><a href="#n45">45</a></p>
+<p id="n46" class="stm run hide_run"><a href="#n46">46</a></p>
+<p id="n47" class="pln"><a href="#n47">47</a></p>
+<p id="n48" class="pln"><a href="#n48">48</a></p>
+<p id="n49" class="stm run hide_run"><a href="#n49">49</a></p>
+<p id="n50" class="pln"><a href="#n50">50</a></p>
+<p id="n51" class="pln"><a href="#n51">51</a></p>
+<p id="n52" class="pln"><a href="#n52">52</a></p>
+<p id="n53" class="pln"><a href="#n53">53</a></p>
+<p id="n54" class="pln"><a href="#n54">54</a></p>
+<p id="n55" class="pln"><a href="#n55">55</a></p>
+<p id="n56" class="pln"><a href="#n56">56</a></p>
+<p id="n57" class="stm run hide_run"><a href="#n57">57</a></p>
+<p id="n58" class="pln"><a href="#n58">58</a></p>
+<p id="n59" class="stm run hide_run"><a href="#n59">59</a></p>
+<p id="n60" class="stm par run hide_run"><a href="#n60">60</a></p>
+<p id="n61" class="stm run hide_run"><a href="#n61">61</a></p>
+<p id="n62" class="stm run hide_run"><a href="#n62">62</a></p>
+<p id="n63" class="stm mis"><a href="#n63">63</a></p>
+<p id="n64" class="stm mis"><a href="#n64">64</a></p>
+<p id="n65" class="stm mis"><a href="#n65">65</a></p>
+<p id="n66" class="pln"><a href="#n66">66</a></p>
+<p id="n67" class="stm mis"><a href="#n67">67</a></p>
+<p id="n68" class="pln"><a href="#n68">68</a></p>
+<p id="n69" class="stm run hide_run"><a href="#n69">69</a></p>
+<p id="n70" class="stm run hide_run"><a href="#n70">70</a></p>
+<p id="n71" class="stm run hide_run"><a href="#n71">71</a></p>
+<p id="n72" class="stm run hide_run"><a href="#n72">72</a></p>
+<p id="n73" class="stm run hide_run"><a href="#n73">73</a></p>
+<p id="n74" class="stm run hide_run"><a href="#n74">74</a></p>
+<p id="n75" class="stm run hide_run"><a href="#n75">75</a></p>
+<p id="n76" class="stm run hide_run"><a href="#n76">76</a></p>
+<p id="n77" class="stm par run hide_run"><a href="#n77">77</a></p>
+<p id="n78" class="stm run hide_run"><a href="#n78">78</a></p>
+<p id="n79" class="stm mis"><a href="#n79">79</a></p>
+<p id="n80" class="pln"><a href="#n80">80</a></p>
+<p id="n81" class="pln"><a href="#n81">81</a></p>
+<p id="n82" class="stm mis"><a href="#n82">82</a></p>
+<p id="n83" class="stm mis"><a href="#n83">83</a></p>
+<p id="n84" class="pln"><a href="#n84">84</a></p>
+<p id="n85" class="stm run hide_run"><a href="#n85">85</a></p>
+<p id="n86" class="stm run hide_run"><a href="#n86">86</a></p>
+<p id="n87" class="pln"><a href="#n87">87</a></p>
+<p id="n88" class="pln"><a href="#n88">88</a></p>
+<p id="n89" class="pln"><a href="#n89">89</a></p>
+<p id="n90" class="stm par run hide_run"><a href="#n90">90</a></p>
+<p id="n91" class="stm mis"><a href="#n91">91</a></p>
+<p id="n92" class="pln"><a href="#n92">92</a></p>
+<p id="n93" class="stm run hide_run"><a href="#n93">93</a></p>
+<p id="n94" class="pln"><a href="#n94">94</a></p>
+<p id="n95" class="stm run hide_run"><a href="#n95">95</a></p>
+<p id="n96" class="pln"><a href="#n96">96</a></p>
+<p id="n97" class="pln"><a href="#n97">97</a></p>
+<p id="n98" class="pln"><a href="#n98">98</a></p>
+<p id="n99" class="stm run hide_run"><a href="#n99">99</a></p>
+<p id="n100" class="stm run hide_run"><a href="#n100">100</a></p>
+<p id="n101" class="pln"><a href="#n101">101</a></p>
+<p id="n102" class="stm run hide_run"><a href="#n102">102</a></p>
+<p id="n103" class="pln"><a href="#n103">103</a></p>
+<p id="n104" class="pln"><a href="#n104">104</a></p>
+<p id="n105" class="stm run hide_run"><a href="#n105">105</a></p>
+<p id="n106" class="pln"><a href="#n106">106</a></p>
+<p id="n107" class="pln"><a href="#n107">107</a></p>
+<p id="n108" class="pln"><a href="#n108">108</a></p>
+<p id="n109" class="pln"><a href="#n109">109</a></p>
+<p id="n110" class="pln"><a href="#n110">110</a></p>
+<p id="n111" class="pln"><a href="#n111">111</a></p>
+<p id="n112" class="stm run hide_run"><a href="#n112">112</a></p>
+<p id="n113" class="stm run hide_run"><a href="#n113">113</a></p>
+<p id="n114" class="stm run hide_run"><a href="#n114">114</a></p>
+<p id="n115" class="stm run hide_run"><a href="#n115">115</a></p>
+<p id="n116" class="stm run hide_run"><a href="#n116">116</a></p>
+<p id="n117" class="stm run hide_run"><a href="#n117">117</a></p>
+<p id="n118" class="stm run hide_run"><a href="#n118">118</a></p>
+<p id="n119" class="stm run hide_run"><a href="#n119">119</a></p>
+<p id="n120" class="pln"><a href="#n120">120</a></p>
+<p id="n121" class="stm run hide_run"><a href="#n121">121</a></p>
+<p id="n122" class="stm run hide_run"><a href="#n122">122</a></p>
+<p id="n123" class="pln"><a href="#n123">123</a></p>
+<p id="n124" class="pln"><a href="#n124">124</a></p>
+<p id="n125" class="stm run hide_run"><a href="#n125">125</a></p>
+<p id="n126" class="pln"><a href="#n126">126</a></p>
+<p id="n127" class="pln"><a href="#n127">127</a></p>
+<p id="n128" class="pln"><a href="#n128">128</a></p>
+<p id="n129" class="pln"><a href="#n129">129</a></p>
+<p id="n130" class="pln"><a href="#n130">130</a></p>
+<p id="n131" class="stm run hide_run"><a href="#n131">131</a></p>
+<p id="n132" class="stm run hide_run"><a href="#n132">132</a></p>
+<p id="n133" class="stm run hide_run"><a href="#n133">133</a></p>
+<p id="n134" class="stm run hide_run"><a href="#n134">134</a></p>
+<p id="n135" class="stm par run hide_run"><a href="#n135">135</a></p>
+<p id="n136" class="stm mis"><a href="#n136">136</a></p>
+<p id="n137" class="stm run hide_run"><a href="#n137">137</a></p>
+<p id="n138" class="pln"><a href="#n138">138</a></p>
+<p id="n139" class="pln"><a href="#n139">139</a></p>
+<p id="n140" class="stm run hide_run"><a href="#n140">140</a></p>
+<p id="n141" class="pln"><a href="#n141">141</a></p>
+<p id="n142" class="pln"><a href="#n142">142</a></p>
+<p id="n143" class="pln"><a href="#n143">143</a></p>
+<p id="n144" class="pln"><a href="#n144">144</a></p>
+<p id="n145" class="pln"><a href="#n145">145</a></p>
+<p id="n146" class="pln"><a href="#n146">146</a></p>
+<p id="n147" class="pln"><a href="#n147">147</a></p>
+<p id="n148" class="pln"><a href="#n148">148</a></p>
+<p id="n149" class="pln"><a href="#n149">149</a></p>
+<p id="n150" class="pln"><a href="#n150">150</a></p>
+<p id="n151" class="pln"><a href="#n151">151</a></p>
+<p id="n152" class="pln"><a href="#n152">152</a></p>
+<p id="n153" class="pln"><a href="#n153">153</a></p>
+<p id="n154" class="pln"><a href="#n154">154</a></p>
+<p id="n155" class="pln"><a href="#n155">155</a></p>
+<p id="n156" class="pln"><a href="#n156">156</a></p>
+<p id="n157" class="pln"><a href="#n157">157</a></p>
+<p id="n158" class="stm run hide_run"><a href="#n158">158</a></p>
+<p id="n159" class="pln"><a href="#n159">159</a></p>
+<p id="n160" class="pln"><a href="#n160">160</a></p>
+<p id="n161" class="stm run hide_run"><a href="#n161">161</a></p>
+<p id="n162" class="stm run hide_run"><a href="#n162">162</a></p>
+<p id="n163" class="pln"><a href="#n163">163</a></p>
+<p id="n164" class="pln"><a href="#n164">164</a></p>
+<p id="n165" class="pln"><a href="#n165">165</a></p>
+<p id="n166" class="pln"><a href="#n166">166</a></p>
+<p id="n167" class="pln"><a href="#n167">167</a></p>
+<p id="n168" class="pln"><a href="#n168">168</a></p>
+<p id="n169" class="pln"><a href="#n169">169</a></p>
+<p id="n170" class="pln"><a href="#n170">170</a></p>
+<p id="n171" class="pln"><a href="#n171">171</a></p>
+<p id="n172" class="stm run hide_run"><a href="#n172">172</a></p>
+<p id="n173" class="stm run hide_run"><a href="#n173">173</a></p>
+<p id="n174" class="stm run hide_run"><a href="#n174">174</a></p>
+<p id="n175" class="stm run hide_run"><a href="#n175">175</a></p>
+<p id="n176" class="stm run hide_run"><a href="#n176">176</a></p>
+<p id="n177" class="pln"><a href="#n177">177</a></p>
+<p id="n178" class="pln"><a href="#n178">178</a></p>
+<p id="n179" class="pln"><a href="#n179">179</a></p>
+<p id="n180" class="stm run hide_run"><a href="#n180">180</a></p>
+<p id="n181" class="pln"><a href="#n181">181</a></p>
+<p id="n182" class="pln"><a href="#n182">182</a></p>
+<p id="n183" class="pln"><a href="#n183">183</a></p>
+<p id="n184" class="pln"><a href="#n184">184</a></p>
+<p id="n185" class="stm run hide_run"><a href="#n185">185</a></p>
+<p id="n186" class="pln"><a href="#n186">186</a></p>
+<p id="n187" class="stm run hide_run"><a href="#n187">187</a></p>
+<p id="n188" class="stm run hide_run"><a href="#n188">188</a></p>
+<p id="n189" class="pln"><a href="#n189">189</a></p>
+<p id="n190" class="pln"><a href="#n190">190</a></p>
+<p id="n191" class="pln"><a href="#n191">191</a></p>
+<p id="n192" class="pln"><a href="#n192">192</a></p>
+<p id="n193" class="stm par run hide_run"><a href="#n193">193</a></p>
+<p id="n194" class="stm mis"><a href="#n194">194</a></p>
+<p id="n195" class="stm mis"><a href="#n195">195</a></p>
+<p id="n196" class="pln"><a href="#n196">196</a></p>
+<p id="n197" class="pln"><a href="#n197">197</a></p>
+<p id="n198" class="stm run hide_run"><a href="#n198">198</a></p>
+<p id="n199" class="stm run hide_run"><a href="#n199">199</a></p>
+<p id="n200" class="stm run hide_run"><a href="#n200">200</a></p>
+<p id="n201" class="pln"><a href="#n201">201</a></p>
+<p id="n202" class="pln"><a href="#n202">202</a></p>
+<p id="n203" class="pln"><a href="#n203">203</a></p>
+<p id="n204" class="pln"><a href="#n204">204</a></p>
+<p id="n205" class="pln"><a href="#n205">205</a></p>
+<p id="n206" class="stm run hide_run"><a href="#n206">206</a></p>
+<p id="n207" class="pln"><a href="#n207">207</a></p>
+<p id="n208" class="pln"><a href="#n208">208</a></p>
+<p id="n209" class="pln"><a href="#n209">209</a></p>
+<p id="n210" class="pln"><a href="#n210">210</a></p>
+<p id="n211" class="pln"><a href="#n211">211</a></p>
+<p id="n212" class="stm run hide_run"><a href="#n212">212</a></p>
+<p id="n213" class="stm run hide_run"><a href="#n213">213</a></p>
+<p id="n214" class="stm run hide_run"><a href="#n214">214</a></p>
+<p id="n215" class="stm run hide_run"><a href="#n215">215</a></p>
+<p id="n216" class="stm par run hide_run"><a href="#n216">216</a></p>
+<p id="n217" class="stm mis"><a href="#n217">217</a></p>
+<p id="n218" class="stm par run hide_run"><a href="#n218">218</a></p>
+<p id="n219" class="stm run hide_run"><a href="#n219">219</a></p>
+<p id="n220" class="stm par run hide_run"><a href="#n220">220</a></p>
+<p id="n221" class="stm run hide_run"><a href="#n221">221</a></p>
+<p id="n222" class="stm run hide_run"><a href="#n222">222</a></p>
+<p id="n223" class="pln"><a href="#n223">223</a></p>
+<p id="n224" class="stm mis"><a href="#n224">224</a></p>
+<p id="n225" class="stm run hide_run"><a href="#n225">225</a></p>
+<p id="n226" class="pln"><a href="#n226">226</a></p>
+<p id="n227" class="pln"><a href="#n227">227</a></p>
+<p id="n228" class="pln"><a href="#n228">228</a></p>
+<p id="n229" class="stm run hide_run"><a href="#n229">229</a></p>
+<p id="n230" class="stm run hide_run"><a href="#n230">230</a></p>
+<p id="n231" class="stm run hide_run"><a href="#n231">231</a></p>
+<p id="n232" class="stm run hide_run"><a href="#n232">232</a></p>
+<p id="n233" class="stm run hide_run"><a href="#n233">233</a></p>
+<p id="n234" class="pln"><a href="#n234">234</a></p>
+<p id="n235" class="stm run hide_run"><a href="#n235">235</a></p>
+<p id="n236" class="stm run hide_run"><a href="#n236">236</a></p>
+<p id="n237" class="stm par run hide_run"><a href="#n237">237</a></p>
+<p id="n238" class="stm mis"><a href="#n238">238</a></p>
+<p id="n239" class="stm mis"><a href="#n239">239</a></p>
+<p id="n240" class="pln"><a href="#n240">240</a></p>
+<p id="n241" class="stm run hide_run"><a href="#n241">241</a></p>
+<p id="n242" class="stm run hide_run"><a href="#n242">242</a></p>
+<p id="n243" class="stm par run hide_run"><a href="#n243">243</a></p>
+<p id="n244" class="stm mis"><a href="#n244">244</a></p>
+<p id="n245" class="stm mis"><a href="#n245">245</a></p>
+<p id="n246" class="pln"><a href="#n246">246</a></p>
+<p id="n247" class="pln"><a href="#n247">247</a></p>
+<p id="n248" class="pln"><a href="#n248">248</a></p>
+<p id="n249" class="stm run hide_run"><a href="#n249">249</a></p>
+<p id="n250" class="stm run hide_run"><a href="#n250">250</a></p>
+<p id="n251" class="pln"><a href="#n251">251</a></p>
+<p id="n252" class="pln"><a href="#n252">252</a></p>
+<p id="n253" class="pln"><a href="#n253">253</a></p>
+<p id="n254" class="pln"><a href="#n254">254</a></p>
+<p id="n255" class="stm par run hide_run"><a href="#n255">255</a></p>
+<p id="n256" class="stm mis"><a href="#n256">256</a></p>
+<p id="n257" class="pln"><a href="#n257">257</a></p>
+<p id="n258" class="pln"><a href="#n258">258</a></p>
+<p id="n259" class="stm run hide_run"><a href="#n259">259</a></p>
+<p id="n260" class="pln"><a href="#n260">260</a></p>
+<p id="n261" class="pln"><a href="#n261">261</a></p>
+<p id="n262" class="pln"><a href="#n262">262</a></p>
+<p id="n263" class="stm par run hide_run"><a href="#n263">263</a></p>
+<p id="n264" class="stm mis"><a href="#n264">264</a></p>
+<p id="n265" class="pln"><a href="#n265">265</a></p>
+<p id="n266" class="stm run hide_run"><a href="#n266">266</a></p>
+
+            </td>
+            <td class="text">
+<p id="t1" class="pln"><span class="com"># (c) 2014 James Cammarata, &lt;jcammarata@ansible.com></span><span class="strut">&nbsp;</span></p>
+<p id="t2" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t3" class="pln"><span class="com"># This file is part of Ansible</span><span class="strut">&nbsp;</span></p>
+<p id="t4" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t5" class="pln"><span class="com"># Ansible is free software: you can redistribute it and/or modify</span><span class="strut">&nbsp;</span></p>
+<p id="t6" class="pln"><span class="com"># it under the terms of the GNU General Public License as published by</span><span class="strut">&nbsp;</span></p>
+<p id="t7" class="pln"><span class="com"># the Free Software Foundation, either version 3 of the License, or</span><span class="strut">&nbsp;</span></p>
+<p id="t8" class="pln"><span class="com"># (at your option) any later version.</span><span class="strut">&nbsp;</span></p>
+<p id="t9" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t10" class="pln"><span class="com"># Ansible is distributed in the hope that it will be useful,</span><span class="strut">&nbsp;</span></p>
+<p id="t11" class="pln"><span class="com"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span><span class="strut">&nbsp;</span></p>
+<p id="t12" class="pln"><span class="com"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span><span class="strut">&nbsp;</span></p>
+<p id="t13" class="pln"><span class="com"># GNU General Public License for more details.</span><span class="strut">&nbsp;</span></p>
+<p id="t14" class="pln"><span class="com">#</span><span class="strut">&nbsp;</span></p>
+<p id="t15" class="pln"><span class="com"># You should have received a copy of the GNU General Public License</span><span class="strut">&nbsp;</span></p>
+<p id="t16" class="pln"><span class="com"># along with Ansible.  If not, see &lt;http://www.gnu.org/licenses/>.</span><span class="strut">&nbsp;</span></p>
+<p id="t17" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t18" class="pln"><span class="com"># Make coding more python3-ish</span><span class="strut">&nbsp;</span></p>
+<p id="t19" class="stm run hide_run"><span class="key">from</span> <span class="nam">__future__</span> <span class="key">import</span> <span class="op">(</span><span class="nam">absolute_import</span><span class="op">,</span> <span class="nam">division</span><span class="op">,</span> <span class="nam">print_function</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t20" class="stm run hide_run"><span class="nam">__metaclass__</span> <span class="op">=</span> <span class="nam">type</span><span class="strut">&nbsp;</span></p>
+<p id="t21" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t22" class="stm run hide_run"><span class="key">import</span> <span class="nam">codecs</span><span class="strut">&nbsp;</span></p>
+<p id="t23" class="stm run hide_run"><span class="key">import</span> <span class="nam">re</span><span class="strut">&nbsp;</span></p>
+<p id="t24" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t25" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">errors</span> <span class="key">import</span> <span class="nam">AnsibleParserError</span><span class="strut">&nbsp;</span></p>
+<p id="t26" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">module_utils</span><span class="op">.</span><span class="nam">_text</span> <span class="key">import</span> <span class="nam">to_text</span><span class="strut">&nbsp;</span></p>
+<p id="t27" class="stm run hide_run"><span class="key">from</span> <span class="nam">ansible</span><span class="op">.</span><span class="nam">parsing</span><span class="op">.</span><span class="nam">quoting</span> <span class="key">import</span> <span class="nam">unquote</span><span class="strut">&nbsp;</span></p>
+<p id="t28" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t29" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t30" class="pln"><span class="com"># Decode escapes adapted from rspeer's answer here:</span><span class="strut">&nbsp;</span></p>
+<p id="t31" class="pln"><span class="com"># http://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python</span><span class="strut">&nbsp;</span></p>
+<p id="t32" class="stm run hide_run"><span class="nam">_HEXCHAR</span> <span class="op">=</span> <span class="str">'[a-fA-F0-9]'</span><span class="strut">&nbsp;</span></p>
+<p id="t33" class="stm run hide_run"><span class="nam">_ESCAPE_SEQUENCE_RE</span> <span class="op">=</span> <span class="nam">re</span><span class="op">.</span><span class="nam">compile</span><span class="op">(</span><span class="str">r'''</span><span class="strut">&nbsp;</span></p>
+<p id="t34" class="pln"><span class="str">    ( \\U{0}           # 8-digit hex escapes</span><span class="strut">&nbsp;</span></p>
+<p id="t35" class="pln"><span class="str">    | \\u{1}           # 4-digit hex escapes</span><span class="strut">&nbsp;</span></p>
+<p id="t36" class="pln"><span class="str">    | \\x{2}           # 2-digit hex escapes</span><span class="strut">&nbsp;</span></p>
+<p id="t37" class="pln"><span class="str">    | \\N\{{[^}}]+\}}  # Unicode characters by name</span><span class="strut">&nbsp;</span></p>
+<p id="t38" class="pln"><span class="str">    | \\[\\'"abfnrtv]  # Single-character escapes</span><span class="strut">&nbsp;</span></p>
+<p id="t39" class="pln"><span class="str">    )'''</span><span class="op">.</span><span class="nam">format</span><span class="op">(</span><span class="nam">_HEXCHAR</span> <span class="op">*</span> <span class="num">8</span><span class="op">,</span> <span class="nam">_HEXCHAR</span> <span class="op">*</span> <span class="num">4</span><span class="op">,</span> <span class="nam">_HEXCHAR</span> <span class="op">*</span> <span class="num">2</span><span class="op">)</span><span class="op">,</span> <span class="nam">re</span><span class="op">.</span><span class="nam">UNICODE</span> <span class="op">|</span> <span class="nam">re</span><span class="op">.</span><span class="nam">VERBOSE</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t40" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t41" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t42" class="stm run hide_run"><span class="key">def</span> <span class="nam">_decode_escapes</span><span class="op">(</span><span class="nam">s</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t43" class="stm run hide_run">    <span class="key">def</span> <span class="nam">decode_match</span><span class="op">(</span><span class="nam">match</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t44" class="stm mis">        <span class="key">return</span> <span class="nam">codecs</span><span class="op">.</span><span class="nam">decode</span><span class="op">(</span><span class="nam">match</span><span class="op">.</span><span class="nam">group</span><span class="op">(</span><span class="num">0</span><span class="op">)</span><span class="op">,</span> <span class="str">'unicode-escape'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t45" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t46" class="stm run hide_run">    <span class="key">return</span> <span class="nam">_ESCAPE_SEQUENCE_RE</span><span class="op">.</span><span class="nam">sub</span><span class="op">(</span><span class="nam">decode_match</span><span class="op">,</span> <span class="nam">s</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t47" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t48" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t49" class="stm run hide_run"><span class="key">def</span> <span class="nam">parse_kv</span><span class="op">(</span><span class="nam">args</span><span class="op">,</span> <span class="nam">check_raw</span><span class="op">=</span><span class="nam">False</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t50" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t51" class="pln"><span class="str">    Convert a string of key/value items to a dict. If any free-form params</span><span class="strut">&nbsp;</span></p>
+<p id="t52" class="pln"><span class="str">    are found and the check_raw option is set to True, they will be added</span><span class="strut">&nbsp;</span></p>
+<p id="t53" class="pln"><span class="str">    to a new parameter called '_raw_params'. If check_raw is not enabled,</span><span class="strut">&nbsp;</span></p>
+<p id="t54" class="pln"><span class="str">    they will simply be ignored.</span><span class="strut">&nbsp;</span></p>
+<p id="t55" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t56" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t57" class="stm run hide_run">    <span class="nam">args</span> <span class="op">=</span> <span class="nam">to_text</span><span class="op">(</span><span class="nam">args</span><span class="op">,</span> <span class="nam">nonstring</span><span class="op">=</span><span class="str">'passthru'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t58" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t59" class="stm run hide_run">    <span class="nam">options</span> <span class="op">=</span> <span class="op">{</span><span class="op">}</span><span class="strut">&nbsp;</span></p>
+<p id="t60" class="stm par run hide_run"><span class="annotate short">60&#x202F;&#x219B;&#x202F;102</span><span class="annotate long">line 60 didn't jump to line 102, because the condition on line 60 was never false</span>    <span class="key">if</span> <span class="nam">args</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t61" class="stm run hide_run">        <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t62" class="stm run hide_run">            <span class="nam">vargs</span> <span class="op">=</span> <span class="nam">split_args</span><span class="op">(</span><span class="nam">args</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t63" class="stm mis">        <span class="key">except</span> <span class="nam">ValueError</span> <span class="key">as</span> <span class="nam">ve</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t64" class="stm mis">            <span class="key">if</span> <span class="str">'no closing quotation'</span> <span class="key">in</span> <span class="nam">str</span><span class="op">(</span><span class="nam">ve</span><span class="op">)</span><span class="op">.</span><span class="nam">lower</span><span class="op">(</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t65" class="stm mis">                <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">"error parsing argument string, try quoting the entire line."</span><span class="op">,</span> <span class="nam">orig_exc</span><span class="op">=</span><span class="nam">ve</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t66" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t67" class="stm mis">                <span class="key">raise</span><span class="strut">&nbsp;</span></p>
+<p id="t68" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t69" class="stm run hide_run">        <span class="nam">raw_params</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t70" class="stm run hide_run">        <span class="key">for</span> <span class="nam">orig_x</span> <span class="key">in</span> <span class="nam">vargs</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t71" class="stm run hide_run">            <span class="nam">x</span> <span class="op">=</span> <span class="nam">_decode_escapes</span><span class="op">(</span><span class="nam">orig_x</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t72" class="stm run hide_run">            <span class="key">if</span> <span class="str">"="</span> <span class="key">in</span> <span class="nam">x</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t73" class="stm run hide_run">                <span class="nam">pos</span> <span class="op">=</span> <span class="num">0</span><span class="strut">&nbsp;</span></p>
+<p id="t74" class="stm run hide_run">                <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t75" class="stm run hide_run">                    <span class="key">while</span> <span class="nam">True</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t76" class="stm run hide_run">                        <span class="nam">pos</span> <span class="op">=</span> <span class="nam">x</span><span class="op">.</span><span class="nam">index</span><span class="op">(</span><span class="str">'='</span><span class="op">,</span> <span class="nam">pos</span> <span class="op">+</span> <span class="num">1</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t77" class="stm par run hide_run"><span class="annotate short">77&#x202F;&#x219B;&#x202F;75</span><span class="annotate long">line 77 didn't jump to line 75, because the condition on line 77 was never false</span>                        <span class="key">if</span> <span class="nam">pos</span> <span class="op">></span> <span class="num">0</span> <span class="key">and</span> <span class="nam">x</span><span class="op">[</span><span class="nam">pos</span> <span class="op">-</span> <span class="num">1</span><span class="op">]</span> <span class="op">!=</span> <span class="str">'\\'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t78" class="stm run hide_run">                            <span class="key">break</span><span class="strut">&nbsp;</span></p>
+<p id="t79" class="stm mis">                <span class="key">except</span> <span class="nam">ValueError</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t80" class="pln">                    <span class="com"># ran out of string, but we must have some escaped equals,</span><span class="strut">&nbsp;</span></p>
+<p id="t81" class="pln">                    <span class="com"># so replace those and append this to the list of raw params</span><span class="strut">&nbsp;</span></p>
+<p id="t82" class="stm mis">                    <span class="nam">raw_params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">x</span><span class="op">.</span><span class="nam">replace</span><span class="op">(</span><span class="str">'\\='</span><span class="op">,</span> <span class="str">'='</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t83" class="stm mis">                    <span class="key">continue</span><span class="strut">&nbsp;</span></p>
+<p id="t84" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t85" class="stm run hide_run">                <span class="nam">k</span> <span class="op">=</span> <span class="nam">x</span><span class="op">[</span><span class="op">:</span><span class="nam">pos</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t86" class="stm run hide_run">                <span class="nam">v</span> <span class="op">=</span> <span class="nam">x</span><span class="op">[</span><span class="nam">pos</span> <span class="op">+</span> <span class="num">1</span><span class="op">:</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t87" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t88" class="pln">                <span class="com"># FIXME: make the retrieval of this list of shell/command</span><span class="strut">&nbsp;</span></p>
+<p id="t89" class="pln">                <span class="com">#        options a function, so the list is centralized</span><span class="strut">&nbsp;</span></p>
+<p id="t90" class="stm par run hide_run"><span class="annotate short">90&#x202F;&#x219B;&#x202F;91</span><span class="annotate long">line 90 didn't jump to line 91, because the condition on line 90 was never true</span>                <span class="key">if</span> <span class="nam">check_raw</span> <span class="key">and</span> <span class="nam">k</span> <span class="key">not</span> <span class="key">in</span> <span class="op">(</span><span class="str">'creates'</span><span class="op">,</span> <span class="str">'removes'</span><span class="op">,</span> <span class="str">'chdir'</span><span class="op">,</span> <span class="str">'executable'</span><span class="op">,</span> <span class="str">'warn'</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t91" class="stm mis">                    <span class="nam">raw_params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">orig_x</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t92" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t93" class="stm run hide_run">                    <span class="nam">options</span><span class="op">[</span><span class="nam">k</span><span class="op">.</span><span class="nam">strip</span><span class="op">(</span><span class="op">)</span><span class="op">]</span> <span class="op">=</span> <span class="nam">unquote</span><span class="op">(</span><span class="nam">v</span><span class="op">.</span><span class="nam">strip</span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t94" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t95" class="stm run hide_run">                <span class="nam">raw_params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">orig_x</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t96" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t97" class="pln">        <span class="com"># recombine the free-form params, if any were found, and assign</span><span class="strut">&nbsp;</span></p>
+<p id="t98" class="pln">        <span class="com"># them to a special option for use later by the shell/command module</span><span class="strut">&nbsp;</span></p>
+<p id="t99" class="stm run hide_run">        <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">raw_params</span><span class="op">)</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t100" class="stm run hide_run">            <span class="nam">options</span><span class="op">[</span><span class="str">u'_raw_params'</span><span class="op">]</span> <span class="op">=</span> <span class="str">' '</span><span class="op">.</span><span class="nam">join</span><span class="op">(</span><span class="nam">raw_params</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t101" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t102" class="stm run hide_run">    <span class="key">return</span> <span class="nam">options</span><span class="strut">&nbsp;</span></p>
+<p id="t103" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t104" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t105" class="stm run hide_run"><span class="key">def</span> <span class="nam">_get_quote_state</span><span class="op">(</span><span class="nam">token</span><span class="op">,</span> <span class="nam">quote_char</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t106" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t107" class="pln"><span class="str">    the goal of this block is to determine if the quoted string</span><span class="strut">&nbsp;</span></p>
+<p id="t108" class="pln"><span class="str">    is unterminated in which case it needs to be put back together</span><span class="strut">&nbsp;</span></p>
+<p id="t109" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t110" class="pln">    <span class="com"># the char before the current one, used to see if</span><span class="strut">&nbsp;</span></p>
+<p id="t111" class="pln">    <span class="com"># the current character is escaped</span><span class="strut">&nbsp;</span></p>
+<p id="t112" class="stm run hide_run">    <span class="nam">prev_char</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t113" class="stm run hide_run">    <span class="key">for</span> <span class="nam">idx</span><span class="op">,</span> <span class="nam">cur_char</span> <span class="key">in</span> <span class="nam">enumerate</span><span class="op">(</span><span class="nam">token</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t114" class="stm run hide_run">        <span class="key">if</span> <span class="nam">idx</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t115" class="stm run hide_run">            <span class="nam">prev_char</span> <span class="op">=</span> <span class="nam">token</span><span class="op">[</span><span class="nam">idx</span> <span class="op">-</span> <span class="num">1</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t116" class="stm run hide_run">        <span class="key">if</span> <span class="nam">cur_char</span> <span class="key">in</span> <span class="str">'"\''</span> <span class="key">and</span> <span class="nam">prev_char</span> <span class="op">!=</span> <span class="str">'\\'</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t117" class="stm run hide_run">            <span class="key">if</span> <span class="nam">quote_char</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t118" class="stm run hide_run">                <span class="key">if</span> <span class="nam">cur_char</span> <span class="op">==</span> <span class="nam">quote_char</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t119" class="stm run hide_run">                    <span class="nam">quote_char</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t120" class="pln">            <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t121" class="stm run hide_run">                <span class="nam">quote_char</span> <span class="op">=</span> <span class="nam">cur_char</span><span class="strut">&nbsp;</span></p>
+<p id="t122" class="stm run hide_run">    <span class="key">return</span> <span class="nam">quote_char</span><span class="strut">&nbsp;</span></p>
+<p id="t123" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t124" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t125" class="stm run hide_run"><span class="key">def</span> <span class="nam">_count_jinja2_blocks</span><span class="op">(</span><span class="nam">token</span><span class="op">,</span> <span class="nam">cur_depth</span><span class="op">,</span> <span class="nam">open_token</span><span class="op">,</span> <span class="nam">close_token</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t126" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t127" class="pln"><span class="str">    this function counts the number of opening/closing blocks for a</span><span class="strut">&nbsp;</span></p>
+<p id="t128" class="pln"><span class="str">    given opening/closing type and adjusts the current depth for that</span><span class="strut">&nbsp;</span></p>
+<p id="t129" class="pln"><span class="str">    block based on the difference</span><span class="strut">&nbsp;</span></p>
+<p id="t130" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t131" class="stm run hide_run">    <span class="nam">num_open</span> <span class="op">=</span> <span class="nam">token</span><span class="op">.</span><span class="nam">count</span><span class="op">(</span><span class="nam">open_token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t132" class="stm run hide_run">    <span class="nam">num_close</span> <span class="op">=</span> <span class="nam">token</span><span class="op">.</span><span class="nam">count</span><span class="op">(</span><span class="nam">close_token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t133" class="stm run hide_run">    <span class="key">if</span> <span class="nam">num_open</span> <span class="op">!=</span> <span class="nam">num_close</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t134" class="stm run hide_run">        <span class="nam">cur_depth</span> <span class="op">+=</span> <span class="op">(</span><span class="nam">num_open</span> <span class="op">-</span> <span class="nam">num_close</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t135" class="stm par run hide_run"><span class="annotate short">135&#x202F;&#x219B;&#x202F;136</span><span class="annotate long">line 135 didn't jump to line 136, because the condition on line 135 was never true</span>        <span class="key">if</span> <span class="nam">cur_depth</span> <span class="op">&lt;</span> <span class="num">0</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t136" class="stm mis">            <span class="nam">cur_depth</span> <span class="op">=</span> <span class="num">0</span><span class="strut">&nbsp;</span></p>
+<p id="t137" class="stm run hide_run">    <span class="key">return</span> <span class="nam">cur_depth</span><span class="strut">&nbsp;</span></p>
+<p id="t138" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t139" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t140" class="stm run hide_run"><span class="key">def</span> <span class="nam">split_args</span><span class="op">(</span><span class="nam">args</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t141" class="pln">    <span class="str">'''</span><span class="strut">&nbsp;</span></p>
+<p id="t142" class="pln"><span class="str">    Splits args on whitespace, but intelligently reassembles</span><span class="strut">&nbsp;</span></p>
+<p id="t143" class="pln"><span class="str">    those that may have been split over a jinja2 block or quotes.</span><span class="strut">&nbsp;</span></p>
+<p id="t144" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t145" class="pln"><span class="str">    When used in a remote module, we won't ever have to be concerned about</span><span class="strut">&nbsp;</span></p>
+<p id="t146" class="pln"><span class="str">    jinja2 blocks, however this function is/will be used in the</span><span class="strut">&nbsp;</span></p>
+<p id="t147" class="pln"><span class="str">    core portions as well before the args are templated.</span><span class="strut">&nbsp;</span></p>
+<p id="t148" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t149" class="pln"><span class="str">    example input: a=b c="foo bar"</span><span class="strut">&nbsp;</span></p>
+<p id="t150" class="pln"><span class="str">    example output: ['a=b', 'c="foo bar"']</span><span class="strut">&nbsp;</span></p>
+<p id="t151" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t152" class="pln"><span class="str">    Basically this is a variation shlex that has some more intelligence for</span><span class="strut">&nbsp;</span></p>
+<p id="t153" class="pln"><span class="str">    how Ansible needs to use it.</span><span class="strut">&nbsp;</span></p>
+<p id="t154" class="pln"><span class="str">    '''</span><span class="strut">&nbsp;</span></p>
+<p id="t155" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t156" class="pln">    <span class="com"># the list of params parsed out of the arg string</span><span class="strut">&nbsp;</span></p>
+<p id="t157" class="pln">    <span class="com"># this is going to be the result value when we are done</span><span class="strut">&nbsp;</span></p>
+<p id="t158" class="stm run hide_run">    <span class="nam">params</span> <span class="op">=</span> <span class="op">[</span><span class="op">]</span><span class="strut">&nbsp;</span></p>
+<p id="t159" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t160" class="pln">    <span class="com"># Initial split on white space</span><span class="strut">&nbsp;</span></p>
+<p id="t161" class="stm run hide_run">    <span class="nam">args</span> <span class="op">=</span> <span class="nam">args</span><span class="op">.</span><span class="nam">strip</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t162" class="stm run hide_run">    <span class="nam">items</span> <span class="op">=</span> <span class="nam">args</span><span class="op">.</span><span class="nam">strip</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">split</span><span class="op">(</span><span class="str">'\n'</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t163" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t164" class="pln">    <span class="com"># iterate over the tokens, and reassemble any that may have been</span><span class="strut">&nbsp;</span></p>
+<p id="t165" class="pln">    <span class="com"># split on a space inside a jinja2 block.</span><span class="strut">&nbsp;</span></p>
+<p id="t166" class="pln">    <span class="com"># ex if tokens are "{{", "foo", "}}" these go together</span><span class="strut">&nbsp;</span></p>
+<p id="t167" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t168" class="pln">    <span class="com"># These variables are used</span><span class="strut">&nbsp;</span></p>
+<p id="t169" class="pln">    <span class="com"># to keep track of the state of the parsing, since blocks and quotes</span><span class="strut">&nbsp;</span></p>
+<p id="t170" class="pln">    <span class="com"># may be nested within each other.</span><span class="strut">&nbsp;</span></p>
+<p id="t171" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t172" class="stm run hide_run">    <span class="nam">quote_char</span> <span class="op">=</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t173" class="stm run hide_run">    <span class="nam">inside_quotes</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t174" class="stm run hide_run">    <span class="nam">print_depth</span> <span class="op">=</span> <span class="num">0</span>  <span class="com"># used to count nested jinja2 {{ }} blocks</span><span class="strut">&nbsp;</span></p>
+<p id="t175" class="stm run hide_run">    <span class="nam">block_depth</span> <span class="op">=</span> <span class="num">0</span>  <span class="com"># used to count nested jinja2 {% %} blocks</span><span class="strut">&nbsp;</span></p>
+<p id="t176" class="stm run hide_run">    <span class="nam">comment_depth</span> <span class="op">=</span> <span class="num">0</span>  <span class="com"># used to count nested jinja2 {# #} blocks</span><span class="strut">&nbsp;</span></p>
+<p id="t177" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t178" class="pln">    <span class="com"># now we loop over each split chunk, coalescing tokens if the white space</span><span class="strut">&nbsp;</span></p>
+<p id="t179" class="pln">    <span class="com"># split occurred within quotes or a jinja2 block of some kind</span><span class="strut">&nbsp;</span></p>
+<p id="t180" class="stm run hide_run">    <span class="key">for</span> <span class="op">(</span><span class="nam">itemidx</span><span class="op">,</span> <span class="nam">item</span><span class="op">)</span> <span class="key">in</span> <span class="nam">enumerate</span><span class="op">(</span><span class="nam">items</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t181" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t182" class="pln">        <span class="com"># we split on spaces and newlines separately, so that we</span><span class="strut">&nbsp;</span></p>
+<p id="t183" class="pln">        <span class="com"># can tell which character we split on for reassembly</span><span class="strut">&nbsp;</span></p>
+<p id="t184" class="pln">        <span class="com"># inside quotation characters</span><span class="strut">&nbsp;</span></p>
+<p id="t185" class="stm run hide_run">        <span class="nam">tokens</span> <span class="op">=</span> <span class="nam">item</span><span class="op">.</span><span class="nam">strip</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">split</span><span class="op">(</span><span class="str">' '</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t186" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t187" class="stm run hide_run">        <span class="nam">line_continuation</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t188" class="stm run hide_run">        <span class="key">for</span> <span class="op">(</span><span class="nam">idx</span><span class="op">,</span> <span class="nam">token</span><span class="op">)</span> <span class="key">in</span> <span class="nam">enumerate</span><span class="op">(</span><span class="nam">tokens</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t189" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t190" class="pln">            <span class="com"># if we hit a line continuation character, but</span><span class="strut">&nbsp;</span></p>
+<p id="t191" class="pln">            <span class="com"># we're not inside quotes, ignore it and continue</span><span class="strut">&nbsp;</span></p>
+<p id="t192" class="pln">            <span class="com"># on to the next token while setting a flag</span><span class="strut">&nbsp;</span></p>
+<p id="t193" class="stm par run hide_run"><span class="annotate short">193&#x202F;&#x219B;&#x202F;194</span><span class="annotate long">line 193 didn't jump to line 194, because the condition on line 193 was never true</span>            <span class="key">if</span> <span class="nam">token</span> <span class="op">==</span> <span class="str">'\\'</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">inside_quotes</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t194" class="stm mis">                <span class="nam">line_continuation</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t195" class="stm mis">                <span class="key">continue</span><span class="strut">&nbsp;</span></p>
+<p id="t196" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t197" class="pln">            <span class="com"># store the previous quoting state for checking later</span><span class="strut">&nbsp;</span></p>
+<p id="t198" class="stm run hide_run">            <span class="nam">was_inside_quotes</span> <span class="op">=</span> <span class="nam">inside_quotes</span><span class="strut">&nbsp;</span></p>
+<p id="t199" class="stm run hide_run">            <span class="nam">quote_char</span> <span class="op">=</span> <span class="nam">_get_quote_state</span><span class="op">(</span><span class="nam">token</span><span class="op">,</span> <span class="nam">quote_char</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t200" class="stm run hide_run">            <span class="nam">inside_quotes</span> <span class="op">=</span> <span class="nam">quote_char</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">None</span><span class="strut">&nbsp;</span></p>
+<p id="t201" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t202" class="pln">            <span class="com"># multiple conditions may append a token to the list of params,</span><span class="strut">&nbsp;</span></p>
+<p id="t203" class="pln">            <span class="com"># so we keep track with this flag to make sure it only happens once</span><span class="strut">&nbsp;</span></p>
+<p id="t204" class="pln">            <span class="com"># append means add to the end of the list, don't append means concatenate</span><span class="strut">&nbsp;</span></p>
+<p id="t205" class="pln">            <span class="com"># it to the end of the last token</span><span class="strut">&nbsp;</span></p>
+<p id="t206" class="stm run hide_run">            <span class="nam">appended</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t207" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t208" class="pln">            <span class="com"># if we're inside quotes now, but weren't before, append the token</span><span class="strut">&nbsp;</span></p>
+<p id="t209" class="pln">            <span class="com"># to the end of the list, since we'll tack on more to it later</span><span class="strut">&nbsp;</span></p>
+<p id="t210" class="pln">            <span class="com"># otherwise, if we're inside any jinja2 block, inside quotes, or we were</span><span class="strut">&nbsp;</span></p>
+<p id="t211" class="pln">            <span class="com"># inside quotes (but aren't now) concat this token to the last param</span><span class="strut">&nbsp;</span></p>
+<p id="t212" class="stm run hide_run">            <span class="key">if</span> <span class="nam">inside_quotes</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">was_inside_quotes</span> <span class="key">and</span> <span class="key">not</span><span class="op">(</span><span class="nam">print_depth</span> <span class="key">or</span> <span class="nam">block_depth</span> <span class="key">or</span> <span class="nam">comment_depth</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t213" class="stm run hide_run">                <span class="nam">params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t214" class="stm run hide_run">                <span class="nam">appended</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t215" class="stm run hide_run">            <span class="key">elif</span> <span class="nam">print_depth</span> <span class="key">or</span> <span class="nam">block_depth</span> <span class="key">or</span> <span class="nam">comment_depth</span> <span class="key">or</span> <span class="nam">inside_quotes</span> <span class="key">or</span> <span class="nam">was_inside_quotes</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t216" class="stm par run hide_run"><span class="annotate short">216&#x202F;&#x219B;&#x202F;217</span><span class="annotate long">line 216 didn't jump to line 217, because the condition on line 216 was never true</span>                <span class="key">if</span> <span class="nam">idx</span> <span class="op">==</span> <span class="num">0</span> <span class="key">and</span> <span class="nam">was_inside_quotes</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t217" class="stm mis">                    <span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span> <span class="op">=</span> <span class="str">"%s%s"</span> <span class="op">%</span> <span class="op">(</span><span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span><span class="op">,</span> <span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t218" class="stm par run hide_run"><span class="annotate short">218&#x202F;&#x219B;&#x202F;224</span><span class="annotate long">line 218 didn't jump to line 224, because the condition on line 218 was never false</span>                <span class="key">elif</span> <span class="nam">len</span><span class="op">(</span><span class="nam">tokens</span><span class="op">)</span> <span class="op">></span> <span class="num">1</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t219" class="stm run hide_run">                    <span class="nam">spacer</span> <span class="op">=</span> <span class="str">''</span><span class="strut">&nbsp;</span></p>
+<p id="t220" class="stm par run hide_run"><span class="annotate short">220&#x202F;&#x219B;&#x202F;222</span><span class="annotate long">line 220 didn't jump to line 222, because the condition on line 220 was never false</span>                    <span class="key">if</span> <span class="nam">idx</span> <span class="op">></span> <span class="num">0</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t221" class="stm run hide_run">                        <span class="nam">spacer</span> <span class="op">=</span> <span class="str">' '</span><span class="strut">&nbsp;</span></p>
+<p id="t222" class="stm run hide_run">                    <span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span> <span class="op">=</span> <span class="str">"%s%s%s"</span> <span class="op">%</span> <span class="op">(</span><span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span><span class="op">,</span> <span class="nam">spacer</span><span class="op">,</span> <span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t223" class="pln">                <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t224" class="stm mis">                    <span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span> <span class="op">=</span> <span class="str">"%s\n%s"</span> <span class="op">%</span> <span class="op">(</span><span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span><span class="op">,</span> <span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t225" class="stm run hide_run">                <span class="nam">appended</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t226" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t227" class="pln">            <span class="com"># if the number of paired block tags is not the same, the depth has changed, so we calculate that here</span><span class="strut">&nbsp;</span></p>
+<p id="t228" class="pln">            <span class="com"># and may append the current token to the params (if we haven't previously done so)</span><span class="strut">&nbsp;</span></p>
+<p id="t229" class="stm run hide_run">            <span class="nam">prev_print_depth</span> <span class="op">=</span> <span class="nam">print_depth</span><span class="strut">&nbsp;</span></p>
+<p id="t230" class="stm run hide_run">            <span class="nam">print_depth</span> <span class="op">=</span> <span class="nam">_count_jinja2_blocks</span><span class="op">(</span><span class="nam">token</span><span class="op">,</span> <span class="nam">print_depth</span><span class="op">,</span> <span class="str">"{{"</span><span class="op">,</span> <span class="str">"}}"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t231" class="stm run hide_run">            <span class="key">if</span> <span class="nam">print_depth</span> <span class="op">!=</span> <span class="nam">prev_print_depth</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">appended</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t232" class="stm run hide_run">                <span class="nam">params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t233" class="stm run hide_run">                <span class="nam">appended</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t234" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t235" class="stm run hide_run">            <span class="nam">prev_block_depth</span> <span class="op">=</span> <span class="nam">block_depth</span><span class="strut">&nbsp;</span></p>
+<p id="t236" class="stm run hide_run">            <span class="nam">block_depth</span> <span class="op">=</span> <span class="nam">_count_jinja2_blocks</span><span class="op">(</span><span class="nam">token</span><span class="op">,</span> <span class="nam">block_depth</span><span class="op">,</span> <span class="str">"{%"</span><span class="op">,</span> <span class="str">"%}"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t237" class="stm par run hide_run"><span class="annotate short">237&#x202F;&#x219B;&#x202F;238</span><span class="annotate long">line 237 didn't jump to line 238, because the condition on line 237 was never true</span>            <span class="key">if</span> <span class="nam">block_depth</span> <span class="op">!=</span> <span class="nam">prev_block_depth</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">appended</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t238" class="stm mis">                <span class="nam">params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t239" class="stm mis">                <span class="nam">appended</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t240" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t241" class="stm run hide_run">            <span class="nam">prev_comment_depth</span> <span class="op">=</span> <span class="nam">comment_depth</span><span class="strut">&nbsp;</span></p>
+<p id="t242" class="stm run hide_run">            <span class="nam">comment_depth</span> <span class="op">=</span> <span class="nam">_count_jinja2_blocks</span><span class="op">(</span><span class="nam">token</span><span class="op">,</span> <span class="nam">comment_depth</span><span class="op">,</span> <span class="str">"{#"</span><span class="op">,</span> <span class="str">"#}"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t243" class="stm par run hide_run"><span class="annotate short">243&#x202F;&#x219B;&#x202F;244</span><span class="annotate long">line 243 didn't jump to line 244, because the condition on line 243 was never true</span>            <span class="key">if</span> <span class="nam">comment_depth</span> <span class="op">!=</span> <span class="nam">prev_comment_depth</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">appended</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t244" class="stm mis">                <span class="nam">params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t245" class="stm mis">                <span class="nam">appended</span> <span class="op">=</span> <span class="nam">True</span><span class="strut">&nbsp;</span></p>
+<p id="t246" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t247" class="pln">            <span class="com"># finally, if we're at zero depth for all blocks and not inside quotes, and have not</span><span class="strut">&nbsp;</span></p>
+<p id="t248" class="pln">            <span class="com"># yet appended anything to the list of params, we do so now</span><span class="strut">&nbsp;</span></p>
+<p id="t249" class="stm run hide_run">            <span class="key">if</span> <span class="key">not</span> <span class="op">(</span><span class="nam">print_depth</span> <span class="key">or</span> <span class="nam">block_depth</span> <span class="key">or</span> <span class="nam">comment_depth</span><span class="op">)</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">inside_quotes</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">appended</span> <span class="key">and</span> <span class="nam">token</span> <span class="op">!=</span> <span class="str">''</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t250" class="stm run hide_run">                <span class="nam">params</span><span class="op">.</span><span class="nam">append</span><span class="op">(</span><span class="nam">token</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t251" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t252" class="pln">        <span class="com"># if this was the last token in the list, and we have more than</span><span class="strut">&nbsp;</span></p>
+<p id="t253" class="pln">        <span class="com"># one item (meaning we split on newlines), add a newline back here</span><span class="strut">&nbsp;</span></p>
+<p id="t254" class="pln">        <span class="com"># to preserve the original structure</span><span class="strut">&nbsp;</span></p>
+<p id="t255" class="stm par run hide_run"><span class="annotate short">255&#x202F;&#x219B;&#x202F;256</span><span class="annotate long">line 255 didn't jump to line 256, because the condition on line 255 was never true</span>        <span class="key">if</span> <span class="nam">len</span><span class="op">(</span><span class="nam">items</span><span class="op">)</span> <span class="op">></span> <span class="num">1</span> <span class="key">and</span> <span class="nam">itemidx</span> <span class="op">!=</span> <span class="nam">len</span><span class="op">(</span><span class="nam">items</span><span class="op">)</span> <span class="op">-</span> <span class="num">1</span> <span class="key">and</span> <span class="key">not</span> <span class="nam">line_continuation</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t256" class="stm mis">            <span class="nam">params</span><span class="op">[</span><span class="op">-</span><span class="num">1</span><span class="op">]</span> <span class="op">+=</span> <span class="str">'\n'</span><span class="strut">&nbsp;</span></p>
+<p id="t257" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t258" class="pln">        <span class="com"># always clear the line continuation flag</span><span class="strut">&nbsp;</span></p>
+<p id="t259" class="stm run hide_run">        <span class="nam">line_continuation</span> <span class="op">=</span> <span class="nam">False</span><span class="strut">&nbsp;</span></p>
+<p id="t260" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t261" class="pln">    <span class="com"># If we're done and things are not at zero depth or we're still inside quotes,</span><span class="strut">&nbsp;</span></p>
+<p id="t262" class="pln">    <span class="com"># raise an error to indicate that the args were unbalanced</span><span class="strut">&nbsp;</span></p>
+<p id="t263" class="stm par run hide_run"><span class="annotate short">263&#x202F;&#x219B;&#x202F;264</span><span class="annotate long">line 263 didn't jump to line 264, because the condition on line 263 was never true</span>    <span class="key">if</span> <span class="nam">print_depth</span> <span class="key">or</span> <span class="nam">block_depth</span> <span class="key">or</span> <span class="nam">comment_depth</span> <span class="key">or</span> <span class="nam">inside_quotes</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t264" class="stm mis">        <span class="key">raise</span> <span class="nam">AnsibleParserError</span><span class="op">(</span><span class="str">u"failed at splitting arguments, either an unbalanced jinja2 block or quotes: {0}"</span><span class="op">.</span><span class="nam">format</span><span class="op">(</span><span class="nam">args</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t265" class="pln"><span class="strut">&nbsp;</span></p>
+<p id="t266" class="stm run hide_run">    <span class="key">return</span> <span class="nam">params</span><span class="strut">&nbsp;</span></p>
+
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.2</a>,
+            created at 2019-05-13 15:45
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
