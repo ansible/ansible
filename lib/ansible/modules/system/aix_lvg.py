@@ -342,7 +342,7 @@ def main():
         pp_size = ''
     else:
         if 1 <= pp_size <= 1024 and (pp_size & (pp_size - 1)) == 0:
-        pp_size = "-s %s" % pp_size
+            pp_size = "-s %s" % pp_size
         else:
             msg = "pp_size must be >= 1 and <= 1024, and a multiple of 2 (supplied: '%s')." % pp_size
             module.fail_json(msg=msg)
