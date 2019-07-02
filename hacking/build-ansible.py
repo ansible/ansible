@@ -56,7 +56,7 @@ def main():
 
     arg_parser = create_arg_parser(os.path.basename(sys.argv[0]))
     subparsers = arg_parser.add_subparsers(title='Subcommands', dest='command',
-                                           help='for help use build-ansible SUBCOMMANDS -h')
+                                           help='for help use build-ansible.py SUBCOMMANDS -h')
     subcommands.pipe('init_parser', subparsers.add_parser)
 
     if argcomplete:
