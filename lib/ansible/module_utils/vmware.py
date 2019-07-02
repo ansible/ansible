@@ -1252,6 +1252,25 @@ class PyVmomi(object):
                 return dsc
         return None
 
+    # Resource pool
+    def find_resource_pool_by_name(self, resource_pool_name, folder=None):
+        """
+        Get resource pool managed object by name
+        Args:
+            resource_pool_name: Name of resource pool
+
+        Returns: Resource pool managed object if found else None
+
+        """
+        if not folder:
+            folder = self.content.rootFolder
+
+        resource_pools = get_all_objs(self.content, [vim.ResourcePool], folder=folder)
+        for rp in resource_pools:
+            if rp.name == resource_pool_name:
+                return rp
+        return None
+
     # VMDK stuff
     def vmdk_disk_path_split(self, vmdk_path):
         """
