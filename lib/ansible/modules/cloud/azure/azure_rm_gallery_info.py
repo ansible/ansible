@@ -92,16 +92,6 @@ galleries:
           - The current state of the gallery.
         type: str
         sample: "Succeeded"
-    identifier:
-        description:
-          - This is the gallery Definition identifier.
-        type: dict
-            contain:
-              uniqueName:
-                description:
-                  - The unique name of the Shared Image Gallery. This name is generated automatically by Azure.
-                type: str
-                sample: "myUniqueName"
 
 '''
 
@@ -224,7 +214,7 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return [self.format_item(x) for x in results] if results else []
+        return [self.format_item(x) for x in results['value']] if results['value'] else []
 
     def list(self):
         response = None
@@ -251,19 +241,18 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return [self.format_item(x) for x in results] if results else []
+        return [self.format_item(x) for x in results['value']] if results['value'] else []
 
-    def format_item(item):
-        item = {
+    def format_item(self,item):
+        d = {
             'id': item['id'],
             'name': item['name'],
             'location': item['location'],
             'tags': item.get('tags'),
-            'description': item['porperties']['desciption'],
-            'provisioningState': item['porperties']['provisioningState'],
-            'identifier': item['porperties']['identifier']
+            'description': item['properties']['description'],
+            'provisioningState': item['properties']['provisioningState']
         }
-        return item
+        return d
 
 
 def main():

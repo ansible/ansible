@@ -256,18 +256,18 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return [self.format_item(x) for x in results] if results else []
+        return [self.format_item(x) for x in results['value']] if results['value'] else []
 
-def format_item(item):
-        item = {
+def format_item(self,item):
+        d = {
             'id': item['id'],
             'name': item['name'],
             'location': item['location'],
             'tags': item.get('tags'),
-            'publishingProfile': item['porperties']['publishingProfile'],
-            'provisioningState': item['porperties']['provisioningState']
+            'publishingProfile': item['properties']['publishingProfile'],
+            'provisioningState': item['properties']['provisioningState']
         }
-        return item
+        return d
 
 
 def main():
