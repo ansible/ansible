@@ -78,7 +78,7 @@ Function Install-PrereqModule {
                     if ((Get-Command -Name Install-Module).Parameters.ContainsKey('SkipPublisherCheck')) {
                         $install_params.SkipPublisherCheck = $true
                     }
-                    
+
                     Install-Module @install_params > $null
 
                     if ( $Name -eq 'PowerShellGet' ) {
