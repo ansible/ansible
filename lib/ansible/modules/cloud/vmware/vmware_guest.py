@@ -1093,7 +1093,7 @@ class PyVmomiHelper(PyVmomi):
             if 'max_connections' in self.params['hardware']:
                 # maxMksConnections == max_connections
                 self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
-                if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
+                if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.maxMksConnections:
                     self.change_detected = True
 
             if 'nested_virt' in self.params['hardware']:

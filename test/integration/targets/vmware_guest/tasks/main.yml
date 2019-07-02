@@ -28,3 +28,4 @@
 - include: linked_clone_d1_c1_f0.yml
 - include: boot_firmware_d1_c1_f0.yml
 - include: clone_with_convert.yml
+#- include: max_connections.yml
