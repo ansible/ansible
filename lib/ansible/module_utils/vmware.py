@@ -557,6 +557,7 @@ def connect_to_api(module, disconnect_atexit=True, return_si=False):
         atexit.register(connect.Disconnect, service_instance)
     if return_si:
         return service_instance, service_instance.RetrieveContent()
+    
     return service_instance.RetrieveContent()
 
 
@@ -807,7 +808,11 @@ class PyVmomi(object):
         self.module = module
         self.params = module.params
         self.current_vm_obj = None
+<<<<<<< HEAD
         self.si, self.content = connect_to_api(self.module, return_si=True)
+=======
+        self.si, self.content = connect_to_api(self.module)
+>>>>>>> [WIP] new module VMware vSAN health facts (#9)
         self.custom_field_mgr = []
         if self.content.customFieldsManager:  # not an ESXi
             self.custom_field_mgr = self.content.customFieldsManager.field
