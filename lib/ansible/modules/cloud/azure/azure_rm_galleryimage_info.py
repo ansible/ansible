@@ -40,7 +40,7 @@ options:
 extends_documentation_fragment:
   - azure
 author:
-  - Zim Kalinowski (@zikalino)
+  - Liu Qingyi (@smile37773)
 
 '''
 
@@ -65,44 +65,72 @@ gallery_images:
   returned: always
   type: complex
   contains:
-    galleryimage_name:
-      description: The key is the name of the server that the values relate to.
-      type: complex
+    id:
+      description:
+        - Resource Id
+      returned: always
+      type: str
+      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+      /providers/Microsoft.Compute/galleries/myGallery/images/myImage"
+    name:
+      description:
+        - Resource name
+      returned: always
+      type: str
+      sample: myImage
+    type:
+      description:
+        - Resource type
+      returned: always
+      type: str
+      sample: "Microsoft.Compute/galleries/images"
+    location:
+      description:
+        - Resource location
+      returned: always
+      type: str
+      sample: "eastus"
+    tags:
+      description:
+        - Resource tags
+      returned: always
+      type: dict
+      sample: { "tag": "value" }
+    properties:
+      returned: always
+      type: dict
       contains:
-        id:
-          description:
-            - Resource Id
-          returned: always
-          type: str
-          sample: null
-        name:
-          description:
-            - Resource name
-          returned: always
-          type: str
-          sample: null
-        type:
-          description:
-            - Resource type
-          returned: always
-          type: str
-          sample: null
-        location:
-          description:
-            - Resource location
-          returned: always
-          type: str
-          sample: null
-        tags:
-          description:
-            - Resource tags
-          returned: always
-          type: dict
-          sample: null
-        properties:
-          returned: always
-          type: dict
-          sample: null
+          osType:
+            description:
+              - The allowed values for OS State are 'Generalized'.
+            type: OperatingSystemStateTypes
+            sample: "Generalized"
+          osType:
+            description:
+              - This property allows you to specify the type of the OS 
+              that is included in the disk when creating a VM from a managed image. 
+            type: OperatingSystemTypes
+            sample: "Linux"
+          identifier:
+            description:
+              - This is the gallery Image Definition identifier.
+            type: dict
+            contains:
+              offer:
+                description:
+                  - The name of the gallery Image Definition offer.
+                type: str
+                sample: "myOfferName"
+              publisher:
+                description:
+                  - The name of the gallery Image Definition publisher.
+                type: str
+                sample: "myPublisherName"
+              sku:
+                description:
+                  - The name of the gallery Image Definition SKU.
+                type: str
+                sample: "mySkuName"
 
 '''
 
@@ -150,7 +178,7 @@ class AzureRMGalleryImagesInfo(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         self.mgmt_client = None
-        super(AzureRMGalleryImagesInfo, self).__init__(self.module_arg_spec, supports_tags=True)
+        super(AzureRMGalleryImagesInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 

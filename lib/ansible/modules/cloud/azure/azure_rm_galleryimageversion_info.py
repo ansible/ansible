@@ -47,7 +47,7 @@ options:
 extends_documentation_fragment:
   - azure
 author:
-  - Zim Kalinowski (@zikalino)
+  - Liu Qingyi (@smile37773)
 
 '''
 
@@ -80,44 +80,59 @@ gallery_image_versions:
   returned: always
   type: complex
   contains:
-    galleryimageversion_name:
-      description: The key is the name of the server that the values relate to.
-      type: complex
+    id:
+      description:
+        - Resource Id
+      returned: always
+      type: str
+      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
+      /myResourceGroup/providers/Microsoft.Compute/galleries/myGallery/
+      images/myImage/versions/myVersion\"
+    name:
+      description:
+        - Resource name
+      returned: always
+      type: str
+      sample: "myVersion"
+    type:
+      description:
+        - Resource type
+      returned: always
+      type: str
+      sample: "Microsoft.Compute/galleries/images/versions"
+    location:
+      description:
+        - Resource location
+      returned: always
+      type: str
+      sample: "eastus"
+    tags:
+      description:
+        - Resource tags
+      returned: always
+      type: dict
+      sample: { "tag": "value" }
+    properties:
+      returned: always
+      type: dict
       contains:
-        id:
+        publishingProfile:
           description:
-            - Resource Id
-          returned: always
-          type: str
-          sample: null
-        name:
-          description:
-            - Resource name
-          returned: always
-          type: str
-          sample: null
-        type:
-          description:
-            - Resource type
-          returned: always
-          type: str
-          sample: null
-        location:
-          description:
-            - Resource location
-          returned: always
-          type: str
-          sample: null
-        tags:
-          description:
-            - Resource tags
-          returned: always
+            - The publishing profile of a gallery Image Version.
           type: dict
-          sample: null
-        properties:
-          returned: always
+        storageProfile:
+          description:
+            - This is the storage profile of a gallery Image Version.
           type: dict
-          sample: null
+        replicationStatus:
+          description:
+            - This is the replication status of the gallery Image Version.
+          type: dict
+        provisioningState:
+            description:
+              - The current state of the gallery.
+            type: str
+            sample: "Succeeded"
 
 '''
 
@@ -157,7 +172,6 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
         self.gallery_name = None
         self.gallery_image_name = None
         self.name = None
-       
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -171,7 +185,7 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         self.mgmt_client = None
-        super(AzureRMGalleryImageVersionsInfo, self).__init__(self.module_arg_spec, supports_tags=True)
+        super(AzureRMGalleryImageVersionsInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
