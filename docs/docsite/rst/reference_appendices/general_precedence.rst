@@ -3,11 +3,11 @@
 Controlling how Ansible behaves: precedence rules
 =================================================
 
-To give you maximum flexibility in managing your environments, Ansible supports many ways to control the way Ansible behaves: how it connects to managed nodes, how it works once it has connected.
+To give you maximum flexibility in managing your environments, Ansible supports many ways to control how Ansible behaves: how it connects to managed nodes, how it works once it has connected.
 If you use Ansible to manage a large number of servers, network devices, and cloud resources, you may define Ansible behavior in several different places and pass that information to Ansible in several different ways.
 This flexibility is convenient, but it can backfire if you do not understand the precedence rules.
 
-These precedence rules apply to any setting that can be defined in configuration, in command-line options, in keywords, and in variables. For example, defining connection information (ANSIBLE_USER), selecting a temporary directory (DEFAULT_LOCAL_TMP), and choosing the correct python/ruby/powershell/etc interpreter to invoke for a module (ANSIBLE_PYTHON_INTERPRETER) all follow these precedence rules. (TODO: add the command-line flags, keywords, and variables to these examples.)
+These precedence rules apply to any setting that can be defined in multiple ways (by configuration settings, command-line options, playbook keywords, variables). For example, defining connection information, selecting a temporary directory, and choosing the correct python/ruby/powershell/etc interpreter to invoke for a module using settings like ANSIBLE_USER, DEFAULT_LOCAL_TMP, or ANSIBLE_PYTHON_INTERPRETER all follow these precedence rules.
 
 .. contents::
    :local:
@@ -15,13 +15,12 @@ These precedence rules apply to any setting that can be defined in configuration
 Precedence categories
 ---------------------
 
-Ansible supports five sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
+Ansible supports four sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
 
    Configuration settings
    Command-line options
    Playbook keywords
-   Connection variables
-   ``-e`` extra variables
+   Variables
 
 Each category overrides any information from all lower-precedence categories. For example, a playbook keyword will override any configuration setting.
 
@@ -30,7 +29,7 @@ Within each precedence category, specific rules apply. However, generally speaki
 Configuration settings
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Configuration settings include both values from the ``ansible.cfg`` file and environment variables. Within this category, values set in configuration files have lower precedence. Ansible uses the first ``ansible.cfg`` file it finds, looking in these locations in order:
+:ref:`Configuration settings<ansible_configuration_settings>` include both values from the ``ansible.cfg`` file and environment variables. Within this category, values set in configuration files have lower precedence. Ansible uses the first ``ansible.cfg`` file it finds, looking in these locations in order:
 
    #. the file specified by the value of ``ANSIBLE_CONFIG``
    #. config in the current working directory: `./ansible.cfg`
@@ -39,14 +38,14 @@ Configuration settings include both values from the ``ansible.cfg`` file and env
 
 Environment variables have a higher precedence than entries in ``ansible.cfg``. If you have environment variables set, they override the settings in whichever ``ansible.cfg`` file Ansible loads. The value of any given environment variable follows normal shell precedence: the last value defined overwrites previous values. (TODO: Does Ansible use the envvars defined on the control node or on the managed node?)
 
-You can use the ``ansible-config`` command line utility to see the current value of a configuration item and where it came from. (TODO: Add example.)
+You can use the :ref:`ansible-config` command line utility to see the current value of a configuration item and where it came from. (TODO: How does this work? Add example.)
 
 Command-line options
 ^^^^^^^^^^^^^^^^^^^^
 
 Any command-line option will override any configuration setting.
 
-At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this ad-hoc task will connect as ``carol``, not as ``mike``::
+At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad-hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
 
       ansible -u mike -m ping myhost -u carol
 
@@ -54,7 +53,7 @@ Some parameters allow multiple values. In this case, Ansible will append all val
 
    ansible -i /path/inventory1 -i /path/inventory2 -m ping all
 
-The help for each tool specifies which parameters allow for multiple entries. (TODO: add example.)
+The help for each :ref:`command-line tool<command_line_tools>` specifies which parameters allow for multiple entries.
 
 Most command-line options deal with generic settings, but some settings are specific to connections and strategies.
 Passing these options at the command-line may feel like the highest-precedence options, but command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
@@ -63,7 +62,7 @@ You can override all other settings from all other sources in all other preceden
 Playbook keywords
 ^^^^^^^^^^^^^^^^^
 
-Any playbook keyword will override any command-line option and any configuration setting.
+Any :ref:`playbook keyword<playbook_keywords>` will override any command-line option and any configuration setting.
 
 Within playbook keywords, precedence is probably the simplest, as it flows with the playbook itself; the more specific wins against the more general:
 
@@ -89,8 +88,8 @@ The same logic applies to a block or role: all tasks, blocks, and roles within a
 Remember that these are KEYWORDS, not variables. Both playbooks and variable files are defined in YAML but they have different significance.
 Playbooks are the command or 'state description' structure for Ansible, variables are data we use to help make playbooks more dynamic.
 
-Connection variables
-^^^^^^^^^^^^^^^^^^^^
+Variables
+^^^^^^^^^
 
 Any variable will override any playbook keyword, any command-line option, and any configuration setting.
 
