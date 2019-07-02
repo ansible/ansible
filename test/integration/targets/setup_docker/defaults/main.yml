@@ -1,0 +1,9 @@
+docker_packages:
+  - docker-ce
+
+docker_prereq_packages: []
+
+docker_pip_packages:
+  - docker
+
+docker_pip_extra_packages: []
