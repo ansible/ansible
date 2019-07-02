@@ -48,7 +48,6 @@ foreach($adapter in $target_adapters_config)
         if(-not $module.CheckMode)
         {
             $result = Invoke-CimMethod -InputObject $adapter -MethodName SetTcpipNetbios -Arguments @{TcpipNetbiosOptions=$netbiosoption}
-            $result = $adapter.SetTcpipNetbios($netbiosoption)
             switch ( $result.ReturnValue )
             {
                 0 { <#Success no reboot#> }

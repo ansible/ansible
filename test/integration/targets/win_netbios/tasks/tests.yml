@@ -1,0 +1,118 @@
+# Test code for win_netbios module
+# Copyright: (c) 2019, Thomas Moore <hi@tmmr.uk>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: fail with invalid network adapter name
+  win_netbios:
+    state: disabled
+    adapter_names:
+      - FakeAdapterName
+  register: invalid_adapter
+  failed_when: invalid_adapter.msg != "Not all of the target adapter names could be found on the system. No configuration changes have been made. FakeAdapterName"
+
+- name: disable netbios with check_mode
+  win_netbios:
+    state: disabled
+  check_mode: yes
+  register: disable_check
+
+- name: assert disable netbios check_mode
+  assert:
+    that:
+      - disable_check.changed
+
+- name: disable netbios without check_mode
+  win_netbios:
+    state: disabled
+  register: netbios_disable
+
+- name: assert netbios disabled
+  assert:
+    that:
+      - netbios_disable.changed
+
+- name: test disable idempotence
+  win_netbios:
+    state: disabled
+  register: netbios_disable
+
+- name: test disable idempotence
+  assert:
+    that:
+      - not netbios_disable.changed
+
+- name: enable netbios with check_mode
+  win_netbios:
+    state: enabled
+  check_mode: yes
+  register: enable_check
+
+- name: assert enable netbios check_mode
+  assert:
+    that:
+      - enable_check.changed
+
+- name: enable netbios without check_mode
+  win_netbios:
+    state: enabled
+  register: netbios_enable
+
+- name: assert netbios enabled
+  assert:
+    that:
+      - netbios_enable.changed
+
+- name: test enable idempotence
+  win_netbios:
+    state: enabled
+  register: netbios_enable
+
+- name: assert enable idempotence
+  assert:
+    that:
+      - not netbios_enable.changed
+
+- name: default netbios with check_mode
+  win_netbios:
+    state: default
+  check_mode: yes
+  register: default_check
+
+- name: assert default netbios check_mode
+  assert:
+    that:
+      - default_check.changed
+
+- name: default netbios without check_mode
+  win_netbios:
+    state: default
+  register: default_enable
+
+- name: assert netbios default
+  assert:
+    that:
+      - default_enable.changed
+
+- name: test default idempotence
+  win_netbios:
+    state: default
+  register: netbios_default
+
+- name: assert default idempotence
+  assert:
+    that:
+      - not netbios_default.changed
