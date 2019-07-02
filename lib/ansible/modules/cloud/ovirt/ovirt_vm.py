@@ -445,16 +445,20 @@ options:
                 description:
                     - Set boot protocol of the network interface of Virtual Machine.
                 choices: ['none', 'dhcp', 'static']
+                version_added: "2.9"
             nic_ip_address_v6:
                 description:
                     - If boot protocol is static, set this IP address to network interface of Virtual Machine.
+                version_added: "2.9"
             nic_netmask_v6:
                 description:
                     - If boot protocol is static, set this netmask to network interface of Virtual Machine.
+                version_added: "2.9"
             nic_gateway_v6:
                 description:
                     - If boot protocol is static, set this gateway to network interface of Virtual Machine.
                     - For IPv6 addresses the value is an integer in the range of 0-128, which represents the subnet prefix.
+                version_added: "2.9"
             nic_name:
                 description:
                     - Set name to network interface of Virtual Machine.
