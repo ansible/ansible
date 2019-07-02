@@ -108,7 +108,7 @@ galleries:
               uniqueName:
                 description:
                   - The unique name of the Shared Image Gallery. This name is generated automatically by Azure.
-                type:str
+                type: str
                 sample: "myUniqueName"
 
 '''
