@@ -2,53 +2,65 @@
 
 - debug: msg="START cli/cli_macro.yaml on connection={{ ansible_connection }}"
 
-- name: "Define macro name"
-  set_fact:
-    macro_name: 'MACRO_ANSIBLE_TEST'
+- name: "Check for macro support"
+  ios_command:
+    commands:
+      - "show parser macro brief"
+  register: supports_macro
+  ignore_errors: yes
 
-- name: "setup - remove configuration"
-  ios_config:
-    lines:
-      - 'no macro name {{ macro_name }}'
-      - 'do show clock'
-    match: none
+- name: "ios_config macro integration tests"
+  block:
 
-- name: "configure macro"
-  ios_config:
-    parents: "macro name {{ macro_name }}"
-    # before: [ 'no macro name ...']
-    multiline_delimiter: '@'
-    after: '@'
-    match: line
-    replace: block
-    lines: "{{ lookup('template', 'basic/macro.j2') }}"
-  register: result
+  - name: "Define macro name"
+    set_fact:
+      macro_name: 'MACRO_ANSIBLE_TEST'
 
-- name: "Check if macro has been added"
-  assert:
-    that:
-      - "result.changed == true"
+  - name: "setup - remove configuration"
+    ios_config:
+      lines:
+        - 'no macro name {{ macro_name }}'
+        - 'do show clock'
+      match: none
 
-- name: "configure macro again - idempotent check"
-  ios_config:
-    parents: "macro name {{ macro_name }}"
-    multiline_delimiter: '@'
-    after: '@'
-    match: line
-    replace: block
-    lines: "{{ lookup('template', 'basic/macro.j2') }}"
-  register: result
+  - name: "configure macro"
+    ios_config:
+      parents: "macro name {{ macro_name }}"
+      # before: [ 'no macro name ...']
+      multiline_delimiter: '@'
+      after: '@'
+      match: line
+      replace: block
+      lines: "{{ lookup('template', 'basic/macro.j2') }}"
+    register: result
 
-- name: "macro already/correctly configured ?"
-  assert:
-    that:
-      - "result.changed == false"
-                  
-- name: "teardown"
-  ios_config:
-    lines:
-      - "no macro name {{ macro_name }}"
-      - 'do show clock'
-    match: none
+  - name: "Check if macro has been added"
+    assert:
+      that:
+        - "result.changed == true"
+
+  - name: "configure macro again - idempotent check"
+    ios_config:
+      parents: "macro name {{ macro_name }}"
+      multiline_delimiter: '@'
+      after: '@'
+      match: line
+      replace: block
+      lines: "{{ lookup('template', 'basic/macro.j2') }}"
+    register: result
+
+  - name: "macro already/correctly configured ?"
+    assert:
+      that:
+        - "result.changed == false"
+                    
+  - name: "teardown"
+    ios_config:
+      lines:
+        - "no macro name {{ macro_name }}"
+        - 'do show clock'
+      match: none
+  
+  when: supports_macro is succeeded
 
 - debug: msg="END cli/cli_macro.yaml on connection={{ ansible_connection }}"
