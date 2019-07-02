@@ -41,8 +41,8 @@ options:
         description:
             - Existing security group with which to associate the subnet.
             - It can be the security group name which is in the same resource group.
-            - It can be the resource ID.
-            - It can be a dict which contains I(name) and I(resource_group) of the security group.
+            - Can be the resource ID of the security group.
+            - Can be a dict containint the I(name) and I(resource_group) of the security group.
         aliases:
             - security_group_name
     state:
@@ -61,9 +61,8 @@ options:
     route_table:
         description:
             - The reference of the RouteTable resource.
-            - It can accept both a str or a dict.
-            - The str can be the name or resource ID of the route table.
-            - The dict can contains I(name) and I(resource_group) of the I(route_table).
+            - Can be the name or resource ID of the route table.
+            - Can be a dict containing the I(name) and I(resource_group) of the I(route_table).
         version_added: "2.7"
     service_endpoints:
         description:
@@ -128,22 +127,22 @@ state:
                 - IP address CIDR.
             returned: always
             type: str
-            example: "10.1.0.0/16"
+            sample: "10.1.0.0/16"
         id:
             description:
                 - Subnet resource path.
             returned: always
             type: str
-            example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/mySubnet"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/mySubnet"
         name:
             description:
                 - Subnet name.
             returned: always
             type: str
-            example: "foobar"
+            sample: "foobar"
         network_security_group:
             description:
-                - Associated network securtiy group of subnets.
+                - Associated network security group of subnets.
             returned: always
             type: complex
             contains:
@@ -152,19 +151,19 @@ state:
                         - Security group resource identifier.
                     returned: always
                     type: str
-                    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo"
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo"
                 name:
                     description:
                         - Name of the security group.
                     returned: always
                     type: str
-                    example: "secgroupfoo"
+                    sample: "secgroupfoo"
         provisioning_state:
             description:
                 - Success or failure of the provisioning event.
             returned: always
             type: str
-            example: "Succeeded"
+            sample: "Succeeded"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, azure_id_to_dict, format_resource_id
