@@ -41,7 +41,7 @@ def main():
         if any(path.startswith(p) for p in prune):
             continue
 
-        with open(path, 'r') as path_fd:
+        with open(path, 'rb') as path_fd:
             future_ok = None
             metaclass_ok = None
 
@@ -51,11 +51,11 @@ def main():
                 continue
 
             for line, text in enumerate(lines):
-                if text in ('from __future__ import (absolute_import, division, print_function)',
-                            'from __future__ import absolute_import, division, print_function'):
+                if text in (b'from __future__ import (absolute_import, division, print_function)',
+                            b'from __future__ import absolute_import, division, print_function'):
                     future_ok = line
 
-                if text == '__metaclass__ = type':
+                if text == b'__metaclass__ = type':
                     metaclass_ok = line
 
                 if future_ok and metaclass_ok:
