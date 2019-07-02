@@ -949,7 +949,7 @@ class DnfModule(YumDnf):
                             failure_response['failures'].append(
                                 " ".join(
                                     (
-                                        ' '.join(module),
+                                        module,
                                         to_native(e)
                                     )
                                 )
