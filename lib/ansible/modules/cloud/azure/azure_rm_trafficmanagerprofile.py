@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_trafficmanagerprofile
 version_added: "2.7"
-short_description: Manage Azure Traffic Manager profile.
+short_description: Manage Azure Traffic Manager profile
 description:
     - Create, update and delete a Traffic Manager profile.
 
@@ -37,8 +37,8 @@ options:
             - present
     location:
         description:
-            - Valid azure location. Defaults to 'global' because in default public Azure cloud, Traffic Manager profile can only be deployed globally.
-            - Reference https://docs.microsoft.com/en-us/azure/traffic-manager/quickstart-create-traffic-manager-profile#create-a-traffic-manager-profile
+            - Valid Azure location. Defaults to C(global) because in default public Azure cloud, Traffic Manager profile can only be deployed globally.
+            - Reference U(https://docs.microsoft.com/en-us/azure/traffic-manager/quickstart-create-traffic-manager-profile#create-a-traffic-manager-profile).
         default: global
     profile_status:
         description:
@@ -63,10 +63,11 @@ options:
             relative_name:
                 description:
                     - The relative DNS name provided by this Traffic Manager profile.
-                    - If not provided, name of the Traffic Manager will be used
+                    - If not provided, name of the Traffic Manager will be used.
             ttl:
                 description:
                     - The DNS Time-To-Live (TTL), in seconds.
+                type: int
                 default: 60
     monitor_config:
         description:
@@ -74,7 +75,7 @@ options:
         suboptions:
             protocol:
                 description:
-                    - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
+                    - The protocol C(HTTP), C(HTTPS) or C(TCP) used to probe for endpoint health.
                 choices:
                     - HTTP
                     - HTTPS
@@ -88,9 +89,11 @@ options:
             interval:
                 description:
                     - The monitor interval for endpoints in this profile in seconds.
+                type: int
             timeout:
                 description:
                     - The monitor timeout for endpoints in this profile in seconds.
+                type: int
             tolerated_failures:
                 description:
                     - The number of consecutive failed health check before declaring an endpoint in this profile Degraded after the next failed health check.
@@ -104,8 +107,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 
 '''
 
@@ -135,20 +138,22 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: The ID of the traffic manager profile
+    description:
+        - The ID of the traffic manager profile.
     returned: when traffic manager profile exists
     type: str
-    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest"
 endpoints:
-  description: List of endpoint IDs attached to the profile
-  returned: when traffic manager endpoints exists
-  type: list
-  sample: [
-        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/exter
-         nalEndpoints/e2",
-        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/exter
-         nalEndpoints/e1"
-    ]
+    description:
+        - List of endpoint IDs attached to the profile.
+    returned: when traffic manager endpoints exists
+    type: list
+    sample: [
+            "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/exter
+             nalEndpoints/e2",
+            "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tm049b1ae293/exter
+             nalEndpoints/e1"
+            ]
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
