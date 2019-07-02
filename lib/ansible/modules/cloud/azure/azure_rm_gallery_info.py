@@ -70,7 +70,7 @@ galleries:
       returned: always
       type: str
       sample: "myGallery"
-     type:
+    type:
       description:
         - Resource type
        returned: always
