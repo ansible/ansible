@@ -6,8 +6,6 @@
 #  - EC2_REGION -> AWS_REGION
 #
 
-# - include: ../../../../../setup_ec2/tasks/common.yml module_name: ec2_instance
-
 - block:
 
     - include_tasks: env_setup.yml
