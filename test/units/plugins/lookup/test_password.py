@@ -34,6 +34,7 @@ from units.mock.loader import DictDataLoader
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import PluginLoader
