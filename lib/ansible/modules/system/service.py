@@ -320,7 +320,7 @@ class Service(object):
             lines = psout.split("\n")
             for line in lines:
                 if self.pattern in line and "pattern=" not in line:
-                    # so as to not confuse ./hacking/test-module
+                    # so as to not confuse ./hacking/test-module.py
                     self.running = True
                     break
 
