@@ -70,12 +70,6 @@ galleries:
       returned: always
       type: str
       sample: "myGallery"
-    type:
-      description:
-        - Resource type
-      returned: always
-      type: str
-      sample: "Microsoft.Compute/galleries"
     location:
       description:
         - Resource location
@@ -88,22 +82,20 @@ galleries:
       returned: always
       type: dict
       sample: { "tag": "value" }
-    properties:
-      returned: always
-      type: dict
-      contains:
-          description:
-            type: str
-            sample: "This is the gallery description."
-          provisioningState:
-            description:
-              - The current state of the gallery.
-            type: str
-            sample: "Succeeded"
-          identifier:
-            description:
-              - This is the gallery Definition identifier.
-            type: dict
+    description:
+      description:
+        - This is the gallery description.
+      type: str
+      sample: "This is the gallery description."
+    provisioningState:
+        description:
+          - The current state of the gallery.
+        type: str
+        sample: "Succeeded"
+    identifier:
+        description:
+          - This is the gallery Definition identifier.
+        type: dict
             contain:
               uniqueName:
                 description:
@@ -202,7 +194,7 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return results
+        return self.format_item(results)
 
     def listbyresourcegroup(self):
         response = None
@@ -232,7 +224,7 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return results
+        return [self.format_item(x) for x in results] if results else []
 
     def list(self):
         response = None
@@ -259,7 +251,19 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return results
+        return [self.format_item(x) for x in results] if results else []
+
+    def format_item(item):
+        item = {
+            'id': item['id'],
+            'name': item['name'],
+            'location': item['location'],
+            'tags': item.get('tags'),
+            'description': item['porperties']['desciption'],
+            'provisioningState': item['porperties']['provisioningState'],
+            'identifier': item['porperties']['identifier']
+        }
+        return item
 
 
 def main():

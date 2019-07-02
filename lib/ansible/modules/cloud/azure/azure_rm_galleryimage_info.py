@@ -78,12 +78,6 @@ gallery_images:
       returned: always
       type: str
       sample: myImage
-    type:
-      description:
-        - Resource type
-      returned: always
-      type: str
-      sample: "Microsoft.Compute/galleries/images"
     location:
       description:
         - Resource location
@@ -96,41 +90,37 @@ gallery_images:
       returned: always
       type: dict
       sample: { "tag": "value" }
-    properties:
-      returned: always
+    osState:
+      description:
+        - The allowed values for OS State are 'Generalized'.
+      type: OperatingSystemStateTypes
+      sample: "Generalized"
+    osType:
+      description: >-
+        This property allows you to specify the type of the OS that is included in the disk
+        when creating a VM from a managed image.
+      type: OperatingSystemTypes
+      sample: "Linux"
+    identifier:
+      description:
+        - This is the gallery Image Definition identifier.
       type: dict
       contains:
-          osState:
-            description:
-              - The allowed values for OS State are 'Generalized'.
-            type: OperatingSystemStateTypes
-            sample: "Generalized"
-          osType:
-            description: >-
-              This property allows you to specify the type of the OS that is included in the disk
-              when creating a VM from a managed image.
-            type: OperatingSystemTypes
-            sample: "Linux"
-          identifier:
-            description:
-              - This is the gallery Image Definition identifier.
-            type: dict
-            contains:
-              offer:
-                description:
-                  - The name of the gallery Image Definition offer.
-                type: str
-                sample: "myOfferName"
-              publisher:
-                description:
-                  - The name of the gallery Image Definition publisher.
-                type: str
-                sample: "myPublisherName"
-              sku:
-                description:
-                  - The name of the gallery Image Definition SKU.
-                type: str
-                sample: "mySkuName"
+        offer:
+          description:
+            - The name of the gallery Image Definition offer.
+          type: str
+          sample: "myOfferName"
+        publisher:
+          description:
+            - The name of the gallery Image Definition publisher.
+          type: str
+          sample: "myPublisherName"
+        sku:
+          description:
+            - The name of the gallery Image Definition SKU.
+          type: str
+          sample: "mySkuName"
 
 '''
 
@@ -232,7 +222,7 @@ class AzureRMGalleryImagesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return results
+        return self.format_item(results)
 
     def listbygallery(self):
         response = None
@@ -265,8 +255,19 @@ class AzureRMGalleryImagesInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return results
-
+        return [self.format_item(x) for x in results] if results else []
+   
+    def format_item(item):
+        item = {
+            'id': item['id'],
+            'name': item['name'],
+            'location': item['location'],
+            'tags': item.get('tags'),
+            'osState': item['porperties']['osState'],
+            'osType': item['porperties']['osType'],
+            'identifier': item['porperties']['identifier']
+        }
+        return item
 
 def main():
     AzureRMGalleryImagesInfo()
