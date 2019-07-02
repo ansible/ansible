@@ -362,4 +362,9 @@ user_cannot_change_password:
     returned: always
     type: str
     sample: false
+created:
+  description: Whether a user was created
+  returned: when a new user was created
+  type: bool
+  sample: true
 '''
