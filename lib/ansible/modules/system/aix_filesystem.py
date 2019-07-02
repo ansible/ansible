@@ -5,9 +5,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ismount import ismount
-import re
 
 __metaclass__ = type
 
@@ -179,6 +176,10 @@ msg:
   type: str
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ismount import ismount
+import re
+
 
 def _fs_exists(module, filesystem):
     """
@@ -269,7 +270,7 @@ def resize_fs(module, filesystem, size):
                 changed = False
                 return changed, err
             else:
-                module.fail_json("Failed to run chfs. Error message: %s" % err)
+                module.fail_json(msg="Failed to run chfs. Error message: %s" % err)
 
         else:
             if re.findall('The filesystem size is already', chfs_out):
@@ -364,7 +365,7 @@ def create_fs(
         crfs_cmd = module.get_bin_path('crfs', True)
         if not module.check_mode:
             cmd = "%s -v %s -m %s %s %s %s %s %s -p %s %s -a %s" % (
-                    crfs_cmd, fs_type, filesystem, vg, device, mount_group, auto_mount, account_subsystem, permissions, size, attributes)
+                crfs_cmd, fs_type, filesystem, vg, device, mount_group, auto_mount, account_subsystem, permissions, size, attributes)
             rc, crfs_out, err = module.run_command(cmd)
 
             if rc == 10:
