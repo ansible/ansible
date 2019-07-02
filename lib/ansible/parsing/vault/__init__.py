@@ -371,21 +371,22 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    this_path = os.path.realpath(os.path.expanduser(filename))
+    fullpath = os.path.expanduser(filename)
+    realpath = os.path.realpath(fullpath)
 
-    if not os.path.exists(this_path):
-        raise AnsibleError("The vault password file %s was not found" % this_path)
+    if not os.path.exists(realpath):
+        raise AnsibleError("The vault password file %s was not found" % realpath)
 
-    if loader.is_executable(this_path):
+    if loader.is_executable(realpath):
         if script_is_client(filename):
             display.vvvv(u'The vault password file %s is a client script.' % to_text(filename))
             # TODO: pass vault_id_name to script via cli
-            return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
+            return ClientScriptVaultSecret(filename=fullpath, vault_id=vault_id,
                                            encoding=encoding, loader=loader)
         # just a plain vault password script. No args, returns a byte array
-        return ScriptVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+        return ScriptVaultSecret(filename=fullpath, encoding=encoding, loader=loader)
 
-    return FileVaultSecret(filename=this_path, encoding=encoding, loader=loader)
+    return FileVaultSecret(filename=realpath, encoding=encoding, loader=loader)
 
 
 # TODO: mv these classes to a separate file so we don't pollute vault with 'subprocess' etc
