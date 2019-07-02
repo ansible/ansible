@@ -3,8 +3,6 @@
 # Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>, Yunge Zhu <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#     Please read more about how to change this file at
-#     https://github.com/Azure/magic-module-specs
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
