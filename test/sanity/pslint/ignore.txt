@@ -12,6 +12,7 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideC
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSUseApprovedVerbs
+lib/ansible/module_utils/powershell/Ansible.ModuleUtils.WebRequest.psm1 PSUseDeclaredVarsMoreThanAssignments  # the spec var is not used within the module
 lib/ansible/modules/windows/async_status.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/setup.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_acl_inheritance.ps1 PSAvoidTrailingWhitespace
@@ -35,7 +36,6 @@ lib/ansible/modules/windows/win_eventlog.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_feature.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_file_version.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_get_url.ps1 PSUsePSCredentialType  # Credential param can take a base64 encoded string as well as a PSCredential
 lib/ansible/modules/windows/win_hotfix.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_hotfix.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_virtualdirectory.ps1 PSCustomUseLiteralPath
