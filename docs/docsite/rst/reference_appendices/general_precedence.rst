@@ -75,10 +75,10 @@ A simple example::
    - hosts: all
      connection: ssh
      tasks:
-       - name: uses ssh
+       - name: This task uses ssh.
          ping:
 
-       - name: test paramiko
+       - name: This task uses paramiko.
          connection: paramiko
          ping:
 
