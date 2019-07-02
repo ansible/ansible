@@ -107,7 +107,7 @@ def test_human_to_bytes_wrong_number(test_input):
         (u'1Yb', 1208925819614629174706176),
     ]
 )
-def test_human_to_bytes_isbites(input_data, expected):
+def test_human_to_bytes_isbits(input_data, expected):
     """Test of human_to_bytes function, isbits = True."""
     assert human_to_bytes(input_data, isbits=True) == expected
 
@@ -135,7 +135,7 @@ def test_human_to_bytes_isbites(input_data, expected):
         (u'1', u'Yb', 1208925819614629174706176),
     ]
 )
-def test_human_to_bytes_isbites_default_unit(input_data, unit, expected):
+def test_human_to_bytes_isbits_default_unit(input_data, unit, expected):
     """Test of human_to_bytes function, isbits = True and default_unit args are passed."""
     assert human_to_bytes(input_data, default_unit=unit, isbits=True) == expected
 
@@ -167,7 +167,7 @@ def test_human_to_bytes_isbits_wrong_unit(test_input, isbits):
         ('4', 'GB', True),
     ]
 )
-def test_human_to_bytes_wrong_default_unit(test_input, unit, isbits):
+def test_human_to_bytes_isbits_wrong_default_unit(test_input, unit, isbits):
     """Test of human_to_bytes function, default_unit is in an invalid format for isbits value."""
     with pytest.raises(ValueError, match="Value is not a valid string"):
         human_to_bytes(test_input, default_unit=unit, isbits=isbits)
