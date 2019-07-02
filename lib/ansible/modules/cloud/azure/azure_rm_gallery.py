@@ -261,7 +261,6 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
             response = json.loads(response.text)
         except Exception:
             response = {'text': response.text}
-            pass
 
         return response
 
