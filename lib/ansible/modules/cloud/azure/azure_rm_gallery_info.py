@@ -79,7 +79,7 @@ galleries:
     location:
       description:
         - Resource location
-       returned: always
+      returned: always
       type: str
       sample: "eastus"
     tags:
