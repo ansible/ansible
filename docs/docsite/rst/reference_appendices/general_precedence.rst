@@ -31,14 +31,14 @@ Configuration settings
 
 :ref:`Configuration settings<ansible_configuration_settings>` include both values from the ``ansible.cfg`` file and environment variables. Within this category, values set in configuration files have lower precedence. Ansible uses the first ``ansible.cfg`` file it finds, looking in these locations in order:
 
-   #. the file specified by the value of ``ANSIBLE_CONFIG``
-   #. config in the current working directory: `./ansible.cfg`
-   #. config in the current user's home directory: `~/.ansible.cfg`
-   #. global config: `/etc/ansible/ansible.cfg`
+ * ``ANSIBLE_CONFIG`` (environment variable if set)
+ * ``ansible.cfg`` (in the current directory)
+ * ``~/.ansible.cfg`` (in the home directory)
+ * ``/etc/ansible/ansible.cfg``
+
+Ansible will use the first ``ansible.cfg`` file found, all others are ignored.
 
 Environment variables have a higher precedence than entries in ``ansible.cfg``. If you have environment variables set, they override the settings in whichever ``ansible.cfg`` file Ansible loads. The value of any given environment variable follows normal shell precedence: the last value defined overwrites previous values. (TODO: Does Ansible use the envvars defined on the control node or on the managed node?)
-
-You can use the :ref:`ansible-config` command line utility to see the current value of a configuration item and where it came from. (TODO: How does this work? Add example.)
 
 Command-line options
 ^^^^^^^^^^^^^^^^^^^^
