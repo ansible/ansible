@@ -10,6 +10,7 @@
   ignore_errors: yes
 
 - name: "ios_config macro integration tests"
+  when: supports_macro is succeeded
   block:
 
   - name: "Define macro name"
@@ -60,7 +61,5 @@
         - "no macro name {{ macro_name }}"
         - 'do show clock'
       match: none
-  
-  when: supports_macro is succeeded
 
 - debug: msg="END cli/cli_macro.yaml on connection={{ ansible_connection }}"
