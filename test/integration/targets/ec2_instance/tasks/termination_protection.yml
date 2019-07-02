@@ -19,6 +19,7 @@
         termination_protection: true
         instance_type: t2.micro
         state: running
+        wait: yes
         <<: *aws_connection_info
       register: in_test_vpc
 
@@ -39,6 +40,7 @@
       ec2_instance_info:
         filters:
           "tag:Name": "{{ resource_prefix }}-test-protected-instance-in-vpc"
+          "instance-state-name": "running"
         <<: *aws_connection_info
       register: presented_instance_fact
 
