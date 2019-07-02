@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #  -*- coding: utf-8 -*-
-#  Copyright: (c) 2018, Ansible Project
-#  Copyright: (c) 2018, Diane Wang <dianew@vmware.com>
+#  Copyright: (c) 2019, Ansible Project
+#  Copyright: (c) 2019, Diane Wang <dianew@vmware.com>
 #  GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -33,10 +33,12 @@ options:
      description:
      - Name of the virtual machine.
      - This is a required parameter, if parameter C(uuid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
      - This is a required parameter, if parameter C(name) is not supplied.
+     type: str
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -52,27 +54,32 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    cluster:
      description:
      - The name of cluster where the virtual machine will run.
      - This is a required parameter, if C(esxi_hostname) is not set.
      - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
+     type: str
    esxi_hostname:
      description:
      - The ESXi hostname where the virtual machine will run.
      - This is a required parameter, if C(cluster) is not set.
      - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
+     type: str
    datacenter:
      default: ha-datacenter
      description:
      - The datacenter name to which virtual machine belongs to.
+     type: str
    gather_network_facts:
      description:
-     - If set to True, return settings of all network adapters, other parameters are ignored.
+     - If set to C(True), return settings of all network adapters, other parameters are ignored.
      - If set to C(False), will add, reconfigure or remove network adapters according to the parameters in C(networks).
      type: bool
      default: False
    networks:
+     type: list
      description:
      - A list of network adapters.
      - C(mac) or C(label) or C(device_type) is required to reconfigure or remove an existing network adapter.
@@ -157,8 +164,9 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, find_obj, get_all_objs
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, find_obj, get_all_objs, get_parent_datacenter
 
 
 class PyVmomiHelper(PyVmomi):
@@ -178,89 +186,53 @@ class PyVmomiHelper(PyVmomi):
 
     def get_device_type(self, device_type=None):
         """ Get network adapter device type """
-        nic_device_type = dict(
-            pcnet32=vim.vm.device.VirtualPCNet32(),
-            vmxnet2=vim.vm.device.VirtualVmxnet2(),
-            vmxnet3=vim.vm.device.VirtualVmxnet3(),
-            e1000=vim.vm.device.VirtualE1000(),
-            e1000e=vim.vm.device.VirtualE1000e(),
-            sriov=vim.vm.device.VirtualSriovEthernetCard(),
-        )
-        if device_type and device_type in nic_device_type:
-            return nic_device_type[device_type]
+        if device_type and device_type in list(self.nic_device_type.keys()):
+            return self.nic_device_type[device_type]()
         else:
             self.module.fail_json(msg='Invalid network device_type %s' % device_type)
 
-    @staticmethod
-    def get_parent_datacenter(obj):
-        """ Walk the parent tree to find the object's datacenter """
-        datacenter = None
-        while True:
-            if not hasattr(obj, 'parent'):
-                break
-            obj = obj.parent
-            if isinstance(obj, vim.Datacenter):
-                datacenter = obj
-                break
-        return datacenter
-
-    def network_exists_by_name(self, content, name):
-        """ Check if network with specified name exists """
-        vimtype = [vim.Network]
-        result = find_obj(content, vimtype, name)
-        if result:
-            if to_text(self.get_parent_datacenter(result).name) != to_text(self.params['datacenter']):
-                objects = get_all_objs(content, vimtype)
-                for obj in objects:
-                    if to_text(self.get_parent_datacenter(obj).name) == to_text(self.params['datacenter']):
-                        if to_text(obj.name) == to_text(name):
-                            return True
+    def get_network_device(self, vm=None, mac=None, device_type=None, device_label=None):
+        """
+        Get network adapter
+        """
+        nic_devices = []
+        nic_device = None
+        if vm is None:
+            if device_type:
+                return nic_devices
             else:
-                return True
-        return False
+                return nic_device
+
+        for device in vm.config.hardware.device:
+            if mac:
+                if isinstance(device, vim.vm.device.VirtualEthernetCard):
+                    if device.macAddress == mac:
+                        nic_device = device
+                        break
+            elif device_type:
+                if isinstance(device, self.nic_device_type[device_type]):
+                    nic_devices.append(device)
+            elif device_label:
+                if isinstance(device, vim.vm.device.VirtualEthernetCard):
+                    if device.deviceInfo.label == device_label:
+                        nic_device = device
+                        break
+        if device_type:
+            return nic_devices
+        else:
+            return nic_device
 
     def get_network_device_by_mac(self, vm=None, mac=None):
         """ Get network adapter with the specified mac address"""
-        nic_device = None
-        if vm is None or mac is None:
-            return nic_device
-        for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualEthernetCard):
-                if device.macAddress == mac:
-                    nic_device = device
-                    break
-
-        return nic_device
+        return self.get_network_device(vm=vm, mac=mac)
 
     def get_network_devices_by_type(self, vm=None, device_type=None):
         """ Get network adapter list with the name type """
-        nic_devices = []
-        if vm is None or device_type is None:
-            return nic_devices
-        for device in vm.config.hardware.device:
-            if isinstance(device, self.nic_device_type[device_type]):
-                nic_devices.append(device)
-
-        return nic_devices
+        return self.get_network_device(vm=vm, device_type=device_type)
 
     def get_network_device_by_label(self, vm=None, device_label=None):
         """ Get network adapter with the specified label """
-        nic_device = None
-        if vm is None or device_label is None:
-            return nic_device
-        for device in vm.config.hardware.device:
-            if isinstance(device, vim.vm.device.VirtualEthernetCard):
-                if device.deviceInfo.label == device_label:
-                    nic_device = device
-                    break
-
-        return nic_device
-
-    @staticmethod
-    def is_valid_mac_addr(mac_addr):
-        """ Validate MAC address for given string """
-        mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-        return bool(mac_addr_regex.match(mac_addr))
+        return self.get_network_device(vm=vm, device_label=device_label)
 
     def create_network_adapter(self, device_info):
         nic = vim.vm.device.VirtualDeviceSpec()
@@ -347,7 +319,7 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
                 elif 'vlan' in network:
                     objects = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
-                    dvps = [x for x in objects if to_text(self.get_parent_datacenter(x).name) == to_text(self.params['datacenter'])]
+                    dvps = [x for x in objects if to_text(get_parent_datacenter(x).name) == to_text(self.params['datacenter'])]
                     for dvp in dvps:
                         if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
                                 isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
@@ -365,12 +337,12 @@ class PyVmomiHelper(PyVmomi):
                     else:
                         self.module.fail_json(msg="VLAN '%(vlan)s' does not exist." % network)
 
-                if 'device_type' in network and network['device_type'] not in self.nic_device_type.keys():
+                if 'device_type' in network and network['device_type'] not in list(self.nic_device_type.keys()):
                     self.module.fail_json(msg="Device type specified '%s' is invalid. "
-                                              "Valid types %s " % (network['device_type'], self.nic_device_type.keys()))
+                                              "Valid types %s " % (network['device_type'], list(self.nic_device_type.keys())))
 
-                if ('mac' in network and not self.is_valid_mac_addr(network['mac'])) or \
-                        ('manual_mac' in network and not self.is_valid_mac_addr(network['manual_mac'])):
+                if ('mac' in network and not is_mac(network['mac'])) or \
+                        ('manual_mac' in network and not is_mac(network['manual_mac'])):
                     self.module.fail_json(msg="Device MAC address '%s' or manual set MAC address %s is invalid. "
                                               "Please provide correct MAC address." % (network['mac'], network['manual_mac']))
 
@@ -468,7 +440,7 @@ def main():
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
         gather_network_facts=dict(type='bool', default=False),
-        networks=dict(type=list, default=[])
+        networks=dict(type='list', default=[])
     )
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uuid']])

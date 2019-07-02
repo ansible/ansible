@@ -103,7 +103,7 @@ state:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-import re
+from ansible.module_utils.common.network import is_mac
 
 
 class NicTag(object):
@@ -121,9 +121,7 @@ class NicTag(object):
         self.nictagadm_bin = self.module.get_bin_path('nictagadm', True)
 
     def is_valid_mac(self):
-        if re.match("[0-9a-f]{2}([:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", self.mac.lower()):
-            return True
-        return False
+        return is_mac(self.mac.lower())
 
     def nictag_exists(self):
         cmd = [self.nictagadm_bin]

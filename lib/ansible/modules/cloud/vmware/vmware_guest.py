@@ -587,6 +587,7 @@ except ImportError:
 
 from random import randint
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
@@ -727,25 +728,13 @@ class PyVmomiDeviceHelper(object):
         nic.device.connectable.startConnected = bool(device_infos.get('start_connected', True))
         nic.device.connectable.allowGuestControl = bool(device_infos.get('allow_guest_control', True))
         nic.device.connectable.connected = True
-        if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
+        if 'mac' in device_infos and is_mac(device_infos['mac']):
             nic.device.addressType = 'manual'
             nic.device.macAddress = device_infos['mac']
         else:
             nic.device.addressType = 'generated'
 
         return nic
-
-    @staticmethod
-    def is_valid_mac_addr(mac_addr):
-        """
-        Function to validate MAC address for given string
-        Args:
-            mac_addr: string to validate as MAC address
-
-        Returns: (Boolean) True if string is valid MAC address, otherwise False
-        """
-        mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-        return bool(mac_addr_regex.match(mac_addr))
 
     def integer_value(self, input_value, name):
         """
@@ -1271,7 +1260,7 @@ class PyVmomiHelper(PyVmomi):
                                           " type from ['%s']." % (network['device_type'],
                                                                   "', '".join(validate_device_types)))
 
-            if 'mac' in network and not PyVmomiDeviceHelper.is_valid_mac_addr(network['mac']):
+            if 'mac' in network and not is_mac(network['mac']):
                 self.module.fail_json(msg="Device MAC address '%s' is invalid."
                                           " Please provide correct MAC address." % network['mac'])
 
