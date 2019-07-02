@@ -270,10 +270,10 @@ def get_cli_config(module, flags=None):
         if "include-default" in flag:
             cfg = rm_config_prefix(cfg)
             break
-    if cfg.startwith('display'):
+    if cfg.startswith('display'):
         lines = cfg.split('\n')
         if len(lines) > 1:
-            return '\n'.join(cfg[1:])
+            return '\n'.join(lines[1:])
         else:
             return ''
     return cfg
