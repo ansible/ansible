@@ -97,10 +97,10 @@ options:
             tolerated_failures:
                 description:
                     - The number of consecutive failed health check before declaring an endpoint in this profile Degraded after the next failed health check.
-            default:
-                protocol: HTTP
-                port: 80
-                path: /
+        default:
+            protocol: HTTP
+            port: 80
+            path: /
 
 extends_documentation_fragment:
     - azure
