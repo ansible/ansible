@@ -23,7 +23,17 @@ description:
 options:
     disk_number:
         description:
-            - Disk number is mandatory for initializing disks.
+            - Used to specify the disk number of the disk to be initialized.
+        type: int
+        required: true
+    uniqueid:
+        description:
+            - Used to specify the uniqueid of the disk to be initialized.
+        type: int
+        required: true
+    path:
+        description:
+            - Used to specify the path to the disk to be initialized.
         type: int
         required: true
     style:
@@ -45,6 +55,8 @@ options:
         default: false
 
 notes:
+    - One of three parameters (I(disk_number), I(uniqueid), and I(path)) are mandatory to identify the target disk, but
+      more than one cannot be specified at the same time.
     - A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see
       U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
     - This module is idempotent if I(force) is not specified.

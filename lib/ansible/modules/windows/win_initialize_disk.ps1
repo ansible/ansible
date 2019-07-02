@@ -10,24 +10,36 @@ Set-StrictMode -Version 2
 
 $spec = @{
     options = @{
-        disk_number = @{ type = "int"; required = $true; }
+        disk_number = @{ type = "int" }
+        uniqueid = @{ type = "str" }
+        path = @{ type = "str" }
         style = @{ type = "str"; choices = "gpt", "mbr"; default = "gpt" }
         online = @{ type = "bool"; default = $true }
         force = @{ type = "bool"; default = $false }
     }
+    mutually_exclusive = @(
+        ,@('disk_number', 'uniqueid', 'path')
+    )
+    required_one_of = @(
+        ,@('disk_number', 'uniqueid', 'path')
+    )
     supports_check_mode = $true
 }
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $disk_number = $module.Params.disk_number
+$uniqueid = $module.Params.uniqueid
+$path = $module.Params.path
 $partition_style = $module.Params.style
 $bring_online = $module.Params.online
 $force_init = $module.Params.force
 
 function Get-AnsibleDisk {
     param(
-        $DiskNumber
+        $DiskNumber,
+        $UniqueId,
+        $Path
     )
 
     if ($null -ne $DiskNumber) {
@@ -36,8 +48,20 @@ function Get-AnsibleDisk {
         } catch {
             $module.FailJson("There was an error retrieving the disk using disk_number $($DiskNumber): $($_.Exception.Message)")
         }
+    } elseif ($null -ne $UniqueId) {
+        try {
+            $disk = Get-Disk -UniqueId $UniqueId
+        } catch {
+            $module.FailJson("There was an error retrieving the disk using id $($UniqueId): $($_.Exception.Message)")
+        }
+    } elseif ($null -ne $Path) {
+        try {
+            $disk = Get-Disk -Path $Path
+        } catch {
+            $module.FailJson("There was an error retrieving the disk using path $($Path): $($_.Exception.Message)")
+        }
     } else {
-        $module.FailJson("Unable to retrieve disk: disk_number was not specified")
+        $module.FailJson("Unable to retrieve disk: disk_number, id, or path was not specified")
     }
 
     return $disk
@@ -102,13 +126,13 @@ function Set-AnsibleDisk {
     }
 
     if ($refresh_disk_status) {
-        $AnsibleDisk = Get-AnsibleDisk -DiskNumber $disk_number
+        $AnsibleDisk = Get-AnsibleDisk -DiskNumber $AnsibleDisk.Number
     }
 
     return $AnsibleDisk
 }
 
-$ansible_disk = Get-AnsibleDisk -DiskNumber $disk_number
+$ansible_disk = Get-AnsibleDisk -DiskNumber $disk_number -UniqueId $uniqueid -Path $path
 $ansible_part_style = $ansible_disk.PartitionStyle
 
 if ("RAW" -eq $ansible_part_style) {
