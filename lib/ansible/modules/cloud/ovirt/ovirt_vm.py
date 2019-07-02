@@ -770,7 +770,7 @@ options:
         version_added: "2.8"
     force_migrate:
         description:
-            - "If I(true), the VM will migrate when vm is user-migratable."
+            - If I(true), the VM will migrate when I(placement_policy=user-migratable) but not when I(placement_policy=pinned).
         version_added: "2.8"
         type: bool
     migrate:
