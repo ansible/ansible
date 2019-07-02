@@ -219,11 +219,12 @@ def create_extend_vg(module, vg, pvs, pp_size, vg_type, force, vg_validation):
 
         if not module.check_mode:
             mkvg_cmd = module.get_bin_path('mkvg', True)
-            rc, output, err = module.run_command("%s %s %s %s -y %s %s" % (mkvg_cmd, vg_opt[vg_type], pp_size, force_opt[force], vg, ' '.join(pvs)))
+            cmd = "%s %s %s %s -y %s %s" % (mkvg_cmd, vg_opt[vg_type], pp_size, force_opt[force], vg, ' '.join(pvs))
+            rc, output, err = module.run_command(cmd)
             if rc != 0:
                 changed = False
-                msg = "Creating volume group '%s' failed." % vg
-                return changed, msg
+                msg = "Failed to create volume group '%s' using command '%s'. Error message: %s" % (vg, cmd, err)
+                module.fail_json(msg=msg)
 
         msg = "Volume group '%s' created." % vg
         return changed, msg
