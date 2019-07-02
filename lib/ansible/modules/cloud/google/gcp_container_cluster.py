@@ -47,6 +47,20 @@ options:
     - present
     - absent
     default: present
+  kubectl_path:
+    description:
+    - The path that the kubectl config file will be written to.
+    - The file will not be created if this path is unset.
+    - Any existing file at this path will be completely overwritten.
+    - This requires the PyYaml library.
+    required: false
+    version_added: 2.9
+  kubectl_context:
+    description:
+    - The name of the context for the kubectl config file. Will default to the cluster
+      name.
+    required: false
+    version_added: 2.9
   name:
     description:
     - The name of this cluster. The name must be unique within this project and location,
@@ -431,6 +445,20 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+kubectlPath:
+  description:
+  - The path that the kubectl config file will be written to.
+  - The file will not be created if this path is unset.
+  - Any existing file at this path will be completely overwritten.
+  - This requires the PyYaml library.
+  returned: success
+  type: str
+kubectlContext:
+  description:
+  - The name of the context for the kubectl config file. Will default to the cluster
+    name.
+  returned: success
+  type: str
 name:
   description:
   - The name of this cluster. The name must be unique within this project and location,
@@ -619,7 +647,7 @@ masterAuth:
       description:
       - The password to use for HTTP basic authentication to the master endpoint.
         Because the master endpoint is open to the Internet, you should create a strong
-        password.
+        password with a minimum of 16 characters.
       returned: success
       type: str
     clientCertificateConfig:
@@ -945,6 +973,8 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
+            kubectl_path=dict(type='str'),
+            kubectl_context=dict(type='str'),
             name=dict(type='str'),
             description=dict(type='str'),
             initial_node_count=dict(type='int'),
@@ -1029,6 +1059,8 @@ def main():
         else:
             fetch = {}
 
+    if module.params.get('kubectl_path'):
+        Kubectl(module).write_file()
     fetch.update({'changed': changed})
 
     module.exit_json(**fetch)
@@ -1051,6 +1083,8 @@ def delete(module, link):
 
 def resource_to_request(module):
     request = {
+        u'kubectlPath': module.params.get('kubectl_path'),
+        u'kubectlContext': module.params.get('kubectl_context'),
         u'name': module.params.get('name'),
         u'description': module.params.get('description'),
         u'initialNodeCount': module.params.get('initial_node_count'),
@@ -1136,6 +1170,8 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
+        u'kubectlPath': response.get(u'kubectlPath'),
+        u'kubectlContext': response.get(u'kubectlContext'),
         u'name': response.get(u'name'),
         u'description': response.get(u'description'),
         u'initialNodeCount': module.params.get('initial_node_count'),
@@ -1229,6 +1265,77 @@ def delete_default_node_pool(module):
         module.params['name'],
     )
     return wait_for_operation(module, auth.delete(link))
+
+
+class Kubectl(object):
+    def __init__(self, module):
+        self.module = module
+
+    """
+    Writes a kubectl config file
+    kubectl_path must be set or this will fail.
+    """
+
+    def write_file(self):
+        try:
+            import yaml
+        except ImportError:
+            self.module.fail_json(msg="Please install the pyyaml module")
+
+        with open(self.module.params['kubectl_path'], 'w') as f:
+            f.write(yaml.dump(self._contents()))
+
+    """
+    Returns the contents of a kubectl file
+    """
+
+    def _contents(self):
+        token = self._auth_token()
+        endpoint = "https://%s" % self.fetch["endpoint"]
+        context = self.module.params.get('kubectl_context')
+        if not context:
+            context = self.module.params['name']
+
+        return {
+            'apiVersion': 'v1',
+            'clusters': [
+                {'name': context, 'cluster': {'certificate-authority-data': str(self.fetch['masterAuth']['clusterCaCertificate']), 'server': endpoint}}
+            ],
+            'contexts': [{'name': context, 'context': {'cluster': context, 'user': context}}],
+            'current-context': context,
+            'kind': 'Config',
+            'preferences': {},
+            'users': [
+                {
+                    'name': context,
+                    'user': {
+                        'auth-provider': {
+                            'config': {
+                                'access-token': token,
+                                'cmd-args': 'config config-helper --format=json',
+                                'cmd-path': '/usr/lib64/google-cloud-sdk/bin/gcloud',
+                                'expiry-key': '{.credential.token_expiry}',
+                                'token-key': '{.credential.access_token}',
+                            },
+                            'name': 'gcp',
+                        },
+                        'username': str(self.fetch['masterAuth']['username']),
+                        'password': str(self.fetch['masterAuth']['password']),
+                    },
+                }
+            ],
+        }
+
+    """
+    Returns the auth token used in kubectl
+    This also sets the 'fetch' variable used in creating the kubectl
+    """
+
+    def _auth_token(self):
+        auth = GcpSession(self.module, 'auth')
+        response = auth.get(self_link(self.module))
+        self.fetch = response.json()
+        return response.request.headers['authorization'].split(' ')[1]
 
 
 class ClusterNodeconfig(object):
