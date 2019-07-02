@@ -131,10 +131,13 @@ ansible_local
     The keys available depend on the custom facts created.
     See the :ref:`setup <setup_module>` module for more details.
 
+.. _connection_variables:
+
 Connection variables
 ---------------------
 Connection variables are normally used to set the specifics on how to execute actions on a target. Most of them correspond to connection plugins, but not all are specific to them; other plugins like shell, terminal and become are normally involved.
 Only the common ones are described as each connection/become/shell/etc plugin can define its own overrides and specific variables.
+See :ref:`general_precedence_rules` for how connection variables interact with :ref:`configuration settings<ansible_configuration_settings>`, :ref:`command-line options<ommand_line_tools>`, and :ref:`playbook keywords<playbook_keywords>`.
 
 ansible_become_user
     The user Ansible 'becomes' after using privilege escalation. This must be available to the 'login user'.
