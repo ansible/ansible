@@ -73,9 +73,9 @@ galleries:
     type:
       description:
         - Resource type
-       returned: always
-       type: str
-       sample: "Microsoft.Compute/galleries"
+      returned: always
+      type: str
+      sample: "Microsoft.Compute/galleries"
     location:
       description:
         - Resource location

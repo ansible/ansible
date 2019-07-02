@@ -106,9 +106,9 @@ gallery_images:
             type: OperatingSystemStateTypes
             sample: "Generalized"
           osType:
-            description:
-              - This property allows you to specify the type of the OS
-              that is included in the disk when creating a VM from a managed image.
+            description: >-
+              This property allows you to specify the type of the OS that is included in the disk
+              when creating a VM from a managed image.
             type: OperatingSystemTypes
             sample: "Linux"
           identifier:
