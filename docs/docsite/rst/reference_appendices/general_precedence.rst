@@ -38,7 +38,7 @@ Configuration settings
 
 Ansible will use the first ``ansible.cfg`` file found, all others are ignored.
 
-Environment variables have a higher precedence than entries in ``ansible.cfg``. If you have environment variables set, they override the settings in whichever ``ansible.cfg`` file Ansible loads. The value of any given environment variable follows normal shell precedence: the last value defined overwrites previous values. (TODO: Does Ansible use the envvars defined on the control node or on the managed node?)
+Environment variables have a higher precedence than entries in ``ansible.cfg``. If you have environment variables set on your control node, they override the settings in whichever ``ansible.cfg`` file Ansible loads. The value of any given environment variable follows normal shell precedence: the last value defined overwrites previous values.
 
 Command-line options
 ^^^^^^^^^^^^^^^^^^^^
@@ -53,7 +53,7 @@ Some parameters allow multiple values. In this case, Ansible will append all val
 
    ansible -i /path/inventory1 -i /path/inventory2 -m ping all
 
-The help for each :ref:`command-line tool<command_line_tools>` specifies which parameters allow for multiple entries.
+The help for each :ref:`command-line tool<command_line_tools>` lists available options for that tool.
 
 Most command-line options deal with generic settings, but some settings are specific to connections and strategies.
 Passing these options at the command-line may feel like the highest-precedence options, but command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
