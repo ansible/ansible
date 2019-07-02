@@ -14,7 +14,7 @@ import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.module_utils.basic import is_executable
+from ansible.module_utils.common.file import is_executable
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
@@ -115,8 +115,8 @@ class DataLoader:
 
     def is_executable(self, path):
         '''is the given path executable?'''
-        path = self.path_dwim(path)
-        return is_executable(path)
+        b_path = to_bytes(self.path_dwim(path), errors='surrogate_or_strict')
+        return is_executable(b_path)
 
     def _decrypt_if_vault_data(self, b_vault_data, b_file_name=None):
         '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''

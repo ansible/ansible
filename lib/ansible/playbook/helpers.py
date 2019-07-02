@@ -22,7 +22,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.utils.display import Display
@@ -213,7 +213,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         else:
                             include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
-                        if os.path.exists(include_file):
+                        if os.path.exists(to_bytes(include_file, errors='surrogate_or_strict')):
                             found = True
                             break
                         else:

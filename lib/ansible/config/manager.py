@@ -363,7 +363,10 @@ class ConfigManager(object):
         origin = None
         for entry in entry_list:
             name = entry.get('name')
-            temp_value = container.get(name, None)
+            try:
+                temp_value = container.get(name, None)
+            except UnicodeEncodeError:
+                continue
             if temp_value is not None:  # only set if env var is defined
                 value = temp_value
                 origin = name

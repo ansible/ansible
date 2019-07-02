@@ -90,7 +90,7 @@ class LookupModule(LookupBase):
 
             if self.get_option('split_lines'):
                 for line in response.read().splitlines():
-                    ret.append(to_text(line))
+                    ret.append(to_text(line, errors='surrogate_or_strict'))
             else:
-                ret.append(to_text(response.read()))
+                ret.append(to_text(response.read(), errors='surrogate_or_strict'))
         return ret

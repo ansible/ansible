@@ -807,7 +807,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        display.vvv("Using module file %s" % module_path)
+        display.vvv("Using module file %s" % to_text(module_path))
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 

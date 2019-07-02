@@ -108,8 +108,18 @@ class ActionModule(_ActionModule):
             result['changed'] = copy_result['changed']
 
         if backup_options and backup_options.get('filename'):
-            result['date'] = time.strftime('%Y-%m-%d', time.gmtime(os.stat(result['backup_path']).st_ctime))
-            result['time'] = time.strftime('%H:%M:%S', time.gmtime(os.stat(result['backup_path']).st_ctime))
+            result['date'] = time.strftime(
+                '%Y-%m-%d',
+                time.gmtime(
+                    os.stat(to_bytes(result['backup_path'], errors='surrogate_or_strict')).st_ctime
+                )
+            )
+            result['time'] = time.strftime(
+                '%H:%M:%S',
+                time.gmtime(
+                    os.stat(to_bytes(result['backup_path'], errors='surrogate_or_strict')).st_ctime
+                )
+            )
 
         else:
             result['date'] = tstamp.split('@')[0]

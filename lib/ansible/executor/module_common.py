@@ -1067,7 +1067,8 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     task_vars = {} if task_vars is None else task_vars
     environment = {} if environment is None else environment
 
-    with open(module_path, 'rb') as f:
+    b_module_path = to_bytes(module_path, errors='surrogate_or_strict')
+    with open(b_module_path, 'rb') as f:
 
         # read in the module source
         b_module_data = f.read()

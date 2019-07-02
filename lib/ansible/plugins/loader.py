@@ -226,7 +226,12 @@ class PluginLoader:
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
-            self.package_path = os.path.dirname(m.__file__)
+            self.package_path = to_text(
+                os.path.dirname(
+                    to_bytes(m.__file__, errors='surrogate_or_strict')
+                ),
+                errors='surrogate_or_strict'
+            )
         if subdirs:
             return self._all_directories(self.package_path)
         return [self.package_path]
@@ -245,12 +250,15 @@ class PluginLoader:
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
             for path in self.config:
-                path = os.path.realpath(os.path.expanduser(path))
+                path = to_text(path, errors='surrogate_or_strict')
+                b_path = os.path.realpath(os.path.expanduser(to_bytes(path, errors='surrogate_or_strict')))
                 if subdirs:
-                    contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
-                    for c in contents:
-                        if os.path.isdir(c) and c not in ret:
-                            ret.append(c)
+                    b_contents = glob.glob(b"%s/*" % b_path) + glob.glob(b"%s/*/*" % b_path)
+                    for b_content in b_contents:
+                        if os.path.isdir(b_content):
+                            content = to_text(b_content, errors='surrogate_or_strict')
+                            if content not in ret:
+                                ret.append(content)
                 if path not in ret:
                     ret.append(path)
 
@@ -305,16 +313,19 @@ class PluginLoader:
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
 
-        directory = os.path.realpath(directory)
+        b_directory = os.path.realpath(to_bytes(directory, errors='surrogate_or_strict'))
+        b_subdir = to_bytes(self.subdir, errors='surrogate_or_strict')
 
-        if directory is not None:
+        if b_directory is not None:
             if with_subdir:
-                directory = os.path.join(directory, self.subdir)
+                b_directory = os.path.join(directory, b_subdir)
+
+            directory = to_text(b_directory, errors='surrogate_or_strict')
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
                 self._clear_caches()
-                display.debug('Added %s to loader search path' % (directory))
+                display.debug('Added %s to loader search path' % directory)
 
     def _find_fq_plugin(self, fq_name, extension):
         fq_name = to_native(fq_name)
@@ -442,15 +453,24 @@ class PluginLoader:
         #       (add_directory()) once we start using the iterator.  Currently, it
         #       looks like _get_paths() never forces a cache refresh so if we expect
         #       additional directories to be added later, it is buggy.
-        for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
-            display.debug('trying %s' % path)
+        for path in self._get_paths():
+            if path in self._searched_paths:
+                continue
+
+            b_path = to_bytes(path, errors='surrogate_or_strict')
+            if not os.path.isdir(b_path):
+                continue
+
+            display.debug('trying %s' % to_text(b_path))
             try:
-                full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                b_full_paths = (os.path.join(b_path, f) for f in os.listdir(b_path))
             except OSError as e:
                 display.warning("Error accessing plugin paths: %s" % to_text(e))
 
-            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
-                full_name = os.path.basename(full_path)
+            for b_full_path in (f for f in b_full_paths if os.path.isfile(f) and not f.endswith(b'__init__.py')):
+                full_path = to_text(b_full_path, errors='surrogate_or_strict')
+                b_full_name = os.path.basename(b_full_path)
+                full_name = to_text(b_full_name, errors='surrogate_or_strict')
 
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
                 # FIXME: I believe this is only correct for modules and module_utils.
@@ -458,10 +478,10 @@ class PluginLoader:
                 if any(full_path.endswith(x) for x in C.BLACKLIST_EXTS):
                     continue
 
-                splitname = os.path.splitext(full_name)
-                base_name = splitname[0]
+                b_splitname = os.path.splitext(b_full_name)
+                base_name = to_text(b_splitname[0], errors='surrogate_or_strict')
                 try:
-                    extension = splitname[1]
+                    extension = to_text(b_splitname[1], errors='surrogate_or_strict')
                 except IndexError:
                     extension = ''
 
@@ -490,7 +510,7 @@ class PluginLoader:
             alias_name = '_' + name
             # We've already cached all the paths at this point
             if alias_name in pull_cache:
-                if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
+                if not ignore_deprecated and not os.path.islink(to_bytes(pull_cache[alias_name], errors='surrogate_or_strict')):
                     # FIXME: this is not always the case, some are just aliases
                     display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
                                        'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))
@@ -537,7 +557,10 @@ class PluginLoader:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             if imp is None:
-                spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+                spec = importlib.util.spec_from_file_location(
+                    to_native(to_bytes(full_name), encoding='ascii'),
+                    to_native(to_bytes(path), encoding='ascii')
+                )
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 sys.modules[full_name] = module
@@ -654,16 +677,17 @@ class PluginLoader:
         if path_only and class_only:
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
-        all_matches = []
+        b_all_matches = []
         found_in_cache = True
 
         for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+            b_all_matches.extend(glob.glob(os.path.join(to_bytes(i, errors='surrogate_or_strict'), b"*.py")))
 
         loaded_modules = set()
-        for path in sorted(all_matches, key=os.path.basename):
-            name = os.path.splitext(path)[0]
-            basename = os.path.basename(name)
+        for b_path in sorted(b_all_matches, key=os.path.basename):
+            path = to_text(b_path, errors='surrogate_or_strict')
+            name = to_text(os.path.splitext(b_path)[0], errors='surrogate_or_strict')
+            basename = to_text(os.path.basename(name), errors='surrogate_or_strict')
 
             if basename == '__init__' or basename in _PLUGIN_FILTERS[self.package]:
                 continue

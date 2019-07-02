@@ -38,6 +38,7 @@ RETURN = """
 import subprocess
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.lookup import LookupBase
 
 
@@ -46,6 +47,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         ret = []
+        basedir = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
         for term in terms:
             '''
             http://docs.python.org/2/library/subprocess.html#popen-constructor
@@ -56,12 +58,12 @@ class LookupModule(LookupBase):
 
             https://github.com/ansible/ansible/issues/6550
             '''
-            term = str(term)
+            term = to_bytes(term, errors='surrogate_or_strict')
 
-            p = subprocess.Popen(term, cwd=self._loader.get_basedir(), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(term, cwd=basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
-                ret.append(stdout.decode("utf-8").rstrip())
+                ret.append(to_text(stdout, errors='surrogate_or_strict').rstrip())
             else:
                 raise AnsibleError("lookup_plugin.pipe(%s) returned %d" % (term, p.returncode))
         return ret

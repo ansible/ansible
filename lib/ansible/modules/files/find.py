@@ -219,6 +219,7 @@ import stat
 import sys
 import time
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -230,16 +231,16 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
     if use_regex:
         if patterns and excludes is None:
             for p in patterns:
-                r = re.compile(p)
+                r = re.compile(to_bytes(p, errors='surrogate_or_strict'))
                 if r.match(f):
                     return True
 
         elif patterns and excludes:
             for p in patterns:
-                r = re.compile(p)
+                r = re.compile(to_bytes(p, errors='surrogate_or_strict'))
                 if r.match(f):
                     for e in excludes:
-                        r = re.compile(e)
+                        r = re.compile(to_bytes(e, errors='surrogate_or_strict'))
                         if r.match(f):
                             return False
                     return True
@@ -247,14 +248,14 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
     else:
         if patterns and excludes is None:
             for p in patterns:
-                if fnmatch.fnmatch(f, p):
+                if fnmatch.fnmatch(f, to_bytes(p, errors='surrogate_or_strict')):
                     return True
 
         elif patterns and excludes:
             for p in patterns:
-                if fnmatch.fnmatch(f, p):
+                if fnmatch.fnmatch(f, to_bytes(p, errors='surrogate_or_strict')):
                     for e in excludes:
-                        if fnmatch.fnmatch(f, e):
+                        if fnmatch.fnmatch(f, to_bytes(e, errors='surrogate_or_strict')):
                             return False
                     return True
 
@@ -406,13 +407,14 @@ def main():
     now = time.time()
     msg = ''
     looked = 0
+    b_sep = to_bytes(os.path.sep, errors='surrogate_or_strict')
     for npath in params['paths']:
-        npath = os.path.expanduser(os.path.expandvars(npath))
-        if os.path.isdir(npath):
+        b_path = os.path.expanduser(os.path.expandvars(to_bytes(npath, errors='surrogate_or_strict')))
+        if os.path.isdir(b_path):
             ''' ignore followlinks for python version < 2.6 '''
-            for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+            for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(b_path)) or os.walk(b_path, followlinks=params['follow']):
                 if params['depth']:
-                    depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
+                    depth = root.replace(b_path.rstrip(b_sep), '').count(b_sep)
                     if files or dirs:
                         depth += 1
                     if depth > params['depth']:
@@ -422,7 +424,7 @@ def main():
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
 
-                    if os.path.basename(fsname).startswith('.') and not params['hidden']:
+                    if os.path.basename(fsname).startswith(b'.') and not params['hidden']:
                         continue
 
                     try:

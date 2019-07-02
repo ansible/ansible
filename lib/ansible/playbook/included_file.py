@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.template import Templar
@@ -150,7 +150,7 @@ class IncludedFile:
                                         for include_file in candidates:
                                             try:
                                                 # may throw OSError
-                                                os.stat(include_file)
+                                                os.stat(to_bytes(include_file, errors='surrogate_or_strict'))
                                                 # or select the task file if it exists
                                                 break
                                             except OSError:
@@ -158,7 +158,7 @@ class IncludedFile:
                                     else:
                                         include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
-                                    if os.path.exists(include_file):
+                                    if os.path.exists(to_bytes(include_file, errors='surrogate_or_strict')):
                                         break
                                     else:
                                         parent_include = parent_include._parent

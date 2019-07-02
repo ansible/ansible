@@ -50,7 +50,7 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.template import generate_ansible_template_vars
 from ansible.utils.display import Display
 
@@ -92,7 +92,15 @@ class LookupModule(LookupBase):
                     searchpath = newsearchpath
                 searchpath.insert(0, os.path.dirname(lookupfile))
 
-                self._templar.environment.loader.searchpath = searchpath
+                self._templar.environment.loader.searchpath = j2_searchpath = []
+                for p in searchpath:
+                    j2_searchpath.append(
+                        to_native(
+                            to_bytes(p, errors='surrogate_or_strict'),
+                            errors='surrogate_or_strict',
+                            encoding='ascii'
+                        )
+                    )
                 if variable_start_string is not None:
                     self._templar.environment.variable_start_string = variable_start_string
                 if variable_end_string is not None:

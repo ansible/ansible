@@ -31,7 +31,7 @@ from ansible.errors.yaml_strings import (
     YAML_POSITION_DETAILS,
     YAML_AND_SHORTHAND_ERROR,
 )
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import Sequence
 
 
@@ -85,15 +85,16 @@ class AnsibleError(Exception):
 
         target_line = ''
         prev_line = ''
+        b_file_name = to_bytes(file_name, errors='surrogate_or_strict')
 
-        with open(file_name, 'r') as f:
+        with open(b_file_name, 'rb') as f:
             lines = f.readlines()
 
             target_line = lines[line_number]
             if line_number > 0:
                 prev_line = lines[line_number - 1]
 
-        return (target_line, prev_line)
+        return (to_native(target_line), to_native(prev_line))
 
     def _get_extended_error(self):
         '''
