@@ -48,6 +48,15 @@ options:
     description:
     - Schedule to be added inside the policy.
     type: list
+  snapmirror_label:
+    description:
+    - SnapMirror label assigned to each schedule inside the policy.
+    type: list
+    required: false
+   vserver:
+    description:
+    - The name of the vserver to use.
+    required: false
 '''
 EXAMPLES = """
     - name: Create Snapshot policy
@@ -80,6 +89,7 @@ EXAMPLES = """
         name: ansible2
         schedule: ['daily', 'weekly']
         count: [20, 30]
+        snapmirror_label: ['daily', 'weekly']
         enabled: True
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -123,7 +133,9 @@ class NetAppOntapSnapshotPolicy(object):
             # count is a list of integers
             count=dict(required=False, type="list", elements="int"),
             comment=dict(required=False, type="str"),
-            schedule=dict(required=False, type="list", elements="str")
+            schedule=dict(required=False, type="list", elements="str"),
+            snapmirror_label=dict(required=False, type="list", elements="str"),
+            vserver=dict(required=False, type="str")
         ))
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -140,7 +152,10 @@ class NetAppOntapSnapshotPolicy(object):
             self.module.fail_json(
                 msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
+            if 'vserver' in self.parameters:
+                self.server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.parameters['vserver'])
+            else:
+                self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
         return
 
     def get_snapshot_policy(self):
@@ -153,28 +168,30 @@ class NetAppOntapSnapshotPolicy(object):
         query = netapp_utils.zapi.NaElement("query")
         snapshot_info_obj = netapp_utils.zapi.NaElement("snapshot-policy-info")
         snapshot_info_obj.add_new_child("policy", self.parameters['name'])
+        if 'vserver' in self.parameters:
+            snapshot_info_obj.add_new_child("vserver-name", self.parameters['vserver'])
         query.add_child_elem(snapshot_info_obj)
         snapshot_obj.add_child_elem(query)
         try:
             result = self.server.invoke_successfully(snapshot_obj, True)
             if result.get_child_by_name('num-records') and \
                     int(result.get_child_content('num-records')) == 1:
-
                 snapshot_policy = result.get_child_by_name('attributes-list').get_child_by_name('snapshot-policy-info')
                 current = {}
-                if snapshot_policy.get_child_by_name('policy'):
-                    current['name'] = snapshot_policy['policy']
-                if snapshot_policy.get_child_by_name('enabled'):
-                    current['enabled'] = False if snapshot_policy['enabled'].lower() == 'false' else True
+                current['name'] = snapshot_policy.get_child_content('policy')
+                current['vserver'] = snapshot_policy.get_child_content('vserver-name')
+                current['enabled'] = False if snapshot_policy.get_child_content('enabled').lower() == 'false' else True
+                current['comment'] = snapshot_policy.get_child_content('comment') or ''
+                current['schedule'], current['count'], current['prefix'], current['snapmirror_label'] = [], [], [], []
                 if snapshot_policy.get_child_by_name('snapshot-policy-schedules'):
-                    current['schedule'] = []
-                    current['count'] = []
                     for schedule in snapshot_policy['snapshot-policy-schedules'].get_children():
-                        current['schedule'].append(schedule['schedule'])
-                        current['count'].append(int(schedule['count']))
-                if snapshot_policy.get_child_by_name('comment'):
-                    current['comment'] = snapshot_policy['comment']
-
+                        current['schedule'].append(schedule.get_child_content('schedule'))
+                        current['count'].append(int(schedule.get_child_content('count')))
+                        current['prefix'].append(schedule.get_child_content('prefix'))
+                        snapmirror_label = schedule.get_child_content('snapmirror-label')
+                        if snapmirror_label == None or snapmirror_label == '-':
+                            snapmirror_label = ''
+                        current['snapmirror_label'].append(snapmirror_label)
                 return current
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg=to_native(error), exception=traceback.format_exc())
@@ -193,6 +210,11 @@ class NetAppOntapSnapshotPolicy(object):
                 "schedule and can have up to a maximum of 5 schedules, with a count "
                 "representing the maximum number of Snapshot copies for each schedule")
 
+        if 'snapmirror_label' in self.parameters:
+            if len(self.parameters['snapmirror_label']) != len(self.parameters['schedule']):
+                self.module.fail_json(msg="Error: Each Snapshot Policy schedule must have an "
+                    "accompanying SnapMirror Label")
+                
     def modify_snapshot_policy(self, current):
         """
         Modifies an existing snapshot policy
@@ -204,7 +226,7 @@ class NetAppOntapSnapshotPolicy(object):
         snapshot_obj = netapp_utils.zapi.NaElement.create_node_with_children('snapshot-policy-modify', **options)
 
         # Set up optional variables to modify snapshot policy
-        if self.parameters.get('comment'):
+        if 'comment' in self.parameters:
             snapshot_obj.add_new_child("comment", self.parameters['comment'])
         try:
             self.server.invoke_successfully(snapshot_obj, True)
@@ -222,17 +244,28 @@ class NetAppOntapSnapshotPolicy(object):
         """
         self.validate_parameters()
 
+        # Init snapmirror_labels
+        if 'snapmirror_label' in self.parameters:
+            snapmirror_labels = self.parameters['snapmirror_label']
+        else:
+            snapmirror_labels = ['']*len(self.parameters['schedule'])
+
         # Modify existing or add new schedules
-        for schedule, count in zip(self.parameters['schedule'], self.parameters['count']):
+        for schedule, count, snapmirror_label in zip(self.parameters['schedule'], self.parameters['count'], snapmirror_labels):
             schedule.strip()
+            snapmirror_label.strip()
             options = {'policy': current['name'],
                        'schedule': schedule}
 
             if schedule in current['schedule']:
                 options['new-count'] = str(count)
+                # Setting snapmirror label to '', will remove existing label.
+                options['new-snapmirror-label'] = snapmirror_label
                 self.modify_snapshot_policy_schedule(options, 'snapshot-policy-modify-schedule')
             else:
                 options['count'] = str(count)
+                if snapmirror_label != '':
+                    options['snapmirror-label'] = snapmirror_label
                 self.modify_snapshot_policy_schedule(options, 'snapshot-policy-add-schedule')
 
         # Delete schedules no longer required
@@ -264,11 +297,22 @@ class NetAppOntapSnapshotPolicy(object):
         options = {'policy': self.parameters['name'],
                    'enabled': str(self.parameters['enabled']),
                    }
+
+        # Init snapmirror_labels
+        if 'snapmirror_label' in self.parameters:
+            snapmirror_labels = self.parameters['snapmirror_label']
+        else:
+            snapmirror_labels = ['']*len(self.parameters['schedule'])
+
         # zapi attribute for first schedule is schedule1, second is schedule2 and so on
         positions = [str(i) for i in range(1, len(self.parameters['schedule']) + 1)]
-        for schedule, count, position in zip(self.parameters['schedule'], self.parameters['count'], positions):
+        for schedule, count, snapmirror_label, position in zip(self.parameters['schedule'], self.parameters['count'], snapmirror_labels, positions):
+            schedule.strip()
+            snapmirror_label.strip()
             options['count' + position] = str(count)
             options['schedule' + position] = schedule
+            if snapmirror_label != '':
+                options['snapmirror-label' + position] = snapmirror_label
         snapshot_obj = netapp_utils.zapi.NaElement.create_node_with_children('snapshot-policy-create', **options)
 
         # Set up optional variables to create a snapshot policy
@@ -316,7 +360,9 @@ class NetAppOntapSnapshotPolicy(object):
         cd_action, modify = None, None
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
         if cd_action is None and self.parameters['state'] == 'present':
-            modify = self.na_helper.get_modified_attributes(current, self.parameters)
+            # Don't sort schedule/count/snapmirror_label lists as it can
+            # mess up the intended parameter order.
+            modify = self.na_helper.get_modified_attributes(current, self.parameters, sort_list=False)
 
         if self.na_helper.changed:
             if self.module.check_mode:

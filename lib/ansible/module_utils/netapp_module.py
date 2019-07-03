@@ -168,7 +168,7 @@ class NetAppModule(object):
         '''
         pass
 
-    def get_modified_attributes(self, current, desired, get_list_diff=False):
+    def get_modified_attributes(self, current, desired, get_list_diff=False, sort_list=True):
         ''' takes two dicts of attributes and return a dict of attributes that are
             not in the current state
             It is expected that all attributes of interest are listed in current and
@@ -194,7 +194,7 @@ class NetAppModule(object):
         # collect changed attributes
         for key, value in current.items():
             if key in desired and desired[key] is not None:
-                if type(value) is list:
+                if type(value) is list and sort_list:
                     value.sort()
                     desired[key].sort()
                 if cmp(value, desired[key]) != 0:
