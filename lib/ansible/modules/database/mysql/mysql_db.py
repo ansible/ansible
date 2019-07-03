@@ -383,50 +383,41 @@ def main():
             non_existence_list.append(each_database)
 
     if state == "absent":
-        if module.check_mode and not db_exists(cursor, db):
-            module.exit_json(changed=False, db=db_name, db_list=db)
-        elif module.check_mode and db_exists(cursor, db):
-            module.exit_json(changed=True, db=db_name, db_list=db)
-        elif not module.check_mode:
-            try:
-                changed = db_delete(cursor, existence_list)
-            except Exception as e:
-                module.fail_json(msg="error deleting database: %s" % to_native(e))
-            module.exit_json(changed=changed, db=db_name, db_list=db)
+        if module.check_mode:
+            module.exit_json(changed=bool(existence_list), db=db_name, db_list=db)
+        try:
+            changed = db_delete(cursor, existence_list)
+        except Exception as e:
+            module.fail_json(msg="error deleting database: %s" % to_native(e))
+        module.exit_json(changed=changed, db=db_name, db_list=db)
     elif state == "present":
-        if db_exists(cursor, db):
-            module.exit_json(changed=False, db=db_name, db_list=db)
-        else:
-            if module.check_mode:
-                changed = True
-            else:
-                try:
-                    changed = db_create(cursor, non_existence_list, encoding, collation)
-                except Exception as e:
-                    module.fail_json(msg="error creating database: %s" % to_native(e),
-                                     exception=traceback.format_exc())
-            module.exit_json(changed=changed, db=db_name, db_list=db)
+        if module.check_mode:
+            module.exit_json(changed=bool(non_existence_list), db=db_name, db_list=db)
+        changed = False
+        if non_existence_list:
+            try:
+                changed = db_create(cursor, non_existence_list, encoding, collation)
+            except Exception as e:
+                module.fail_json(msg="error creating database: %s" % to_native(e),
+                                 exception=traceback.format_exc())
+        module.exit_json(changed=changed, db=db_name, db_list=db)
     elif state == "dump":
-        if db_exists(cursor, db):
-            if module.check_mode:
-                module.exit_json(changed=True, db=db_name, db_list=db)
-            rc, stdout, stderr = db_dump(module, login_host, login_user,
-                                         login_password, db, target, all_databases,
-                                         login_port, config_file, socket, ssl_cert, ssl_key,
-                                         ssl_ca, single_transaction, quick, ignore_tables)
-            if rc != 0:
-                module.fail_json(msg="%s" % stderr)
-            else:
-                module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
-        else:
-            if module.check_mode:
-                module.exit_json(changed=False, db=db_name, db_list=db)
+        if module.check_mode:
+            module.exit_json(changed=not bool(non_existence_list), db=db_name, db_list=db)
+        if non_existence_list:
             module.fail_json(msg="Cannot dump database %r - not found" % (' '.join(non_existence_list)))
+        rc, stdout, stderr = db_dump(module, login_host, login_user,
+                                     login_password, db, target, all_databases,
+                                     login_port, config_file, socket, ssl_cert, ssl_key,
+                                     ssl_ca, single_transaction, quick, ignore_tables)
+        if rc != 0:
+            module.fail_json(msg="%s" % stderr)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
     elif state == "import":
         changed = True
         if module.check_mode:
-            module.exit_json(changed=changed, db=db_name, db_list=db)
-        if not db_exists(cursor, db):
+            module.exit_json(changed=True, db=db_name, db_list=db)
+        if non_existence_list:
             try:
                 changed = db_create(cursor, db, encoding, collation)
             except Exception as e:
