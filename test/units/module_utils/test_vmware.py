@@ -88,10 +88,12 @@ class FakeAnsibleModule:
         raise FailJson(*args, **kwargs)
 
 
-def fake_connect_to_api(module):
+def fake_connect_to_api(module, disconnect_atexit=True, return_si=False):
     class MyContent():
         customFieldsManager = None
-    return MyContent
+    if return_si:
+        return (None, MyContent())
+    return MyContent()
 
 
 def test_pyvmomi_lib_exists(mocker, fake_ansible_module):
