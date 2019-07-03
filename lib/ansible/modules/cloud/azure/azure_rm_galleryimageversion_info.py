@@ -269,6 +269,7 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
         }
         return d
 
+
 def main():
     AzureRMGalleryImageVersionsInfo()
 

@@ -254,6 +254,7 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
         }
         return d
 
+
 def main():
     AzureRMGalleriesInfo()
 
