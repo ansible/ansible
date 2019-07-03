@@ -232,6 +232,15 @@ EXAMPLES = '''
     name: myhost
     force: True
 
+# Retry removing host when failed (https://bugzilla.redhat.com/show_bug.cgi?id=1719271)
+- ovirt_host:
+    state: absent
+    name: myhost
+  register: result
+  until: not result.failed
+  retries: 6
+  delay: 20
+
 # Change host Name
 - ovirt_host:
     id: 00000000-0000-0000-0000-000000000000
