@@ -175,12 +175,10 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
                 self.gallery_name is not None and
                 self.gallery_image_name is not None and
                 self.name is not None):
-            # self.results['gallery_image_versions'] = self.format_item(self.get())
             self.results['gallery_image_versions'] = self.get()
         elif (self.resource_group is not None and
               self.gallery_name is not None and
               self.gallery_image_name is not None):
-            # self.results['gallery_image_versions'] = self.format_item(self.listbygalleryimage())
             self.results['gallery_image_versions'] = self.listbygalleryimage()
         return self.results
 
