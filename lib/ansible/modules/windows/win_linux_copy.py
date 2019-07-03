@@ -76,9 +76,6 @@ EXAMPLES = r'''
     flow: l2w
     usr: root
     pass: root_password
-
-
-
 '''
 
 RETURN = r'''
@@ -97,6 +94,5 @@ msg:
     returned: always.
     type: str
     sample: data.txt                  | 0 kB |   0.1 kB/s | ETA: 00:00:00 | 100%
-
 
 '''
