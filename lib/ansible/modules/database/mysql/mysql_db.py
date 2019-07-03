@@ -405,7 +405,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=not bool(non_existence_list), db=db_name, db_list=db)
         if non_existence_list:
-            module.fail_json(msg="Cannot dump database %r - not found" % (' '.join(non_existence_list)))
+            module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
@@ -419,7 +419,7 @@ def main():
             module.exit_json(changed=True, db=db_name, db_list=db)
         if non_existence_list:
             try:
-                changed = db_create(cursor, db, encoding, collation)
+                changed = db_create(cursor, non_existence_list, encoding, collation)
             except Exception as e:
                 module.fail_json(msg="error creating database: %s" % to_native(e),
                                  exception=traceback.format_exc())
