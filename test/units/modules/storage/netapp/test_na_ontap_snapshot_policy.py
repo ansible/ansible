@@ -92,8 +92,8 @@ class MockONTAPConnection(object):
                         'comment': 'new comment',
                         'enabled': 'true',
                         'policy': 'ansible',
-                        'snapshot-policy-schedules' : {
-                            'snapshot-schedule-info' : {
+                        'snapshot-policy-schedules': {
+                            'snapshot-schedule-info': {
                                 'count': 100,
                                 'prefix': 'hourly',
                                 'schedule': 'hourly',
@@ -116,8 +116,8 @@ class MockONTAPConnection(object):
                         'comment': 'modified comment',
                         'enabled': 'true',
                         'policy': 'ansible',
-                        'snapshot-policy-schedules' : {
-                            'snapshot-schedule-info' : {
+                        'snapshot-policy-schedules': {
+                            'snapshot-schedule-info': {
                                 'count': 100,
                                 'prefix': 'hourly',
                                 'schedule': 'hourly',
@@ -140,8 +140,8 @@ class MockONTAPConnection(object):
                         'comment': 'new comment',
                         'enabled': 'false',
                         'policy': 'ansible',
-                        'snapshot-policy-schedules' : {
-                            'snapshot-schedule-info' : {
+                        'snapshot-policy-schedules': {
+                            'snapshot-schedule-info': {
                                 'count': 100,
                                 'prefix': 'hourly',
                                 'schedule': 'hourly',

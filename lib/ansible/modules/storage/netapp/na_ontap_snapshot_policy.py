@@ -53,7 +53,7 @@ options:
     - SnapMirror label assigned to each schedule inside the policy.
     type: list
     required: false
-   vserver:
+  vserver:
     description:
     - The name of the vserver to use.
     required: false
@@ -189,7 +189,7 @@ class NetAppOntapSnapshotPolicy(object):
                         current['count'].append(int(schedule.get_child_content('count')))
                         current['prefix'].append(schedule.get_child_content('prefix'))
                         snapmirror_label = schedule.get_child_content('snapmirror-label')
-                        if snapmirror_label == None or snapmirror_label == '-':
+                        if snapmirror_label is None or snapmirror_label == '-':
                             snapmirror_label = ''
                         current['snapmirror_label'].append(snapmirror_label)
                 return current
@@ -207,14 +207,14 @@ class NetAppOntapSnapshotPolicy(object):
                 len(self.parameters['count']) < 1 or len(self.parameters['schedule']) < 1 or \
                 len(self.parameters['count']) != len(self.parameters['schedule']):
             self.module.fail_json(msg="Error: A Snapshot policy must have at least 1 "
-                "schedule and can have up to a maximum of 5 schedules, with a count "
-                "representing the maximum number of Snapshot copies for each schedule")
+                                      "schedule and can have up to a maximum of 5 schedules, with a count "
+                                      "representing the maximum number of Snapshot copies for each schedule")
 
         if 'snapmirror_label' in self.parameters:
             if len(self.parameters['snapmirror_label']) != len(self.parameters['schedule']):
                 self.module.fail_json(msg="Error: Each Snapshot Policy schedule must have an "
-                    "accompanying SnapMirror Label")
-                
+                                          "accompanying SnapMirror Label")
+
     def modify_snapshot_policy(self, current):
         """
         Modifies an existing snapshot policy
@@ -248,7 +248,7 @@ class NetAppOntapSnapshotPolicy(object):
         if 'snapmirror_label' in self.parameters:
             snapmirror_labels = self.parameters['snapmirror_label']
         else:
-            snapmirror_labels = ['']*len(self.parameters['schedule'])
+            snapmirror_labels = [''] * len(self.parameters['schedule'])
 
         # Modify existing or add new schedules
         for schedule, count, snapmirror_label in zip(self.parameters['schedule'], self.parameters['count'], snapmirror_labels):
@@ -273,7 +273,7 @@ class NetAppOntapSnapshotPolicy(object):
             schedule.strip()
             if schedule not in [item.strip() for item in self.parameters['schedule']]:
                 options = {'policy': current['name'],
-                            'schedule': schedule}
+                           'schedule': schedule}
                 self.modify_snapshot_policy_schedule(options, 'snapshot-policy-remove-schedule')
 
     def modify_snapshot_policy_schedule(self, options, zapi):
@@ -302,7 +302,7 @@ class NetAppOntapSnapshotPolicy(object):
         if 'snapmirror_label' in self.parameters:
             snapmirror_labels = self.parameters['snapmirror_label']
         else:
-            snapmirror_labels = ['']*len(self.parameters['schedule'])
+            snapmirror_labels = [''] * len(self.parameters['schedule'])
 
         # zapi attribute for first schedule is schedule1, second is schedule2 and so on
         positions = [str(i) for i in range(1, len(self.parameters['schedule']) + 1)]
