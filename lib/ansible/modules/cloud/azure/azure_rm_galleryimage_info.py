@@ -100,7 +100,7 @@ images:
         This property allows you to specify the type of the OS that is included in the disk
         when creating a VM from a managed image.
       type: OperatingSystemTypes
-      sample: "linux"/"windows"
+      sample: "linux/windows"
     identifier:
       description:
         - This is the gallery image definition identifier.
