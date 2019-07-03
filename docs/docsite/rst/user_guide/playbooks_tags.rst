@@ -16,11 +16,10 @@ that tags two tasks with different tags::
 
     tasks:
     - yum:
-        name: "{{ item }}"
+        name:
+        - httpd
+        - memcached
         state: present
-      loop:
-      - httpd
-      - memcached
       tags:
       - packages
 
