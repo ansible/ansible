@@ -53,10 +53,12 @@ options:
     - SnapMirror label assigned to each schedule inside the policy.
     type: list
     required: false
+    version_added: '2.9'
   vserver:
     description:
     - The name of the vserver to use.
     required: false
+    version_added: '2.9'
 '''
 EXAMPLES = """
     - name: Create Snapshot policy
