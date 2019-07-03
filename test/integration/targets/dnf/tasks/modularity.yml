@@ -1,13 +1,6 @@
 # FUTURE - look at including AppStream support in our local repo
-- name: set package for RHEL
-  set_fact:
-    astream_name: '@swig:3.0/default'
-  when: ansible_distribution == 'RedHat'
-
-- name: set package for Fedora
-  set_fact:
-    astream_name: '@ripgrep:master/default'
-  when: ansible_distribution == 'Fedora'
+- name: Include distribution specific variables
+  include_vars: "{{ ansible_facts.distribution }}.yml"
 
 - name: install "{{ astream_name }}" module
   dnf:
