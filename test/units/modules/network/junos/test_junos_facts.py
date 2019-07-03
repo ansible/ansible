@@ -46,20 +46,24 @@ class TestJunosCommandModule(TestJunosModule):
     def setUp(self):
         super(TestJunosCommandModule, self).setUp()
 
-        self.mock_get_config = patch('ansible.modules.network.junos.junos_facts.get_configuration')
+        self.mock_get_config = patch('ansible.module_utils.network.junos.facts.legacy.base.get_configuration')
         self.get_config = self.mock_get_config.start()
 
         self.mock_netconf = patch('ansible.module_utils.network.junos.junos.NetconfConnection')
         self.netconf_conn = self.mock_netconf.start()
 
-        self.mock_exec_rpc = patch('ansible.modules.network.junos.junos_facts.exec_rpc')
+        self.mock_exec_rpc = patch('ansible.module_utils.network.junos.facts.legacy.base.exec_rpc')
         self.exec_rpc = self.mock_exec_rpc.start()
 
         self.mock_netconf_rpc = patch('ansible.module_utils.network.common.netconf.NetconfConnection')
         self.netconf_rpc = self.mock_netconf_rpc.start()
 
-        self.mock_get_capabilities = patch('ansible.modules.network.junos.junos_facts.get_capabilities')
+        self.mock_get_resource_connection = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection = self.mock_get_resource_connection.start()
+
+        self.mock_get_capabilities = patch('ansible.module_utils.network.junos.facts.legacy.base.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
+
         self.get_capabilities.return_value = {
             'device_info': {
                 'network_os': 'junos',
@@ -76,6 +80,7 @@ class TestJunosCommandModule(TestJunosModule):
         self.mock_exec_rpc.stop()
         self.mock_netconf_rpc.stop()
         self.mock_get_capabilities.stop()
+        self.mock_get_resource_connection.stop()
 
     def load_fixtures(self, commands=None, format='text', changed=False):
         def load_from_file(*args, **kwargs):
