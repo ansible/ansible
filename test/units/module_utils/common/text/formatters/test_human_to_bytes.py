@@ -76,7 +76,7 @@ def test_human_to_bytes_wrong_unit(test_input):
 
 @pytest.mark.parametrize('test_input', [u'b1bbb', u'm2mmm', u'', u' ', ])
 def test_human_to_bytes_wrong_number(test_input):
-    """Test of human_to_bytes function, nubmer param is invalid string / number."""
+    """Test of human_to_bytes function, number param is invalid string / number."""
     with pytest.raises(ValueError, match="can't interpret"):
         human_to_bytes(test_input)
 

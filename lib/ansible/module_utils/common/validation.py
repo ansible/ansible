@@ -521,11 +521,11 @@ def check_type_bytes(value):
 
 
 def check_type_bits(value):
-    """Convert a human-readable string bits value to bits in integer
+    """Convert a human-readable string bits value to bits in integer.
 
     Example: check_type_bits('1Mb') returns integer 1048576.
 
-    Raises TypeError if unable to covert the value
+    Raises TypeError if unable to covert the value.
     """
     try:
         return human_to_bytes(value, isbits=True)

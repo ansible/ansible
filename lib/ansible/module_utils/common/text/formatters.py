@@ -38,7 +38,7 @@ def lenient_lowercase(lst):
 
 def human_to_bytes(number, default_unit=None, isbits=False):
     """Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument.
-    example: human_to_bytes('10M') <=> human_to_bytes(10, 'M')
+    example: human_to_bytes('10M') <=> human_to_bytes(10, 'M').
 
     When isbits is False (default), converts bytes from a human-readable format to integer.
         exmample: human_to_bytes('1MB') returns 1048576 (int).
