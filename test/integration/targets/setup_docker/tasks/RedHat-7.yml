@@ -3,13 +3,8 @@
 
 - name: Install Docker pre-reqs
   yum:
-    name: "{{ item }}"
+    name: "{{ docker_prereq_packages }}"
     state: present
-  loop:
-    - yum-utils
-    - device-mapper-persistent-data
-    - lvm2
-    - libseccomp
 
 - name: Install epel repo which is missing on rhel-7 and is needed for pigz (needed for docker-ce 18)
   yum:
@@ -17,16 +12,22 @@
 
 - name: Enable extras repository for RHEL on AWS
   command: yum-config-manager --enable rhui-REGION-rhel-server-extras
+  args:
+    warn: no
 
 - name: Add repository
   command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    warn: no
 
 - name: Update cache
   command: yum -y makecache fast
+  args:
+    warn: no
 
 - name: Install docker
   yum:
-    name: docker-ce
+    name: "{{ docker_packages }}"
     state: present
 
 - name: Make sure the docker daemon is running (failure expected inside docker container)
