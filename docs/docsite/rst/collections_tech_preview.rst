@@ -10,7 +10,7 @@ Collections
    
 Collections are a distribution format for Ansible content. They can be used to
 package and distribute playbooks, roles, modules, and plugins.
-You will be able to publish and use collections through `Ansible's Galaxy repository <http://galaxy.ansible.com>`_.
+You will be able to publish and use collections through `Ansible's Galaxy repository <https://galaxy.ansible.com>`_.
 
 .. important::
     This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing  and should not be deployed in a production environment.
@@ -63,7 +63,7 @@ This file contains the information about a collection that is necessary for Ansi
     version: "1.0.12"
     authors:
         - "Author1"
-        - "Author2 (http://author2.example.com)"
+        - "Author2 (https://author2.example.com)"
         - "Author3 <author3@example.com>"
     dependencies:
         "other_namespace.collection1": ">=1.0.0"
@@ -88,7 +88,7 @@ Required Fields:
 
 Optional Fields:
     - ``dependencies``: A dictionary where keys are collections, and values are version
-      range 'specifiers <https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification>`_.
+      range `specifiers <https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification>`_.
       It is good practice to depend on a version range to minimize conflicts, and pin to a
       a major version to protect against breaking changes. For example: ``"user1.collection1": ">=1.2.2,<2.0.0"``
       This field allows  other collections as dependencies, not traditional roles.
@@ -152,7 +152,7 @@ TBD. Expect tests for the collection itself, including Molecule files, to reside
 Creating Collections
 ====================
 
-This is currently is a work in progress. We created the `Mazer <https://galaxy.ansible.com/docs/mazer/index.html>`_ command line tool
+This is currently is a work in progress. We created the `Mazer <https://galaxy.ansible.com/docs/mazer/>`_ command line tool
 available at the `Ansible Mazer project <https://github.com/ansible/mazer>`_. as a proof of concept for packaging,
 distributing and installing collections.  You can install mazer with ``pip install mazer`` or checkout the code directly.
 
@@ -173,7 +173,7 @@ In the end, to get started with authoring a new collection it should be as simpl
     collecion_dir#>ansible-galaxy collection init
 
 
-And then populating the directories with the content you want inside the collection. For now you can optionally clone from  https://github.com//bcoca/collection to get the directory structure (or just create the directories as you need them).
+And then populating the directories with the content you want inside the collection. For now you can optionally clone from  https://github.com/bcoca/collection to get the directory structure (or just create the directories as you need them).
 
 .. _building_collections:
 
@@ -181,12 +181,12 @@ Building Collections
 ====================
 
 Collections are built by running ``mazer build`` from inside the collection's root directory.
-This will create a ``releases`` directory inside the collection with the build artifacts,
+This will create a ``releases/`` directory inside the collection with the build artifacts,
 which can be uploaded to Galaxy.::
 
     collection/
     ├── ...
-    ├── releases
+    ├── releases/
     │   └── namespace_name-collection_name-1.0.12.tar.gz
     └── ...
 
@@ -206,7 +206,7 @@ We are in the process of updating Ansible Galaxy to manage collections as it man
 Upload From the Galaxy Website
 ------------------------------
 
-Go to the `My Content </my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces. From
+Go to the `My Content <https://galaxy.ansible.com/my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces. From
 the **Add Content** dialogue, click **Upload New Collection**, and select the collection archive file from your local
 filesystem.
 
@@ -229,9 +229,9 @@ You can upload ollection artefacts with Mazer, as shown in the following example
 The above command triggers an import process, just as if the collection had been uploaded through the Galaxy website. Use the **My Imports**
 page to view the output from the import process.
 
-Your API key can be found on `the preferences page in Galaxy </me/preferences>`_.
+Your API key can be found on `the preferences page in Galaxy <https://galaxy.ansible.com/me/preferences>`_.
 
-To learn more about Mazer, see `Mazer <https://galaxy-dev.ansible.com/docs/mazer/index.html>`.
+To learn more about Mazer, see `Mazer <https://galaxy.ansible.com/docs/mazer/>`_.
 
 
 Collection Versions
@@ -262,7 +262,7 @@ You can also use a tarball resulting from your build:
 
 As a path you should use one of the values configured in `COLLECTINS_PATHS <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#collections-paths>`_. This is also where Ansible itself will expect to find collections when attempting to use them.
 
-You can also keep a collection adjacent to the current playbook, under a `collections/ansible_collection/` directory structure.
+You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collection/`` directory structure.
 
 ::
 
@@ -270,7 +270,7 @@ You can also keep a collection adjacent to the current playbook, under a `collec
     ├── collections/
     │   └── ansbile_collection/
     │               └── myname/
-    │                   └── mycol/< collection structure lives here>
+    │                   └── mycol/<collection structure lives here>
 
 
 
