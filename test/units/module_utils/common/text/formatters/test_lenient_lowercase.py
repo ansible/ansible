@@ -32,7 +32,7 @@ LOWERED_LIST = [
 
 
 def test_lenient_lowercase():
-    """Test of lenient_lowercase function"""
+    """Test that lenient_lowercase() proper results."""
     output_list = lenient_lowercase(INPUT_LIST)
     for out_elem, exp_elem in zip(output_list, LOWERED_LIST):
         assert out_elem == exp_elem
