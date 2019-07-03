@@ -1,0 +1,9 @@
+docker_prereq_packages:
+  - dnf-utils
+  - device-mapper-persistent-data
+  - lvm2
+  - libseccomp
+
+# Docker CE > 3:18.09.1 requires containerd.io >= 1.2.2-3 which is unavaible at this time
+docker_packages:
+  - docker-ce-3:18.09.1

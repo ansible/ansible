@@ -1,0 +1,5 @@
+docker_prereq_packages:
+  - dnf-plugins-core
+
+docker_packages:
+  - docker-ce

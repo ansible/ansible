@@ -1,6 +1,6 @@
 - name: Install docker 17
   zypper:
-    name: docker>=17
+    name: "{{ docker_packages }}"
     force: yes
     disable_gpg_check: yes
     update_cache: yes
