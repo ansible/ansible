@@ -28,64 +28,82 @@ Function Test-Credential {
     $platform_util = @'
 using System;
 using System.Runtime.InteropServices;
-
+using System.ComponentModel;
+using System.Security;
 namespace Ansible
 {
     public class WinUserPInvoke
     {
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool LogonUser(
-            string lpszUsername,
-            string lpszDomain,
-            string lpszPassword,
-            UInt32 dwLogonType,
-            UInt32 dwLogonProvider,
-            out IntPtr phToken);
-
+        const int LOGON32_LOGON_NETWORK           = 3;
+        const int LOGON32_PROVIDER_DEFAULT        = 0; // Negotiate if domain == null and username not upn else NTLM
+        const int LOGON32_PROVIDER_WINNT40        = 2; // Negotiate
+        const int LOGON32_PROVIDER_WINNT50        = 3; // NTLM
+        // Refere to: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
+        static int[] success_codes = new int[] {
+            0x0000052F,  // ERROR_ACCOUNT_RESTRICTION
+            0x00000530,  // ERROR_INVALID_LOGON_HOURS
+            0x00000531,  // ERROR_INVALID_WORKSTATION
+            0x00000569   // ERROR_LOGON_TYPE_GRANTED
+        };
+        static int[] failed_codes = new int[] {
+            0x0000052E,  // ERROR_LOGON_FAILURE - the user or pass was incorrect
+            0x00000006,  // ERROR_INVALID_HANDLE - the handle is invalid
+            0x00000532   // ERROR_PASSWORD_EXPIRED - The password has exired
+        };
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern bool LogonUser(String username, String domain, IntPtr password,
+            int logonType, int logonProvider, out IntPtr token);
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(
+        internal static extern bool CloseHandle(
             IntPtr hObject);
+        public static bool TestCredential(string userName, SecureString password, string domainName = null)
+        {
+            IntPtr tokenHandle = IntPtr.Zero;
+            IntPtr passwordPtr = IntPtr.Zero;
+            bool returnValue   = false;
+            int err_code = 0;
+
+            // Marshal the SecureString to unmanaged memory.
+            passwordPtr = Marshal.SecureStringToGlobalAllocUnicode(password);
+
+            // Pass LogonUser the decrypted copy of the password.
+            returnValue = LogonUser(userName, domainName, passwordPtr,
+                                    LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT,
+                                    out tokenHandle);
+            // Perform cleanup whether or not the call succeeded.
+            // Secure delete the plaintext password from memory.
+            Marshal.ZeroFreeGlobalAllocUnicode(passwordPtr);
+            // We don't need the token, so close it again.
+            CloseHandle(tokenHandle);
+            if (returnValue || !(tokenHandle == IntPtr.Zero)) {
+                return true;
+            } else {
+                err_code = Marshal.GetLastWin32Error();
+                if (Array.Exists(success_codes, element => element == err_code)) {
+                    return true;
+                } else if (Array.Exists(failed_codes, element => element == err_code)) {
+                    return false;
+                } else {
+                    throw new System.ComponentModel.Win32Exception(err_code);
+                }
+            }
+        }
     }
 }
 '@
+    if ($null -ne $Username) {
+        $original_tmp = $env:TMP
+        $env:TMP = $_remote_tmp
+        Add-Type -TypeDefinition $platform_util
+        $env:TMP = $original_tmp
 
-    $original_tmp = $env:TMP
-    $env:TMP = $_remote_tmp
-    Add-Type -TypeDefinition $platform_util
-    $env:TMP = $original_tmp
-
-    $handle = [IntPtr]::Zero
-    $logon_res = [Ansible.WinUserPInvoke]::LogonUser($Username, $Domain, $Password,
-        $LOGON32_LOGON_TYPE, $LOGON32_PROVIDER, [Ref]$handle)
-
-    if ($logon_res) {
-        $valid_credentials = $true
-        [Ansible.WinUserPInvoke]::CloseHandle($handle) > $null
+        # Todo: Make sure $UserName is always in UPN format.
+        # Than $Domain can be $null
+        $logon_res = [Ansible.WinUserPInvoke]::TestCredential($Username, (ConvertTo-SecureString $Password -AsPlainText -Force), $Domain)
+        return $logon_res
     } else {
-        $err_code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
-        # following errors indicate the creds are correct but the user was
-        # unable to log on for other reasons, which we don't care about
-        $success_codes = @(
-            0x0000052F,  # ERROR_ACCOUNT_RESTRICTION
-            0x00000530,  # ERROR_INVALID_LOGON_HOURS
-            0x00000531,  # ERROR_INVALID_WORKSTATION
-            0x00000569  # ERROR_LOGON_TYPE_GRANTED
-        )
-
-        if ($err_code -eq 0x0000052E) {
-            # ERROR_LOGON_FAILURE - the user or pass was incorrect
-            $valid_credentials = $false
-        } elseif ($err_code -in $success_codes) {
-            $valid_credentials = $true
-        } else {
-            # an unknown failure, raise an Exception for this
-            $win32_exp = New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code
-            $err_msg = "LogonUserW failed: $($win32_exp.Message) (Win32ErrorCode: $err_code)"
-            throw New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $err_code, $err_msg
-        }
+        return $false
     }
-
-    return $valid_credentials
 }
 
 try {
