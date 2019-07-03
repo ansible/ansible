@@ -1,0 +1,2 @@
+---
+- Removed redundant type check in Nagios module which only existed to cause crashes
