@@ -5,6 +5,10 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from datetime import datetime
+
+import pytest
+
 from ansible.module_utils.common.text.formatters import lenient_lowercase
 
 
@@ -40,3 +44,10 @@ def test_lenient_lowercase():
     output_list = lenient_lowercase(INPUT_LIST)
     for out_elem, exp_elem in zip(output_list, EXPECTED_LIST):
         assert out_elem == exp_elem
+
+
+@pytest.mark.parametrize('input_data', [1, False, 1.001, 1j, datetime.now(), ])
+def test_lenient_lowercase_unexpected_data_type(input_data):
+    """Test passing objects of unexpected types to lenient_lowercase()."""
+    with pytest.raises(TypeError):
+        lenient_lowercase(input_data)
