@@ -16,13 +16,14 @@ Function Test-Credential {
         # UserPrincipalName
         $Username = ($Username -split '@')[0]
         $Domain = ($Username -split '@')[1]
-    } elif (($Username.ToCharArray()) -contains [char]'\') {
+    } else if (($Username.ToCharArray()) -contains [char]'\') {
         # Pre Win2k Account Name
         $Username = ($Username -split '\')[0]
         $Domain = ($Username -split '\')[1]
     } else {
         # No domain provided, so maybe local user?
     }
+    $null = $Domain # Make CI-Check happy...
 
     # More information about LogonUser at https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-logonusera
     $platform_util = @'
