@@ -1361,9 +1361,9 @@ class ModuleValidator(Validator):
             doc_type = doc_options_arg.get('type', 'str')
             arg_type = data.get('type', 'str')
             if doc_type is None:
-                doc_type == 'str'
+                doc_type = 'str'
             if arg_type is None:
-                arg_type == 'str'
+                arg_type = 'str'
             if arg_type != doc_type and not arg.startswith('_'):  # hidden parameter, for example _raw_params
                 msg = "Argument '%s' in argument_spec" % arg
                 if context:
