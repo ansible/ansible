@@ -21,8 +21,8 @@ class TestAviApiUtils(unittest.TestCase):
             'capacity_estimation': False,
             'fewest_tasks_feedback_delay': 10,
             '_last_modified': '1471377748747040',
-            'cloud_ref': 'https://1.1.1.1/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
-            'vrf_ref': 'https://1.1.1.1/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
+            'cloud_ref': 'https://10.10.25.42/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
+            'vrf_ref': 'https://10.10.25.42/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
             'inline_health_monitor': True,
             'default_server_port': 80,
             'request_queue_depth': 128,
@@ -32,8 +32,8 @@ class TestAviApiUtils(unittest.TestCase):
             'request_queue_enabled': False,
             'name': 'testpool',
             'max_concurrent_connections_per_server': 0,
-            'url': 'https://1.1.1.1/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
-            'tenant_ref': 'https://1.1.1.1/api/tenant/admin',
+            'url': 'https://10.10.25.42/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
+            'tenant_ref': 'https://10.10.25.42/api/tenant/admin',
             'uuid': 'pool-20084ee1-872e-4103-98e1-899103e2242a',
             'connection_ramp_duration': 10}
 
@@ -55,8 +55,8 @@ class TestAviApiUtils(unittest.TestCase):
             'capacity_estimation': False,
             'fewest_tasks_feedback_delay': 10,
             '_last_modified': '1471377748747040',
-            'cloud_ref': 'https://1.1.1.1/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
-            'vrf_ref': 'https://1.1.1.1/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
+            'cloud_ref': 'https://10.10.25.42/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
+            'vrf_ref': 'https://10.10.25.42/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
             'inline_health_monitor': True,
             'default_server_port': 80,
             'request_queue_depth': 128,
@@ -66,12 +66,12 @@ class TestAviApiUtils(unittest.TestCase):
             'request_queue_enabled': False,
             'name': 'testpool',
             'max_concurrent_connections_per_server': 0,
-            'url': 'https://1.1.1.1/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
-            'tenant_ref': 'https://1.1.1.1/api/tenant/admin',
+            'url': 'https://10.10.25.42/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
+            'tenant_ref': 'https://10.10.25.42/api/tenant/admin',
             'uuid': 'pool-20084ee1-872e-4103-98e1-899103e2242a',
             'connection_ramp_duration': 10,
             'health_monitor_refs': [
-                "https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP"],
+                "https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP"],
         }
 
         diff = avi_obj_cmp(obj, existing_obj)
@@ -117,8 +117,8 @@ class TestAviApiUtils(unittest.TestCase):
             'capacity_estimation': False,
             'fewest_tasks_feedback_delay': 10,
             '_last_modified': '1471377748747040',
-            'cloud_ref': 'https://1.1.1.1/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
-            'vrf_ref': 'https://1.1.1.1/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
+            'cloud_ref': 'https://10.10.25.42/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
+            'vrf_ref': 'https://10.10.25.42/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
             'inline_health_monitor': True,
             'default_server_port': 80,
             'request_queue_depth': 128,
@@ -128,8 +128,8 @@ class TestAviApiUtils(unittest.TestCase):
             'request_queue_enabled': False,
             'name': 'testpool',
             'max_concurrent_connections_per_server': 0,
-            'url': 'https://1.1.1.1/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
-            'tenant_ref': 'https://1.1.1.1/api/tenant/admin',
+            'url': 'https://10.10.25.42/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
+            'tenant_ref': 'https://10.10.25.42/api/tenant/admin',
             'uuid': 'pool-20084ee1-872e-4103-98e1-899103e2242a',
             'connection_ramp_duration': 10
         }
@@ -145,8 +145,8 @@ class TestAviApiUtils(unittest.TestCase):
             'capacity_estimation': False,
             'fewest_tasks_feedback_delay': 10,
             '_last_modified': '1471377748747040',
-            'cloud_ref': 'https://1.1.1.1/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
-            'vrf_ref': 'https://1.1.1.1/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
+            'cloud_ref': 'https://10.10.25.42/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9',
+            'vrf_ref': 'https://10.10.25.42/api/vrfcontext/vrfcontext-0e8ce760-fed2-4650-9397-5b3e4966376e',
             'inline_health_monitor': True,
             'default_server_port': 80,
             'request_queue_depth': 128,
@@ -156,37 +156,37 @@ class TestAviApiUtils(unittest.TestCase):
             'request_queue_enabled': False,
             'name': 'testpool',
             'max_concurrent_connections_per_server': 0,
-            'url': 'https://1.1.1.1/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
-            'tenant_ref': 'https://1.1.1.1/api/tenant/admin',
+            'url': 'https://10.10.25.42/api/pool/pool-20084ee1-872e-4103-98e1-899103e2242a',
+            'tenant_ref': 'https://10.10.25.42/api/tenant/admin',
             'uuid': 'pool-20084ee1-872e-4103-98e1-899103e2242a',
             'connection_ramp_duration': 10,
             'health_monitor_refs': [
-                "https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP",
-                "https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8",
+                "https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP",
+                "https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8",
             ],
         }
 
         obj = {'name': 'testpool',
-               'health_monitor_refs': ['https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9',
-                                       "https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8"],
+               'health_monitor_refs': ['https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9',
+                                       "https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8"],
                'server_count': 0}
         diff = avi_obj_cmp(obj, existing_obj)
         assert diff
 
         obj = {'name': 'testpool',
                'health_monitor_refs': [
-                   'https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP',
-                   "https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8"],
+                   'https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP',
+                   "https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8"],
                'server_count': 0}
         diff = avi_obj_cmp(obj, existing_obj)
         assert diff
 
         obj = {'name': 'testpool',
                'health_monitor_refs': [
-                   'https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP',
-                   "https://1.1.1.1/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8#System-HTTP2"],
+                   'https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc9#System-HTTP',
+                   "https://10.10.25.42/api/healthmonitor/healthmonitor-6d07b57f-126b-476c-baba-a8c8c8b06dc8#System-HTTP2"],
                'server_count': 0,
-               'cloud_ref': 'https://1.1.1.1/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9#Default-Cloud',
+               'cloud_ref': 'https://10.10.25.42/api/cloud/cloud-afe8bf2c-9821-4272-9bc6-67634c84bec9#Default-Cloud',
                }
         diff = avi_obj_cmp(obj, existing_obj)
         assert diff
