@@ -6,6 +6,8 @@
   shell: rpm -q python2-dnf
   register: rpm_result
   ignore_errors: true
+  args:
+    warn: no
 
 # Don't uninstall python2-dnf with the `dnf` module in case it needs to load
 # some dnf python files after the package is uninstalled.

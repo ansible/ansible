@@ -19,23 +19,24 @@
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
 
-- include: 'dnf.yml'
-  when:
-    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
+- include_tasks: dnf.yml
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
+        (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
 
-- include: 'repo.yml'
-  when:
-    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
+- include_tasks: repo.yml
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
+        (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
 
-- include: 'dnfinstallroot.yml'
-  when:
-    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
+- include_tasks: dnfinstallroot.yml
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
+        (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
 
 # Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
-- include: 'dnfreleasever.yml'
+- include_tasks: dnfreleasever.yml
   when:
-    - ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23
+    - ansible_distribution == 'Fedora'
+    - ansible_distribution_major_version is version('23', '>=')
 
-- import_tasks: 'modularity.yml'
-  when:
-    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 29) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
+- include_tasks: modularity.yml
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('29', '>=')) or
+        (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
