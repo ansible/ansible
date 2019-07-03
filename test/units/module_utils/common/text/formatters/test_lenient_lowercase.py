@@ -12,6 +12,7 @@ INPUT_LIST = [
     u'HELLO',
     u'Ёлка',
     u'cafÉ',
+    u'くらとみ',
     b'HELLO',
     1,
     {1: 'Dict'},
@@ -24,11 +25,13 @@ LOWERED_LIST = [
     u'hello',
     u'ёлка',
     u'café',
+    u'くらとみ',
     b'hello',
     1,
     {1: 'Dict'},
     True,
     [1],
+    3.14159,
 ]
 
 
