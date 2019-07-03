@@ -88,6 +88,21 @@
     that: 
       - output.changed
 
+- name: Get a gallery info.
+  azure_rm_gallery_info:
+    resource_group: "{{ resource_group }}"
+    name: myGallery{{ rpfx }}
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.galleries['id'] != None
+      - output.galleries['name'] != None
+      - output.galleries['location'] != None
+      - output.galleries['description'] != None
+      - output.galleries['provisioning_state'] != None
+
 - name: Create or update gallery image
   azure_rm_galleryimage:
     resource_group: "{{ resource_group }}"
@@ -144,6 +159,23 @@
 - assert:
     that: 
       - output.changed
+
+- name: Get a gallery image info.
+  azure_rm_galleryimage_info:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    name: myImage
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.images['id'] != None
+      - output.images['name'] != None
+      - output.images['location'] != None
+      - output.images['os_state'] != None
+      - output.images['os_type'] != None
+      - output.images['identifier'] != None
 
 - name: Create or update a simple gallery Image Version.
   azure_rm_galleryimageversion:
@@ -225,6 +257,23 @@
 - assert:
     that: 
       - output.changed
+
+- name: Get a simple gallery Image Version info.
+  azure_rm_galleryimageversion_info:
+    resource_group: "{{ resource_group }}"
+    gallery_name: myGallery{{ rpfx }}
+    gallery_image_name: myImage
+    name: 10.1.3
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.versions['id'] != None
+      - output.versions['name'] != None
+      - output.versions['location'] != None
+      - output.versions['publishing_profile'] != None
+      - output.versions['provisioning_state'] != None
 
 - name: Delete gallery image Version.
   azure_rm_galleryimageversion:
