@@ -465,9 +465,8 @@
     target: '{{ dump1_file }}'
     login_unix_socket: '{{ mysql_socket }}'
   register: dump_result
-  check_mode: yes
 
-- name: assert successful completion of dump operation using check mode
+- name: assert successful completion of dump operation
   assert:
     that:
        - dump_result.changed == true
@@ -476,7 +475,7 @@
   command: mysql "-e show databases like 'database%';"
   register: mysql_result
 
-- name: assert that databases does exist (check mode)
+- name: assert that databases does exist
   assert:
     that:
       - "'{{ db1_name }}' in mysql_result.stdout"
@@ -486,7 +485,7 @@
       - "'{{ db5_name }}' not in mysql_result.stdout"
 
 - name: state dump - file name should exist
-  file: name={{ dump1_file }} state=present
+  file: name={{ dump1_file }} state=file
 
 # TODO: dump all
 
@@ -552,3 +551,6 @@
       - "'{{ db3_name }}' not in mysql_result.stdout"
       - "'{{ db4_name }}' not in mysql_result.stdout"
       - "'{{ db5_name }}' not in mysql_result.stdout"
+
+- name: state dump - file name should be removed
+  file: name={{ dump1_file }} state=absent
