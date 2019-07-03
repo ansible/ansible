@@ -21,7 +21,7 @@ INPUT_LIST = [
     3.14159,
 ]
 
-LOWERED_LIST = [
+EXPECTED_LIST = [
     u'hello',
     u'ёлка',
     u'café',
@@ -38,9 +38,5 @@ LOWERED_LIST = [
 def test_lenient_lowercase():
     """Test that lenient_lowercase() proper results."""
     output_list = lenient_lowercase(INPUT_LIST)
-    for out_elem, exp_elem in zip(output_list, LOWERED_LIST):
+    for out_elem, exp_elem in zip(output_list, EXPECTED_LIST):
         assert out_elem == exp_elem
-
-
-if __name__ == '__main__':
-    test_lenient_lowercase()
