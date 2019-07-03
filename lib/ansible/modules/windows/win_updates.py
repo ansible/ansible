@@ -187,10 +187,10 @@ EXAMPLES = r'''
   win_updates:
     reboot: yes
     reboot_timeout: 3600
-    
+
 # Search and download Windows updates
 - name: Search and download Windows updates without installing them
-  win_updates: 
+  win_updates:
     state: downloaded
 '''
 
