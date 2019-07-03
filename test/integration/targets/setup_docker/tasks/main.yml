@@ -1,4 +1,6 @@
-- block:
+- name: Setup Docker
+  when: ansible_facts.distribution ~ ansible_facts.distribution_major_version not in  ['CentOS6', 'RedHat6']
+  block:
     - name: Include distribution specific variables
       include_vars: "{{ lookup('first_found', params) }}"
       vars:
@@ -47,9 +49,9 @@
       ignore_errors: yes
 
     - set_fact:
-        docker_cli_version: "{{ (docker_cli_version_stdout.stdout | default('0.0')) or '0.0' }}"
-        docker_api_version: "{{ docker_api_version_stdout.stdout or '0.0' }}"
-        docker_py_version: "{{ docker_py_version_stdout.stdout or '0.0' }}"
+        docker_cli_version: "{{ docker_cli_version_stdout.stdout | default('0.0') }}"
+        docker_api_version: "{{ docker_api_version_stdout.stdout | default('0.0') }}"
+        docker_py_version: "{{ docker_py_version_stdout.stdout | default('0.0') }}"
 
     - debug:
         msg: "Docker CLI version: {{ docker_cli_version }}; Docker API version: {{ docker_api_version }}; docker-py library version: {{ docker_py_version }}"
