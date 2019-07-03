@@ -8,10 +8,21 @@ Function Test-Credential {
     param(
         [String]$Username,
         [String]$Password,
-        [String]$Domain,
+        [String]$Domain = $null,
         $LOGON32_PROVIDER = 0, # Default
         $LOGON32_LOGON_TYPE = 3 # NetworkLogon
     )
+    if (($Username.ToCharArray()) -contains [char]'@') {
+        # UserPrincipalName
+        $Username = ($Username -split '@')[0]
+        $Domain = ($Username -split '@')[1]
+    } elif (($Username.ToCharArray()) -contains [char]'\') {
+        # Pre Win2k Account Name
+        $Username = ($Username -split '\')[0]
+        $Domain = ($Username -split '\')[1]
+    } else {
+        # No domain provided, so maybe local user?
+    }
 
     # More information about LogonUser at https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-logonusera
     $platform_util = @'
@@ -189,16 +200,7 @@ If ($state -eq 'present') {
         )
     ) {
         If (-not $new_user) { # Don't uncecessary check if the credentials works, if we know it doesn't.
-            if (($username.ToCharArray()) -contains [char]'@') {
-                # UserPrincipalName
-                $user = ($username -split '@')[0]
-                $domain = ($username -split '@')[1]
-            } else {
-                # Pre Win2k Account Name
-                $user = ($username -split '\')[0]
-                $domain = ($username -split '\')[1]
-            }
-            $test_new_credentials = Test-Credential -Username $user -Password $password -Domain $domain
+            $test_new_credentials = Test-Credential -Username $username -Password $password
         } else {
             $test_new_credentials = $false
         }
