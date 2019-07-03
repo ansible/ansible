@@ -241,7 +241,7 @@ Function Get-FileStat($file) {
     $isdir = $false
     $isshared = $false
 
-    if ($attributes -contains 'ReparsePoint') {
+    if ($attributes -contains 'ReparsePoint' -and $attributes -contains 'Directory') {
         # TODO: Find a way to differenciate between soft and junction links
         $islnk = $true
         $isdir = $true
