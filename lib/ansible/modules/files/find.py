@@ -219,11 +219,11 @@ import stat
 import sys
 import time
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
-def pfilter(f, patterns=None, excludes=None, use_regex=False):
+def pfilter(b_filepath, patterns=None, excludes=None, use_regex=False):
     '''filter using glob patterns'''
     if patterns is None and excludes is None:
         return True
@@ -232,30 +232,30 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
         if patterns and excludes is None:
             for p in patterns:
                 r = re.compile(to_bytes(p, errors='surrogate_or_strict'))
-                if r.match(f):
+                if r.match(b_filepath):
                     return True
 
         elif patterns and excludes:
             for p in patterns:
                 r = re.compile(to_bytes(p, errors='surrogate_or_strict'))
-                if r.match(f):
+                if r.match(b_filepath):
                     for e in excludes:
                         r = re.compile(to_bytes(e, errors='surrogate_or_strict'))
-                        if r.match(f):
+                        if r.match(b_filepath):
                             return False
                     return True
 
     else:
         if patterns and excludes is None:
             for p in patterns:
-                if fnmatch.fnmatch(f, to_bytes(p, errors='surrogate_or_strict')):
+                if fnmatch.fnmatch(b_filepath, to_bytes(p, errors='surrogate_or_strict')):
                     return True
 
         elif patterns and excludes:
             for p in patterns:
-                if fnmatch.fnmatch(f, to_bytes(p, errors='surrogate_or_strict')):
+                if fnmatch.fnmatch(b_filepath, to_bytes(p, errors='surrogate_or_strict')):
                     for e in excludes:
-                        if fnmatch.fnmatch(f, to_bytes(e, errors='surrogate_or_strict')):
+                        if fnmatch.fnmatch(b_filepath, to_bytes(e, errors='surrogate_or_strict')):
                             return False
                     return True
 
@@ -412,54 +412,54 @@ def main():
         b_path = os.path.expanduser(os.path.expandvars(to_bytes(npath, errors='surrogate_or_strict')))
         if os.path.isdir(b_path):
             ''' ignore followlinks for python version < 2.6 '''
-            for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(b_path)) or os.walk(b_path, followlinks=params['follow']):
+            for b_root, b_dirs, b_files in (sys.version_info < (2, 6, 0) and os.walk(b_path)) or os.walk(b_path, followlinks=params['follow']):
                 if params['depth']:
-                    depth = root.replace(b_path.rstrip(b_sep), '').count(b_sep)
-                    if files or dirs:
+                    depth = b_root.replace(b_path.rstrip(b_sep), '').count(b_sep)
+                    if b_files or b_dirs:
                         depth += 1
                     if depth > params['depth']:
-                        del(dirs[:])
+                        del(b_dirs[:])
                         continue
-                looked = looked + len(files) + len(dirs)
-                for fsobj in (files + dirs):
-                    fsname = os.path.normpath(os.path.join(root, fsobj))
+                looked = looked + len(b_files) + len(b_dirs)
+                for b_fsobj in (b_files + b_dirs):
+                    b_fsname = os.path.normpath(os.path.join(b_root, b_fsobj))
 
-                    if os.path.basename(fsname).startswith(b'.') and not params['hidden']:
+                    if os.path.basename(b_fsname).startswith(b'.') and not params['hidden']:
                         continue
 
                     try:
-                        st = os.lstat(fsname)
+                        st = os.lstat(b_fsname)
                     except Exception:
-                        msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
+                        msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % to_native(b_fsname)
                         continue
 
-                    r = {'path': fsname}
+                    r = {'path': to_native(b_fsname)}
                     if params['file_type'] == 'any':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(b_fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
-                                r['checksum'] = module.sha1(fsname)
+                                r['checksum'] = module.sha1(b_fsname)
                             filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(b_fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                        if pfilter(b_fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains']):
+                           sizefilter(st, size) and contentfilter(b_fsname, params['contains']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
-                                r['checksum'] = module.sha1(fsname)
+                                r['checksum'] = module.sha1(b_fsname)
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(b_fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
                             filelist.append(r)
