@@ -115,8 +115,7 @@ class DataLoader:
 
     def is_executable(self, path):
         '''is the given path executable?'''
-        b_path = to_bytes(self.path_dwim(path), errors='surrogate_or_strict')
-        return is_executable(b_path)
+        return is_executable(path)
 
     def _decrypt_if_vault_data(self, b_vault_data, b_file_name=None):
         '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''

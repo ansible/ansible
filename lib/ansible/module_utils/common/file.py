@@ -83,7 +83,8 @@ def is_executable(path):
     # These are all bitfields so first bitwise-or all the permissions we're
     # looking for, then bitwise-and with the file's mode to determine if any
     # execute bits are set.
-    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
+    b_path = to_bytes(path)
+    return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(b_path)[stat.ST_MODE])
 
 
 def format_attributes(attributes):
