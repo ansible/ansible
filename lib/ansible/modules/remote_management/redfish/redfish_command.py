@@ -172,18 +172,6 @@ EXAMPLES = '''
       account_password: "{{ account_password }}"
       account_roleid: "{{ account_roleid }}"
 
-  - name: Add user on service where existing account Id needs to be PATCHed
-    redfish_command:
-      category: Accounts
-      command: AddUser
-      baseuri: "{{ baseuri }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      account_id: "{{ account_id }}"
-      new_username: "{{ new_username }}"
-      new_password: "{{ new_password }}"
-      roleid: "{{ roleid }}"
-
   - name: Delete user
     redfish_command:
       category: Accounts
@@ -192,15 +180,6 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       account_username: "{{ account_username }}"
-
-  - name: Delete user with Id property of account_id
-    redfish_command:
-      category: Accounts
-      command: DeleteUser
-      baseuri: "{{ baseuri }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      account_id: "{{ account_id }}"
 
   - name: Disable user
     redfish_command:

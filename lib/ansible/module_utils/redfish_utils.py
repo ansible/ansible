@@ -679,7 +679,8 @@ class RedfishUtils(object):
             return response
         data = response['data']
 
-        uris = [a.get('@odata.id') for a in data.get('Members', []) if a.get('@odata.id')]
+        uris = [a.get('@odata.id') for a in data.get('Members', []) if
+                a.get('@odata.id')]
         for uri in uris:
             response = self.get_request(self.root_uri + uri)
             if response['ret'] is False:
@@ -697,6 +698,30 @@ class RedfishUtils(object):
 
         return {'ret': False, 'no_match': True, 'msg':
                 'No account with the given account_id or account_username found'}
+
+    def _find_empty_account_slot(self):
+        response = self.get_request(self.root_uri + self.accounts_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+
+        uris = [a.get('@odata.id') for a in data.get('Members', []) if
+                a.get('@odata.id')]
+        if uris:
+            # first slot may be reserved, so move to end of list
+            uris += [uris.pop(0)]
+        for uri in uris:
+            response = self.get_request(self.root_uri + uri)
+            if response['ret'] is False:
+                continue
+            data = response['data']
+            headers = response['headers']
+            if data.get('UserName') == "" and not data.get('Enabled', True):
+                return {'ret': True, 'data': data,
+                        'headers': headers, 'uri': uri}
+
+        return {'ret': False, 'no_match': True, 'msg':
+                'No empty account slot found'}
 
     def list_users(self):
         result = {}
@@ -732,20 +757,26 @@ class RedfishUtils(object):
         return result
 
     def add_user_via_patch(self, user):
-        response = self._find_account_uri(username=user.get('account_username'),
-                                          acct_id=user.get('account_id'))
+        if user.get('account_id'):
+            # If Id slot specified, use it
+            response = self._find_account_uri(acct_id=user.get('account_id'))
+        else:
+            # Otherwise find first empty slot
+            response = self._find_empty_account_slot()
+
         if not response['ret']:
             return response
         uri = response['uri']
-        payloads = [
-            {'UserName': user.get('account_username')},
-            {'Password': user.get('account_password')},
-            {'RoleId': user.get('account_roleid')}
-        ]
-        for payload in payloads:
-            response = self.patch_request(self.root_uri + uri, payload)
-            if response['ret'] is False:
-                return response
+        payload = {}
+        if user.get('account_username'):
+            payload['UserName'] = user.get('account_username')
+        if user.get('account_password'):
+            payload['Password'] = user.get('account_password')
+        if user.get('account_roleid'):
+            payload['RoleId'] = user.get('account_roleid')
+        response = self.patch_request(self.root_uri + uri, payload)
+        if response['ret'] is False:
+            return response
         return {'ret': True}
 
     def add_user(self, user):
@@ -813,11 +844,13 @@ class RedfishUtils(object):
             uri = response['uri']
             data = response['data']
 
-        if data and data.get('UserName') == '':
+        if data and data.get('UserName') == '' and not data.get('Enabled', False):
             # account UserName already cleared, nothing to do
             return {'ret': True, 'changed': False}
 
         payload = {'UserName': ''}
+        if 'Enabled' in data:
+            payload['Enabled'] = False
         response = self.patch_request(self.root_uri + uri, payload)
         if response['ret'] is False:
             return response
