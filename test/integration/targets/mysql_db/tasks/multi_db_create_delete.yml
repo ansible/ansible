@@ -4,9 +4,9 @@
 - set_fact:
     db1_name="database1"
     db2_name="database2"
-    db3_name="database2"
-    db4_name="database2"
-    db5_name="database2"
+    db3_name="database3"
+    db4_name="database4"
+    db5_name="database5"
     dump1_file="/tmp/dump1_file.sql"
 
 # ========================= CREATE AND DELETE TEST =========================
@@ -480,6 +480,38 @@
     that:
       - "'{{ db1_name }}' not in mysql_result.stdout"
       - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' not in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+      - "'{{ db5_name }}' not in mysql_result.stdout"
+
+# ==========================================================================
+# Delete all databases
+- name: Delete all databases
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+      - '{{ db4_name }}'
+      - '{{ db5_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert successful completion of deleting database
+  assert:
+    that:
+       - result.changed == true
+
+- name: run command to test state=present for a database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that specific databases does not exist
+  assert:
+    that:
+      - "'{{ db1_name }}' not in mysql_result.stdout"
+      - "'{{ db2_name }}' not in mysql_result.stdout"
       - "'{{ db3_name }}' not in mysql_result.stdout"
       - "'{{ db4_name }}' not in mysql_result.stdout"
       - "'{{ db5_name }}' not in mysql_result.stdout"
