@@ -953,7 +953,7 @@ class PyVmomiHelper(PyVmomi):
                 except ValueError:
                     self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
                 # check VM power state and cpu hot-add/hot-remove state before re-config VM
-                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and not vm_creation:
                     if not vm_obj.config.cpuHotRemoveEnabled and num_cpus < vm_obj.config.hardware.numCPU:
                         self.module.fail_json(msg="Configured cpu number is less than the cpu number of the VM, "
                                                   "cpuHotRemove is not enabled")
@@ -988,7 +988,7 @@ class PyVmomiHelper(PyVmomi):
                                               " Please refer the documentation and provide"
                                               " correct value.")
                 # check VM power state and memory hotadd state before re-config VM
-                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and not vm_creation:
                     if vm_obj.config.memoryHotAddEnabled and memory_mb < vm_obj.config.hardware.memoryMB:
                         self.module.fail_json(msg="Configured memory is less than memory size of the VM, "
                                                   "operation is not supported")
@@ -1003,7 +1003,7 @@ class PyVmomiHelper(PyVmomi):
 
             if 'hotadd_memory' in self.params['hardware']:
                 if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
-                        vm_obj.config.memoryHotAddEnabled != bool(self.params['hardware']['hotadd_memory']):
+                        vm_obj.config.memoryHotAddEnabled != bool(self.params['hardware']['hotadd_memory']) and not vm_creation:
                     self.module.fail_json(msg="Configure hotadd memory operation is not supported when VM is power on")
                 self.configspec.memoryHotAddEnabled = bool(self.params['hardware']['hotadd_memory'])
                 if vm_obj is None or self.configspec.memoryHotAddEnabled != vm_obj.config.memoryHotAddEnabled:
@@ -1011,7 +1011,7 @@ class PyVmomiHelper(PyVmomi):
 
             if 'hotadd_cpu' in self.params['hardware']:
                 if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
-                        vm_obj.config.cpuHotAddEnabled != bool(self.params['hardware']['hotadd_cpu']):
+                        vm_obj.config.cpuHotAddEnabled != bool(self.params['hardware']['hotadd_cpu']) and not vm_creation:
                     self.module.fail_json(msg="Configure hotadd cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
@@ -1019,7 +1019,7 @@ class PyVmomiHelper(PyVmomi):
 
             if 'hotremove_cpu' in self.params['hardware']:
                 if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
-                        vm_obj.config.cpuHotRemoveEnabled != bool(self.params['hardware']['hotremove_cpu']):
+                        vm_obj.config.cpuHotRemoveEnabled != bool(self.params['hardware']['hotremove_cpu']) and not vm_creation:
                     self.module.fail_json(msg="Configure hotremove cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
                 if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
