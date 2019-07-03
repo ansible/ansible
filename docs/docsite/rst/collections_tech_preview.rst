@@ -2,12 +2,11 @@
 
 .. _collections:
 
+***********
 Collections
-===========
+***********
 
-.. contents::
-   :local:
-   
+
 Collections are a distribution format for Ansible content. They can be used to
 package and distribute playbooks, roles, modules, and plugins.
 You will be able to publish and use collections through `Ansible's Galaxy repository <https://galaxy.ansible.com>`_.
@@ -17,10 +16,13 @@ You will be able to publish and use collections through `Ansible's Galaxy reposi
     Future Galaxy or Ansible releases may introduce breaking changes.
 
 
-Collection Structure
+.. contents::
+   :local:
+
+Collection structure
 ====================
 
-Collections follow a simple data stucture. None of the directories are required unless you have specific content that belongs in one of them. They do require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy
+Collections follow a simple data structure. None of the directories are required unless you have specific content that belongs in one of them. They do require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy
 and other tools need in order to package, build and publish the collection.::
 
     collection/
@@ -91,7 +93,7 @@ Optional Fields:
       range `specifiers <https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification>`_.
       It is good practice to depend on a version range to minimize conflicts, and pin to a
       a major version to protect against breaking changes. For example: ``"user1.collection1": ">=1.2.2,<2.0.0"``
-      This field allows  other collections as dependencies, not traditional roles.
+      This field allows other collections as dependencies, not traditional roles.
     - ``description``: A short summary description of the collection.
     - ``license``: Either a single license or a list of licenses for content inside of a collection.
       Galaxy currently only accepts `SPDX <https://spdx.org/licenses/>`_ licenses.
@@ -101,9 +103,9 @@ Optional Fields:
 docs directory
 ---------------
 
-Keep general documentation for the collection here. Plugins and modules will still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to list the roles and plugins the collection provides, role requirements, user guides, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
+Keep general documentation for the collection here. Plugins and modules will still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
 
-We are `updating ansible-doc  <https://github.com/ansible/ansible/pull/57764>`_ to allow showing documentation for plugins inside a collection::
+We are `updating ansible-doc <https://github.com/ansible/ansible/pull/57764>`_ to allow showing documentation for plugins inside a collection::
 
     ansible-doc -t lookup mycol.myname.lookup1
 
@@ -149,20 +151,20 @@ TBD. Expect tests for the collection itself, including Molecule files, to reside
 
 .. _creating_collections:
 
-Creating Collections
+Creating collections
 ====================
 
 This is currently is a work in progress. We created the `Mazer <https://galaxy.ansible.com/docs/mazer/>`_ command line tool
 available at the `Ansible Mazer project <https://github.com/ansible/mazer>`_. as a proof of concept for packaging,
-distributing and installing collections.  You can install mazer with ``pip install mazer`` or checkout the code directly.
+distributing and installing collections. You can install ``mazer`` with ``pip install mazer`` or checkout the code directly.
 
 .. Note::
     All the documentation below that use ``mazer`` might be updated to use another tool in the future as ``mazer`` will not be updated in the future.
 
-We are working on integrating this into Ansible itself for 2.9. Currently we have an `ansible-galaxy PR <https://github.com/ansible/ansible/pull/57106>`_ incorporating some of the commands into ``ansible-galaxy``. Currently it is not installable outside ansible, but we hope to land this into development soon so early adopters can test.
+We are working on integrating this into Ansible itself for 2.9. Currently we have an `ansible-galaxy PR <https://github.com/ansible/ansible/pull/57106>`_ incorporating some of the commands into ``ansible-galaxy``. Currently it is not installable outside Ansible, but we hope to land this into development soon so early adopters can test.
 
 .. Note::
-    Any references to ``ansbile-galaxy`` below will be of a 'working version' either in this PR or subsequently in development. As such, the command and this documentation section is subject to frequent change.
+    Any references to ``ansible-galaxy`` below will be of a 'working version' either in this PR or subsequently in development. As such, the command and this documentation section is subject to frequent change.
 
 We also plan to update `Ansible Molecule <https://github.com/ansible/molecule>`_, for a full developer toolkit with integrated testing.
 
@@ -170,14 +172,14 @@ In the end, to get started with authoring a new collection it should be as simpl
 
 .. code-block:: bash
 
-    collecion_dir#>ansible-galaxy collection init
+    collection_dir#>ansible-galaxy collection init
 
 
-And then populating the directories with the content you want inside the collection. For now you can optionally clone from  https://github.com/bcoca/collection to get the directory structure (or just create the directories as you need them).
+And then populating the directories with the content you want inside the collection. For now you can optionally clone from https://github.com/bcoca/collection to get the directory structure (or just create the directories as you need them).
 
 .. _building_collections:
 
-Building Collections
+Building collections
 ====================
 
 Collections are built by running ``mazer build`` from inside the collection's root directory.
@@ -197,30 +199,30 @@ which can be uploaded to Galaxy.::
 
 This tarball itself can be used to install the collection on target systems. It is mainly intended to upload to Galaxy as a distribution method, but you should be able to use directly.
 
-Publishing Collections
+Publishing collections
 ======================
 
-We are in the process of updating Ansible Galaxy to manage collections as it manages roles until now.
+We are in the process of updating Ansible Galaxy to manage collections as it currently manages roles.
 
 
-Upload From the Galaxy Website
+Upload from the Galaxy website
 ------------------------------
 
 Go to the `My Content <https://galaxy.ansible.com/my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces. From
 the **Add Content** dialogue, click **Upload New Collection**, and select the collection archive file from your local
 filesystem.
 
-When uploading collections it doesn't  matter which namespace you select. The collection will be uploaded to the
-namespace specified in the collection metadata  in the ``galaxy.yml`` file. If you're not an owner of the
+When uploading collections it doesn't matter which namespace you select. The collection will be uploaded to the
+namespace specified in the collection metadata in the ``galaxy.yml`` file. If you're not an owner of the
 namespace, the upload request will fail.
 
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
 
-Upload Using Mazer
+Upload using mazer
 ------------------
 
-You can upload ollection artefacts with Mazer, as shown in the following example:
+You can upload collection artifacts with ``mazer``, as shown in the following example:
 
 .. code-block:: bash
 
@@ -234,7 +236,7 @@ Your API key can be found on `the preferences page in Galaxy <https://galaxy.ans
 To learn more about Mazer, see `Mazer <https://galaxy.ansible.com/docs/mazer/>`_.
 
 
-Collection Versions
+Collection versions
 -------------------
 
 Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before
@@ -242,14 +244,14 @@ uploading. The only way to change a collection is to release a new version. The 
 will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
 
 
-Installing Collections
+Installing collections
 ======================
 
 The recommended way to install a collection is:
 
 .. code-block:: bash
 
-   #> ansible-galaxy collection install  mycollection -p /path
+   #> ansible-galaxy collection install mycollection -p /path
 
 assuming the collection is hosted in Galaxy.
 
@@ -257,10 +259,10 @@ You can also use a tarball resulting from your build:
 
 .. code-block:: bash
 
-   #> ansible-galaxy install  mynamespace.mycollection.0.1.0.tgz -p /path
+   #> ansible-galaxy install mynamespace.mycollection.0.1.0.tgz -p /path
 
 
-As a path you should use one of the values configured in `COLLECTINS_PATHS <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#collections-paths>`_. This is also where Ansible itself will expect to find collections when attempting to use them.
+As a path you should use one of the values configured in `COLLECTIONS_PATHS <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#collections-paths>`_. This is also where Ansible itself will expect to find collections when attempting to use them.
 
 You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collection/`` directory structure.
 
@@ -275,7 +277,7 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
 
 
-Using Collections
+Using collections
 =================
 
 Once installed, you can reference collection content by its FQCN:
