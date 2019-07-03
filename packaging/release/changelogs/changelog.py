@@ -25,6 +25,7 @@ except ImportError:
     argcomplete = None
 
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 CHANGELOG_DIR = os.path.join(BASE_DIR, 'changelogs')
@@ -280,8 +281,8 @@ def generate_changelog(changes, plugins, fragments):
     generator = ChangelogGenerator(config, changes, plugins, fragments)
     rst = generator.generate()
 
-    with open(changelog_path, 'w') as changelog_fd:
-        changelog_fd.write(rst)
+    with open(changelog_path, 'wb') as changelog_fd:
+        changelog_fd.write(to_bytes(rst))
 
 
 class ChangelogFragmentLinter(object):
