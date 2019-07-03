@@ -1,0 +1,29 @@
+# Number of days of inactivity before a closed issue or pull request is locked
+daysUntilLock: 365
+
+# Issues and pull requests with these labels will not be locked.
+exemptLabels: []
+
+# Label to add before locking, such as `outdated`. Set to `false` to disable
+lockLabel: "S: auto-locked"
+
+# Comment to post before locking. Set to `false` to disable
+lockComment: false
+
+# Assign `resolved` as the reason for locking. Set to `false` to disable
+setLockReason: true
+
+# Limit to only `issues` or `pulls`
+# only: issues
+
+# Optionally, specify configuration settings just for `issues` or `pulls`
+# issues:
+#   exemptLabels:
+#     - help-wanted
+#   lockLabel: outdated
+
+# pulls:
+#   daysUntilLock: 30
+
+# Repository to extend settings from
+# _extends: repo
