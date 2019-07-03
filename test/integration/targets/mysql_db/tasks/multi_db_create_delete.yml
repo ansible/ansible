@@ -324,9 +324,7 @@
       - '{{ db2_name }}'
       - '{{ db3_name }}'
     state: present
-    login_host: 172.17.0.2
-    login_user: monty
-    login_password: pw
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert successful completion of create database
