@@ -297,8 +297,8 @@ $update_script_block = {
         }
 
         # Early exit for download-only
-        if ($state -eq "Downloaded $($updates_to_install.Count) updates") {
-            Write-DebugLog -msg "Downloaded updates..."
+        if ($state -eq "downloaded") {
+            Write-DebugLog -msg "Downloaded $($updates_to_install.Count) updates..."
             $result.failed = $false
             $result.msg = "Downloaded $($updates_to_install.Count) updates"
             return $result
