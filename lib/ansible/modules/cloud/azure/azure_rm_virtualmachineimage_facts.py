@@ -87,22 +87,26 @@ azure_vmimages:
     returned: always
     type: list
     example: [ {
-                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150410",
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150410",
                 "location": "eastus",
                 "name": "7.1.20150410"
             },
             {
-                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150605",
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150605",
                 "location": "eastus",
                 "name": "7.1.20150605"
             },
             {
-                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150731",
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                 Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150731",
                 "location": "eastus",
                 "name": "7.1.20150731"
             },
             {
-                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20160308",
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20160308",
                 "location": "eastus",
                 "name": "7.1.20160308"
             }
