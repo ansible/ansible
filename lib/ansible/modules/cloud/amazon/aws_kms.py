@@ -595,7 +595,7 @@ def update_key(connection, module, key):
                 connection.create_alias(KeyId=key_id, AliasName=alias)
                 changed = True
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(msg="Failed create key alias")
+                module.fail_json_aws(e, msg="Failed create key alias")
 
     if key['key_state'] == 'PendingDeletion':
         try:
