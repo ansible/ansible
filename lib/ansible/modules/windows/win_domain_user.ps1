@@ -16,7 +16,7 @@ Function Test-Credential {
         # UserPrincipalName
         $Username = ($Username -split '@')[0]
         $Domain = ($Username -split '@')[1]
-    } else if (($Username.ToCharArray()) -contains [char]'\') {
+    } elseif (($Username.ToCharArray()) -contains [char]'\') {
         # Pre Win2k Account Name
         $Username = ($Username -split '\')[0]
         $Domain = ($Username -split '\')[1]
