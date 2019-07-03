@@ -17,6 +17,7 @@ INPUT_LIST = [
     {1: 'Dict'},
     True,
     [1],
+    3.14159,
 ]
 
 LOWERED_LIST = [
