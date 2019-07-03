@@ -100,7 +100,6 @@
       - output.galleries['id'] != None
       - output.galleries['name'] != None
       - output.galleries['location'] != None
-      - output.galleries['tags'] != None
       - output.galleries['description'] != None
       - output.galleries['provisioningState'] != None
 
@@ -174,7 +173,6 @@
       - output.gallery_images['id'] != None
       - output.gallery_images['name'] != None
       - output.gallery_images['location'] != None
-      - output.gallery_images['tags'] != None
       - output.gallery_images['osState'] != None
       - output.gallery_images['osType'] != None
       - output.gallery_images['identifier'] != None
@@ -274,7 +272,6 @@
       - output.gallery_image_versions['id'] != None
       - output.gallery_image_versions['name'] != None
       - output.gallery_image_versions['location'] != None
-      - output.gallery_image_versions['tags'] != None
       - output.gallery_image_versions['publishingProfile'] != None
       - output.gallery_image_versions['provisioningState'] != None
 
