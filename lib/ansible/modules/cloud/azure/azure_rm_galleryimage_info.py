@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimage_info
 version_added: '2.9'
-short_description: Get GalleryImage info.
+short_description: Get Azure SIG Image info.
 description:
-  - Get info of GalleryImage.
+  - Get info of Azure SIG Image.
 options:
   resource_group:
     description:
@@ -29,7 +29,7 @@ options:
   gallery_name:
     description:
       - >-
-        The name of the Shared Image Gallery from which the Image Definitions
+        The name of the shared image gallery from which the image definitions
         are to be retrieved.
     type: str
     required: true
@@ -58,10 +58,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-gallery_images:
+images:
   description: >-
-    A list of dict results where the key is the name of the GalleryImage and the
-    values are the facts for that GalleryImage.
+    A list of dict results where the key is the name of the image and the
+    values are the info for that image.
   returned: always
   type: complex
   contains:
@@ -90,35 +90,35 @@ gallery_images:
       returned: always
       type: dict
       sample: { "tag": "value" }
-    osState:
+    os_state:
       description:
         - The allowed values for OS State are 'Generalized'.
       type: OperatingSystemStateTypes
       sample: "Generalized"
-    osType:
+    os_type:
       description: >-
         This property allows you to specify the type of the OS that is included in the disk
         when creating a VM from a managed image.
       type: OperatingSystemTypes
-      sample: "Linux"
+      sample: "linux"/"windows"
     identifier:
       description:
-        - This is the gallery Image Definition identifier.
+        - This is the gallery image definition identifier.
       type: dict
       contains:
         offer:
           description:
-            - The name of the gallery Image Definition offer.
+            - The name of the gallery image definition offer.
           type: str
           sample: "myOfferName"
         publisher:
           description:
-            - The name of the gallery Image Definition publisher.
+            - The name of the gallery image definition publisher.
           type: str
           sample: "myPublisherName"
         sku:
           description:
-            - The name of the gallery Image Definition SKU.
+            - The name of the gallery image definition sku.
           type: str
           sample: "mySkuName"
 
@@ -182,11 +182,11 @@ class AzureRMGalleryImagesInfo(AzureRMModuleBase):
                 self.gallery_name is not None and
                 self.name is not None):
             # self.results['gallery_images'] = self.format_item(self.get())
-            self.results['gallery_images'] = self.get()
+            self.results['images'] = self.get()
         elif (self.resource_group is not None and
               self.gallery_name is not None):
             # self.results['gallery_images'] = self.format_item(self.listbygallery())
-            self.results['gallery_images'] = self.listbygallery()
+            self.results['images'] = self.listbygallery()
         return self.results
 
     def get(self):
@@ -263,8 +263,8 @@ class AzureRMGalleryImagesInfo(AzureRMModuleBase):
             'name': item['name'],
             'location': item['location'],
             'tags': item.get('tags'),
-            'osState': item['properties']['osState'],
-            'osType': item['properties']['osType'],
+            'os_state': item['properties']['osState'],
+            'os_type': item['properties']['osType'],
             'identifier': item['properties']['identifier']
         }
         return d

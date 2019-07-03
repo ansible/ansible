@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimageversion_info
 version_added: '2.9'
-short_description: Get GalleryImageVersion info.
+short_description: Get Azure SIG Image Version info.
 description:
-  - Get info of GalleryImageVersion.
+  - Get info of Azure SIG Image Version.
 options:
   resource_group:
     description:
@@ -52,12 +52,12 @@ author:
 '''
 
 EXAMPLES = '''
-- name: List gallery Image Versions in a gallery Image Definition.
+- name: List gallery image versions in a gallery image definition.
   azure_rm_galleryimageversion_info:
     resource_group: myResourceGroup
     gallery_name: myGallery
     gallery_image_name: myImage
-- name: Get a gallery Image Version.
+- name: Get a gallery image version.
   azure_rm_galleryimageversion_info:
     resource_group: myResourceGroup
     gallery_name: myGallery
@@ -67,10 +67,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-gallery_image_versions:
+versions:
   description: >-
-    A list of dict results where the key is the name of the GalleryImageVersion
-    and the values are the facts for that GalleryImageVersion.
+    A list of dict results where the key is the name of the version
+    and the values are the info for that version.
   returned: always
   type: complex
   contains:
@@ -100,11 +100,11 @@ gallery_image_versions:
       returned: always
       type: dict
       sample: { "tag": "value" }
-    publishingProfile:
+    publishing_profile:
       description:
-        - The publishing profile of a gallery Image Version.
+        - The publishing profile of a gallery image version.
       type: dict
-    provisioningState:
+    provisioning_state:
       description:
         - The current state of the gallery.
       type: str
@@ -175,11 +175,11 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
                 self.gallery_name is not None and
                 self.gallery_image_name is not None and
                 self.name is not None):
-            self.results['gallery_image_versions'] = self.get()
+            self.results['versions'] = self.get()
         elif (self.resource_group is not None and
               self.gallery_name is not None and
               self.gallery_image_name is not None):
-            self.results['gallery_image_versions'] = self.listbygalleryimage()
+            self.results['versions'] = self.listbygalleryimage()
         return self.results
 
     def get(self):
@@ -262,8 +262,8 @@ class AzureRMGalleryImageVersionsInfo(AzureRMModuleBase):
             'name': item['name'],
             'location': item['location'],
             'tags': item.get('tags'),
-            'publishingProfile': item['properties']['publishingProfile'],
-            'provisioningState': item['properties']['provisioningState']
+            'publishing_profile': item['properties']['publishingProfile'],
+            'provisioning_state': item['properties']['provisioningState']
         }
         return d
 

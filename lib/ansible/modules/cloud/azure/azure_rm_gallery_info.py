@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_gallery_info
 version_added: '2.9'
-short_description: Get Gallery info.
+short_description: Get Azure Shared Image Gallery info.
 description:
-  - Get info of Gallery.
+  - Get info of Azure Shared Image Gallery.
 options:
   resource_group:
     description:
@@ -52,8 +52,8 @@ EXAMPLES = '''
 RETURN = '''
 galleries:
   description: >-
-    A list of dict results where the key is the name of the Gallery and the
-    values are the facts for that Gallery.
+    A list of dict results where the key is the name of the gallery and the
+    values are the info for that gallery.
   returned: always
   type: complex
   contains:
@@ -87,7 +87,7 @@ galleries:
         - This is the gallery description.
       type: str
       sample: "This is the gallery description."
-    provisioningState:
+    provisioning_state:
         description:
           - The current state of the gallery.
         type: str
@@ -250,7 +250,7 @@ class AzureRMGalleriesInfo(AzureRMModuleBase):
             'location': item['location'],
             'tags': item.get('tags'),
             'description': item['properties']['description'],
-            'provisioningState': item['properties']['provisioningState']
+            'provisioning_state': item['properties']['provisioningState']
         }
         return d
 

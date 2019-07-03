@@ -101,7 +101,7 @@
       - output.galleries['name'] != None
       - output.galleries['location'] != None
       - output.galleries['description'] != None
-      - output.galleries['provisioningState'] != None
+      - output.galleries['provisioning_state'] != None
 
 - name: Create or update gallery image
   azure_rm_galleryimage:
@@ -170,12 +170,12 @@
 - assert:
     that: 
       - not output.changed
-      - output.gallery_images['id'] != None
-      - output.gallery_images['name'] != None
-      - output.gallery_images['location'] != None
-      - output.gallery_images['osState'] != None
-      - output.gallery_images['osType'] != None
-      - output.gallery_images['identifier'] != None
+      - output.images['id'] != None
+      - output.images['name'] != None
+      - output.images['location'] != None
+      - output.images['os_state'] != None
+      - output.images['os_type'] != None
+      - output.images['identifier'] != None
 
 - name: Create or update a simple gallery Image Version.
   azure_rm_galleryimageversion:
@@ -269,11 +269,11 @@
 - assert:
     that: 
       - not output.changed
-      - output.gallery_image_versions['id'] != None
-      - output.gallery_image_versions['name'] != None
-      - output.gallery_image_versions['location'] != None
-      - output.gallery_image_versions['publishingProfile'] != None
-      - output.gallery_image_versions['provisioningState'] != None
+      - output.versions['id'] != None
+      - output.versions['name'] != None
+      - output.versions['location'] != None
+      - output.versions['publishing_profile'] != None
+      - output.versions['provisioning_state'] != None
 
 - name: Delete gallery image Version.
   azure_rm_galleryimageversion:
