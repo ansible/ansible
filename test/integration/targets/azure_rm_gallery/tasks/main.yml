@@ -164,7 +164,7 @@
 
 - assert:
     that: 
-      - output.changed
+      - not output.changed
 
 - name: Create or update a simple gallery Image Version.
   azure_rm_galleryimageversion:
@@ -257,7 +257,7 @@
 
 - assert:
     that: 
-      - output.changed
+      - not output.changed
 
 - name: Delete gallery image Version.
   azure_rm_galleryimageversion:
