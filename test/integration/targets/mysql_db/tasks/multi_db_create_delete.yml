@@ -100,8 +100,8 @@
 - name: assert that databases does not exist (since created via check_mode)
   assert:
     that:
-      - "'{{ db1_name }}' not in mysql_result.stdout"
-      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
 
 # ==========================================================================
 # Recreate same databases
