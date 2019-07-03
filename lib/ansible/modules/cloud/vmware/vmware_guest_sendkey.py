@@ -33,10 +33,12 @@ options:
      description:
      - Name of the virtual machine.
      - This is a required parameter, if parameter C(uuid) is not supplied.
+     type: string
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
      - This is a required parameter, if parameter C(name) is not supplied.
+     type: string
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -52,29 +54,35 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: string
    cluster:
      description:
      - The name of cluster where the virtual machine is running.
      - This is a required parameter, if C(esxi_hostname) is not set.
      - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
+     type: string
    esxi_hostname:
      description:
      - The ESXi hostname where the virtual machine is running.
      - This is a required parameter, if C(cluster) is not set.
      - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
+     type: string
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
+     type: string
    string_send:
      description:
      - The string will be sent to the virtual machine.
      - This string can contain valid special character, alphabet and digit on the keyboard.
+     type: string
    keys_send:
      description:
      - The list of the keys will be sent to the virtual machine.
      - 'Valid values are C(ENTER), C(ESC), C(BACKSPACE), C(TAB), C(SPACE), C(CAPSLOCK), C(DELETE), C(CTRL_ALT_DEL),
         C(CTRL_C) and C(F1) to C(F12), C(RIGHTARROW), C(LEFTARROW), C(DOWNARROW), C(UPARROW).'
      - If both C(keys_send) and C(string_send) are specified, keys in C(keys_send) list will be sent in front of the C(string_send).
+     type: list
 extends_documentation_fragment: vmware.documentation
 '''
 
