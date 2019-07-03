@@ -443,6 +443,12 @@ releases:
     - win_acl-network.yaml
     - win_domain-setup.yaml
     release_date: '2019-05-23'
+  2.6.18:
+    codename: Heartbreaker
+    fragments:
+    - fix_safe_eval.yml
+    - v2.6.18_summary.yaml
+    release_date: '2019-07-03'
   2.6.2:
     codename: Heartbreaker
     fragments:
