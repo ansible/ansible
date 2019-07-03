@@ -94,7 +94,7 @@ class AnsibleError(Exception):
             if line_number > 0:
                 prev_line = lines[line_number - 1]
 
-        return (to_native(target_line), to_native(prev_line))
+        return (target_line, prev_line)
 
     def _get_extended_error(self):
         '''
