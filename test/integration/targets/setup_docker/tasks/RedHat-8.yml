@@ -3,19 +3,17 @@
 
 - name: Install Docker pre-reqs
   dnf:
-    name:
-    - dnf-utils
-    - device-mapper-persistent-data
-    - lvm2
-    - libseccomp
+    name: "{{ docker_prereq_packages }}"
     state: present
 
 - name: Set-up repository
   command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    warn: no
 
 - name: Install docker
   dnf:
-    name: docker-ce
+    name: "{{ docker_packages }}"
     state: present
 
 - name: Make sure the docker daemon is running (failure expected inside docker container)
