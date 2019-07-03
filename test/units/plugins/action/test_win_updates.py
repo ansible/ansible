@@ -19,7 +19,7 @@ class TestWinUpdatesActionPlugin(object):
         (
             {"state": "invalid"},
             False,
-            "state must be either installed or searched"
+            "state must be either installed, searched or downloaded"
         ),
         (
             {"reboot": "nonsense"},
