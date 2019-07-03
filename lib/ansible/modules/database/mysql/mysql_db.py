@@ -78,12 +78,7 @@ EXAMPLES = r'''
     name: bobdata
     state: present
 
-- name: Create new database with name 'foo', 'bar'
-  mysql_db:
-    name: foo,bar
-    state: present
-
-- name: Create new database with name 'foo', 'bar'
+- name: Create new databases with names 'foo' and 'bar'
   mysql_db:
     name:
       - foo
@@ -133,12 +128,7 @@ EXAMPLES = r'''
     name: bobdata
     state: absent
 
-- name: Delete database with name 'foo', 'bar'
-  mysql_db:
-    name: foo,bar
-    state: absent
-
-- name: Delete database with name 'foo', 'bar'
+- name: Make sure there is neither a database with name 'foo', nor one with name 'bar'
   mysql_db:
     name:
       - foo
@@ -329,7 +319,7 @@ def main():
 
     db = module.params["name"]
     if not db:
-        module.fail_json(msg="Please provide at least one database name")
+        module.exit_json(changed=False, db=db)
     db = [each_db.strip() for each_db in db]
 
     encoding = module.params["encoding"]
