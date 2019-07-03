@@ -17,8 +17,7 @@ module: win_linux_copy
 version_added: "2.4"
 short_description: This module can be used to copy files /folders from linux to windows or vice-versa.
 description:
-    - Copy files and folders from windows to linux or vice-versa.
-    
+    - Copy files and folders from windows to linux or vice-versa.    
 options:
   src:
     description:
@@ -48,8 +47,7 @@ options:
     description:
       - This switch expects the direction of data to be copied. Use w2l for copying data from windows to Linux / unix and l2w for Linux to windows.
     type: str
-    choices: [w2l, l2w ]
-    
+    choices: [w2l, l2w ]    
 notes:
 - This module uses putty Secure Copy client application to copy the data, hence putty must be installed.
 requirements:
@@ -94,5 +92,6 @@ msg:
     returned: always.
     type: str
     sample: data.txt                  | 0 kB |   0.1 kB/s | ETA: 00:00:00 | 100%
+
 
 '''
