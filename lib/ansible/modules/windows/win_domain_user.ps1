@@ -97,7 +97,7 @@ If ($state -eq 'present') {
             New-ADUser -Name $username -WhatIf:$check_mode @extra_args
         }
         $new_user = $true
-		$result.created = $true
+	$result.created = $true
         $result.changed = $true
         If ($check_mode) {
             Exit-Json $result
