@@ -255,7 +255,7 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
             'id': item['id'],
             'name': item['name'],
             'location': item['location'],
-            'etags': item['etags'],
+            'etag': item['etag'],
             'tags': item.get('tags'),
             'nat_rule_collections': item['properties']['natRuleCollections'],
             'network_rule_collections': item['properties']['networkRuleCollections'],

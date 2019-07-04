@@ -246,3 +246,21 @@
   assert:
     that:
       - output.changed
+
+- name: Get Azure Firewall
+  azure_rm_azurefirewall_info:
+    resource_group: myResourceGroup
+    name: myAzureFirewall
+  register: output
+
+- assert:
+    that: 
+      - not output.changed
+      - output.firewalls['id'] != None
+      - output.firewalls['name'] != None
+      - output.firewalls['location'] != None
+      - output.firewalls['etag'] != None
+      - output.firewalls['nat_rule_collections'] != None
+      - output.firewalls['network_rule_collections'] != None
+      - output.firewalls['ip_configurations'] != None
+      - output.firewalls['provisioning_state'] != None
