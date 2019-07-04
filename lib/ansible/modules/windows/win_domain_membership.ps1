@@ -153,8 +153,9 @@ Function Set-Workgroup {
 
     if ($swg_result.ReturnValue -ne 0) {
         Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
-
-    return $swg_result}
+    }
+    
+    return $swg_result
 }
 
 Function Join-Workgroup {
@@ -177,7 +178,7 @@ Function Join-Workgroup {
 
     # we're already on a workgroup- change it.
     Else {
-        Set-Workgroup $workgroup_name
+        Set-Workgroup $workgroup_name > $null
     }
 }
 
@@ -288,7 +289,7 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+                    Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password > $null
 
                     # this change requires a reboot
                     $result.reboot_required = $true
