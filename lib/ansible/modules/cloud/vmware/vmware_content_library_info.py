@@ -19,7 +19,7 @@ module: vmware_content_library_info
 short_description: Gather information about VMWare Content Library
 description:
 - Module to list the content libraries.
-- Module to get facts about specific content library
+- Module to get information about specific content library.
 - Content Library feature is introduced in vSphere 6.0 version, so this module is not supported in the earlier versions of vSphere.
 - All variables and VMware object names are case sensitive.
 version_added: '2.9'
@@ -34,7 +34,7 @@ requirements:
 options:
     library_id:
       description:
-      - content library id for which details needs to be fetched
+      - content library id for which details needs to be fetched.
       type: str
       required: False
 extends_documentation_fragment: vmware_rest_client.documentation
@@ -48,39 +48,47 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
   delegate_to: localhost
 
-- name: Get facts about content library
+- name: Get information about content library
   vmware_content_library_info:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
-    library_id: 'LibraryID'
+    library_id: '13b0f060-f4d3-4f84-b61f-0fe1b0c0a5a8'
     validate_certs: no
   delegate_to: localhost
 '''
 
 RETURN = r'''
-results:
-  description: dictionary of content library metadata
+content_lib_details:
+  description: list of content library metadata
   returned: on success
-  type: dict
-  sample: {
-            "demo-local-lib": {
-            "lib_creation_time": "2019-07-02T11:50:52.242000",
-            "lib_description": "new description",
-            "lib_id": "13b0f060-f4d3-4f84-b61f-0fe1b0c0a5a8",
-            "lib_name": "demo-local-lib",
-            "lib_publish_info": {
-                "authentication_method": "NONE",
-                "persist_json_enabled": false,
-                "publish_url": null,
-                "published": false,
-                "user_name": null
-                },
-                "lib_server_guid": "0fd5813b-aac7-4b92-9fb7-f18f16565613",
-                "lib_type": "LOCAL",
-                "lib_version": "3"
-            }
+  type: list
+  sample: [
+      {
+          "library_creation_time": "2019-07-02T11:50:52.242000",
+          "library_description": "new description",
+          "library_id": "13b0f060-f4d3-4f84-b61f-0fe1b0c0a5a8",
+          "library_name": "demo-local-lib",
+          "library_publish_info": {
+              "authentication_method": "NONE",
+              "persist_json_enabled": false,
+              "publish_url": null,
+              "published": false,
+              "user_name": null
+              },
+          "library_server_guid": "0fd5813b-aac7-4b92-9fb7-f18f16565613",
+          "library_type": "LOCAL",
+          "library_version": "3"
         }
+    ]
+content_libs:
+    description: list of content libraries
+    returned: on success
+    type: list
+    sample: [
+        "ded9c4d5-0dcd-4837-b1d8-af7398511e33",
+        "36b72549-14ed-4b5f-94cb-6213fecacc02"
+    ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -92,9 +100,7 @@ class VmwareContentLibFacts(VmwareRestClient):
         """Constructor."""
         super(VmwareContentLibFacts, self).__init__(module)
         self.content_service = self.api_client
-        self.local_libraries = []
-        self.library_facts = dict()
-        self.lib_publish_info = dict()
+        self.library_facts = []
 
     def get_all_content_libs(self):
         """Method to retrieve List of content libraries."""
@@ -102,26 +108,31 @@ class VmwareContentLibFacts(VmwareRestClient):
 
     def get_content_lib_details(self, library_id):
         """Method to retrieve Details of contentlib with library_id"""
-        lib_details = self.content_service.content.LocalLibrary.get(library_id)
-        self.lib_publish_info = dict(
+        try:
+            lib_details = self.content_service.content.LocalLibrary.get(library_id)
+        except Exception as e:
+            self.module.fail_json(exists=False, msg="%s" % self.get_error_message(e))
+        lib_publish_info = dict(
             persist_json_enabled=lib_details.publish_info.persist_json_enabled,
             authentication_method=lib_details.publish_info.authentication_method,
             publish_url=lib_details.publish_info.publish_url,
             published=lib_details.publish_info.published,
             user_name=lib_details.publish_info.user_name
         )
-        self.library_facts[lib_details.name] = dict(
-            lib_name=lib_details.name,
-            lib_description=lib_details.description,
-            lib_id=lib_details.id,
-            lib_type=lib_details.type,
-            lib_creation_time=lib_details.creation_time,
-            lib_server_guid=lib_details.server_guid,
-            lib_version=lib_details.version,
-            lib_publish_info=self.lib_publish_info
+        self.library_facts.append(
+            dict(
+                library_name=lib_details.name,
+                library_description=lib_details.description,
+                library_id=lib_details.id,
+                library_type=lib_details.type,
+                library_creation_time=lib_details.creation_time,
+                library_server_guid=lib_details.server_guid,
+                library_version=lib_details.version,
+                library_publish_info=lib_publish_info
+            )
         )
 
-        self.module.exit_json(changed=False, content_lib_details=self.library_facts)
+        self.module.exit_json(exists=False, changed=False, content_lib_details=self.library_facts)
 
 
 def main():
