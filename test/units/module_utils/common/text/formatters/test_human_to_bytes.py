@@ -25,31 +25,22 @@ NUM_IN_METRIC = {
 @pytest.mark.parametrize(
     'input_data,expected',
     [
-        (0, 0),
-        (u'0B', 0),
-        (1024, NUM_IN_METRIC['K']),
-        (u'1024B', NUM_IN_METRIC['K']),
-        (u'1K', NUM_IN_METRIC['K']),
-        (u'1KB', NUM_IN_METRIC['K']),
-        (u'1MB', NUM_IN_METRIC['M']),
-        (u'1M', NUM_IN_METRIC['M']),
-        (u'1G', NUM_IN_METRIC['G']),
-        (u'1GB', NUM_IN_METRIC['G']),
-        (u'1T', NUM_IN_METRIC['T']),
-        (u'1TB', NUM_IN_METRIC['T']),
-        (u'1P', NUM_IN_METRIC['P']),
-        (u'1PB', NUM_IN_METRIC['P']),
-        (u'1E', NUM_IN_METRIC['E']),
-        (u'1EB', NUM_IN_METRIC['E']),
-        (u'1Z', NUM_IN_METRIC['Z']),
-        (u'1ZB', NUM_IN_METRIC['Z']),
-        (u'1Y', NUM_IN_METRIC['Y']),
-        (u'1YB', NUM_IN_METRIC['Y']),
+        ((0, u'0B'), 0),
+        ((1024, u'1024B'), NUM_IN_METRIC['K']),
+        ((u'1K', u'1KB'), NUM_IN_METRIC['K']),
+        ((u'1M', u'1MB'), NUM_IN_METRIC['M']),
+        ((u'1G', u'1GB'), NUM_IN_METRIC['G']),
+        ((u'1T', u'1TB'), NUM_IN_METRIC['T']),
+        ((u'1P', u'1PB'), NUM_IN_METRIC['P']),
+        ((u'1E', u'1EB'), NUM_IN_METRIC['E']),
+        ((u'1Z', u'1ZB'), NUM_IN_METRIC['Z']),
+        ((u'1Y', u'1YB'), NUM_IN_METRIC['Y']),
     ]
 )
 def test_human_to_bytes_number(input_data, expected):
     """Test of human_to_bytes function, only number arg is passed."""
-    assert human_to_bytes(input_data) == expected
+    for elem in input_data:
+        assert human_to_bytes(elem) == expected
 
 
 @pytest.mark.parametrize(
@@ -99,32 +90,22 @@ def test_human_to_bytes_wrong_number(test_input):
 @pytest.mark.parametrize(
     'input_data,expected',
     [
-        (0, 0),
-        (1024, 1024),
-        (u'1024b', 1024),
-        (u'1024B', 1024),
-        (u'0B', 0),
-        (u'1K', NUM_IN_METRIC['K']),
-        (u'1Kb', NUM_IN_METRIC['K']),
-        (u'1M', NUM_IN_METRIC['M']),
-        (u'1Mb', NUM_IN_METRIC['M']),
-        (u'1G', NUM_IN_METRIC['G']),
-        (u'1Gb', NUM_IN_METRIC['G']),
-        (u'1T', NUM_IN_METRIC['T']),
-        (u'1Tb', NUM_IN_METRIC['T']),
-        (u'1P', NUM_IN_METRIC['P']),
-        (u'1Pb', NUM_IN_METRIC['P']),
-        (u'1E', NUM_IN_METRIC['E']),
-        (u'1Eb', NUM_IN_METRIC['E']),
-        (u'1Z', NUM_IN_METRIC['Z']),
-        (u'1Zb', NUM_IN_METRIC['Z']),
-        (u'1Y', NUM_IN_METRIC['Y']),
-        (u'1Yb', NUM_IN_METRIC['Y']),
+        ((0, u'0B'), 0),
+        ((u'1024b', u'1024B'), 1024),
+        ((u'1K', u'1Kb'), NUM_IN_METRIC['K']),
+        ((u'1M', u'1Mb'), NUM_IN_METRIC['M']),
+        ((u'1G', u'1Gb'), NUM_IN_METRIC['G']),
+        ((u'1T', u'1Tb'), NUM_IN_METRIC['T']),
+        ((u'1P', u'1Pb'), NUM_IN_METRIC['P']),
+        ((u'1E', u'1Eb'), NUM_IN_METRIC['E']),
+        ((u'1Z', u'1Zb'), NUM_IN_METRIC['Z']),
+        ((u'1Y', u'1Yb'), NUM_IN_METRIC['Y']),
     ]
 )
 def test_human_to_bytes_isbits(input_data, expected):
     """Test of human_to_bytes function, isbits = True."""
-    assert human_to_bytes(input_data, isbits=True) == expected
+    for elem in input_data:
+        assert human_to_bytes(elem, isbits=True) == expected
 
 
 @pytest.mark.parametrize(
