@@ -33,6 +33,7 @@ options:
   security_policy:
     description:
       - Set allowed TLS versions through AWS defined policies. Currently only TLS_1_0 and TLS_1_2 are available.
+      - Can only be set with botocore 1.12.175 or newer. On older boto versions this flag will automatically be ignored
     default: TLS_1_2
     choices: ['TLS_1_0', 'TLS_1_2']
   endpoint_type:
@@ -44,7 +45,7 @@ options:
     description:
       - Map your domain base paths to your API GW REST APIs, you previously created. Use provide ID of the API setup and the release stage.
       - domain_mappings should be a list of dictionaries containing three keys: base_path, rest_api_id and stage.
-      - Example: I([{ base_path: /, rest_api_id: abc123, stage: production }])
+      - Example: I([{ base_path: v1, rest_api_id: abc123, stage: production }]), if you want base path to be just I(/) omit the param completely or set it to ''.
     required: true
     type: list
   state:
@@ -69,7 +70,7 @@ EXAMPLES = '''
     security_policy: TLS_1_0
     endpoint_type: EDGE
     domain_mappings:
-        - { base_path: '/', rest_api_id: abc123, stage: production }
+        - { rest_api_id: abc123, stage: production }
     state: present
   register: api_gw_domain_result
 
@@ -125,57 +126,87 @@ def get_domain(module, client):
         return None
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="getting API GW domain")
-
-    return result
+    return camel_dict_to_snake_dict(result)
 
 
 def create_domain(module, client):
-    domain_args = copy.deepcopy(module.params)
-    domain_args.pop('domain_mappings')
-    domain_args.pop('state')
-    domain_name = domain_args['domain_name']
-    path_mappings = module.params.get('domain_mappings')
+    path_mappings = module.params.get('domain_mappings', [])
+    domain_name= module.params.get('domain_name')
+    result = {'domain': {}, 'path_mappings': []}
 
-    result = {}
     try:
-        result['domain'] = create_domain_name(client, snake_dict_to_camel_dict(domain_args))
-        result['path_mappings'] = {}
+        result['domain'] = create_domain_name(
+            module,
+            client,
+            domain_name, module.params['certificate_arn'],
+            module.params['endpoint_type'],
+            module.params['security_policy']
+        )
 
         for mapping in path_mappings:
-            base_path = mapping.get('base_path', '/')
+            base_path = mapping.get('base_path', '')
             rest_api_id = mapping['rest_api_id']
             stage = mapping['stage']
             if rest_api_id is None or stage is None:
                 module.fail_json('Every domain mapping needs a rest_api_id and stage name')
 
-            result['path_mappings'][base_path] = add_domain_mapping(client, domain_name, base_path, rest_api_id, stage)
+            result['path_mappings'].append(add_domain_mapping(client, domain_name, base_path, rest_api_id, stage))
 
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="creating API GW domain")
+    return camel_dict_to_snake_dict(result)
 
-    return result
 
+def update_domain(module, client, existing_domain):
+    domain_name = module.params.get('domain_name')
+    result = {'updated': False}
 
-def update_domain(module, client):
-    domain_args = copy.deepcopy(module.params)
-    domain_args.pop('domain_mappings')
-    domain_args.pop('state')
-    domain_name = domain_args['domain_name']
+    domain = existing_domain.get('domain')
+    # Compare only relevant set of domain arguments.
+    # As get_domain_name gathers all kind of state information that can't be set anyways.
+    # Also this module doesn't support custom TLS cert setup params as they are kind of deprecated already and would increase complexity.
+    existing_domain_settings = {
+        'certificate_arn': domain.get('certificate_arn'),
+        'security_policy': domain.get('security_policy'),
+        'endpoint_type': domain.get('endpoint_configuration').get('types')[0]
+    }
+    specified_domain_settings = {
+        'certificate_arn': module.params.get('certificate_arn'),
+        'security_policy': module.params.get('security_policy'),
+        'endpoint_type': module.params.get('endpoint_type')
+    }
 
-    try:
-        res = update_domain_name(client, domain_name, snake_dict_to_camel_dict(domain_args))
-    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
-        module.fail_json_aws(e, msg="updating API GW domain")
-    return res
+    if not specified_domain_settings == existing_domain_settings:
+        try:
+            result['domain'] = update_domain_name(client, domain_name, **snake_dict_to_camel_dict(specified_domain_settings))
+            result['updated'] = True
+        except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+            module.fail_json_aws(e, msg="updating API GW domain")
+
+    existing_mappings = existing_domain.get('path_mappings', [])
+    specified_mappings = module.params.get('domain_mappings')
+
+    if not specified_mappings == existing_mappings:
+        try:
+            # When lists missmatch delete all existing mappings before adding new ones as specified
+            for base_path, mapping_info in existing_mappings.items():
+                delete_domain_mapping(client, domain_name, base_path)
+            for mapping in specified_mappings:
+                result['path_mappings'] = add_domain_mapping(client, domain_name, mapping['base_path'], mapping['rest_api_id'], mapping['stage'])
+                result['updated'] = True
+        except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+            module.fail_json_aws(e, msg="updating API GW domain mapping")
+
+    return camel_dict_to_snake_dict(result)
 
 
 def delete_domain(module, client):
     domain_name = module.params.get('domain_name')
     try:
-        res = delete_domain_name(client, domain_name)
+        result = delete_domain_name(client, domain_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="deleting API GW domain")
-    return res
+    return camel_dict_to_snake_dict(result)
 
 
 retry_params = {"tries": 10, "delay": 5, "backoff": 1.2}
@@ -192,8 +223,19 @@ def get_domain_mappings(client, domain_name):
 
 
 @AWSRetry.backoff(**retry_params)
-def create_domain_name(client, **args):
-    return client.create_domain_name(args)
+def create_domain_name(module, client, domain_name, certificate_arn, endpoint_type, security_policy):
+    endpoint_configuration = {'types': [endpoint_type]}
+    if module.botocore_at_least('1.12.175'):
+        # The securityPolicy param was only added in botocore 1.12.175, hence we don't set it if older version is installed.
+        # See diff at https://github.com/boto/botocore/compare/1.12.174...1.12.175
+        return client.create_domain_name(
+            domainName=domain_name,
+            certificateArn=certificate_arn,
+            endpointConfiguration=endpoint_configuration,
+            securityPolicy=security_policy
+        )
+    else:
+        return client.create_domain_name(domainName=domain_name, certificateArn=certificate_arn, endpointConfiguration=endpoint_configuration)
 
 
 @AWSRetry.backoff(**retry_params)
@@ -202,11 +244,14 @@ def add_domain_mapping(client, domain_name, base_path, rest_api_id, stage):
 
 
 @AWSRetry.backoff(**retry_params)
-def update_domain_name(client, domain_name, **args):
+def update_domain_name(client, domain_name, **kwargs):
     patch_operations = []
 
-    for key, value in args.items():
-        patch_operations << {"op": "replace", "path": "/" + key, "value": value}
+    for key, value in kwargs.items():
+        path = "/" + key
+        if key == "endpointType":
+            continue
+        patch_operations.append({"op": "replace", "path": path, "value": value})
 
     return client.update_domain_name(domainName=domain_name, patchOperations=patch_operations)
 
@@ -214,6 +259,11 @@ def update_domain_name(client, domain_name, **args):
 @AWSRetry.backoff(**retry_params)
 def delete_domain_name(client, domain_name):
     return client.delete_domain_name(domainName=domain_name)
+
+
+@AWSRetry.backoff(**retry_params)
+def delete_domain_mapping(client, domain_name, base_path):
+    return client.delete_base_path_mapping(domainName=domain_name, basePath=base_path)
 
 
 def main():
@@ -239,16 +289,19 @@ def main():
     if state == "present":
         existing_domain = get_domain(module, client)
         if existing_domain is not None:
-            result = update_domain(module, client)
+            result = update_domain(module, client, existing_domain)
+            changed = result['updated']
         else:
             result = create_domain(module, client)
+            changed = True
     if state == "absent":
         result = delete_domain(module, client)
+        changed = True
 
     exit_args = { "changed": changed }
 
     if result is not None:
-        exit_args['response'] = camel_dict_to_snake_dict(result)
+        exit_args['response'] = result
 
     module.exit_json(**exit_args)
 
