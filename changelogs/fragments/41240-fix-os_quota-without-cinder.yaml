@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "os_quota - fix failure to set compute or network quota when volume service is not available"
