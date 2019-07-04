@@ -47,7 +47,7 @@ def test_lenient_lowercase():
 
 
 @pytest.mark.parametrize('input_data', [1, False, 1.001, 1j, datetime.now(), ])
-def test_lenient_lowercase_unexpected_data_type(input_data):
-    """Test passing objects of unexpected types to lenient_lowercase()."""
-    with pytest.raises(TypeError):
+def test_lenient_lowercase_illegal_data_type(input_data):
+    """Test passing objects of illegal types to lenient_lowercase()."""
+    with pytest.raises(TypeError, match='object is not iterable'):
         lenient_lowercase(input_data)
