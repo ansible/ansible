@@ -107,8 +107,16 @@ options:
     - password
   use_default_credential:
     description:
-    - Uses the current user's credentials if the WinRM connection was
-      authenticated with C(CredSSP) or C(become) was used on the task.
+    - Uses the current user's credentials when authenticating with a server
+      protected with C(NTLM), C(Kerberos), or C(Negotiate) authentication.
+    - Sites that use C(Basic) auth will still require explicit credentials
+      through the I(url_username) and I(url_password) options.
+    - The module will only have access to the user's credentials if using
+      C(become) with a password, you are connecting with SSH using a password,
+      or connecting with WinRM using C(CredSSP) or C(Kerberos with delegation).
+    - If not using C(become) or a different auth method to the ones stated
+      above, there will be no default credentials available and no
+      authentication will occur.
     default: no
     type: bool
     version_added: "2.9"
@@ -133,9 +141,16 @@ options:
     type: str
   proxy_use_default_credential:
     description:
-    - Uses the current user's credentials for proxy auth if the WinRM
-      connection was authenticated with C(CredSSP) or C(become) was used on the
-      task.
+    - Uses the current user's credentials when authenticating with a proxy host
+      protected with C(NTLM), C(Kerberos), or C(Negotiate) authentication.
+    - Proxies that use C(Basic) auth will still require explicit credentials
+      through the I(proxy_username) and I(proxy_password) options.
+    - The module will only have access to the user's credentials if using
+      C(become) with a password, you are connecting with SSH using a password,
+      or connecting with WinRM using C(CredSSP) or C(Kerberos with delegation).
+    - If not using C(become) or a different auth method to the ones stated
+      above, there will be no default credentials available and no proxy
+      authentication will occur.
     default: no
     type: bool
     version_added: "2.9"

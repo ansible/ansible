@@ -54,8 +54,8 @@ Function Get-AnsibleWebRequest {
     The password to use for authenticating with the target.
 
     .PARAMETER UseDefaultCredential
-    Whether to use the current user's credentials if available. This will only work when using Become or the WinRM
-    auth was CredSSP. TODO: Verify whether Kerberos also works here
+    Whether to use the current user's credentials if available. This will only work when using Become, using SSH with
+    password auth, or WinRM with CredSSP or Kerberos with credential delegation.
 
     .PARAMETER UseProxy
     Whether to use the default proxy defined in IE (WinINet) for the user or set no proxy at all. This should not
@@ -73,7 +73,7 @@ Function Get-AnsibleWebRequest {
 
     .PARAMETER ProxyUseDefaultCredential
     Whether to use the current user's credentials for proxy authentication if available. This will only work when
-    using become or the WinRM auth was CredSSP.  TODO: Verify whether Kerberos also works here
+    using Become, using SSH with password auth, or WinRM with CredSSP or Kerberos with credential delegation.
 
     .PARAMETER Module
     The AnsibleBasic module that can be used as a backup parameter source or a way to return warnings back to the
@@ -191,7 +191,7 @@ Function Get-AnsibleWebRequest {
     }
 
     # Disable certificate validation if requested
-    # TODO: set this on ServerCertificateValidationCallback of the HttpWebRequest once .NET 4.5 is the minimum
+    # FUTURE: set this on ServerCertificateValidationCallback of the HttpWebRequest once .NET 4.5 is the minimum
     if (-not $ValidateCerts) {
         [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
     }
@@ -239,13 +239,24 @@ Function Get-AnsibleWebRequest {
 
     if (-not $UseProxy) {
         $web_request.Proxy = $null
-    } elseif ($ProxyUrl) {
-        $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $ProxyUrl, $true
+    } else {
+        if ($ProxyUrl) {
+            $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $ProxyUrl, $true
+        } else {
+            # By default the existing proxy object is the Default proxy implementation from IE.
+            $proxy = $web_request.Proxy
+        }
+
         if ($ProxyUseDefaultCredential) {
-            $proxy.UseDefaultCredentials = $true
+            # Weird hack, $web_request.Proxy returns WebProxyWrapper which only has the Credentials property. To
+            # support UseDefaultCredentials on both the default proxy and an explicit one we just set the
+            # Credentials object to the DefaultCredentials in the CredentialCache.
+            $proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
         } elseif ($ProxyUsername) {
             $proxy_credential = New-Object -TypeName System.Net.NetworkCredential -ArgumentList $ProxyUsername, $ProxyPassword
             $proxy.Credentials = $proxy_credential
+        } else {
+            $proxy.Credentials = $null
         }
 
         $web_request.Proxy = $proxy
