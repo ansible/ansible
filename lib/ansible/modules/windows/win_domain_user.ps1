@@ -185,8 +185,6 @@ If ($state -eq 'present') {
             } else {
                 $add_attributes.$attribute_name = $attribute_value
             }
-        } else {
-            $add_attributes.$attribute_name = $attribute_value
         }
         if ($add_attributes.Count -gt 0) {
             $set_args.Add = $add_attributes
