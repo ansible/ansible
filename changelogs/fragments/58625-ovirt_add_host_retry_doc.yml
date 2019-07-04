@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt add host retry example to documentation BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1719271)
