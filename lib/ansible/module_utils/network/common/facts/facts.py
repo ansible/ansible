@@ -115,7 +115,7 @@ class FactsBase(object):
         runable_subsets.add('default')
         if runable_subsets:
             facts = dict()
-            facts['ansible_net_gather_subset'] = list(runable_subsets)
+            self.ansible_facts['ansible_net_gather_subset'] = list(runable_subsets)
 
             instances = list()
             for key in runable_subsets:
