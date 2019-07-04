@@ -234,4 +234,9 @@ sid:
   returned: group exists
   type: str
   sample: S-1-5-21-2171456218-3732823212-122182344-1189
+created:
+  description: Whether a group was created
+  returned: always
+  type: bool
+  sample: true
 '''
