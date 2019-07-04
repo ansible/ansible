@@ -125,7 +125,79 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
 
 
+class WeChat(object):
+    def __init__(self, module, corpid, secret, agentid):
+        self.module = module
+        self.url = "https://qyapi.weixin.qq.com"
+        self.corpid = corpid
+        self.secret = secret
+        self.agentid = agentid
+        self.token = ''
+        self.msg = ''
 
+        if self.module.check_mode:
+        # In check mode, exit before actually sending the message
+          module.exit_json(changed=False)
+
+        self.access_token()
+
+    def access_token(self):
+        """
+        get access_token
+        :return:
+        """
+        url_arg = '/cgi-bin/gettoken?corpid={id}&corpsecret={crt}'.format(
+            id=self.corpid, crt=self.secret)
+        url = self.url + url_arg
+        response,info = fetch_url(self.module, url=url)
+        text = response.read()
+        try: 
+          self.token = json.loads(text)['access_token']
+        except:
+          raise Exception("Invalid corpid or corpsecret，api result:%s" % text)
+
+    def messages(self, msg, touser, toparty, totag):
+        """
+        Message body
+        :param msg: message info
+        :param touser: user id
+        :param toparty: department id
+        :param totag: tag id 
+        :return:
+        """
+        values = {
+            "msgtype": 'text',
+            "agentid": self.agentid,
+            "text": {'content': msg},
+            "safe": 0
+        }
+
+        if touser:
+            values['touser'] = touser
+        if toparty:
+            values['toparty'] = toparty
+        if toparty:
+            values['totag'] = totag
+
+        self.msg = json.dumps(values)
+
+    def send_message(self, msg, touser=None, toparty=None, totag=None):
+        """
+        send message 
+        :param msg: message info
+        :param touser:  user id
+        :param toparty:  department id
+        :param totag: tag id 
+        :return:
+        """
+        self.messages(msg, touser, toparty, totag)
+
+        send_url = '{url}/cgi-bin/message/send?access_token={token}'.format(
+            url=self.url, token=self.token)
+        response,info = fetch_url(self.module,url=send_url, data=self.msg, method='POST')
+        text = json.loads(response.read())
+        if text['invaliduser'] != '' :
+           raise Exception("invalid user: %s" % text['invaliduser'])
 
 def main():
     module = AnsibleModule(
