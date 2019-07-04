@@ -1,0 +1,3 @@
+bugfixes:
+  - To resolve NoneType error as it was missing NoneType check for l3protocol param in aci_l3out.
+    (https://github.com/ansible/ansible/pull/58618).
