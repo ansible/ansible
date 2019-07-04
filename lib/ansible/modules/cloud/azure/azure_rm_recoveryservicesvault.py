@@ -109,19 +109,13 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create of Update Recovery Services vault
+- name: Create or Update Recovery Services vault
   azure_rm_recoveryservicesvault:
     resource_group: myResourceGroup
     name: myVault
     sku:
       name: Standard
-    location: westus
-- name: Update Resource
-  azure_rm_recoveryservicesvault:
-    resource_group: myResourceGroup
-    name: myVault
-    tags:
-      PatchKey: PatchKeyUpdated
+    location: westus  
 - name: Delete Recovery Services Vault
   azure_rm_recoveryservicesvault:
     resource_group: myResourceGroup
@@ -175,7 +169,7 @@ class AzureRMVaults(AzureRMModuleBaseExt):
             e_tag=dict(
                 type='str',
                 updatable=False,
-                disposition='/'
+                disposition='/eTag'
             ),
             location=dict(
                 type='str',
@@ -224,7 +218,7 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                          'Updating']
             ),
             sku_name=dict(
-                type='dict',
+                type='str',
                 disposition='/sku/name',
                 choices=['Standard',
                          'RS0']
@@ -307,6 +301,8 @@ class AzureRMVaults(AzureRMModuleBaseExt):
             else:
                 modifiers = {}
                 self.create_compare_modifiers(self.module_arg_spec, '', modifiers)
+                self.results['modifiers'] = modifiers
+                self.results['compare'] = []
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
 

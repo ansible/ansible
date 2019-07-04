@@ -241,7 +241,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get info for @(Model.ModuleOperationNameUpper).')
 
-        return self.format_item(results)
+        return self.format_item(results) if results else None
 
     def listbyresourcegroup(self):
         response = None
@@ -306,7 +306,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
             'name': item['name'],
             'location': item['location'],
             'tags': item.get('tags'),
-            'e_tag': item['eTags'],
+            'e_tag': item['etag'],
             'sku_state': item['sku']['name'],
             'provisioning_state': item['properties']['provisioningState']
         }
