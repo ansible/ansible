@@ -24,9 +24,11 @@ options:
   resource_group:
     description:
       - The name of the resource group.
+    type: str
   name:
     description:
       - Resource name.
+    type: str
 extends_documentation_fragment:
   - azure
 author:
@@ -113,7 +115,11 @@ import json
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
 from copy import deepcopy
-from msrestazure.azure_exceptions import CloudError
+try:
+    from msrestazure.azure_exceptions import CloudError
+except Exception:
+    # handled in azure_rm_common
+    pass
 
 
 class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
@@ -152,8 +158,7 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(GenericRestClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if (self.resource_group is not None and
-            self.name is not None):
+        if (self.resource_group is not None and self.name is not None):
             self.results['firewalls'] = self.get()
         elif (self.resource_group is not None):
             self.results['firewalls'] = self.list()
