@@ -16,7 +16,8 @@ module: aws_api_gateway_domain
 short_description: Manage AWS API Gateway custom domains
 description:
      - Allows for the management of API Gateway custom domains. To have nice domain names for your API GW Rest APIs.
-     - AWS API Gateway custom domain setups use CloudFront behind the scenenes. So you will get a CloudFront distribution as a result, configured to be aliased with your domain.
+     - AWS API Gateway custom domain setups use CloudFront behind the scenenes.
+       So you will get a CloudFront distribution as a result, configured to be aliased with your domain.
 version_added: '2.9'
 requirements: [ boto3 ]
 author:
@@ -56,7 +57,8 @@ extends_documentation_fragment:
     - ec2
 notes:
    - Does not create a DNS entry on Route53, for that use the route53 module.
-   - Only supports TLS certificates from AWS ACM that can just be referenced by the ARN, while the AWS API still offers (deprecated) options to add own Certificates.
+   - Only supports TLS certificates from AWS ACM that can just be referenced by the ARN, while the AWS API still offers (deprecated)
+     options to add own Certificates.
 '''
 
 EXAMPLES = '''
@@ -109,7 +111,7 @@ except ImportError:
 import copy
 import traceback
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict, snake_dict_to_camel_dict)
 
 
@@ -117,8 +119,10 @@ def get_domain(module, client):
     domain_name = module.params.get('domain_name')
     result = {}
     try:
-        result['domain']        = get_domain_name(client, domain_name)
-        result['path_mappings']  = get_domain_mappings(client, domain_name)
+        result['domain'] = get_domain_name(client, domain_name)
+        result['path_mappings'] = get_domain_mappings(client, domain_name)
+    except is_boto3_error_code('NotFoundException'): # pylint: disable=duplicate-except
+        return None
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="getting API GW domain")
 
@@ -134,13 +138,14 @@ def create_domain(module, client):
 
     result = {}
     try:
-        result['domain'] = create_domain_name(client, snake_dict_to_camel_dict(args))
+        result['domain'] = create_domain_name(client, snake_dict_to_camel_dict(domain_args))
         result['path_mappings'] = {}
+
         for mapping in path_mappings:
             base_path = mapping.get('base_path', '/')
             rest_api_id = mapping['rest_api_id']
             stage = mapping['stage']
-            if !rest_api_id or !stage:
+            if rest_api_id is None or stage is None:
                 module.fail_json('Every domain mapping needs a rest_api_id and stage name')
 
             result['path_mappings'][base_path] = add_domain_mapping(client, domain_name, base_path, rest_api_id, stage)
@@ -158,7 +163,7 @@ def update_domain(module, client):
     domain_name = domain_args['domain_name']
 
     try:
-        res = update_domain_name(client, domain_name, snake_dict_to_camel_dict(args))
+        res = update_domain_name(client, domain_name, snake_dict_to_camel_dict(domain_args))
     except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
         module.fail_json_aws(e, msg="updating API GW domain")
     return res
@@ -201,7 +206,7 @@ def update_domain_name(client, domain_name, **args):
     patch_operations = []
 
     for key, value in args.items():
-        patch_operations = << { "op": "replace", "path": "/" + key, "value": value }
+        patch_operations << {"op": "replace", "path": "/" + key, "value": value}
 
     return client.update_domain_name(domainName=domain_name, patchOperations=patch_operations)
 
@@ -233,9 +238,10 @@ def main():
 
     if state == "present":
         existing_domain = get_domain(module, client)
-        # if domain exists use update
-
-        result = create_domain(module, client)
+        if existing_domain is not None:
+            result = update_domain(module, client)
+        else:
+            result = create_domain(module, client)
     if state == "absent":
         result = delete_domain(module, client)
 
