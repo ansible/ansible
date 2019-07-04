@@ -17,7 +17,6 @@ Function Write-DebugLog {
     )
 
     $DebugPreference = "Continue"
-    $ErrorActionPreference = "Continue"
     $date_str = Get-Date -Format u
     $msg = "$date_str $msg"
 
