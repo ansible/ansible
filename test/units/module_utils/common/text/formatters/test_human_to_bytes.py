@@ -10,29 +10,41 @@ import pytest
 from ansible.module_utils.common.text.formatters import human_to_bytes
 
 
+NUM_IN_METRIC = {
+    'K': 1024,
+    'M': 1048576,
+    'G': 1073741824,
+    'T': 1099511627776,
+    'P': 1125899906842624,
+    'E': 1152921504606846976,
+    'Z': 1180591620717411303424,
+    'Y': 1208925819614629174706176,
+}
+
+
 @pytest.mark.parametrize(
     'input_data,expected',
     [
         (0, 0),
-        (1024, 1024),
-        (u'1024B', 1024),
         (u'0B', 0),
-        (u'1K', 1024),
-        (u'1KB', 1024),
-        (u'1MB', 1048576),
-        (u'1M', 1048576),
-        (u'1G', 1073741824),
-        (u'1GB', 1073741824),
-        (u'1T', 1099511627776),
-        (u'1TB', 1099511627776),
-        (u'1P', 1125899906842624),
-        (u'1PB', 1125899906842624),
-        (u'1E', 1152921504606846976),
-        (u'1EB', 1152921504606846976),
-        (u'1Z', 1180591620717411303424),
-        (u'1ZB', 1180591620717411303424),
-        (u'1Y', 1208925819614629174706176),
-        (u'1YB', 1208925819614629174706176),
+        (1024, NUM_IN_METRIC['K']),
+        (u'1024B', NUM_IN_METRIC['K']),
+        (u'1K', NUM_IN_METRIC['K']),
+        (u'1KB', NUM_IN_METRIC['K']),
+        (u'1MB', NUM_IN_METRIC['M']),
+        (u'1M', NUM_IN_METRIC['M']),
+        (u'1G', NUM_IN_METRIC['G']),
+        (u'1GB', NUM_IN_METRIC['G']),
+        (u'1T', NUM_IN_METRIC['T']),
+        (u'1TB', NUM_IN_METRIC['T']),
+        (u'1P', NUM_IN_METRIC['P']),
+        (u'1PB', NUM_IN_METRIC['P']),
+        (u'1E', NUM_IN_METRIC['E']),
+        (u'1EB', NUM_IN_METRIC['E']),
+        (u'1Z', NUM_IN_METRIC['Z']),
+        (u'1ZB', NUM_IN_METRIC['Z']),
+        (u'1Y', NUM_IN_METRIC['Y']),
+        (u'1YB', NUM_IN_METRIC['Y']),
     ]
 )
 def test_human_to_bytes_number(input_data, expected):
@@ -41,30 +53,33 @@ def test_human_to_bytes_number(input_data, expected):
 
 
 @pytest.mark.parametrize(
-    'input_data,unit,expected',
+    'input_data,unit',
     [
-        (u'1024', u'B', 1024),
-        (1, u'K', 1024),
-        (1, u'KB', 1024),
-        (u'1', u'M', 1048576),
-        (u'1', u'MB', 1048576),
-        (1, u'G', 1073741824),
-        (1, u'GB', 1073741824),
-        (1, u'T', 1099511627776),
-        (1, u'TB', 1099511627776),
-        (u'1', u'P', 1125899906842624),
-        (u'1', u'PB', 1125899906842624),
-        (u'1', u'E', 1152921504606846976),
-        (u'1', u'EB', 1152921504606846976),
-        (u'1', u'Z', 1180591620717411303424),
-        (u'1', u'ZB', 1180591620717411303424),
-        (u'1', u'Y', 1208925819614629174706176),
-        (u'1', u'YB', 1208925819614629174706176),
+        (u'1024', u'B'),
+        (1, u'K'),
+        (1, u'KB'),
+        (u'1', u'M'),
+        (u'1', u'MB'),
+        (1, u'G'),
+        (1, u'GB'),
+        (1, u'T'),
+        (1, u'TB'),
+        (u'1', u'P'),
+        (u'1', u'PB'),
+        (u'1', u'E'),
+        (u'1', u'EB'),
+        (u'1', u'Z'),
+        (u'1', u'ZB'),
+        (u'1', u'Y'),
+        (u'1', u'YB'),
     ]
 )
-def test_human_to_bytes_number_unit(input_data, unit, expected):
+def test_human_to_bytes_number_unit(input_data, unit):
     """Test of human_to_bytes function, number and default_unit args are passed."""
-    assert human_to_bytes(input_data, default_unit=unit) == expected
+    if unit[0] == u'B':
+        assert human_to_bytes(input_data, default_unit=unit) == int(input_data)
+    else:
+        assert human_to_bytes(input_data, default_unit=unit) == NUM_IN_METRIC[unit[0]]
 
 
 @pytest.mark.parametrize('test_input', [u'1024s', u'1024w', ])
@@ -89,22 +104,22 @@ def test_human_to_bytes_wrong_number(test_input):
         (u'1024b', 1024),
         (u'1024B', 1024),
         (u'0B', 0),
-        (u'1K', 1024),
-        (u'1Kb', 1024),
-        (u'1M', 1048576),
-        (u'1Mb', 1048576),
-        (u'1G', 1073741824),
-        (u'1Gb', 1073741824),
-        (u'1T', 1099511627776),
-        (u'1Tb', 1099511627776),
-        (u'1P', 1125899906842624),
-        (u'1Pb', 1125899906842624),
-        (u'1E', 1152921504606846976),
-        (u'1Eb', 1152921504606846976),
-        (u'1Z', 1180591620717411303424),
-        (u'1Zb', 1180591620717411303424),
-        (u'1Y', 1208925819614629174706176),
-        (u'1Yb', 1208925819614629174706176),
+        (u'1K', NUM_IN_METRIC['K']),
+        (u'1Kb', NUM_IN_METRIC['K']),
+        (u'1M', NUM_IN_METRIC['M']),
+        (u'1Mb', NUM_IN_METRIC['M']),
+        (u'1G', NUM_IN_METRIC['G']),
+        (u'1Gb', NUM_IN_METRIC['G']),
+        (u'1T', NUM_IN_METRIC['T']),
+        (u'1Tb', NUM_IN_METRIC['T']),
+        (u'1P', NUM_IN_METRIC['P']),
+        (u'1Pb', NUM_IN_METRIC['P']),
+        (u'1E', NUM_IN_METRIC['E']),
+        (u'1Eb', NUM_IN_METRIC['E']),
+        (u'1Z', NUM_IN_METRIC['Z']),
+        (u'1Zb', NUM_IN_METRIC['Z']),
+        (u'1Y', NUM_IN_METRIC['Y']),
+        (u'1Yb', NUM_IN_METRIC['Y']),
     ]
 )
 def test_human_to_bytes_isbits(input_data, expected):
@@ -113,31 +128,34 @@ def test_human_to_bytes_isbits(input_data, expected):
 
 
 @pytest.mark.parametrize(
-    'input_data,unit,expected',
+    'input_data,unit',
     [
-        (1024, u'b', 1024),
-        (u'1024', u'B', 1024),
-        (1, u'K', 1024),
-        (1, u'Kb', 1024),
-        (u'1', u'M', 1048576),
-        (u'1', u'Mb', 1048576),
-        (1, u'G', 1073741824),
-        (1, u'Gb', 1073741824),
-        (1, u'T', 1099511627776),
-        (1, u'Tb', 1099511627776),
-        (u'1', u'P', 1125899906842624),
-        (u'1', u'Pb', 1125899906842624),
-        (u'1', u'E', 1152921504606846976),
-        (u'1', u'Eb', 1152921504606846976),
-        (u'1', u'Z', 1180591620717411303424),
-        (u'1', u'Zb', 1180591620717411303424),
-        (u'1', u'Y', 1208925819614629174706176),
-        (u'1', u'Yb', 1208925819614629174706176),
+        (1024, u'b'),
+        (u'1024', u'B'),
+        (1, u'K'),
+        (1, u'Kb'),
+        (u'1', u'M'),
+        (u'1', u'Mb'),
+        (1, u'G'),
+        (1, u'Gb'),
+        (1, u'T'),
+        (1, u'Tb'),
+        (u'1', u'P'),
+        (u'1', u'Pb'),
+        (u'1', u'E'),
+        (u'1', u'Eb'),
+        (u'1', u'Z'),
+        (u'1', u'Zb'),
+        (u'1', u'Y'),
+        (u'1', u'Yb'),
     ]
 )
-def test_human_to_bytes_isbits_default_unit(input_data, unit, expected):
+def test_human_to_bytes_isbits_default_unit(input_data, unit):
     """Test of human_to_bytes function, isbits = True and default_unit args are passed."""
-    assert human_to_bytes(input_data, default_unit=unit, isbits=True) == expected
+    if unit[0].lower() == u'b':
+        assert human_to_bytes(input_data, default_unit=unit, isbits=True) == int(input_data)
+    else:
+        assert human_to_bytes(input_data, default_unit=unit, isbits=True) == NUM_IN_METRIC[unit[0]]
 
 
 @pytest.mark.parametrize(
