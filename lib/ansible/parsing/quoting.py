@@ -17,15 +17,30 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
+from ansible.module_utils import six
+
 __metaclass__ = type
 
 
 def is_quoted(data):
+    if not isinstance(data, six.string_types):
+        return False
+
     return len(data) > 1 and data[0] == data[-1] and data[0] in ('"', "'") and data[-2] != '\\'
 
 
 def unquote(data):
-    ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
+    """Removes first and last quotes from a string, if the string starts and
+    ends with the same quotes.
+
+    :parama data: The string to modify
+    :type data: str
+
+    :return: The string without quotes
+    :rtype: str
+    """
     if is_quoted(data):
         return data[1:-1]
+
     return data
