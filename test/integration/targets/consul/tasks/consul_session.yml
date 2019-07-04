@@ -101,4 +101,5 @@
 - name: ensure session was deleted
   assert:
     that:
-      - not ((search_deleted['results']|map('changed')|list) is any)
+      - search_deleted is success
+      - search_deleted is not changed
