@@ -256,7 +256,7 @@ files:
             sample: true
         islnk:
             description: If the path is a symbolic link or junction or not.
-            returned: success, path exists
+            returned: success, path exists or deduped files
             type: bool
             sample: true
         isreadonly:
