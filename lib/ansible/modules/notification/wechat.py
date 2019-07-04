@@ -153,7 +153,7 @@ class WeChat(object):
         text = response.read()
         try: 
             self.token = json.loads(text)['access_token']
-        except as ex:
+        except Exception as e:
             raise Exception("Invalid corpid or corpsecret, api result:%s" % text)
 
     def messages(self, msg, touser, toparty, totag):
