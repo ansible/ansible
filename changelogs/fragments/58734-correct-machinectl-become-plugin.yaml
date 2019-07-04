@@ -1,0 +1,3 @@
+bugfixes:
+  - machinectl become plugin - call proper get_option method
+  - machinectl become plugin - correct configuration option
