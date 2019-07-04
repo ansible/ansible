@@ -272,10 +272,10 @@ options:
         suboptions:
             name:
                 description:
-                    - Name of the cluster network.
+                    - Name of the network cluster.
             type:
                 description:
-                    - The type of network.
+                    - This type indicates the purpose that the network is used for in the cluster.
                 choices: ['display', 'gluster', 'migration', 'management', 'default_route', 'vm']
             state:
                 description:
