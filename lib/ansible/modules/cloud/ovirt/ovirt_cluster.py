@@ -634,7 +634,7 @@ class ClustersModule(BaseModule):
                     # Add network to cluster
                     cluster_networks_service.add(self.build_network(net))
                     self.changed = True
-            if net.get('state') == 'absent' and net.get('name') in networks:
+            if net.get('state') == 'absent':
                 if net.get('name') in cluster_networks:
                     # Detach netwrok from cluster
                     cluster_networks_service.network_service(get_id_by_name(networks_service, net.get('name'))).remove()
