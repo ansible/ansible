@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION ="""
+DOCUMENTATION = """
 short_description: A dynamic inventory script that uses the Spacewalk API
 description:
     - A dynamic inventory script for Ansible that uses the Spacewalk API
