@@ -24,25 +24,25 @@ version_added: "2.7"
 short_description: Get virtual machine facts
 
 description:
-  - Get facts for one or all virtual machines in a resource group.
+    - Get facts for all virtual machines of a resource group.
 
 options:
     resource_group:
         description:
-        - Name of the resource group containing the virtual machines (required when filtering by vm name).
+            - Name of the resource group containing the virtual machines (required when filtering by vm name).
     name:
         description:
-        - Name of the virtual machine.
+            - Name of the virtual machine.
     tags:
         description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
-  - azure
+    - azure
 
 author:
-  - "Gustavo Muniz do Carmo (@gustavomcarmo)"
-  - "Zim Kalinowski (@zikalino)"
+    - Gustavo Muniz do Carmo (@gustavomcarmo)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -66,7 +66,8 @@ EXAMPLES = '''
 
 RETURN = '''
 vms:
-    description: List of virtual machines.
+    description:
+        - List of virtual machines.
     returned: always
     type: complex
     contains:
@@ -76,32 +77,6 @@ vms:
             returned: always
             type: str
             sample: admin
-        boot_diagnostics:
-            description:
-                - Information about the boot diagnostics settings.
-            returned: always
-            type: complex
-            contains:
-                enabled:
-                    description:
-                        - Indicates if boot diagnostics are enabled.
-                    type: bool
-                    sample: true
-                storage_uri:
-                    description:
-                        - Indicates the storage account used by boot diagnostics.
-                    type: str
-                    sample: https://mystorageaccountname.blob.core.windows.net/
-                console_screenshot_uri:
-                    description:
-                        - Contains a URI to grab a console screenshot.
-                        - Only present if enabled.
-                    type: str
-                serial_console_log_uri:
-                    description:
-                        - Contains a URI to grab the serial console log.
-                        - Only present if enabled.
-                    type: str
         data_disks:
             description:
                 - List of attached data disks.
@@ -111,21 +86,25 @@ vms:
                 caching:
                     description:
                         - Type of data disk caching.
+                    returned: always
                     type: str
                     sample: ReadOnly
                 disk_size_gb:
                     description:
-                        - The initial disk size in GB for blank data disks
+                        - The initial disk size in GB for blank data disks.
+                    returned: always
                     type: int
                     sample: 64
                 lun:
                     description:
-                        - The logical unit number for data disk
+                        - The logical unit number for data disk.
+                    returned: always
                     type: int
                     sample: 0
                 managed_disk_type:
                     description:
-                        - Managed data disk type
+                        - Managed data disk type.
+                    returned: always
                     type: str
                     sample: Standard_LRS
         id:
@@ -136,37 +115,37 @@ vms:
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVm
         image:
             description:
-                - Image specification
+                - Image specification.
             returned: always
             type: complex
             contains:
                 offer:
                     description:
-                        - Offer.
+                        - The image offer.
                     type: str
                     returned: when created from marketplace image
                     sample: RHEL
                 publisher:
                     description:
-                        - Publisher name.
+                        - The image publisher.
                     type: str
                     returned: when created from marketplace image
                     sample: RedHat
                 sku:
                     description:
-                        - SKU name.
+                        - The image SKU.
                     type: str
                     returned: when created from marketplace image
                     sample: 7-RAW
                 version:
                     description:
-                        - Image version.
+                        - The image version.
                     type: str
                     returned: when created from marketplace image
                     sample: 7.5.2018050901
                 id:
                     description:
-                        - Custom image resource id.
+                        - Custom image resource ID.
                     type: str
                     returned: when created from custom image
                     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage
@@ -185,6 +164,7 @@ vms:
         network_interface_names:
             description:
                 - List of attached network interfaces.
+            returned: always
             type: list
             sample: [
                 "myNetworkInterface"
@@ -192,35 +172,43 @@ vms:
         os_disk_caching:
             description:
                 - Type of OS disk caching.
+            returned: always
             type: str
             sample: ReadOnly
         os_type:
             description:
                 - Base type of operating system.
+            returned: always
             type: str
             sample: Linux
         resource_group:
             description:
                 - Resource group.
+            returned: always
             type: str
             sample: myResourceGroup
         state:
             description:
                 - State of the resource.
+            returned: always
             type: str
             sample: present
         tags:
             description:
-                - Tags.
+                - The resource tags.
+            returned: always
             type: dict
+            sample: { 'key1':'value1' }
         vm_size:
             description:
                 - Virtual machine size.
+            returned: always
             type: str
             sample: Standard_D4
         power_state:
             description:
                 - Power state of the virtual machine.
+            returned: always
             type: str
             sample: running
 '''
@@ -232,7 +220,8 @@ except Exception:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 import re
 
@@ -382,18 +371,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                 new_result['image'] = {
                     'id': image.get('id', None)
                 }
-
-        new_result['boot_diagnostics'] = {
-            'enabled': 'diagnosticsProfile' in result['properties'] and
-                       'bootDiagnostics' in result['properties']['diagnosticsProfile'] and
-                       result['properties']['diagnosticsProfile']['bootDiagnostics']['enabled'] or False,
-            'storage_uri': 'diagnosticsProfile' in result['properties'] and
-                           'bootDiagnostics' in result['properties']['diagnosticsProfile'] and
-                           result['properties']['diagnosticsProfile']['bootDiagnostics']['storageUri'] or None
-        }
-        if new_result['boot_diagnostics']['enabled']:
-            new_result['boot_diagnostics']['console_screenshot_uri'] = result['properties']['instanceView']['bootDiagnostics']['consoleScreenshotBlobUri']
-            new_result['boot_diagnostics']['serial_console_log_uri'] = result['properties']['instanceView']['bootDiagnostics']['serialConsoleLogBlobUri']
 
         vhd = result['properties']['storageProfile']['osDisk'].get('vhd')
         if vhd is not None:
