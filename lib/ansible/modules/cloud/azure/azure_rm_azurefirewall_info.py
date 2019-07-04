@@ -62,7 +62,7 @@ firewalls:
         - Resource ID.
       returned: always
       type: str
-      sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
+      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
       myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall"
     name:
       description:
