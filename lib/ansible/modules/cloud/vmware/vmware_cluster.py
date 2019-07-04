@@ -140,7 +140,7 @@ class VMwareCluster(PyVmomi):
         """
         Destroy cluster
         """
-        changed, result = True, None
+        changed, result = False, None
 
         try:
             if not self.module.check_mode:
