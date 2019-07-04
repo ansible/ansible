@@ -33,7 +33,9 @@
                 "iam:CreateRole",
                 "iam:DeleteRole",
                 "iam:DetachRolePolicy",
-                "iam:PassRole"
+                "iam:PassRole",
+                "iam:UpdateAssumeRolePolicy",
+                "sts:AssumeRole"
              ],
             "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
             "Effect": "Allow",
@@ -92,22 +94,6 @@
             ]
         },
         {
-            "Sid": "AllowSTSAnsibleTests",
-            "Action": [
-                "iam:CreateRole",
-                "iam:DeleteRole",
-                "iam:DetachRolePolicy",
-                "sts:AssumeRole",
-                "iam:AttachRolePolicy",
-                "iam:CreateInstanceProfile"
-            ],
-            "Effect": "Allow",
-            "Resource": [
-                "arn:aws:iam::{{aws_account}}:role/ansible-test-sts-*",
-                "arn:aws:iam::{{aws_account}}:instance-profile/ansible-test-sts-*"
-            ]
-        },
-        {
             "Sid": "AllowAccessToUnspecifiedKMSResources",
             "Effect": "Allow",
             "Action": [
@@ -132,26 +118,13 @@
             "Resource": "*"
         },
         {
-            "Sid": "AllowAccessToSpecifiedIAMResources",
+            "Sid": "AllowAccessToServerCertificates",
             "Effect": "Allow",
             "Action": [
-                "iam:CreateRole",
-                "iam:DeleteRole",
-                "iam:GetRole",
-                "iam:PassRole",
-                "iam:UpdateAssumeRolePolicy"
+                "iam:ListServerCertificates",
+                "iam:UploadServerCertificate"
             ],
-            "Resource": "arn:aws:iam::{{aws_account}}:role/ansible-test-*"
-        },
-        {
-            "Sid": "AllowInstanceProfileCreation",
-            "Effect": "Allow",
-            "Action": [
-                "iam:AddRoleToInstanceProfile",
-                "iam:CreateInstanceProfile",
-                "iam:RemoveRoleFromInstanceProfile"
-            ],
-            "Resource": "arn:aws:iam::{{aws_account}}:instance-profile/ansible-test-*"
+            "Resource": "*"
         }
     ]
 }
