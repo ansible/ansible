@@ -44,33 +44,26 @@ def test_human_to_bytes_number(input_data, expected):
 
 
 @pytest.mark.parametrize(
-    'input_data,unit',
+    'input_data,units',
     [
-        (u'1024', u'B'),
-        (1, u'K'),
-        (1, u'KB'),
-        (u'1', u'M'),
-        (u'1', u'MB'),
-        (1, u'G'),
-        (1, u'GB'),
-        (1, u'T'),
-        (1, u'TB'),
-        (u'1', u'P'),
-        (u'1', u'PB'),
-        (u'1', u'E'),
-        (u'1', u'EB'),
-        (u'1', u'Z'),
-        (u'1', u'ZB'),
-        (u'1', u'Y'),
-        (u'1', u'YB'),
+        (u'1024', (u'B', u'B')),
+        (1, (u'K', u'KB')),
+        (u'1', (u'M', u'MB')),
+        (1, (u'G', u'GB')),
+        (1, (u'T', u'TB')),
+        (u'1', (u'P', u'PB')),
+        (u'1', (u'E', u'EB')),
+        (u'1', (u'Z', u'ZB')),
+        (u'1', (u'Y', u'YB')),
     ]
 )
-def test_human_to_bytes_number_unit(input_data, unit):
+def test_human_to_bytes_number_unit(input_data, units):
     """Test of human_to_bytes function, number and default_unit args are passed."""
-    if unit[0] == u'B':
-        assert human_to_bytes(input_data, default_unit=unit) == int(input_data)
-    else:
-        assert human_to_bytes(input_data, default_unit=unit) == NUM_IN_METRIC[unit[0]]
+    for unit in units:
+        if unit[0] == u'B':
+            assert human_to_bytes(input_data, default_unit=unit) == int(input_data)
+        else:
+            assert human_to_bytes(input_data, default_unit=unit) == NUM_IN_METRIC[unit[0]]
 
 
 @pytest.mark.parametrize('test_input', [u'1024s', u'1024w', ])
@@ -109,34 +102,26 @@ def test_human_to_bytes_isbits(input_data, expected):
 
 
 @pytest.mark.parametrize(
-    'input_data,unit',
+    'input_data,units',
     [
-        (1024, u'b'),
-        (u'1024', u'B'),
-        (1, u'K'),
-        (1, u'Kb'),
-        (u'1', u'M'),
-        (u'1', u'Mb'),
-        (1, u'G'),
-        (1, u'Gb'),
-        (1, u'T'),
-        (1, u'Tb'),
-        (u'1', u'P'),
-        (u'1', u'Pb'),
-        (u'1', u'E'),
-        (u'1', u'Eb'),
-        (u'1', u'Z'),
-        (u'1', u'Zb'),
-        (u'1', u'Y'),
-        (u'1', u'Yb'),
+        (1024, (u'b', u'B')),
+        (1, (u'K', u'Kb')),
+        (u'1', (u'M', u'Mb')),
+        (1, (u'G', u'Gb')),
+        (1, (u'T', u'Tb')),
+        (u'1', (u'P', u'Pb')),
+        (u'1', (u'E', u'Eb')),
+        (u'1', (u'Z', u'Zb')),
+        (u'1', (u'Y', u'Yb')),
     ]
 )
-def test_human_to_bytes_isbits_default_unit(input_data, unit):
+def test_human_to_bytes_isbits_default_unit(input_data, units):
     """Test of human_to_bytes function, isbits = True and default_unit args are passed."""
-    if unit[0].lower() == u'b':
-        assert human_to_bytes(input_data, default_unit=unit, isbits=True) == int(input_data)
-    else:
-        assert human_to_bytes(input_data, default_unit=unit, isbits=True) == NUM_IN_METRIC[unit[0]]
+    for unit in units:
+        if unit[0].lower() == u'b':
+            assert human_to_bytes(input_data, default_unit=unit, isbits=True) == int(input_data)
+        else:
+            assert human_to_bytes(input_data, default_unit=unit, isbits=True) == NUM_IN_METRIC[unit[0]]
 
 
 @pytest.mark.parametrize(
