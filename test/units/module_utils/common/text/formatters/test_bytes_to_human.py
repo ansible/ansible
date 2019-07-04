@@ -123,8 +123,8 @@ def test_bytes_to_human_unit_isbits(input_data, unit, expected):
     assert bytes_to_human(input_data, isbits=True, unit=unit) == expected
 
 
-@pytest.mark.parametrize('input_data', [0j, '1B', [1], {1: 1}, ])
-def test_bytes_to_human_unexpected_size(input_data):
-    """Test of bytes_to_human function, unexpected numbers are passed."""
+@pytest.mark.parametrize('input_data', [0j, u'1B', [1], {1: 1}, None, b'1B'])
+def test_bytes_to_human_illegal_size(input_data):
+    """Test of bytes_to_human function, illegal objects are passed as a size."""
     with pytest.raises(TypeError):
         bytes_to_human(input_data)
