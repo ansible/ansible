@@ -97,38 +97,13 @@ If ($state -eq 'present') {
             New-ADUser -Name $username -WhatIf:$check_mode @extra_args
         }
         $new_user = $true
-        $result.created = $true
+		$result.created = $true
         $result.changed = $true
         If ($check_mode) {
             Exit-Json $result
         }
         $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
     }
-
-    # Set the password if required
-    If ($password -and (($new_user -and $update_password -eq "on_create") -or $update_password -eq "always")) {
-        $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
-        Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
-        $result.password_updated = $true
-        $result.changed = $true
-    }
-
-    # Configure password policies
-    If (($null -ne $password_never_expires) -and ($password_never_expires -ne $user_obj.PasswordNeverExpires)) {
-        Set-ADUser -Identity $username -PasswordNeverExpires $password_never_expires -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
-        $result.changed = $true
-    }
-    Else {
-        New-ADUser -Name $username -WhatIf:$check_mode @extra_args
-    }
-    $new_user = $true
-    $result.changed = $true
-    If ($check_mode) {
-        Exit-Json $result
-    }
-    $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
 
     # Set the password if required
     If ($password -and (($new_user -and $update_password -eq "on_create") -or $update_password -eq "always")) {
