@@ -280,10 +280,11 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
-    if 'eigrp' in l3protocol and asn is None:
-        module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
-    if 'eigrp' not in l3protocol and asn is not None:
-        module.warn("Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored")
+    if l3protocol:
+        if 'eigrp' in l3protocol and asn is None:
+            module.fail_json(msg="Parameter 'asn' is required when l3protocol is 'eigrp'")
+        if 'eigrp' not in l3protocol and asn is not None:
+            module.warn("Parameter 'asn' is only applicable when l3protocol is 'eigrp'. The ASN will be ignored")
 
     enforce_ctrl = ''
     if enforceRtctrl is not None:
