@@ -10,7 +10,7 @@
     diff_match: none
 
 #- name: test interface range
-#  cli_config: 
+#  cli_config:
 #    config: |
 #      interface range 0/1-0/10
 #      shutdown
@@ -19,19 +19,12 @@
 - name: test interface range
   cli_config:
     config: |
-      vlan database 
+      vlan database
       vlan 2-7
       exit
       interface range vlan 2-7
-      description testhaha 
+      description testhaha
     diff_match: none
-
-
-
-
-
-
-
 
 - name: configure device with config
   cli_config: &conf

@@ -41,6 +41,7 @@ options:
   hostname:
     description:
       - Configure the device hostname parameter. This option takes an ASCII string value.
+    type: str
   domain_name:
     description:
       - Configure the IP domain name
@@ -48,12 +49,14 @@ options:
         should be in the dotted name form and will be
         appended to the C(hostname) to create a fully-qualified
         domain name.
+    type: list
   domain_search:
     description:
       - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
         This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
+    type: list
   lookup_enabled:
     description:
       - Administrative control
@@ -66,6 +69,7 @@ options:
       - List of DNS name servers by IP address to use to perform name resolution
         lookups.  This argument accepts either a list of DNS servers See
         examples.
+    type: list
   state:
     description:
       - State of the configuration
@@ -73,6 +77,7 @@ options:
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
+    type: str
     default: present
     choices: ['present', 'absent']
 """
@@ -239,8 +244,8 @@ def map_obj_to_commands(want, have, module):
 
 def parse_hostname(config):
     match = re.search(r'^hostname \s?"(.+)"', config, re.M)
-    #match = re.search(r'^hostname (\S+)', config, re.M)
-    if (match != None):
+    # match = re.search(r'^hostname (\S+)', config, re.M)
+    if match is not None:
         return match.group(1)
     else:
         return None

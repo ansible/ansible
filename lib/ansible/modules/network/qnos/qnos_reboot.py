@@ -36,16 +36,14 @@ options:
   confirm:
     description:
       - Safeguard boolean. Set to true if you're sure you want to reboot.
+    type: bool
     required: true
-    default: null
-    choices: ['yes', 'no']
   save:
     description:
-      - Safeguard boolean. Set to true if you're sure to save the running-
+      - Safeguard boolean. Set to yes if you're sure to save the running-
         config to the startup-config at rebooting.
+    type: bool
     required: true
-    default: null
-    choices: ['yes', 'no']
 """
 
 EXAMPLES = """
@@ -59,7 +57,7 @@ RETURN = """
 rebooted:
     description: Whether the device was instructed to reboot.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 """
 import re
@@ -75,6 +73,7 @@ from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import string_types
 
+
 def check_args(module, warnings):
 
     qnos_check_args(module, warnings)
@@ -84,7 +83,7 @@ def check_args(module, warnings):
                              'module to work.')
 
     save = module.params['save']
-    if save=='':
+    if save == '':
         module.fail_json(msg='save must be explicitly set to yes or no for this '
                              'module to work.')
 
@@ -95,19 +94,14 @@ def main():
     commands = list()
     responses = list()
     argument_spec = dict(
-        # this argument is deprecated (2.2) in favor of setting match: none
-        # it will be removed in a future version
-        response=dict(),
         confirm=dict(required=True, type='bool'),
-        save=dict(required=True, type='bool'),
-        config=dict(),
-        defaults=dict(type='bool', default=False),
+        save=dict(required=True, type='bool')
     )
 
     argument_spec.update(qnos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                 supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
@@ -118,7 +112,7 @@ def main():
     rebooted = False
     save = module.params['save']
 
-    responses = run_reload(module,save=save)
+    responses = run_reload(module, save=save)
 
     result['response'] = responses
     changed = save

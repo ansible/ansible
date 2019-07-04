@@ -100,5 +100,5 @@ options:
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
         type: str
 notes:
-  - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`  
+  - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
 '''

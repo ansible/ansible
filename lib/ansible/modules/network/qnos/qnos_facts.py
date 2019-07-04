@@ -47,6 +47,7 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
+    type: list
     required: false
     default: '!config'
 """
@@ -77,15 +78,15 @@ ansible_net_gather_subset:
 ansible_net_burned_in_mac:
   description: The burned in mac of the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: string
+  type: str
 ansible_net_license:
   description: The license status of the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_model:
   description: The model name returned from the device
   returned: always
@@ -93,7 +94,7 @@ ansible_net_model:
 ansible_net_part_no:
   description: The part no of the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
@@ -101,11 +102,11 @@ ansible_net_serialnum:
 ansible_net_storage:
   description: The storage type of the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: string
+  type: str
 
 
 # hardware
@@ -181,7 +182,7 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    COMMANDS = ['show version','show hosts']
+    COMMANDS = ['show version', 'show hosts']
 
     def populate(self):
         super(Default, self).populate()
@@ -198,6 +199,7 @@ class Default(FactsBase):
         data = self.responses[1]
         if data:
             self.facts['hostname'] = self.parse_hostname(data)
+
     def parse_version(self, data):
         match = re.search(r'Software Version[\.]+ \s*(.+)', data)
         if match:
@@ -238,6 +240,7 @@ class Default(FactsBase):
         if match:
             return match.group(1)
 
+
 class Hardware(FactsBase):
 
     COMMANDS = [
@@ -262,7 +265,6 @@ class Hardware(FactsBase):
             data_env = self.responses[2]
             self.facts['fans'] = self.populate_fans(data, data_env)
             self.facts['powers'] = self.populate_powers(data, data_env)
-
 
     def parse_memfree_mb(self, data):
         match = re.search(r'free      \s*(.+)', data)
@@ -342,6 +344,7 @@ class Hardware(FactsBase):
             powers[entry] = dict(status=status, type=type, model=model, revision=revision, firmware=firmware, direction=direction)
         return powers
 
+
 class Config(FactsBase):
 
     COMMANDS = ['show running-config']
@@ -393,32 +396,32 @@ class Interfaces(FactsBase):
                     interface_type = 'port'
 
             if interface_type not in facts:
-                    facts[interface_type] = list()
+                facts[interface_type] = list()
 
             intf = dict()
             intf_info = dict()
             intf_info = self.populate_interface_info(key, interface_type)
-            intf[key]=intf_info
+            intf[key] = intf_info
             facts[interface_type].append(intf)
         return facts
 
     def populate_interface_info(self, data, interface_type):
         intf_info = dict()
         commands = list()
-        if interface_type=='port':
+        if interface_type == 'port':
             commands.append('show interface status {0}'.format(data))
             commands.append('show ip interface port {0}'.format(data))
             commands.append('show ipv6 interface port {0}'.format(data))
-        elif interface_type=='vlan':
+        elif interface_type == 'vlan':
             commands.append('show interface status {0}'.format(data))
             commands.append('show ip interface {0}'.format(data))
             commands.append('show ipv6 interface {0}'.format(data))
-        elif interface_type=='loopback':
+        elif interface_type == 'loopback':
             id = data.split('lb')[1]
             commands.append('show interface status loopback {0}'.format(id))
             commands.append('show ip interface loopback {0}'.format(id))
             commands.append('show ipv6 interface loopback {0}'.format(id))
-        elif interface_type=='port-channel':
+        elif interface_type == 'port-channel':
             id = data.split('ch')[1]
             commands.append('show interface status port-channel {0}'.format(id))
         else:
@@ -449,13 +452,12 @@ class Interfaces(FactsBase):
 
         return intf_info
 
-
     def add_ip_address(self, address, family):
         if family == 'ipv4':
             for key, value in iteritems(address):
-                if key=='primary':
+                if key == 'primary':
                     self.facts['all_ipv4_addresses'].append(value['address'])
-                if key=='secondary':
+                if key == 'secondary':
                     for entry in value:
                         self.facts['all_ipv4_addresses'].append(entry['address'])
         else:
@@ -463,9 +465,10 @@ class Interfaces(FactsBase):
 
     def parse_neighbors(self, neighbors):
         facts = dict()
+        lldpObjRegex = re.compile(r'^(\d+/\d+) +(\d+)+ +([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}) +(\d+/\d+) *(.+)?$')
         for entry in neighbors.split('\n'):
             if entry != '':
-                lldp_value = re.match(r'^(\d+/\d+) +(\d+)+ +([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}) +(\d+/\d+) *(.+)?$', entry)
+                lldp_value = lldpObjRegex.match(entry)
                 if lldp_value:
                     intf = lldp_value.group(1)
                     if intf not in facts:
@@ -579,6 +582,7 @@ class Interfaces(FactsBase):
         match = re.search(r'Physical Status\.+ (.+)$', data, re.M)
         if match:
             return match.group(1)
+
 
 FACT_SUBSETS = dict(
     default=Default,

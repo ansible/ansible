@@ -269,11 +269,11 @@ class Cliconf(CliconfBase):
 
         return responses
 
-    #This function is used to send key (or key string) and NOT wait response
+    # This function is used to send key (or key string) and NOT wait response
     def send_data(self, data=None):
         if data is None:
             return
-        out = self.send_command(data,sendonly=True)
+        out = self.send_command(data, sendonly=True)
 
     def get_defaults_flag(self):
         """

@@ -120,10 +120,11 @@ def get_config(module, flags=None):
         try:
             out = connection.get_config(flags=flags)
         except ConnectionError as exc:
-                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
+
 
 def run_commands(module, commands, check_rc=True):
     responses = list()
@@ -152,7 +153,6 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 
-
 def send_data(module, data):
     connection = Connection(module._socket_path)
     if (connection):
@@ -161,12 +161,13 @@ def send_data(module, data):
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc))
 
+
 def run_reload(module, save=False):
     responses = list()
     connection = get_connection(module)
 
     command = 'reload'
-    prompt = '\(y/n\) ?$'
+    prompt = '\\(y/n\\) ?$'
     answer = 'n'
 
     try:
@@ -177,20 +178,19 @@ def run_reload(module, save=False):
     except UnicodeError:
         module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
 
-
-    if ( out.find("The system has unsaved changes.") >= 0):
-        #not reload for previous command
-        send_data(module,'n')
-        send_data(module,'reload\n')
+    if (out.find("The system has unsaved changes.") >= 0):
+        # not reload for previous command
+        send_data(module, 'n')
+        send_data(module, 'reload\n')
         if save:
-            send_data(module,'y')
-            out="""The system has unsaved changes.
+            send_data(module, 'y')
+            out = """The system has unsaved changes.
 Would you like to save them now? (y/n) y
 
 Config file 'startup-config' created successfully .
 """
         else:
-            send_data(module,'ny')
+            send_data(module, 'ny')
             out += ' y'
         responses.append(out)
 
@@ -198,11 +198,11 @@ Config file 'startup-config' created successfully .
         out = out[:-1]
         out += 'y'
         responses.append(out)
-        out = send_data(module,'reload\n')
-        out = send_data(module,'y')
-
+        out = send_data(module, 'reload\n')
+        out = send_data(module, 'y')
 
     return responses
+
 
 def load_config(module, commands):
     connection = get_connection(module)
@@ -255,6 +255,7 @@ def normalize_interface(name):
 
     return proper_interface
 
+
 def get_sublevel_config(running_config, module):
     contents = list()
     current_config_contents = list()
@@ -267,6 +268,7 @@ def get_sublevel_config(running_config, module):
             current_config_contents.append(c.raw)
     sublevel_config.add(current_config_contents, module.params['parents'])
     return sublevel_config
+
 
 def qnos_parse(lines, indent=None, comment_tokens=None):
     sublevel_cmds = [
@@ -283,14 +285,13 @@ def qnos_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'openflow.*$'),
         re.compile(r'hybridmode (per-port|per-vlan).*$')]
 
-
     vlanDbLine = re.compile(r'vlan database$')
     vlanLstLine = re.compile(r'vlan \d+([,|-]\d+)?$')
     childline = re.compile(r'^exit$')
     config = list()
     parent = list()
     children = []
-    countexit=0
+    countexit = 0
     inVlanDbMode = False
     parent_match = False
     for line in str(lines).split('\n'):
@@ -308,22 +309,22 @@ def qnos_parse(lines, indent=None, comment_tokens=None):
                 inVlanDbMode = True
                 parent_match = True
             elif not inVlanDbMode:
-               if vlanLstLine.match(line):
-                   parent_match = True
+                if vlanLstLine.match(line):
+                    parent_match = True
             # handle sublevel parent
             if not parent_match:
                 for pr in sublevel_cmds:
-                   if pr.match(line):
-                      parent_match = True
-                      break
+                    if pr.match(line):
+                        parent_match = True
+                        break
             if parent_match:
-               if len(parent) != 0:
-                   cfg._parents.extend(parent)
-               parent.append(cfg)
-               config.append(cfg)
-               if children:
-                   children.insert(len(parent) - 1, [])
-                   children[len(parent) - 2].append(cfg)
+                if len(parent) != 0:
+                    cfg._parents.extend(parent)
+                parent.append(cfg)
+                config.append(cfg)
+                if children:
+                    children.insert(len(parent) - 1, [])
+                    children[len(parent) - 2].append(cfg)
 
             # handle exit
             if childline.match(line):
@@ -363,25 +364,12 @@ class QnosNetworkConfig(NetworkConfig):
         self._config_text = contents
         self._items = qnos_parse(contents, self._indent)
 
-
-    def _compare(self,want, other):
-        count=0
-        for item in other:
-            if (str(want) == item.text):
-               return True
-            count += 1
-            if (count > 500):
-               return False
-        return False
-
     def _diff_none(self, other, path=None):
         diff = list()
         return diff
 
     def _diff_line(self, other, path=None):
         diff = list()
-
-
 
         for item in self.items:
             if str(item) == "exit":

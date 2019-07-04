@@ -36,7 +36,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$"),
         re.compile(br"[\r\n]?(?:\([^\)]+\) ){,3}(?:>|#)$"),
         re.compile(br"[\r\n]?Password:$")
-        #re.compile(br"\(y/n\) ?$")
+        # re.compile(br"\(y/n\) ?$")
     ]
 
     terminal_stderr_re = [
@@ -58,7 +58,7 @@ class TerminalModule(TerminalBase):
 
     def on_open_shell(self):
         try:
-            for cmd in (['terminal length 25','no pager']):
+            for cmd in (['terminal length 25', 'no pager']):
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
