@@ -669,6 +669,7 @@ class ClustersModule(BaseModule):
         sched_policy = self._get_sched_policy()
         migration_policy = getattr(entity.migration, 'policy', None)
         cluster_cpu = getattr(entity, 'cpu', dict())
+
         def check_custom_scheduling_policy_properties():
             if self.param('scheduling_policy_properties'):
                 current = []
