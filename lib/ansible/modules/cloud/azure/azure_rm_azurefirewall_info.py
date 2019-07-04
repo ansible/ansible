@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2019 Liu Qingyi, (@smile37773)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -30,7 +30,7 @@ options:
 extends_documentation_fragment:
   - azure
 author:
-  - Zim Kalinowski (@zikalino)
+  - Liu Qingyi (@smile37773)
 
 '''
 
@@ -60,25 +60,26 @@ firewalls:
         - Resource ID.
       returned: always
       type: str
-      sample: null
+      sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
+      myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall"
     name:
       description:
         - Resource name.
       returned: always
       type: str
-      sample: null
+      sample: "myAzureFirewall"
     location:
       description:
         - Resource location.
       returned: always
       type: str
-      sample: null
+      sample: "eastus"
     tags:
       description:
         - Resource tags.
       returned: always
       type: dict
-      sample: null
+      sample: { "tag": "value" }
     etag:
       description:
         - >-
@@ -86,7 +87,24 @@ firewalls:
           is updated.
       returned: always
       type: str
-      sample: null
+      sample: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    nat_rule_collections:
+      description:
+        - Collection of NAT rule collections used by Azure Firewall.
+      type: list
+    network_rule_collections:
+      description:
+        - Collection of network rule collections used by Azure Firewall.
+      type: list
+    ip_configurations:
+      description:
+        - IP configuration of the Azure Firewall resource.
+      type: list
+    provisioning_state:
+        description:
+          - The current state of the gallery.
+        type: str
+        sample: "Succeeded"
 
 '''
 
@@ -237,8 +255,12 @@ class AzureRMAzureFirewallsInfo(AzureRMModuleBase):
             'id': item['id'],
             'name': item['name'],
             'location': item['location'],
+            'etags': item['etags'],
             'tags': item.get('tags'),
-            'etags': item['properties']['etags']
+            'nat_rule_collections': item['properties']['natRuleCollections'],
+            'network_rule_collections': item['properties']['networkRuleCollections'],
+            'ip_configurations': item['properties']['ipConfigurations'],
+            'provisioning_state': item['properties']['provisioningState']
         }
         return d
 
