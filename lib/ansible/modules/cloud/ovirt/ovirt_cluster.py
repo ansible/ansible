@@ -265,6 +265,25 @@ options:
             - "Could be for example I(virtual-host), I(rhgs-sequential-io), I(rhgs-random-io)"
         version_added: 2.8
         type: str
+    networks:
+        description:
+            - List of cluster networks.
+            - You can only create or delete them for editing use ovirt_network module.
+        suboptions:
+            name:
+                description:
+                    - Name of the cluster network.
+            type:
+                description:
+                    - The type of network.
+                choices: ['display', 'gluster', 'migration', 'management', 'default_route', 'vm']
+            state:
+                description:
+                    - Should the netowrk be present or absent.
+                    - If I(present) and network already present it will attach network to cluster.
+                choices: ['present', 'absent']
+        version_added: 2.9
+        type: list
 extends_documentation_fragment: ovirt
 '''
 
@@ -318,6 +337,21 @@ EXAMPLES = '''
 - ovirt_cluster:
     id: 00000000-0000-0000-0000-000000000000
     name: "new_cluster_name"
+
+- name: set up cluster network roles
+  ovirt_cluster:
+  data_center: DataCenter
+  name: test_cluster_45
+  networks:
+    - name: my_mgmt_network
+      type: management
+    - name: my_mgmt_display
+      type: display
+    - name: infra_servers
+      type: required
+    - name: migration_network
+      type: migration
+
 '''
 
 RETURN = '''
@@ -566,6 +600,50 @@ class ClustersModule(BaseModule):
     def _matches_entity(self, item, entity):
         return equal(item.get('id'), entity.id) and equal(item.get('name'), entity.name)
 
+    def build_network(self, net):
+        return otypes.Network(
+            name=net.get('name'),
+            data_center=otypes.DataCenter(
+                name=self.param('data_center'),
+            ),
+            required=True if net.get('type') == 'required' else False,
+            display=True if net.get('type') == 'display' else False,
+            usages=[
+                otypes.NetworkUsage(net.get('type'))
+            ] if net.get('type') in ['display', 'gluster', 'migration', 'management', 'default_route', 'vm'] else None,
+        )
+
+    def update_networks(self, entity):
+        networks = [net.name for net in self._service.cluster_service(entity.id).networks_service().list()]
+        for net in self.param('networks'):
+            if net.get('name') not in networks or (net.get('state') is not None and net.get('state') == 'absent'):
+                self.post_create(entity)
+
+    def post_create(self, entity):
+        networks_service = self._connection.system_service().networks_service()
+        networks = [net.name for net in networks_service.list()]
+        cluster_networks_service = self._service.cluster_service(entity.id).networks_service()
+        cluster_networks = [net.name for net in cluster_networks_service.list()]
+        for net in self.param('networks'):
+            if net.get('state') is None or net.get('state') == 'present':
+                if not net.get('name') in networks:
+                    # Create network
+                    networks_service.add(self.build_network(net))
+                    self.changed = True
+                if not net.get('name') in cluster_networks:
+                    # Add network to cluster
+                    cluster_networks_service.add(self.build_network(net))
+                    self.changed = True
+            if net.get('state') == 'absent' and net.get('name') in networks:
+                if net.get('name') in cluster_networks:
+                    # Detach netwrok from cluster
+                    cluster_networks_service.network_service(get_id_by_name(networks_service, net.get('name'))).remove()
+                    self.changed = True
+                if net.get('name') in networks:
+                    # Remove network
+                    networks_service.network_service(get_id_by_name(networks_service, net.get('name'))).remove()
+                    self.changed = True
+
     def _update_check_external_network_providers(self, entity):
         if self.param('external_network_providers') is None:
             return True
@@ -587,10 +665,10 @@ class ClustersModule(BaseModule):
         return True
 
     def update_check(self, entity):
+        self.update_networks(entity)
         sched_policy = self._get_sched_policy()
         migration_policy = getattr(entity.migration, 'policy', None)
         cluster_cpu = getattr(entity, 'cpu', dict())
-
         def check_custom_scheduling_policy_properties():
             if self.param('scheduling_policy_properties'):
                 current = []
@@ -708,6 +786,7 @@ def main():
         mac_pool=dict(default=None),
         external_network_providers=dict(default=None, type='list'),
         scheduling_policy_properties=dict(type='list'),
+        networks=dict(default=[], type='list'),
         firewall_type=dict(choices=['iptables', 'firewalld'], default=None),
         gluster_tuned_profile=dict(default=None),
     )
