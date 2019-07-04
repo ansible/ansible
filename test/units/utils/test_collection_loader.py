@@ -23,52 +23,51 @@ def test_import_from_collection(monkeypatch):
 
     from ansible.utils.collection_loader import AnsibleCollectionLoader
 
-    assert not any(obj for obj in sys.meta_path if isinstance(obj, AnsibleCollectionLoader))
+    for index in [idx for idx, obj in enumerate(sys.meta_path) if isinstance(obj, AnsibleCollectionLoader)]:
+        # replace any existing collection loaders that may exist
+        # since these were loaded during unit test collection
+        # they will not have the correct configuration
+        sys.meta_path[index] = AnsibleCollectionLoader()
 
+    # make sure the collection loader is installed
+    # this will be a no-op if the collection loader is already installed
+    # which will depend on whether or not any tests being run imported ansible.plugins.loader during unit test collection
     from ansible.plugins.loader import _configure_collection_loader
     _configure_collection_loader()  # currently redundant, the import above already calls this
 
-    assert any(obj for obj in sys.meta_path if isinstance(obj, AnsibleCollectionLoader))
+    from ansible_collections.my_namespace.my_collection.plugins.module_utils.my_util import question
+
+    original_trace_function = sys.gettrace()
+    trace_log = []
+
+    if original_trace_function:
+        # enable tracing while preserving the existing trace function (coverage)
+        def my_trace_function(frame, event, arg):
+            trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
+
+            # the original trace function expects to have itself set as the trace function
+            sys.settrace(original_trace_function)
+            # call the original trace function
+            original_trace_function(frame, event, arg)
+            # restore our trace function
+            sys.settrace(my_trace_function)
+
+            return my_trace_function
+    else:
+        # no existing trace function, so our trace function is much simpler
+        def my_trace_function(frame, event, arg):
+            trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
+
+            return my_trace_function
+
+    sys.settrace(my_trace_function)
 
     try:
-        from ansible_collections.my_namespace.my_collection.plugins.module_utils.my_util import question
-
-        original_trace_function = sys.gettrace()
-        trace_log = []
-
-        if original_trace_function:
-            # enable tracing while preserving the existing trace function (coverage)
-            def my_trace_function(frame, event, arg):
-                trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
-
-                # the original trace function expects to have itself set as the trace function
-                sys.settrace(original_trace_function)
-                # call the original trace function
-                original_trace_function(frame, event, arg)
-                # restore our trace function
-                sys.settrace(my_trace_function)
-
-                return my_trace_function
-        else:
-            # no existing trace function, so our trace function is much simpler
-            def my_trace_function(frame, event, arg):
-                trace_log.append((frame.f_code.co_filename, frame.f_lineno, event))
-
-                return my_trace_function
-
-        sys.settrace(my_trace_function)
-
-        try:
-            # run a minimal amount of code while the trace is running
-            # adding more code here, including use of a context manager, will add more to our trace
-            answer = question()
-        finally:
-            sys.settrace(original_trace_function)
+        # run a minimal amount of code while the trace is running
+        # adding more code here, including use of a context manager, will add more to our trace
+        answer = question()
     finally:
-        if isinstance(sys.meta_path[0], AnsibleCollectionLoader):
-            sys.meta_path.pop(0)
-
-    assert not any(obj for obj in sys.meta_path if isinstance(obj, AnsibleCollectionLoader))
+        sys.settrace(original_trace_function)
 
     # verify that code loaded from a collection does not inherit __future__ statements from the collection loader
     if sys.version_info[0] == 2:
