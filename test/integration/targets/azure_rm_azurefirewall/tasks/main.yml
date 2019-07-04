@@ -247,10 +247,10 @@
     that:
       - output.changed
 
-- name: Get Azure Firewall
+- name: Get info of the Azure Firewall
   azure_rm_azurefirewall_info:
-    resource_group: myResourceGroup
-    name: myAzureFirewall
+    resource_group: '{{resource_group}}'
+    name: '{{azure_firewall_name}}'
   register: output
 
 - assert:
