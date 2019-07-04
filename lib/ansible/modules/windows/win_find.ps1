@@ -241,16 +241,19 @@ Function Get-FileStat($file) {
     $isdir = $false
     $isshared = $false
 
-    if ($attributes -contains 'ReparsePoint' -and $attributes -contains 'Directory') {
+    if ($attributes -contains 'ReparsePoint') {
         # TODO: Find a way to differenciate between soft and junction links
         $islnk = $true
-        $isdir = $true
 
-        # Try and get the symlink source, can result in failure if link is broken
-        try {
-            $lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($file)
-            $file_stat.lnk_source = $lnk_source
-        } catch {}
+        if ($attributes -contains 'Directory') {
+            $isdir = $true
+
+            # Try and get the symlink source, can result in failure if link is broken
+            try {
+                $lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($file)
+                $file_stat.lnk_source = $lnk_source
+            } catch {}
+        }
     } elseif ($file.PSIsContainer) {
         $isdir = $true
 
