@@ -38,12 +38,27 @@ EXPECTED_LIST = [
     3.14159,
 ]
 
+result_list = lenient_lowercase(INPUT_LIST)
 
-def test_lenient_lowercase():
+
+@pytest.mark.parametrize(
+    'input_value,expected_outcome',
+    [
+        (result_list[0], EXPECTED_LIST[0]),
+        (result_list[1], EXPECTED_LIST[1]),
+        (result_list[2], EXPECTED_LIST[2]),
+        (result_list[3], EXPECTED_LIST[3]),
+        (result_list[4], EXPECTED_LIST[4]),
+        (result_list[5], EXPECTED_LIST[5]),
+        (result_list[6], EXPECTED_LIST[6]),
+        (result_list[7], EXPECTED_LIST[7]),
+        (result_list[8], EXPECTED_LIST[8]),
+        (result_list[9], EXPECTED_LIST[9]),
+    ]
+)
+def test_lenient_lowercase(input_value, expected_outcome):
     """Test that lenient_lowercase() proper results."""
-    output_list = lenient_lowercase(INPUT_LIST)
-    for out_elem, exp_elem in zip(output_list, EXPECTED_LIST):
-        assert out_elem == exp_elem
+    assert input_value == expected_outcome
 
 
 @pytest.mark.parametrize('input_data', [1, False, 1.001, 1j, datetime.now(), ])
