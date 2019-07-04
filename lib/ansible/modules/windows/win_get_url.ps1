@@ -108,7 +108,7 @@ Function Invoke-AnsibleWebRequest {
 
     if (-not $UseProxy) {
         $web_request.Proxy = $null
-    } elseif ($ProxyUri) {
+    } elseif ($Proxy) {
         $web_request.Proxy = $Proxy
     }
 
