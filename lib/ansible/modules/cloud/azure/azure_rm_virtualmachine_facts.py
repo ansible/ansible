@@ -21,7 +21,7 @@ module: azure_rm_virtualmachine_facts
 
 version_added: "2.7"
 
-short_description: Get virtual machine facts.
+short_description: Get virtual machine facts
 
 description:
   - Get facts for one or all virtual machines in a resource group.

@@ -21,7 +21,7 @@ module: azure_rm_virtualmachine
 
 version_added: "2.1"
 
-short_description: Manage Azure virtual machines.
+short_description: Manage Azure virtual machines
 
 description:
     - Create, update, stop and start a virtual machine. Provide an existing storage account and network interface or
