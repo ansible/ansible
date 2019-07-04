@@ -92,7 +92,7 @@ author:
 
 EXAMPLES = '''
 - name: List of Recovery Services Resources in SubscriptionId
-  azure_rm_recoveryservicesvault_info: {}
+  azure_rm_recoveryservicesvault_info:
 - name: List of Recovery Services Resources in ResourceGroup
   azure_rm_recoveryservicesvault_info:
     resource_group: myResourceGroup
