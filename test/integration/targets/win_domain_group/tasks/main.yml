@@ -52,6 +52,7 @@
 - name: assert create group with defaults
   assert:
     that:
+    - create_default is created
     - create_default is changed
     - create_default.category == 'Security'
     - create_default.description == None
@@ -76,6 +77,7 @@
   assert:
     that:
     - create_default_again is not changed
+    - create_default_again is not created
 
 - name: remove group check
   win_domain_group:
@@ -109,6 +111,7 @@
   assert:
     that:
     - remove_group is changed
+    - remove_group is not created
     - remove_group_actual.rc == 1
 
 - name: remove group again
@@ -121,6 +124,7 @@
   assert:
     that:
     - remove_group_again is not changed
+    - remove_group_again is not created
 
 - name: create non default group check
   win_domain_group:
@@ -148,6 +152,7 @@
   assert:
     that:
     - create_non_default_check is changed
+    - create_non_default_check is created
     - create_non_default_actual_check.rc == 1
 
 - name: create non default group
@@ -175,6 +180,7 @@
   assert:
     that:
     - create_non_default is changed
+    - create_non_default is created
     - create_non_default.category == 'Distribution'
     - create_non_default.description == 'Group Description'
     - create_non_default.display_name == 'Group Display Name'
@@ -208,6 +214,7 @@
   assert:
     that:
     - create_non_default_again is not changed
+    - create_non_default_again is not created
 
 - name: try and move group with protection mode on
   win_domain_group:
@@ -241,6 +248,7 @@
   assert:
     that:
     - modify_existing_check is changed
+    - modify_existing_check is not created
     - modify_existing_actual_check.stdout == 'CN=' + test_win_domain_group_name + ',' + test_win_domain_group_ou_path + '\r\n'
 
 - name: modify existing group
@@ -267,6 +275,7 @@
   assert:
     that:
     - modify_existing is changed
+    - modify_existing is not created
     - modify_existing.category == 'Security'
     - modify_existing.description == 'New Description'
     - modify_existing.display_name == 'New Display Name'
@@ -300,6 +309,7 @@
   assert:
     that:
     - modify_existing_again is not changed
+    - modify_existing_again is not created
 
 - name: fail change managed_by to invalid user
   win_domain_group:
@@ -333,6 +343,7 @@
   assert:
     that:
     - delete_with_force is changed
+    - delete_with_force is not created
     - delete_with_force_actual.rc == 1
 
 - name: ensure the test group is deleted after the test

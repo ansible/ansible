@@ -1,0 +1,2 @@
+minor_changes:
+- "win_domain_user and win_domain_group: add created result boolean (https://github.com/ansible/ansible/issues/57547)"
