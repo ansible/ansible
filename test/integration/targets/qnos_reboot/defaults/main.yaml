@@ -1,0 +1,7 @@
+
+---
+testcase: "*"
+test_items: []
+cli:
+  username: "{{ ansible_ssh_user }}"
+  password: "{{ ansible_ssh_pass }}"

@@ -1,0 +1,28 @@
+---
+- debug: msg="START cli/reboot.yaml on connection={{ ansible_connection }} "
+
+- name: reboot not save
+  qnos_reboot:
+    confirm: yes
+    save: no
+    provider: "{{ cli }}"
+  become: True
+  become_method: enable
+
+#- pause: seconds=120
+
+- name: Wait for switch to come back
+  become: false
+  local_action: wait_for
+  #connection: local
+  args:
+    host: "{{ ansible_host }}"
+    port: "{{ ansible_ssh_port }}"
+    state: started
+    #search_regex: "Using username"
+    search_regex: "OpenSSH"
+    delay: 10
+    timeout: 180
+  changed_when: false
+
+- debug: msg="END cli/reboot.yaml on connection={{ ansible_connection }}"

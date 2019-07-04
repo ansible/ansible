@@ -1,0 +1,118 @@
+!Current Configuration:
+!
+!System Description "LY9, Runtime Code 18.12, Linux 3.8.13-rt9, U-Boot 2010.12 (Dec 10 2015 - 13:45:31) - ONIE 2015.05-v1.0"
+!System Software Version "18.12"
+!System Up Time          "2 days 18 hrs 28 mins 1 secs"
+!Cut-through mode is configured as disabled
+!Additional Packages     BGP-4,QOS,Multicast,IPv6,Routing,Data Center
+!Current SNTP Synchronized Time: SNTP Client Mode Is Disabled
+!
+configure
+hostname "an-qnos-03.ansible.com"
+vlan database
+vlan 2-7
+exit
+
+sntp server "118.163.81.61"
+sntp clock timezone "Taipei" 8 0 before-utc
+time-range
+username "admin" passwd 7 0944395d14e6b3a51ff86220b2b2d70977df3e4efd411078e4c18e94b3d6b0b8a5452f0140769bc0d52db8416b090ec14ba252fada29a6c8577e5f0e1f46a0f4 level 15
+username "admin" role "network-admin"
+username "guest" role "network-operator"
+line console
+exit
+
+line vty
+exit
+
+line ssh
+exit
+
+interface vlan 1
+exit
+interface vlan 2
+exit
+interface vlan 3
+exit
+interface vlan 4
+exit
+interface vlan 5
+exit
+interface vlan 6
+exit
+interface vlan 7
+exit
+snmp-server sysname "an-qnos-03.ansible.com"
+!
+mac-addr-table aging-time 500
+interface control-plane
+exit
+application install orig_restful_api
+application install psme-network auto-restart
+application install psme-rest-server auto-restart
+interface loopback 0
+shutdown
+description 'this is a test'
+exit
+
+
+interface 0/2
+no negotiate
+exit
+
+
+
+interface 0/3
+no negotiate
+exit
+
+
+
+interface vlan 1
+ip address dhcp
+exit
+
+
+
+interface vlan 2
+description 'testhaha'
+exit
+
+
+
+interface vlan 3
+description 'testhaha'
+exit
+
+
+
+interface vlan 4
+description 'testhaha'
+exit
+
+
+
+interface vlan 5
+description 'testhaha'
+exit
+
+
+
+interface vlan 6
+description 'testhaha'
+exit
+
+
+
+interface vlan 7
+description 'testhaha'
+exit
+
+
+router ospf
+exit
+ipv6 router ospf
+exit
+openflow instance 1
+exit
+exit
