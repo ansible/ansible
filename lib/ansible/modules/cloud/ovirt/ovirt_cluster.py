@@ -340,17 +340,17 @@ EXAMPLES = '''
 
 - name: set up cluster network roles
   ovirt_cluster:
-  data_center: DataCenter
-  name: test_cluster_45
-  networks:
-    - name: my_mgmt_network
-      type: management
-    - name: my_mgmt_display
-      type: display
-    - name: infra_servers
-      type: required
-    - name: migration_network
-      type: migration
+    data_center: Default
+    name: mycluster
+    networks:
+      - name: my_mgmt_network
+        type: management
+      - name: my_mgmt_display
+        type: display
+      - name: infra_servers
+        type: required
+      - name: migration_network
+        type: migration
 
 '''
 
