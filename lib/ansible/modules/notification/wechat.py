@@ -25,29 +25,36 @@ options:
     description:
       - Business id.
     required: true
+    type: str
   secret:
     description:
       - application secret.
     required: true
+    type: str
   agentid:
     description:
       - application id.
     required: true
+    type: str
   touser:
     description:
       - Member ID list (message recipient, multiple recipients separated by '|', up to 1000).
       - "Special case: Specify @all to send to all members of the enterprise application."
       -  When toparty, touser, totag is empty, the default value is @all.
+    type: str
   toparty:
     description:
       - A list of department IDs. Multiple recipients are separated by '|' and support up to 100. Ignore this parameter when touser is @all
+    type: str
   totag:
     description:
       - A list of tag IDs, separated by '|' and supported by up to 100. Ignore this parameter when touser is @all
+    type: str
   msg:
     description:
       - The message body.
     required: true
+    type: str
 author:
 - lework (@lework)
 '''
@@ -151,7 +158,7 @@ class WeChat(object):
         url = self.url + url_arg
         response, info = fetch_url(self.module, url=url)
         text = response.read()
-        try: 
+        try:
             self.token = json.loads(text)['access_token']
         except Exception as e:
             raise Exception("Invalid corpid or corpsecret, api result:%s" % text)
