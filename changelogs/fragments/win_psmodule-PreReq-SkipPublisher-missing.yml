@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_psmodule - Missing SkipPublisherCheck in Prerq installations"
