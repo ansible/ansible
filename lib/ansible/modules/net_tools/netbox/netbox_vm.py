@@ -45,24 +45,15 @@ options:
         description:
           - The name of the virtual machine
         required: true
-      role:
+      device_role:
         description:
-          - Required if I(state=present) and the virtual machine does not exist yet
+          - Required if I(state=present) and the virtual machine does not exist yet. The device_role should be enabled for VM use.
       tenant:
         description:
           - The tenant that the virtual machine will be assigned to
       platform:
         description:
           - The platform of the virtual machine
-      primary_ip:
-        description:
-          - Primary IP of the VM
-      primary_ip4:
-        description:
-          - Primary IPv4 of the VM
-      primary_ip6:
-        description:
-          - Primary IPv6 of the VM
       vcpus:
         description:
           - Number of vcpus assigned to VM
