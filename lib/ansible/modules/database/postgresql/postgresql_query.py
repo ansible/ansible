@@ -62,6 +62,7 @@ options:
       (e.g., VACUUM).
     - Mutually exclusive with I(check_mode).
     type: bool
+    version_added: '2.9'
 author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
