@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt update vm migration domunetation BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1724535)
