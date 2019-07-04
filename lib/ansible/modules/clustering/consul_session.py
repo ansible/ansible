@@ -232,7 +232,8 @@ def remove_session(module):
 
 def get_consul_api(module):
     return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'))
+                         port=module.params.get('port'),
+                         scheme=module.params.get('scheme'))
 
 
 def test_dependencies(module):
