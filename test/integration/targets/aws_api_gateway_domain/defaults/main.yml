@@ -1,0 +1,5 @@
+---
+# defaults file for aws_api_gateway_domain
+
+api_gateway_domain_name: "{{ resource_prefix }}-api-gw-test.foobar.com"
+api_gateway_domain_tls_arn: "arn:aws:acm:{{ aws_region }}:{{ aws_account_id }}:certificate/abc123-acb123-abc123-abc123"

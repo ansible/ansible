@@ -1,0 +1,124 @@
+---
+# tasks file for aws_api_gateway_domain
+
+- name: Run aws_api_gateway_domain module integration tests
+  # NOTE: To make tests work set TLS ARN in defaults/main.yml to an existing and
+  # validated TLS cert on ACM
+
+  block:
+
+    # ==================== preparations ========================================
+
+    - name: Preperaation - Set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: Preperations - Create REST API Gateway on AWS API Gateway service to reference from domain tests
+      aws_api_gateway:
+        swagger_file: ../files/api_gw_swagger.yml
+        stage: test
+        state: present
+        <<: *aws_connection_info
+      register: api_gateway_result
+
+    # ================== integration tests ==========================================
+
+    - name: Create Test - API gateway custom domain setup
+      aws_api_gateway_domain:
+        domain_name: "{{ api_gateway_domain_name }}"
+        certificate_arn: "{{ api_gateway_domain_tls_arn }}"
+        security_policy: 'TLS_1_0'
+        endpoint_type: EDGE
+        domain_mappings:
+          - { rest_api_id: "{{ api_gateway_result.api_id }}", stage: test }
+        state: present
+        <<: *aws_connection_info
+      register: create_result
+
+    - assert:
+        that:
+          - create_result.changed == True
+          - create_result.response.domain.domain_name == "{{ api_gateway_domain_name }}"
+          - create_result.response.domain.distribution_domain_name is defined
+          - create_result.response.domain.distribution_hosted_zone_id is defined
+          - create_result.response.path_mappings is defined
+
+    - name: Idempotence Test - API gateway custom domain setup
+      aws_api_gateway_domain:
+        domain_name: "{{ api_gateway_domain_name }}"
+        certificate_arn: "{{ api_gateway_domain_tls_arn }}"
+        security_policy: 'TLS_1_0'
+        endpoint_type: EDGE
+        domain_mappings:
+          - { rest_api_id: "{{ api_gateway_result.api_id }}", stage: test }
+        state: present
+        <<: *aws_connection_info
+      register: repeat_result
+
+    - assert:
+        that:
+          - repeat_result.changed == False
+          - repeat_result.failed == False
+          - repeat_result.response.domain_name == "{{ api_gateway_domain_name }}"
+
+    - name: Update Test - API gateway custom domain setup, change settings
+      aws_api_gateway_domain:
+        domain_name: "{{ api_gateway_domain_name }}"
+        certificate_arn: "{{ api_gateway_domain_tls_arn }}"
+        security_policy: 'TLS_1_2'
+        endpoint_type: REGIONAL
+        domain_mappings:
+          - { base_path: v1, rest_api_id: "{{ api_gateway_result.api_id }}", stage: test }
+        state: present
+        <<: *aws_connection_info
+      register: update_result
+
+    - assert:
+        that:
+          - update_result.changed == True
+          - update_result.response.domain.domain_name == "{{ api_gateway_domain_name }}"
+          - update_result.response.domain.security_policy == 'TLS_1_2'
+          - update_result.response.domain.endpoint_configuration.types.0 == 'REGIONAL'
+          - update_result.response.path_mappings.0.base_path = '/v1'
+
+    - name: Delete - API gateway custom domain setup deletion
+      aws_api_gateway_domain:
+        domain_name: "{{ api_gateway_domain_name }}"
+        certificate_arn: "{{ api_gateway_domain_tls_arn }}"
+        security_policy: 'TLS_1_2'
+        endpoint_type: REGIONAL
+        domain_mappings:
+          - { base_path: v1, rest_api_id: "{{ api_gateway_result.api_id }}", stage: test }
+        state: absent
+        <<: *aws_connection_info
+      register: delete_result
+
+    - assert:
+        that:
+          - delete_result.changed == True
+          - delete_result.response_metadata.http_status_code == 202
+
+  # ==================== cleanup =======================
+
+  always:
+
+    - name: Cleanup - delete test domain setup
+      aws_api_gateway_domain:
+        domain_name: "{{ api_gateway_domain_name }}"
+        certificate_arn: "{{ api_gateway_domain_tls_arn }}"
+        domain_mappings: []
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: Cleanup - remove REST API Gateway on AWS API Gateway service
+      aws_api_gateway:
+        api_id: "{{ api_gateway_result.api_id }}"
+        swagger_file: files/api_gw_swagger.yml
+        state: absent
+        <<: *aws_connection_info
