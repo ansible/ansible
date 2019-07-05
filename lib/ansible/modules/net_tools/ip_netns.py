@@ -78,23 +78,24 @@ class Namespace(object):
 
     def exists(self):
         '''Check if the namespace already exists'''
-        rc, out, err = self.module.run_command('ip netns list')
+        rc, out, err = self._netns(['list'])
         if rc != 0:
             self.module.fail_json(msg=to_text(err))
         return self.name in out
 
     def add(self):
         '''Create network namespace'''
-        rtc, out, err = self._netns(['add', self.name])
+        rc, out, err = self._netns(['add', self.name])
 
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+        if rc != 0:
+            self.module.fail_json(msg=to_text(err))
 
     def delete(self):
         '''Delete network namespace'''
-        rtc, out, err = self._netns(['del', self.name])
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+        rc, out, err = self._netns(['del', self.name])
+
+        if rc != 0:
+            self.module.fail_json(msg=to_text(err))
 
     def check(self):
         '''Run check mode'''
@@ -111,14 +112,12 @@ class Namespace(object):
         '''Make the necessary changes'''
         changed = False
 
-        if self.state == 'absent':
-            if self.exists():
-                self.delete()
-                changed = True
-        elif self.state == 'present':
-            if not self.exists():
-                self.add()
-                changed = True
+        if self.state == 'absent' and self.exists():
+            self.delete()
+            changed = True
+        elif self.state == 'present' and not self.exists():
+            self.add()
+            changed = True
 
         self.module.exit_json(changed=changed)
 
@@ -126,10 +125,10 @@ class Namespace(object):
 def main():
     """Entry point."""
     module = AnsibleModule(
-        argument_spec={
-            'name': {'default': None},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
-        },
+        argument_spec=dict(
+            name=dict(default=None),
+            state=dict(default='present', choices=['present', 'absent']),
+        ),
         supports_check_mode=True,
     )
 
