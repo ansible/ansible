@@ -45,7 +45,8 @@ options:
     description:
       - Map your domain base paths to your API GW REST APIs, you previously created. Use provide ID of the API setup and the release stage.
       - domain_mappings should be a list of dictionaries containing three keys: base_path, rest_api_id and stage.
-      - Example: I([{ base_path: v1, rest_api_id: abc123, stage: production }]), if you want base path to be just I(/) omit the param completely or set it to ''.
+      - "Example: I([{ base_path: v1, rest_api_id: abc123, stage: production }])"
+      - if you want base path to be just I(/) omit the param completely or set it to empty string.
     required: true
     type: list
   state:
@@ -122,16 +123,16 @@ def get_domain(module, client):
     try:
         result['domain'] = get_domain_name(client, domain_name)
         result['path_mappings'] = get_domain_mappings(client, domain_name)
-    except is_boto3_error_code('NotFoundException'): # pylint: disable=duplicate-except
+    except is_boto3_error_code('NotFoundException'):
         return None
-    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="getting API GW domain")
     return camel_dict_to_snake_dict(result)
 
 
 def create_domain(module, client):
     path_mappings = module.params.get('domain_mappings', [])
-    domain_name= module.params.get('domain_name')
+    domain_name = module.params.get('domain_name')
     result = {'domain': {}, 'path_mappings': []}
 
     try:
@@ -176,7 +177,7 @@ def update_domain(module, client, existing_domain):
         'endpoint_type': module.params.get('endpoint_type')
     }
 
-    if not specified_domain_settings == existing_domain_settings:
+    if specified_domain_settings != existing_domain_settings:
         try:
             result['domain'] = update_domain_name(client, domain_name, **snake_dict_to_camel_dict(specified_domain_settings))
             result['updated'] = True
@@ -186,7 +187,7 @@ def update_domain(module, client, existing_domain):
     existing_mappings = existing_domain.get('path_mappings', [])
     specified_mappings = module.params.get('domain_mappings')
 
-    if not specified_mappings == existing_mappings:
+    if specified_mappings != existing_mappings:
         try:
             # When lists missmatch delete all existing mappings before adding new ones as specified
             for base_path, mapping_info in existing_mappings.items():
@@ -267,7 +268,7 @@ def delete_domain_mapping(client, domain_name, base_path):
 
 
 def main():
-    argument_spec=dict(
+    argument_spec = dict(
         domain_name=dict(type='str', required=True),
         certificate_arn=dict(type='str', required=True),
         security_policy=dict(type='str', default='TLS_1_2', choices=['TLS_1_0', 'TLS_1_2']),
@@ -298,7 +299,7 @@ def main():
         result = delete_domain(module, client)
         changed = True
 
-    exit_args = { "changed": changed }
+    exit_args = {"changed": changed}
 
     if result is not None:
         exit_args['response'] = result
