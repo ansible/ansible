@@ -209,6 +209,12 @@ options:
         type: bool
         default: True
         version_added: "2.8"
+    single_placement_group:
+        description:
+            - When true this limits the scale set to a single placement group, of max size 100 virtual machines.
+        type: bool
+        default: True
+        version_added: "2.9"
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
@@ -265,6 +271,21 @@ EXAMPLES = '''
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2
+    virtual_network_name: testvnet
+    upgrade_policy: Manual
+    subnet_name: testsubnet
+    admin_username: adminUser
+    admin_password: password01
+    managed_disk_type: Standard_LRS
+    image: customimage001
+
+- name: Create a VMSS with over 100 instances
+  azure_rm_virtualmachinescaleset:
+    resource_group: myResourceGroup
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 120
+    single_placement_group: False
     virtual_network_name: testvnet
     upgrade_policy: Manual
     subnet_name: testsubnet
@@ -436,6 +457,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
             overprovision=dict(type='bool', default=True),
+            single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
             custom_data=dict(type='str')
         )
@@ -468,6 +490,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
+        self.single_placement_group = None
         self.zones = None
         self.custom_data = None
 
@@ -571,8 +594,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     image_reference = self.get_custom_image_reference(
                         self.image.get('name'),
                         self.image.get('resource_group'))
+                elif self.image.get('id'):
+                    try:
+                        image_reference = self.compute_models.ImageReference(id=self.image['id'])
+                    except Exception as exc:
+                        self.fail("id Error: Cannot get image from the reference id - {0}".format(self.image['id']))
                 else:
-                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]")
+                    self.fail("parameter error: expecting image to contain [publisher, offer, sku, version], [name, resource_group] or [id]")
             elif self.image and isinstance(self.image, str):
                 custom_image = True
                 image_reference = self.get_custom_image_reference(self.image)
@@ -647,6 +675,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                 if bool(self.overprovision) != bool(vmss_dict['properties']['overprovision']):
                     differences.append('overprovision')
+                    changed = True
+
+                if bool(self.single_placement_group) != bool(vmss_dict['properties']['singlePlacementGroup']):
+                    differences.append('single_placement_group')
                     changed = True
 
                 vmss_dict['zones'] = [int(i) for i in vmss_dict['zones']] if 'zones' in vmss_dict and vmss_dict['zones'] else None
@@ -739,6 +771,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
                         overprovision=self.overprovision,
+                        single_placement_group=self.single_placement_group,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -836,6 +869,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
+                    vmss_resource.single_placement_group = self.single_placement_group
 
                     if support_lb_change:
                         if self.load_balancer:
