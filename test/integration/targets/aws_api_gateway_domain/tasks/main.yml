@@ -20,7 +20,7 @@
 
     - name: Preperations - Create REST API Gateway on AWS API Gateway service to reference from domain tests
       aws_api_gateway:
-        swagger_file: ../files/api_gw_swagger.yml
+        swagger_file: files/api_gw_swagger.yml
         stage: test
         state: present
         <<: *aws_connection_info
