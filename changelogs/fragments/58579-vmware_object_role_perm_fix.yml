@@ -1,0 +1,2 @@
+minor_changes:
+  - Warn user about Distributed vSwitch permission in vmware_object_role_permission (https://github.com/ansible/ansible/issues/55248).
