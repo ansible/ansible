@@ -229,8 +229,9 @@ Function Get-AnsibleWebRequest {
         }
 
         try {
-            $certs = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2Collection -ArgumentList $ClientCert, $ClientCertPassword
-            $web_request.ClientCertificates = $certs
+            $web_request.ClientCertificates = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2Collection -ArgumentList @(
+                $ClientCert, $ClientCertPassword
+            )
         } catch [System.Security.Cryptography.CryptographicException] {
             Write-Error -Message "Failed to read client certificate '$ClientCert'" -Exception $_.Exception -Category SecurityError
             return
@@ -238,23 +239,25 @@ Function Get-AnsibleWebRequest {
     }
 
     if (-not $UseProxy) {
-        $web_request.Proxy = $null
-    } else {
-        if ($ProxyUrl) {
-            $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $ProxyUrl, $true
-        } else {
-            # By default the existing proxy object is the Default proxy implementation from IE.
-            $proxy = $web_request.Proxy
-        }
+        $proxy = $null
+    } elseif ($ProxyUrl) {
+        $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $ProxyUrl, $true
+    } else  {
+        $proxy = $web_request.Proxy
+    }
 
+    # $web_request.Proxy may return $null for a FTP web request. We only set the credentials if we have an actual
+    # proxy to work with, otherwise just ignore the credentials property.
+    if ($null -ne $proxy) {
         if ($ProxyUseDefaultCredential) {
-            # Weird hack, $web_request.Proxy returns WebProxyWrapper which only has the Credentials property. To
-            # support UseDefaultCredentials on both the default proxy and an explicit one we just set the
-            # Credentials object to the DefaultCredentials in the CredentialCache.
+            # Weird hack, $web_request.Proxy returns an IWebProxy object which only gurantees the Credentials
+            # property. We cannot set UseDefaultCredentials so we just set the Credentials to the
+            # DefaultCredentials in the CredentialCache which does the same thing.
             $proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
         } elseif ($ProxyUsername) {
-            $proxy_credential = New-Object -TypeName System.Net.NetworkCredential -ArgumentList $ProxyUsername, $ProxyPassword
-            $proxy.Credentials = $proxy_credential
+            $proxy.Credentials = New-Object -TypeName System.Net.NetworkCredential -ArgumentList @(
+                $ProxyUsername, $ProxyPassword
+            )
         } else {
             $proxy.Credentials = $null
         }
