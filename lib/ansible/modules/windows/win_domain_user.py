@@ -73,9 +73,9 @@ options:
     type: str
   update_password:
     description:
-      - C(always) will update passwords if they differ.
+      - C(always) will always update passwords.
       - C(on_create) will only set the password for newly created users.
-      - C(when_changed) will only set the password when it differs.
+      - C(when_changed) will only set the password when changed (added in ansible 2.9).
     type: str
     choices: [ always, on_create, when_changed ]
     default: always

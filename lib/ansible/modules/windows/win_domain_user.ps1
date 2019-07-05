@@ -8,20 +8,17 @@ Function Test-Credential {
     param(
         [String]$Username,
         [String]$Password,
-        [String]$Domain = $null,
-        $LOGON32_PROVIDER = 0, # Default
-        $LOGON32_LOGON_TYPE = 3 # NetworkLogon
+        [String]$Domain = $null
     )
     if (($Username.ToCharArray()) -contains [char]'@') {
         # UserPrincipalName
-        $Username = ($Username -split '@')[0]
-        $Domain = ($Username -split '@')[1]
+        $Domain = $null # force $Domain to be null, to prevent undefined behaviour, as a domain name is already included in the username
     } elseif (($Username.ToCharArray()) -contains [char]'\') {
         # Pre Win2k Account Name
         $Username = ($Username -split '\')[0]
         $Domain = ($Username -split '\')[1]
     } else {
-        # No domain provided, so maybe local user?
+        # No domain provided, so maybe local user, or domain specified separately.
     }
     $null = $Domain # Make CI-Check happy...
 
@@ -35,10 +32,6 @@ namespace Ansible
 {
     public class WinUserPInvoke
     {
-        const int LOGON32_LOGON_NETWORK           = 3;
-        const int LOGON32_PROVIDER_DEFAULT        = 0; // Negotiate if domain == null and username not upn else NTLM
-        const int LOGON32_PROVIDER_WINNT40        = 2; // Negotiate
-        const int LOGON32_PROVIDER_WINNT50        = 3; // NTLM
         // Refere to: https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
         static int[] success_codes = new int[] {
             0x0000052F,  // ERROR_ACCOUNT_RESTRICTION
@@ -48,7 +41,6 @@ namespace Ansible
         };
         static int[] failed_codes = new int[] {
             0x0000052E,  // ERROR_LOGON_FAILURE - the user or pass was incorrect
-            0x00000006,  // ERROR_INVALID_HANDLE - the handle is invalid
             0x00000532   // ERROR_PASSWORD_EXPIRED - The password has exired
         };
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -69,17 +61,20 @@ namespace Ansible
 
             // Pass LogonUser the decrypted copy of the password.
             returnValue = LogonUser(userName, domainName, passwordPtr,
-                                    LOGON32_LOGON_NETWORK, LOGON32_PROVIDER_DEFAULT,
+                                    3, // LOGON32_LOGON_NETWORK = 3
+                                    0, // LOGON32_PROVIDER_DEFAULT = 0; Negotiate if (domain == null and username not upn) else NTLM
                                     out tokenHandle);
+            error_code = Marshal.GetLastWin32Error();
+
             // Perform cleanup whether or not the call succeeded.
             // Secure delete the plaintext password from memory.
             Marshal.ZeroFreeGlobalAllocUnicode(passwordPtr);
             // We don't need the token, so close it again.
             CloseHandle(tokenHandle);
-            if (returnValue || !(tokenHandle == IntPtr.Zero)) {
+
+            if (returnValue) {
                 return true;
             } else {
-                err_code = Marshal.GetLastWin32Error();
                 if (Array.Exists(success_codes, element => element == err_code)) {
                     return true;
                 } else if (Array.Exists(failed_codes, element => element == err_code)) {
@@ -223,10 +218,7 @@ If ($state -eq 'present') {
         } else {
             $test_new_credentials = $false
         }
-        If ($test_new_credentials -and ($update_password -ne "always")) {
-            $result.password_updated = $false
-            $result.changed = $false
-        } Else {
+        If ((-not $test_new_credentials) -or ($update_password -eq "always")) {
             $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
             Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
