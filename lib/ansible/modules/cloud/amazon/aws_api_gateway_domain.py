@@ -76,7 +76,7 @@ EXAMPLES = '''
   register: api_gw_domain_result
 
 - name: Create a DNS record for your custom domain on route 53 (using route53 module)
-  route53
+  route53:
     record: myapi.foobar.com
     value: "{{ api_gw_domain_result.domain_name }}"
     type: A
@@ -95,7 +95,7 @@ repsonse:
     {
         domain_name: mydomain.com,
         certificate_arn: 'arn:aws:acm:xxxxxx',
-        distribution_domain_name: mydomain.com
+        distribution_domain_name: mydomain.com,
         distribution_hosted_zone_id: abc123123,
         endpoint_configuration: { types: ['EDGE'] },
         domain_name_status: 'AVAILABLE',
@@ -139,15 +139,16 @@ def create_domain(module, client):
         result['domain'] = create_domain_name(
             module,
             client,
-            domain_name, module.params['certificate_arn'],
-            module.params['endpoint_type'],
-            module.params['security_policy']
+            domain_name,
+            module.params.get('certificate_arn'),
+            module.params.get('endpoint_type'),
+            module.params.get('security_policy')
         )
 
         for mapping in path_mappings:
             base_path = mapping.get('base_path', '')
-            rest_api_id = mapping['rest_api_id']
-            stage = mapping['stage']
+            rest_api_id = mapping.get('rest_api_id')
+            stage = mapping.get('stage')
             if rest_api_id is None or stage is None:
                 module.fail_json('Every domain mapping needs a rest_api_id and stage name')
 
@@ -160,7 +161,8 @@ def create_domain(module, client):
 
 def update_domain(module, client, existing_domain):
     domain_name = module.params.get('domain_name')
-    result = {'updated': False}
+    result = existing_domain
+    result['updated'] = False
 
     domain = existing_domain.get('domain')
     # Compare only relevant set of domain arguments.
@@ -184,16 +186,25 @@ def update_domain(module, client, existing_domain):
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             module.fail_json_aws(e, msg="updating API GW domain")
 
-    existing_mappings = existing_domain.get('path_mappings', [])
-    specified_mappings = module.params.get('domain_mappings')
+    existing_mappings = copy.deepcopy(existing_domain.get('path_mappings', []))
+    # Cleanout `base_path: "(none)"` elements from dicts as those won't match with specified mappings
+    for mapping in existing_mappings:
+        if mapping.get('base_path', 'missing') == '(none)':
+            mapping.pop('base_path')
+
+    specified_mappings = copy.deepcopy(module.params.get('domain_mappings', []))
+    # Cleanout `base_path: ""` elements from dicts as those won't match with existing mappings
+    for mapping in specified_mappings:
+        if mapping.get('base_path', 'missing') == '':
+            mapping.pop('base_path')
 
     if specified_mappings != existing_mappings:
         try:
             # When lists missmatch delete all existing mappings before adding new ones as specified
-            for base_path, mapping_info in existing_mappings.items():
-                delete_domain_mapping(client, domain_name, base_path)
-            for mapping in specified_mappings:
-                result['path_mappings'] = add_domain_mapping(client, domain_name, mapping['base_path'], mapping['rest_api_id'], mapping['stage'])
+            for mapping in existing_domain.get('path_mappings', []):
+                delete_domain_mapping(client, domain_name, mapping['base_path'])
+            for mapping in module.params.get('domain_mappings', []):
+                result['path_mappings'] = add_domain_mapping(client, domain_name, mapping.get('base_path', ''), mapping.get('rest_api_id'), mapping.get('stage'))
                 result['updated'] = True
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             module.fail_json_aws(e, msg="updating API GW domain mapping")
@@ -220,7 +231,7 @@ def get_domain_name(client, domain_name):
 
 @AWSRetry.backoff(**retry_params)
 def get_domain_mappings(client, domain_name):
-    return client.get_base_path_mappings(domainName=domain_name, limit=200)
+    return client.get_base_path_mappings(domainName=domain_name, limit=200).get('items', [])
 
 
 @AWSRetry.backoff(**retry_params)
