@@ -29,7 +29,7 @@ class FactsBase(object):
         if not self._gather_subset:
             self._gather_subset = ['!config']
         if not self._gather_network_resources:
-            self._gather_network_resources = ['all']
+            self._gather_network_resources = ['!all']
 
     def gen_runable(self, subsets, valid_subsets):
         """ Generate the runable subset
