@@ -1,0 +1,3 @@
+bugfixes:
+- win_domain_controller - Do not fail the play without the user being able to catch dcpromo failing because of a pending reboot within a playbook using ignore_error or retry logic.
+- win_domain_controller - Do not fail the play without the user being able to catch domain dns resolution errors within the playbook using ignore_error or retry logic.
