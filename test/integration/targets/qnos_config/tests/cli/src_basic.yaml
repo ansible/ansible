@@ -1,0 +1,103 @@
+---
+- debug: msg="START cli/src_basic.yaml on connection={{ ansible_connection }}"
+
+#- name: vlan database configuration
+#  qnos_config:
+#    commands:
+#      - vlan 22,25-28,4093
+#    parents:
+#      - vlan database
+#    match: none
+#
+#- name: vlan mode configuration
+#  qnos_config:
+#    commands:
+#      - private-vlan isolated 
+#    parents:
+#      - vlan 25-28
+#    match: none
+#
+#- name: show vlan
+#  qnos_command:
+#    commands: 
+#    - show vlan
+#  register: result
+#
+#- debug: msg=result
+#
+#- name: vlan configuration
+#  qnos_config:
+#    commands:
+#      - no vlan 22,25-28,4093
+#    parents:
+#      - vlan database
+#    match: none
+
+
+- name: setup
+  qnos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface loopback 0
+    match: none
+
+- name: configure device with config
+  qnos_config:
+    src: basic/config.j2
+  register: result
+
+- name: debug, remove me
+  debug:
+    msg: "{{ result }}"
+- assert:
+    that:
+      - "result.changed == true"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#      - "result.updates is not defined"
+
+- name: check device with config
+  qnos_config:
+    src: basic/config.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#      - "result.updates is not defined"
+
+- name: check for empty diff
+  qnos_config:
+    running_config: |
+      service prohibit access snmp
+      service prohibit access telnet
+    lines:
+      - service prohibit access snmp
+      - service prohibit access telnet
+  check_mode: True
+  register: result
+- assert:
+    that:
+      - "result.updates is undefined"
+
+- name: check for diff with ignore lines for running config
+  qnos_config:
+    running_config: |
+      service prohibit access snmp
+      service prohibit access telnet
+    lines:
+      - service prohibit access snmp
+      - service prohibit access telnet
+    diff_ignore_lines: service prohibit access telnet
+  check_mode: True
+  register: result
+
+- assert:
+    that:
+      - "'service prohibit access telnet' in result.updates"
+
+- debug: msg="END cli/src_basic.yaml on connection={{ ansible_connection }}"
