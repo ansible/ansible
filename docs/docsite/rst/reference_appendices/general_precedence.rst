@@ -53,9 +53,9 @@ Some parameters allow multiple values. In this case, Ansible will append all val
 
 The help for each :ref:`command-line tool<command_line_tools>` lists available options for that tool.
 
-Most command-line options deal with generic settings, but some settings are specific to connections and strategies.
-Passing these options at the command-line may feel like the highest-precedence options, but command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
-You can override all other settings from all other sources in all other precedence categories at the command line with ``--extra-vars var_name=value``, but that is not a command-line option, it is a :ref:`variable<general_precedence_variables>`.
+When you type something directly at the command line, you may feel that your hand-crafted values should override all others, but Ansible does not work that way. Command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
+
+You can override all other settings from all other sources in all other precedence categories at the command line by  :ref:`general_precedence_extra_vars`, but that is not a command-line option, it is a way of passing a :ref:`variable<general_precedence_variables>`.
 
 Playbook keywords
 ^^^^^^^^^^^^^^^^^
@@ -120,6 +120,8 @@ When setting variables in playbooks, remember that there are a couple of levels 
 These variables don't survive the playbook object they were defined in and will not be available to subsequent objects, including other plays.
 
 And there is also a 'host scope' - variables that are directly associated with the host (also available via the `hostvars[]` dictionary). The host scope variables are available across plays and are  defined in inventory, vars plugins, or from modules (set_fact, include_vars).
+
+.. _general_precedence_extra_vars:
 
 Using ``-e`` extra variables at the command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
