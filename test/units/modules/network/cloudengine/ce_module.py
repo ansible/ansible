@@ -29,6 +29,7 @@ from units.modules.utils import set_module_args as _set_module_args
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
+
 def load_fixture(module_name, name, device=''):
     path = os.path.join(fixture_path, module_name, device, name)
     if not os.path.exists(path):
