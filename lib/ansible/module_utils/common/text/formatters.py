@@ -42,7 +42,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     example: human_to_bytes('10M') <=> human_to_bytes(10, 'M').
 
     When isbits is False (default), converts bytes from a human-readable format to integer.
-        exmample: human_to_bytes('1MB') returns 1048576 (int).
+        example: human_to_bytes('1MB') returns 1048576 (int).
         The function expects 'B' (uppercase) as a byte identifier passed
         as a part of 'name' param string or 'unit', e.g. 'MB'/'KB'/etc.
         (except when the identifier is single 'b', it is perceived as a byte identifier too).
