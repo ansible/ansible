@@ -38,7 +38,8 @@ Function Get-AnsibleWebRequest {
     Whether to validate SSL certificates, default to True.
 
     .PARAMETER ClientCert
-    The path to PFX file to use for X509 authentication. This is only valid for a HTTP URI.
+    The path to PFX file to use for X509 authentication. This is only valid for a HTTP URI. This path can either
+    be a filesystem path (C:\folder\cert.pfx) or a PSPath to a credential (Cert:\CurrentUser\My\<thumbprint>).
 
     .PARAMETER ClientCertPassword
     The password for the PFX certificate if required. This is only valid for a HTTP URI.
@@ -222,20 +223,30 @@ Function Get-AnsibleWebRequest {
             $credential = New-Object -TypeName System.Net.NetworkCredential -ArgumentList $UrlUsername, $UrlPassword
             $web_request.Credentials = $credential
         }
-    } elseif ($ClientCert) {
-        if (-not (Test-Path -LiteralPath $ClientCert)) {
+    }
+
+    if ($ClientCert) {
+        # Expecting either a filepath or PSPath (Cert:\CurrentUser\My\<thumbprint>)
+        $cert = Get-Item -LiteralPath $ClientCert -ErrorAction SilentlyContinue
+        if ($null -eq $cert) {
             Write-Error -Message "Client certificate '$ClientCert' does not exist" -Category ObjectNotFound
             return
         }
 
-        try {
-            $web_request.ClientCertificates = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2Collection -ArgumentList @(
-                $ClientCert, $ClientCertPassword
-            )
-        } catch [System.Security.Cryptography.CryptographicException] {
-            Write-Error -Message "Failed to read client certificate '$ClientCert'" -Exception $_.Exception -Category SecurityError
-            return
+        $crypto_ns = 'System.Security.Cryptography.X509Certificates'
+        if ($cert.PSProvider.Name -ne 'Certificate') {
+            try {
+                $cert = New-Object -TypeName "$crypto_ns.X509Certificate2" -ArgumentList @(
+                    $ClientCert, $ClientCertPassword
+                )
+            } catch [System.Security.Cryptography.CryptographicException] {
+                Write-Error -Message "Failed to read client certificate at '$ClientCert'" -Exception $_.Exception -Category SecurityError
+                return
+            }
         }
+        $web_request.ClientCertificates = New-Object -TypeName "$crypto_ns.X509Certificate2Collection" -ArgumentList @(
+            $cert
+        )
     }
 
     if (-not $UseProxy) {
@@ -468,7 +479,7 @@ $ansible_web_request_options = @{
     validate_certs = @{ type="bool"; default=$true }
 
     # Credential options
-    client_cert = @{ type="path" }
+    client_cert = @{ type="str" }
     client_cert_password = @{ type="str"; no_log=$true }
     force_basic_auth = @{ type="bool"; default=$false }
     url_username = @{ type="str"; aliases=@("user", "username") }  # user was used in win_uri

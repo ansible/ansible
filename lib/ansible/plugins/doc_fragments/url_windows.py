@@ -72,7 +72,9 @@ options:
   client_cert:
     description:
     - The path to the client certificate (.pfx) that is used for X509
-      authentication.
+      authentication. This path can either be the path to the C(pfx) on the
+      filesystem or the PowerShell certificate path
+      C(Cert:\CurrentUser\My\<thumbprint>).
     - The WinRM connection must be authenticated with C(CredSSP) or C(become)
       is used on the task if the certificate file is not password protected.
     - Other authentication types can set I(client_cert_password) when the cert
