@@ -88,15 +88,26 @@ options:
     description:
       - Provisioning State.
     type: str
+    choices:
+      - Creating
+      - Deleting
+      - Failed
+      - Migrating
+      - Succeeded
+      - Updating
   sku_name:
     description:
       - The Sku name.
     type: str
+    choices:
+      - Standard
+      - RS0
   state:
     description:
       - Assert the state of the Vault.
       - Use C(present) to create or update an Vault and C(absent) to delete it.
     default: present
+    type: str
     choices:
       - absent
       - present
@@ -180,52 +191,52 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                 type='dict',
                 disposition='/properties/upgradeDetails/*',
                 options=dict(
-                  operation_id=dict(
-                    type='str',
-                    disposition='operationId'
-                  ),
-                  start_time_utc=dict(
-                    type='str',
-                    disposition='startTimeUtc'
-                  ),
-                  last_updated_time_utc=dict(
-                    type='str',
-                    disposition='lastUpdatedTimeUtc'
-                  ),
-                  end_time_utc=dict(
-                    type='str',
-                    disposition='endTimeUtc'
-                  ),
-                  status=dict(
-                    type='dict',
-                    disposition='status/*',
-                    options=dict(
-                      failed=dict(type='str', disposition='Failed'),
-                      in_progress=dict(type='str', disposition='InProgress'),
-                      unknown=dict(type='str', disposition='Unknown'),
-                      upgraded=dict(type='str', disposition='Upgraded')
-                    )
-                  ),
-                  message=dict(
-                    type='str',
-                    disposition='message'
-                  ),
-                  trigger_type=dict(
-                    type='dict',
-                    disposition='triggerType/*',
-                    options=dict(
-                      forced_upgrade=dict(type='str', disposition='ForcedUpgrade'),
-                      user_triggered=dict(type='str', disposition='UserTriggered')
-                    )
-                  ),
-                  upgraded_resource_id=dict(
-                    type='str',
-                    disposition='upgradedResourceId'
-                  ),
-                  previous_resource_id=dict(
-                    type='str',
-                    disposition='previousResourceId'
-                  ),
+                    operation_id=dict(
+                        type='str',
+                        disposition='operationId'
+                    ),
+                    start_time_utc=dict(
+                        type='str',
+                        disposition='startTimeUtc'
+                    ),
+                    last_updated_time_utc=dict(
+                        type='str',
+                        disposition='lastUpdatedTimeUtc'
+                    ),
+                    end_time_utc=dict(
+                        type='str',
+                        disposition='endTimeUtc'
+                    ),
+                    status=dict(
+                        type='dict',
+                        disposition='status/*',
+                        options=dict(
+                            failed=dict(type='str', disposition='Failed'),
+                            in_progress=dict(type='str', disposition='InProgress'),
+                            unknown=dict(type='str', disposition='Unknown'),
+                            upgraded=dict(type='str', disposition='Upgraded')
+                        )
+                    ),
+                    message=dict(
+                      type='str',
+                      disposition='message'
+                    ),
+                    trigger_type=dict(
+                        type='dict',
+                        disposition='triggerType/*',
+                        options=dict(
+                            forced_upgrade=dict(type='str', disposition='ForcedUpgrade'),
+                            user_triggered=dict(type='str', disposition='UserTriggered')
+                        )
+                    ),
+                    upgraded_resource_id=dict(
+                        type='str',
+                        disposition='upgradedResourceId'
+                    ),
+                    previous_resource_id=dict(
+                        type='str',
+                        disposition='previousResourceId'
+                    ),
                 )
             ),
             provisioning_state=dict(
@@ -235,7 +246,7 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                          'Deleting',
                          'Failed',
                          'Migrating',
-                         'Succeeded',  
+                         'Succeeded',
                          'Updating']
             ),
             sku_name=dict(
