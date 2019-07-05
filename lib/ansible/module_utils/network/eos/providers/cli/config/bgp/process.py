@@ -23,7 +23,8 @@ class Provider(CliProvider):
         existing_as = None
         if config:
             match = re.search(r'router bgp (\d+)', config, re.M)
-            existing_as = match.group(1)
+            if match:
+                existing_as = match.group(1)
 
         operation = self.params['operation']
 

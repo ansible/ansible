@@ -1,0 +1,2 @@
+bugfixes:
+  - eos_bgp - Fix fetching AS failure if BGP is not already configured (https://github.com/ansible/ansible/pull/58756)
