@@ -47,7 +47,7 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    type: str
+    type: list
     required: false
     default: '!config'
 """
@@ -135,7 +135,7 @@ ansible_net_powers:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: string
+  type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:
