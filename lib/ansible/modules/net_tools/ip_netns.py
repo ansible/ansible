@@ -100,12 +100,9 @@ class Namespace(object):
         '''Run check mode'''
         changed = False
 
-        if self.state == 'present' and self.exists():
+        if self.state == 'present' and not self.exists():
             changed = True
-
         elif self.state == 'absent' and self.exists():
-            changed = True
-        elif self.state == 'present' and not self.exists():
             changed = True
 
         self.module.exit_json(changed=changed)
