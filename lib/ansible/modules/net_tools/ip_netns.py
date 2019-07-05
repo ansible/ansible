@@ -47,11 +47,11 @@ options:
 EXAMPLES = '''
 # Create a namespace named mario
 - name: Create a namespace named mario
-  namespace:
+  ip_netns:
     name: mario
     state: present
 - name: Delete a namespace named luigi
-  namespace:
+  ip_netns:
     name: luigi
     state: absent
 '''
