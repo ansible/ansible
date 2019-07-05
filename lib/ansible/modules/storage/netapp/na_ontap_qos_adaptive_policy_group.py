@@ -34,11 +34,13 @@ options:
     description:
     - The name of the policy group to manage.
     type: str
+    required: true
 
   vserver:
     description:
     - Name of the vserver to use.
     type: str
+    required: true
 
   from_name:
     description:
@@ -185,6 +187,7 @@ class NetAppOntapAdaptiveQosPolicyGroup(object):
         policy_group_get_iter = netapp_utils.zapi.NaElement('qos-adaptive-policy-group-get-iter')
         policy_group_info = netapp_utils.zapi.NaElement('qos-adaptive-policy-group-info')
         policy_group_info.add_new_child('policy-group', policy_group_name)
+        policy_group_info.add_new_child('vserver', self.parameters['vserver'])
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(policy_group_info)
         policy_group_get_iter.add_child_elem(query)
@@ -292,7 +295,7 @@ class NetAppOntapAdaptiveQosPolicyGroup(object):
         """
         Run module based on playbook
         """
-        self.asup_log_for_cserver("na_ontap_qos_policy_group")
+        self.autosupport_log("na_ontap_qos_policy_group")
         current = self.get_policy_group()
         rename, cd_action = None, None
         if self.parameters.get('from_name'):
@@ -314,17 +317,12 @@ class NetAppOntapAdaptiveQosPolicyGroup(object):
                     self.modify_helper(modify)
         self.module.exit_json(changed=self.na_helper.changed)
 
-    def asup_log_for_cserver(self, event_name):
+    def autosupport_log(self, event_name):
         """
-        Fetch admin vserver for the given cluster
-        Create and Autosupport log event with the given module name
-        :param event_name: Name of the event log
-        :return: None
+        Create a log event against the provided vserver
         """
-        results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
-        netapp_utils.ems_log_event(event_name, cserver)
-
+        server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.parameters['vserver'])
+        netapp_utils.ems_log_event(event_name, server)
 
 def main():
     '''Apply vserver operations from playbook'''
