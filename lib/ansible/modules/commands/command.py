@@ -262,12 +262,12 @@ def main():
         try:
             chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
         except ValueError as e:
-            module.jail_json('Unable to use supplied chdir: %s' % to_text(e))
+            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
 
         try:
             os.chdir(chdir)
         except (IOError, OSError) as e:
-            module.fail_json('Unable to change directory before execution: %s' % to_text(e))
+            module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
 
     if creates:
         # do not run the command if the line contains creates=filename
