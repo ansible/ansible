@@ -71,7 +71,7 @@ options:
         default: true
     state:
         description:
-            - Indicates whether to create or remove the object
+            - Indicates whether to create or remove the object.
         type: str
         choices:
             - present
