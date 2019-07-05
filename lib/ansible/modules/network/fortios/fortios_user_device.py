@@ -46,7 +46,6 @@ options:
         type: str
         required: true
     username:
-
         description:
             - FortiOS or FortiGate username.
         type: str
