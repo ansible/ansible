@@ -60,6 +60,7 @@ RETURN = '''
 # Default return values
 '''
 
+import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 
@@ -74,14 +75,22 @@ class Namespace(object):
 
     def _netns(self, command):
         '''Run ip nents command'''
-        return self.module.run_command(['ip', 'netns'] + command)
+        return self.module.run_command(['ip', '-json', 'netns'] + command)
 
     def exists(self):
         '''Check if the namespace already exists'''
         rc, out, err = self._netns(['list'])
+
         if rc != 0:
             self.module.fail_json(msg=to_text(err))
-        return self.name in out
+
+        out = json.load(out)
+
+        for netns in out:
+            if self.name == netns.name:
+                return True
+
+        return False
 
     def add(self):
         '''Create network namespace'''
