@@ -42,7 +42,7 @@ requirements:
 options:
     host:
         description:
-            - FortiOS or FortiGate ip address.
+            - FortiOS or FortiGate IP address.
         type: str
         required: true
     username:
