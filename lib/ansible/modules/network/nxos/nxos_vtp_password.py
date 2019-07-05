@@ -101,15 +101,12 @@ changed:
 
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 import re
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if 'status' not in command:
-        output = 'json'
-    else:
-        output = 'text'
+def execute_show_command(command, module, output='json'):
     cmds = [{
         'command': command,
         'output': output,
@@ -145,7 +142,7 @@ def get_vtp_config(module):
     command = 'show vtp status'
 
     body = execute_show_command(
-        command, module)[0]
+        command, module, 'text')[0]
     vtp_parsed = {}
 
     if body:
@@ -174,15 +171,23 @@ def get_vtp_config(module):
 
 def get_vtp_password(module):
     command = 'show vtp password'
-    body = execute_show_command(command, module)[0]
-    try:
-        password = body['passwd']
-        if password:
-            return str(password)
-        else:
-            return ""
-    except TypeError:
-        return ""
+    output = 'json'
+    cap = get_capabilities(module)['device_info']['network_os_model']
+    if re.search(r'Nexus 6', cap):
+        output = 'text'
+
+    body = execute_show_command(command, module, output)[0]
+
+    if output == 'json':
+        password = body.get('passwd', '')
+    else:
+        password = ''
+        rp = r'VTP Password: (\S+)'
+        mo = re.search(rp, body)
+        if mo:
+            password = mo.group(1)
+
+    return str(password)
 
 
 def main():
@@ -214,8 +219,8 @@ def main():
 
     commands = []
     if state == 'absent':
-        # if vtp_password is not set, some devices returns '\\'
-        if not existing['vtp_password'] or existing['vtp_password'] == '\\':
+        # if vtp_password is not set, some devices returns '\\' or the string 'None'
+        if not existing['vtp_password'] or existing['vtp_password'] == '\\' or existing['vtp_password'] == 'None':
             pass
         elif vtp_password is not None:
             if existing['vtp_password'] == proposed['vtp_password']:

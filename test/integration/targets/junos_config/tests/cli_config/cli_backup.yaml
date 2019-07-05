@@ -24,7 +24,6 @@
 - name: take config backup
   cli_config:
     backup: yes
-  become: yes
   register: result
 
 - assert:
@@ -48,7 +47,6 @@
     backup_options:
       filename: backup.cfg
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
-  become: yes
   register: result
 
 - assert:
@@ -70,7 +68,6 @@
     backup: yes
     backup_options:
       filename: backup.cfg
-  become: yes
   register: result
 
 - assert:
@@ -92,7 +89,6 @@
     backup: yes
     backup_options:
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
-  become: yes
   register: result
 
 - assert:

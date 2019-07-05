@@ -26,23 +26,28 @@ options:
     description:
       - List of categories to execute on OOB controller
     default: ['Systems']
+    type: list
   command:
     required: false
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
@@ -90,6 +95,36 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+
+  - name: Get Virtual Media information
+    redfish_facts:
+      category: Manager
+      command: GetVirtualMedia
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.virtual_media.entries | to_nice_json }}"
+
+  - name: Get Volume Inventory
+    redfish_facts:
+      category: Systems
+      command: GetVolumeInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.volume.entries | to_nice_json }}"
+
+  - name: Get Session information
+    redfish_facts:
+      category: Sessions
+      command: GetSessions
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+  - debug:
+      msg: "{{ redfish_facts.session.entries | to_nice_json }}"
 
   - name: Get default inventory information
     redfish_facts:
@@ -184,12 +219,13 @@ from ansible.module_utils.redfish_utils import RedfishUtils
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
                 "GetMemoryInventory", "GetNicInventory",
-                "GetStorageControllerInventory", "GetDiskInventory",
+                "GetStorageControllerInventory", "GetDiskInventory", "GetVolumeInventory",
                 "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
     "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
     "Accounts": ["ListUsers"],
+    "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities"],
-    "Manager": ["GetManagerNicInventory", "GetLogs"],
+    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -197,13 +233,13 @@ CATEGORY_COMMANDS_DEFAULT = {
     "Chassis": "GetFanInventory",
     "Accounts": "ListUsers",
     "Update": "GetFirmwareInventory",
+    "Sessions": "GetSessions",
     "Manager": "GetManagerNicInventory"
 }
 
 
 def main():
     result = {}
-    resource = {}
     category_list = []
     module = AnsibleModule(
         argument_spec=dict(
@@ -226,8 +262,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Build Category list
     if "all" in module.params['category']:
@@ -262,7 +297,7 @@ def main():
         # Organize by Categories / Commands
         if category == "Systems":
             # execute only if we find a Systems resource
-            resource = rf_utils._find_systems_resource(rf_uri)
+            resource = rf_utils._find_systems_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -279,6 +314,8 @@ def main():
                     result["storage_controller"] = rf_utils.get_multi_storage_controller_inventory()
                 elif command == "GetDiskInventory":
                     result["disk"] = rf_utils.get_multi_disk_inventory()
+                elif command == "GetVolumeInventory":
+                    result["volume"] = rf_utils.get_multi_volume_inventory()
                 elif command == "GetBiosAttributes":
                     result["bios_attribute"] = rf_utils.get_multi_bios_attributes()
                 elif command == "GetBootOrder":
@@ -288,7 +325,7 @@ def main():
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
-            resource = rf_utils._find_chassis_resource(rf_uri)
+            resource = rf_utils._find_chassis_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -306,7 +343,7 @@ def main():
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
-            resource = rf_utils._find_accountservice_resource(rf_uri)
+            resource = rf_utils._find_accountservice_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -316,7 +353,7 @@ def main():
 
         elif category == "Update":
             # execute only if we find UpdateService resources
-            resource = rf_utils._find_updateservice_resource(rf_uri)
+            resource = rf_utils._find_updateservice_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
@@ -326,15 +363,27 @@ def main():
                 elif command == "GetFirmwareUpdateCapabilities":
                     result["firmware_update_capabilities"] = rf_utils.get_firmware_update_capabilities()
 
+        elif category == "Sessions":
+            # excute only if we find SessionService resources
+            resource = rf_utils._find_sessionservice_resource()
+            if resource['ret'] is False:
+                module.fail_json(msg=resource['msg'])
+
+            for command in command_list:
+                if command == "GetSessions":
+                    result["session"] = rf_utils.get_sessions()
+
         elif category == "Manager":
             # execute only if we find a Manager service resource
-            resource = rf_utils._find_managers_resource(rf_uri)
+            resource = rf_utils._find_managers_resource()
             if resource['ret'] is False:
                 module.fail_json(msg=resource['msg'])
 
             for command in command_list:
                 if command == "GetManagerNicInventory":
                     result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
+                elif command == "GetVirtualMedia":
+                    result["virtual_media"] = rf_utils.get_multi_virtualmedia()
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 

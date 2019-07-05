@@ -21,7 +21,7 @@ version_added: "2.7"
 short_description: Get Azure Traffic Manager endpoint facts
 
 description:
-    - Get facts for a specific Traffic Manager endpoints or all endpoints  in a Traffic Manager profile
+    - Get facts for a specific Traffic Manager endpoints or all endpoints  in a Traffic Manager profile.
 
 options:
     name:
@@ -29,11 +29,11 @@ options:
             - Limit results to a specific Traffic Manager endpoint.
     resource_group:
         description:
-            - The resource group to search for the desired Traffic Manager profile
+            - The resource group to search for the desired Traffic Manager profile.
         required: True
     profile_name:
         description:
-            - Name of Traffic Manager Profile
+            - Name of Traffic Manager Profile.
         required: True
     type:
         description:
@@ -47,8 +47,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
@@ -67,7 +67,8 @@ EXAMPLES = '''
 
 RETURN = '''
 endpoints:
-    description: List of Traffic Manager endpoints.
+    description:
+        - List of Traffic Manager endpoints.
     returned: always
     type: complex
     contains:
@@ -86,46 +87,55 @@ endpoints:
         type:
             description:
                 - The type of the endpoint.
+            returned: always
             type: str
             sample: external_endpoints
         target_resource_id:
             description:
                 - The Azure Resource URI of the of the endpoint.
+            returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ClassicCompute/domainNames/vscjavaci
         target:
             description:
                 - The fully-qualified DNS name of the endpoint.
+            returned: always
             type: str
             sample: 8.8.8.8
         enabled:
             description:
                 - The status of the endpoint.
+            returned: always
             type: str
             sample: Enabled
         weight:
             description:
                 - The weight of this endpoint when using the 'Weighted' traffic routing method.
+            returned: always
             type: int
             sample: 10
         priority:
             description:
                 - The priority of this endpoint when using the 'Priority' traffic routing method.
+            returned: always
             type: str
             sample: 3
         location:
             description:
                 - The location of the external or nested endpoints when using the 'Performance' traffic routing method.
+            returned: always
             type: str
             sample: East US
         min_child_endpoints:
             description:
                 - The minimum number of endpoints that must be available in the child profile to make the parent profile available.
+            returned: always
             type: int
             sample: 3
         geo_mapping:
             description:
                 - The list of countries/regions mapped to this endpoint when using the 'Geographic' traffic routing method.
+            returned: always
             type: list
             sample: [
                 "GEO-NA",

@@ -17,12 +17,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import platform
 import re
+import sys
 from datetime import timedelta
 from distutils.version import LooseVersion
 
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -258,7 +260,7 @@ DOCKERPYUPGRADE_SWITCH_TO_DOCKER = "Try `pip uninstall docker-py` followed by `p
 DOCKERPYUPGRADE_UPGRADE_DOCKER = "Use `pip install --upgrade docker` to upgrade."
 DOCKERPYUPGRADE_RECOMMEND_DOCKER = ("Use `pip install --upgrade docker-py` to upgrade. "
                                     "Hint: if you do not need Python 2.6 support, try "
-                                    "`pip uninstall docker-py` instead followed by `pip install docker`.")
+                                    "`pip uninstall docker-py` instead, followed by `pip install docker`.")
 
 
 class AnsibleDockerClient(Client):
@@ -303,19 +305,21 @@ class AnsibleDockerClient(Client):
             self.fail("Cannot have both the docker-py and docker python modules (old and new version of Docker "
                       "SDK for Python) installed together as they use the same namespace and cause a corrupt "
                       "installation. Please uninstall both packages, and re-install only the docker-py or docker "
-                      "python module. It is recommended to install the docker module if no support for Python 2.6 "
-                      "is required. Please note that simply uninstalling one of the modules can leave the other "
-                      "module in a broken state.")
+                      "python module (for %s's Python %s). It is recommended to install the docker module if no "
+                      "support for Python 2.6 is required. Please note that simply uninstalling one of the modules "
+                      "can leave the other module in a broken state." % (platform.node(), sys.executable))
 
         if not HAS_DOCKER_PY:
             if NEEDS_DOCKER_PY2:
-                msg = "Failed to import docker (Docker SDK for Python) - %s. Try `pip install docker`."
+                msg = missing_required_lib("Docker SDK for Python: docker")
+                msg = msg + ", for example via `pip install docker`. The error was: %s"
             else:
-                msg = "Failed to import docker or docker-py (Docker SDK for Python) - %s. Try `pip install docker` or `pip install docker-py` (Python 2.6)."
+                msg = missing_required_lib("Docker SDK for Python: docker (Python >= 2.7) or docker-py (Python 2.6)")
+                msg = msg + ", for example via `pip install docker` or `pip install docker-py` (Python 2.6). The error was: %s"
             self.fail(msg % HAS_DOCKER_ERROR)
 
         if self.docker_py_version < LooseVersion(min_docker_version):
-            msg = "Error: Docker SDK for Python version is %s. Minimum version required is %s. "
+            msg = "Error: Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s."
             if not NEEDS_DOCKER_PY2:
                 # The minimal required version is < 2.0 (and the current version as well).
                 # Advertise docker (instead of docker-py) for non-Python-2.6 users.
@@ -324,7 +328,7 @@ class AnsibleDockerClient(Client):
                 msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
             else:
                 msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-            self.fail(msg % (docker_version, min_docker_version))
+            self.fail(msg % (docker_version, platform.node(), sys.executable, min_docker_version))
 
         self.debug = self.module.params.get('debug')
         self.check_mode = self.module.check_mode
@@ -332,14 +336,14 @@ class AnsibleDockerClient(Client):
 
         try:
             super(AnsibleDockerClient, self).__init__(**self._connect_params)
+            self.docker_api_version_str = self.version()['ApiVersion']
         except APIError as exc:
             self.fail("Docker API error: %s" % exc)
         except Exception as exc:
             self.fail("Error connecting: %s" % exc)
 
+        self.docker_api_version = LooseVersion(self.docker_api_version_str)
         if min_docker_api_version is not None:
-            self.docker_api_version_str = self.version()['ApiVersion']
-            self.docker_api_version = LooseVersion(self.docker_api_version_str)
             if self.docker_api_version < LooseVersion(min_docker_api_version):
                 self.fail('Docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
@@ -477,14 +481,14 @@ class AnsibleDockerClient(Client):
                         msg = 'Docker API version is %s. Minimum version required is %s to %s.'
                         msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
                     elif not support_docker_py:
-                        msg = "Docker SDK for Python version is %s. Minimum version required is %s to %s. "
+                        msg = "Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s to %s. "
                         if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
                             msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
                         elif self.docker_py_version < LooseVersion('2.0.0'):
                             msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
                         else:
                             msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-                        msg = msg % (docker_version, data['docker_py_version'], usg)
+                        msg = msg % (docker_version, platform.node(), sys.executable, data['docker_py_version'], usg)
                     else:
                         # should not happen
                         msg = 'Cannot %s with your configuration.' % (usg, )
@@ -639,10 +643,12 @@ class AnsibleDockerClient(Client):
         images = response
         if tag:
             lookup = "%s:%s" % (name, tag)
+            lookup_digest = "%s@%s" % (name, tag)
             images = []
             for image in response:
                 tags = image.get('RepoTags')
-                if tags and lookup in tags:
+                digests = image.get('RepoDigests')
+                if (tags and lookup in tags) or (digests and lookup_digest in digests):
                     images = [image]
                     break
         return images

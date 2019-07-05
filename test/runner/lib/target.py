@@ -84,56 +84,6 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
     return tuple(sorted(internal_targets, key=lambda t: t.name))
 
 
-def walk_external_targets(targets, includes=None, excludes=None, requires=None):
-    """
-    :type targets: collections.Iterable[CompletionTarget]
-    :type includes: list[str]
-    :type excludes: list[str]
-    :type requires: list[str]
-    :rtype: tuple[CompletionTarget], tuple[CompletionTarget]
-    """
-    targets = tuple(targets)
-
-    if requires:
-        include_targets = list(filter_targets(targets, includes, errors=True, directories=False))
-        require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
-        includes = [target.name for target in include_targets if target in require_targets]
-
-        if includes:
-            include_targets = sorted(filter_targets(targets, includes, errors=True), key=lambda t: t.name)
-        else:
-            include_targets = []
-    else:
-        include_targets = sorted(filter_targets(targets, includes, errors=True), key=lambda t: t.name)
-
-    if excludes:
-        exclude_targets = sorted(filter_targets(targets, excludes, errors=True), key=lambda t: t.name)
-    else:
-        exclude_targets = []
-
-    previous = None
-    include = []
-    for target in include_targets:
-        if isinstance(previous, DirectoryTarget) and isinstance(target, DirectoryTarget) \
-                and previous.name == target.name:
-            previous.modules = tuple(set(previous.modules) | set(target.modules))
-        else:
-            include.append(target)
-            previous = target
-
-    previous = None
-    exclude = []
-    for target in exclude_targets:
-        if isinstance(previous, DirectoryTarget) and isinstance(target, DirectoryTarget) \
-                and previous.name == target.name:
-            previous.modules = tuple(set(previous.modules) | set(target.modules))
-        else:
-            exclude.append(target)
-            previous = target
-
-    return tuple(include), tuple(exclude)
-
-
 def filter_targets(targets, patterns, include=True, directories=True, errors=True):
     """
     :type targets: collections.Iterable[CompletionTarget]

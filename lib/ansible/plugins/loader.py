@@ -10,7 +10,6 @@ __metaclass__ = type
 import glob
 import os
 import os.path
-import pkgutil
 import sys
 import warnings
 
@@ -56,7 +55,7 @@ def add_all_plugin_dirs(path):
                 if os.path.isdir(plugin_path):
                     obj.add_directory(to_text(plugin_path))
     else:
-        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_native(path))
+        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_text(path))
 
 
 def get_shell_plugin(shell_type=None, executable=None):
@@ -330,15 +329,12 @@ class PluginLoader:
         package = splitname[0]
         resource = splitname[1]
 
-        append_plugin_type = self.class_name or self.subdir
+        append_plugin_type = self.subdir.replace('_plugins', '')
 
-        if append_plugin_type:
-            # only current non-class special case, module_utils don't use this loader method
-            if append_plugin_type == 'library':
-                append_plugin_type = 'modules'
-            elif append_plugin_type != 'module_utils':
-                append_plugin_type = get_plugin_class(append_plugin_type)
-            package += '.plugins.{0}'.format(append_plugin_type)
+        if append_plugin_type == 'library':
+            append_plugin_type = 'modules'
+
+        package += '.plugins.{0}'.format(append_plugin_type)
 
         if extension:
             resource += extension
@@ -525,7 +521,7 @@ class PluginLoader:
             if isinstance(ex, AnsibleError):
                 raise
             # log and continue, likely an innocuous type/package loading failure in collections import
-            display.debug('has_plugin error: {0}'.format(to_native(ex)))
+            display.debug('has_plugin error: {0}'.format(to_text(ex)))
 
     __contains__ = has_plugin
 

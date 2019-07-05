@@ -1,6 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 import json
+
+DOCUMENTATION = r'''
+module: testmodule
+description: for testing
+extends_documentation_fragment:
+  - testns.testcoll.frag
+  - testns.testcoll.frag.other_documentation
+'''
 
 
 def main():

@@ -29,7 +29,7 @@ from ansible.module_utils.basic import missing_required_lib
 
 try:
     from ncclient.operations import RPCError
-    from ncclient.xml_ import to_xml, to_ele
+    from ncclient.xml_ import to_xml, to_ele, NCElement
     HAS_NCCLIENT = True
     NCCLIENT_IMP_ERR = None
 except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
@@ -223,9 +223,22 @@ class NetconfBase(AnsiblePlugin):
         """
         if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
-        req = fromstring(rpc_command)
-        resp = self.m.dispatch(req, source=source, filter=filter)
-        return resp.data_xml if resp.data_ele else resp.xml
+
+        resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
+
+        if isinstance(resp, NCElement):
+            # In case xml reply is transformed or namespace is removed in
+            # ncclient device specific handler return modified xml response
+            result = resp.data_xml
+        elif hasattr(resp, 'data_ele') and resp.data_ele:
+            # if data node is present in xml response return the xml string
+            # with data node as root
+            result = resp.data_xml
+        else:
+            # return raw xml string received from host with rpc-reply as the root node
+            result = resp.xml
+
+        return result
 
     @ensure_connected
     def lock(self, target="candidate"):

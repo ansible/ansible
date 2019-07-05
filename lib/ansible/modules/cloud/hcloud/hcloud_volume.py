@@ -232,7 +232,7 @@ class AnsibleHcloudVolume(Hcloud):
         server_name = self.module.params.get("server")
         if server_name:
             server = self.client.servers.get_by_name(server_name)
-            if self.hcloud_volume.server != server:
+            if self.hcloud_volume.server is None or self.hcloud_volume.server.name != server.name:
                 if not self.module.check_mode:
                     automount = self.module.params.get("automount", False)
                     self.hcloud_volume.attach(server, automount=automount).wait_until_finished()

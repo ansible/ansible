@@ -64,7 +64,6 @@ lib/ansible/modules/system/lvg.py blacklisted-name
 lib/ansible/modules/system/lvol.py blacklisted-name
 lib/ansible/modules/system/parted.py blacklisted-name
 lib/ansible/modules/system/timezone.py blacklisted-name
-lib/ansible/modules/system/ufw.py blacklisted-name
 lib/ansible/modules/utilities/logic/wait_for.py blacklisted-name
 lib/ansible/modules/web_infrastructure/rundeck_acl_policy.py blacklisted-name
 lib/ansible/parsing/vault/__init__.py blacklisted-name

@@ -41,8 +41,8 @@ deprecated:
     removed_in: "2.12"
     why: Updated modules released with increased functionality
     alternative: >
-      Use M(gcp_compute_healthcheck), M(gcp_compute_http_healthcheck) or
-      M(gcp_compute_https_healthcheck) instead.
+      Use M(gcp_compute_health_check), M(gcp_compute_http_health_check) or
+      M(gcp_compute_https_health_check) instead.
 author:
   - "Tom Melendez (@supertom) <tom@supertom.com>"
 options:

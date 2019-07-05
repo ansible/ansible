@@ -214,8 +214,7 @@ def main():
         contract_ref = mso.contract_ref(**contract)
         if (contract_ref, contract['type']) in contracts:
             contract_idx = contracts.index((contract_ref, contract['type']))
-            # FIXME: Changes based on index are DANGEROUS
-            contract_path = '/templates/{0}/anps/{1}/epgs/{2}/contractRelationships/{3}'.format(template, anp, epg, contract_idx)
+            contract_path = '/templates/{0}/anps/{1}/epgs/{2}/contractRelationships/{3}'.format(template, anp, epg, contract)
             mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['contractRelationships'][contract_idx]
 
     if state == 'query':

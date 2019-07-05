@@ -62,7 +62,7 @@ options:
     curve:
         description:
             - Note that not all curves are supported by all versions of C(cryptography).
-            - For maximal interoperability, C(secp384r1) or C(secp256k1) should be used.
+            - For maximal interoperability, C(secp384r1) or C(secp256r1) should be used.
             - We use the curve names as defined in the
               L(IANA registry for TLS,https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8).
         type: str
@@ -71,6 +71,7 @@ options:
             - secp521r1
             - secp224r1
             - secp192r1
+            - secp256r1
             - secp256k1
             - brainpoolP256r1
             - brainpoolP384r1
@@ -103,7 +104,9 @@ options:
         version_added: "2.4"
     cipher:
         description:
-            - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
+            - The cipher to encrypt the private key. (Valid values can be found by
+              running `openssl list -cipher-algorithms` or `openssl list-cipher-algorithms`,
+              depending on your OpenSSL version.)
             - When using the C(cryptography) backend, use C(auto).
         type: str
         version_added: "2.4"
@@ -176,7 +179,7 @@ curve:
     description: Elliptic curve used to generate the TLS/SSL private key.
     returned: changed or success, and I(type) is C(ECC)
     type: str
-    sample: secp256k1
+    sample: secp256r1
 filename:
     description: Path to the generated TLS/SSL private key file.
     returned: changed or success
@@ -452,6 +455,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         self._add_curve('secp521r1', 'SECP521R1')
         self._add_curve('secp224r1', 'SECP224R1')
         self._add_curve('secp192r1', 'SECP192R1')
+        self._add_curve('secp256r1', 'SECP256R1')
         self._add_curve('secp256k1', 'SECP256K1')
         self._add_curve('brainpoolP256r1', 'BrainpoolP256R1', deprecated=True)
         self._add_curve('brainpoolP384r1', 'BrainpoolP384R1', deprecated=True)
@@ -611,8 +615,8 @@ def main():
                 'DSA', 'ECC', 'Ed25519', 'Ed448', 'RSA', 'X25519', 'X448'
             ]),
             curve=dict(type='str', choices=[
-                'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
-                'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
+                'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256r1',
+                'secp256k1', 'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
                 'sect571k1', 'sect409k1', 'sect283k1', 'sect233k1', 'sect163k1',
                 'sect571r1', 'sect409r1', 'sect283r1', 'sect233r1', 'sect163r2',
             ]),
@@ -669,11 +673,13 @@ def main():
     try:
         if backend == 'pyopenssl':
             if not PYOPENSSL_FOUND:
-                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                 exception=PYOPENSSL_IMP_ERR)
             private_key = PrivateKeyPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
             private_key = PrivateKeyCryptography(module)
 
         if private_key.state == 'present':

@@ -4,6 +4,7 @@
 
 # Kubernetes resources
 
+- include_tasks: delete.yml
 - include_tasks: waiter.yml
 
 - block:
@@ -17,18 +18,31 @@
       debug:
         var: output
 
-    - name: k8s_facts works with empty resources
-      k8s_facts:
+    - name: Setting validate_certs to true causes a failure
+      k8s:
+        name: testing
+        kind: namespace
+        validate_certs: yes
+      ignore_errors: yes
+      register: output
+
+    - name: assert that validate_certs caused a failure (and therefore was correctly translated to verify_ssl)
+      assert:
+        that:
+          - output is failed
+
+    - name: k8s_info works with empty resources
+      k8s_info:
         kind: Deployment
         namespace: testing
         api_version: extensions/v1beta1
-      register: k8s_facts
+      register: k8s_info
 
-    - name: assert that k8s_facts is in correct format
+    - name: assert that k8s_info is in correct format
       assert:
         that:
-          - "'resources' in k8s_facts"
-          - not k8s_facts.resources
+          - "'resources' in k8s_info"
+          - not k8s_info.resources
 
     - name: Create a service
       k8s:
@@ -66,6 +80,25 @@
     - name: Service creation should be idempotent
       assert:
         that: not output.changed
+
+    - name: Create a ConfigMap
+      k8s:
+        kind: ConfigMap
+        name: test-force-update
+        namespace: testing
+        definition:
+          data:
+            key: value
+
+    - name: Force update ConfigMap
+      k8s:
+        kind: ConfigMap
+        name: test-force-update
+        namespace: testing
+        definition:
+          data:
+            key: newvalue
+        force: yes
 
     - name: Create PVC
       k8s:
@@ -162,12 +195,12 @@
             name: testing1
 
     - name: Namespace should exist
-      k8s_facts:
+      k8s_info:
         kind: Namespace
         api_version: v1
         name: testing1
-      register: k8s_facts_testing1
-      failed_when: not k8s_facts_testing1.resources or k8s_facts_testing1.resources[0].status.phase != "Active"
+      register: k8s_info_testing1
+      failed_when: not k8s_info_testing1.resources or k8s_info_testing1.resources[0].status.phase != "Active"
 
     - name: Create resources from a multidocument yaml string
       k8s:
@@ -184,7 +217,7 @@
             name: testing3
 
     - name: Lookup namespaces
-      k8s_facts:
+      k8s_info:
         api_version: v1
         kind: Namespace
         name: "{{ item }}"
@@ -214,7 +247,7 @@
             name: testing3
 
     - name: Lookup namespaces
-      k8s_facts:
+      k8s_info:
         api_version: v1
         kind: Namespace
         name: "{{ item }}"
@@ -242,7 +275,7 @@
               name: testing5
 
     - name: Lookup namespaces
-      k8s_facts:
+      k8s_info:
         api_version: v1
         kind: Namespace
         name: "{{ item }}"
@@ -269,20 +302,20 @@
             metadata:
               name: testing5
 
-    - k8s_facts:
+    - k8s_info:
         api_version: v1
         kind: Namespace
         name: "{{ item }}"
       loop:
         - testing4
         - testing5
-      register: k8s_facts
+      register: k8s_info
 
 
     - name: Resources are terminating if still in results
       assert:
         that: not item.resources or item.resources[0].status.phase == "Terminating"
-      loop: "{{ k8s_facts.results }}"
+      loop: "{{ k8s_info.results }}"
 
     - include_tasks: crd.yml
     - include_tasks: lists.yml

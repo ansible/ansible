@@ -103,6 +103,14 @@ network:
     }'
 '''
 
+import traceback
+
+try:
+    from docker.errors import DockerException
+except ImportError:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    pass
+
 from ansible.module_utils.docker.common import AnsibleDockerClient
 
 
@@ -117,13 +125,16 @@ def main():
         min_docker_api_version='1.21',
     )
 
-    network = client.get_network(client.module.params['name'])
+    try:
+        network = client.get_network(client.module.params['name'])
 
-    client.module.exit_json(
-        changed=False,
-        exists=(True if network else False),
-        network=network,
-    )
+        client.module.exit_json(
+            changed=False,
+            exists=(True if network else False),
+            network=network,
+        )
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

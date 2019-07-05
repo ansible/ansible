@@ -32,7 +32,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 options:
     category_name:
       description:
@@ -119,7 +118,8 @@ category_results:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
-    from com.vmware.cis.tagging_client import Category, CategoryModel
+    from com.vmware.cis.tagging_client import CategoryModel
+    from com.vmware.vapi.std.errors_client import Error
 except ImportError:
     pass
 
@@ -127,7 +127,7 @@ except ImportError:
 class VmwareCategory(VmwareRestClient):
     def __init__(self, module):
         super(VmwareCategory, self).__init__(module)
-        self.category_service = Category(self.connect)
+        self.category_service = self.api_client.tagging.Category
         self.global_categories = dict()
         self.category_name = self.params.get('category_name')
         self.get_all_categories()
@@ -160,7 +160,11 @@ class VmwareCategory(VmwareRestClient):
 
         category_spec.associable_types = set()
 
-        category_id = self.category_service.create(category_spec)
+        try:
+            category_id = self.category_service.create(category_spec)
+        except Error as error:
+            self.module.fail_json(msg="%s" % self.get_error_message(error))
+
         if category_id:
             self.module.exit_json(changed=True,
                                   category_results=dict(msg="Category '%s' created." % category_spec.name,
@@ -200,8 +204,11 @@ class VmwareCategory(VmwareRestClient):
             change_list.append(True)
 
         if any(change_list):
-            self.category_service.update(category_id, category_update_spec)
-            changed = True
+            try:
+                self.category_service.update(category_id, category_update_spec)
+                changed = True
+            except Error as error:
+                self.module.fail_json(msg="%s" % self.get_error_message(error))
 
         self.module.exit_json(changed=changed,
                               category_results=results)
@@ -209,7 +216,10 @@ class VmwareCategory(VmwareRestClient):
     def state_delete_category(self):
         """Delete category."""
         category_id = self.global_categories[self.category_name]['category_id']
-        self.category_service.delete(category_id=category_id)
+        try:
+            self.category_service.delete(category_id=category_id)
+        except Error as error:
+            self.module.fail_json(msg="%s" % self.get_error_message(error))
         self.module.exit_json(changed=True,
                               category_results=dict(msg="Category '%s' deleted." % self.category_name,
                                                     category_id=category_id))

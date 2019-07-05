@@ -5,21 +5,51 @@
 
 from __future__ import absolute_import
 
+import pytest
+
 from ansible.modules.source_control.gitlab_user import GitLabUser
 
-from .gitlab import (GitlabModuleTestCase,
-                     python_version_match_requirement,
-                     resp_find_user, resp_get_user, resp_get_user_keys,
-                     resp_create_user_keys, resp_create_user, resp_delete_user,
-                     resp_get_member, resp_get_group, resp_add_member,
-                     resp_update_member, resp_get_member)
 
-# Gitlab module requirements
-if python_version_match_requirement():
-    from gitlab.v4.objects import User
+def _dummy(x):
+    """Dummy function.  Only used as a placeholder for toplevel definitions when the test is going
+    to be skipped anyway"""
+    return x
+
+
+pytestmark = []
+try:
+    from .gitlab import (GitlabModuleTestCase,
+                         python_version_match_requirement,
+                         resp_find_user, resp_get_user, resp_get_user_keys,
+                         resp_create_user_keys, resp_create_user, resp_delete_user,
+                         resp_get_member, resp_get_group, resp_add_member,
+                         resp_update_member, resp_get_member)
+
+    # Gitlab module requirements
+    if python_version_match_requirement():
+        from gitlab.v4.objects import User
+except ImportError:
+    pytestmark.append(pytest.mark.skip("Could not load gitlab module required for testing"))
+    # Need to set these to something so that we don't fail when parsing
+    GitlabModuleTestCase = object
+    resp_find_user = _dummy
+    resp_get_user = _dummy
+    resp_get_user_keys = _dummy
+    resp_create_user_keys = _dummy
+    resp_create_user = _dummy
+    resp_delete_user = _dummy
+    resp_get_member = _dummy
+    resp_get_group = _dummy
+    resp_add_member = _dummy
+    resp_update_member = _dummy
+    resp_get_member = _dummy
 
 # Unit tests requirements
-from httmock import with_httmock  # noqa
+try:
+    from httmock import with_httmock  # noqa
+except ImportError:
+    pytestmark.append(pytest.mark.skip("Could not load httmock module required for testing"))
+    with_httmock = _dummy
 
 
 class TestGitlabUser(GitlabModuleTestCase):

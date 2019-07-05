@@ -8,8 +8,8 @@
 
 - name: Registering container name
   set_fact:
-    service_names: "{{ service_names }} + [service_name]"
-    network_names: "{{ network_names }} + [network_name_1, network_name_2]"
+    service_names: "{{ service_names + [service_name] }}"
+    network_names: "{{ network_names + [network_name_1, network_name_2] }}"
 
 - docker_network:
     name: "{{ network_name }}"
@@ -1753,7 +1753,8 @@
       - resolve_image_1 is changed
       - resolve_image_2 is not changed
       - resolve_image_3 is failed
-      - "('version is ' ~ docker_py_version ~'. Minimum version required is 3.2.0') in resolve_image_3.msg"
+      - "('version is ' ~ docker_py_version ~ ' ') in resolve_image_3.msg"
+      - "'Minimum version required is 3.2.0 ' in resolve_image_3.msg"
   when: docker_api_version is version('1.30', '<') or docker_py_version is version('3.2.0', '<')
 
 ###################################################################

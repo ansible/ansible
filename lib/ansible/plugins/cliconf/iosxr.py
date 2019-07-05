@@ -35,7 +35,6 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import get_timestamp
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -61,9 +60,12 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_image'] = match.group(1)
 
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
-        if match:
-            device_info['network_os_model'] = match.group(1)
+        model_search_strs = [r'^Cisco (.+) \(revision', r'^[Cc]isco (\S+ \S+).+bytes of .*memory']
+        for item in model_search_strs:
+            match = re.search(item, data, re.M)
+            if match:
+                device_info['network_os_model'] = match.group(1)
+                break
 
         match = re.search(r'^(.+) uptime', data, re.M)
         if match:
@@ -116,6 +118,11 @@ class Cliconf(CliconfBase):
             cmd = line['command']
             results.append(self.send_command(**line))
             requests.append(cmd)
+
+        # Before any commit happend, we can get a real configuration
+        # diff from the device and make it available by the iosxr_config module.
+        # This information can be usefull either in check mode or normal mode.
+        resp['show_commit_config_diff'] = self.get('show commit changes diff')
 
         if commit:
             self.commit(comment=comment, label=label, replace=replace)
@@ -184,11 +191,10 @@ class Cliconf(CliconfBase):
 
         self.send_command(**cmd_obj)
 
-    def run_commands(self, commands=None, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands=None, check_rc=True):
         if commands is None:
             raise ValueError("'commands' value is required")
         responses = list()
-        timestamps = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
@@ -198,7 +204,6 @@ class Cliconf(CliconfBase):
                 raise ValueError("'output' value %s is not supported for run_commands" % output)
 
             try:
-                timestamp = get_timestamp()
                 out = self.send_command(**cmd)
             except AnsibleConnectionFailure as e:
                 if check_rc:
@@ -217,11 +222,7 @@ class Cliconf(CliconfBase):
                     pass
 
                 responses.append(out)
-                timestamps.append(timestamp)
-        if return_timestamps:
-            return responses, timestamps
-        else:
-            return responses
+        return responses
 
     def discard_changes(self):
         self.send_command('abort')

@@ -100,9 +100,20 @@ You can also combine multiple conditions for failure. This task will fail if bot
         - result.rc == 0
         - '"No such" not in result.stdout'
 
- If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
+If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
 
       failed_when: result.rc == 0 or "No such" not in result.stdout
+
+If you have too many conditions to fit neatly into one line, you can split it into a multi-line yaml value with ``>``::
+
+
+    - name: example of many failed_when conditions with OR
+      shell: "./myBinary"
+      register: ret
+      failed_when: >
+        ("No such file or directory" in ret.stdout) or
+        (ret.stderr != '') or
+        (ret.rc == 10)
 
 .. _override_the_changed_result:
 
@@ -141,7 +152,7 @@ Aborting the play
 
 Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
 
-The ``any_errors_fatal`` play option will mark all hosts as failed if any fails, causing an immediate abort::
+The ``any_errors_fatal`` play option will end the play when any tasks results in an error and stop execution of the play::
 
      - hosts: somehosts
        any_errors_fatal: true
@@ -175,13 +186,13 @@ See :ref:`block_error_handling` for more examples.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

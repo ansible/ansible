@@ -267,9 +267,10 @@ actions:
 '''
 
 import json
+import traceback
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -659,14 +660,17 @@ def main():
         option_minimal_versions=option_minimal_versions,
     )
 
-    results = dict(
-        changed=False,
-        result='',
-        actions=[]
-    )
+    try:
+        results = dict(
+            changed=False,
+            result='',
+            actions=[]
+        )
 
-    SwarmManager(client, results)()
-    client.module.exit_json(**results)
+        SwarmManager(client, results)()
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

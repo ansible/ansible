@@ -192,8 +192,10 @@ tasks:
 
 '''
 
+import traceback
+
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException, APIError, NotFound
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker_common
     pass
@@ -361,13 +363,16 @@ def main():
     client.fail_results['docker_swarm_active'] = client.check_if_swarm_node()
     client.fail_results['docker_swarm_manager'] = client.check_if_swarm_manager()
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    DockerSwarmManager(client, results)
-    results.update(client.fail_results)
-    client.module.exit_json(**results)
+        DockerSwarmManager(client, results)
+        results.update(client.fail_results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

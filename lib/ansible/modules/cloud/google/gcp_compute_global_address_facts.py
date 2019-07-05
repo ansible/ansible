@@ -42,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters.)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
 extends_documentation_fragment: gcp
@@ -60,8 +60,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -107,6 +107,13 @@ items:
       - A reference to the region where the regional address resides.
       returned: success
       type: str
+    prefixLength:
+      description:
+      - The prefix length of the IP range. If not present, it means the address field
+        is a single IP address.
+      - This field is not applicable to addresses with addressType=EXTERNAL.
+      returned: success
+      type: int
     addressType:
       description:
       - The type of the address to reserve, default is EXTERNAL.
@@ -114,6 +121,20 @@ items:
       - "* INTERNAL indicates internal IP ranges belonging to some network."
       returned: success
       type: str
+    purpose:
+      description:
+      - The purpose of the resource. For global internal addresses it can be * VPC_PEERING
+        - for peer networks This should only be set when using an Internal address.
+      returned: success
+      type: str
+    network:
+      description:
+      - The URL of the network in which to reserve the IP range. The IP range must
+        be in RFC1918 space. The network cannot be deleted if there are any reserved
+        IP ranges referring to it.
+      - This should only be set when using an Internal address.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
@@ -138,7 +159,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

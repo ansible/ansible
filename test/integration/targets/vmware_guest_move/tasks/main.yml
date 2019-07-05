@@ -18,30 +18,33 @@
     folder_type: vm
     state: present
     validate_certs: no
+  register: dest_folder
 
 # Testcase 0001: Move vm and get changed status
 - name: Move VM (Changed)
   vmware_guest_move:
     validate_certs: false
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ dc1 }}"
-    name: "{{ infra.vm_list[0] }}"
-    dest_folder: '/F0/DC0/vm/f1'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    name: '{{ virtual_machines[0].name }}'
+    # Depends-On: https://github.com/ansible/ansible/pull/55237
+    dest_folder: '{{ dest_folder.result.path }}'
   register: vm_facts_0001
 
 
 # Testcase 0002: Move vm and get OK status (Already Moved)
-- name: Move VM (OK)
+- &vm_move
+  name: Move VM (OK)
   vmware_guest_move:
     validate_certs: false
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ dc1 }}"
-    name: "{{ infra.vm_list[0] }}"
-    dest_folder: 'F0/DC0/vm/f1'
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    name: '{{ virtual_machines[0].name }}'
+    dest_folder: '{{ dest_folder.result.path }}'
   register: vm_facts_0002
 
 - debug:
@@ -50,7 +53,18 @@
 - debug:
     msg: "{{ vm_facts_0002 }}"
 
-- assert:
+- name: Make sure changes are done
+  assert:
     that:
       - vm_facts_0001.changed
       - not vm_facts_0002.changed
+
+- <<: *vm_move
+  name: Move VM in check mode
+  check_mode: yes
+  register: vm_move_0003
+
+- name: Make sure changes are not made in check mode
+  assert:
+    that:
+    - vm_move_0003.changed

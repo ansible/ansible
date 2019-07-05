@@ -481,6 +481,10 @@ class TestIpFilter(unittest.TestCase):
         self.assertEqual(ipmath('192.168.1.5', -5), '192.168.1.0')
         self.assertEqual(ipmath('192.168.0.5', -10), '192.167.255.251')
 
+        self.assertEqual(ipmath('192.168.1.1/24', 5), '192.168.1.6')
+        self.assertEqual(ipmath('192.168.1.6/24', -5), '192.168.1.1')
+        self.assertEqual(ipmath('192.168.2.6/24', -10), '192.168.1.252')
+
         self.assertEqual(ipmath('2001::1', 8), '2001::9')
         self.assertEqual(ipmath('2001::1', 9), '2001::a')
         self.assertEqual(ipmath('2001::1', 10), '2001::b')

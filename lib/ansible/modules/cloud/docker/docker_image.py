@@ -59,7 +59,8 @@ options:
         type: list
       dockerfile:
         description:
-          - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+          - Use with state C(present) and source C(build) to provide an alternate name for the Dockerfile to use when building an image.
+          - This can also include a relative path (relative to I(path)).
         type: str
       http_timeout:
         description:
@@ -125,6 +126,12 @@ options:
             be set in the container being built.
           - Needs Docker SDK for Python >= 3.7.0.
         type: bool
+      target:
+        description:
+          - When building an image specifies an intermediate build stage by
+            name as a final stage for the resulting image.
+        type: str
+        version_added: "2.9"
     version_added: "2.8"
   archive_path:
     description:
@@ -142,7 +149,8 @@ options:
     version_added: "2.2"
   dockerfile:
     description:
-      - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+      - Use with state C(present) and source C(build) to provide an alternate name for the Dockerfile to use when building an image.
+      - This can also include a relative path (relative to I(path)).
       - Please use I(build.dockerfile) instead. This option will be removed in Ansible 2.12.
     type: str
     version_added: "2.0"
@@ -408,8 +416,10 @@ image:
     type: dict
     sample: {}
 '''
+
 import os
 import re
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -425,6 +435,7 @@ if docker_version is not None:
         else:
             from docker.auth.auth import resolve_repository_name
         from docker.utils.utils import parse_repository_tag
+        from docker.errors import DockerException
     except ImportError:
         # missing Docker SDK for Python handled in module_utils.docker.common
         pass
@@ -453,11 +464,12 @@ class ImageManager(DockerBaseClass):
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
         self.network = build.get('network')
-        self.nocache = build.get('nocache')
+        self.nocache = build.get('nocache', False)
         self.build_path = build.get('path')
         self.pull = build.get('pull')
+        self.target = build.get('target')
         self.repository = parameters.get('repository')
-        self.rm = build.get('rm')
+        self.rm = build.get('rm', True)
         self.state = parameters.get('state')
         self.tag = parameters.get('tag')
         self.http_timeout = build.get('http_timeout')
@@ -727,6 +739,8 @@ class ImageManager(DockerBaseClass):
             # use_config_proxy is True and buildargs is None
             if 'buildargs' not in params:
                 params['buildargs'] = {}
+        if self.target:
+            params['target'] = self.target
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -793,6 +807,7 @@ def main():
             rm=dict(type='bool', default=True),
             args=dict(type='dict'),
             use_config_proxy=dict(type='bool'),
+            target=dict(type='str'),
         )),
         archive_path=dict(type='path'),
         container_limits=dict(type='dict', options=dict(
@@ -833,12 +848,16 @@ def main():
     def detect_build_network(client):
         return client.module.params['build'] and client.module.params['build'].get('network') is not None
 
+    def detect_build_target(client):
+        return client.module.params['build'] and client.module.params['build'].get('target') is not None
+
     def detect_use_config_proxy(client):
         return client.module.params['build'] and client.module.params['build'].get('use_config_proxy') is not None
 
     option_minimal_versions = dict()
     option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
     option_minimal_versions["build.network"] = dict(docker_py_version='2.4.0', docker_api_version='1.25', detect_usage=detect_build_network)
+    option_minimal_versions["build.target"] = dict(docker_py_version='2.4.0', detect_usage=detect_build_target)
     option_minimal_versions["build.use_config_proxy"] = dict(docker_py_version='3.7.0', detect_usage=detect_use_config_proxy)
 
     client = AnsibleDockerClient(
@@ -879,14 +898,14 @@ def main():
         if client.module.params[option] != default_value:
             if client.module.params['build'] is None:
                 client.module.params['build'] = dict()
-            if client.module.params['build'].get(build_option) != default_value:
+            if client.module.params['build'].get(build_option, default_value) != default_value:
                 client.fail('Cannot specify both %s and build.%s!' % (option, build_option))
             client.module.params['build'][build_option] = client.module.params[option]
             client.module.warn('Please specify build.%s instead of %s. The %s option '
                                'has been renamed and will be removed in Ansible 2.12.' % (build_option, option, option))
     if client.module.params['source'] == 'build':
         if (not client.module.params['build'] or not client.module.params['build'].get('path')):
-            client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
+            client.fail('If "source" is set to "build", the "build.path" option must be specified.')
         if client.module.params['build'].get('pull') is None:
             client.module.warn("The default for build.pull is currently 'yes', but will be changed to 'no' in Ansible 2.12. "
                                "Please set build.pull explicitly to the value you need.")
@@ -912,14 +931,17 @@ def main():
                            'use the "force_source", "force_absent" or "force_tag" option '
                            'instead, depending on what you want to force.')
 
-    results = dict(
-        changed=False,
-        actions=[],
-        image={}
-    )
+    try:
+        results = dict(
+            changed=False,
+            actions=[],
+            image={}
+        )
 
-    ImageManager(client, results)
-    client.module.exit_json(**results)
+        ImageManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

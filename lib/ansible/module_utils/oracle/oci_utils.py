@@ -1,8 +1,6 @@
 # Copyright (c) 2017, 2018, 2019 Oracle and/or its affiliates.
-# This software is made available to you under the terms of the GPL 3.0 license or the Apache 2.0 license.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# Apache License v2.0
-# See LICENSE.TXT for details.
+
 from __future__ import absolute_import
 
 import logging
@@ -413,37 +411,18 @@ def get_logger(module_name):
 
 
 def setup_logging(
-    default_config_file="/etc/ansible/oci_logging.yaml",
     default_level="INFO",
-    default_log_path=tempfile.gettempdir(),
 ):
     """Setup logging configuration"""
-    env_config_file = "LOG_CONFIG"
     env_log_path = "LOG_PATH"
     env_log_level = "LOG_LEVEL"
 
-    config_file = os.getenv(env_config_file, default_config_file)
+    default_log_path = tempfile.gettempdir()
     log_path = os.getenv(env_log_path, default_log_path)
-
-    files_handlers = ["debug_file_handler", "error_file_handler", "info_file_handler"]
-
-    if os.path.exists(config_file):
-        with open(to_bytes(config_file), "rt") as f:
-            config = yaml.safe_load(f.read())
-            for files_handler in files_handlers:
-                config["handlers"][files_handler]["filename"] = config["handlers"][
-                    files_handler
-                ]["filename"].format(
-                    path=log_path, date=datetime.today().strftime("%d-%m-%Y")
-                )
-        logging.config.dictConfig(config)
-    else:
-        log_level_str = os.getenv(env_log_level, default_level)
-        log_level = logging.getLevelName(log_level_str)
-
-        log_file_path = os.path.join(tempfile.gettempdir(), "oci_ansible_module.log")
-
-        logging.basicConfig(filename=log_file_path, filemode="a", level=log_level)
+    log_level_str = os.getenv(env_log_level, default_level)
+    log_level = logging.getLevelName(log_level_str)
+    log_file_path = os.path.join(log_path, "oci_ansible_module.log")
+    logging.basicConfig(filename=log_file_path, filemode="a", level=log_level)
     return logging
 
 

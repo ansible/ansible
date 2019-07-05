@@ -212,7 +212,7 @@ options:
         type: bool
     iops:
         description:
-          - The Provisioned IOPS (I/O operations per second) value.
+          - The Provisioned IOPS (I/O operations per second) value. Is only set when using I(storage_type) is set to io1.
         type: int
     kms_key_id:
         description:
@@ -224,10 +224,8 @@ options:
     license_model:
         description:
           - The license model for the DB instance.
-        choices:
-          - license-included
-          - bring-your-own-license
-          - general-public-license
+          - Several options are license-included, bring-your-own-license, and general-public-license.
+          - This option can also be omitted to default to an accepted value.
         type: str
     master_user_password:
         description:
@@ -848,6 +846,8 @@ def get_options_with_changing_values(client, module, parameters):
         parameters.pop('MasterUserPassword', None)
     if cloudwatch_logs_enabled:
         parameters['CloudwatchLogsExportConfiguration'] = cloudwatch_logs_enabled
+    if not module.params['storage_type']:
+        parameters.pop('Iops', None)
 
     instance = get_instance(client, module, instance_id)
     updated_parameters = get_changing_options_with_inconsistent_keys(parameters, instance, purge_cloudwatch_logs)
@@ -892,7 +892,8 @@ def get_current_attributes_with_inconsistent_keys(instance):
     options['DBParameterGroupName'] = [parameter_group['DBParameterGroupName'] for parameter_group in instance['DBParameterGroups']]
     options['AllowMajorVersionUpgrade'] = None
     options['EnableIAMDatabaseAuthentication'] = instance['IAMDatabaseAuthenticationEnabled']
-    options['EnablePerformanceInsights'] = instance['PerformanceInsightsEnabled']
+    # PerformanceInsightsEnabled is not returned on older RDS instances it seems
+    options['EnablePerformanceInsights'] = instance.get('PerformanceInsightsEnabled', False)
     options['MasterUserPassword'] = None
     options['NewDBInstanceIdentifier'] = instance['DBInstanceIdentifier']
 
@@ -1090,7 +1091,7 @@ def main():
         force_failover=dict(type='bool'),
         iops=dict(type='int'),
         kms_key_id=dict(),
-        license_model=dict(choices=['license-included', 'bring-your-own-license', 'general-public-license']),
+        license_model=dict(),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
         monitoring_interval=dict(type='int'),

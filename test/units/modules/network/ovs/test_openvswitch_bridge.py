@@ -20,10 +20,23 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch
 from ansible.modules.network.ovs import openvswitch_bridge
+from units.compat.mock import patch, MagicMock
 from units.modules.utils import set_module_args
 from .ovs_module import TestOpenVSwitchModule, load_fixture
+
+import pytest
+
+
+@pytest.fixture
+def patched_openvswitch_bridge(monkeypatch):
+    mocked_bridge = MagicMock()
+    mocked_bridge.return_value = {'bridge': 'test-br2', 'parent': 'test-br',
+                                  'vlan': 200, 'fail_mode': None,
+                                  'external_ids': None, 'set': None}
+    monkeypatch.setattr(openvswitch_bridge, 'map_config_to_obj', mocked_bridge)
+    return openvswitch_bridge
+
 
 test_name_side_effect_matrix = {
     'test_openvswitch_bridge_absent_idempotent': [
@@ -47,6 +60,11 @@ test_name_side_effect_matrix = {
         (0, '', ''),
         (0, '', '')],
     'test_openvswitch_bridge_present_creates_fake_bridge': [
+        (0, '', ''),
+        (0, '', ''),
+        (0, '', ''),
+        (0, '', '')],
+    'test_openvswitch_bridge_updates_vlan': [
         (0, '', ''),
         (0, '', ''),
         (0, '', ''),
@@ -154,6 +172,16 @@ class TestOpenVSwitchBridgeModule(TestOpenVSwitchModule):
         ]
         self.execute_module(changed=True, commands=commands,
                             test_name='test_openvswitch_bridge_present_creates_fake_bridge')
+
+    @pytest.mark.usefixtures('patched_openvswitch_bridge')
+    def test_openvswitch_bridge_updates_vlan(self):
+        set_module_args({'state': 'present', 'bridge': 'test-br2', 'parent':
+                         'test-br', 'vlan': 300})
+        commands = [
+            '/usr/bin/ovs-vsctl -t 5 set port test-br2 tag=300'
+        ]
+        self.execute_module(changed=True, commands=commands,
+                            test_name='test_openvswitch_bridge_updates_vlan')
 
     def test_openvswitch_bridge_present_adds_external_id(self):
         set_module_args(dict(state='present',

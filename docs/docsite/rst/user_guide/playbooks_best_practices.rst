@@ -19,7 +19,7 @@ The following section shows one of many possible ways to organize playbook conte
 Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
 
 One crucial way to organize your playbook content is Ansible's "roles" organization feature, which is documented as part
-of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :doc:`playbooks_reuse_roles`.
+of the main playbooks page.  You should take the time to read and understand the roles documentation which is available here: :ref:`playbooks_reuse_roles`.
 
 .. _directory_layout:
 
@@ -120,7 +120,7 @@ This layout gives you more flexibility for larger environments, as well as a tot
 Use Dynamic Inventory With Clouds
 `````````````````````````````````
 
-If you are using a cloud provider, you should not be managing your inventory in a static file.  See :doc:`intro_dynamic_inventory`.
+If you are using a cloud provider, you should not be managing your inventory in a static file.  See :ref:`intro_dynamic_inventory`.
 
 This does not just apply to clouds -- If you have another system maintaining a canonical list of systems
 in your infrastructure, usage of dynamic inventory is a great idea in general.
@@ -282,7 +282,7 @@ of each play::
         name: ntpd
         state: restarted
 
-See :doc:`playbooks_reuse_roles` for more information.
+See :ref:`playbooks_reuse_roles` for more information.
 
 
 .. _organization_examples:
@@ -359,7 +359,7 @@ Rolling Updates
 Understand the 'serial' keyword.  If updating a webserver farm you really want to use it to control how many machines you are
 updating at once in the batch.
 
-See :doc:`playbooks_delegation`.
+See :ref:`playbooks_delegation`.
 
 .. _mention_the_state:
 
@@ -374,13 +374,13 @@ parameter in your playbooks to make it clear, especially as some modules support
 Group By Roles
 ++++++++++++++
 
-We're somewhat repeating ourselves with this tip, but it's worth repeating. A system can be in multiple groups.  See :doc:`intro_inventory` and :doc:`intro_patterns`.   Having groups named after things like
+We're somewhat repeating ourselves with this tip, but it's worth repeating. A system can be in multiple groups.  See :ref:`intro_inventory` and :ref:`intro_patterns`.   Having groups named after things like
 *webservers* and *dbservers* is repeated in the examples because it's a very powerful concept.
 
 This allows playbooks to target machines based on role, as well as to assign role specific variables
 using the group variable system.
 
-See :doc:`playbooks_reuse_roles`.
+See :ref:`playbooks_reuse_roles`.
 
 .. _os_variance:
 
@@ -509,4 +509,3 @@ This best practice has no limit on the amount of variable and vault files or the
        Complete playbook files from the github project source
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-

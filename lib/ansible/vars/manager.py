@@ -35,7 +35,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
@@ -104,7 +104,7 @@ class VariableManager:
         except AnsibleError as e:
             # bad cache plugin is not fatal error
             # fallback to a dict as in memory cache
-            display.warning(to_native(e))
+            display.warning(to_text(e))
             self._fact_cache = {}
 
     def __getstate__(self):
@@ -318,7 +318,7 @@ class VariableManager:
                     # and magic vars so we can properly template the vars_files entries
                     temp_vars = combine_vars(all_vars, self._extra_vars)
                     temp_vars = combine_vars(temp_vars, magic_variables)
-                    self._templar.set_available_variables(temp_vars)
+                    self._templar.available_variables = temp_vars
 
                     # we assume each item in the list is itself a list, as we
                     # support "conditional includes" for vars_files, which mimics
@@ -498,7 +498,7 @@ class VariableManager:
         # as we're fetching vars before post_validate has been called on
         # the task that has been passed in
         vars_copy = existing_variables.copy()
-        self._templar.set_available_variables(vars_copy)
+        self._templar.available_variables = vars_copy
 
         items = []
         has_loop = True
@@ -533,7 +533,7 @@ class VariableManager:
             if item is not None:
                 vars_copy[item_var] = item
 
-            self._templar.set_available_variables(vars_copy)
+            self._templar.available_variables = vars_copy
             delegated_host_name = self._templar.template(task.delegate_to, fail_on_undefined=False)
             if delegated_host_name != task.delegate_to:
                 cache_items = True

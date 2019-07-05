@@ -1,5 +1,7 @@
 :orphan:
 
+.. _testing_validate-modules:
+
 ****************
 validate-modules
 ****************
@@ -8,7 +10,7 @@ validate-modules
 
 Python program to help test or validate Ansible modules.
 
-``validate-modules`` is one of the ``ansible-test`` Sanity Tests, see :doc:`testing_sanity` for more information.
+``validate-modules`` is one of the ``ansible-test`` Sanity Tests, see :ref:`testing_sanity` for more information.
 
 Originally developed by Matt Martz (@sivel)
 
@@ -129,6 +131,8 @@ Errors
   334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
   335       argument_spec implies type="str" but documentation defines it as different data type
   336       argument in argument_spec is not a valid python identifier
+  337       Type value is defined in ``argument_spec`` but documentation doesn't specify a type
+  338       documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
   ..
 ---------   -------------------
   **4xx**   **Syntax**

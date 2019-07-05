@@ -22,7 +22,8 @@ description:
     - Keys are generated in PEM format.
     - This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
 requirements:
-    - python-pyOpenSSL
+    - pyOpenSSL
+    - cryptography (if I(format) is C(OpenSSH))
 author:
 - Yanis Guenane (@Spredzy)
 options:
@@ -149,13 +150,21 @@ import traceback
 PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import serialization as crypto_serialization
 except ImportError:
     PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
+
+CRYPTOGRAPHY_IMP_ERR = None
+try:
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization as crypto_serialization
+except ImportError:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
+    cryptography_found = False
+else:
+    cryptography_found = True
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
@@ -310,6 +319,8 @@ def main():
 
     if not pyopenssl_found:
         module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+    if module.params['format'] == 'OpenSSH' and not cryptography_found:
+        module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):

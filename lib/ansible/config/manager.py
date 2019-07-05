@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import atexit
 import io
 import os
 import os.path
@@ -28,8 +29,7 @@ from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils import py3compat
-from ansible.utils.path import unfrackpath
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
 Plugin = namedtuple('Plugin', 'name type')
@@ -83,11 +83,11 @@ def ensure_type(value, value_type, origin=None):
     if value_type:
         value_type = value_type.lower()
 
-    if value_type in ('boolean', 'bool'):
-        value = boolean(value, strict=False)
+    if value is not None:
+        if value_type in ('boolean', 'bool'):
+            value = boolean(value, strict=False)
 
-    elif value is not None:
-        if value_type in ('integer', 'int'):
+        elif value_type in ('integer', 'int'):
             value = int(value)
 
         elif value_type == 'float':
@@ -110,6 +110,7 @@ def ensure_type(value, value_type, origin=None):
                 makedirs_safe(value, 0o700)
             prefix = 'ansible-local-%s' % os.getpid()
             value = tempfile.mkdtemp(prefix=prefix, dir=value)
+            atexit.register(cleanup_tmp_file, value, warn=True)
 
         elif value_type == 'pathspec':
             if isinstance(value, string_types):

@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove lingering ansible vault cipher (AES) after it beeing removed in #44320

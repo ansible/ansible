@@ -206,7 +206,7 @@ class OnePasswordFacts(object):
             else:
                 if section_title is None:
                     for field_data in data['details'].get('fields', []):
-                        if field_data.get('name').lower() == field_name.lower():
+                        if field_data.get('name', '').lower() == field_name.lower():
                             return {field_name: field_data.get('value', '')}
 
                 # Not found it yet, so now lets see if there are any sections defined
@@ -216,7 +216,7 @@ class OnePasswordFacts(object):
                     if section_title is not None and section_title.lower() != section_data['title'].lower():
                         continue
                     for field_data in section_data.get('fields', []):
-                        if field_data.get('t').lower() == field_name.lower():
+                        if field_data.get('t', '').lower() == field_name.lower():
                             return {field_name: field_data.get('v', '')}
 
         # We will get here if the field could not be found in any section and the item wasn't a document to be downloaded.

@@ -81,7 +81,25 @@ Function Invoke-AnsibleWebRequest {
     $web_request.Method = $Method.($web_request.GetType().Name)
 
     foreach ($header in $headers.GetEnumerator()) {
-        $web_request.Headers.Add($header.Key, $header.Value)
+        # some headers need to be set on the property itself
+        switch ($header.Key) {
+            Accept { $web_request.Accept = $header.Value }
+            Connection { $web_request.Connection = $header.Value }
+            Content-Length { $web_request.ContentLength = $header.Value }
+            Content-Type { $web_request.ContentType = $header.Value }
+            Expect { $web_request.Expect = $header.Value }
+            Date { $web_request.Date = $header.Value }
+            Host { $web_request.Host = $header.Value }
+            If-Modified-Since { $web_request.IfModifiedSince = $header.Value }
+            Range { $web_request.AddRange($header.Value) }
+            Referer { $web_request.Referer = $header.Value }
+            Transfer-Encoding {
+                $web_request.SendChunked = $true
+                $web_request.TransferEncoding = $header.Value
+            }
+            User-Agent { $web_request.UserAgent = $header.Value }
+            default { $web_request.Headers.Add($header.Key, $header.Value) }
+        }
     }
 
     if ($timeout) {
@@ -90,7 +108,7 @@ Function Invoke-AnsibleWebRequest {
 
     if (-not $UseProxy) {
         $web_request.Proxy = $null
-    } elseif ($ProxyUri) {
+    } elseif ($Proxy) {
         $web_request.Proxy = $Proxy
     }
 

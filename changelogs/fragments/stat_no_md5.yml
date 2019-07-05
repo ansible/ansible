@@ -1,0 +1,2 @@
+minor_changes:
+    - removed previously deprecated ``get_md5`` option from M(stat) module.

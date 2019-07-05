@@ -319,7 +319,7 @@ class GalaxyCLI(CLI):
     def execute_install(self):
         """
         uses the args list of roles to be installed, unless -f was specified. The list of roles
-        can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
+        can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
         """
         role_file = context.CLIARGS['role_file']
 
@@ -437,8 +437,8 @@ class GalaxyCLI(CLI):
                                     dep_role.remove()
                                     roles_left.append(dep_role)
                                 else:
-                                    display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
-                                                    (to_text(dep_role), role.name, dep_role.install_info['version']))
+                                    display.warning('- dependency %s (%s) from role %s differs from already installed version (%s), skipping' %
+                                                    (to_text(dep_role), dep_role.version, role.name, dep_role.install_info['version']))
                             else:
                                 if force_deps:
                                     roles_left.append(dep_role)

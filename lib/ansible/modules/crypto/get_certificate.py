@@ -44,8 +44,7 @@ notes:
   - When using ca_cert on OS X it has been reported that in some conditions the validate will always succeed.
 
 requirements:
-  - "python >= 2.6"
-  - "python-pyOpenSSL >= 0.15"
+  - "pyOpenSSL >= 0.15"
 '''
 
 RETURN = '''
@@ -107,6 +106,12 @@ EXAMPLES = '''
   delegate_to: localhost
   run_once: true
   register: cert
+
+- name: How many days until cert expires
+  debug:
+    msg: "cert expires in: {{ expire_days }} days."
+  vars:
+    expire_days: "{{ (( cert.not_after | to_datetime('%Y%m%d%H%M%SZ')) - (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ')) ).days }}"
 '''
 
 import traceback
@@ -147,7 +152,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+        module.fail_json(msg=missing_required_lib('pyOpenSSL >= 0.15'), exception=PYOPENSSL_IMP_ERR)
 
     if timeout:
         setdefaulttimeout(timeout)

@@ -318,7 +318,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 result['result'] = k8s_obj
                 if wait:
                     success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
-                match, diffs = self.diff_objects(existing.to_dict(), result['result'].to_dict())
+                match, diffs = self.diff_objects(existing.to_dict(), result['result'])
                 result['changed'] = not match
                 result['method'] = 'replace'
                 result['diff'] = diffs
@@ -347,7 +347,6 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if wait:
                 success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
             match, diffs = self.diff_objects(existing.to_dict(), result['result'])
-            result['result'] = k8s_obj
             result['changed'] = not match
             result['method'] = 'patch'
             result['diff'] = diffs
@@ -437,6 +436,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             # There should never be more than one condition of a specific type
             match = match[0]
             if match.status == 'Unknown':
+                if match.status == condition['status']:
+                    if 'reason' not in condition:
+                        return True
+                    if condition['reason']:
+                        return match.reason == condition['reason']
                 return False
             status = True if match.status == 'True' else False
             if status == condition['status']:

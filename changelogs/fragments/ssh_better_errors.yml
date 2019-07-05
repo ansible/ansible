@@ -1,0 +1,2 @@
+bugfixes:
+    - preserve actual ssh error when we cannot connect.

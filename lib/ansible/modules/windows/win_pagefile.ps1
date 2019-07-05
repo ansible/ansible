@@ -91,12 +91,14 @@ if ($state -eq "absent") {
     }
 
     # Make sure drive is accessible
-    if (($test_path) -and (-not (Test-Path "${drive}:"))) {
+    if (($testPath) -and (-not (Test-Path "${drive}:"))) {
         Fail-Json $result "Unable to access '${drive}:' drive"
     }
 
+    $curPagefile = Get-Pagefile $fullPath
+
     # Set pagefile
-    if ($null -eq (Get-Pagefile $fullPath)) {
+    if ($null -eq $curPagefile) {
         try {
             $pagefile = Set-WmiInstance -Class Win32_PageFileSetting -Arguments @{name = $fullPath; InitialSize = 0; MaximumSize = 0} -WhatIf:$check_mode
         } catch {
@@ -129,6 +131,40 @@ if ($state -eq "absent") {
             }
         }
         $result.changed = $true
+    }else
+    {
+        $CurPageFileSystemManaged = (Get-CimInstance -ClassName win32_Pagefile -Property 'System' -Filter "name='$($fullPath.Replace('\','\\'))'").System
+        if ((-not $check_mode) -and 
+            -not ($systemManaged -or $CurPageFileSystemManaged) -and 
+            (   ($curPagefile.InitialSize -ne $initialSize) -or 
+                ($curPagefile.maximumSize -ne $maximumSize)))
+        {
+            $curPagefile.InitialSize = $initialSize
+            $curPagefile.MaximumSize = $maximumSize
+            try {
+                $curPagefile.Put() | out-null
+            } catch {
+                $originalExceptionMessage = $($_.Exception.Message)
+                # Try workaround before failing
+                try {
+                    Remove-Pagefile $fullPath -whatif:$check_mode
+                } catch {
+                    Fail-Json $result "Failed to remove pagefile before workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                }
+                try {
+                    $pagingFilesValues = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management").PagingFiles
+                } catch {
+                    Fail-Json $result "Failed to get pagefile settings from the registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                }
+                $pagingFilesValues += "$fullPath $initialSize $maximumSize"
+                try {
+                    Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" "PagingFiles" $pagingFilesValues
+                } catch {
+                    Fail-Json $result "Failed to set pagefile settings to the registry for workaround $($_.Exception.Message) Original exception: $originalExceptionMessage"
+                }
+            }
+            $result.changed = $true
+        }
     }
 } elseif ($state -eq "query") {
     $result.pagefiles = @()

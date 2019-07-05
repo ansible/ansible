@@ -16,7 +16,7 @@ started with some ad-hoc commands.
 What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
 These features are handled by playbooks which are covered in a separate section.
 
-This section is about how to initially get Ansible running.  Once you understand these concepts, read :doc:`intro_adhoc` for some more detail, and then you'll be ready to begin learning about playbooks and explore the most interesting parts!
+This section is about how to initially get Ansible running.  Once you understand these concepts, read :ref:`intro_adhoc` for some more detail, and then you'll be ready to begin learning about playbooks and explore the most interesting parts!
 
 .. _remote_connection_information:
 
@@ -55,7 +55,7 @@ public SSH key should be located in ``authorized_keys`` on those systems::
     bserver.example.org
 
 
-This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
+This is an inventory file, which is also explained in greater depth here:  :ref:`intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
 do:
@@ -65,7 +65,12 @@ do:
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
 
-(Depending on your setup, you may wish to use Ansible's ``--private-key`` option to specify a pem file instead)
+Depending on your setup, you may wish to use Ansible's ``--private-key`` command line option to specify a pem file instead.  You can also add the private key file:
+
+    $ ssh-agent bash
+    $ ssh-add ~/.ssh/keypair.pem
+
+Another way to add private key files without using ssh-agent is using ``ansible_ssh_private_key_file`` in an inventory file as explained here:  :ref:`intro_inventory`.
 
 Now ping all your nodes:
 
@@ -97,9 +102,9 @@ Now run a live command on all of your nodes:
    $ ansible all -a "/bin/echo hello"
 
 Congratulations!  You've just contacted your nodes with Ansible.  It's
-soon going to be time to: read about some more real-world cases in :doc:`intro_adhoc`,
+soon going to be time to: read about some more real-world cases in :ref:`intro_adhoc`,
 explore what you can do with different modules, and to learn about the Ansible
-:doc:`playbooks` language.  Ansible is not just about running commands, it
+:ref:`working_with_playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
 explore, but you already have a fully working infrastructure!
 

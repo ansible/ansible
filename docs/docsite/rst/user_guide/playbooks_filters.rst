@@ -40,7 +40,7 @@ To avoid such behaviour and generate long lines it is possible to use ``width`` 
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying python functions.
+While it would be nicer to use a construction like ``float("inf")`` instead of a hardcoded number, unfortunately the filter doesn't support proxying Python functions.
 Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
 
 
@@ -114,7 +114,10 @@ Omitting Parameters
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
-      file: dest={{ item.path }} state=touch mode={{ item.mode | default(omit) }}
+      file:
+        dest: "{{ item.path }}"
+        state: touch
+        mode: "{{ item.mode | default(omit) }}"
       loop:
         - path: /tmp/foo
         - path: /tmp/bar
@@ -124,9 +127,9 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
-.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
-      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
-      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+.. note:: If you are "chaining" additional filters after the ``default(omit)`` filter, you should instead do something like this:
+      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the
+      later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to
       the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
@@ -378,6 +381,10 @@ To get a random MAC address from a string prefix starting with '52:54:00'::
 
 Note that if anything is wrong with the prefix string, the filter will issue an error.
 
+As of Ansible version 2.9, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
+
+    "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
+
 .. _random_filter:
 
 Random Number Filter
@@ -478,29 +485,52 @@ Sometimes you end up with a complex data structure in JSON format and you need t
 
 Now, let's take the following data structure::
 
-    domain_definition:
-        domain:
-            cluster:
-                - name: "cluster1"
-                - name: "cluster2"
-            server:
-                - name: "server11"
-                  cluster: "cluster1"
-                  port: "8080"
-                - name: "server12"
-                  cluster: "cluster1"
-                  port: "8090"
-                - name: "server21"
-                  cluster: "cluster2"
-                  port: "9080"
-                - name: "server22"
-                  cluster: "cluster2"
-                  port: "9090"
-            library:
-                - name: "lib1"
-                  target: "cluster1"
-                - name: "lib2"
-                  target: "cluster2"
+    {
+        "domain_definition": {
+            "domain": {
+                "cluster": [
+                    {
+                        "name": "cluster1"
+                    },
+                    {
+                        "name": "cluster2"
+                    }
+                ],
+                "server": [
+                    {
+                        "name": "server11",
+                        "cluster": "cluster1",
+                        "port": "8080"
+                    },
+                    {
+                        "name": "server12",
+                        "cluster": "cluster1",
+                        "port": "8090"
+                    },
+                    {
+                        "name": "server21",
+                        "cluster": "cluster2",
+                        "port": "9080"
+                    },
+                    {
+                        "name": "server22",
+                        "cluster": "cluster2",
+                        "port": "9090"
+                    }
+                ],
+                "library": [
+                    {
+                        "name": "lib1",
+                        "target": "cluster1"
+                    },
+                    {
+                        "name": "lib2",
+                        "target": "cluster2"
+                    }
+                ]
+            }
+        }
+    }
 
 To extract all clusters from this structure, you can use the following query::
 
@@ -575,7 +605,7 @@ address. For example, to get the IP address itself from a CIDR, you can use::
   {{ '192.0.2.1/24' | ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
-in :doc:`playbooks_filters_ipaddr`.
+in :ref:`playbooks_filters_ipaddr`.
 
 .. _network_filters:
 
@@ -776,6 +806,38 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
     </rpc-reply>
 
 .. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
+
+Network VLAN filters
+````````````````````
+
+.. versionadded:: 2.8
+
+Use the ``vlan_parser`` filter to manipulate an unsorted list of VLAN integers into a
+sorted string list of integers according to IOS-like VLAN list rules. This list has the following properties:
+
+* Vlans are listed in ascending order.
+* Three or more consecutive VLANs are listed with a dash.
+* The first line of the list can be first_line_len characters long.
+* Subsequent list lines can be other_line_len characters.
+
+To sort a VLAN list::
+
+    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
+
+This example renders the folllowing sorted list::
+
+    ['100,1688,3002-3005,3999']
+
+
+Another example Jinja template::
+
+    {% set parsed_vlans = vlans | vlan_parser %}
+    switchport trunk allowed vlan {{ parsed_vlans[0] }}
+    {% for i in range (1, parsed_vlans | count) %}
+    switchport trunk allowed vlan add {{ parsed_vlans[i] }}
+
+This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface. You can store an exhaustive raw list of the exact VLANs required for an interface and then compare that to the parsed IOS output that would actually be generated for the configuration.
+
 
 .. _hash_filters:
 
@@ -1067,15 +1129,34 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
+.. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
+   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
+   end, which means it will make two replacements.
+
     # add "https://" prefix to each item in a list
+    GOOD:
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '(.+)', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '^', 'https://') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', 'https://\\1') | list }}
+
+    # append ':80' to each item in a list
+    GOOD:
+    {{ hosts | map('regex_replace', '^(.*)$', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '(.+)', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '$', ':80') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', '\\1:80') | list }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 .. versionadded:: 2.0
 
-To escape special characters within a standard python regex, use the "regex_escape" filter (using the default re_type='python' option)::
+To escape special characters within a standard Python regex, use the "regex_escape" filter (using the default re_type='python' option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
@@ -1305,8 +1386,8 @@ type of a variable::
 Computer Theory Assertions
 ```````````````````````````
 
-The ``human_readable`` and ``human_to_bytes`` functions let you test your 
-playbooks to make sure you are using the right size format in your tasks - that 
+The ``human_readable`` and ``human_to_bytes`` functions let you test your
+playbooks to make sure you are using the right size format in your tasks - that
 you're providing Byte format to computers and human-readable format to people.
 
 Human Readable
@@ -1369,17 +1450,17 @@ to be added to core so everyone can make use of them.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

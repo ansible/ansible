@@ -434,6 +434,10 @@ options:
       - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
          C(docker run --network) and will I(not) add the default network if C(networks) is
          specified. If C(networks) is not specified, the default network will be attached."
+      - "Note that docker CLI also sets C(network_mode) to the name of the first network
+         added if C(--network) is specified. For more compatibility with docker CLI, you
+         explicitly have to set C(network_mode) to the name of the first network you're
+         adding."
       - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
     type: bool
     version_added: "2.8"
@@ -486,7 +490,6 @@ options:
       - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
         is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
         to resolve hostnames."
-      - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
       - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
@@ -832,8 +835,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: "true"
-      - arg2: "whatever"
+      arg1: "true"
+      arg2: "whatever"
     volumes:
       - /tmp:/tmp
     comparisons:
@@ -846,8 +849,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: "true"
-      - arg2: "whatever"
+      arg1: "true"
+      arg2: "whatever"
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
@@ -939,6 +942,7 @@ container:
 import os
 import re
 import shlex
+import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils.common.text.formatters import human_to_bytes
@@ -961,7 +965,7 @@ try:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException, APIError, NotFound
 except Exception:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -1283,7 +1287,7 @@ class TaskParameters(DockerBaseClass):
                 if network.get(para):
                     params[para] = network[para]
             network_config = dict()
-            network_config[network['name']] = self.client.create_endpoint_config(params)
+            network_config[network['name']] = self.client.create_endpoint_config(**params)
             result['networking_config'] = self.client.create_networking_config(network_config)
         return result
 
@@ -1407,11 +1411,17 @@ class TaskParameters(DockerBaseClass):
             return ip
         for net in self.networks:
             if net.get('name'):
-                network = self.client.inspect_network(net['name'])
-                if network.get('Driver') == 'bridge' and \
-                   network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
-                    ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
-                    break
+                try:
+                    network = self.client.inspect_network(net['name'])
+                    if network.get('Driver') == 'bridge' and \
+                       network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
+                        ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
+                        break
+                except NotFound as e:
+                    self.client.fail(
+                        "Cannot inspect the network '{0}' to determine the default IP.".format(net['name']),
+                        exception=traceback.format_exc()
+                    )
         return ip
 
     def _parse_publish_ports(self):
@@ -2096,7 +2106,7 @@ class Container(DockerBaseClass):
         self.log('_get_expected_binds')
         image_vols = []
         if image:
-            image_vols = self._get_image_binds(image['ContainerConfig'].get('Volumes'))
+            image_vols = self._get_image_binds(image[self.parameters.client.image_inspect_source].get('Volumes'))
         param_vols = []
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
@@ -2146,8 +2156,8 @@ class Container(DockerBaseClass):
     def _get_expected_volumes(self, image):
         self.log('_get_expected_volumes')
         expected_vols = dict()
-        if image and image['ContainerConfig'].get('Volumes'):
-            expected_vols.update(image['ContainerConfig'].get('Volumes'))
+        if image and image[self.parameters.client.image_inspect_source].get('Volumes'):
+            expected_vols.update(image[self.parameters.client.image_inspect_source].get('Volumes'))
 
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
@@ -2177,8 +2187,8 @@ class Container(DockerBaseClass):
     def _get_expected_env(self, image):
         self.log('_get_expected_env')
         expected_env = dict()
-        if image and image['ContainerConfig'].get('Env'):
-            for env_var in image['ContainerConfig']['Env']:
+        if image and image[self.parameters.client.image_inspect_source].get('Env'):
+            for env_var in image[self.parameters.client.image_inspect_source]['Env']:
                 parts = env_var.split('=', 1)
                 expected_env[parts[0]] = parts[1]
         if self.parameters.env:
@@ -2192,7 +2202,8 @@ class Container(DockerBaseClass):
         self.log('_get_expected_exposed')
         image_ports = []
         if image:
-            image_ports = [self._normalize_port(p) for p in (image['ContainerConfig'].get('ExposedPorts') or {}).keys()]
+            image_exposed_ports = image[self.parameters.client.image_inspect_source].get('ExposedPorts') or {}
+            image_ports = [self._normalize_port(p) for p in image_exposed_ports.keys()]
         param_ports = []
         if self.parameters.ports:
             param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
@@ -2351,8 +2362,8 @@ class ContainerManager(DockerBaseClass):
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
                 self.diff_tracker.add('running', parameter=True, active=was_running)
-                self.container_stop(container.Id)
-                container = self.container_start(container.Id)
+                self.diff_tracker.add('restarted', parameter=True, active=False)
+                container = self.container_restart(container.Id)
             elif state == 'stopped' and container.running:
                 self.diff_tracker.add('running', parameter=False, active=was_running)
                 self.container_stop(container.Id)
@@ -2634,6 +2645,19 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error killing container %s: %s" % (container_id, exc))
         return response
 
+    def container_restart(self, container_id):
+        self.results['actions'].append(dict(restarted=container_id, timeout=self.parameters.stop_timeout))
+        self.results['changed'] = True
+        if not self.check_mode:
+            try:
+                if self.parameters.stop_timeout:
+                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                else:
+                    response = self.client.restart(container_id)
+            except Exception as exc:
+                self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
+        return self._get_container(container_id)
+
     def container_stop(self, container_id):
         if self.parameters.force_kill:
             self.container_kill(container_id)
@@ -2831,8 +2855,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
             ipc_mode=dict(docker_api_version='1.25'),
             mac_address=dict(docker_api_version='1.25'),
-            oom_killer=dict(docker_py_version='2.0.0'),
-            oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
+            oom_score_adj=dict(docker_api_version='1.22'),
             shm_size=dict(docker_api_version='1.22'),
             stop_signal=dict(docker_api_version='1.21'),
             tmpfs=dict(docker_api_version='1.22'),
@@ -2858,6 +2881,11 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS,
             **kwargs
         )
+
+        self.image_inspect_source = 'Config'
+        if self.docker_api_version < LooseVersion('1.21'):
+            self.image_inspect_source = 'ContainerConfig'
+
         self._get_additional_minimal_versions()
         self._parse_comparisons()
 
@@ -2996,8 +3024,11 @@ def main():
             version='2.12'
         )
 
-    cm = ContainerManager(client)
-    client.module.exit_json(**sanitize_result(cm.results))
+    try:
+        cm = ContainerManager(client)
+        client.module.exit_json(**sanitize_result(cm.results))
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

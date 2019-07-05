@@ -159,6 +159,8 @@ options:
             - The IDs used in the expression must exactly match the ones
               defined in the filter conditions. No condition can remain unused or omitted.
             - Required for custom expression filters.
+            - Use sequential IDs that start at "A". If non-sequential IDs are used, Zabbix re-indexes them.
+              This makes each module run notice the difference in IDs and update the action.
     default_message:
         description:
             - Problem message default text.
@@ -437,13 +439,18 @@ msg:
     sample: 'Action Deleted: Register webservers, ID: 0001'
 '''
 
+
+import atexit
+import traceback
+
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Zapi(object):
@@ -1964,7 +1971,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -1996,6 +2003,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user,
                         passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

@@ -50,16 +50,16 @@ def XenAPI():
 
 
 @pytest.fixture
-def xenserver_guest_facts(XenAPI):
-    """Imports and returns xenserver_guest_facts module."""
+def xenserver_guest_info(XenAPI):
+    """Imports and returns xenserver_guest_info module."""
 
     # Since we are wrapping fake XenAPI module inside a fixture, all modules
     # that depend on it have to be imported inside a test function. To make
     # this easier to handle and remove some code repetition, we wrap the import
-    # of xenserver_guest_facts module with a fixture.
-    from ansible.modules.cloud.xenserver import xenserver_guest_facts
+    # of xenserver_guest_info module with a fixture.
+    from ansible.modules.cloud.xenserver import xenserver_guest_info
 
-    return xenserver_guest_facts
+    return xenserver_guest_info
 
 
 @pytest.fixture

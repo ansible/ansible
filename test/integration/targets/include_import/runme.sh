@@ -10,6 +10,10 @@ function gen_task_files() {
     done
 }
 
+## Adhoc
+
+ansible -m include_role -a name=role1 localhost
+
 ## Import (static)
 
 # Playbook
@@ -97,3 +101,6 @@ test "$(egrep -c 'Templating the path of the parent include_tasks failed.' test_
 
 # https://github.com/ansible/ansible/issues/54618
 ansible-playbook test_loop_var_bleed.yaml "$@"
+
+# https://github.com/ansible/ansible/issues/56580
+ansible-playbook valid_include_keywords/playbook.yml "$@"

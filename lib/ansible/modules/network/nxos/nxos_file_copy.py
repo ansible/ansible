@@ -113,6 +113,11 @@ options:
       - The remote scp server password which is used to pull the file.
         This is required if file_pull is True.
     version_added: "2.7"
+  vrf:
+    description:
+      - The VRF used to pull the file. Useful when no vrf management is defined
+    default: "management"
+    version_added: "2.9"
 '''
 
 EXAMPLES = '''
@@ -133,6 +138,7 @@ EXAMPLES = '''
       remote_scp_server: "192.168.0.1"
       remote_scp_server_user: "myUser"
       remote_scp_server_password: "myPassword"
+      vrf: "management"
 '''
 
 RETURN = '''
@@ -308,7 +314,7 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
         ruser = module.params['remote_scp_server_user'] + '@'
         rserver = module.params['remote_scp_server']
         rfile = module.params['remote_file'] + ' '
-        vrf = ' vrf management'
+        vrf = ' vrf ' + module.params['vrf']
         command = (cmdroot + ruser + rserver + rfile + file_system + ldir + local + vrf)
 
         child.sendline(command)
@@ -362,6 +368,7 @@ def main():
         remote_scp_server=dict(type='str'),
         remote_scp_server_user=dict(type='str'),
         remote_scp_server_password=dict(no_log=True),
+        vrf=dict(required=False, type='str', default='management'),
     )
 
     argument_spec.update(nxos_argument_spec)

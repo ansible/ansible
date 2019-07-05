@@ -1,0 +1,4 @@
+---
+bugfixes:
+ - Fix privilege escalation support for the docker connection plugin when
+   credentials need to be supplied (e.g. sudo with password).
