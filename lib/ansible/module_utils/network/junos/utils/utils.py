@@ -27,6 +27,14 @@ def build_child_xml_node(parent, tag, text=None, attrib=None):
     return element
 
 
+def build_subtree(parent, path):
+    element = parent
+    for field in path.split('/'):
+        sub_element = build_child_xml_node(element, field)
+        element = sub_element
+    return element
+
+
 def _handle_field_replace(root, field, have, want, tag=None):
     tag = field if not tag else tag
     want_value = want.get(field) if want else None
