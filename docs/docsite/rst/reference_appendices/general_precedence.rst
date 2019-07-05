@@ -43,6 +43,10 @@ Command-line options
 
 Any command-line option will override any configuration setting.
 
+When you type something directly at the command line, you may feel that your hand-crafted values should override all others, but Ansible does not work that way. Command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
+
+You can override all other settings from all other sources in all other precedence categories at the command line by  :ref:`general_precedence_extra_vars`, but that is not a command-line option, it is a way of passing a :ref:`variable<general_precedence_variables>`.
+
 At the command line, if you pass multiple values for a parameter that accepts only a single value, the last defined value wins. For example, this :ref:`ad-hoc task<intro_adhoc>` will connect as ``carol``, not as ``mike``::
 
       ansible -u mike -m ping myhost -u carol
@@ -53,16 +57,12 @@ Some parameters allow multiple values. In this case, Ansible will append all val
 
 The help for each :ref:`command-line tool<command_line_tools>` lists available options for that tool.
 
-When you type something directly at the command line, you may feel that your hand-crafted values should override all others, but Ansible does not work that way. Command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
-
-You can override all other settings from all other sources in all other precedence categories at the command line by  :ref:`general_precedence_extra_vars`, but that is not a command-line option, it is a way of passing a :ref:`variable<general_precedence_variables>`.
-
 Playbook keywords
 ^^^^^^^^^^^^^^^^^
 
 Any :ref:`playbook keyword<playbook_keywords>` will override any command-line option and any configuration setting.
 
-Within playbook keywords, precedence is probably the simplest, as it flows with the playbook itself; the more specific wins against the more general:
+Within playbook keywords, precedence flows with the playbook itself; the more specific wins against the more general:
 
 - play (most general)
 - blocks/includes/imports/roles (optional and can contain tasks and each other)
@@ -93,33 +93,40 @@ Variables
 
 Any variable will override any playbook keyword, any command-line option, and any configuration setting.
 
-Variables can be set in multiple ways and places. You can define variables for hosts and groups in inventory. You can define variables for tasks and plays in ``vars:`` blocks in playbooks. However, they are still variables - they are data, not keywords or configuration settings. Variables that override playbook keywords and configuration settings follow the same rules of :ref:`variable precedence <ansible_variable_precedence>` as any other variables.
+Variables that have equivalent playbook keywords, command-line options, and configuration settings are known as :ref:`connection_variables`. Originally designed for connection parameters, this category has expanded to include other core variables like the temporary directory and the python interpreter.
 
-When setting variables in playbooks, remember that there are a couple of levels of scoping in playbooks. The first is 'playbook object scope'::
+Connection variables, like all variables, can be set in multiple ways and places. You can define variables for hosts and groups in :ref:`inventory<intro_inventory>`. You can define variables for tasks and plays in ``vars:`` blocks in :ref:`playbooks<about_playbooks>`. However, they are still variables - they are data, not keywords or configuration settings. Variables that override playbook keywords, command-line options, and configuration settings follow the same rules of :ref:`variable precedence <ansible_variable_precedence>` as any other variables.
 
-   - hosts: localhost
+When set in a playbook, variables follow the same inheritance rules as playbook keywords. You can set a value for the play, then override it in a task, block, or role::
+
+   - hosts: cloud
      gather_facts: false
+     become: yes
      vars:
-       me: play
+       ansible_become_user: admin
      tasks:
-       - name: the value is the play level one
-         debug: var=me
+       - name: This task uses admin as the become user.
+         dnf:
+           name: some-service
+           state: latest
        - block:
-           - name: the block controls the value here
-             debug: var=me
+           - name: This task uses service-admin as the become user.
+             # a task to configure the new service
+           - name: This task also uses service-admin as the become user, defined in the block.
+             # second task to configure the service
          vars:
-           me: inblock
-       - name: the task overrides the play level value
-         debug: var=me
-         vars:
-           me: debugtask
+           ansible_become_user: service-admin
+       - name: This task (outside of the block) uses admin as the become user again.
+         service:
+           name: some-service
+           state: restarted
 
-       - name: we are back to the play scope value
-         debug: var=me
+Variable scope: how long is a value available?
+""""""""""""""""""""""""""""""""""""""""""""""
 
-These variables don't survive the playbook object they were defined in and will not be available to subsequent objects, including other plays.
+Variable values set in a playbook exist only within the playbook object that defines them. These 'playbook object scope' variables are not available to subsequent objects, including other plays.
 
-And there is also a 'host scope' - variables that are directly associated with the host (also available via the `hostvars[]` dictionary). The host scope variables are available across plays and are  defined in inventory, vars plugins, or from modules (set_fact, include_vars).
+Variable values associated directly with a host or group, including variables defined in inventory, by vars plugins, or using modules like :ref:`set_fact<set_fact_module>` and :ref:`include_vars<include_vars_module>`, are available to all plays. These 'host scope' variables are also available via the `hostvars[]` dictionary.
 
 .. _general_precedence_extra_vars:
 
