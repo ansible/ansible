@@ -115,7 +115,7 @@ EXAMPLES = '''
     name: myVault
     sku:
       name: Standard
-    location: westus  
+    location: westus
 - name: Delete Recovery Services Vault
   azure_rm_recoveryservicesvault:
     resource_group: myResourceGroup
@@ -180,31 +180,52 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                 type='dict',
                 disposition='/properties/upgradeDetails/*',
                 options=dict(
-                  operation_id=dict(type='str',disposition='operationId'),
-                  start_time_utc=dict(type='str',disposition='startTimeUtc'),
-                  last_updated_time_utc=dict(type='str',disposition='lastUpdatedTimeUtc'),
-                  end_time_utc=dict(type='str',disposition='endTimeUtc'),
+                  operation_id=dict(
+                    type='str',
+                    disposition='operationId'
+                  ),
+                  start_time_utc=dict(
+                    type='str',
+                    disposition='startTimeUtc'
+                  ),
+                  last_updated_time_utc=dict(
+                    type='str',
+                    disposition='lastUpdatedTimeUtc'
+                  ),
+                  end_time_utc=dict(
+                    type='str',
+                    disposition='endTimeUtc'
+                  ),
                   status=dict(
                     type='dict',
                     disposition='status/*',
                     options=dict(
-                      failed=dict(type='str',disposition='Failed'),
-                      in_progress=dict(type='str',disposition='InProgress'),
-                      unknown=dict(type='str',disposition='Unknown'),
-                      upgraded=dict(type='str',disposition='Upgraded')
+                      failed=dict(type='str', disposition='Failed'),
+                      in_progress=dict(type='str', disposition='InProgress'),
+                      unknown=dict(type='str', disposition='Unknown'),
+                      upgraded=dict(type='str', disposition='Upgraded')
                     )
                   ),
-                  message=dict(type='str',disposition='message'),
+                  message=dict(
+                    type='str',
+                    disposition='message'
+                  ),
                   trigger_type=dict(
                     type='dict',
                     disposition='triggerType/*',
                     options=dict(
-                      forced_upgrade=dict(type='str',disposition='ForcedUpgrade'),
-                      user_triggered=dict(type='str',disposition='UserTriggered')
+                      forced_upgrade=dict(type='str', disposition='ForcedUpgrade'),
+                      user_triggered=dict(type='str', disposition='UserTriggered')
                     )
                   ),
-                  upgraded_resource_id=dict(type='str',disposition='upgradedResourceId'),
-                  previous_resource_id=dict(type='str',disposition='previousResourceId'),
+                  upgraded_resource_id=dict(
+                    type='str',
+                    disposition='upgradedResourceId'
+                  ),
+                  previous_resource_id=dict(
+                    type='str',
+                    disposition='previousResourceId'
+                  ),
                 )
             ),
             provisioning_state=dict(
@@ -259,7 +280,7 @@ class AzureRMVaults(AzureRMModuleBaseExt):
 
         self.inflate_parameters(self.module_arg_spec, self.body, 0)
 
-        if not 'properties' in self.body:
+        if 'properties' not in self.body:
             self.body['properties'] = {}
         old_response = None
         response = None
@@ -339,7 +360,7 @@ class AzureRMVaults(AzureRMModuleBaseExt):
             response = old_response
 
         if response:
-           self.results["id"] = response["id"]
+            self.results["id"] = response["id"]
 
         return self.results
 

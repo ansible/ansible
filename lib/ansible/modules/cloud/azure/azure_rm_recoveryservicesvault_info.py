@@ -132,19 +132,17 @@ vaults:
     location:
       description:
         - Resource location.
-          returned: always
-          type: str
-          sample: null
+      returned: always
+      type: str
+      sample: null
     tags:
       description:
         - Resource tags.
-      returned: always
       type: dict
       sample: { "TestUpdatedKey": "TestUpdatedValue" }
     sku_name:
       description:
         - The Sku name.
-      returned: always
       type: str
       sample: null
     provisioning_state:
