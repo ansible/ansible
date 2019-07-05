@@ -7,7 +7,7 @@ To give you maximum flexibility in managing your environments, Ansible supports 
 If you use Ansible to manage a large number of servers, network devices, and cloud resources, you may define Ansible behavior in several different places and pass that information to Ansible in several different ways.
 This flexibility is convenient, but it can backfire if you do not understand the precedence rules.
 
-These precedence rules apply to any setting that can be defined in multiple ways (by configuration settings, command-line options, playbook keywords, variables). For example, defining connection information, selecting a temporary directory, and choosing the correct python/ruby/powershell/etc interpreter to invoke for a module using settings like ANSIBLE_USER, DEFAULT_LOCAL_TMP, or ANSIBLE_PYTHON_INTERPRETER all follow these precedence rules.
+These precedence rules apply to any setting that can be defined in multiple ways (by configuration settings, command-line options, playbook keywords, variables).
 
 .. contents::
    :local:
@@ -17,10 +17,10 @@ Precedence categories
 
 Ansible supports four sources for controlling its behavior. In order of precedence from lowest (most easily overridden) to highest (overrides all others), the categories are:
 
-   Configuration settings
-   Command-line options
-   Playbook keywords
-   Variables
+ * Configuration settings
+ * Command-line options
+ * Playbook keywords
+ * Variables
 
 Each category overrides any information from all lower-precedence categories. For example, a playbook keyword will override any configuration setting.
 
@@ -81,7 +81,7 @@ A simple example::
          ping:
 
 In this example, the ``connection`` keyword is set to ``ssh`` at the play level. The first task inherits that value, and connects using ``ssh``. The second task inherits that value, overrides it, and connects using ``paramiko``.
-The same logic applies to blocks and roles as well. All tasks, blocks, and roles within a play inherit play-level keywords; any task, block, or role can override any play-level keyword by defining a different value for that keyword within the task, block, or role.
+The same logic applies to blocks and roles as well. All tasks, blocks, and roles within a play inherit play-level keywords; any task, block, or role can override any keyword by defining a different value for that keyword within the task, block, or role.
 
 Remember that these are KEYWORDS, not variables. Both playbooks and variable files are defined in YAML but they have different significance.
 Playbooks are the command or 'state description' structure for Ansible, variables are data we use to help make playbooks more dynamic.
@@ -126,7 +126,7 @@ Variable scope: how long is a value available?
 
 Variable values set in a playbook exist only within the playbook object that defines them. These 'playbook object scope' variables are not available to subsequent objects, including other plays.
 
-Variable values associated directly with a host or group, including variables defined in inventory, by vars plugins, or using modules like :ref:`set_fact<set_fact_module>` and :ref:`include_vars<include_vars_module>`, are available to all plays. These 'host scope' variables are also available via the `hostvars[]` dictionary.
+Variable values associated directly with a host or group, including variables defined in inventory, by vars plugins, or using modules like :ref:`set_fact<set_fact_module>` and :ref:`include_vars<include_vars_module>`, are available to all plays. These 'host scope' variables are also available via the ``hostvars[]`` dictionary.
 
 .. _general_precedence_extra_vars:
 
