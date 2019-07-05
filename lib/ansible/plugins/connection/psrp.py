@@ -119,7 +119,7 @@ options:
       (First sleeps X, then sleeps 2*X, then sleeps 4*X, ...)
     - This is measured in seconds.
     vars:
-    - name: ansible_psrp_connection_backoff
+    - name: ansible_psrp_reconnection_backoff
     default: 2
     version_added: '2.8'
   message_encryption:
