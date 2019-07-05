@@ -154,8 +154,6 @@ Function Set-Workgroup {
     if ($swg_result.ReturnValue -ne 0) {
         Fail-Json -obj $result -message "failed to set workgroup through WMI, return value: $($swg_result.ReturnValue)"
     }
-
-    return $swg_result
 }
 
 Function Join-Workgroup {
