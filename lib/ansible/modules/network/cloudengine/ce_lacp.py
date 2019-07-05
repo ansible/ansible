@@ -357,7 +357,7 @@ def xml_to_dict(args):
     root = ET.fromstring(args)
     ifmtrunk = root.find('.//ifmtrunk')
     if ifmtrunk is not None:
-        for ele in ifmtrunk.iter():
+        for ele in ifmtrunk.getiterator():
             if ele.text is not None and len(ele.text.strip()) > 0:
                 rdict[ele.tag] = ele.text
     return rdict
