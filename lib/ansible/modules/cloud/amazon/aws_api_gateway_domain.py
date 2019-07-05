@@ -83,11 +83,11 @@ EXAMPLES = '''
 - name: Create a DNS record for your custom domain on route 53 (using route53 module)
   route53:
     record: myapi.foobar.com
-    value: "{{ api_gw_domain_result.domain_name }}"
+    value: "{{ api_gw_domain_result.response.domain.distribution_domain_name }}"
     type: A
     alias: true
     zone: foobar.com
-    alias_hosted_zone_id: "{{ api_gw_domain_result.distribution_hosted_zone_id }}"
+    alias_hosted_zone_id: "{{ api_gw_domain_result.response.domain.distribution_hosted_zone_id }}"
     command: create
 '''
 
@@ -101,8 +101,8 @@ response:
         {
             domain_name: mydomain.com,
             certificate_arn: 'arn:aws:acm:xxxxxx',
-            distribution_domain_name: mydomain.com,
-            distribution_hosted_zone_id: abc123123,
+            distribution_domain_name: xxxx.cloudfront.net,
+            distribution_hosted_zone_id: ABC123123,
             endpoint_configuration: { types: ['EDGE'] },
             domain_name_status: 'AVAILABLE',
             security_policy: TLS_1_2,
