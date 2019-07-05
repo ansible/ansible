@@ -36,12 +36,14 @@ class AnsibleFailJson(Exception):
 
 
 def exit_json(*args, **kwargs):
+    kwargs['success'] = True
     if 'changed' not in kwargs:
         kwargs['changed'] = False
     raise AnsibleExitJson(**kwargs)
 
 
 def fail_json(*args, **kwargs):
+    kwargs['success'] = False
     raise AnsibleFailJson(**kwargs)
 
 
@@ -59,6 +61,7 @@ def base_fixture(monkeypatch):
     openshift.dynamic.Resource.delete = MagicMock()
     openshift.dynamic.Resource.patch = MagicMock()
     openshift.dynamic.Resource.search = MagicMock()
+    openshift.dynamic.Resource.watch = MagicMock()
     # Globally mock some methods, since all tests will use this
     KubernetesRawModule.patch_resource = MagicMock()
     KubernetesRawModule.patch_resource.return_value = ({}, None)
