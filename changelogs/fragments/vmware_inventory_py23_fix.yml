@@ -1,0 +1,2 @@
+minor_changes:
+  - Use to_native instead of encode / decode in order to handle Python 2 and 3 syntax in vmware_inventory.py.

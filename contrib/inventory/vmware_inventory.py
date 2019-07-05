@@ -42,6 +42,7 @@ from jinja2 import Environment
 
 from ansible.module_utils.six import integer_types, PY3
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 try:
     import argparse
@@ -150,11 +151,7 @@ class VMWareInventory(object):
 
     def debugl(self, text):
         if self.args.debug:
-            try:
-                text = str(text)
-            except UnicodeEncodeError:
-                text = text.encode('utf-8')
-            print('%s %s' % (datetime.datetime.now(), text))
+            print('%s %s' % (datetime.datetime.now(), to_native(text)))
 
     def show(self):
         # Data to print
@@ -693,7 +690,7 @@ class VMWareInventory(object):
             if vobj.isalnum():
                 rdata = vobj
             else:
-                rdata = vobj.encode('utf-8').decode('utf-8')
+                rdata = to_native(vobj)
         elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
             rdata = vobj
         elif issubclass(type(vobj), integer_types) or isinstance(vobj, integer_types):
