@@ -383,8 +383,7 @@ EXAMPLES = r'''
       ip4: '{{ item.ip4 }}'
       gw4: '{{ item.gw4 }}'
       state: present
-    with_items:
-      - '{{ nmcli_team }}'
+    loop: '{{ nmcli_team }}'
 
   - name: Try nmcli add teams-slave
     nmcli:
@@ -393,8 +392,7 @@ EXAMPLES = r'''
       ifname: '{{ item.ifname }}'
       master: '{{ item.master }}'
       state: present
-    with_items:
-      - '{{ nmcli_team_slave }}'
+    loop: '{{ nmcli_team_slave }}'
 
 ###### Working with all cloud nodes - Bonding
   - name: Try nmcli add bond - conn_name only & ip4 gw4 mode
@@ -405,8 +403,7 @@ EXAMPLES = r'''
       gw4: '{{ item.gw4 }}'
       mode: '{{ item.mode }}'
       state: present
-    with_items:
-      - '{{ nmcli_bond }}'
+    loop: '{{ nmcli_bond }}'
 
   - name: Try nmcli add bond-slave
     nmcli:
@@ -415,8 +412,7 @@ EXAMPLES = r'''
       ifname: '{{ item.ifname }}'
       master: '{{ item.master }}'
       state: present
-    with_items:
-      - '{{ nmcli_bond_slave }}'
+    loop: '{{ nmcli_bond_slave }}'
 
 ##### Working with all cloud nodes - Ethernet
   - name: Try nmcli add Ethernet - conn_name only & ip4 gw4
@@ -426,8 +422,7 @@ EXAMPLES = r'''
       ip4: '{{ item.ip4 }}'
       gw4: '{{ item.gw4 }}'
       state: present
-    with_items:
-      - '{{ nmcli_ethernet }}'
+    loop: '{{ nmcli_ethernet }}'
 
 ## playbook-del.yml example
 - hosts: openstack-stage
@@ -438,7 +433,7 @@ EXAMPLES = r'''
     nmcli:
       conn_name: '{{ item.conn_name }}'
       state: absent
-    with_items:
+    loop:
       - conn_name: em1
       - conn_name: em2
       - conn_name: p1p1
