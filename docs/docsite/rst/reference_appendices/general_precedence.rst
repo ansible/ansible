@@ -29,14 +29,12 @@ Within each precedence category, specific rules apply. However, generally speaki
 Configuration settings
 ^^^^^^^^^^^^^^^^^^^^^^
 
-:ref:`Configuration settings<ansible_configuration_settings>` include both values from the ``ansible.cfg`` file and environment variables. Within this category, values set in configuration files have lower precedence. Ansible uses the first ``ansible.cfg`` file it finds, looking in these locations in order:
+:ref:`Configuration settings<ansible_configuration_settings>` include both values from the ``ansible.cfg`` file and environment variables. Within this category, values set in configuration files have lower precedence. Ansible uses the first ``ansible.cfg`` file it finds, ignoring all others. Ansible searches for ``ansible.cfg`` in these locations in order:
 
  * ``ANSIBLE_CONFIG`` (environment variable if set)
  * ``ansible.cfg`` (in the current directory)
  * ``~/.ansible.cfg`` (in the home directory)
  * ``/etc/ansible/ansible.cfg``
-
-Ansible will use the first ``ansible.cfg`` file found, all others are ignored.
 
 Environment variables have a higher precedence than entries in ``ansible.cfg``. If you have environment variables set on your control node, they override the settings in whichever ``ansible.cfg`` file Ansible loads. The value of any given environment variable follows normal shell precedence: the last value defined overwrites previous values.
 
@@ -57,7 +55,7 @@ The help for each :ref:`command-line tool<command_line_tools>` lists available o
 
 Most command-line options deal with generic settings, but some settings are specific to connections and strategies.
 Passing these options at the command-line may feel like the highest-precedence options, but command-line options have low precedence - they override configuration only. They do not override playbook keywords, variables from inventory or variables from playbooks.
-You can override all other settings from all other sources in all other precedence categories at the command line with ``--extra-vars var_name=value``, but that is not a command-line option, it is a variable.
+You can override all other settings from all other sources in all other precedence categories at the command line with ``--extra-vars var_name=value``, but that is not a command-line option, it is a :ref:`variable<general_precedence_variables>`.
 
 Playbook keywords
 ^^^^^^^^^^^^^^^^^
@@ -87,6 +85,8 @@ The same logic applies to blocks and roles as well. All tasks, blocks, and roles
 
 Remember that these are KEYWORDS, not variables. Both playbooks and variable files are defined in YAML but they have different significance.
 Playbooks are the command or 'state description' structure for Ansible, variables are data we use to help make playbooks more dynamic.
+
+.. _general_precedence_variables:
 
 Variables
 ^^^^^^^^^
@@ -119,7 +119,7 @@ When setting variables in playbooks, remember that there are a couple of levels 
 
 These variables don't survive the playbook object they were defined in and will not be available to subsequent objects, including other plays.
 
-And there is also a 'host scope' - variables that are directly associated with the host (also available via the `hostvars[]` dictionary). The host scope variables are  available across plays and are  defined in inventory, vars plugins, or from modules (set_fact, include_vars).
+And there is also a 'host scope' - variables that are directly associated with the host (also available via the `hostvars[]` dictionary). The host scope variables are available across plays and are  defined in inventory, vars plugins, or from modules (set_fact, include_vars).
 
 Using ``-e`` extra variables at the command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
