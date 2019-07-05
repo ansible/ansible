@@ -582,12 +582,6 @@ def main():
             ['reboot', 'special_time'],
             ['insertafter', 'insertbefore'],
         ],
-        required_by=dict(
-            cron_file=('user',),
-        ),
-        required_if=(
-            ('state', 'present', ('job',)),
-        ),
     )
 
     name = module.params['name']
@@ -656,6 +650,13 @@ def main():
     # cannot support special_time on solaris
     if (special_time or reboot) and get_platform() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
+
+    if cron_file and do_install:
+        if not user:
+            module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
+
+    if job is None and do_install:
+        module.fail_json(msg="You must specify 'job' to install a new cron job or variable")
 
     if (insertafter or insertbefore) and not env and do_install:
         module.fail_json(msg="Insertafter and insertbefore parameters are valid only with env=yes")
