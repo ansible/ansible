@@ -187,9 +187,19 @@ def main():
 
     if use_max and use_min:
         module.fail_json(msg="Cannot use use_min and use_max at the same time.")
+      
+    def check_value(item, value):
+        try:
+            if item == 'nice':
+                if not -20 <= int(value) <= 20:
+                    module.fail_json(msg="Argument 'value' of nice needs to be between -20 and 20. Refer to manual pages for more details.")
+            else:
+                if not (value in ['unlimited', 'infinity'] or -1 <= int(value)):
+                    module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', '-1' or positive number. Refer to manual pages for more details.")
+        except ValueError:
+            module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', or number. Refer to manual pages for more details.")
 
-    if not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
-        module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', '-1' or positive number. Refer to manual pages for more details.")
+    check_value(limit_item, value)
 
     # Backup
     if backup:
@@ -238,9 +248,8 @@ def main():
         line_type = line_fields[1]
         line_item = line_fields[2]
         actual_value = line_fields[3]
-
-        if not (actual_value in ['unlimited', 'infinity', '-1'] or actual_value.isdigit()):
-            module.fail_json(msg="Invalid configuration of '%s'. Current value of %s is unsupported." % (limits_conf, line_item))
+        
+        check_value(line_item, actual_value)
 
         # Found the line
         if line_domain == domain and line_type == limit_type and line_item == limit_item:
