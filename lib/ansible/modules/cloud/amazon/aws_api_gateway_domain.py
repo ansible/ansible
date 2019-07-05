@@ -92,21 +92,25 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-repsonse:
-  description: The data returned by create_domain_name (or update and delete) method in boto3
+response:
+  description: The data returned by create_domain_name (or update and delete) nad create_base_path_mapping methods in boto3
   returned: success
   type: dict
   sample:
-    {
-        domain_name: mydomain.com,
-        certificate_arn: 'arn:aws:acm:xxxxxx',
-        distribution_domain_name: mydomain.com,
-        distribution_hosted_zone_id: abc123123,
-        endpoint_configuration: { types: ['EDGE'] },
-        domain_name_status: 'AVAILABLE',
-        security_policy: TLS_1_2,
-        tags: {}
-    }
+    domain:
+        {
+            domain_name: mydomain.com,
+            certificate_arn: 'arn:aws:acm:xxxxxx',
+            distribution_domain_name: mydomain.com,
+            distribution_hosted_zone_id: abc123123,
+            endpoint_configuration: { types: ['EDGE'] },
+            domain_name_status: 'AVAILABLE',
+            security_policy: TLS_1_2,
+            tags: {}
+        }
+    path_mappings: [
+        { base_path: '(empty)', rest_api_id: 'abcd123', stage: 'production' }
+    ]
 '''
 
 try:
