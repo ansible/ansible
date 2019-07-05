@@ -253,7 +253,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
             'location': item['location'],
             'tags': item.get('tags'),
             'e_tag': item['etag'],
-            'sku_state': item['sku']['name'],
+            'sku_name': item['sku']['name'],
             'provisioning_state': item['properties']['provisioningState']
         }
         return d
