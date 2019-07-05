@@ -33,7 +33,7 @@ description:
     - Create or delete network namespaces using the ip command.
 options:
     name:
-        required: false
+        required: yes
         description:
             - Name of the namespace
     state:
@@ -135,7 +135,7 @@ def main():
     """Entry point."""
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(default=None),
+            name=dict(required=True),
             state=dict(default='present', choices=['present', 'absent']),
         ),
         supports_check_mode=True,
