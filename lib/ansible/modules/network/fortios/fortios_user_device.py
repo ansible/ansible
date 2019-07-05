@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: fortios_user_device
 short_description: Configure devices in Fortinet's FortiOS and FortiGate
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS device by allowing the
       user to set and modify user feature and device category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.2
