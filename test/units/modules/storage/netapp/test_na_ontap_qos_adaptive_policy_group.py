@@ -132,7 +132,6 @@ class TestMyModule(unittest.TestCase):
         :return: na_ontap_volume object
         """
         policy_obj = qos_policy_group_module()
-        #policy_obj.asup_log_for_cserver = Mock(return_value=None)
         policy_obj.autosupport_log = Mock(return_value=None)
         policy_obj.cluster = Mock()
         policy_obj.cluster.invoke_successfully = Mock()

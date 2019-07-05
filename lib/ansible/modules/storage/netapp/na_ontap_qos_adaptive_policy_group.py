@@ -324,6 +324,7 @@ class NetAppOntapAdaptiveQosPolicyGroup(object):
         server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.parameters['vserver'])
         netapp_utils.ems_log_event(event_name, server)
 
+
 def main():
     '''Apply vserver operations from playbook'''
     qos_policy_group = NetAppOntapAdaptiveQosPolicyGroup()
