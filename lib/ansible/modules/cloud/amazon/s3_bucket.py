@@ -68,6 +68,12 @@ options:
   tags:
     description:
       - tags dict to apply to bucket
+  purge_tags:
+    description:
+      - whether to remove tags that aren't present in the C(tags) parameter
+    type: bool
+    default: True
+    version_added: "2.9"
   versioning:
     description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
@@ -152,6 +158,7 @@ def create_or_update_bucket(s3_client, module, location):
     name = module.params.get("name")
     requester_pays = module.params.get("requester_pays")
     tags = module.params.get("tags")
+    purge_tags = module.params.get("purge_tags")
     versioning = module.params.get("versioning")
     encryption = module.params.get("encryption")
     encryption_key_id = module.params.get("encryption_key_id")
@@ -278,6 +285,9 @@ def create_or_update_bucket(s3_client, module, location):
             tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
             if current_tags_dict != tags:
                 if tags:
+                    if not purge_tags:
+                        current_tags_dict.update(tags)
+                        tags = current_tags_dict
                     try:
                         put_bucket_tagging(s3_client, name, tags)
                     except (BotoCoreError, ClientError) as e:
@@ -628,15 +638,16 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            force=dict(required=False, default='no', type='bool'),
-            policy=dict(required=False, default=None, type='json'),
-            name=dict(required=True, type='str'),
+            force=dict(default=False, type='bool'),
+            policy=dict(type='json'),
+            name=dict(required=True),
             requester_pays=dict(default=False, type='bool'),
-            s3_url=dict(aliases=['S3_URL'], type='str'),
-            state=dict(default='present', type='str', choices=['present', 'absent']),
-            tags=dict(required=False, default=None, type='dict'),
-            versioning=dict(default=None, type='bool'),
-            ceph=dict(default='no', type='bool'),
+            s3_url=dict(aliases=['S3_URL']),
+            state=dict(default='present', choices=['present', 'absent']),
+            tags=dict(type='dict'),
+            purge_tags=dict(type='bool', default=True),
+            versioning=dict(type='bool'),
+            ceph=dict(default=False, type='bool'),
             encryption=dict(choices=['none', 'AES256', 'aws:kms']),
             encryption_key_id=dict()
         )
