@@ -66,7 +66,7 @@ options:
     https:
         description:
             - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+              protocol.
         type: bool
         default: true
     state:
