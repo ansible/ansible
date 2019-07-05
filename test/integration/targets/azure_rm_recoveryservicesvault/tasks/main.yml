@@ -1,10 +1,10 @@
 - name: Create or Update Recovery Services vault
-      azure_rm_recoveryservicesvault:
-        resource_group: "{{ resource_group }}"
-        name: testVault
-        sku:
-          name: Standard
-        location: "{{ location }}"  
+  azure_rm_recoveryservicesvault:
+    resource_group: "{{ resource_group }}"
+    name: testVault
+    sku:
+      name: Standard
+    location: "{{ location }}"  
   register: output
 
 - assert:
@@ -12,9 +12,9 @@
       - output.changed
 
 - name: Get Info of Recovery Services Resource
-      azure_rm_recoveryservicesvault_info:
-        resource_group: "{{ resource_group }}"
-        name: testVault
+  azure_rm_recoveryservicesvault_info:
+    resource_group: "{{ resource_group }}"
+    name: testVault
   register: output
 
 - assert:
@@ -28,11 +28,11 @@
       - output.vaults['provisioning_state'] != None
 
 - name: Delete Recovery Services Vault
-      azure_rm_recoveryservicesvault:
-        resource_group: "{{ resource_group }}"
-        name: testVault
-        state: absent
-   register: output
+  azure_rm_recoveryservicesvault:
+    resource_group: "{{ resource_group }}"
+    name: testVault
+    state: absent
+  register: output
 
 - assert:
     that: 
