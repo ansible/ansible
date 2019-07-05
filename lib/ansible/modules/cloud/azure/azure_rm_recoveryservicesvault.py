@@ -218,8 +218,8 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                         )
                     ),
                     message=dict(
-                      type='str',
-                      disposition='message'
+                        type='str',
+                        disposition='message'
                     ),
                     trigger_type=dict(
                         type='dict',

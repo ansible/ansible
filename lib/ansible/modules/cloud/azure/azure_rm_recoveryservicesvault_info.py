@@ -26,63 +26,11 @@ options:
       - >-
         The name of the resource group where the recovery services vault is
         present.
+    type: str
   name:
     description:
       - Resource name associated with the resource.
-  id:
-    description:
-      - Resource Id represents the complete path to the resource.
-  type:
-    description:
-      - >-
-        Resource type represents the complete path of the form
-        Namespace/ResourceType/ResourceType/...
-  e_tag:
-    description:
-      - Optional ETag.
-  location:
-    description:
-      - Resource location.
-  provisioning_state:
-    description:
-      - Provisioning State.
-  upgrade_details:
-    description:
-      - undefined
-    suboptions:
-      operation_id:
-        description:
-          - ID of the vault upgrade operation.
-      start_time_utc:
-        description:
-          - UTC time at which the upgrade operation has started.
-      last_updated_time_utc:
-        description:
-          - UTC time at which the upgrade operation status was last updated.
-      end_time_utc:
-        description:
-          - UTC time at which the upgrade operation has ended.
-      status:
-        description:
-          - Status of the vault upgrade operation.
-      message:
-        description:
-          - >-
-            Message to the user containing information about the upgrade
-            operation.
-      trigger_type:
-        description:
-          - The way the vault upgrade was triggered.
-      upgraded_resource_id:
-        description:
-          - Resource ID of the upgraded vault.
-      previous_resource_id:
-        description:
-          - Resource ID of the vault before the upgrade.
-  sku_name:
-    description:
-      - The Sku name.
-    required: true
+    type: str
 extends_documentation_fragment:
   - azure
 author:
@@ -191,7 +139,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
         self.mgmt_client = None
-        super(AzureRMVaultsInfo, self).__init__(self.module_arg_spec, supports_tags=True)
+        super(AzureRMVaultsInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
