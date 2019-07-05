@@ -27,24 +27,28 @@ options:
     description:
       - Domain name you want to use for your API GW deployment
     required: true
+    type: str
   certificate_arn:
     description:
       - AWS Certificate Manger (ACM) TLS certificate ARN.
+    type: str
   security_policy:
     description:
       - Set allowed TLS versions through AWS defined policies. Currently only TLS_1_0 and TLS_1_2 are available.
       - Can only be set with botocore 1.12.175 or newer. On older boto versions this flag will automatically be ignored
     default: TLS_1_2
     choices: ['TLS_1_0', 'TLS_1_2']
+    type: str
   endpoint_type:
     description:
       - API endpoint configuration for domain. Use EDGE for edge-optimized endpoint, or use REGIONAL or PRIVATE
     default: EDGE
     choices: ['EDGE', 'REGIONAL', 'PRIVATE']
+    type: str
   domain_mappings:
     description:
       - Map your domain base paths to your API GW REST APIs, you previously created. Use provide ID of the API setup and the release stage.
-      - domain_mappings should be a list of dictionaries containing three keys: base_path, rest_api_id and stage.
+      - "domain_mappings should be a list of dictionaries containing three keys: base_path, rest_api_id and stage."
       - "Example: I([{ base_path: v1, rest_api_id: abc123, stage: production }])"
       - if you want base path to be just I(/) omit the param completely or set it to empty string.
     required: true
@@ -54,6 +58,7 @@ options:
       - Create or delete custom domain setup
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -204,7 +209,9 @@ def update_domain(module, client, existing_domain):
             for mapping in existing_domain.get('path_mappings', []):
                 delete_domain_mapping(client, domain_name, mapping['base_path'])
             for mapping in module.params.get('domain_mappings', []):
-                result['path_mappings'] = add_domain_mapping(client, domain_name, mapping.get('base_path', ''), mapping.get('rest_api_id'), mapping.get('stage'))
+                result['path_mappings'] = add_domain_mapping(
+                    client, domain_name, mapping.get('base_path', ''), mapping.get('rest_api_id'), mapping.get('stage')
+                )
                 result['updated'] = True
         except (botocore.exceptions.ClientError, botocore.exceptions.EndpointConnectionError) as e:
             module.fail_json_aws(e, msg="updating API GW domain mapping")
