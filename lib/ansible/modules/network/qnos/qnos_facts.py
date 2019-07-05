@@ -47,7 +47,7 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    type: list
+    type: str
     required: false
     default: '!config'
 """
@@ -593,7 +593,6 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
-global warnings
 warnings = list()
 
 

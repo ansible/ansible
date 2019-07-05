@@ -176,7 +176,7 @@ def run_reload(module, save=False):
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
     except UnicodeError:
-        module.fail_json(msg=u'Failed to decode output from %s: %s' % (cmd, to_text(out)))
+        module.fail_json(msg=u'Failed to decode output from %s: %s' % (command, to_text(out)))
 
     if (out.find("The system has unsaved changes.") >= 0):
         # not reload for previous command
