@@ -91,6 +91,18 @@
     - test_no_tag.changed
     - test_no_tag.output.TotalCount == 2
 
+- name: Run Pester test(s) specifying a test file with tag
+  win_pester:
+    path: '{{test_win_pester_path}}\test03.test.ps1'
+    tags: tag1
+  register: test_with_tag
+
+- name: Run Pester test(s) specifying a test file and only test with sepecified tag executed
+  assert:
+    that:
+    - test_with_tag.changed
+    - test_with_tag.output.TotalCount == 1
+
 - name: Run Pester test(s) specifying a test file with parameters
   win_pester:
     path: '{{test_win_pester_path}}\test04.test.ps1'
