@@ -338,7 +338,6 @@ except ImportError:
     pass  # will be detected by imported AnsibleAWSModule
 
 IGNORE_S3_DROP_IN_EXCEPTIONS = ['XNotImplemented', 'NotImplemented']
-LIST_EXTENDED = False
 
 class Sigv4Required(Exception):
     pass
@@ -450,27 +449,30 @@ def create_bucket(module, s3, bucket, location=None):
         return True
 
 
-def paginated_list(s3, **pagination_params):
+def paginated_list(s3, mode, **pagination_params):
     pg = s3.get_paginator('list_objects_v2')
     for page in pg.paginate(**pagination_params):
-        if LIST_EXTENDED == True:
+        if mode == 'listextended':
             yield [data for data in page.get('Contents', [])]
         else:
             yield [data['Key'] for data in page.get('Contents', [])]
 
 
 def list_keys(module, s3, bucket, prefix, marker, max_keys):
+    mode = module.params.get("mode")
     pagination_params = {'Bucket': bucket}
+    # pagination_params['mode'] = list_type
     for param_name, param_value in (('Prefix', prefix), ('StartAfter', marker), ('MaxKeys', max_keys)):
         pagination_params[param_name] = param_value
     try:
-        keys = sum(paginated_list(s3, **pagination_params), [])
+        keys = sum(paginated_list(s3, mode, **pagination_params), [])
         module.exit_json(msg="LIST operation complete", s3_keys=keys)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed while listing the keys in the bucket {0}".format(bucket))
 
 
 def delete_bucket(module, s3, bucket):
+    mode = module.params.get("mode")
     if module.check_mode:
         module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
@@ -478,7 +480,7 @@ def delete_bucket(module, s3, bucket):
         if exists is False:
             return False
         # if there are contents then we need to delete them before we can delete the bucket
-        for keys in paginated_list(s3, Bucket=bucket):
+        for keys in paginated_list(s3, mode, Bucket=bucket):
             formatted_keys = [{'Key': key} for key in keys]
             if formatted_keys:
                 s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
@@ -699,7 +701,6 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=F
 
 
 def main():
-    global LIST_EXTENDED
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
@@ -940,9 +941,6 @@ def main():
         # If the bucket does not exist then bail out
         if not exists:
             module.fail_json(msg="Target bucket (%s) cannot be found" % bucket)
-
-        if mode == 'listextended':
-            LIST_EXTENDED = True
 
         list_keys(module, s3, bucket, prefix, marker, max_keys)
 

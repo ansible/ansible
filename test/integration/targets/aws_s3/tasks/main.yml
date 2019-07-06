@@ -191,6 +191,20 @@
           - "'delete.txt' in result.s3_keys"
           - result.msg == "LIST operation complete"
 
+    - name: test listextended to get all objects in the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: listextended
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      register: result
+    - name: assert that the keys are correct
+      assert:
+        that:
+          - "'delete.txt' in result.s3_keys.Key"
+          - result.msg == "LIST operation complete"
+
     - name: test delobj to just delete an object in the bucket
       aws_s3:
         bucket: "{{ bucket_name }}"
