@@ -70,6 +70,7 @@ The following modules will be removed in Ansible 2.13. Please update update your
 Noteworthy module changes
 -------------------------
 
+* :ref:`vmware_cluster <vmware_cluster_module>` has been refactored into several specialized modules; the functionality to configure DRS, HA and vSAN has been moved to :ref:`vmware_cluster_drs <vmware_cluster_drs_module>`, :ref:`vmware_cluster_ha <vmware_cluster_ha_module>` and :ref:`vmware_cluster_vsan <vmware_cluster_vsan_module>`.
 * `vmware_dvswitch <vmware_dvswitch_module>` accepts `folder` parameter to place dvswitch in user defined folder. This option makes `datacenter` as an optional parameter.
 * `vmware_datastore_cluster <vmware_datastore_cluster_module>` accepts `folder` parameter to place datastore cluster in user defined folder. This option makes `datacenter` as an optional parameter.
 * `mysql_db <mysql_db_module>` returns new `db_list` parameter in addition to `db` parameter. This `db_list` parameter refers to list of database names. `db` parameter will be deprecated in version `2.13`.
