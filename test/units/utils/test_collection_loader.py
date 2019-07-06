@@ -69,6 +69,11 @@ def test_import_from_collection(monkeypatch):
     finally:
         sys.settrace(original_trace_function)
 
+    # make sure relative imports work from collections code
+    # these require __package__ to be set correctly
+    import ansible_collections.my_namespace.my_collection.plugins.module_utils.my_other_util
+    import ansible_collections.my_namespace.my_collection.plugins.action.my_action
+
     # verify that code loaded from a collection does not inherit __future__ statements from the collection loader
     if sys.version_info[0] == 2:
         # if the collection code inherits the division future feature from the collection loader this will fail
