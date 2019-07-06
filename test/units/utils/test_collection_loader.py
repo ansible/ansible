@@ -12,9 +12,9 @@ def test_import_from_collection(monkeypatch):
     # the trace we're expecting to be generated when running the code below:
     # answer = question()
     expected_trace_log = [
-        (collection_path, 1, 'call'),
-        (collection_path, 2, 'line'),
-        (collection_path, 2, 'return'),
+        (collection_path, 5, 'call'),
+        (collection_path, 6, 'line'),
+        (collection_path, 6, 'return'),
     ]
 
     # define the collection root before any ansible code has been loaded
