@@ -135,7 +135,7 @@ def is_valid_tag(tag, allow_empty=False):
         return allow_empty
     # See here ("Extended description") for a definition what tags can be:
     # https://docs.docker.com/engine/reference/commandline/tag/
-    return re.match('^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0-127}$', tag)
+    return bool(re.match('^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$', tag))
 
 
 def sanitize_result(data):
