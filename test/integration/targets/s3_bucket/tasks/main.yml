@@ -215,6 +215,53 @@
       pause:
         seconds: 10
 
+    - name: Update a tag for s3_bucket with purge_tags False
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        state: present
+        policy: "{{ lookup('template','policy.json') }}"
+        requester_pays: no
+        versioning: no
+        purge_tags: no
+        tags:
+          anewtag: next
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.tags.example == 'tag1-udpated'
+          - output.tags.anewtag == 'next'
+
+    # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
+    - name: Pass empty tags dict for s3_bucket with purge_tags False
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        state: present
+        policy: "{{ lookup('template','policy.json') }}"
+        requester_pays: no
+        versioning: no
+        purge_tags: no
+        tags: {}
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - output.tags.example == 'tag1-udpated'
+          - output.tags.anewtag == 'next'
+
+    # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
     - name: Do not specify any tag to ensure previous tags are not removed
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"

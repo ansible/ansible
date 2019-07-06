@@ -283,20 +283,23 @@ def create_or_update_bucket(s3_client, module, location):
         if tags is not None:
             # Tags are always returned as text
             tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
+            if not purge_tags:
+                # Ensure existing tags that aren't updated by desired tags remain
+                current_copy = current_tags_dict.copy()
+                current_copy.update(tags)
+                tags = current_copy
             if current_tags_dict != tags:
                 if tags:
-                    if not purge_tags:
-                        current_tags_dict.update(tags)
-                        tags = current_tags_dict
                     try:
                         put_bucket_tagging(s3_client, name, tags)
                     except (BotoCoreError, ClientError) as e:
                         module.fail_json_aws(e, msg="Failed to update bucket tags")
                 else:
-                    try:
-                        delete_bucket_tagging(s3_client, name)
-                    except (BotoCoreError, ClientError) as e:
-                        module.fail_json_aws(e, msg="Failed to delete bucket tags")
+                    if purge_tags:
+                        try:
+                            delete_bucket_tagging(s3_client, name)
+                        except (BotoCoreError, ClientError) as e:
+                            module.fail_json_aws(e, msg="Failed to delete bucket tags")
                 current_tags_dict = wait_tags_are_applied(module, s3_client, name, tags)
                 changed = True
 
@@ -593,7 +596,7 @@ def destroy_bucket(s3_client, module):
 
     try:
         delete_bucket(s3_client, name)
-        s3_client.get_waiter('bucket_not_exists').wait(Bucket=name)
+        s3_client.get_waiter('bucket_not_exists').wait(Bucket=name, WaiterConfig=dict(Delay=5, MaxAttempts=60))
     except WaiterError as e:
         module.fail_json_aws(e, msg='An error occurred waiting for the bucket to be deleted.')
     except (BotoCoreError, ClientError) as e:
