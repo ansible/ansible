@@ -172,7 +172,6 @@ class AnsibleCollectionLoader(object):
                     continue
 
             newmod = ModuleType(fullname)
-            newmod.__package__ = fullname
             newmod.__file__ = location
             newmod.__loader__ = self
 
@@ -181,6 +180,10 @@ class AnsibleCollectionLoader(object):
                     newmod.__path__ = [candidate_child_path]
                 else:
                     newmod.__path__ = package_paths
+
+                newmod.__package__ = fullname
+            else:
+                newmod.__package__ = parent_pkg_name
 
             sys.modules[fullname] = newmod
 
