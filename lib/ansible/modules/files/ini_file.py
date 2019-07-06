@@ -55,6 +55,7 @@ options:
         required (e.g. for systemd config files).
     type: bool
     default: no
+    version_added: "2.9"
   value:
     description:
       - The string value to be associated with an I(option).
