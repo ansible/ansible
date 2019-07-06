@@ -38,10 +38,10 @@
         force: yes
         state: absent
       with_items:
-        - clone_resize_disks_original
-        - clone_resize_disks_clone
         - CDROM-Test
         - CDROM-Test-38679
+        - clone_resize_disks_clone
+        - clone_resize_disks_original
         - newvm_2
         - newvm_3
         - newvmnw_4
