@@ -1,28 +1,11 @@
 ---
 - hosts: 127.0.0.1
   connection: local
-  vars:
-    do_api_token: "{{ lookup('env', 'DIGITALOCEAN_TOKEN') }}"
-    do_region: "{{ lookup('env', 'DIGITALOCEAN_REGION') }}"
-    dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
   tasks:
-    - name: Check that Ansible variable do_api_token is set
-      assert:
-        that:
-          - do_api_token != ''
-
-    - name: Check that Ansible variable do_region is set
-      assert: { that: do_region != '' }
-
-    - name: Check that Ansible variable dm_machine_name is set
-      assert: { that: dm_machine_name != '' }
-
-    - name: Request Docker Machine to create a provisioned Digital Ocean droplet
-      command: "docker-machine create \
-        --driver digitalocean \
-        --digitalocean-access-token {{ do_api_token }} \
-        --digitalocean-region {{ do_region }} \
-        --digitalocean-image ubuntu-18-04-x64 \
-        --digitalocean-size s-1vcpu-1gb \
-        --digitalocean-tags sometag:somevalue,othertag:othervalue \
-        {{ dm_machine_name }}"
+    - name: Request Docker Machine to use this machine as a generic VM
+      command: "docker-machine --debug create \
+        --driver generic \
+        --generic-ip-address=localhost \
+        --generic-ssh-key {{ lookup('env', 'HOME') }}/.ssh/id_rsa \
+        --generic-ssh-user root \
+        vm"
