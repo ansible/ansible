@@ -182,11 +182,11 @@ class AnsibleCollectionLoader(object):
                 else:
                     newmod.__path__ = package_paths
 
+            sys.modules[fullname] = newmod
+
             if code_object:
                 # FIXME: decide cases where we don't actually want to exec the code?
                 exec(code_object, newmod.__dict__)
-
-            sys.modules[fullname] = newmod
 
             return newmod
 
