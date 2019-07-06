@@ -1,8 +1,6 @@
 ---
 - hosts: 127.0.0.1
   connection: local
-  vars:
-    dm_machine_name: "{{ lookup('env', 'DM_MACHINE_NAME') }}"
   tasks:
-    - name: Request Docker Machine to terminate the Digital Ocean droplet
-      command: "docker-machine rm {{ dm_machine_name }} -f"
+    - name: Request Docker Machine to remove this machine as a generic VM
+      command: "docker-machine rm vm -f"
