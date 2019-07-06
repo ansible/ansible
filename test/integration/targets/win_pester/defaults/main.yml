@@ -1,2 +1,5 @@
 ---
 test_win_pester_path: C:\ansible\win_pester
+parameter:
+  Process: lsass
+  Service: bits
