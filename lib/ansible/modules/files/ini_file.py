@@ -48,6 +48,13 @@ options:
       - If set (required for changing a I(value)), this is the name of the option.
       - May be omitted if adding/removing a whole I(section).
     type: str
+  append_option:
+    description:
+      - If set, the option is appended regardless of if it already exists in the section of the INI file.
+      - Although keys (options) should generally be unique, duplicate keys are sometimes
+        required (e.g. for systemd config files).
+    type: bool
+    default: no
   value:
     description:
       - The string value to be associated with an I(option).
@@ -136,7 +143,7 @@ def match_active_opt(option, line):
     return re.match('( |\t)*%s( |\t)*(=|$)' % option, line)
 
 
-def do_ini(module, filename, section=None, option=None, value=None,
+def do_ini(module, filename, section=None, option=None, append_option=False, value=None,
            state='present', backup=False, no_extra_spaces=False, create=True,
            allow_no_value=False):
 
@@ -227,7 +234,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
             if within_section and option:
                 if state == 'present':
                     # change the existing option line
-                    if match_opt(option, line):
+                    if match_opt(option, line) and not append_option:
                         if not value and allow_no_value:
                             newline = '%s\n' % option
                         else:
@@ -302,6 +309,7 @@ def main():
             path=dict(type='path', required=True, aliases=['dest']),
             section=dict(type='str', required=True),
             option=dict(type='str'),
+            append_option=dict(type='bool', default=False),
             value=dict(type='str'),
             backup=dict(type='bool', default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -316,6 +324,7 @@ def main():
     path = module.params['path']
     section = module.params['section']
     option = module.params['option']
+    append_option = module.params['append_option']
     value = module.params['value']
     state = module.params['state']
     backup = module.params['backup']
@@ -323,7 +332,7 @@ def main():
     allow_no_value = module.params['allow_no_value']
     create = module.params['create']
 
-    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create, allow_no_value)
+    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, append_option, value, state, backup, no_extra_spaces, create, allow_no_value)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
