@@ -16,7 +16,7 @@ ANSIBLE_ROLES_PATH=../ ansible-playbook filters.yml -t password_hash -i ../../in
 
 # Required to test against CryptHash class
 
-source virtualenv-isolated.sh
+source virtualenv.sh
 
 pip install jmespath netaddr bcrypt -r ../../../../requirements.txt
 
