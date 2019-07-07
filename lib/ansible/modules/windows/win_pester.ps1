@@ -87,7 +87,7 @@ If (Test-Path -LiteralPath $path -PathType Leaf) {
                 $Parameters.Script = @{Path = $Path ; Parameters = $parameterlist }
             }
             else {
-                $Parameters.Path = $Path
+                $Parameters.Script = $Path
             }
             $result.output = Invoke-Pester @Parameters
         } catch {
