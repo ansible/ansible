@@ -162,6 +162,7 @@ EXAMPLES = '''
       password: admin
       project_name: admin
     name: port1
+    network: foo
     vnic_type: direct
 '''
 
@@ -356,8 +357,7 @@ def main():
 
         # Neutron API accept 'binding:vnic_type' as an argument
         # for the port type.
-        module.params['binding:vnic_type'] = module.params['vnic_type']
-        module.params.pop('vnic_type', None)
+        module.params['binding:vnic_type'] = module.params.pop('vnic_type')
 
         port = None
         network_id = None
