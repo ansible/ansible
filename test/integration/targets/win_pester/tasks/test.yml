@@ -105,7 +105,7 @@
 
 - name: Run Pester test(s) specifying a test file with parameters
   win_pester:
-    path: '{{test_win_pester_path}}\test04.tests.ps1'
+    path: '{{test_win_pester_path}}\test04.test.ps1'
     parameterlist: "{{parameter}}"
   register: test_with_parameter
 
