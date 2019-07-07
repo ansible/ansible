@@ -376,14 +376,14 @@ options:
         - If not set, the value will be remain the same if container exists and will be inherited from the host machine if it is (re-)created.
     type: int
   mounts:
-    version_added: "2.8"
+    version_added: "2.9"
     type: list
     description:
-      - 'Specification for mounts to be added to the container. More powerful alternative to C(volumes).'
+      - 'Specification for mounts to be added to the container. More powerful alternative to I(volumes).'
     suboptions:
       target:
         description:
-          - Container path.
+          - Path inside the container.
         type: str
         required: true
       source:
@@ -428,8 +428,8 @@ options:
       no_copy:
         description:
           - False if the volume should be populated with the data from the target. Only valid for the C(volume) type.
+          - The default value is C(false).
         type: bool
-        default: false
       labels:
         description:
           - User-defined name and labels for the volume. Only valid for the C(volume) type.
@@ -2804,6 +2804,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             env='set',
             entrypoint='list',
             etc_hosts='set',
+            mounts='set(dict)',
             networks='set(dict)',
             ulimits='set(dict)',
             device_read_bps='set(dict)',
@@ -3039,13 +3040,13 @@ def main():
         memory_swap=dict(type='str'),
         memory_swappiness=dict(type='int'),
         mounts=dict(type='list', elements='dict', options=dict(
-            target=dict(required=True, type='str'),
-            source=dict(required=True, type='str'),
+            target=dict(type='str', required=True),
+            source=dict(type='str', required=True),
             type=dict(type='str', choices=['bind', 'volume', 'tmpfs', 'npipe'], default='volume'),
             read_only=dict(type='bool'),
             consistency=dict(type='str', choices=['default', 'consistent', 'cached', 'delegated']),
             propagation=dict(type='str', choices=['private', 'rprivate', 'shared', 'rshared', 'slave', 'rslave']),
-            no_copy=dict(type='bool', default=False),
+            no_copy=dict(type='bool'),
             labels=dict(type='dict'),
             volume_driver=dict(type='str'),
             volume_options=dict(type='dict'),
