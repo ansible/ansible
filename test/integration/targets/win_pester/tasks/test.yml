@@ -113,5 +113,5 @@
   assert:
     that:
     - test_with_parameter.changed
-    - test_with_parameter.PassedCount == 2
+    - test_with_parameter.output.PassedCount == 2
     - test_with_parameter.output.TotalCount == 2
