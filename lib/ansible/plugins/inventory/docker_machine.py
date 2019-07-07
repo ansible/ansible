@@ -35,7 +35,7 @@ DOCUMENTATION = '''
             type: bool
             default: yes
         verbose_output:
-            description: when true, include all available nodes metadata (e.g. Image, Region, Size) as a JSON object.
+            description: when true, include all available nodes metadata (e.g. Image, Region, Size) as a JSON object named C(docker_machine_node_attributes).
             type: bool
             default: yes
 '''
