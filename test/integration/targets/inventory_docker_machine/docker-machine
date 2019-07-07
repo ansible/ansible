@@ -15,7 +15,6 @@ EOF
         ;;
 
     *)
-        # Hmm, this is quite possibly wrong on the Ansible shippable infra... :-(
-        /usr/local/bin/docker-machine $*
+        /usr/bin/docker-machine $*
         ;;
 esac
