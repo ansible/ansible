@@ -42,7 +42,7 @@ options:
             - Existing security group with which to associate the subnet.
             - It can be the security group name which is in the same resource group.
             - Can be the resource ID of the security group.
-            - Can be a dict containint the I(name) and I(resource_group) of the security group.
+            - Can be a dict containing the I(name) and I(resource_group) of the security group.
         aliases:
             - security_group_name
     state:
@@ -62,7 +62,7 @@ options:
         description:
             - The reference of the RouteTable resource.
             - Can be the name or resource ID of the route table.
-            - Can be a dict containing the I(name) and I(resource_group) of the I(route_table).
+            - Can be a dict containing the I(name) and I(resource_group) of the route table.
         version_added: "2.7"
     service_endpoints:
         description:
