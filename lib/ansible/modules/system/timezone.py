@@ -135,7 +135,7 @@ class Timezone(object):
             if AIXoslevel >= 61:
                 return super(Timezone, AIXTimezone).__new__(AIXTimezone)
             else:
-                module.fail_json(msg='AIX os level must be >= 61 for timezone module (Target: %s).' % AIXoslevel )
+                module.fail_json(msg='AIX os level must be >= 61 for timezone module (Target: %s).' % AIXoslevel)
         else:
             # Not supported yet
             return super(Timezone, Timezone).__new__(Timezone)
@@ -785,7 +785,7 @@ class AIXTimezone(Timezone):
     inspects C(/etc/environment) to determine the current timezone.
 
     While AIX time zones can be set using two formats (POSIX and
-    Olson) the prefered method is Olson.  
+    Olson) the prefered method is Olson.
     See the following article for more information:
     https://developer.ibm.com/articles/au-aix-posix/
 
@@ -821,8 +821,8 @@ class AIXTimezone(Timezone):
         """
         if key == 'name':
             # chtz seems to always return 0 on AIX 7.2, even for invalid timezone values.
-            # It will only return non-zero if the chtz command itself fails, it does not check for 
-            #  valid timezones. We need to perform a basic check to confirm that the timezone 
+            # It will only return non-zero if the chtz command itself fails, it does not check for
+            #  valid timezones. We need to perform a basic check to confirm that the timezone
             #  definition exists in /usr/share/lib/zoneinfo
             # This does mean that we can only support Olson for now. The below commented out regex
             #  detects Olson date formats, so in the future we could detect Posix or Olson and
@@ -848,8 +848,8 @@ class AIXTimezone(Timezone):
 
             if rc != 0:
                 self.module.fail_json(msg=stderr)
-            
-            # The best condition check we can do is to check the environment file after making the 
+
+            # The best condition check we can do is to check the environment file after making the
             #  change.
             try:
                 p = re.compile('^TZ=(.*)$')
