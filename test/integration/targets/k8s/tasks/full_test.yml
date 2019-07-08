@@ -5,13 +5,14 @@
 # Kubernetes resources
 
 - include_tasks: delete.yml
+- include_tasks: apply.yml
 - include_tasks: waiter.yml
 
 - block:
     - name: Create a namespace
       k8s:
         name: testing
-        kind: namespace
+        kind: Namespace
       register: output
 
     - name: show output
@@ -21,7 +22,7 @@
     - name: Setting validate_certs to true causes a failure
       k8s:
         name: testing
-        kind: namespace
+        kind: Namespace
         validate_certs: yes
       ignore_errors: yes
       register: output

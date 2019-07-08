@@ -12,7 +12,7 @@
 
 - pip:
     name:
-      - openshift==0.8.8
+      - 'openshift>=0.9.0'
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
@@ -30,8 +30,8 @@
 
 - pip:
     name:
-      - openshift==0.8.8
       - kubernetes-validate==1.12.0
+      - 'openshift>=0.9.0'
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
@@ -71,7 +71,7 @@
 
 - pip:
     name:
-      - openshift==0.8.8
+      - 'openshift>=0.9.0'
       - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
@@ -80,6 +80,7 @@
 - include_tasks: full_test.yml
   vars:
     ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+    create_crd_with_apply: no
     playbook_namespace: ansible-test-k8s-full
 
 - file:
