@@ -66,7 +66,7 @@ from collections import defaultdict
 def _normalize_weights(records):
     '''Normalize all the weights in a record set to be percentages and sort.'''
     wt_sum = float(sum([rec['weight'] for rec in records]))
-    _ = [rec.update({'weight': rec['weight']/wt_sum * 100}) for rec in records]
+    [rec.update({'weight': rec['weight'] / wt_sum * 100}) for rec in records]
     records.sort(key=lambda record: 1 - record['weight'])
 
 
