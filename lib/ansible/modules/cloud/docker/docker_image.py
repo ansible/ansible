@@ -424,7 +424,12 @@ import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils.docker.common import (
-    docker_version, AnsibleDockerClient, DockerBaseClass, is_image_name_id, is_valid_tag,
+    docker_version,
+    AnsibleDockerClient,
+    DockerBaseClass,
+    is_image_name_id,
+    is_valid_tag,
+    RequestException,
 )
 from ansible.module_utils._text import to_native
 
@@ -945,6 +950,8 @@ def main():
         client.module.exit_json(**results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

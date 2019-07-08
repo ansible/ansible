@@ -475,7 +475,11 @@ except ImportError as exc:
     HAS_COMPOSE_EXC = traceback.format_exc()
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    RequestException,
+)
 
 
 AUTH_PARAM_MAPPING = {
@@ -1101,6 +1105,8 @@ def main():
         client.module.exit_json(**result)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

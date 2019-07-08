@@ -74,6 +74,16 @@ except ImportError:
     HAS_DOCKER_SSLADAPTER = False
 
 
+try:
+    from request.exceptions import RequestException
+except ImportError:
+    # Either docker-py is no longer using requests, or docker-py isn't around either,
+    # or docker-py's dependency requests is missing. In any case, define an exception
+    # class RequestException so that our code doesn't break.
+    class RequestException(Exception):
+        pass
+
+
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
