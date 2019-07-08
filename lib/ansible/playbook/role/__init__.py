@@ -68,7 +68,7 @@ def hash_params(params):
                 new_params = set()
                 for k, v in params.items():
                     # Hash each entry individually
-                    new_params.update((k, hash_params(v)))
+                    new_params.add((k, hash_params(v)))
                 new_params = frozenset(new_params)
 
         elif isinstance(params, (Set, Sequence)):
@@ -79,7 +79,7 @@ def hash_params(params):
                 new_params = set()
                 for v in params:
                     # Hash each entry individually
-                    new_params.update(hash_params(v))
+                    new_params.add(hash_params(v))
                 new_params = frozenset(new_params)
         else:
             # This is just a guess.
