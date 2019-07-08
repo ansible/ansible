@@ -15,7 +15,6 @@
   <meta charset="utf-8">
   {{ metatags }}
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   {% block htmltitle %}
   <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
   {% endblock %}
@@ -79,6 +78,7 @@
   <link rel="stylesheet" href="{{ pathto(css, 1) }}" type="text/css" />
     {%- endif %}
   {%- endfor %}
+
   {%- for cssfile in extra_css_files %}
     <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
   {%- endfor %}
@@ -108,14 +108,11 @@
 
 <body class="wy-body-for-nav">
   {% block extrabody %} {% include "ansible_extrabody.html" %} {% endblock %}
-
   <div class="wy-grid-for-nav">
-
     {# SIDE NAV, TOGGLES ON MOBILE #}
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" {% if theme_style_nav_header_background %} style="background: {{theme_style_nav_header_background}}" {% endif %}>
           {% block sidebartitle %}
 
           <div style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
@@ -123,17 +120,25 @@
               <div class="DocSiteProduct-productName">
                 <div class="DocSiteProduct-logoText">
                   Ansible
-                  <div class="DocSiteProduct-CurrentVersion" align="right">{{ current_version }}</div>
                 </div>
               </div>
             </a>
           </div>
 
-          {% include "ansible_versions.html" %}
+          {% if theme_display_version %}
+            {%- set nav_version = version %}
+            {% if READTHEDOCS and current_version %}
+              {%- set nav_version = current_version %}
+            {% endif %}
+            {% if nav_version %}
+              <div class="version">
+                {{ nav_version }}
+              </div>
+            {% endif %}
+          {% endif %}
 
-          <div class="wy-side-nav-search" style="background-color#5bbdbf;height=80px;margin:'auto auto auto auto'">
-            {% include "searchbox.html" %}
-          </div>
+          {% include "ansible_versions.html" %}
+          {% include "searchbox.html" %}
 
           {% endblock %}
         </div>
@@ -192,14 +197,22 @@
         {% else %}
         <div class="rst-content">
         {% endif %}
-        {% include "breadcrumbs.html" %}
-        {% include "ansible_banner.html" %}
-        <div id="page-content">
-        {% block body %}{% endblock %}
+          {% include "breadcrumbs.html" %}
+          {% include "ansible_banner.html" %}
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+          {%- block document %}
+           <div itemprop="articleBody">
+            {% block body %}{% endblock %}
+           </div>
+           {% if self.comments()|trim %}
+           <div class="articleComments">
+            {% block comments %}{% endblock %}
+           </div>
+           {% endif%}
+          </div>
+          {%- endblock %}
+          {% include "footer.html" %}
         </div>
-        <div id="search-results"><gcse:searchresults-only></div>
-        {% include "footer.html" %}
-      </div>
       {%- endblock %}
       </div>
 
