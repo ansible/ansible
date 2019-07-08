@@ -33,10 +33,10 @@ EXAMPLES = """
   debug: msg="{{ lookup('dnssrv', '_test._tcp.example.com') }}"
 
 - name: show lowest priority, highest weight target
-  debug: msg="{{ lookup('dnssrv', '_test._tcp.example.com').0.0 }}"
+  debug: msg="{{ lookup('dnssrv', '_test._tcp.example.com').0.0.target }}"
 
 - name: iterate over lowest priority entries
-  debug: msg="Target {{ item.1 }} should be used {{ item.0 }}% of the time."
+  debug: msg="Target {{ item.target }} should be used {{ item.weight }}% of the time."
   loop: "{{ lookup('dnssrv', '_test._tcp.example.com').0 }}"
 """
 
