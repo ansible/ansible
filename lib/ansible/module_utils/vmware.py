@@ -832,7 +832,7 @@ class PyVmomi(object):
 
     def get_managed_objects_properties(self, vim_type, properties=None):
         """
-        Function to look up a Managed Object Reference in vCenter / ESXi Environment
+        Look up a Managed Object Reference in vCenter / ESXi Environment
         :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
         :param properties: List of properties related to vim object e.g. Name
         :return: local content object
@@ -880,7 +880,7 @@ class PyVmomi(object):
     # Virtual Machine related functions
     def get_vm(self):
         """
-        Function to find unique virtual machine either by UUID or Name.
+        Find unique virtual machine either by UUID or Name.
         Returns: virtual machine object if found, else None.
 
         """
@@ -967,7 +967,7 @@ class PyVmomi(object):
 
     def gather_facts(self, vm):
         """
-        Function to gather facts of virtual machine.
+        Gather facts of virtual machine.
         Args:
             vm: Name of virtual machine.
 
@@ -979,7 +979,7 @@ class PyVmomi(object):
     @staticmethod
     def get_vm_path(content, vm_name):
         """
-        Function to find the path of virtual machine.
+        Find the path of virtual machine.
         Args:
             content: VMware content object
             vm_name: virtual machine managed object
@@ -1088,7 +1088,7 @@ class PyVmomi(object):
 
     def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
         """
-        Function to get all host system managed object
+        Get all host system managed object
 
         Args:
             cluster_name: Name of Cluster
@@ -1163,7 +1163,7 @@ class PyVmomi(object):
 
     def get_all_port_groups_by_host(self, host_system):
         """
-        Function to get all Port Group by host
+        Get all Port Group by host
         Args:
             host_system: Name of Host System
 
@@ -1174,10 +1174,48 @@ class PyVmomi(object):
             pgs_list.append(pg)
         return pgs_list
 
+    def find_network_by_name(self, network_name=None):
+        """
+        Get network specified by name
+        Args:
+            network_name: Name of network
+
+        Returns: List of network managed objects
+        """
+        networks = []
+
+        if not network_name:
+            return networks
+
+        objects = self.get_managed_objects_properties(vim_type=vim.Network, properties=['name'])
+
+        for temp_vm_object in objects:
+            if len(temp_vm_object.propSet) != 1:
+                continue
+            for temp_vm_object_property in temp_vm_object.propSet:
+                if temp_vm_object_property.val == self.params['name']:
+                    networks.append(temp_vm_object.obj)
+                    break
+        return networks
+
+    def network_exists_by_name(self, network_name=None):
+        """
+        Check if network with a specified name exists or not
+        Args:
+            network_name: Name of network
+
+        Returns: True if network exists else False
+        """
+        ret = False
+        if not network_name:
+            return ret
+        ret = True if self.find_network_by_name(network_name=network_name) else False
+        return ret
+
     # Datacenter
     def find_datacenter_by_name(self, datacenter_name):
         """
-        Function to get datacenter managed object by name
+        Get datacenter managed object by name
 
         Args:
             datacenter_name: Name of datacenter
@@ -1189,7 +1227,7 @@ class PyVmomi(object):
 
     def find_datastore_by_name(self, datastore_name):
         """
-        Function to get datastore managed object by name
+        Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
 
@@ -1201,7 +1239,7 @@ class PyVmomi(object):
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):
         """
-        Function to get datastore cluster managed object by name
+        Get datastore cluster managed object by name
         Args:
             datastore_cluster_name: Name of datastore cluster
 
