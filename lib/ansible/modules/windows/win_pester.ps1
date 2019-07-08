@@ -79,16 +79,17 @@ if($tags.count){
 }
 # Run Pester tests
 If (Test-Path -LiteralPath $path -PathType Leaf) {
+    if ($parameterlist.keys.count) {
+        $Parameters.Script = @{Path = $Path ; Parameters = $parameterlist }
+        $parameterListCheckModeMsg = "with $($parameterlist.keys -join ',') parameters"
+    }
+    else {
+        $Parameters.Script = $Path
+    }
     if ($check_mode) {
-        $result.output = "Run pester test in the file: $path"
+        $result.output = "Run pester test in the file: $path $parameterListCheckModeMsg"
     } else {
         try {
-            if ($parameterlist.keys.count) {
-                $Parameters.Script = @{Path = $Path ; Parameters = $parameterlist }
-            }
-            else {
-                $Parameters.Script = $Path
-            }
             $result.output = Invoke-Pester @Parameters
         } catch {
             Fail-Json -obj $result -message $_.Exception
