@@ -46,3 +46,6 @@ httmock
 
 # requirment for kubevirt modules
 openshift ; python_version >= '2.7'
+
+# requirements for dns lookup plugins
+dnspython
