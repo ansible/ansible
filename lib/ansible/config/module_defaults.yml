@@ -610,6 +610,8 @@ groupings:
   - k8s
   k8s_facts:
   - k8s
+  k8s_info:
+  - k8s
   k8s_service:
   - k8s
   k8s_scale:

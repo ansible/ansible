@@ -59,6 +59,7 @@ options:
     - If openshift >= 0.6.2, this defaults to C(['strategic-merge', 'merge']), which is ideal for using the same parameters
       on resource kinds that combine Custom Resources and built-in resources. For openshift < 0.6.2, the default
       is simply C(strategic-merge).
+    - mutually exclusive with C(apply)
     choices:
     - json
     - merge
@@ -130,6 +131,15 @@ options:
       the generated hash and append_hash=no)
     type: bool
     version_added: "2.8"
+  apply:
+    description:
+    - C(apply) compares the desired resource definition with the previously supplied resource definition,
+      ignoring properties that are automatically generated
+    - C(apply) works better with Services than 'force=yes'
+    - C(apply) defaults to True if the openshift library is new enough to support it (0.9.0 or newer)
+    - mutually exclusive with C(merge_type)
+    type: bool
+    version_added: "2.9"
 
 requirements:
   - "python >= 2.7"
