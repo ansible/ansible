@@ -148,7 +148,7 @@ EXAMPLES = '''
       threshold: 1.0
       period: 60
       evaluation_periods: 2
-      unit: "Seconds"
+      unit: "Count"
       description: "This will recover an instance when it fails"
       dimensions: {"InstanceId":'i-XXX'}
       alarm_actions: ["arn:aws:automate:us-west-1:ec2:recover"]
