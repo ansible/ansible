@@ -43,25 +43,9 @@ def get_connection(module):
     if hasattr(module, '_qnos_connection'):
         return module._qnos_connection
 
-    capabilities = get_capabilities(module)
-    network_api = capabilities.get('network_api')
-    if network_api == 'cliconf':
-        module._qnos_connection = Connection(module._socket_path)
-    else:
-        module.fail_json(msg='Invalid connection type %s' % network_api)
+    module._qnos_connection = Connection(module._socket_path)
 
     return module._qnos_connection
-
-
-def get_capabilities(module):
-    if hasattr(module, '_qnos_capabilities'):
-        return module._qnos_capabilities
-    try:
-        capabilities = Connection(module._socket_path).get_capabilities()
-    except ConnectionError as exc:
-        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
-    module._qnos_capabilities = json.loads(capabilities)
-    return module._qnos_capabilities
 
 
 def get_defaults_flag(module):
