@@ -1271,6 +1271,33 @@ class PyVmomi(object):
                 return rp
         return None
 
+    def find_resource_pool_by_cluster(self, resource_pool_name='Resources', cluster=None):
+        """
+        Get resource pool managed object by cluster object
+        Args:
+            resource_pool_name: Name of resource pool
+            cluster: Managed object of cluster
+
+        Returns: Resource pool managed object if found else None
+
+        """
+        desired_rp = None
+        if not cluster:
+            return desired_rp
+
+        if resource_pool_name != 'Resources':
+            # Resource pool name is different than default 'Resources'
+            resource_pools = cluster.resourcePool.resourcePool
+            if resource_pools:
+                for rp in resource_pools:
+                    if rp.name == resource_pool_name:
+                        desired_rp = rp
+                        break
+        else:
+            desired_rp = cluster.resourcePool
+
+        return desired_rp
+
     # VMDK stuff
     def vmdk_disk_path_split(self, vmdk_path):
         """

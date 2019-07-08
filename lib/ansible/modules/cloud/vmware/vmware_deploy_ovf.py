@@ -344,15 +344,16 @@ class VMwareDeployOvf(PyVmomi):
             self.module.fail_json(msg='%(datastore)s could not be located' % self.params)
 
         if self.params['cluster']:
-            cluster = self.find_cluster_by_name(self.params['cluster'])
+            resource_pools = []
+            cluster = self.find_cluster_by_name(self.params['cluster'], datacenter_name=self.datacenter)
             if cluster is None:
                 self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
-            else:
-                self.resource_pool = cluster.resourcePool
+            self.resource_pool = self.find_resource_pool_by_cluster(self.params['resource_pool'], cluster=cluster)
         else:
             self.resource_pool = self.find_resource_pool_by_name(self.params['resource_pool'])
-            if not self.resource_pool:
-                self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
+
+        if not self.resource_pool:
+            self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
         for key, value in self.params['networks'].items():
             network = find_network_by_name(self.si, value)
