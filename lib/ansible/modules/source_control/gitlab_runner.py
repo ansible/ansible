@@ -176,9 +176,13 @@ except NameError:
 
 
 class GitLabRunner(object):
-    def __init__(self, module, gitlab_instance):
+    def __init__(self, module, gitlab_instance, project = None):
         self._module = module
         self._gitlab = gitlab_instance
+        # Whether ro operate on GitLab-instance-wide or project-wide runners
+        # See https://gitlab.com/gitlab-org/gitlab-ce/issues/60774
+        # for group runner token access
+        self._runners_endpoint = project.runners if project else gitlab_instance.runners
         self.runnerObject = None
 
     def createOrUpdateRunner(self, description, options):
@@ -225,7 +229,7 @@ class GitLabRunner(object):
             return True
 
         try:
-            runner = self._gitlab.runners.create(arguments)
+            runner = self._runners_endpoint.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
             self._module.fail_json(msg="Failed to create runner: %s " % to_native(e))
 
@@ -259,7 +263,7 @@ class GitLabRunner(object):
     @param description Description of the runner
     '''
     def findRunner(self, description):
-        runners = self._gitlab.runners.list(as_list=False)
+        runners = self._runners_endpoint.list(as_list=False)
         for runner in runners:
             if (runner.description == description):
                 return self._gitlab.runners.get(runner.id)
@@ -304,6 +308,7 @@ def main():
         access_level=dict(type='str', default='ref_protected', choices=["not_protected", "ref_protected"]),
         maximum_timeout=dict(type='int', default=3600),
         registration_token=dict(type='str', required=True),
+        project=dict(type='str'),
         state=dict(type='str', default="present", choices=["absent", "present"]),
     ))
 
@@ -345,6 +350,7 @@ def main():
     access_level = module.params['access_level']
     maximum_timeout = module.params['maximum_timeout']
     registration_token = module.params['registration_token']
+    project = module.params['project']
 
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
@@ -352,6 +358,8 @@ def main():
     try:
         gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
                                         private_token=gitlab_token, api_version=4)
+        if module._verbosity >= 2:
+            gitlab_instance.enable_debug()
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
@@ -359,7 +367,14 @@ def main():
         module.fail_json(msg="Failed to connect to Gitlab server: %s. \
             Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
-    gitlab_runner = GitLabRunner(module, gitlab_instance)
+    glproject = None
+    if project:
+        try:
+            glproject = gitlab_instance.projects.get(project)
+        except gitlab.exceptions.GitlabGetError as e:
+            module.fail_json(msg='No such a project %s' % project, exception=to_native(e))
+
+    gitlab_runner = GitLabRunner(module, gitlab_instance, glproject)
     runner_exists = gitlab_runner.existsRunner(runner_description)
 
     if state == 'absent':
