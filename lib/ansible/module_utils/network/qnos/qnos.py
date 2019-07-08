@@ -4,9 +4,9 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2016 Red Hat Inc.
+# (c) 2019 Red Hat Inc.
 #
-# Copyright (c) 2016 Dell Inc.
+# Copyright (c) 2019 Dell Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -39,37 +39,6 @@ from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine
 
 _DEVICE_CONFIGS = {}
 
-qnos_provider_spec = {
-    'host': dict(),
-    'port': dict(type='int'),
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int')
-}
-qnos_argument_spec = {
-    'provider': dict(type='dict', options=qnos_provider_spec),
-}
-
-qnos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(removed_in_version=2.9, no_log=True),
-    'timeout': dict(removed_in_version=2.9, type='int')
-}
-qnos_argument_spec.update(qnos_top_spec)
-
-
-def get_provider_argspec():
-    return qnos_provider_spec
-
-
 def get_connection(module):
     if hasattr(module, '_qnos_connection'):
         return module._qnos_connection
@@ -93,10 +62,6 @@ def get_capabilities(module):
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._qnos_capabilities = json.loads(capabilities)
     return module._qnos_capabilities
-
-
-def check_args(module, warnings):
-    pass
 
 
 def get_defaults_flag(module):
