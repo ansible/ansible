@@ -72,8 +72,10 @@ def _api(avi_session, path, **kwargs):
             rsp = rsp_data['results']
         else:
             rsp.append(rsp_data)
-    except ObjectNotFound:
-        pass
+    except ObjectNotFound as e:
+        display.warning('Resource not found. Please check obj_name/'
+                        'obj_uuid/obj_type are spelled correctly.')
+        display.v(to_native(e))
     except (AviServerError, APIError) as e:
         raise AnsibleError(to_native(e))
     except Exception as e:
