@@ -59,7 +59,7 @@ function Get-CAP([string] $name) {
 
     # Fetch CAP user and computer groups in Down-Level Logon format
     $cap.UserGroups = @(
-        Get-ChildItem -Path "$cap_path\UserGroups" | 
+        Get-ChildItem -Path "$cap_path\UserGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )

@@ -81,7 +81,7 @@ Function Get-PropertyValue($task_property, $com, $property) {
         return $null
     } elseif ($raw_value.GetType().Name -eq "__ComObject") {
         $com_values = @{}
-        $properties = Get-Member -InputObject $raw_value -MemberType Property | % {
+        Get-Member -InputObject $raw_value -MemberType Property | ForEach-Object {
             $com_value = Get-PropertyValue -task_property $property -com $raw_value -property $_.Name
             $com_values.$($_.Name) = $com_value
         }
@@ -297,7 +297,7 @@ if ($null -ne $name) {
             $property_name = $property -replace "_"
             $result.$property = @{}
             $values = $task_definition.$property_name
-            Get-Member -InputObject $values -MemberType Property | % {
+            Get-Member -InputObject $values -MemberType Property | ForEach-Object {
                 if ($_.Name -notin $ignored_properties) {
                     $result.$property.$($_.Name) = (Get-PropertyValue -task_property $property -com $values -property $_.Name)
                 }
@@ -312,14 +312,14 @@ if ($null -ne $name) {
                 $item = $collection.Item($i)
                 $item_info = @{}
 
-                Get-Member -InputObject $item -MemberType Property | % {
+                Get-Member -InputObject $item -MemberType Property | ForEach-Object {
                     if ($_.Name -notin $ignored_properties) {
                         $item_info.$($_.Name) = (Get-PropertyValue -task_property $property -com $item -property $_.Name)
                     }
                 }
                 $result.$property += $item_info
             }
-        }    
+        }
     } else {
         $result.task_exists = $false
     }
@@ -328,4 +328,3 @@ if ($null -ne $name) {
 $result = Convert-DictToSnakeCase -dict $result
 
 Exit-Json -obj $result
-

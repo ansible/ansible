@@ -9,7 +9,7 @@ function Get-EnabledPlugins($rabbitmq_plugins_cmd)
 {
     $list_plugins_cmd = "$rabbitmq_plugins_cmd list -E -m"
     try {
-        $enabled_plugins = @(Invoke-Expression "& $list_plugins_cmd" | Where { $_  })
+        $enabled_plugins = @(Invoke-Expression "& $list_plugins_cmd" | Where-Object { $_  })
         return ,$enabled_plugins
     }
     catch {
@@ -115,7 +115,7 @@ if ($rabbitmq_bin_path) {
 $enabled_plugins = Get-EnabledPlugins -rabbitmq_plugins_cmd $rabbitmq_plugins_cmd
 
 if ($state -eq "enabled") {
-    $plugins_to_enable = $plugins | ?{-not ($enabled_plugins -contains $_)}
+    $plugins_to_enable = $plugins | Where-Object {-not ($enabled_plugins -contains $_)}
     foreach ($plugin in $plugins_to_enable) {
         if (-not $check_mode) {
             Enable-Plugin -rabbitmq_plugins_cmd $rabbitmq_plugins_cmd -plugin_name $plugin
@@ -128,7 +128,7 @@ if ($state -eq "enabled") {
     }
 
     if (-not $new_only) {
-        $plugins_to_disable = $enabled_plugins | ?{-not ($plugins -contains $_)}
+        $plugins_to_disable = $enabled_plugins | Where-Object {-not ($plugins -contains $_)}
         foreach ($plugin in $plugins_to_disable) {
             if (-not $check_mode) {
                 Disable-Plugin -rabbitmq_plugins_cmd $rabbitmq_plugins_cmd -plugin_name $plugin
@@ -141,7 +141,7 @@ if ($state -eq "enabled") {
         }
     }
 } else {
-    $plugins_to_disable = $enabled_plugins | ?{$plugins -contains $_}
+    $plugins_to_disable = $enabled_plugins | Where-Object {$plugins -contains $_}
     foreach ($plugin in $plugins_to_disable) {
         if (-not $check_mode) {
             Disable-Plugin -rabbitmq_plugins_cmd $rabbitmq_plugins_cmd -plugin_name $plugin

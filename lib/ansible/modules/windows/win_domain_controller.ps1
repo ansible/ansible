@@ -10,6 +10,8 @@ Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 $ConfirmPreference = "None"
 
+$log_path = $null
+
 Function Write-DebugLog {
     Param(
         [string]$msg
@@ -21,7 +23,6 @@ Function Write-DebugLog {
     $msg = "$date_str $msg"
 
     Write-Debug $msg
-
     if($log_path) {
         Add-Content $log_path $msg
     }
@@ -39,17 +40,17 @@ Function Get-MissingFeatures {
     }
 
     $missing_features = @($features | Where-Object InstallState -ne Installed)
-    
+
     return ,$missing_features # no, the comma's not a typo- allows us to return an empty array
 }
 
 Function Ensure-FeatureInstallation {
     # ensure RSAT-ADDS and AD-Domain-Services features are installed
 
-    Write-DebugLog "Ensuring required Windows features are installed..." 
+    Write-DebugLog "Ensuring required Windows features are installed..."
     $feature_result = Install-WindowsFeature $required_features
     $result.reboot_required = $feature_result.RestartNeeded
-    
+
     If(-not $feature_result.Success) {
         Exit-Json -message ("Error installing AD-Domain-Services and RSAT-ADDS features: {0}" -f ($feature_result | Out-String))
     }
@@ -59,7 +60,7 @@ Function Ensure-FeatureInstallation {
 Function Get-DomainControllerDomain {
     Write-DebugLog "Checking for domain controller role and domain name"
 
-    $sys_cim = Get-WmiObject Win32_ComputerSystem
+    $sys_cim = Get-CIMInstance Win32_ComputerSystem
 
     $is_dc = $sys_cim.DomainRole -in (4,5) # backup/primary DC
     # this will be our workgroup or joined-domain if we're not a DC
@@ -106,8 +107,11 @@ $read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -defau
 $site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 
 $state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
+
 $log_path = Get-AnsibleParam -obj $params -name "log_path"
 $_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+
+$global:log_path = $log_path
 
 Try {
     # ensure target OS support; < 2012 doesn't have cmdlet support for DC promotion
@@ -208,7 +212,7 @@ Try {
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
@@ -253,7 +257,7 @@ Try {
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 
             Write-DebugLog "Uninstalling domain controller..."
-            $uninstall_result = Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
+            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }
@@ -268,4 +272,3 @@ Catch {
 
     Throw
 }
-

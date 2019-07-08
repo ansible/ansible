@@ -27,7 +27,6 @@ if ($diff_mode) {
 }
 
 Function Run-SecEdit($arguments) {
-    $rc = $null
     $stdout = $null
     $stderr = $null
     $log_path = [IO.Path]::GetTempFileName()
@@ -165,7 +164,7 @@ if ($secedit_ini.$section.ContainsKey($key)) {
     if ($diff_mode) {
         $result.diff.prepared = @"
 [$section]
-+$key = $value        
++$key = $value
 "@
     }
     $secedit_ini.$section.$key = $value
