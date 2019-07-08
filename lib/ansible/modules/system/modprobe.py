@@ -55,6 +55,7 @@ EXAMPLES = '''
 import os.path
 import shlex
 import traceback
+import errno
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -97,11 +98,17 @@ def main():
             module_file = '/' + name + '.ko'
             builtin_path = os.path.join('/lib/modules/', uname_kernel_release.strip(),
                                         'modules.builtin')
-            with open(builtin_path) as builtins:
-                for line in builtins:
-                    if line.endswith(module_file):
-                        present = True
-                        break
+            try:                                                                              
+                with open(builtin_path) as builtins:                                          
+                    for line in builtins:                                                     
+                        if line.endswith(module_file):                                        
+                            present = True                                                    
+                            break                                                             
+            except IOError as e:                                                              
+                # The open() failed                                                           
+                if e.errno != errno.ENOENT:                                                   
+                    # We are ok if this file doesnt exist, but nothing else
+                    module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **result)
     except IOError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **result)
 
