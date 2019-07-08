@@ -1,0 +1,2 @@
+bugfixes:
+- Fix broken slxos_config due to changed backup options (https://github.com/ansible/ansible/pull/58804).
