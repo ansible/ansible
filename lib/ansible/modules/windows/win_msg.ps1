@@ -48,5 +48,5 @@ $result.sent_localtime = $endsend_at.Trim()
 if ($result.rc -ne 0 ) {
     Fail-Json -obj $result -message "$output"
 }
-  
+
 Exit-Json $result

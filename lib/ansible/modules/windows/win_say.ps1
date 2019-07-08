@@ -42,7 +42,7 @@ $words = $null
 if ($msg_file) {
    if (-not (Test-Path -Path $msg_file)) {
       $module.FailJson("Message file $msg_file could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
-   } 
+   }
    $words = Get-Content $msg_file | Out-String
 }
 
@@ -53,7 +53,7 @@ if ($msg) {
 if ($start_sound_path) {
    if (-not (Test-Path -Path $start_sound_path)) {
       $module.FailJson("Start sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
-   } 
+   }
    if (-not $module.CheckMode) {
       (new-object Media.SoundPlayer $start_sound_path).playSync()
    }
@@ -84,7 +84,7 @@ if ($words) {
 if ($end_sound_path) {
    if (-not (Test-Path -Path $end_sound_path)) {
       $module.FailJson("End sound file $start_sound_path could not be found or opened.  Ensure you have specified the full path to the file, and the ansible windows user has permission to read the file.")
-   } 
+   }
    if (-not $module.CheckMode) {
       (new-object Media.SoundPlayer $end_sound_path).playSync()
    }

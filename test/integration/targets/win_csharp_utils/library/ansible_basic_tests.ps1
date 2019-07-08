@@ -693,7 +693,7 @@ test_no_log - Invoked with:
       hide: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
       data: Oops this is secret: ********
       custom: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
-      list: 
+      list:
       - VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
       - ********word
       - ********567

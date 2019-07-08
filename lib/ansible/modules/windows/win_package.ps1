@@ -150,7 +150,7 @@ Function Test-RegistryProperty($path, $name) {
     }
 }
 
-Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_path, $creates_version, $creates_service) {
+Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credential, $creates_path, $creates_version, $creates_service) {
     # will get some metadata about the program we are trying to install or remove
     $metadata = @{
         installed = $false
@@ -327,7 +327,7 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are uninstalling an msi
-                if ( -Not $log_path ) { 
+                if ( -Not $log_path ) {
                     $temp_path = [System.IO.Path]::GetTempPath()
                     $log_file = [System.IO.Path]::GetRandomFileName()
                     $log_path = Join-Path -Path $temp_path -ChildPath $log_file
@@ -421,7 +421,7 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
-                if ( -Not $log_path ) { 
+                if ( -Not $log_path ) {
                     $temp_path = [System.IO.Path]::GetTempPath()
                     $log_file = [System.IO.Path]::GetRandomFileName()
                     $log_path = Join-Path -Path $temp_path -ChildPath $log_file

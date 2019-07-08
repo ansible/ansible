@@ -400,4 +400,3 @@ if ($test_result.InDesiredState -ne $true) {
 }
 
 $module.ExitJson()
-

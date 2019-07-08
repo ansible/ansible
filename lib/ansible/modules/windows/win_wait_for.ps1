@@ -230,7 +230,9 @@ if ($null -eq $path -and $null -eq $port -and $state -ne "drained") {
                         try {
                             $exclude_ips = [System.Net.Dns]::GetHostAddresses($exclude_host) | ForEach-Object { Write-Output $_.IPAddressToString }
                             $connection_info = $connection_info | Where-Object { $_ -notin $exclude_ips }
-                        } catch {} # ignore invalid hostnames
+                        } catch { # ignore invalid hostnames
+                            Add-Warning -obj $result -message "Invalid hostname specified $exclude_host"
+                        }
                     }
 
                     if ($connection_info.Count -eq 0) {
