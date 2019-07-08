@@ -23,7 +23,7 @@ version_added: "1.8"
 author: "Alexander Bulimov (@abulimov)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     state:
         description:
