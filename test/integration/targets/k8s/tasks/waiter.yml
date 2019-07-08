@@ -253,6 +253,7 @@
             namespace: "{{ wait_namespace }}"
           spec:
             paused: True
+        apply: no
         wait: yes
         wait_condition:
           type: Progressing

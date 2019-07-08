@@ -1,5 +1,5 @@
 - name: ensure that there are actually some nodes
-  k8s_facts:
+  k8s_info:
     kind: Node
   register: nodes
 
@@ -41,7 +41,7 @@
           - ds.result.status.currentNumberScheduled == ds.result.status.desiredNumberScheduled
 
     - name: check if pods exist
-      k8s_facts:
+      k8s_info:
         namespace: "{{ delete_namespace }}"
         kind: Pod
         label_selectors:
@@ -64,7 +64,7 @@
         wait: yes
 
     - name: show status of pods
-      k8s_facts:
+      k8s_info:
         namespace: "{{ delete_namespace }}"
         kind: Pod
         label_selectors:
@@ -77,7 +77,7 @@
         seconds: 30
 
     - name: check if pods still exist
-      k8s_facts:
+      k8s_info:
         namespace: "{{ delete_namespace }}"
         kind: Pod
         label_selectors:
