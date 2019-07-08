@@ -803,23 +803,26 @@ def main():
                 module.fail_json(msg="Key %s does not exist." % obj)
 
         # If the destination path doesn't exist or overwrite is True, no need to do the md5sum ETag check, so just download.
-        # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if path_check(dest):
+            if overwrite == 'always':
+                try:
+                    download_s3file(module, s3, bucket, obj, dest, retries,
+                                    version=version)
+                except Sigv4Required:
+                    s3 = get_s3_connection(module, aws_connect_kwargs,
+                                           location, rgw, s3_url, sig_4=True)
+                    download_s3file(module, s3, bucket, obj, dest, retries,
+                                    version=version)
+            # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
             # Determine if the remote and local object are identical
             if keysum_compare(module, dest, s3, bucket, obj, version=version):
                 sum_matches = True
-                if overwrite == 'always':
-                    try:
-                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-                    except Sigv4Required:
-                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
-                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-                else:
+                if overwrite != 'always':
                     module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
             else:
                 sum_matches = False
 
-                if overwrite in ('always', 'different'):
+                if overwrite == 'different':
                     try:
                         download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                     except Sigv4Required:
@@ -848,25 +851,29 @@ def main():
         if bucketrtn:
             keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
 
+        # If overwrite is True, no need to do the md5sum ETag check, so just upload.
+        if overwrite == 'always':
+            # only use valid object acls for the upload_s3file function
+            module.params['permission'] = object_acl
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata,
+                          encrypt, headers)
+
         # Lets check key state. Does it exist and if it does, compute the ETag md5sum.
-        if bucketrtn and keyrtn:
-            # Compare the local and remote object
-            if keysum_compare(module, src, s3, bucket, obj):
-                sum_matches = True
-                if overwrite == 'always':
-                    # only use valid object acls for the upload_s3file function
-                    module.params['permission'] = object_acl
-                    upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
+        else:
+            if bucketrtn and keyrtn:
+                # Compare the local and remote object
+                if keysum_compare(module, src, s3, bucket, obj):
+                    sum_matches = True
+                    if overwrite != 'always':
+                        get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
-                    get_download_url(module, s3, bucket, obj, expiry, changed=False)
-            else:
-                sum_matches = False
-                if overwrite in ('always', 'different'):
-                    # only use valid object acls for the upload_s3file function
-                    module.params['permission'] = object_acl
-                    upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
-                else:
-                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
+                    sum_matches = False
+                    if overwrite == 'different':
+                        # only use valid object acls for the upload_s3file function
+                        module.params['permission'] = object_acl
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
+                    else:
+                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
         if not bucketrtn:
