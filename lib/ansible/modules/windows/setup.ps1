@@ -362,7 +362,7 @@ if($gather_subset.Contains('processor')) {
     }
 
     $cpu_list = @( )
-    for ($i=1; $i -le $win32_cs.NumberOfProcessors; $i++) {
+    for ($i=1; $i -le ($win32_cpu.NumberOfLogicalProcessors * $win32_cs.NumberOfProcessors); $i++) {
         $cpu_list += $win32_cpu.Manufacturer
         $cpu_list += $win32_cpu.Name
     }
