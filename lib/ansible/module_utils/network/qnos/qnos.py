@@ -39,6 +39,7 @@ from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine
 
 _DEVICE_CONFIGS = {}
 
+
 def get_connection(module):
     if hasattr(module, '_qnos_connection'):
         return module._qnos_connection
