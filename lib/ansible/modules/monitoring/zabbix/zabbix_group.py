@@ -27,7 +27,7 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     state:
         description:
@@ -80,7 +80,7 @@ import atexit
 import traceback
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     from zabbix_api import Already_Exists
 
     HAS_ZABBIX_API = True
