@@ -72,8 +72,20 @@ def _normalize_weights(records):
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables=None, **kwargs):
+    @staticmethod
+    def _do_dns_query(domain):
+        '''Perform DNS query.'''
+        try:
+            return dns.resolver.query(domain, 'SRV')
+        except dns.resolver.Timeout:
+            return []
+        except dns.resolver.NoAnswer:
+            return []
+        except DNSException as e:
+            raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
 
+    def run(self, terms, variables=None, **kwargs):
+        '''Run dnssrv lookup.'''
         if HAVE_DNS is False:
             raise AnsibleError("Can't LOOKUP(dnssrv): module dns.resolver is not installed")
 
@@ -85,14 +97,9 @@ class LookupModule(LookupBase):
         domain = term.split()[0]
 
         # perform query
-        try:
-            answers = dns.resolver.query(domain, 'SRV')
-        except dns.resolver.Timeout:
-            return [[]]
-        except dns.resolver.NoAnswer:
-            return [[]]
-        except DNSException as e:
-            raise AnsibleError("dns.resolver unhandled exception %s" % to_native(e))
+        answers = self._do_dns_query(domain)
+        if not answers:
+            return answers
 
         # extract all dns answers, group by priority
         raw = defaultdict(list)
