@@ -1420,7 +1420,7 @@ class TaskParameters(DockerBaseClass):
                         break
                 except NotFound as e:
                     self.client.fail(
-                        "Cannot inspect the network '{0}' to determine the default IP.".format(net['name']),
+                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], e),
                         exception=traceback.format_exc()
                     )
         return ip
@@ -2652,9 +2652,9 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 if self.parameters.stop_timeout:
-                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                    dummy = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
                 else:
-                    response = self.client.restart(container_id)
+                    dummy = self.client.restart(container_id)
             except Exception as exc:
                 self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)

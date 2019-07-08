@@ -195,7 +195,7 @@ tasks:
 import traceback
 
 try:
-    from docker.errors import DockerException, APIError, NotFound
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker_common
     pass

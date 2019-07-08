@@ -95,7 +95,7 @@ from ansible.module_utils.docker.common import (
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 try:
-    from docker.errors import DockerException, APIError, NotFound
+    from docker.errors import DockerException
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass

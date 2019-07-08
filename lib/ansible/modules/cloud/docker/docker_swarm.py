@@ -278,7 +278,6 @@ except ImportError:
 from ansible.module_utils.docker.common import (
     DockerBaseClass,
     DifferenceTracker,
-    LooseVersion,
     RequestException,
 )
 

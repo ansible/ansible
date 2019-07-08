@@ -451,7 +451,7 @@ try:
     import yaml
     HAS_YAML = True
     HAS_YAML_EXC = None
-except ImportError as exc:
+except ImportError as dummy:
     HAS_YAML = False
     HAS_YAML_EXC = traceback.format_exc()
 
@@ -470,7 +470,7 @@ try:
     HAS_COMPOSE = True
     HAS_COMPOSE_EXC = None
     MINIMUM_COMPOSE_VERSION = '1.7.0'
-except ImportError as exc:
+except ImportError as dummy:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = traceback.format_exc()
     DEFAULT_TIMEOUT = 10
