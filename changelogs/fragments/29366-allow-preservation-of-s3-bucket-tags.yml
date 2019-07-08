@@ -1,0 +1,2 @@
+minor_changes:
+  - add purge_tags parameter to s3_bucket to allow preservation of existing tags when updating tags.
