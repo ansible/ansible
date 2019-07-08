@@ -98,15 +98,15 @@ def main():
             module_file = '/' + name + '.ko'
             builtin_path = os.path.join('/lib/modules/', uname_kernel_release.strip(),
                                         'modules.builtin')
-            try:                                                                              
-                with open(builtin_path) as builtins:                                          
-                    for line in builtins:                                                     
-                        if line.endswith(module_file):                                        
-                            present = True                                                    
-                            break                                                             
-            except IOError as e:                                                              
-                # The open() failed                                                           
-                if e.errno != errno.ENOENT:                                                   
+            try:
+                with open(builtin_path) as builtins:
+                    for line in builtins:
+                        if line.endswith(module_file):
+                            present = True
+                            break
+            except IOError as e:
+                # The open() failed
+                if e.errno != errno.ENOENT:
                     # We are ok if this file doesnt exist, but nothing else
                     module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **result)
     except IOError as e:
