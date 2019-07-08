@@ -85,7 +85,7 @@ EXAMPLES = """
   ios_vlan:
     vlan_id: 100
     state: absent
-    
+
 - name: Add vlan using aggregate
   ios_vlan:
     aggregate:
@@ -97,7 +97,7 @@ EXAMPLES = """
     vlan_id: 102
     interfaces:
       - GigabitEthernet0/0
-      - GigabitEthernet0/1    
+      - GigabitEthernet0/1
 """
 
 RETURN = """
