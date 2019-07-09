@@ -1499,7 +1499,7 @@ class TaskParameters(DockerBaseClass):
                        network.get('Options', {}).get('com.docker.network.bridge.host_binding_ipv4'):
                         ip = network['Options']['com.docker.network.bridge.host_binding_ipv4']
                         break
-                except NotFound as e:
+                except NotFound as dummy:
                     self.client.fail(
                         "Cannot inspect the network '{0}' to determine the default IP.".format(net['name']),
                         exception=traceback.format_exc()
@@ -1565,12 +1565,12 @@ class TaskParameters(DockerBaseClass):
             for vol in volumes:
                 host = None
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        host, container, mode = vol.split(':')
+                    parts = vol.split(':')
+                    if len(parts) == 3:
+                        host, container, mode = parts
                         if not is_volume_permissions(mode):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    elif len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
                             host, container, mode = (vol.split(':') + ['rw'])
                 if host is not None:
@@ -2733,9 +2733,9 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 if self.parameters.stop_timeout:
-                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                    dummy = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
                 else:
-                    response = self.client.restart(container_id)
+                    dummy = self.client.restart(container_id)
             except Exception as exc:
                 self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
