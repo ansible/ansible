@@ -1368,7 +1368,7 @@ class ModuleValidator(Validator):
                 msg = "Argument '%s' in argument_spec" % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)
-                msg += " defines type as %r but documentation defines type as %r" % (data['type'], doc_type)
+                msg += " defines type as %r but documentation defines type as %r" % (arg_type, doc_type)
                 self.reporter.error(
                     path=self.object_path,
                     code='doc-type-does-not-match-spec',
