@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: icx_banner
 version_added: "2.9"
-author: "Ruckus (https://support.ruckuswireless.com/contact-us)"
+author: "Ruckus (support@commscope.com)"
 short_description: Manage multiline banners on Ruckus ICX 7000 series switches
 description:
   - This will configure both login and motd banners on remote
@@ -25,6 +25,7 @@ options:
   banner:
     description:
       - Specifies which banner should be configured on the remote device.
+    type: str
     required: true
     choices: ['motd', 'exec', 'incoming']
   text:
@@ -37,6 +38,7 @@ options:
     description:
       - Specifies whether or not the configuration is
         present in the current devices active running configuration.
+    type: str
     default: present
     choices: ['present', 'absent']
   enterkey:
