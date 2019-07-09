@@ -1033,6 +1033,8 @@ from ansible.module_utils.docker.common import (
     compare_generic,
     is_image_name_id,
     sanitize_result,
+    clean_dict_booleans_for_docker_api,
+    omit_none_from_dict,
     parse_healthcheck,
     DOCKER_COMMON_ARGS,
 )
@@ -1043,6 +1045,7 @@ try:
     from ansible.module_utils.docker.common import docker_version
     if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
+        from docker import types as docker_types
     else:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import DockerException, APIError, NotFound
@@ -1284,6 +1287,8 @@ class TaskParameters(DockerBaseClass):
             if isinstance(self.command, list):
                 self.command = ' '.join([str(x) for x in self.command])
 
+        self.mounts_opt, self.expected_mounts = self._process_mounts()
+
         for param_name in ["device_read_bps", "device_write_bps"]:
             if client.module.params.get(param_name):
                 self._process_rate_bps(option=param_name)
@@ -1483,6 +1488,9 @@ class TaskParameters(DockerBaseClass):
         if self.restart_policy:
             params['restart_policy'] = dict(Name=self.restart_policy,
                                             MaximumRetryCount=self.restart_retries)
+
+        if 'mounts' in params:
+            params['mounts'] = self.mounts_opt
 
         return self.client.create_host_config(**params)
 
@@ -1737,6 +1745,58 @@ class TaskParameters(DockerBaseClass):
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
 
+    def _process_mounts(self):
+        if self.mounts is None:
+            return None, None
+        mounts_list = []
+        mounts_expected = []
+        for mount in self.mounts:
+            target = mount['target']
+            type = mount['type']
+            mount_dict = dict(mount)
+            # Handle volume_driver and volume_options
+            volume_driver = mount_dict.pop('volume_driver')
+            volume_options = mount_dict.pop('volume_options')
+            if volume_driver:
+                mount_dict['driver_config'] = docker_types.DriverConfig(name=volume_driver, options=volume_options)
+            if volume_options:
+                volume_options = clean_dict_booleans_for_docker_api(volume_options)
+            if mount_dict['labels']:
+                mount_dict['labels'] = clean_dict_booleans_for_docker_api(mount_dict['labels'])
+            if mount_dict.get('tmpfs_size') is not None:
+                try:
+                    mount_dict['tmpfs_size'] = human_to_bytes(mount_dict['tmpfs_size'])
+                except ValueError as exc:
+                    self.fail('Failed to convert tmpfs_size of mount "{0}" to bytes: {1}' % (target, exc))
+            if mount_dict.get('tmpfs_mode') is not None:
+                try:
+                    mount_dict['tmpfs_mode'] = int(mount_dict['tmpfs_mode'], 8)
+                except Exception as dummy:
+                    self.client.fail('tmp_fs mode of mount "{0}" is not an octal string!'.format(target))
+            # Sanity checks (so we don't wait for docker-py to barf on input)
+            if mount_dict.get('source') is None and type != 'tmpfs':
+                self.client.fail('source must be specified for mount "{0}" of type "{1}"'.format(target, type))
+            if volume_driver and type != 'volume':
+                self.client.fail('volume_driver cannot be specified for mount "{0}" of type "{1}"'.format(target, type))
+            if mount_dict.get('propagation') is not None and type != 'bind':
+                self.client.fail('propagation cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
+            if mount_dict.get('no_copy') is not None and type != 'volume':
+                self.client.fail('no_copy cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
+            if mount_dict.get('labels') is not None and type != 'volume':
+                self.client.fail('labels cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
+            if mount_dict.get('tmpfs_size') is not None and type != 'tmpfs':
+                self.client.fail('tmpfs_size cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
+            if mount_dict.get('tmpfs_mode') is not None and type != 'tmpfs':
+                self.client.fail('tmpfs_mode cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
+            # Fill expected mount dict
+            mount_expected = dict(mount)
+            mount_expected['tmpfs_size'] = mount_dict['tmpfs_size']
+            mount_expected['tmpfs_mode'] = mount_dict['tmpfs_mode']
+            # Add result to lists
+            mounts_list.append(docker_types.Mount(**mount_dict))
+            mounts_expected.append(omit_none_from_dict(mount_expected))
+        return mounts_list, mounts_expected
+
     def _process_rate_bps(self, option):
         """
         Format device_read_bps and device_write_bps option
@@ -1813,6 +1873,7 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
+        self.parameters_map['expected_mounts'] = 'mounts'
 
     def fail(self, msg):
         self.parameters.client.fail(msg)
@@ -1839,6 +1900,28 @@ class Container(DockerBaseClass):
         Compare values a and b as described in compare.
         '''
         return compare_generic(a, b, compare['comparison'], compare['type'])
+
+    def _decode_mounts(self, mounts):
+        if not mounts:
+            return mounts
+        result = []
+        empty_dict = dict()
+        for mount in mounts:
+            res = dict()
+            res['type'] = mount.get('Type')
+            res['source'] = mount.get('Source')
+            res['target'] = mount.get('Target')
+            res['read_only'] = mount.get('ReadOnly')
+            res['consistency'] = mount.get('Consistency')
+            res['propagation'] = mount.get('BindOptions', empty_dict).get('Propagation')
+            res['no_copy'] = mount.get('VolumeOptions', empty_dict).get('NoCopy', False)
+            res['labels'] = mount.get('VolumeOptions', empty_dict).get('Labels', empty_dict)
+            res['volume_driver'] = mount.get('VolumeOptions', empty_dict).get('DriverConfig', empty_dict).get('Name')
+            res['volume_options'] = mount.get('VolumeOptions', empty_dict).get('DriverConfig', empty_dict).get('Options', empty_dict)
+            res['tmpfs_size'] = mount.get('TmpfsOptions', empty_dict).get('SizeBytes')
+            res['tmpfs_mode'] = mount.get('TmpfsOptions', empty_dict).get('Mode')
+            result.append(res)
+        return result
 
     def has_different_configuration(self, image):
         '''
@@ -1938,6 +2021,11 @@ class Container(DockerBaseClass):
             device_read_iops=host_config.get('BlkioDeviceReadIOps'),
             device_write_iops=host_config.get('BlkioDeviceWriteIOps'),
             pids_limit=host_config.get('PidsLimit'),
+            # According to https://github.com/moby/moby/, support for HostConfig.Mounts
+            # has been included at least since v17.03.0-ce, which has API version 1.26.
+            # The previous tag, v1.9.1, has API version 1.21 and does not have
+            # HostConfig.Mounts. I have no idea what about API 1.25...
+            expected_mounts=self._decode_mounts(host_config.get('Mounts')),
         )
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:

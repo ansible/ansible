@@ -986,3 +986,10 @@ def parse_healthcheck(healthcheck):
         return None, True
 
     return result, False
+
+
+def omit_none_from_dict(d):
+    """
+    Return a copy of the dictionary with all keys with value None omitted.
+    """
+    return {k: v for (k, v) in d.items() if v is not None}
