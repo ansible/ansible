@@ -797,19 +797,27 @@ class AIXTimezone(Timezone):
         super(AIXTimezone, self).__init__(module)
         self.settimezone = self.module.get_bin_path('chtz', required=True)
 
+    def __get_timezone(self):
+        """ Return the current value of TZ= in /etc/environment """
+        try:
+            f = open('/etc/environment', 'r')
+            etcenvironment = f.read()
+            f.close()
+        except Exception:
+            self.module.fail_json(msg='Issue reading contents of /etc/environment')
+
+        match = re.search(r'^TZ=(.*)$', etcenvironment, re.MULTILINE)
+        if match:
+            return match.group(1)
+        else:
+            return None
+
     def get(self, key, phase):
         """Lookup the current timezone name in `/etc/environment`. If anything else
         is requested, or if the TZ field is not set we fail.
         """
         if key == 'name':
-            try:
-                f = open('/etc/environment', 'r')
-                for line in f:
-                    m = re.match('^TZ=(.*)$', line.strip())
-                    if m:
-                        return m.groups()[0]
-            except Exception:
-                self.module.fail_json(msg='Failed to read /etc/environment')
+            return self.__get_timezone()
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
 
@@ -847,20 +855,13 @@ class AIXTimezone(Timezone):
             if rc != 0:
                 self.module.fail_json(msg=stderr)
 
-            # The best condition check we can do is to check the environment file after making the
+            # The best condition check we can do is to check the value of TZ after making the
             #  change.
-            try:
-                p = re.compile('^TZ=(.*)$')
-                f = open('/etc/environment', 'r')
-                for line in f:
-                    line = line.strip()
-                    if p.match(line):
-                        check = line.split('=')[1]
-                        if check != value:
-                            msg = 'Post-change check does not match supplied value (%s - %s)' % (check, value)
-                            self.module.fail_json(msg=msg)
-            except Exception:
-                self.module.fail_json(msg='Failed to check status of change; issue reading /etc/environment')
+            TZ = self.__get_timezone()
+            if TZ != value:
+                msg = 'TZ value does not match post-change (Actual: %s, Expected: %s).' % (match.group(0), value)
+                self.module.fail_json(msg=msg)
+
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
 
