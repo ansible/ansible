@@ -77,7 +77,8 @@ AZURE_API_PROFILES = {
         'ComputeManagementClient': '2016-03-30',
         'NetworkManagementClient': '2015-06-15',
         'ResourceManagementClient': '2016-02-01',
-        'StorageManagementClient': '2016-01-01'
+        'StorageManagementClient': '2016-01-01',
+        'GenericRestClient': '2016-06-01'
     }
 }
 
