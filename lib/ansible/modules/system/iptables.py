@@ -474,7 +474,7 @@ def append_param(rule, param, flag, is_list):
     else:
         if param is not None:
             if param[0] == '!':
-                rule.extend(['!', flag, param[1:]])
+                rule.extend(['!', flag, param[1:].replace(" ", "")])
             else:
                 rule.extend([flag, param])
 
