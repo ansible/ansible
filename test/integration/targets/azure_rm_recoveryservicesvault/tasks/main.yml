@@ -1,9 +1,21 @@
-- name: Create or Update Recovery Services vault
+- name: Create Recovery Services vault
   azure_rm_recoveryservicesvault:
     resource_group: "{{ resource_group }}"
     name: testVault
     sku_name: Standard
-    location: "{{ location }}"  
+    location: eastus
+  register: output
+
+- assert:
+    that: 
+      - output.changed
+
+- name: Update Recovery Services vault
+  azure_rm_recoveryservicesvault:
+    resource_group: "{{ resource_group }}"
+    name: testVault
+    upgrade_details:
+      message: myMessage
   register: output
 
 - assert:
@@ -24,6 +36,7 @@
       - output.vaults['location'] != None
       - output.vaults['e_tag'] != None
       - output.vaults['sku_name'] != None
+      - output.vaults['upgrade_details'] != None
       - output.vaults['provisioning_state'] != None
 
 - name: Delete Recovery Services Vault

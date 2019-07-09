@@ -64,35 +64,42 @@ vaults:
         - Resource Id represents the complete path to the resource.
       returned: always
       type: str
-      sample: null
+      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+      /providers/Microsoft.RecoveryServices/vaults/myVault"
     name:
       description:
         - Resource name associated with the resource.
       returned: always
       type: str
-      sample: null
+      sample: "myVault"
     e_tag:
       description:
         - Optional ETag.
       returned: always
       type: str
-      sample: null
+      sample: "W/\"datetime'xxxx-xx-xxT12%3A36%3A51.68Z'\""
     location:
       description:
         - Resource location.
       returned: always
       type: str
-      sample: null
+      sample: "eastus"
+    sku_name:
+      description:
+        - The Sku name.
+      type: str
+      sample: "Standard"
     tags:
       description:
         - Resource tags.
       type: dict
       sample: { "TestUpdatedKey": "TestUpdatedValue" }
-    sku_name:
+    upgrade_details:
       description:
-        - The Sku name.
-      type: str
-      sample: null
+        - Details for upgrading vault.
+      type: dict
+      sample: { "status": None, "end_time_utc": None, "trigger_type": None, "start_time_utc": None, "last_updated_time_utc": None, 
+      "upgraded_resource_id": None, "previous_resource_id": None, "operation_id": None, "message": "myMessage" }
     provisioning_state:
         description:
           - The current state of the gallery.
@@ -252,8 +259,8 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
             'name': item['name'],
             'location': item['location'],
             'tags': item.get('tags'),
-            'e_tag': item['etag'],
-            'sku_name': item['sku']['name'],
+            'upgrade_details': item['properties'].get('upgradeDetails'),
+            'e_tag': item['sku']['name'],
             'provisioning_state': item['properties']['provisioningState']
         }
         return d

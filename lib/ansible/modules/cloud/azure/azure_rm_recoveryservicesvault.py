@@ -125,7 +125,8 @@ id:
     - Resource Id represents the complete path to the resource.
   returned: always
   type: str
-  sample: null
+  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+  /providers/Microsoft.RecoveryServices/vaults/myVault"
 
 '''
 
