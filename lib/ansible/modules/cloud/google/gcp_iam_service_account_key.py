@@ -152,6 +152,7 @@ path:
 ################################################################################
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils._text import to_native
 import json
 import os
 import mimetypes
@@ -204,7 +205,7 @@ def create(module):
     auth = GcpSession(module, 'iam')
     json_content = return_if_object(module, auth.post(self_link(module), resource_to_request(module)))
     with open(module.params['path'], 'w') as f:
-        private_key_contents = base64.b64decode(json_content['privateKeyData'])
+        private_key_contents = to_native(base64.b64decode(json_content['privateKeyData']))
         f.write(private_key_contents)
 
 
