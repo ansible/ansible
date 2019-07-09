@@ -891,9 +891,13 @@ class StrategyBase:
             if not iterator.is_failed(host) or iterator._play.force_handlers:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
+                templar = Templar(loader=self._loader, variables=task_vars)
+                if not handler.cached_name:
+                    handler.name = templar.template(handler.name)
+                    handler.cached_name = True
+
                 self._queue_task(host, handler, task_vars, play_context)
 
-                templar = Templar(loader=self._loader, variables=task_vars)
                 if templar.template(handler.run_once) or bypass_host_loop:
                     break
 
