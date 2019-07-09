@@ -12,15 +12,13 @@ Function Get-CustomFacts {
     $factpath = $null
   )
 
-  if (-not (Test-Path -Path $factpath)) {
-    Fail-Json $result "The path $factpath does not exist. Typo?"
-  }
+  if (Test-Path -Path $factpath) {
+    $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
 
-  $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
-
-  foreach ($FactsFile in $FactsFiles) {
-      $out = & $($FactsFile.FullName)
-      $result.ansible_facts.Add("ansible_$(($FactsFile.Name).Split('.')[0])", $out)
+    foreach ($FactsFile in $FactsFiles) {
+        $out = & $($FactsFile.FullName)
+        $result.ansible_facts.Add("ansible_$(($FactsFile.Name).Split('.')[0])", $out)
+    }
   }
 }
 
