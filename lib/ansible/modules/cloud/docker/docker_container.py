@@ -2087,10 +2087,13 @@ class Container(DockerBaseClass):
                     elif compare['type'] == 'set(dict)':
                         # Since the order does not matter, sort so that the diff output is better.
                         # We sort the list of dictionaries by using the sorted items of a dict as its key.
+                        sort_key_fn = lambda x: sorted((a, str(b)) for a, b in x.items())
+                        if key == 'expected_mounts':
+                            sort_key_fn = lambda x: x['target']
                         if p is not None:
-                            p = sorted(p, key=lambda x: sorted(x.items()))
+                            p = sorted(p, key=sort_key_fn)
                         if c is not None:
-                            c = sorted(c, key=lambda x: sorted(x.items()))
+                            c = sorted(c, key=sort_key_fn)
                     differences.add(key, parameter=p, active=c)
 
         has_differences = not differences.empty
