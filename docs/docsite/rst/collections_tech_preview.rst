@@ -297,6 +297,8 @@ This works for roles or any type of plugin distributed within the collection:
        tasks:
          - include_role:
              name : myname.mycol.role1
+         - myname.mycol.mymodule:
+             option1: value
 
          - debug:
              msg: '{{ lookup("myname.mycol.lookup1", 'param1')| myname.mycol.filter1 }}'
@@ -313,6 +315,8 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbi
        tasks:
          - include_role:
              name: role1
+         - mymodule:
+             option1: value
 
          - debug:
              msg: '{{ lookup("myname.mycol.lookup1", 'param1')| myname.mycol.filter1 }}'
