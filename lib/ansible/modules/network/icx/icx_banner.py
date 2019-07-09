@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -14,8 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = """
 ---
 module: icx_banner
-version_added: "1.0"
-author: "Ruckus: https://support.ruckuswireless.com/contact-us"
+version_added: "2.9"
+author: "Ruckus: https://support.ruckuswireless.com/contact-us(support@commscope.com)"
 short_description: Manage multiline banners on Ruckus ICX 7000 series switches
 description:
   - This will configure both login and motd banners on remote
@@ -48,10 +48,10 @@ options:
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
-       Module will use environment variable value(default:True), unless it is overriden, 
+       Module will use environment variable value(default:True), unless it is overriden,
        by specifying it as module parameter.
     type: bool
-    default: As set in environment variable
+    default: yes
 """
 
 EXAMPLES = """
@@ -178,7 +178,7 @@ def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        banner=dict(type='str', required=True, choices=['motd', 'exec', 'incoming']),
+        banner=dict(required=True, choices=['motd', 'exec', 'incoming']),
         text=dict(),
         enterkey=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
