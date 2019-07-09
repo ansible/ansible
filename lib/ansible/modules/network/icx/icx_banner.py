@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: icx_banner
 version_added: "2.9"
-author: "Ruckus (support@commscope.com)"
+author: "Ruckus"
 short_description: Manage multiline banners on Ruckus ICX 7000 series switches
 description:
   - This will configure both login and motd banners on remote
