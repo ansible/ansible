@@ -61,7 +61,7 @@ options:
 
 EXAMPLES = '''
 # Create a DNS record on a UCS
-- udm_dns_zone:
+- udm_dns_record:
     name: www
     zone: example.com
     type: host_record
