@@ -111,6 +111,8 @@ EXAMPLES = '''
     name: myVault
     sku_name: Standard
     location: westus
+    upgrade_details:
+      message: myMessage
 - name: Delete Recovery Services Vault
   azure_rm_recoveryservicesvault:
     resource_group: myResourceGroup
