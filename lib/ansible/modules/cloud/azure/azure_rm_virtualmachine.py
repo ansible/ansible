@@ -21,7 +21,7 @@ module: azure_rm_virtualmachine
 
 version_added: "2.1"
 
-short_description: Manage Azure virtual machines.
+short_description: Manage Azure virtual machines
 
 description:
     - Create, update, stop and start a virtual machine. Provide an existing storage account and network interface or
@@ -46,111 +46,102 @@ options:
         required: true
     custom_data:
         description:
-            - Data which is made available to the virtual machine and used by e.g., cloud-init.
+            - Data which is made available to the virtual machine and used by e.g. C(cloud-init).
         version_added: "2.5"
     state:
         description:
             - Assert the state of the virtual machine.
-            - State C(present) will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power
-              state.
-            - State C(absent) will remove the virtual machine.
+            - I(state=present) will check that the machine exists with the requested configuration. If the configuration of the existing machine does not match,
+              the machine will be updated. Use options I(started), I(allocated) and I(restarted) to change the machine's power state.
+            - C(state=absent) will remove the virtual machine.
         default: present
         choices:
             - absent
             - present
     started:
         description:
-            - Use with state C(present) to start the machine. Set to false to have the machine be 'stopped'.
+            - Use with I(state=present) to start the machine. Set to C(false) to have the machine be 'stopped'.
         default: true
         type: bool
     allocated:
         description:
-            - Toggle that controls if the machine is allocated/deallocated, only useful with state='present'.
+            - Toggle that controls if the machine is allocated/deallocated, only useful with I(state=present).
         default: True
         type: bool
     generalized:
         description:
-            - Use with state C(present) to generalize the machine. Set to true to generalize the machine.
+            - Use with I(state=present) to generalize the machine. Set to true to generalize the machine.
             - Please note that this operation is irreversible.
         type: bool
         version_added: "2.8"
     restarted:
         description:
-            - Use with state C(present) to restart a running VM.
+            - Use with I(state=present) to restart a running VM.
         type: bool
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
     short_hostname:
         description:
-            - Name assigned internally to the host. On a linux VM this is the name returned by the `hostname` command.
-              When creating a virtual machine, short_hostname defaults to name.
+            - Name assigned internally to the host. On a Linux VM this is the name returned by the `hostname` command.
+            - When creating a virtual machine, short_hostname defaults to name.
     vm_size:
         description:
-            - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
-              subscription and location. Check your subscription for available choices. Required when creating a VM.
+            - A valid Azure VM size value. For example, C(Standard_D4).
+            - The list of choices varies depending on the subscription and location. Check your subscription for available choices. Required when creating a VM.
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
     admin_password:
         description:
-            - Password for the admin username. Not required if the os_type is Linux and SSH password authentication
-              is disabled by setting ssh_password_enabled to false.
+            - Password for the admin username.
+            - Not required if the I(os_type=Linux) and SSH password authentication is disabled by setting I(ssh_password_enabled=false).
     ssh_password_enabled:
         description:
-            - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
-              and require use of SSH keys.
+            - When the I(os_type=Linux), setting I(ssh_password_enabled=false) will disable SSH password authentication and require use of SSH keys.
         default: true
         type: bool
     ssh_public_keys:
         description:
-            - "For os_type Linux provide a list of SSH keys. Each item in the list should be a dictionary where the
-              dictionary contains two keys: path and key_data. Set the path to the default location of the
-              authorized_keys files. On an Enterprise Linux host, for example, the path will be
-              /home/<admin username>/.ssh/authorized_keys. Set key_data to the actual value of the public key."
+            - For I(os_type=Linux) provide a list of SSH keys.
+            - Each item in the list should be a dictionary where the dictionary contains two keys, I(path) and I(key_data).
+              Set the I(path) to the default location of the authorized_keys files. On an Enterprise Linux host,
+              for example, will setting I(path=/home/<admin username>/.ssh/authorized_keys). Set I(key_data) to the actual value of the public key.
     image:
         description:
             - Specifies the image used to build the VM.
-            - If a string, the image is sourced from a custom image based on the
-              name.
-            - 'If a dict with the keys C(publisher), C(offer), C(sku), and
-              C(version), the image is sourced from a Marketplace image. NOTE:
-              set image.version to C(latest) to get the most recent version of a
-              given image.'
-            - 'If a dict with the keys C(name) and C(resource_group), the image
-              is sourced from a custom image based on the C(name) and
-              C(resource_group) set. NOTE: the key C(resource_group) is optional
-              and if omitted, all images in the subscription will be searched
-              for by C(name).'
-            - Custom image support was added in Ansible 2.5
+            - If a string, the image is sourced from a custom image based on the name.
+            - If a dict with the keys I(publisher), I(offer), I(sku), and I(version), the image is sourced from a Marketplace image.
+              Note that set I(version=latest) to get the most recent version of a given image.
+            - If a dict with the keys I(name) and I(resource_group), the image is sourced from a custom image based on the I(name) and I(resource_group) set.
+              Note that the key I(resource_group) is optional and if omitted, all images in the subscription will be searched for by I(name).
+            - Custom image support was added in Ansible 2.5.
         required: true
     availability_set:
         description:
-            - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
+            - Name or ID of an existing availability set to add the VM to. The I(availability_set) should be in the same resource group as VM.
         version_added: "2.5"
     storage_account_name:
         description:
-            - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
-              a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+            - Name of an existing storage account that supports creation of VHD blobs.
+            - If not specified for a new VM, a new storage account named <vm name>01 will be created using storage type C(Standard_LRS).
         aliases:
             - storage_account
     storage_container_name:
         description:
-            - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
-              default container will created.
+            - Name of the container to use within the storage account to store VHD blobs. If no name is specified a default container will created.
         default: vhds
         aliases:
             - storage_container
     storage_blob_name:
         description:
-            - Name of the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
-              the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
+            - Name of the storage blob used to hold the VM's OS disk image.
+            - If no name is provided, defaults to the VM name + '.vhd'. If you provide a name, it must end with '.vhd'.
         aliases:
             - storage_blob
     managed_disk_type:
         description:
-            - Managed OS disk type
+            - Managed OS disk type.
         choices:
             - Standard_LRS
             - StandardSSD_LRS
@@ -158,7 +149,7 @@ options:
         version_added: "2.4"
     os_disk_name:
         description:
-            - OS disk name
+            - OS disk name.
         version_added: "2.8"
     os_disk_caching:
         description:
@@ -187,16 +178,16 @@ options:
         suboptions:
             lun:
                 description:
-                    - The logical unit number for data disk
+                    - The logical unit number for data disk.
                 default: 0
                 version_added: "2.4"
             disk_size_gb:
                 description:
-                    - The initial disk size in GB for blank data disks
+                    - The initial disk size in GB for blank data disks.
                 version_added: "2.4"
             managed_disk_type:
                 description:
-                    - Managed data disk type
+                    - Managed data disk type.
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
@@ -204,19 +195,19 @@ options:
                 version_added: "2.4"
             storage_account_name:
                 description:
-                    - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
-                      a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
+                    - Name of an existing storage account that supports creation of VHD blobs.
+                    - If not specified for a new VM, a new storage account named <vm name>01 will be created using storage type C(Standard_LRS).
                 version_added: "2.4"
             storage_container_name:
                 description:
-                    - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
-                      default container will created.
+                    - Name of the container to use within the storage account to store VHD blobs.
+                    - If no name is specified a default container will created.
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
                 description:
-                    - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
-                      the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
+                    - Name fo the storage blob used to hold the VM's OS disk image.
+                    - If no name is provided, defaults to the VM name + '.vhd'. If you provide a name, it must end with '.vhd'.
                 version_added: "2.4"
             caching:
                 description:
@@ -230,7 +221,7 @@ options:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
               determines if the public IP address remains permanently associated with the Network Interface. If set
-              to 'Dynamic' the public IP address may change any time the VM is rebooted or power cycled.
+              to C(Dynamic) the public IP address may change any time the VM is rebooted or power cycled.
             - The C(Disabled) choice was added in Ansible 2.6.
         choices:
             - Dynamic
@@ -241,30 +232,29 @@ options:
             - public_ip_allocation
     open_ports:
         description:
-            - If a network interface is created when creating the VM, a security group will be created as well. For
-              Linux hosts a rule will be added to the security group allowing inbound TCP connections to the default
-              SSH port 22, and for Windows hosts ports 3389 and 5986 will be opened. Override the default open ports by
-              providing a list of ports.
+            - If a network interface is created when creating the VM, a security group will be created as well.i
+            - For Linux hosts a rule will be added to the security group allowing inbound TCP connections to the default SSH port 22,
+               and for Windows hosts ports 3389 and 5986 will be opened. Override the default open ports by providing a list of ports.
     network_interface_names:
         description:
             - List of existing network interface names to add to the VM.
             - Item can be a str of name or resource id of the network interface.
-            - Item can also be a dict contains C(resource_group) and C(name) of the network interface.
+            - Item can also be a dict contains I(resource_group) and I(name) of the network interface.
             - If a network interface name is not provided when the VM is created, a default network interface will be created.
             - In order for the module to create a new network interface, at least one Virtual Network with one Subnet must exist.
         aliases:
             - network_interfaces
     virtual_network_resource_group:
         description:
-            - When creating a virtual machine, if a specific virtual network from another resource group should be
-              used, use this parameter to specify the resource group to use.
+            - When creating a virtual machine, if a specific virtual network from another resource group should be use this parameter
+              to specify the resource group to use.
         version_added: "2.4"
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
             - The network interface will be assigned to the first virtual network found in the resource group.
             - Use this parameter to provide a specific virtual network instead.
-            - If the virtual network in in another resource group, specific resource group by C(virtual_network_resource_group).
+            - If the virtual network in in another resource group, specific resource group by I(virtual_network_resource_group).
         aliases:
             - virtual_network
     subnet_name:
@@ -272,91 +262,92 @@ options:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
             - The new network interface will be assigned to the first subnet found in the virtual network.
             - Use this parameter to provide a specific subnet instead.
-            - If the subnet is in another resource group, specific resource group by C(virtual_network_resource_group).
+            - If the subnet is in another resource group, specific resource group by I(virtual_network_resource_group).
         aliases:
             - subnet
     remove_on_absent:
         description:
-            - "When removing a VM using state 'absent', also remove associated resources."
-            - "It can be a list with any of the following: ['all', 'all_autocreated', 'network_interfaces', 'virtual_storage', 'public_ips']."
-            - "To remove all resources referred by VM use 'all' (this includes autocreated)."
-            - "To remove all resources that were automatically created while provisioning VM use 'all_autocreated'."
+            - When removing a VM using I(state=absent), also remove associated resources.
+            - It can be a list with any of the following ['all', 'all_autocreated', 'network_interfaces', 'virtual_storage', 'public_ips'].
+            - To remove all resources referred by VM use all (this includes autocreated).
+            - To remove all resources that were automatically created while provisioning VM use all_autocreated.
             - Any other input will be ignored.
+        type: list
         default: ['all']
     plan:
         description:
-            - A dictionary describing a third-party billing plan for an instance
-        version_added: 2.5
+            - A dictionary describing a third-party billing plan for an instance.
+        version_added: "2.5"
         suboptions:
             name:
                 description:
-                    - billing plan name
+                    - Billing plan name.
                 required: true
             product:
                 description:
-                    - product name
+                    - Product name.
                 required: true
             publisher:
                 description:
-                    - publisher offering the plan
+                    - Publisher offering the plan.
                 required: true
             promotion_code:
                 description:
-                    - optional promotion code
+                    - Optional promotion code.
     accept_terms:
         description:
-            - Accept terms for marketplace images that require it
-            - Only Azure service admin/account admin users can purchase images from the marketplace
-            - C(plan) must be set when C(accept_terms) is true
+            - Accept terms for marketplace images that require it.
+            - Only Azure service admin/account admin users can purchase images from the marketplace.
+            - I(plan) must be set when I(accept_terms=true).
         type: bool
         default: false
         version_added: "2.7"
     zones:
         description:
-            - A list of Availability Zones for your virtual machine
+            - A list of Availability Zones for your virtual machine.
         type: list
         version_added: "2.8"
     license_type:
         description:
-            - Specifies that the image or disk that is being used was licensed on-premises. This element is only
-              used for images that contain the Windows Server operating system.
-            - "Note: To unset this value, it has to be set to the string 'None'."
-        version_added: 2.8
+            - Specifies that the image or disk that is being used was licensed on-premises.
+            - This option is only used for images that contain the Windows Server operating system.
+            - Note that to unset this value, it has to be set to the string 'None'.
+        version_added: "2.8"
         choices:
             - Windows_Server
             - Windows_Client
     vm_identity:
         description:
             - Identity for the virtual machine.
-        version_added: 2.8
+        version_added: "2.8"
         choices:
             - SystemAssigned
     winrm:
         description:
             - List of Windows Remote Management configurations of the VM.
-        version_added: 2.8
+        version_added: "2.8"
         suboptions:
             protocol:
                 description:
-                    - Specifies the protocol of listener
+                    - Specifies the protocol of listener.
                 required: true
                 choices:
                     - http
                     - https
             source_vault:
                 description:
-                    - The relative URL of the Key Vault containing the certificate
+                    - The relative URL of the Key Vault containing the certificate.
             certificate_url:
                 description:
                     - This is the URL of a certificate that has been uploaded to Key Vault as a secret.
             certificate_store:
                 description:
-                    - Specifies the certificate store on the Virtual Machine to which the certificate
-                      should be added. The specified certificate store is implicitly in the LocalMachine account.
+                    - Specifies the certificate store on the Virtual Machine to which the certificate should be added.
+                    - The specified certificate store is implicitly in the LocalMachine account.
     boot_diagnostics:
         description:
-            - Manage boot diagnostics settings for a virtual machine.  Boot diagnostics
-              includes a serial console and remote console screenshots.
+            - Manage boot diagnostics settings for a virtual machine.
+            - Boot diagnostics includes a serial console and remote console screenshots.
         version_added: '2.9'
         suboptions:
             enabled:
@@ -367,11 +358,9 @@ options:
             storage_account:
                 description:
                     - The name of an existing storage account to use for boot diagnostics.
-                    - If omitted and C(storage_account_name) is defined one level up, that
-                      will be used instead.
-                    - If omitted and C(storage_account_name) is not defined one level up, and
-                      C(enabled) is I(true), then a default storage account will be created
-                      or used for the virtual machine to hold the boot diagnostics data.
+                    - If omitted and I(storage_account_name) is defined one level up, that will be used instead.
+                    - If omitted and I(storage_account_name) is not defined one level up, and C(enabled) is C(true),
+                      then a default storage account will be created or used for the virtual machine to hold the boot diagnostics data.
                 required: false
 
 extends_documentation_fragment:
@@ -379,10 +368,10 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
-    - "Christopher Perrin (@cperrin88)"
-    - "James E. King III (@jeking3)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
+    - Christopher Perrin (@cperrin88)
+    - James E. King III (@jeking3)
 '''
 EXAMPLES = '''
 
@@ -453,12 +442,12 @@ EXAMPLES = '''
       sku: Stable
       version: latest
     data_disks:
-        - lun: 0
-          disk_size_gb: 64
-          managed_disk_type: Standard_LRS
-        - lun: 1
-          disk_size_gb: 128
-          managed_disk_type: Premium_LRS
+      - lun: 0
+        disk_size_gb: 64
+        managed_disk_type: Standard_LRS
+      - lun: 1
+        disk_size_gb: 128
+        managed_disk_type: Premium_LRS
 
 - name: Create a VM with OS and multiple data storage accounts
   azure_rm_virtualmachine:
@@ -468,8 +457,8 @@ EXAMPLES = '''
     admin_username: adminUser
     ssh_password_enabled: false
     ssh_public_keys:
-    - path: /home/adminUser/.ssh/authorized_keys
-      key_data: < insert yor ssh public key here... >
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
     network_interfaces: testvm001
     storage_container: osdisk
     storage_blob: osdisk.vhd
@@ -481,14 +470,14 @@ EXAMPLES = '''
       sku: Stable
       version: latest
     data_disks:
-    - lun: 0
-      disk_size_gb: 64
-      storage_container_name: datadisk1
-      storage_blob_name: datadisk1.vhd
-    - lun: 1
-      disk_size_gb: 128
-      storage_container_name: datadisk2
-      storage_blob_name: datadisk2.vhd
+      - lun: 0
+        disk_size_gb: 64
+        storage_container_name: datadisk1
+        storage_blob_name: datadisk1.vhd
+      - lun: 1
+        disk_size_gb: 128
+        storage_container_name: datadisk2
+        storage_blob_name: datadisk2.vhd
 
 - name: Create a VM with a custom image
   azure_rm_virtualmachine:
@@ -592,30 +581,35 @@ EXAMPLES = '''
 
 RETURN = '''
 powerstate:
-    description: Indicates if the state is running, stopped, deallocated, generalized
+    description:
+        - Indicates if the state is C(running), C(stopped), C(deallocated), C(generalized).
     returned: always
     type: str
-    example: running
+    sample: running
 deleted_vhd_uris:
-    description: List of deleted Virtual Hard Disk URIs.
+    description:
+        - List of deleted Virtual Hard Disk URIs.
     returned: 'on delete'
     type: list
-    example: ["https://testvm104519.blob.core.windows.net/vhds/testvm10.vhd"]
+    sample: ["https://testvm104519.blob.core.windows.net/vhds/testvm10.vhd"]
 deleted_network_interfaces:
-    description: List of deleted NICs.
+    description:
+        - List of deleted NICs.
     returned: 'on delete'
     type: list
-    example: ["testvm1001"]
+    sample: ["testvm1001"]
 deleted_public_ips:
-    description: List of deleted public IP address names.
+    description:
+        - List of deleted public IP address names.
     returned: 'on delete'
     type: list
-    example: ["testvm1001"]
+    sample: ["testvm1001"]
 azure_vm:
-    description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
+    description:
+        - Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
     returned: always
-    type: complex
-    contains: {
+    type: dict
+    sample: {
         "properties": {
             "availabilitySet": {
                     "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/availabilitySets/MYAVAILABILITYSET"
