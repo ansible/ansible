@@ -165,11 +165,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _should_skip_host(self, machine_name, env_var_tuples):
         if not env_var_tuples:
+            warning_prefix = 'Unable to fetch Docker daemon env vars from Docker Machine for host {0}'.format(machine_name)
             if self.get_option('daemon_required'):
-                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will be skipped'.format(machine_name))
+                display.warning('{0}: host will be skipped'.format(warning_prefix))
                 return True
             else:
-                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will lack dm_DOCKER_xxx variables'.format(machine_name))
+                display.warning('{0}: host will lack dm_DOCKER_xxx variables'.format(warning_prefix))
         return False
 
     def _populate(self):
