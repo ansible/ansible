@@ -795,9 +795,7 @@ class AIXTimezone(Timezone):
 
     def __init__(self, module):
         super(AIXTimezone, self).__init__(module)
-        self.settimezone = self.module.get_bin_path('chtz', required=False)
-        if not self.settimezone:
-            module.fail_json(msg='chtz not found.')
+        self.settimezone = self.module.get_bin_path('chtz', required=True)
 
     def get(self, key, phase):
         """Lookup the current timezone name in `/etc/environment`. If anything else
