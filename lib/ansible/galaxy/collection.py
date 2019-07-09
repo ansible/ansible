@@ -16,7 +16,7 @@ import uuid
 import yaml
 
 from contextlib import contextmanager
-from distutils.version import LooseVersion
+from distutils.version import LooseVersion, StrictVersion
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
@@ -323,7 +323,9 @@ class CollectionRequirement:
             else:
                 versions = []
                 while True:
-                    versions += [v['version'] for v in resp['results']]
+                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
+                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
+                    versions += [v['version'] for v in resp['results'] if StrictVersion.version_re.match(v['version'])]
                     if resp['next'] is None:
                         break
                     resp = json.load(open_url(to_native(resp['next'], errors='surrogate_or_strict'),
@@ -875,7 +877,8 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
 
     existing = [c for c in existing_collections if str(c) == str(collection_info)]
     if existing and not collection_info.force:
-        existing[0].add_requirement(str(collection_info), requirement)  # Test that the installed collection fits the requirement
+        # Test that the installed collection fits the requirement
+        existing[0].add_requirement(str(collection_info), requirement)
         collection_info = existing[0]
 
     dep_map[str(collection_info)] = collection_info

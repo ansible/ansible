@@ -260,6 +260,56 @@ def test_build_requirement_from_name(monkeypatch):
     assert mock_open.mock_calls[0][2] == {'validate_certs': True}
 
 
+def test_build_requirement_from_name_with_prerelease(monkeypatch):
+    galaxy_server = 'https://galaxy-dev.ansible.com'
+    json_str = artifact_versions_json('namespace', 'collection', ['1.0.1', '2.0.1-beta.1', '2.0.1'], galaxy_server)
+    mock_open = MagicMock()
+    mock_open.return_value = StringIO(json_str)
+
+    monkeypatch.setattr(collection, 'open_url', mock_open)
+
+    actual = collection.CollectionRequirement.from_name('namespace.collection', [galaxy_server], '*', True, True)
+
+    assert actual.namespace == u'namespace'
+    assert actual.name == u'collection'
+    assert actual.b_path is None
+    assert actual.source == to_text(galaxy_server)
+    assert actual.skip is False
+    assert actual.versions == set([u'1.0.1', u'2.0.1'])
+    assert actual.latest_version == u'2.0.1'
+    assert actual.dependencies is None
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == u"%s/api/v2/collections/namespace/collection/versions/" % galaxy_server
+    assert mock_open.mock_calls[0][2] == {'validate_certs': True}
+
+
+def test_build_requirment_from_name_with_prerelease_explicit(monkeypatch):
+    galaxy_server = 'https://galaxy-dev.ansible.com'
+    json_str = artifact_json('namespace', 'collection', '2.0.1-beta.1', {}, galaxy_server)
+    mock_open = MagicMock()
+    mock_open.return_value = StringIO(json_str)
+
+    monkeypatch.setattr(collection, 'open_url', mock_open)
+
+    actual = collection.CollectionRequirement.from_name('namespace.collection', [galaxy_server], '2.0.1-beta.1', True,
+                                                        True)
+
+    assert actual.namespace == u'namespace'
+    assert actual.name == u'collection'
+    assert actual.b_path is None
+    assert actual.source == to_text(galaxy_server)
+    assert actual.skip is False
+    assert actual.versions == set([u'2.0.1-beta.1'])
+    assert actual.latest_version == u'2.0.1-beta.1'
+    assert actual.dependencies == {}
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == u"%s/api/v2/collections/namespace/collection/versions/2.0.1-beta.1/" \
+        % galaxy_server
+    assert mock_open.mock_calls[0][2] == {'validate_certs': True}
+
+
 def test_build_requirement_from_name_second_server(monkeypatch):
     galaxy_server = 'https://galaxy-dev.ansible.com'
     json_str = artifact_versions_json('namespace', 'collection', ['1.0.1', '1.0.2', '1.0.3'], galaxy_server)
