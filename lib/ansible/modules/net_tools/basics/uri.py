@@ -51,12 +51,12 @@ options:
     type: raw
   body_format:
     description:
-      - The serialization format of the body. When set to C(json) or C(form-urlencoded), encodes the
-        body argument, if needed, and automatically sets the Content-Type header accordingly.
-        As of C(2.3) it is possible to override the `Content-Type` header, when
-        set to C(json) or C(form-urlencoded) via the I(headers) option.
+      - The serialization format of the body. When set to C(json) or C(form-urlencoded) or
+        C(form-multipart), encodes the body argument, if needed, and automatically sets the
+        Content-Type header accordingly. As of C(2.3) it is possible to override the `Content-Type`
+        header, when set to C(json) or C(form-urlencoded) via the I(headers) option.
     type: str
-    choices: [ form-urlencoded, json, raw ]
+    choices: [ form-multipart, form-urlencoded, json, raw ]
     default: raw
     version_added: "2.0"
   method:
@@ -260,6 +260,21 @@ EXAMPLES = r'''
     src: /path/to/my/file.json
     remote_src: yes
 
+- name: POST multipart/form-data to server with file upload
+  uri:
+    url: https://httpbin.org/post
+    method: POST
+    body_format: form-multipart
+    body:
+      name: your_username
+      my_file:
+        filename: /path/to/file.txt
+      file2:
+        filename: other_file
+        mimetype: text/plain
+        content: my other file content
+  register: form_upload_file
+
 - name: Pause play until a URL is reachable from this host
   uri:
     url: "http://192.0.2.1/some/test"
@@ -342,9 +357,12 @@ url:
 import cgi
 import datetime
 import json
+import mimetypes
 import os
+import random
 import re
 import shutil
+import string
 import sys
 import tempfile
 
@@ -479,6 +497,57 @@ def form_urlencoded(body):
     return body
 
 
+def form_multipart(body, boundary):
+    ''' Convert data into multipart/form-data '''
+    if isinstance(body, string_types):
+        return body
+
+    if isinstance(body, Mapping):
+        result = []
+        # Convert mapping into multipart chunks
+        for field, value in kv_list(body):
+            # result.extend(('--%s' % boundary))
+            if isinstance(value, string_types):
+                result.extend((
+                  '--%s' % boundary,
+                  'Content-Disposition: form-data; name="%s"' % field,
+                  '',
+                  str(value)
+                ))
+            if isinstance(value, Mapping):
+                # filename required
+                if 'filename' not in value:
+                    module.fail_json(msg='filename key missing from "%s" element' % field)
+                else:
+                    filename = os.path.basename(value['filename'])
+                # set or guess mimetype
+                if 'mimetype' in value:
+                    mimetype = value['mimetype']
+                else:
+                    mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+                # get the content or read the file from disk
+                if 'content' in value:
+                    data = value['content']
+                else:
+                    if os.path.exists(value['filename']):
+                        with open(value['filename'], 'rb') as data_file:
+                            data = data_file.read()
+                    else:
+                        module.fail_json(msg='unable to read file "%s"' % value['filename'])
+                result.extend((
+                  '--%s' % boundary,
+                  'Content-Disposition: form-data; name="%s"; filename="%s"' % (field, filename),
+                  'Content-Type: %s' % mimetype,
+                  '',
+                  to_text(data)
+                ))
+        result.extend((
+            '--%s--' % boundary,
+            ''
+        ))
+        return '\r\n'.join(result)
+
+
 def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
@@ -555,7 +624,7 @@ def main():
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
         body=dict(type='raw'),
-        body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
+        body_format=dict(type='str', default='raw', choices=['form-multipart', 'form-urlencoded', 'json', 'raw']),
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
@@ -604,6 +673,15 @@ def main():
                 module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    elif body_format == 'form-multipart':
+        if not isinstance(body, string_types):
+            boundary = ''.join(random.choice(string.ascii_letters + string.digits) for r in range(30))
+            try:
+                body = form_multipart(body, boundary)
+            except ValueError as e:
+                module.fail_json(msg='failed to parse body as form_multipart: %s' % to_native(e), elapsed=0)
+        if 'content-type' not in [header.lower() for header in dict_headers]:
+            dict_headers['Content-Type'] = 'multipart/form-data; boundary=%s' % boundary
 
     if creates is not None:
         # do not run the command if the line contains creates=filename
