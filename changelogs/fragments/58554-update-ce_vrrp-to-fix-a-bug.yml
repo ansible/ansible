@@ -1,0 +1,4 @@
+bugfixes:
+  - ce_vrrp - tag 'data' is the root node of data xml tree,remove 'data' tag to find all. 
+    line 700,747 "vrrp_group_info["adminIgnoreIfDown"]", value is string and lower case.
+    line 1177,1240. Compare wrong! They should be same key of value to be compared.
