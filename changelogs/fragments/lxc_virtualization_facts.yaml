@@ -1,0 +1,2 @@
+bugfixes:
+  - LXC is now detected more reliably for the virtualization_type and virtualization_role facts

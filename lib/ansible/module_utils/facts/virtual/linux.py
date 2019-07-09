@@ -68,6 +68,17 @@ class LinuxVirtual(Virtual):
                         virtual_facts['virtualization_role'] = 'guest'
                         found_virt = True
 
+        # the lxd communication sockets are good indicators for lxc guest/host
+        # https://lxd.readthedocs.io/en/latest/dev-lxd/
+        if os.path.exists('/dev/lxd/sock'):
+            virtual_facts['virtualization_type'] = 'lxc'
+            virtual_facts['virtualization_role'] = 'guest'
+            return virtual_facts
+        if os.path.exists('/var/lib/lxd/devlxd/sock'):
+            virtual_facts['virtualization_type'] = 'lxc'
+            virtual_facts['virtualization_role'] = 'host'
+            return virtual_facts
+
         # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
         if os.path.exists('/proc/1/environ'):
             for line in get_file_lines('/proc/1/environ', line_sep='\x00'):
