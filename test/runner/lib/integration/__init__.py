@@ -6,7 +6,6 @@ import contextlib
 import json
 import os
 import shutil
-import stat
 import tempfile
 
 from lib.target import (
@@ -30,6 +29,7 @@ from lib.util import (
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
+    INSTALL_ROOT,
 )
 
 from lib.cache import (
@@ -172,9 +172,9 @@ def integration_test_environment(args, target, inventory_path):
         ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
 
         file_copies = [
-            ('test/integration/%s.cfg' % args.command, ansible_config),
-            ('test/integration/integration_config.yml', os.path.join(integration_dir, vars_file)),
-            (inventory_path, os.path.join(integration_dir, inventory_name)),
+            (os.path.join(INSTALL_ROOT, 'test/integration/%s.cfg' % args.command), ansible_config),
+            (os.path.join(INSTALL_ROOT, 'test/integration/integration_config.yml'), os.path.join(integration_dir, vars_file)),
+            (os.path.join(INSTALL_ROOT, inventory_path), os.path.join(integration_dir, inventory_name)),
         ]
 
         file_copies += [(path, os.path.join(temp_dir, path)) for path in files_needed]

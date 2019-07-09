@@ -7,7 +7,6 @@ import contextlib
 import errno
 import fcntl
 import inspect
-import json
 import os
 import pkgutil
 import random
@@ -43,6 +42,10 @@ try:
 except ImportError:
     from pipes import quote as cmd_quote
 
+import lib.types as t
+
+C = t.TypeVar('C')
+
 DOCKER_COMPLETION = {}  # type: dict[str, dict[str, str]]
 REMOTE_COMPLETION = {}  # type: dict[str, dict[str, str]]
 PYTHON_PATHS = {}  # type: dict[str, str]
@@ -54,6 +57,8 @@ except AttributeError:
 
 COVERAGE_CONFIG_PATH = '.coveragerc'
 COVERAGE_OUTPUT_PATH = 'coverage'
+
+INSTALL_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -91,7 +96,7 @@ def get_parameterized_completion(cache, name):
     :rtype: dict[str, dict[str, str]]
     """
     if not cache:
-        images = read_lines_without_comments('test/runner/completion/%s.txt' % name, remove_blank_lines=True)
+        images = read_lines_without_comments(os.path.join(INSTALL_ROOT, 'test/runner/completion/%s.txt' % name), remove_blank_lines=True)
 
         cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
 
@@ -129,12 +134,15 @@ def remove_file(path):
         os.remove(path)
 
 
-def read_lines_without_comments(path, remove_blank_lines=False):
+def read_lines_without_comments(path, remove_blank_lines=False, optional=False):  # type: (str, bool, bool) -> t.List[str]
     """
-    :type path: str
-    :type remove_blank_lines: bool
-    :rtype: list[str]
+    Returns lines from the specified text file with comments removed.
+    Comments are any content from a hash symbol to the end of a line.
+    Any spaces immediately before a comment are also removed.
     """
+    if optional and not os.path.exists(path):
+        return []
+
     with open(path, 'r') as path_fd:
         lines = path_fd.read().splitlines()
 
@@ -236,7 +244,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
     else:
         # unit tests, sanity tests and other special cases (localhost only)
         # config and results are in the source tree
-        coverage_config_base_path = os.getcwd()
+        coverage_config_base_path = args.coverage_config_base_path or INSTALL_ROOT
         coverage_output_base_path = os.path.abspath(os.path.join('test/results'))
 
     config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_PATH)
@@ -365,7 +373,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     cmd = list(cmd)
     version = python_version or args.python_version
     interpreter = virtualenv or find_python(version)
-    inject_path = os.path.abspath('test/runner/injector')
+    inject_path = os.path.join(INSTALL_ROOT, 'test/runner/injector')
 
     if not virtualenv:
         # injection of python into the path is required when not activating a virtualenv
@@ -937,11 +945,8 @@ def get_available_port():
         return socket_fd.getsockname()[1]
 
 
-def get_subclasses(class_type):
-    """
-    :type class_type: type
-    :rtype: set[str]
-    """
+def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
+    """Returns the set of types that are concrete subclasses of the given type."""
     subclasses = set()
     queue = [class_type]
 
@@ -957,26 +962,59 @@ def get_subclasses(class_type):
     return subclasses
 
 
-def import_plugins(directory):
+def is_subdir(candidate_path, path):  # type: (str, str) -> bool
+    """Returns true if candidate_path is path or a subdirectory of path."""
+    if not path.endswith(os.sep):
+        path += os.sep
+
+    if not candidate_path.endswith(os.sep):
+        candidate_path += os.sep
+
+    return candidate_path.startswith(path)
+
+
+def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
     """
-    :type directory: str
+    Import plugins from the given directory relative to the given root.
+    If the root is not provided, the 'lib' directory for the test runner will be used.
     """
-    path = os.path.join(os.path.dirname(__file__), directory)
-    prefix = 'lib.%s.' % directory
+    if root is None:
+        root = os.path.dirname(__file__)
+
+    path = os.path.join(root, directory)
+    prefix = 'lib.%s.' % directory.replace(os.sep, '.')
 
     for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
-        __import__(name)
+        module_path = os.path.join(root, name[4:].replace('.', os.sep) + '.py')
+        load_module(module_path, name)
 
 
-def load_plugins(base_type, database):
+def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C]]) -> None
     """
-    :type base_type: type
-    :type database: dict[str, type]
+    Load plugins of the specified type and track them in the specified database.
+    Only plugins which have already been imported will be loaded.
     """
-    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: dict [str, type]
+    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: t.Dict[str, t.Type[C]]
 
     for plugin in plugins:
         database[plugin] = plugins[plugin]
+
+
+def load_module(path, name):  # type: (str, str) -> None
+    """Load a Python module using the given name and path."""
+    if sys.version_info >= (3, 4):
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        sys.modules[name] = module
+    else:
+        import imp
+
+        with open(path, 'r') as module_file:
+            imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

@@ -74,6 +74,8 @@ def main():
             is_module = False
             is_integration = False
 
+            dirname = os.path.dirname(path)
+
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
             elif path.startswith('lib/') or path.startswith('test/runner/lib/'):
@@ -87,14 +89,14 @@ def main():
             elif path.startswith('test/integration/targets/'):
                 is_integration = True
 
-                dirname = os.path.dirname(path)
-
                 if dirname.endswith('/library') or dirname.endswith('/plugins/modules') or dirname in (
                     # non-standard module library directories
                     'test/integration/targets/module_precedence/lib_no_extension',
                     'test/integration/targets/module_precedence/lib_with_extension',
                 ):
                     is_module = True
+            elif dirname == 'plugins/modules':
+                is_module = True
 
             if is_module:
                 if executable:
