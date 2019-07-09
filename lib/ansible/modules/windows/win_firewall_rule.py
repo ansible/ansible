@@ -73,6 +73,7 @@ options:
       - The remote port this rule applies to.
       - Set to C(any) to apply to all remote ports.
       - Defaults to C(any) when creating a new rule.
+      - Must have I(protocol) set
     type: str
   program:
     description:
