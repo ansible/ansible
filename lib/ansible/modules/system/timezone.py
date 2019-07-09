@@ -859,7 +859,7 @@ class AIXTimezone(Timezone):
             #  change.
             TZ = self.__get_timezone()
             if TZ != value:
-                msg = 'TZ value does not match post-change (Actual: %s, Expected: %s).' % (match.group(0), value)
+                msg = 'TZ value does not match post-change (Actual: %s, Expected: %s).' % (TZ, value)
                 self.module.fail_json(msg=msg)
 
         else:
