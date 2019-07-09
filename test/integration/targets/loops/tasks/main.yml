@@ -344,4 +344,3 @@
     loop_var: "{{ loop_var_name }}"
   vars:
     loop_var_name: templated_loop_var_name
-  register: templated_loop_var_name_result
