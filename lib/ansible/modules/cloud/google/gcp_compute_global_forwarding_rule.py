@@ -181,7 +181,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-globalforwardingrule
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'
