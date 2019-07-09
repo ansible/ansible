@@ -91,7 +91,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Create a directory on a datastore
-  vsphere_copy:
+  vsphere_file:
     host: '{{ vhost }}'
     username: '{{ vuser }}'
     password: '{{ vpass }}'
@@ -115,7 +115,7 @@ EXAMPLES = r'''
   ignore_errors: yes
 
 - name: Delete a file on a datastore
-  vsphere_copy:
+  vsphere_file:
     host: '{{ vhost }}'
     username: '{{ vuser }}'
     password: '{{ vpass }}'
