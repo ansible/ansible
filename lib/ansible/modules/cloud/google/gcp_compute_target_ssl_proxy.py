@@ -132,7 +132,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-targetsslproxy
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     protocol: SSL
