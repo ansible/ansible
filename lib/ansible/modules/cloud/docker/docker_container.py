@@ -390,10 +390,10 @@ options:
         description:
           - Mount source (e.g. a volume name or a host path).
         type: str
-        required: true
       type:
         description:
           - The mount type.
+          - Note that C(npipe) is only supported by Docker for Windows.
         type: str
         choices:
           - 'bind'
@@ -446,12 +446,15 @@ options:
         type: dict
       tmpfs_size:
         description:
-          - The size for the tmpfs mount in bytes.
-        type: int
+          - "The size for the tmpfs mount in bytes. Format: <number>[<unit>]"
+          - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+             C(T) (tebibyte), or C(P) (pebibyte)"
+          - "Omitting the unit defaults to bytes."
+        type: str
       tmpfs_mode:
         description:
           - The permission mode for the tmpfs mount.
-        type: int
+        type: str
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -3041,7 +3044,7 @@ def main():
         memory_swappiness=dict(type='int'),
         mounts=dict(type='list', elements='dict', options=dict(
             target=dict(type='str', required=True),
-            source=dict(type='str', required=True),
+            source=dict(type='str'),
             type=dict(type='str', choices=['bind', 'volume', 'tmpfs', 'npipe'], default='volume'),
             read_only=dict(type='bool'),
             consistency=dict(type='str', choices=['default', 'consistent', 'cached', 'delegated']),
@@ -3050,8 +3053,8 @@ def main():
             labels=dict(type='dict'),
             volume_driver=dict(type='str'),
             volume_options=dict(type='dict'),
-            tmpfs_size=dict(type='int'),
-            tmpfs_mode=dict(type='int'),
+            tmpfs_size=dict(type='str'),
+            tmpfs_mode=dict(type='str'),
         )),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
