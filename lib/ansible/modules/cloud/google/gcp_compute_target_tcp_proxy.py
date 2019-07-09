@@ -114,7 +114,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-targettcpproxy
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     protocol: TCP
