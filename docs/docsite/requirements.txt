@@ -1,3 +1,7 @@
-#pip packages required to build docssite
-sphinx
+#pip packages required to build docsite
+jinja2
 PyYAML
+rstcheck
+sphinx
+sphinx-notfound-page
+Pygments >= 2.4.0

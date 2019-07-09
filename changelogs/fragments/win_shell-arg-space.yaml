@@ -1,0 +1,2 @@
+bugfixes:
+- win_shell - Fix bug when setting ``args.executable`` to an executable with a space

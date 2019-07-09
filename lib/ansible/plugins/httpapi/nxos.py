@@ -138,7 +138,7 @@ class HttpApi(HttpApiBase):
                 device_info['network_os_image'] = match_file_name.group(1)
                 break
 
-        match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\nPID:\s*(\S+)', platform_reply, re.M)
+        match_os_platform = re.search(r'NAME: (?:"Chassis"| Chassis ),\s*DESCR:.*\nPID:\s*(\S+)', platform_reply, re.M)
         if match_os_platform:
             device_info['network_os_platform'] = match_os_platform.group(1)
 

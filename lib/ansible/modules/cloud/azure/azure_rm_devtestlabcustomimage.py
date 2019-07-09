@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabcustomimage
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab Custom Image instance.
+short_description: Manage Azure DevTest Lab Custom Image instance
 description:
     - Create, update and delete instance of Azure DevTest Lab Custom Image.
 
@@ -59,19 +59,19 @@ options:
             - The author of the custom image.
     state:
       description:
-        - Assert the state of the Custom Image.
-        - Use C(present) to create or update an Custom Image and C(absent) to delete it.
+          - Assert the state of the Custom Image.
+          - Use C(present) to create or update an Custom Image and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

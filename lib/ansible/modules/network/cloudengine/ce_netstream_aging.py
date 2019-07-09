@@ -315,7 +315,6 @@ class NetStreamAging(object):
         tcp_tmp["vxlan"] = "absent"
         flags = list()
         exp = " | ignore-case include netstream timeout"
-        exp = "| ignore-case include evpn-overlay enable"
         flags.append(exp)
         config = get_config(self.module, flags)
         if config:
@@ -324,14 +323,14 @@ class NetStreamAging(object):
             for config_mem in config_list:
                 config_mem = config_mem.lstrip()
                 config_mem_list = config_mem.split(' ')
-                if config_mem_list[2] == "ip":
+                if len(config_mem_list) > 4 and config_mem_list[2] == "ip":
                     if config_mem_list[3] == "active":
                         active_tmp["ip"] = config_mem_list[4]
                     if config_mem_list[3] == "inactive":
                         inactive_tmp["ip"] = config_mem_list[4]
                     if config_mem_list[3] == "tcp-session":
                         tcp_tmp["ip"] = "present"
-                if config_mem_list[2] == "vxlan":
+                if len(config_mem_list) > 5 and config_mem_list[2] == "vxlan":
                     if config_mem_list[4] == "active":
                         active_tmp["vxlan"] = config_mem_list[5]
                     if config_mem_list[4] == "inactive":

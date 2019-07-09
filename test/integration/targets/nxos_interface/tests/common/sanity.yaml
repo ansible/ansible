@@ -85,17 +85,13 @@
   - assert: *true
 
   - name: Configure Required SVI
-    nxos_ip_interface: &addips
-      interface: "{{ item.os_svi_int }}"
-      addr: "{{ item.ipv4_addr }}"
-      mask: "{{ item.ipv4_mask }}"
-      version: "{{ item.ipv4_ver }}"
+    nxos_l3_interface: &addips
+      aggregate:
+        - {name: vlan2, ipv4: 192.168.2.1/24}
+        - {name: vlan710, ipv4: 192.168.3.1/24}
+        - {name: vlan711, ipv4: 192.168.4.1/24}
+        - {name: vlan712, ipv4: 192.168.5.1/24}
       provider: "{{ connection }}"
-    with_items: &vlanips
-      - {os_svi_int: vlan2, ipv4_addr: 192.168.2.1, ipv4_mask: 24, ipv4_ver: v4}
-      - {os_svi_int: vlan710, ipv4_addr: 192.168.3.1, ipv4_mask: 24, ipv4_ver: v4}
-      - {os_svi_int: vlan711, ipv4_addr: 192.168.4.1, ipv4_mask: 24, ipv4_ver: v4}
-      - {os_svi_int: vlan712, ipv4_addr: 192.168.5.1, ipv4_mask: 24, ipv4_ver: v4}
     register: result
 
   - assert: *true
@@ -108,8 +104,7 @@
   - assert: *false
 
   - name: Configure Required SVI Idempotence Check
-    nxos_ip_interface: *addips
-    with_items: *vlanips
+    nxos_l3_interface: *addips
     register: result
 
   - assert: *false

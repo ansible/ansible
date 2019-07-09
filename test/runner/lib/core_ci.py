@@ -79,6 +79,9 @@ class AnsibleCoreCI(object):
             parallels=(
                 'osx',
             ),
+            vmware=(
+                'vmware'
+            ),
         )
 
         if provider:
@@ -131,6 +134,11 @@ class AnsibleCoreCI(object):
 
             self.ssh_key = SshKey(args)
             self.port = None
+        elif self.provider == 'vmware':
+            self.ssh_key = SshKey(args)
+            self.endpoints = ['https://access.ws.testing.ansible.com']
+            self.max_threshold = 1
+
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
 

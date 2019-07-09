@@ -1,0 +1,7 @@
+---
+# tasks to cleanup after creating a repo file, specifically for testing the 'mode' arg
+
+- name: Delete existing repo
+  file:
+    path: "{{ test_repo_path }}"
+    state: absent

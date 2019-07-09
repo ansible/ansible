@@ -53,6 +53,13 @@ options:
   description:
     description:
       - Description of the neighbor.
+  bfd:
+    description:
+      - Enables/Disables BFD for a given neighbor.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: str
+    choices: ['enable', 'disable']
   connected_check:
     description:
       - Configure whether or not to check for directly connected peer.
@@ -154,6 +161,7 @@ EXAMPLES = '''
     neighbor: 192.0.2.3
     local_as: 20
     remote_as: 30
+    bfd: enable
     description: "just a description"
     update_source: Ethernet1/3
     state: present
@@ -188,6 +196,7 @@ BOOL_PARAMS = [
 ]
 PARAM_TO_COMMAND_KEYMAP = {
     'asn': 'router bgp',
+    'bfd': 'bfd',
     'capability_negotiation': 'dont-capability-negotiate',
     'connected_check': 'disable-connected-check',
     'description': 'description',
@@ -211,6 +220,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'vrf': 'vrf'
 }
 PARAM_TO_DEFAULT_KEYMAP = {
+    'bfd': 'disable',
     'shutdown': False,
     'dynamic_capability': True,
     'timers_keepalive': 60,
@@ -245,6 +255,8 @@ def get_value(arg, config):
             value = 'enable'
         elif has_command_val:
             value = has_command_val.group('value')
+    elif arg == 'bfd':
+        value = 'enable' if has_command else 'disable'
     else:
         value = ''
 
@@ -354,6 +366,9 @@ def state_present(module, existing, proposed, candidate):
                         proposed['timers_holdtime'])
                     if command not in commands:
                         commands.append(command)
+            elif key == 'bfd':
+                no_cmd = 'no ' if value == 'disable' else ''
+                commands.append(no_cmd + key)
             else:
                 command = '{0} {1}'.format(key, value)
                 commands.append(command)
@@ -389,6 +404,7 @@ def main():
         vrf=dict(required=False, type='str', default='default'),
         neighbor=dict(required=True, type='str'),
         description=dict(required=False, type='str'),
+        bfd=dict(required=False, type='str', choices=['enable', 'disable']),
         capability_negotiation=dict(required=False, type='bool'),
         connected_check=dict(required=False, type='bool'),
         dynamic_capability=dict(required=False, type='bool'),
@@ -442,7 +458,10 @@ def main():
         if key not in ['asn', 'vrf', 'neighbor', 'pwd_type']:
             if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
-            if existing.get(key) != value:
+            if key == 'bfd':
+                if existing.get('bfd', 'disable') != value:
+                    proposed[key] = value
+            elif existing.get(key) != value:
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)

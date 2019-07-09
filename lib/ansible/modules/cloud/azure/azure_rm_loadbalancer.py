@@ -19,10 +19,10 @@ module: azure_rm_loadbalancer
 
 version_added: "2.4"
 
-short_description: Manage Azure load balancers.
+short_description: Manage Azure load balancers
 
 description:
-    - Create, update and delete Azure load balancers
+    - Create, update and delete Azure load balancers.
 
 options:
     resource_group:
@@ -35,74 +35,84 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the load balancer. Use C(present) to create/update a load balancer, or
-              C(absent) to delete one.
+            - Assert the state of the load balancer. Use C(present) to create/update a load balancer, or C(absent) to delete one.
         default: present
         choices:
             - absent
             - present
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     sku:
         description:
-            The load balancer SKU.
+            - The load balancer SKU.
         choices:
             - Basic
             - Standard
-        version_added: 2.6
+        version_added: '2.6'
     frontend_ip_configurations:
-        description: List of frontend IPs to be used
+        description:
+            - List of frontend IPs to be used.
         suboptions:
             name:
-                description: Name of the frontend ip configuration.
+                description:
+                    - Name of the frontend ip configuration.
                 required: True
             public_ip_address:
-                description: Name of an existing public IP address object in the current resource group to associate with the security group.
+                description:
+                    - Name of an existing public IP address object in the current resource group to associate with the security group.
             private_ip_address:
-                description: The reference of the Public IP resource.
-                version_added: 2.6
+                description:
+                    - The reference of the Public IP resource.
+                version_added: '2.6'
             private_ip_allocation_method:
-                description: The Private IP allocation method.
+                description:
+                    - The Private IP allocation method.
                 choices:
                     - Static
                     - Dynamic
-                version_added: 2.6
+                version_added: '2.6'
             subnet:
                 description:
                     - The reference of the subnet resource.
                     - Should be an existing subnet's resource id.
-                version_added: 2.6
-        version_added: 2.5
+                version_added: '2.6'
+        version_added: '2.5'
     backend_address_pools:
-        description: List of backend address pools
+        description:
+            - List of backend address pools.
         suboptions:
             name:
-                description: Name of the backend address pool.
+                description:
+                    - Name of the backend address pool.
                 required: True
-        version_added: 2.5
+        version_added: '2.5'
     probes:
-        description: List of probe definitions used to check endpoint health.
+        description:
+            - List of probe definitions used to check endpoint health.
         suboptions:
             name:
-                description: Name of the probe.
+                description:
+                    - Name of the probe.
                 required: True
             port:
-                description: Probe port for communicating the probe. Possible values range from 1 to 65535, inclusive.
+                description:
+                    - Probe port for communicating the probe. Possible values range from 1 to 65535, inclusive.
                 required: True
             protocol:
                 description:
                     - The protocol of the end point to be probed.
-                    - If 'Tcp' is specified, a received ACK is required for the probe to be successful.
-                    - If 'Http' is specified, a 200 OK response from the specified URL is required for the probe to be successful.
+                    - If C(Tcp) is specified, a received ACK is required for the probe to be successful.
+                    - If C(Http) or C(Https) is specified, a 200 OK response from the specified URL is required for the probe to be successful.
                 choices:
                     - Tcp
                     - Http
+                    - Https
             interval:
                 description:
                     - The interval, in seconds, for how frequently to probe the endpoint for health status.
                     - Slightly less than half the allocated timeout period, which allows two full probes before taking the instance out of rotation.
-                    - The default value is 15, the minimum value is 5.
+                    - The default value is C(15), the minimum value is C(5).
                 default: 15
             fail_count:
                 description:
@@ -114,8 +124,8 @@ options:
             request_path:
                 description:
                     - The URI used for requesting health status from the VM.
-                    - Path is required if a protocol is set to http. Otherwise, it is not allowed.
-        version_added: 2.5
+                    - Path is required if I(protocol=Http) or I(protocol=Https). Otherwise, it is not allowed.
+        version_added: '2.5'
     inbound_nat_pools:
         description:
             - Defines an external port range for inbound NAT to a single backend port on NICs associated with a load balancer.
@@ -126,13 +136,16 @@ options:
             - They have to reference individual inbound NAT rules.
         suboptions:
             name:
-                description: Name of the inbound NAT pool.
+                description:
+                    - Name of the inbound NAT pool.
                 required: True
             frontend_ip_configuration_name:
-                description: A reference to frontend IP addresses.
+                description:
+                    - A reference to frontend IP addresses.
                 required: True
             protocol:
-                description: IP protocol for the NAT pool
+                description:
+                    - IP protocol for the NAT pool.
                 choices:
                     - Tcp
                     - Udp
@@ -151,25 +164,30 @@ options:
                 description:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 1 and 65535.
-        version_added: 2.5
+        version_added: '2.5'
     load_balancing_rules:
         description:
             - Object collection representing the load balancing rules Gets the provisioning.
         suboptions:
             name:
-                description: name of the load balancing rule.
+                description:
+                    - Name of the load balancing rule.
                 required: True
             frontend_ip_configuration:
-                description: A reference to frontend IP addresses.
+                description:
+                    - A reference to frontend IP addresses.
                 required: True
             backend_address_pool:
-                description: A reference to a pool of DIPs. Inbound traffic is randomly load balanced across IPs in the backend IPs.
+                description:
+                    - A reference to a pool of DIPs. Inbound traffic is randomly load balanced across IPs in the backend IPs.
                 required: True
             probe:
-                description: The name of the load balancer probe this rule should use for health checks.
+                description:
+                    - The name of the load balancer probe this rule should use for health checks.
                 required: True
             protocol:
-                description: IP protocol for the load balancing rule.
+                description:
+                    - IP protocol for the load balancing rule.
                 choices:
                     - Tcp
                     - Udp
@@ -187,22 +205,22 @@ options:
                     - The port for the external endpoint.
                     - Frontend port numbers must be unique across all rules within the load balancer.
                     - Acceptable values are between 0 and 65534.
-                    - Note that value 0 enables "Any Port"
+                    - Note that value 0 enables "Any Port".
             backend_port:
                 description:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 0 and 65535.
-                    - Note that value 0 enables "Any Port"
+                    - Note that value 0 enables "Any Port".
             idle_timeout:
                 description:
                     - The timeout for the TCP idle connection.
                     - The value can be set between 4 and 30 minutes.
-                    - The default value is 4 minutes.
+                    - The default value is C(4) minutes.
                     - This element is only used when the protocol is set to TCP.
             enable_floating_ip:
                 description:
                     - Configures SNAT for the VMs in the backend pool to use the publicIP address specified in the frontend of the load balancing rule.
-        version_added: 2.5
+        version_added: '2.5'
     inbound_nat_rules:
         description:
             - Collection of inbound NAT Rules used by a load balancer.
@@ -212,13 +230,16 @@ options:
             - They have to reference individual inbound NAT rules.
         suboptions:
             name:
-                description: name of the inbound nat rule.
+                description:
+                    - name of the inbound nat rule.
                 required: True
             frontend_ip_configuration:
-                description: A reference to frontend IP addresses.
+                description:
+                    - A reference to frontend IP addresses.
                 required: True
             protocol:
-                description: IP protocol for the inbound nat rule.
+                description:
+                    - IP protocol for the inbound nat rule.
                 choices:
                     - Tcp
                     - Udp
@@ -228,18 +249,18 @@ options:
                     - The port for the external endpoint.
                     - Frontend port numbers must be unique across all rules within the load balancer.
                     - Acceptable values are between 0 and 65534.
-                    - Note that value 0 enables "Any Port"
+                    - Note that value 0 enables "Any Port".
             backend_port:
                 description:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 0 and 65535.
-                    - Note that value 0 enables "Any Port"
+                    - Note that value 0 enables "Any Port".
             idle_timeout:
                 description:
                     - The timeout for the TCP idle connection.
                     - The value can be set between 4 and 30 minutes.
-                    - The default value is 4 minutes.
-                    - This element is only used when the protocol is set to TCP.
+                    - The default value is C(4) minutes.
+                    - This element is only used when I(protocol=Tcp).
             enable_floating_ip:
                 description:
                     - Configures a virtual machine's endpoint for the floating IP capability required to configure a SQL AlwaysOn Availability Group.
@@ -248,8 +269,8 @@ options:
             enable_tcp_reset:
                 description:
                     - Receive bidirectional TCP Reset on TCP flow idle timeout or unexpected connection termination.
-                    - This element is only used when the C(protocol) is set to C(Tcp).
-        version_added: 2.8
+                    - This element is only used when I(protocol=Tcp).
+        version_added: '2.8'
     public_ip_address_name:
         description:
             - (deprecated) Name of an existing public IP address object to associate with the security group.
@@ -269,6 +290,7 @@ options:
         choices:
             - Tcp
             - Http
+            - Https
     probe_interval:
         description:
             - (deprecated) Time (in seconds) between endpoint health probes.
@@ -281,7 +303,7 @@ options:
         default: 3
     probe_request_path:
         description:
-            - (deprecated) The URL that an HTTP probe will use (only relevant if probe_protocol is set to Http).
+            - (deprecated) The URL that an HTTP probe or HTTPS probe will use (only relevant if I(probe_protocol=Http) or I(probe_protocol=Https)).
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
     protocol:
         description:
@@ -332,8 +354,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Thomas Stringer (@trstringer)"
-    - "Yuwei Zhou (@yuwzho)"
+    - Thomas Stringer (@trstringer)
+    - Yuwei Zhou (@yuwzho)
 '''
 
 EXAMPLES = '''
@@ -373,11 +395,13 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the load balancer
+    description:
+        - Current state of the load balancer.
     returned: always
     type: dict
 changed:
-    description: Whether or not the resource has changed
+    description:
+        - Whether or not the resource has changed.
     returned: always
     type: bool
 '''
@@ -432,7 +456,7 @@ probes_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Http']
+        choices=['Tcp', 'Http', 'Https']
     ),
     interval=dict(
         type='int',
@@ -617,7 +641,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ),
             probe_protocol=dict(
                 type='str',
-                choices=['Tcp', 'Http']
+                choices=['Tcp', 'Http', 'Https']
             ),
             probe_interval=dict(
                 type='int',

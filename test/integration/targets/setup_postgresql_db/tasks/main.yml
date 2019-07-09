@@ -145,3 +145,33 @@
 
 - name: restart postgresql service
   service: name={{ postgresql_service }} state=restarted
+
+########################
+# Setup dummy extension:
+- name: copy control file for dummy ext
+  copy:
+    src: dummy.control
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/dummy.control"
+    mode: 0444
+  when: ansible_os_family == 'Debian'
+
+- name: copy version files for dummy ext
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+  with_items:
+  - dummy--1.0.sql
+  - dummy--2.0.sql
+  - dummy--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: add update paths
+  file:
+    path: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+    state: touch
+  with_items:
+  - dummy--1.0--2.0.sql
+  - dummy--2.0--3.0.sql
+  when: ansible_os_family == 'Debian'

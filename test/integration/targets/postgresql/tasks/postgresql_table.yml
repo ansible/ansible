@@ -12,6 +12,14 @@
     login_user: "{{ pg_user }}"
     name: alice
 
+- name: postgresql_table - create test schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+
 #
 # Check table creation
 #
@@ -691,3 +699,156 @@
     that:
       - result.rowcount == 1
   when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Drop table CASCADE:
+- name: postgresql_table - drop table cascade
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test5
+    state: absent
+    cascade: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.queries == ['DROP TABLE "test5" CASCADE']
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Check that the table doesn't exist after the previous step, rowcount must be - 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test5'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+#
+# Create, drop, and rename table in a specific schema:
+#
+- name: postgresql_table - create table in a specific schema
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.queries == ['CREATE TABLE "acme"."test_schema_table" ()']
+
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'acme'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+- name: postgresql_table - try to create a table with the same name and schema again
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: postgresql_table - create a table in the default schema for the next test
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+
+- name: postgresql_table - drop the table from schema acme
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: postgres.acme.test_schema_table
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.queries == ['DROP TABLE "postgres"."acme"."test_schema_table"']
+
+- name: postgresql_table - check that the table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'acme'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+- name: postgresql_table - try to drop the table from schema acme again
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: postgresql_table - check that the table with the same name in schema public exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'public'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+- name: postgresql_table - rename the table that contents a schema name
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: public.test_schema_table
+    rename: new_test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.queries == ['ALTER TABLE "public"."test_schema_table" RENAME TO "new_test_schema_table"']

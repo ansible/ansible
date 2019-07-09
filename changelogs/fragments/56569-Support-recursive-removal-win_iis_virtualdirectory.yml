@@ -1,0 +1,2 @@
+bugfixes:
+- "win_iis_virtualdirectory - Support recursive removal (https://github.com/ansible/ansible/issues/49755)"

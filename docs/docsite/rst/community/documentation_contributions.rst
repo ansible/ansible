@@ -62,15 +62,16 @@ If you make multiple changes to the documentation, or add more than a line to it
 
 To work with documentation on your local machine, you need the following packages installed:
 
-- libyaml
-- PyYAML
-- six
-- tornado
-- pyparsing
 - gcc
 - jinja2
+- libyaml
+- Pygments >= 2.4.0
+- pyparsing
+- PyYAML
 - rstcheck
+- six
 - sphinx
+- sphinx-notfound-page
 
 .. note::
 

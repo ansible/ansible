@@ -43,7 +43,7 @@ options:
      - This is required parameter, if parameter C(name) is not supplied.
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -112,7 +112,9 @@ guest_disk_facts:
             "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a",
             "capacity_in_bytes": 10485760,
             "capacity_in_kb": 10240,
+            "controller_bus_number": 0,
             "controller_key": 1000,
+            "controller_type": "paravirtual",
             "key": 2000,
             "label": "Hard disk 1",
             "summary": "10,240 KB",
@@ -128,7 +130,9 @@ guest_disk_facts:
             "backing_uuid": null,
             "capacity_in_bytes": 15728640,
             "capacity_in_kb": 15360,
+            "controller_bus_number": 0,
             "controller_key": 1000,
+            "controller_type": "paravirtual",
             "key": 2001,
             "label": "Hard disk 3",
             "summary": "15,360 KB",
@@ -160,9 +164,29 @@ class PyVmomiHelper(PyVmomi):
         Returns: A list of dict containing disks information
 
         """
+        controller_facts = dict()
         disks_facts = dict()
         if vm_obj is None:
             return disks_facts
+
+        controller_types = {
+            vim.vm.device.VirtualLsiLogicController: 'lsilogic',
+            vim.vm.device.ParaVirtualSCSIController: 'paravirtual',
+            vim.vm.device.VirtualBusLogicController: 'buslogic',
+            vim.vm.device.VirtualLsiLogicSASController: 'lsilogicsas',
+            vim.vm.device.VirtualIDEController: 'ide'
+        }
+
+        controller_index = 0
+        for controller in vm_obj.config.hardware.device:
+            if isinstance(controller, tuple(controller_types.keys())):
+                controller_facts[controller_index] = dict(
+                    key=controller.key,
+                    controller_type=controller_types[type(controller)],
+                    bus_number=controller.busNumber,
+                    devices=controller.device
+                )
+                controller_index += 1
 
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
@@ -231,6 +255,12 @@ class PyVmomiHelper(PyVmomi):
                     disks_facts[disk_index]['backing_split'] = bool(disk.backing.split)
                     disks_facts[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
                     disks_facts[disk_index]['backing_uuid'] = disk.backing.uuid
+
+                for controller_index in range(len(controller_facts)):
+                    if controller_facts[controller_index]['key'] == disks_facts[disk_index]['controller_key']:
+                        disks_facts[disk_index]['controller_bus_number'] = controller_facts[controller_index]['bus_number']
+                        disks_facts[disk_index]['controller_type'] = controller_facts[controller_index]['controller_type']
+
                 disk_index += 1
         return disks_facts
 

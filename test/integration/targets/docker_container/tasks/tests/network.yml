@@ -7,8 +7,8 @@
     nname_2: "{{ cname_prefix ~ '-network-2' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname, cname_h1]"
-    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
+    cnames: "{{ cnames + [cname, cname_h1] }}"
+    dnetworks: "{{ dnetworks + [nname_1, nname_2] }}"
 
 - name: Create networks
   docker_network:
@@ -260,6 +260,9 @@
       state: started
       networks:
       - name: "{{ nname_1 }}"
+        aliases:
+        - alias1
+        - alias2
       - name: "{{ nname_2 }}"
       networks_cli_compatible: yes
     register: networks_1

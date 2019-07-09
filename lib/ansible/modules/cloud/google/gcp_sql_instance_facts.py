@@ -53,8 +53,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -261,6 +261,25 @@ items:
       returned: success
       type: complex
       contains:
+        databaseFlags:
+          description:
+          - The database flags passed to the instance at startup.
+          returned: success
+          type: complex
+          contains:
+            name:
+              description:
+              - The name of the flag. These flags are passed at instance startup,
+                so include both server options and system variables for MySQL. Flags
+                should be specified with underscores, not hyphens.
+              returned: success
+              type: str
+            value:
+              description:
+              - The value of the flag. Booleans should be set to on for true and off
+                for false. This field must be omitted if the flag doesn't take a value.
+              returned: success
+              type: str
         ipConfiguration:
           description:
           - The settings for IP Management. This allows to enable or disable the instance
@@ -373,7 +392,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

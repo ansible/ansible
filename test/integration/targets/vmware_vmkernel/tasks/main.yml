@@ -29,7 +29,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         vswitch: "{{ switch1 }}"
         portgroup: vMotion
         mtu: 9000
@@ -55,7 +55,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        esxi_hostname: '{{ hostvars[esxi1].ansible_host }}'
+        esxi_hostname: '{{ esxi1 }}'
         vswitch: "{{ switch1 }}"
         device: '{{ host_vmkernel.device }}'
         portgroup: vMotion

@@ -1,5 +1,6 @@
 ---
 - block:
+  # This is commented out because a device cannot be unclaimed via API
   # - name: Claim a device into an organization
   #   meraki_device:
   #     auth_key: '{{auth_key}}'
@@ -183,6 +184,7 @@
       tags: recently-added
       state: present
       move_map_marker: True
+      note: Test device notes
     delegate_to: localhost
     register: update_device_idempotent
 
@@ -192,6 +194,7 @@
   - assert:
       that:
         - update_device_idempotent.changed == False
+        - update_device_idempotent.data is defined
 
   always:
   - name: Remove a device from a network

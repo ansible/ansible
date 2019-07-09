@@ -215,7 +215,7 @@ from ansible.module_utils._text import to_bytes, to_native
 def write_changes(module, b_lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    with open(tmpfile, 'wb') as f:
+    with os.fdopen(tmpfd, 'wb') as f:
         f.writelines(b_lines)
 
     validate = module.params.get('validate', None)

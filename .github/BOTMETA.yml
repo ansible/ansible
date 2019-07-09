@@ -61,23 +61,23 @@ files:
   $modules/cloud/amazon/ec2_ami.py: willthames
   $modules/cloud/amazon/ec2_asg.py: $team_ansible s-hertel ryansb
   $modules/cloud/amazon/ec2_group.py: $team_ansible
-  $modules/cloud/amazon/ec2_group_facts.py: willthames
+  $modules/cloud/amazon/ec2_group_info.py: willthames
   $modules/cloud/amazon/ec2_instance.py: Shaps
-  $modules/cloud/amazon/ec2_instance_facts.py: willthames
+  $modules/cloud/amazon/ec2_instance_info.py: willthames
   $modules/cloud/amazon/ec2_key.py: $team_ansible
   $modules/cloud/amazon/ec2_lc.py: $team_ansible
-  $modules/cloud/amazon/ec2_lc_facts.py: willthames
+  $modules/cloud/amazon/ec2_lc_info.py: willthames
   $modules/cloud/amazon/ec2_metric_alarm.py: $team_ansible
   $modules/cloud/amazon/ec2_tag.py: $team_ansible
   $modules/cloud/amazon/ec2_vol.py: $team_ansible
   $modules/cloud/amazon/ec2_vpc_endpoint.py: willthames
-  $modules/cloud/amazon/ec2_vpc_endpoint_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_endpoint_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_igw.py: willthames
-  $modules/cloud/amazon/ec2_vpc_igw_facts.py: willthames
-  $modules/cloud/amazon/ec2_vpc_nat_gateway_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_igw_info.py: willthames
+  $modules/cloud/amazon/ec2_vpc_nat_gateway_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_net.py: $team_ansible
-  $modules/cloud/amazon/ec2_vpc_net_facts.py: whiter
-  $modules/cloud/amazon/ec2_vpc_peering_facts.py: willthames
+  $modules/cloud/amazon/ec2_vpc_net_info.py: whiter
+  $modules/cloud/amazon/ec2_vpc_peering_info.py: willthames
   $modules/cloud/amazon/ec2_vpc_subnet.py: willthames
   $modules/cloud/amazon/ecs_cluster.py: willthames
   $modules/cloud/amazon/ecs_ecr.py: willthames
@@ -87,7 +87,7 @@ files:
   $modules/cloud/amazon/ecs_taskdefinition.py: willthames
   $modules/cloud/amazon/ecs_taskdefinition_facts.py: willthames
   $modules/cloud/amazon/elasticache.py: alachaum
-  $modules/cloud/amazon/elb_target_group_facts.py: willthames
+  $modules/cloud/amazon/elb_target_group_info.py: willthames
   $modules/cloud/amazon/iam.py: $team_ansible
   $modules/cloud/amazon/iam_cert.py: $team_ansible
   $modules/cloud/amazon/iam_group.py: willthames
@@ -173,7 +173,7 @@ files:
   $modules/cloud/misc/virt_pool.py: *virt
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
-  $modules/cloud/opennebula/: ilicmilan kustodian
+  $modules/cloud/opennebula/: ilicmilan kustodian xorel rsmontero
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
@@ -191,7 +191,7 @@ files:
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/: &vmware
-    ignored: cigamit jcpowermac mtnbikenc tchernomax
+    ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: [ cloud, vmware ]
     maintainers: $team_vmware
@@ -269,7 +269,7 @@ files:
   $modules/monitoring/monit.py: brian-brazil
   $modules/monitoring/pagerduty.py:
     ignored: bpennypacker
-  $modules/monitoring/zabbix/: eikef D3DeFi
+  $modules/monitoring/zabbix/: eikef D3DeFi rubentsirunyan
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py:
@@ -291,7 +291,6 @@ files:
     keywords: [ aci, cisco msc, cisco mso, multisite, multi-site ]
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
-    notified: koladiya
   $modules/network/aireos/: &aireos
     maintainers: $team_aireos
     labels: [ aireos, cisco, networking ]
@@ -302,7 +301,8 @@ files:
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
-  $modules/network/cloudengine/: QijunPan
+  $modules/network/cloudengine/:
+    maintainers: $team_huawei
   $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
@@ -427,7 +427,9 @@ files:
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan robinro
   $modules/remote_management/foreman/: ehelms
-  $modules/remote_management/hpilo/: dagwieers haad
+  $modules/remote_management/hpilo/:
+    ignored: dagwieers
+    maintainers: haad
   $modules/remote_management/imc/:
     labels: [ cisco ]
     maintainers: $team_imc
@@ -488,7 +490,6 @@ files:
   $modules/system/selinux.py: samdoran
   $modules/system/service.py: $team_ansible
   $modules/system/setup.py:
-    ignored: david_obrien
     maintainers: $team_ansible
   $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde
@@ -693,7 +694,12 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
-  $module_utils/hwc_utils.py: *huawei
+  $module_utils/hwc_utils.py: &huawei_hwc
+    <<: *huawei
+    support: community
+    labels:
+      - networking
+      - huawei
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -734,7 +740,7 @@ files:
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
   $module_utils/network/cloudengine:
-    maintainers: QijunPan
+    maintainers: $team_huawei
   $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
   $module_utils/network/common:
@@ -896,6 +902,8 @@ files:
     support: core
   $plugins/action/fetch.py:
     support: core
+  $plugins/action/gather_facts.py:
+    support: core
   $plugins/action/group_by.py:
     support: core
   $plugins/action/include_vars.py:
@@ -987,6 +995,16 @@ files:
     maintainers: $team_networking
     labels: networking
 ###############################
+# plugins/become
+  $plugins/become:
+    support: community
+  $plugins/become/__init__.py:
+    support: core
+  $plugins/become/su.py:
+    support: core
+  $plugins/become/sudo.py:
+    support: core
+###############################
 # plugins/cache
   $plugins/cache/__init__.py:
     support: core
@@ -1066,6 +1084,9 @@ files:
 # plugins/connection
   $plugins/connection/:
     support: core
+  $plugins/connection/buildah.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/docker.py:
     <<: *docker
     support: community
@@ -1089,10 +1110,19 @@ files:
   $plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/podman.py:
+    support: community
+    maintainers: TomasTomecek
   $plugins/connection/psrp.py: *windows_core
   $plugins/connection/saltstack.py:
     support: community
   $plugins/connection/winrm.py: *windows_core
+  $plugins/connection/vmware_tools.py:
+    support: community
+    maintainers: $team_vmware
+    labels:
+      - vmware
+      - cloud
 ###############################
 # plugins/doc_fragments
   $plugins/doc_fragments/:
@@ -1111,7 +1141,8 @@ files:
     support: community
     supershipit: $team_google
     maintainers: $team_google
-  $plugins/doc_fragments/hwc.py: *huawei
+  $plugins/doc_fragments/hwc.py:
+    maintainers: $team_huawei
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
@@ -1197,7 +1228,7 @@ files:
     keywords:
       - vmware inventory
       - vmware dynamic inventory plugin
-    ignored: cigamit jcpowermac mtnbikenc tchernomax
+    ignored: cigamit jcpowermac mtnbikenc tchernomax ckotte
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
@@ -1205,6 +1236,50 @@ files:
 ###############################
 # plugins/lookup
   $plugins/lookup/__init__.py:
+    support: core
+  $plugins/lookup/config.py:
+    support: core
+  $plugins/lookup/dict.py:
+    support: core
+  $plugins/lookup/env.py:
+    support: core
+  $plugins/lookup/file.py:
+    support: core
+  $plugins/lookup/fileglob.py:
+    support: core
+  $plugins/lookup/first_found.py:
+    support: core
+  $plugins/lookup/indexed_items.py:
+    support: core
+  $plugins/lookup/inventory_hostnames.py:
+    support: core
+  $plugins/lookup/items.py:
+    support: core
+  $plugins/lookup/lines.py:
+    support: core
+  $plugins/lookup/list.py:
+    support: core
+  $plugins/lookup/nested.py:
+    support: core
+  $plugins/lookup/password.py:
+    support: core
+  $plugins/lookup/pipe.py:
+    support: core
+  $plugins/lookup/random_choice.py:
+    support: core
+  $plugins/lookup/sequence.py:
+    support: core
+  $plugins/lookup/subelements.py:
+    support: core
+  $plugins/lookup/template.py:
+    support: core
+  $plugins/lookup/together.py:
+    support: core
+  $plugins/lookup/url.py:
+    support: core
+  $plugins/lookup/varnames.py:
+    support: core
+  $plugins/lookup/vars.py:
     support: core
   $plugins/lookup/aws:
     labels:
@@ -1388,7 +1463,8 @@ files:
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
-  test/integration/targets/hwc_: *huawei
+  test/integration/targets/hwc_:
+    maintainers: $team_huawei
   test/integration/targets/inventory_docker: *docker
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
@@ -1408,7 +1484,7 @@ files:
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
-    maintainers: eikef D3DeFi
+    maintainers: eikef D3DeFi rubentsirunyan
   test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
@@ -1424,7 +1500,8 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/module_utils/hwc: *huawei
+  test/units/module_utils/hwc:
+    maintainers: $team_huawei
   test/units/module_utils/acme: *crypto
   test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
@@ -1442,6 +1519,9 @@ files:
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
   test/units/modules/storage/hpe3par: *hpe3par
+  test/units/modules/storage/netapp:
+    maintainers: $team_netapp
+    support: community
   test/utils/shippable/:
     notified: mattclay
   hacking/report.py:
@@ -1454,14 +1534,14 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers jmcgill298 mtorelli rsmeyers schunduri smnmtzgr
+  team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
   team_aireos: jmighion
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
-  team_asa: gdpak ogenstad
+  team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho yungezz zikalino
-  team_bsd: bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
+  team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
@@ -1477,29 +1557,29 @@ macros:
   team_google: rambleraptor erjohnso
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
-  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang
+  team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN
   team_imc: dagwieers
   team_intersight: dsoper2 movinalot
-  team_ios: rcarrillocruz
-  team_iosxr: rcarrillocruz gdpak
+  team_ios: justjais
+  team_iosxr: justjais NilashishC
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_kubevirt: machacekondra mmazur pkliczewski
   team_linode: InTheCloudDan lwm displague rmcintosh
-  team_macos: akasurde dagwieers kyleabenson
+  team_macos: akasurde dagwieers kyleabenson martinm82
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
-  team_meraki: dagwieers kbreit
-  team_mysql: bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
+  team_meraki: kbreit
+  team_mysql: Alexander198961 bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon Andersson007
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
+  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha justjais NilashishC danielmellado
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull gtema
-  team_openswitch: Qalthos gdpak
+  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me cloudnull gtema
+  team_openswitch: Qalthos danielmellado
   team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
@@ -1508,11 +1588,11 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: remyleone abarbare DenBeke jerome-quere kindermoumoute QuentinBrosse
-  team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
-  team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
+  team_solaris: bcoca dagwieers danowar2k fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
+  team_tower: ghjm matburt ryanpetrello rooftopcellist AlanCoding jladdjr kdelee chrismeyersfsu
   team_ucs: dsoper2 movinalot SDBrett vallard vvb
-  team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9 goneri
+  team_vmware: Akasurde warthog9 Tomorrow9 goneri pgbidkar
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: dagwieers jborean93 jhawkesworth nitzmahone
+  team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
   team_windows_core: nitzmahone jborean93

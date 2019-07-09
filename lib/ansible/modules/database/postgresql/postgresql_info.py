@@ -46,19 +46,6 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- login_user or session_role must be able to read from pg_authid.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -474,11 +461,13 @@ except ImportError:
     # from ansible.module_utils.postgres
     pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
 
 
 # ===========================================
@@ -486,36 +475,34 @@ from ansible.module_utils.six import iteritems
 #
 
 class PgDbConn(object):
+
+    """Auxiliary class for working with PostgreSQL connection objects.
+
+    Arguments:
+        module (AnsibleModule): Object of AnsibleModule class that
+            contains connection parameters.
+    """
+
     def __init__(self, module):
         self.module = module
         self.db_conn = None
         self.cursor = None
-        self.session_role = self.module.params.get('session_role')
 
     def connect(self):
-        try:
-            self.db_conn = connect_to_db(self.module, warn_db_default=False)
-            self.cursor = self.db_conn.cursor(cursor_factory=DictCursor)
+        """Connect to a PostgreSQL database and return a cursor object.
 
-            # Switch role, if specified:
-            if self.session_role:
-                try:
-                    self.cursor.execute('SET ROLE %s' % self.session_role)
-                except Exception as e:
-                    self.module.fail_json(msg="Could not switch role: %s" % to_native(e))
-
-            return self.cursor
-
-        except TypeError as e:
-            if 'sslrootcert' in e.args[0]:
-                self.module.fail_json(msg='PostgreSQL server must be at least version 8.4 '
-                                          'to support sslrootcert')
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
-
-        except Exception as e:
-            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+        Note: connection parameters are passed by self.module object.
+        """
+        conn_params = get_conn_params(self.module, self.module.params, warn_db_default=False)
+        self.db_conn = connect_to_db(self.module, conn_params)
+        return self.db_conn.cursor(cursor_factory=DictCursor)
 
     def reconnect(self, dbname):
+        """Reconnect to another database and return a PostgreSQL cursor object.
+
+        Arguments:
+            dbname (string): Database name to connect to.
+        """
         self.db_conn.close()
 
         self.module.params['database'] = dbname
@@ -523,6 +510,14 @@ class PgDbConn(object):
 
 
 class PgClusterInfo(object):
+
+    """Class for collection information about a PostgreSQL instance.
+
+    Arguments:
+        module (AnsibleModule): Object of AnsibleModule class.
+        db_conn_obj (psycopg2.connect): PostgreSQL connection object.
+    """
+
     def __init__(self, module, db_conn_obj):
         self.module = module
         self.db_obj = db_conn_obj
@@ -539,6 +534,7 @@ class PgClusterInfo(object):
         }
 
     def collect(self, val_list=False):
+        """Collect information based on 'filter' option."""
         subset_map = {
             "version": self.get_pg_version,
             "tablespaces": self.get_tablespaces,
@@ -590,9 +586,7 @@ class PgClusterInfo(object):
         return self.pg_info
 
     def get_tablespaces(self):
-        """
-        Get information about tablespaces.
-        """
+        """Get information about tablespaces."""
         # Check spcoption exists:
         opt = self.__exec_sql("SELECT column_name "
                               "FROM information_schema.columns "
@@ -624,9 +618,7 @@ class PgClusterInfo(object):
         self.pg_info["tablespaces"] = ts_dict
 
     def get_ext_info(self):
-        """
-        Get information about existing extensions.
-        """
+        """Get information about existing extensions."""
         # Check that pg_extension exists:
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
@@ -658,9 +650,7 @@ class PgClusterInfo(object):
         return ext_dict
 
     def get_role_info(self):
-        """
-        Get information about roles (in PgSQL groups and users are roles).
-        """
+        """Get information about roles (in PgSQL groups and users are roles)."""
         query = ("SELECT r.rolname, r.rolsuper, r.rolcanlogin, "
                  "r.rolvaliduntil, "
                  "ARRAY(SELECT b.rolname "
@@ -683,9 +673,7 @@ class PgClusterInfo(object):
         self.pg_info["roles"] = rol_dict
 
     def get_rslot_info(self):
-        """
-        Get information about replication slots if exist.
-        """
+        """Get information about replication slots if exist."""
         # Check that pg_replication_slots exists:
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
@@ -713,9 +701,7 @@ class PgClusterInfo(object):
         self.pg_info["repl_slots"] = rslot_dict
 
     def get_settings(self):
-        """
-        Get server settings.
-        """
+        """Get server settings."""
         # Check pending restart column exists:
         pend_rest_col_exists = self.__exec_sql("SELECT 1 FROM information_schema.columns "
                                                "WHERE table_name = 'pg_settings' "
@@ -781,9 +767,7 @@ class PgClusterInfo(object):
         self.pg_info["settings"] = set_dict
 
     def get_repl_info(self):
-        """
-        Get information about replication if the server is a master.
-        """
+        """Get information about replication if the server is a master."""
         # Check that pg_replication_slots exists:
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
@@ -815,9 +799,7 @@ class PgClusterInfo(object):
         self.pg_info["replications"] = repl_dict
 
     def get_lang_info(self):
-        """
-        Get information about current supported languages.
-        """
+        """Get information about current supported languages."""
         query = ("SELECT l.lanname, a.rolname, l.lanacl "
                  "FROM pg_language AS l "
                  "JOIN pg_authid AS a ON l.lanowner = a.oid")
@@ -832,9 +814,7 @@ class PgClusterInfo(object):
         return lang_dict
 
     def get_namespaces(self):
-        """
-        Get information about namespaces.
-        """
+        """Get information about namespaces."""
         query = ("SELECT n.nspname, a.rolname, n.nspacl "
                  "FROM pg_catalog.pg_namespace AS n "
                  "JOIN pg_authid AS a ON a.oid = n.nspowner")
@@ -850,6 +830,7 @@ class PgClusterInfo(object):
         return nsp_dict
 
     def get_pg_version(self):
+        """Get major and minor PostgreSQL server version."""
         query = "SELECT version()"
         raw = self.__exec_sql(query)[0][0]
         raw = raw.split()[1].split('.')
@@ -859,6 +840,7 @@ class PgClusterInfo(object):
         )
 
     def get_db_info(self):
+        """Get information about the current database."""
         # Following query returns:
         # Name, Owner, Encoding, Collate, Ctype, Access Priv, Size
         query = ("SELECT d.datname, "
@@ -897,9 +879,11 @@ class PgClusterInfo(object):
         self.pg_info["databases"] = db_dict
 
     def __get_pretty_val(self, setting):
+        """Get setting's value represented by SHOW command."""
         return self.__exec_sql("SHOW %s" % setting)[0][0]
 
     def __exec_sql(self, query):
+        """Execute SQL and return the result."""
         try:
             self.cursor.execute(query)
             res = self.cursor.fetchall()

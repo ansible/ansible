@@ -181,7 +181,7 @@ options:
     description:
       - Amount of time to wait for the dnf lockfile to be freed.
     required: false
-    default: 0
+    default: 30
     type: int
     version_added: "2.8"
   install_weak_deps:
@@ -285,6 +285,7 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -327,6 +328,11 @@ class DnfModule(YumDnf):
             self.with_modules = dnf.base.WITH_MODULES
         except AttributeError:
             self.with_modules = False
+
+    def is_lockfile_pid_valid(self):
+        # FIXME? it looks like DNF takes care of invalid lock files itself?
+        # https://github.com/ansible/ansible/issues/57189
+        return True
 
     def _sanitize_dnf_error_msg(self, spec, error):
         """
@@ -488,7 +494,7 @@ class DnfModule(YumDnf):
                     results=[],
                 )
 
-            self.module.run_command(['dnf', 'install', '-y', package], check_rc=True)
+            rc, stdout, stderr = self.module.run_command(['dnf', 'install', '-y', package])
             global dnf
             try:
                 import dnf
@@ -499,9 +505,15 @@ class DnfModule(YumDnf):
                 import dnf.util
             except ImportError:
                 self.module.fail_json(
-                    msg="Could not import the dnf python module. "
-                    "Please install `{0}` package.".format(package),
+                    msg="Could not import the dnf python module using {0} ({1}). "
+                        "Please install `{2}` package or ensure you have specified the "
+                        "correct ansible_python_interpreter.".format(sys.executable, sys.version.replace('\n', ''),
+                                                                     package),
                     results=[],
+                    cmd='dnf install -y {0}'.format(package),
+                    rc=rc,
+                    stdout=stdout,
+                    stderr=stderr,
                 )
 
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
@@ -934,14 +946,7 @@ class DnfModule(YumDnf):
                             self.module_base.install([module])
                             self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 # Install groups.
                 for group in groups:
@@ -1004,14 +1009,7 @@ class DnfModule(YumDnf):
                                 response['results'].append("Module {0} upgraded.".format(module))
                             self.module_base.upgrade([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 for group in groups:
                     try:
@@ -1075,14 +1073,7 @@ class DnfModule(YumDnf):
                             self.module_base.disable([module])
                             self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 for group in groups:
                     try:
@@ -1108,6 +1099,14 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
+                    # short-circuit installed check for wildcard matching
+                    if '*' in pkg_spec:
+                        try:
+                            self.base.remove(pkg_spec)
+                        except dnf.exceptions.MarkingError as e:
+                            failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                        continue
+
                     installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
                     if installed_pkg:
                         candidate_pkg = self._packagename_dict(installed_pkg[0])

@@ -1,0 +1,3 @@
+cloud/vcenter
+shippable/vcenter/group1
+needs/target/prepare_vmware_tests

@@ -13,9 +13,16 @@
     src: files/
     dest: '{{ testing_dir }}'
 
+# False positive in Windows Defender is flagging the file as a virus and removing it. We need to add an exclusion so
+# the tests continue to work
+- name: add exclusion for the SlimFTPd binary
+  win_defender_exclusion:
+    path: '{{ remote_tmp_dir | win_dirname }}'
+    state: present
+
 - name: download SlimFTPd binary
   win_get_url:
-    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_get_url/SlimFTPd.exe
     dest: '{{ testing_dir }}\SlimFTPd.exe'
 
 # SlimFTPd does not work with special chars because it is so old, use a symlink as a workaround
@@ -58,4 +65,9 @@
   - name: remove temp symlink
     win_file:
       path: '{{ slimftpd_link }}'
+      state: absent
+
+  - name: remove exclusion for the SlimFTPd binary
+    win_defender_exclusion:
+      path: '{{ remote_tmp_dir | win_dirname }}'
       state: absent

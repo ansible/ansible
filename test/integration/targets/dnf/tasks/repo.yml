@@ -256,6 +256,26 @@
         that:
         - rpm_main_result.rc == 0
         - rpm_weak_result.rc == 1  # the weak dependency shouldn't be installed
+
+    # https://github.com/ansible/ansible/issues/55938
+    - name: Install foo-*
+      dnf:
+        name: foo-*
+        state: present
+
+    - name: Uninstall foo-*
+      dnf:
+        name: foo-*
+        state: absent
+
+    - name: Check if all foo packages are removed
+      shell: rpm -qa foo-* | wc -l
+      register: rpm_result
+
+    - name: Verify rpm result
+      assert:
+        that:
+          - rpm_result.stdout == '0'
   always:
     - name: Clean up
       dnf:

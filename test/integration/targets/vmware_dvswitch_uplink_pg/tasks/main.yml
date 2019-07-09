@@ -63,6 +63,7 @@
 
     - <<: *uplink_data
       name: Configure Uplink portgroup
+      register: uplink_pg_result
       check_mode: no
 
     - debug:

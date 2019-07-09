@@ -30,7 +30,6 @@ requirements:
 - python >= 2.6
 - PyVmomi
 - vSphere Automation SDK
-- vCloud Suite SDK
 options:
     tag_name:
       description:
@@ -109,7 +108,7 @@ results:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
-    from com.vmware.cis.tagging_client import Tag, Category
+    from com.vmware.vapi.std.errors_client import Error
 except ImportError:
     pass
 
@@ -117,11 +116,12 @@ except ImportError:
 class VmwareTag(VmwareRestClient):
     def __init__(self, module):
         super(VmwareTag, self).__init__(module)
-        self.tag_service = Tag(self.connect)
         self.global_tags = dict()
+        # api_client to call APIs instead of individual service
+        self.tag_service = self.api_client.tagging.Tag
         self.tag_name = self.params.get('tag_name')
         self.get_all_tags()
-        self.category_service = Category(self.connect)
+        self.category_service = self.api_client.tagging.Category
 
     def ensure_state(self):
         """
@@ -164,13 +164,18 @@ class VmwareTag(VmwareRestClient):
             self.module.fail_json(msg="Unable to find category specified using 'category_id' - %s" % category_id)
 
         tag_spec.category_id = category_id
-        tag_id = self.tag_service.create(tag_spec)
+        tag_id = ''
+        try:
+            tag_id = self.tag_service.create(tag_spec)
+        except Error as error:
+            self.module.fail_json(msg="%s" % self.get_error_message(error))
+
         if tag_id:
             self.module.exit_json(changed=True,
                                   results=dict(msg="Tag '%s' created." % tag_spec.name,
                                                tag_id=tag_id))
         self.module.exit_json(changed=False,
-                              results=dict(msg="No tag created", tag_id=''))
+                              results=dict(msg="No tag created", tag_id=tag_id))
 
     def state_unchanged(self):
         """
@@ -193,7 +198,11 @@ class VmwareTag(VmwareRestClient):
         desired_tag_desc = self.params.get('tag_description')
         if tag_desc != desired_tag_desc:
             tag_update_spec.description = desired_tag_desc
-            self.tag_service.update(tag_id, tag_update_spec)
+            try:
+                self.tag_service.update(tag_id, tag_update_spec)
+            except Error as error:
+                self.module.fail_json(msg="%s" % self.get_error_message(error))
+
             results['msg'] = 'Tag %s updated.' % self.tag_name
             changed = True
 
@@ -205,7 +214,10 @@ class VmwareTag(VmwareRestClient):
 
         """
         tag_id = self.global_tags[self.tag_name]['tag_id']
-        self.tag_service.delete(tag_id=tag_id)
+        try:
+            self.tag_service.delete(tag_id=tag_id)
+        except Error as error:
+            self.module.fail_json(msg="%s" % self.get_error_message(error))
         self.module.exit_json(changed=True,
                               results=dict(msg="Tag '%s' deleted." % self.tag_name,
                                            tag_id=tag_id))

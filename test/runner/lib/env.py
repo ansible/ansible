@@ -304,7 +304,7 @@ def get_git_details(args):
     return git_details
 
 
-def get_merged_commit(args, commit):
+def get_merged_commit(args, commit):  # pylint: disable=unused-argument
     """
     :type args: CommonConfig
     :type commit: str
@@ -313,7 +313,7 @@ def get_merged_commit(args, commit):
     if not commit:
         return None
 
-    git = Git(args)
+    git = Git()
 
     try:
         show_commit = git.run_git(['show', '--no-patch', '--no-abbrev', commit])

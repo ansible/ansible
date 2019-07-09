@@ -1,0 +1,13 @@
+minor_changes:
+- The ``ec2_ami_facts`` module has been renamed to ``ec2_ami_info``.
+- The ``ec2_asg_facts`` module has been renamed to ``ec2_asg_info``.
+- The ``ec2_customer_gateway_facts`` module has been renamed to ``ec2_customer_gateway_info``.
+- The ``ec2_eip_facts`` module has been renamed to ``ec2_eip_info``.
+- The ``ec2_elb_facts`` module has been renamed to ``ec2_elb_info``.
+- The ``ec2_eni_facts`` module has been renamed to ``ec2_eni_info``.
+- The ``ec2_group_facts`` module has been renamed to ``ec2_group_info``.
+- The ``ec2_instance_facts`` module has been renamed to ``ec2_instance_info``.
+- The ``ec2_lc_facts`` module has been renamed to ``ec2_lc_info``.
+- The ``ec2_placement_group_facts`` module has been renamed to ``ec2_placement_group_info``.
+- The ``ec2_snapshot_facts`` module has been renamed to ``ec2_snapshot_info``.
+- The ``ec2_vol_facts`` module has been renamed to ``ec2_vol_info``.

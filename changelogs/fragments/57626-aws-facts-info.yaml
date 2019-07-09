@@ -1,0 +1,14 @@
+minor_changes:
+- The ``cloudwatchlogs_log_group_facts`` module has been renamed to ``cloudwatchlogs_log_group_info``.
+- The ``elasticache_facts`` module has been renamed to ``elasticache_info``.
+- The ``elb_application_lb_facts`` module has been renamed to ``elb_application_lb_info``.
+- The ``elb_classic_lb_facts`` module has been renamed to ``elb_classic_lb_info``.
+- The ``elb_target_facts`` module has been renamed to ``elb_target_info``.
+- The ``elb_target_group_facts`` module has been renamed to ``elb_target_group_info``.
+- The ``iam_mfa_device_facts`` module has been renamed to ``iam_mfa_device_info``.
+- The ``iam_role_facts`` module has been renamed to ``iam_role_info``.
+- The ``iam_server_certificate_facts`` module has been renamed to ``iam_server_certificate_info``.
+- The ``rds_instance_facts`` module has been renamed to ``rds_instance_info``.
+- The ``rds_snapshot_facts`` module has been renamed to ``rds_snapshot_info``.
+- The ``redshift_facts`` module has been renamed to ``redshift_info``.
+- The ``route53_facts`` module has been renamed to ``route53_info``.

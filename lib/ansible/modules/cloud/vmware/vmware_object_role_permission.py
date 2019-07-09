@@ -27,7 +27,8 @@ author:
 - Joseph Andreatta (@vmwjoseph)
 notes:
     - Tested on ESXi 6.5, vSphere 6.7
-    - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
+    - The ESXi login user must have the appropriate rights to administer permissions.
+    - Permissions for a distributed switch must be defined and managed on either the datacenter or a folder containing the switch.
 requirements:
     - "python >= 2.7"
     - PyVmomi
@@ -220,6 +221,12 @@ class VMwareObjectRolePermission(PyVmomi):
                 msg="Specified object %s of type %s was not found."
                 % (self.params['object_name'], self.params['object_type'])
             )
+        if self.params['object_type'] == 'DistributedVirtualSwitch':
+            msg = "You are applying permissions to a Distributed vSwitch. " \
+                  "This will probably fail, since Distributed vSwitches inherits permissions " \
+                  "from the datacenter or a folder level. " \
+                  "Define permissions on the datacenter or the folder containing the switch."
+            self.module.warn(msg)
 
 
 def main():

@@ -170,8 +170,8 @@ def find_datastore_by_name(content, datastore_name):
     return find_object_by_name(content, datastore_name, [vim.Datastore])
 
 
-def find_dvs_by_name(content, switch_name):
-    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch])
+def find_dvs_by_name(content, switch_name, folder=None):
+    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch], folder=folder)
 
 
 def find_hostsystem_by_name(content, hostname):
@@ -302,6 +302,8 @@ def gather_vm_facts(content, vm):
         'snapshots': [],
         'current_snapshot': None,
         'vnc': {},
+        'moid': vm._moId,
+        'vimref': "vim.VirtualMachine:%s" % vm._moId,
     }
 
     # facts that may or may not exist
@@ -488,7 +490,7 @@ def vmware_argument_spec():
     )
 
 
-def connect_to_api(module, disconnect_atexit=True):
+def connect_to_api(module, disconnect_atexit=True, return_si=False):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
@@ -553,6 +555,8 @@ def connect_to_api(module, disconnect_atexit=True):
     # Also removal significantly speeds up the return of the module
     if disconnect_atexit:
         atexit.register(connect.Disconnect, service_instance)
+    if return_si:
+        return service_instance, service_instance.RetrieveContent()
     return service_instance.RetrieveContent()
 
 
@@ -802,9 +806,11 @@ class PyVmomi(object):
 
         self.module = module
         self.params = module.params
-        self.si = None
         self.current_vm_obj = None
-        self.content = connect_to_api(self.module)
+        self.si, self.content = connect_to_api(self.module, return_si=True)
+        self.custom_field_mgr = []
+        if self.content.customFieldsManager:  # not an ESXi
+            self.custom_field_mgr = self.content.customFieldsManager.field
 
     def is_vcenter(self):
         """
@@ -826,7 +832,7 @@ class PyVmomi(object):
 
     def get_managed_objects_properties(self, vim_type, properties=None):
         """
-        Function to look up a Managed Object Reference in vCenter / ESXi Environment
+        Look up a Managed Object Reference in vCenter / ESXi Environment
         :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
         :param properties: List of properties related to vim object e.g. Name
         :return: local content object
@@ -874,16 +880,16 @@ class PyVmomi(object):
     # Virtual Machine related functions
     def get_vm(self):
         """
-        Function to find unique virtual machine either by UUID or Name.
+        Find unique virtual machine either by UUID or Name.
         Returns: virtual machine object if found, else None.
 
         """
         vm_obj = None
         user_desired_path = None
-
-        if self.params['uuid'] and not self.params['use_instance_uuid']:
+        use_instance_uuid = self.params.get('use_instance_uuid') or False
+        if self.params['uuid'] and not use_instance_uuid:
             vm_obj = find_vm_by_id(self.content, vm_id=self.params['uuid'], vm_id_type="uuid")
-        elif self.params['uuid'] and self.params['use_instance_uuid']:
+        elif self.params['uuid'] and use_instance_uuid:
             vm_obj = find_vm_by_id(self.content,
                                    vm_id=self.params['uuid'],
                                    vm_id_type="instance_uuid")
@@ -961,7 +967,7 @@ class PyVmomi(object):
 
     def gather_facts(self, vm):
         """
-        Function to gather facts of virtual machine.
+        Gather facts of virtual machine.
         Args:
             vm: Name of virtual machine.
 
@@ -973,7 +979,7 @@ class PyVmomi(object):
     @staticmethod
     def get_vm_path(content, vm_name):
         """
-        Function to find the path of virtual machine.
+        Find the path of virtual machine.
         Args:
             content: VMware content object
             vm_name: virtual machine managed object
@@ -1082,7 +1088,7 @@ class PyVmomi(object):
 
     def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
         """
-        Function to get all host system managed object
+        Get all host system managed object
 
         Args:
             cluster_name: Name of Cluster
@@ -1157,7 +1163,7 @@ class PyVmomi(object):
 
     def get_all_port_groups_by_host(self, host_system):
         """
-        Function to get all Port Group by host
+        Get all Port Group by host
         Args:
             host_system: Name of Host System
 
@@ -1168,10 +1174,48 @@ class PyVmomi(object):
             pgs_list.append(pg)
         return pgs_list
 
+    def find_network_by_name(self, network_name=None):
+        """
+        Get network specified by name
+        Args:
+            network_name: Name of network
+
+        Returns: List of network managed objects
+        """
+        networks = []
+
+        if not network_name:
+            return networks
+
+        objects = self.get_managed_objects_properties(vim_type=vim.Network, properties=['name'])
+
+        for temp_vm_object in objects:
+            if len(temp_vm_object.propSet) != 1:
+                continue
+            for temp_vm_object_property in temp_vm_object.propSet:
+                if temp_vm_object_property.val == self.params['name']:
+                    networks.append(temp_vm_object.obj)
+                    break
+        return networks
+
+    def network_exists_by_name(self, network_name=None):
+        """
+        Check if network with a specified name exists or not
+        Args:
+            network_name: Name of network
+
+        Returns: True if network exists else False
+        """
+        ret = False
+        if not network_name:
+            return ret
+        ret = True if self.find_network_by_name(network_name=network_name) else False
+        return ret
+
     # Datacenter
     def find_datacenter_by_name(self, datacenter_name):
         """
-        Function to get datacenter managed object by name
+        Get datacenter managed object by name
 
         Args:
             datacenter_name: Name of datacenter
@@ -1183,7 +1227,7 @@ class PyVmomi(object):
 
     def find_datastore_by_name(self, datastore_name):
         """
-        Function to get datastore managed object by name
+        Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
 
@@ -1195,7 +1239,7 @@ class PyVmomi(object):
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):
         """
-        Function to get datastore cluster managed object by name
+        Get datastore cluster managed object by name
         Args:
             datastore_cluster_name: Name of datastore cluster
 
@@ -1274,11 +1318,14 @@ class PyVmomi(object):
         if not changed:
             self.module.fail_json(msg="No valid disk vmdk image found for path %s" % vmdk_path)
 
-        target_folder_path = datastore_name_sq + " " + vmdk_folder + '/'
+        target_folder_paths = [
+            datastore_name_sq + " " + vmdk_folder + '/',
+            datastore_name_sq + " " + vmdk_folder,
+        ]
 
         for file_result in search_res.info.result:
             for f in getattr(file_result, 'file'):
-                if f.path == vmdk_filename and file_result.folderPath == target_folder_path:
+                if f.path == vmdk_filename and file_result.folderPath in target_folder_paths:
                     return f
 
         self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
@@ -1378,8 +1425,24 @@ class PyVmomi(object):
                         self._deepmerge(result, tmp)
                     else:
                         result[prop] = self._jsonify(getattr(obj, prop))
+                        # To match gather_vm_facts output
+                        prop_name = prop
+                        if prop.lower() == '_moid':
+                            prop_name = 'moid'
+                        elif prop.lower() == '_vimref':
+                            prop_name = 'vimref'
+                        result[prop_name] = result[prop]
                 except (AttributeError, KeyError):
                     self.module.fail_json(msg="Property '{0}' not found.".format(prop))
         else:
             result = self._jsonify(obj)
         return result
+
+    def get_folder_path(self, cur):
+        full_path = '/' + cur.name
+        while hasattr(cur, 'parent') and cur.parent:
+            if cur.parent == self.content.rootFolder:
+                break
+            cur = cur.parent
+            full_path = '/' + cur.name + full_path
+        return full_path

@@ -1,0 +1,29 @@
+---
+esxi_hosts:
+  - esxi1.test
+  - esxi2.test
+esxi_password: '{{ esxi1_password }}'
+infra:
+  datastores:
+    LocalDS_0:
+      type: nfs
+      server: gateway.test
+      path: /srv/share/isos
+      ro: true
+    LocalDS_1:
+      type: nfs
+      server: gateway.test
+      path: /srv/share/vms
+      ro: false
+virtual_machines:
+  - name: DC0_H0_VM0
+    folder: '{{ f0 }}'
+  - name: DC0_H0_VM1
+    folder: '{{ f0 }}'
+virtual_machines_in_cluster:
+  - name: DC0_C0_RP0_VM0
+    folder: '{{ f0 }}'
+    cluster: '{{ ccr1 }}'
+  - name: DC0_C0_RP0_VM1
+    folder: '{{ f0 }}'
+    cluster: '{{ ccr1 }}'

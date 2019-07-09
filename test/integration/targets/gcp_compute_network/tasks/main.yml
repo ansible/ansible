@@ -49,7 +49,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a network that already exists
   gcp_compute_network:
@@ -93,7 +93,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a network that does not exist
   gcp_compute_network:

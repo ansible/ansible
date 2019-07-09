@@ -70,11 +70,8 @@ options:
   type:
     description:
     - The type of InterconnectAttachment you wish to create. Defaults to DEDICATED.
+    - 'Some valid choices include: "DEDICATED", "PARTNER", "PARTNER_PROVIDER"'
     required: false
-    choices:
-    - DEDICATED
-    - PARTNER
-    - PARTNER_PROVIDER
   router:
     description:
     - URL of the cloud router to be used for dynamic routing. This router must be
@@ -108,7 +105,8 @@ options:
     required: false
   vlan_tag8021q:
     description:
-    - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+    - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+      PARTNER type this will be managed upstream.
     required: false
   region:
     description:
@@ -249,7 +247,8 @@ candidateSubnets:
   type: list
 vlanTag8021q:
   description:
-  - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+  - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+    PARTNER type this will be managed upstream.
   returned: success
   type: int
 region:
@@ -282,7 +281,7 @@ def main():
             interconnect=dict(type='str'),
             description=dict(type='str'),
             edge_availability_domain=dict(type='str'),
-            type=dict(type='str', choices=['DEDICATED', 'PARTNER', 'PARTNER_PROVIDER']),
+            type=dict(type='str'),
             router=dict(required=True, type='dict'),
             name=dict(required=True, type='str'),
             candidate_subnets=dict(type='list', elements='str'),
@@ -436,7 +435,7 @@ def response_to_hash(module, response):
 def region_selflink(name, params):
     if name is None:
         return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/[a-z1-9\-]*"
+    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*"
     if not re.match(url, name):
         name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
     return name

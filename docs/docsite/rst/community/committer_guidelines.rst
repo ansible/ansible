@@ -152,3 +152,5 @@ Individuals who've been asked to become a part of this group have generally been
 +---------------------+----------------------+--------------------+----------------------+
 | Sandra McCann       | samccann             | samccann           |                      |
 +---------------------+----------------------+--------------------+----------------------+
+| Felix Fontein       | felixfontein         | felixfontein       | felix@fontein.de     |
++---------------------+----------------------+--------------------+----------------------+

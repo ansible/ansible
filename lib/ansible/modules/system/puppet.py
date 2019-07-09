@@ -82,6 +82,11 @@ options:
       - It has no effect with a puppetmaster.
     type: str
     version_added: "2.1"
+  use_srv_records:
+    description:
+      - Toggles use_srv_records flag
+    type: bool
+    version_added: "2.9"
   summarize:
     description:
       - Whether to print a transaction summary.
@@ -142,10 +147,10 @@ EXAMPLES = r'''
 
 import json
 import os
-import pipes
 import stat
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def _get_facter_dir():
@@ -192,6 +197,7 @@ def main():
             summarize=dict(type='bool', default=False),
             debug=dict(type='bool', default=False),
             verbose=dict(type='bool', default=False),
+            use_srv_records=dict(type='bool'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -239,7 +245,7 @@ def main():
     if TIMEOUT_CMD:
         base_cmd = "%(timeout_cmd)s -s 9 %(timeout)s %(puppet_cmd)s" % dict(
             timeout_cmd=TIMEOUT_CMD,
-            timeout=pipes.quote(p['timeout']),
+            timeout=shlex_quote(p['timeout']),
             puppet_cmd=PUPPET_CMD)
     else:
         base_cmd = PUPPET_CMD
@@ -249,7 +255,7 @@ def main():
                " --no-daemonize --no-usecacheonfailure --no-splay"
                " --detailed-exitcodes --verbose --color 0") % dict(base_cmd=base_cmd)
         if p['puppetmaster']:
-            cmd += " --server %s" % pipes.quote(p['puppetmaster'])
+            cmd += " --server %s" % shlex_quote(p['puppetmaster'])
         if p['show_diff']:
             cmd += " --show_diff"
         if p['environment']:
@@ -260,6 +266,11 @@ def main():
             cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
             cmd += " --noop"
+        if p['use_srv_records'] is not None:
+            if not p['use_srv_records']:
+                cmd += " --no-use_srv_records"
+            else:
+                cmd += " --use_srv_records"
         elif 'noop' in p:
             if p['noop']:
                 cmd += " --noop"
@@ -289,7 +300,7 @@ def main():
         if p['execute']:
             cmd += " --execute '%s'" % p['execute']
         else:
-            cmd += pipes.quote(p['manifest'])
+            cmd += shlex_quote(p['manifest'])
         if p['summarize']:
             cmd += " --summarize"
         if p['debug']:

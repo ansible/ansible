@@ -181,8 +181,7 @@ def main():
     epgs = [e['epgRef'] for e in schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs']]
     if epg is not None and epg_ref in epgs:
         epg_idx = epgs.index(epg_ref)
-        # FIXME: Changes based on index are DANGEROUS
-        epg_path = '/sites/{0}/anps/{1}/epgs/{2}'.format(site_template, anp_idx, epg_idx)
+        epg_path = '/sites/{0}/anps/{1}/epgs/{2}'.format(site_template, anp, epg)
         mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]
 
     if state == 'query':
@@ -192,7 +191,7 @@ def main():
             mso.fail_json(msg="EPG '{epg}' not found".format(epg=epg))
         mso.exit_json()
 
-    epgs_path = '/sites/{0}/anps/{1}/epgs'.format(site_template, anp_idx)
+    epgs_path = '/sites/{0}/anps/{1}/epgs'.format(site_template, anp)
     ops = []
 
     mso.previous = mso.existing

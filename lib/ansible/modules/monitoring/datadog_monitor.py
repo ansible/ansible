@@ -18,91 +18,126 @@ DOCUMENTATION = '''
 module: datadog_monitor
 short_description: Manages Datadog monitors
 description:
-- "Manages monitors within Datadog"
-- "Options like described on http://docs.datadoghq.com/api/"
+  - Manages monitors within Datadog.
+  - Options as described on https://docs.datadoghq.com/api/.
 version_added: "2.0"
-author: "Sebastian Kornehl (@skornehl)"
+author: Sebastian Kornehl (@skornehl)
 requirements: [datadog]
 options:
     api_key:
-        description: ["Your DataDog API key."]
+        description:
+          - Your Datadog API key.
         required: true
+        type: str
     app_key:
-        description: ["Your DataDog app key."]
+        description:
+          - Your Datadog app key.
         required: true
+        type: str
     state:
-        description: ["The designated state of the monitor."]
+        description:
+          - The designated state of the monitor.
         required: true
         choices: ['present', 'absent', 'mute', 'unmute']
+        type: str
     tags:
-        description: ["A list of tags to associate with your monitor when creating or updating. This can help you categorize and filter monitors."]
+        description:
+          - A list of tags to associate with your monitor when creating or updating.
+          - This can help you categorize and filter monitors.
         version_added: "2.2"
+        type: list
     type:
         description:
-            - "The type of the monitor."
-            - The 'event alert'is available starting at Ansible 2.1
+          - The type of the monitor.
         choices: ['metric alert', 'service check', 'event alert']
+        type: str
     query:
-        description: ["The monitor query to notify on with syntax varying depending on what type of monitor you are creating."]
+        description:
+          - The monitor query to notify on.
+          - Syntax varies depending on what type of monitor you are creating.
+        type: str
     name:
-        description: ["The name of the alert."]
+        description:
+          - The name of the alert.
         required: true
+        type: str
     message:
         description:
-            - A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same
-              '@username' notation as events. Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
+          - A message to include with notifications for this monitor.
+          - Email notifications can be sent to specific users by using the same '@username' notation as events.
+          - Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
+        type: str
     silenced:
-        description: ["Dictionary of scopes to timestamps or None. Each scope will be muted until the given POSIX timestamp or forever if the value is None. "]
+        description:
+          - Dictionary of scopes to silence, with timestamps or None.
+          - Each scope will be muted until the given POSIX timestamp or forever if the value is None.
         default: ""
     notify_no_data:
-        description: ["A boolean indicating whether this monitor will notify when data stops reporting.."]
+        description:
+          - Whether this monitor will notify when data stops reporting.
         type: bool
         default: 'no'
     no_data_timeframe:
         description:
-            - The number of minutes before a monitor will notify when data stops reporting. Must be at least 2x the monitor timeframe for metric
-              alerts or 2 minutes for service checks.
+          - The number of minutes before a monitor will notify when data stops reporting.
+          - Must be at least 2x the monitor timeframe for metric alerts or 2 minutes for service checks.
         default: 2x timeframe for metric, 2 minutes for service
+        type: str
     timeout_h:
-        description: ["The number of hours of the monitor not reporting data before it will automatically resolve from a triggered state."]
+        description:
+          - The number of hours of the monitor not reporting data before it will automatically resolve from a triggered state.
+        type: str
     renotify_interval:
         description:
-            - The number of minutes after the last notification before a monitor will re-notify on the current status. It will only re-notify if it's
-              not resolved.
+          - The number of minutes after the last notification before a monitor will re-notify on the current status.
+          - It will only re-notify if it is not resolved.
+        type: str
     escalation_message:
         description:
-            - A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
-              is None
+          - A message to include with a re-notification. Supports the '@username' notification we allow elsewhere.
+          - Not applicable if I(renotify_interval=None).
+        type: str
     notify_audit:
-        description: ["A boolean indicating whether tagged users will be notified on changes to this monitor."]
+        description:
+          - Whether tagged users will be notified on changes to this monitor.
         type: bool
         default: 'no'
     thresholds:
         description:
-            - A dictionary of thresholds by status. This option is only available for service checks and metric alerts. Because each of them can have
-              multiple thresholds, we don't define them directly in the query."]
+          - A dictionary of thresholds by status.
+          - Only available for service checks and metric alerts.
+          - Because each of them can have multiple thresholds, we do not define them directly in the query.
         default: {'ok': 1, 'critical': 1, 'warning': 1}
     locked:
-        description: ["A boolean indicating whether changes to this monitor should be restricted to the creator or admins."]
+        description:
+          - Whether changes to this monitor should be restricted to the creator or admins.
         type: bool
         default: 'no'
         version_added: "2.2"
     require_full_window:
         description:
-            - A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for
-              sparse metrics, otherwise some evaluations will be skipped.
+          - Whether this monitor needs a full window of data before it gets evaluated.
+          - We highly recommend you set this to False for sparse metrics, otherwise some evaluations will be skipped.
         version_added: "2.3"
         type: bool
     new_host_delay:
-        description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
-        This gives the host time to fully initialize."]
+        description:
+          - A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
+          - This gives the host time to fully initialize.
         version_added: "2.4"
+        type: str
     evaluation_delay:
-        description: ["Time to delay evaluation (in seconds). It is effective for sparse values."]
+        description:
+          - Time to delay evaluation (in seconds).
+          - Effective for sparse values.
         version_added: "2.7"
+        type: str
     id:
-        description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
+        description:
+          - The ID of the alert.
+          - If set, will be used instead of the name to locate the alert.
         version_added: "2.3"
+        type: str
 '''
 
 EXAMPLES = '''
@@ -158,8 +193,8 @@ def main():
         argument_spec=dict(
             api_key=dict(required=True, no_log=True),
             app_key=dict(required=True, no_log=True),
-            state=dict(required=True, choises=['present', 'absent', 'mute', 'unmute']),
-            type=dict(required=False, choises=['metric alert', 'service check', 'event alert']),
+            state=dict(required=True, choices=['present', 'absent', 'mute', 'unmute']),
+            type=dict(required=False, choices=['metric alert', 'service check', 'event alert']),
             name=dict(required=True),
             query=dict(required=False),
             message=dict(required=False, default=None),

@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: vmware_guest_custom_attributes
-short_description: Manage custom attributes from VMWare for the given virtual machine
+short_description: Manage custom attributes from VMware for the given virtual machine
 description:
     - This module can be used to add, remove and update custom attributes for the given virtual machine.
 version_added: 2.7
@@ -50,7 +50,7 @@ options:
      - This is required parameter, if C(name) is not supplied.
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -139,7 +139,6 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 class VmAttributeManager(PyVmomi):
     def __init__(self, module):
         super(VmAttributeManager, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def set_custom_field(self, vm, user_fields):
         result_fields = dict()

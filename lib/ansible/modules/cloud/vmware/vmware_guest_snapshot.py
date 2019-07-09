@@ -56,7 +56,7 @@ options:
      - This is required if C(name) parameter is not supplied.
    use_instance_uuid:
      description:
-     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     - Whether to use the VMware instance UUID rather than the BIOS UUID.
      default: no
      type: bool
      version_added: '2.8'
@@ -92,7 +92,7 @@ options:
    quiesce:
      description:
      - If set to C(true) and virtual machine is powered on, it will quiesce the file system in virtual machine.
-     - Note that VMWare Tools are required for this flag.
+     - Note that VMware Tools are required for this flag.
      - If virtual machine is powered off or VMware Tools are not available, then this flag is set to C(false).
      - If virtual machine does not provide capability to take quiesce snapshot, then this flag is set to C(false).
      required: False

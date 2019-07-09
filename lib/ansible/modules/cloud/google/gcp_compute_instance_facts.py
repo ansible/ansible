@@ -42,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters.)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
   zone:
@@ -65,8 +65,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -258,13 +258,15 @@ items:
       type: int
     labelFingerprint:
       description:
-      - A fingerprint for this request, which is essentially a hash of the metadata's
-        contents and used for optimistic locking. The fingerprint is initially generated
-        by Compute Engine and changes after every request to modify or update metadata.
-        You must always provide an up-to-date fingerprint hash in order to update
-        or change metadata.
+      - The fingerprint used for optimistic locking of this resource. Used internally
+        during updates.
       returned: success
       type: str
+    labels:
+      description:
+      - Labels to apply to this instance. A list of key->value pairs.
+      returned: success
+      type: dict
     metadata:
       description:
       - The metadata key/value pairs to assign to instances that are created from
@@ -494,7 +496,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

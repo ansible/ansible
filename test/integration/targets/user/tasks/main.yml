@@ -853,7 +853,7 @@
     state: absent
     remove: yes
     local: yes
-  register: local_user_test_3
+  register: local_user_test_remove_1
   tags:
     - user_test_local_mode
 
@@ -863,16 +863,68 @@
     state: absent
     remove: yes
     local: yes
+  register: local_user_test_remove_2
+  tags:
+    - user_test_local_mode
+
+- name: Create test group
+  group:
+    name: testgroup
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser with groups
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: testgroup
+  register: local_user_test_3
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser with groups again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    groups: testgroup
   register: local_user_test_4
   tags:
     - user_test_local_mode
 
-- name: Ensure local user accounts were created
+- name: Remove local_ansibulluser with groups
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+    groups: testgroup
+  register: local_user_test_remove_3
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser with groups again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+    groups: testgroup
+  register: local_user_test_remove_4
+  tags:
+    - user_test_local_mode
+
+- name: Ensure local user accounts were created and removed properly
   assert:
     that:
       - local_user_test_1 is changed
       - local_user_test_2 is not changed
       - local_user_test_3 is changed
       - local_user_test_4 is not changed
+      - local_user_test_remove_1 is changed
+      - local_user_test_remove_2 is not changed
+      - local_user_test_remove_3 is changed
+      - local_user_test_remove_4 is not changed
   tags:
     - user_test_local_mode

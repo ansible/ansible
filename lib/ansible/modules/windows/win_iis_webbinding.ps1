@@ -372,6 +372,6 @@ ElseIf (-not $current_bindings -and $state -eq 'present')
         $result.binding_info = Create-BindingInfo $web_binding
     } else {
         $result.binding_info = $null
-    } 
+    }
     Exit-Json $result
 }

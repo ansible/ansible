@@ -9,7 +9,6 @@ import fcntl
 import inspect
 import json
 import os
-import pipes
 import pkgutil
 import random
 import re
@@ -20,6 +19,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 
 from struct import unpack, pack
@@ -37,6 +37,11 @@ try:
 except ImportError:
     # noinspection PyCompatibility
     from configparser import ConfigParser
+
+try:
+    from shlex import quote as cmd_quote
+except ImportError:
+    from pipes import quote as cmd_quote
 
 DOCKER_COMPLETION = {}  # type: dict[str, dict[str, str]]
 REMOTE_COMPLETION = {}  # type: dict[str, dict[str, str]]
@@ -147,6 +152,11 @@ def get_python_path(args, interpreter):
     :type interpreter: str
     :rtype: str
     """
+    # When the python interpreter is already named "python" its directory can simply be added to the path.
+    # Using another level of indirection is only required when the interpreter has a different name.
+    if os.path.basename(interpreter) == 'python':
+        return os.path.dirname(interpreter)
+
     python_path = PYTHON_PATHS.get(interpreter)
 
     if python_path:
@@ -161,9 +171,38 @@ def get_python_path(args, interpreter):
         return os.path.join(root_temp_dir, ''.join((prefix, 'temp', suffix)))
 
     python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
+    injected_interpreter = os.path.join(python_path, 'python')
+
+    # A symlink is faster than the execv wrapper, but isn't compatible with virtual environments.
+    # Attempt to detect when it is safe to use a symlink by checking the real path of the interpreter.
+    use_symlink = os.path.dirname(os.path.realpath(interpreter)) == os.path.dirname(interpreter)
+
+    if use_symlink:
+        display.info('Injecting "%s" as a symlink to the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
+
+        os.symlink(interpreter, injected_interpreter)
+    else:
+        display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
+
+        code = textwrap.dedent('''
+        #!%s
+
+        from __future__ import absolute_import
+
+        from os import execv
+        from sys import argv
+
+        python = '%s'
+
+        execv(python, [python] + argv[1:])
+        ''' % (interpreter, interpreter)).lstrip()
+
+        with open(injected_interpreter, 'w') as python_fd:
+            python_fd.write(code)
+
+        os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
     os.chmod(python_path, MODE_DIRECTORY)
-    os.symlink(interpreter, os.path.join(python_path, 'python'))
 
     if not PYTHON_PATHS:
         atexit.register(cleanup_python_paths)
@@ -389,7 +428,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     cmd = list(cmd)
 
-    escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
+    escaped_cmd = ' '.join(cmd_quote(c) for c in cmd)
 
     display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
@@ -481,8 +520,21 @@ def common_environment():
         'SSH_AUTH_SOCK',
         # MacOS High Sierra Compatibility
         # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
+        # Example configuration for macOS:
+        # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
         'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
         'ANSIBLE_KEEP_REMOTE_FILES',
+        # MacOS Homebrew Compatibility
+        # https://cryptography.io/en/latest/installation/#building-cryptography-on-macos
+        # This may also be required to install pyyaml with libyaml support when installed in non-standard locations.
+        # Example configuration for brew on macOS:
+        # export LDFLAGS="-L$(brew --prefix openssl)/lib/     -L$(brew --prefix libyaml)/lib/"
+        # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
+        # However, this is not adequate for PyYAML 3.13, which is the latest version supported on Python 2.6.
+        # For that version the standard location must be used, or `pip install` must be invoked with additional options:
+        # --global-option=build_ext --global-option=-L{path_to_lib_dir}
+        'LDFLAGS',
+        'CFLAGS',
     )
 
     env.update(pass_vars(required=required, optional=optional))
@@ -763,7 +815,7 @@ class SubprocessError(ApplicationError):
         :type stderr: str | None
         :type runtime: float | None
         """
-        message = 'Command "%s" returned exit status %s.\n' % (' '.join(pipes.quote(c) for c in cmd), status)
+        message = 'Command "%s" returned exit status %s.\n' % (' '.join(cmd_quote(c) for c in cmd), status)
 
         if stderr:
             message += '>>> Standard Error\n'

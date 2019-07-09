@@ -38,6 +38,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
@@ -1177,10 +1178,17 @@ class ModuleValidator(Validator):
                 deprecated_args_from_argspec.add(arg)
                 deprecated_args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
-                # Record provider options from network modules, for later comparison
-                for provider_arg, provider_data in data.get('options', {}).items():
-                    provider_args.add(provider_arg)
-                    provider_args.update(provider_data.get('aliases', []))
+                if data.get('options') and not isinstance(data.get('options'), Mapping):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=331,
+                        msg="Argument 'options' in argument_spec['provider'] must be a dictionary/hash when used",
+                    )
+                else:
+                    # Record provider options from network modules, for later comparison
+                    for provider_arg, provider_data in data.get('options', {}).items():
+                        provider_args.add(provider_arg)
+                        provider_args.update(provider_data.get('aliases', []))
 
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
@@ -1245,8 +1253,16 @@ class ModuleValidator(Validator):
 
             # TODO: needs to recursively traverse suboptions
             doc_type = docs.get('options', {}).get(arg, {}).get('type')
-            if 'type' in data:
-                if data['type'] != doc_type and doc_type is not None:
+            if 'type' in data and data['type'] is not None:
+                if doc_type is None:
+                    if not arg.startswith('_'):  # hidden parameter, for example _raw_params
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=337,
+                            msg="Argument '%s' in argument_spec defines type as %r "
+                                "but documentation doesn't define type" % (arg, data['type'])
+                        )
+                elif data['type'] != doc_type:
                     self.reporter.error(
                         path=self.object_path,
                         code=325,
@@ -1254,7 +1270,14 @@ class ModuleValidator(Validator):
                             "but documentation defines type as %r" % (arg, data['type'], doc_type)
                     )
             else:
-                if doc_type != 'str' and doc_type is not None:
+                if doc_type is None:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=338,
+                        msg="Argument '%s' in argument_spec uses default type ('str') "
+                            "but documentation doesn't define type" % (arg)
+                    )
+                elif doc_type != 'str':
                     self.reporter.error(
                         path=self.object_path,
                         code=335,

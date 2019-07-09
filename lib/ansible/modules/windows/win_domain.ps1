@@ -16,7 +16,9 @@ Function Ensure-Prereqs {
 
         # NOTE: AD-Domain-Services includes: RSAT-AD-AdminCenter, RSAT-AD-Powershell and RSAT-ADDS-Tools
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
+        $result.reboot_required = $awf.RestartNeeded
         # FUTURE: Check if reboot necessary
+
         return $true
     }
     return $false

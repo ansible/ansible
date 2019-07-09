@@ -97,13 +97,10 @@ BECOME_METHODS = _DeprecatedSequenceConstant(
 # CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
-CONTROLLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
-DEFAULT_SUDO_PASS = None
 DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
-DEFAULT_SU_PASS = None
 # FIXME: expand to other plugins, but never doc fragments
 CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'shell')
 # NOTE: always update the docs/docsite/Makefile to match
@@ -171,18 +168,6 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_pass=('ansible_become_password', 'ansible_become_pass'),
     become_exe=('ansible_become_exe', ),
     become_flags=('ansible_become_flags', ),
-
-    # deprecated
-    sudo=('ansible_sudo', ),
-    sudo_user=('ansible_sudo_user', ),
-    sudo_pass=('ansible_sudo_password', 'ansible_sudo_pass'),
-    sudo_exe=('ansible_sudo_exe', ),
-    sudo_flags=('ansible_sudo_flags', ),
-    su=('ansible_su', ),
-    su_user=('ansible_su_user', ),
-    su_pass=('ansible_su_password', 'ansible_su_pass'),
-    su_exe=('ansible_su_exe', ),
-    su_flags=('ansible_su_flags', ),
 )
 
 # POPULATE SETTINGS FROM CONFIG ###

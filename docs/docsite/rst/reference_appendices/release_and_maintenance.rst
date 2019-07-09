@@ -38,10 +38,11 @@ This table links to the release notes for each major release. These release note
 ==============================      =================================================
 Ansible Release                     Status
 ==============================      =================================================
-devel                               In development (2.8 unreleased, trunk)
-`2.7 Release Notes`_                Supported (security **and** general bug fixes)
-`2.6 Release Notes`_                Supported (security **and** critical bug fixes)
-`2.5 Release Notes`_                Supported (security fixes)
+devel                               In development (2.9 unreleased, trunk)
+`2.8 Release Notes`_                Supported (security **and** general bug fixes)
+`2.7 Release Notes`_                Supported (security **and** critical bug fixes)
+`2.6 Release Notes`_                Supported (security fixes)
+`2.5 Release Notes`_                Unsupported (end of life)
 `2.4 Release Notes`_                Unsupported (end of life)
 `2.3 Release Notes`_                Unsupported (end of life)
 `2.2 Release Notes`_                Unsupported (end of life)
@@ -53,12 +54,14 @@ devel                               In development (2.8 unreleased, trunk)
 
 You can download the releases from `<https://releases.ansible.com/ansible/>`_.
 
-.. note:: Starting with Ansible-2.4, support lasts for 3 releases.  Thus Ansible-2.4 will receive
+.. note:: Ansible support lasts for 3 releases.  Thus the latest Ansible release receives
     security and general bug fixes when it is first released, security and critical bug fixes when
-    2.5 is released, and **only** security fixes once 2.6 is released.
+    the next Ansible version is released, and **only** security fixes once the follow on to that version is released.
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+.. _2.8 Release Notes:
+.. _2.8: https://github.com/ansible/ansible/blob/stable-2.8/changelogs/CHANGELOG-v2.8.rst
 .. _2.7 Release Notes: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
 .. _2.6 Release Notes:
 .. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
@@ -89,10 +92,6 @@ major release will only receive fixes for security issues and critical bugs. Ans
 security fixes to releases which are two releases old. This work is tracked on the
 ``stable-<version>`` git branches.
 
-.. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
-    are only supported for two releases with the first stage including both security and general bug
-    fixes while the second stage includes security and critical bug fixes
-
 The fixes that land in supported stable branches will eventually be released
 as a new version when necessary.
 
@@ -108,7 +107,7 @@ Changelogs
 
 Older versions logged changes in ``stable-<version>`` branches at ``stable-<version>/CHANGELOG.md``. For example, here is the changelog for 2.4_ on GitHub.
 
-We now generate changelogs based on fragments. Here is the generated changelog for 2.6_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
+We now generate changelogs based on fragments. Here is the generated changelog for 2.8_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
 We've got :ref:`examples and instructions on creating changelog fragments <changelogs_how_to>` in the Community Guide.
 

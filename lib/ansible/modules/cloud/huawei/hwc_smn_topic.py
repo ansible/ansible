@@ -109,11 +109,10 @@ update_time:
 # Imports
 ###############################################################################
 
-from ansible.module_utils.hwc_utils import (Config, HwcModule, build_path,
-                                            HwcClientException, navigate_hash,
-                                            remove_nones_from_dict, get_region,
-                                            remove_empty_from_dict,
-                                            are_dicts_different)
+from ansible.module_utils.hwc_utils import (Config, HwcClientException,
+                                            HwcModule, navigate_value,
+                                            are_different_dicts, is_empty_value,
+                                            build_path, get_region)
 import re
 
 ###############################################################################
@@ -153,7 +152,8 @@ def main():
         if state == 'present':
             expect = _get_resource_editable_properties(module)
             current_state = response_to_hash(module, fetch)
-            if are_dicts_different(expect, current_state):
+            current = {'display_name': current_state['display_name']}
+            if are_different_dicts(expect, current):
                 if not module.check_mode:
                     fetch = update(config)
                     fetch = response_to_hash(module, fetch)
@@ -236,7 +236,13 @@ def get_resource(config, result):
     module = config.module
     client = config.client(get_region(module), "smn", "project")
 
-    d = {'topic_urn': navigate_hash(result, ['topic_urn'])}
+    v = ""
+    try:
+        v = navigate_value(result, ['topic_urn'])
+    except Exception as ex:
+        module.fail_json(msg=str(ex))
+
+    d = {'topic_urn': v}
     url = build_path(module, 'notifications/topics/{topic_urn}', d)
 
     return fetch_resource(module, client, url)
@@ -280,24 +286,33 @@ def self_link(module):
 
 
 def create_resource_opts(module):
-    request = remove_empty_from_dict({
-        u'display_name': module.params.get('display_name'),
-        u'name': module.params.get('name')
-    })
-    return request
+    params = dict()
+
+    v = module.params.get('display_name')
+    if not is_empty_value(v):
+        params["display_name"] = v
+
+    v = module.params.get('name')
+    if not is_empty_value(v):
+        params["name"] = v
+
+    return params
 
 
 def update_resource_opts(module):
-    request = remove_nones_from_dict({
-        u'display_name': module.params.get('display_name')
-    })
-    return request
+    params = dict()
+
+    v = module.params.get('display_name')
+    if not is_empty_value(v):
+        params["display_name"] = v
+
+    return params
 
 
 def _get_resource_editable_properties(module):
-    return remove_nones_from_dict({
+    return {
         "display_name": module.params.get("display_name"),
-    })
+    }
 
 
 def response_to_hash(module, response):
