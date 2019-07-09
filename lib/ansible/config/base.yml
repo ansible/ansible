@@ -1795,7 +1795,7 @@ ERIC_ECCLI_ADDITIONAL_RE_FILE:
   default: null
   description:
     - Specify a custom ECCLI prompt and error information configuration file.
-    - For each command run through ECCLI module, performs additional checking.
+    - For each command run through ECCLI module, performs additional checking,
     - If command's output matches any error regular expressions,
     - specified in this configuration file, then command run fails.
     - If command's output matches any prompt specified in this configuration file,
