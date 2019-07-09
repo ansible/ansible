@@ -1767,7 +1767,7 @@ class TaskParameters(DockerBaseClass):
                 try:
                     mount_dict['tmpfs_size'] = human_to_bytes(mount_dict['tmpfs_size'])
                 except ValueError as exc:
-                    self.fail('Failed to convert tmpfs_size of mount "{0}" to bytes: {1}' % (target, exc))
+                    self.fail('Failed to convert tmpfs_size of mount "{0}" to bytes: {1}'.format(target, exc))
             if mount_dict.get('tmpfs_mode') is not None:
                 try:
                     mount_dict['tmpfs_mode'] = int(mount_dict['tmpfs_mode'], 8)
