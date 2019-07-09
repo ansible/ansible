@@ -20,26 +20,24 @@ version_added: "2.4"
 short_description: Get Virtual Machine Scale Set facts
 
 description:
-    - Get facts for a virtual machine scale set
-
-notes:
-    - This module was called C(azure_rm_virtualmachine_scaleset_facts) before Ansible 2.8. The usage did not change.
+    - Get facts for a virtual machine scale set.
+    - Note that this module was called M(azure_rm_virtualmachine_scaleset_facts) before Ansible 2.8. The usage did not change.
 
 options:
     name:
         description:
-            - Limit results to a specific virtual machine scale set
+            - Limit results to a specific virtual machine scale set.
     resource_group:
         description:
-            - The resource group to search for the desired virtual machine scale set
+            - The resource group to search for the desired virtual machine scale set.
     tags:
         description:
-            - List of tags to be matched
+            - List of tags to be matched.
     format:
         description:
             - Format of the data returned.
             - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachinescaleset module.
+            - If C(curated) is selected the structure will be identical to input parameters of M(azure_rm_virtualmachinescaleset) module.
             - In Ansible 2.5 and lower facts are always returned in raw format.
             - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
         default: 'raw'
@@ -52,7 +50,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Sertac Ozercan (@sozercan)"
+    - Sertac Ozercan (@sozercan)
 '''
 
 EXAMPLES = '''
@@ -75,13 +73,14 @@ EXAMPLES = '''
 
 RETURN = '''
 vmss:
-    description: List of virtual machine scale sets
+    description:
+        - List of virtual machine scale sets.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/scalesets/myscaleset
@@ -106,47 +105,55 @@ vmss:
                 caching:
                     description:
                         - Type of data disk caching.
+                    returned: always
                     type: str
                     sample: ReadOnly
                 disk_size_gb:
                     description:
-                        - The initial disk size in GB for blank data disks
+                        - The initial disk size in GB for blank data disks.
+                    returned: always
                     type: int
                     sample: 64
                 lun:
                     description:
-                        - The logical unit number for data disk
+                        - The logical unit number for data disk.
+                    returned: always
                     type: int
                     sample: 0
                 managed_disk_type:
                     description:
-                        - Managed data disk type
+                        - Managed data disk type.
+                    returned: always
                     type: str
                     sample: Standard_LRS
         image:
             description:
-                - Image specification
+                - Image specification.
             returned: always
             type: complex
             contains:
                 offer:
                     description:
-                        - Offer.
+                        - The offer of the platform image or marketplace image used to create the virtual machine.
+                    returned: always
                     type: str
                     sample: RHEL
                 publisher:
                     description:
                         - Publisher name.
+                    returned: always
                     type: str
                     sample: RedHat
                 sku:
                     description:
                         - SKU name.
+                    returned: always
                     type: str
                     sample: 7-RAW
                 version:
                     description:
                         - Image version.
+                    returned: always
                     type: str
                     sample: 7.5.2018050901
         load_balancer:
@@ -163,7 +170,7 @@ vmss:
             sample: japaneast
         managed_disk_type:
             description:
-                - Managed data disk type
+                - Managed data disk type.
             type: str
             returned: always
             sample: Standard_LRS
@@ -233,7 +240,9 @@ vmss:
             returned: always
             sample: Standard_D4
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+                - Tags assigned to the resource. Dictionary of string:string pairs.
+            returned: always
             type: dict
             sample: { "tag1": "abc" }
 '''  # NOQA
