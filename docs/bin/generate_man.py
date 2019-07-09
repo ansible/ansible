@@ -132,6 +132,7 @@ def opts_docs(cli_class_name, cli_module_name):
         'short_desc': cli.parser.description,
         'long_desc': trim_docstring(cli.__doc__),
         'actions': {},
+        'content_depth': 2,
     }
     option_info = {'option_names': [],
                    'options': [],
@@ -157,44 +158,56 @@ def opts_docs(cli_class_name, cli_module_name):
     # now for each action/subcommand
     # force populate parser with per action options
 
-    # use class attrs not the attrs on a instance (not that it matters here...)
-    try:
-        subparser = cli.parser._subparsers._group_actions[0].choices
-    except AttributeError:
-        subparser = {}
-    for action, parser in subparser.items():
-        action_info = {'option_names': [],
-                       'options': []}
-        # docs['actions'][action] = {}
-        # docs['actions'][action]['name'] = action
-        action_info['name'] = action
-        action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
+    def get_actions(parser, docs):
+        # use class attrs not the attrs on a instance (not that it matters here...)
+        try:
+            subparser = parser._subparsers._group_actions[0].choices
+        except AttributeError:
+            subparser = {}
 
-        # docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
-        action_doc_list = opt_doc_list(parser)
+        depth = 0
 
-        uncommon_options = []
-        for action_doc in action_doc_list:
-            # uncommon_options = []
+        for action, parser in subparser.items():
+            action_info = {'option_names': [],
+                           'options': [],
+                           'actions': {}}
+            # docs['actions'][action] = {}
+            # docs['actions'][action]['name'] = action
+            action_info['name'] = action
+            action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
 
-            option_aliases = action_doc.get('options', [])
-            for option_alias in option_aliases:
+            # docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
+            action_doc_list = opt_doc_list(parser)
 
-                if option_alias in shared_opt_names:
-                    continue
+            uncommon_options = []
+            for action_doc in action_doc_list:
+                # uncommon_options = []
 
-                # TODO: use set
-                if option_alias not in action_info['option_names']:
-                    action_info['option_names'].append(option_alias)
+                option_aliases = action_doc.get('options', [])
+                for option_alias in option_aliases:
 
-                if action_doc in action_info['options']:
-                    continue
+                    if option_alias in shared_opt_names:
+                        continue
 
-                uncommon_options.append(action_doc)
+                    # TODO: use set
+                    if option_alias not in action_info['option_names']:
+                        action_info['option_names'].append(option_alias)
 
-            action_info['options'] = uncommon_options
+                    if action_doc in action_info['options']:
+                        continue
 
-        docs['actions'][action] = action_info
+                    uncommon_options.append(action_doc)
+
+                action_info['options'] = uncommon_options
+
+            depth = 1 + get_actions(parser, action_info)
+
+            docs['actions'][action] = action_info
+
+        return depth
+
+    action_depth = get_actions(cli.parser, docs)
+    docs['content_depth'] = action_depth + 1
 
     docs['options'] = opt_doc_list(cli.parser)
     return docs
