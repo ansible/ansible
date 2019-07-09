@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_evpn_bgp_rr - fix bugs,get wrong config, get wrong result.changed .(https://github.com/ansible/ansible/pull/58228)
