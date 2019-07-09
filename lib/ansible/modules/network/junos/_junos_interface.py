@@ -23,7 +23,7 @@ description:
   - This module provides declarative management of Interfaces
     on Juniper JUNOS network devices.
 deprecated:
-  removed_in: '2.13'
+  removed_in: "2.13"
   why: Updated modules released with more functionality
   alternative: Use M(junos_interfaces) instead.
 options:

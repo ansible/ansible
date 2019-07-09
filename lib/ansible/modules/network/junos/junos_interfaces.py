@@ -29,11 +29,9 @@ The module file for junos_interfaces
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -46,7 +44,6 @@ options:
   config:
     description: The provided configuration
     type: list
-    elements: dict
     suboptions:
       name:
         description:
@@ -101,13 +98,13 @@ options:
     description:
     - The state the configuration should be left in
     type: str
-  requirements:
-    - ncclient (>=v0.6.4)
-  notes:
-    - This module requires the netconf system service be enabled on
-      the remote device being managed.
-    - Tested against vSRX JUNOS version 18.4R1.
-    - This module works with connection C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
+requirements:
+  - ncclient (>=v0.6.4)
+notes:
+  - This module requires the netconf system service be enabled on
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 18.4R1.
+  - This module works with connection C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
 
 """
 EXAMPLES = """
@@ -137,7 +134,7 @@ EXAMPLES = """
         mtu: 1800
       - name: ge-0/0/2
         description: 'Configured by Ansible -2'
-    operation: deleted
+    state: deleted
 
 # After state:
 # ------------
@@ -169,7 +166,7 @@ EXAMPLES = """
       - name: ge-0/0/2
         description: 'Configured by Ansible-2'
         enable: False
-    operation: merged
+    state: merged
 
 # After state:
 # ------------
@@ -215,7 +212,7 @@ EXAMPLES = """
         mtu: 2800
       - name: ge-0/0/3
         description: 'Configured by Ansible-3'
-    operation: overriden
+    state: overriden
 
 # After state:
 # ------------
@@ -262,7 +259,7 @@ EXAMPLES = """
         mtu: 2800
       - name: ge-0/0/3
         description: 'Configured by Ansible-3'
-    operation: replaced
+    state: replaced
 
 # After state:
 # ------------
@@ -290,20 +287,22 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
-commands:
-  description: The set of commands pushed to the remote device.
+xml:
+  description: The set of xml rpc payload pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['xml 1', 'xml 2', 'xml 3']
 """
 
 from ansible.module_utils.basic import AnsibleModule
