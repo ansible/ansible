@@ -1,0 +1,3 @@
+bugfixes:
+  - ce_bfd_global - line284, 'data' tag of xpath should be removed.
+    line498, add "self.existing == self.end_state" to compare the status and get 'changed'.
