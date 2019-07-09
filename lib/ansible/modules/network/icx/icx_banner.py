@@ -47,7 +47,9 @@ options:
     default: no
   check_running_config:
     description:
-      - Check running configuration. This can be set as environment variable. Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+      - Check running configuration. This can be set as environment variable.
+       Module will use environment variable value(default:True), unless it is overriden, 
+       by specifying it as module parameter.
     type: bool
     default: As set in environment variable
 """
@@ -109,7 +111,7 @@ def map_obj_to_commands(updates, module):
     if state == 'absent':
         if 'text' in have.keys() and have['text']:
             commands.append('no banner %s' % module.params['banner'])
-        if(module.params['enterkey'] == False):
+        if(module.params['enterkey'] is False):
             commands.append('no banner %s require-enter-key' % module.params['banner'])
 
     elif state == 'present':
