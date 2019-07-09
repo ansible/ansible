@@ -370,6 +370,12 @@ EXAMPLES = r'''
     jump: ACCEPT
     comment: Accept new SSH connections.
 
+- name: Drop all protocols except TCP protocol
+  iptables:
+    chain: INPUT
+    protocol: '!tcp' # or '! tcp'
+    jump: DROP
+
 - name: Match on IP ranges
   iptables:
     chain: FORWARD
