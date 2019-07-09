@@ -519,6 +519,7 @@
       that:
       - result.changed == false
 
+  always:
   #
   # Clean up
   #
