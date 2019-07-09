@@ -315,6 +315,7 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansbi
              name: role1
 
          - debug:
-             msg: '{{ lookup("lookup1", 'param1')|filter1 }}'
+             msg: '{{ lookup("myname.mycol.lookup1", 'param1')| myname.mycol.filter1 }}'
 
 This keyword creates a 'search path' for non namespaced plugin references. It does not import roles or anything else.
+Notice that you still need the FQCN for non-action or module plugins.
