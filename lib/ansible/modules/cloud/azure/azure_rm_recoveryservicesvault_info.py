@@ -98,7 +98,7 @@ vaults:
       description:
         - Details for upgrading vault.
       type: dict
-      sample: { "status": None, "end_time_utc": None, "trigger_type": None, "start_time_utc": None, "last_updated_time_utc": None, 
+      sample: { "status": None, "end_time_utc": None, "trigger_type": None, "start_time_utc": None, "last_updated_time_utc": None,
       "upgraded_resource_id": None, "previous_resource_id": None, "operation_id": None, "message": "myMessage" }
     provisioning_state:
         description:
