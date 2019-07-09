@@ -53,7 +53,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['resources'] | length >= 1
+      - results['resources'] | map(attribute='name') | select("match", ".*{{ resource_name }}.*") | list | length == 1
 # ----------------------------------------------------------------------------
 - name: create a node that already exists
   gcp_tpu_node:
@@ -100,7 +100,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['resources'] | length == 0
+      - results['resources'] | map(attribute='name') | select("match", ".*{{ resource_name }}.*") | list | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a node that does not exist
   gcp_tpu_node:
