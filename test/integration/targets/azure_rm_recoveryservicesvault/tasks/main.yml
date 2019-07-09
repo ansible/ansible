@@ -12,7 +12,7 @@
 
 - name: Update Recovery Services vault
   azure_rm_recoveryservicesvault:
-    resource_group: '"{{ resource_group }}"
+    resource_group: "{{ resource_group }}"
     name: myVault
     upgrade_details:
       message: myMessage
