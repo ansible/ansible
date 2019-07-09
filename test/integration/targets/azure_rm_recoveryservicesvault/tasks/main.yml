@@ -3,7 +3,7 @@
     resource_group: "{{ resource_group }}"
     name: myVault
     sku_name: Standard
-    location: West US
+    location: westus
   register: output
 
 - assert:
