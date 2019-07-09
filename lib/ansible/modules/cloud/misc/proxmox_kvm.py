@@ -735,6 +735,8 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             if module.params[param] is not None:
                 clone_params[param] = module.params[param]
         clone_params.update(dict([k, int(v)] for k, v in clone_params.items() if isinstance(v, bool)))
+        if clone_params['full'] == 0:  # linked clones don't need format:
+            del clone_params['format']
         taskid = proxmox_node.qemu(vmid).clone.post(newid=newid, name=name, **clone_params)
     else:
         taskid = getattr(proxmox_node, VZ_TYPE).create(vmid=vmid, name=name, memory=memory, cpu=cpu, cores=cores, sockets=sockets, **kwargs)
