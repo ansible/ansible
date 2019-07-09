@@ -27,7 +27,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
-from ansible.module_utils.network.qnos.qnos import qnos_provider_spec
 from ansible.utils.display import Display
 
 display = Display()
