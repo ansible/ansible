@@ -1893,6 +1893,9 @@ class PyVmomiHelper(PyVmomi):
 
         datastore_freespace = 0
         for ds in datastores:
+            if not self.is_datastore_valid(datastore_obj=ds):
+                continue
+
             if ds.summary.freeSpace > datastore_freespace:
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
@@ -1932,6 +1935,9 @@ class PyVmomiHelper(PyVmomi):
         for ds in datastore_cluster_obj.childEntity:
             if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
                 # If datastore field is provided, filter destination datastores
+                if not self.is_datastore_valid(datastore_obj=ds):
+                    continue
+
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
         if datastore:
@@ -1952,6 +1958,9 @@ class PyVmomiHelper(PyVmomi):
 
                 datastore_freespace = 0
                 for ds in datastores:
+                    if not self.is_datastore_valid(datastore_obj=ds):
+                        continue
+
                     if (ds.summary.freeSpace > datastore_freespace) or (ds.summary.freeSpace == datastore_freespace and not datastore):
                         # If datastore field is provided, filter destination datastores
                         if 'datastore' in self.params['disk'][0] and \

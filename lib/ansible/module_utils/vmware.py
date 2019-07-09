@@ -1252,6 +1252,20 @@ class PyVmomi(object):
         """
         return find_datacenter_by_name(self.content, datacenter_name=datacenter_name)
 
+    def is_datastore_valid(self, datastore_obj=None):
+        """
+        Check if datastore selected is valid or not
+        Args:
+            datastore_obj: datastore managed object
+
+        Returns: True if datastore is valid, False if not
+        """
+        if not datastore_obj \
+           or datastore_obj.summary.maintenanceMode != 'normal' \
+           or not datastore_obj.summary.accessible:
+            return False
+        return True
+
     def find_datastore_by_name(self, datastore_name):
         """
         Get datastore managed object by name
