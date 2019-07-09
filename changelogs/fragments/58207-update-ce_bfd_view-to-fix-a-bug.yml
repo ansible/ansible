@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_bfd_view - line287, line293, 'data' tag of a xpath should be removed to find a element.line500, running result judgment.
