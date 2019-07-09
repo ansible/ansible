@@ -20,6 +20,7 @@ ansible -m include_role -a name=role1 localhost
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
+ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags test_import
 
 # Tasks
 ANSIBLE_STRATEGY='linear' ansible-playbook tasks/test_import_tasks.yml -i inventory "$@"

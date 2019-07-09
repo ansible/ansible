@@ -1,0 +1,7 @@
+- name: Playbook 5
+  hosts: testhost2
+
+  tasks:
+    - name: Set fact in playbook 5
+      debug:
+        msg: playbook5 imported

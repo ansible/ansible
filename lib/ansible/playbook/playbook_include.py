@@ -144,7 +144,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if len(items) == 0:
             raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
         else:
-            new_ds['import_playbook'] = items[0]
+            new_ds['import_playbook'] = items[0].rstrip()
             if len(items) > 1:
                 # rejoin the parameter portion of the arguments and
                 # then use parse_kv() to get a dict of params back

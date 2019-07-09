@@ -8,3 +8,5 @@
     - skipme
 
 - import_playbook: validate_tags.yml        # Validate
+
+- import_playbook: playbook5.yml   tags=test_import

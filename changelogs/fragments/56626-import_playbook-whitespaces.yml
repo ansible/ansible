@@ -1,0 +1,2 @@
+minor_changes:
+- Strip whitespaces from import_playbook filename (https://github.com/ansible/ansible/issues/56626).
