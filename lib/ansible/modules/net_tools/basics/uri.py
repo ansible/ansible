@@ -505,19 +505,19 @@ def form_multipart(body, boundary):
     if isinstance(body, Mapping):
         result = []
         # Convert mapping into multipart chunks
-        for field, value in kv_list(body):
+        for field, value in list(body.items()):
             # result.extend(('--%s' % boundary))
             if isinstance(value, string_types):
                 result.extend((
-                  '--%s' % boundary,
-                  'Content-Disposition: form-data; name="%s"' % field,
-                  '',
-                  str(value)
+                    '--%s' % boundary,
+                    'Content-Disposition: form-data; name="%s"' % field,
+                    '',
+                    str(value)
                 ))
             if isinstance(value, Mapping):
                 # filename required
                 if 'filename' not in value:
-                    module.fail_json(msg='filename key missing from "%s" element' % field)
+                    raise LookupError('required key "filename" missing from "%s" element' % field)
                 else:
                     filename = os.path.basename(value['filename'])
                 # set or guess mimetype
@@ -533,13 +533,13 @@ def form_multipart(body, boundary):
                         with open(value['filename'], 'rb') as data_file:
                             data = data_file.read()
                     else:
-                        module.fail_json(msg='unable to read file "%s"' % value['filename'])
+                        raise IOError('unable to read file "%s"' % value['filename'])
                 result.extend((
-                  '--%s' % boundary,
-                  'Content-Disposition: form-data; name="%s"; filename="%s"' % (field, filename),
-                  'Content-Type: %s' % mimetype,
-                  '',
-                  to_text(data)
+                    '--%s' % boundary,
+                    'Content-Disposition: form-data; name="%s"; filename="%s"' % (field, filename),
+                    'Content-Type: %s' % mimetype,
+                    '',
+                    to_text(data)
                 ))
         result.extend((
             '--%s--' % boundary,
