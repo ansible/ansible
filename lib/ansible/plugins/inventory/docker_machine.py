@@ -13,7 +13,6 @@ DOCUMENTATION = '''
     requirements:
         - L(Docker Machine,https://docs.docker.com/machine/)
     extends_documentation_fragment:
-        - inventory_cache
         - constructed
     description:
         - Get inventory hosts from Docker Machine.
