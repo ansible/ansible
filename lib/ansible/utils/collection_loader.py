@@ -30,7 +30,7 @@ _SYNTHETIC_PACKAGES = {
 }
 
 # TODO: tighten this up to subset Python identifier requirements (and however we want to restrict ns/collection names)
-_collection_qualified_re = re.compile(to_text(r'^(\w+)\.(\w+)\.(\w+)'))
+_collection_qualified_re = re.compile(to_text(r'^(\w+)\.(\w+)\.(\w+)$'))
 
 
 # FIXME: exception handling/error logging
