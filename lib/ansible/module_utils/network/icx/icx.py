@@ -34,6 +34,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
+
 def get_connection(module):
     return Connection(module._socket_path)
 
@@ -47,6 +48,7 @@ def load_config(module, commands):
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 
+
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
@@ -54,26 +56,30 @@ def run_commands(module, commands, check_rc=True):
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 
-def exec_scp(module,command):
-  connection = Connection(module._socket_path)
-  return connection.scp(**command)
 
-def get_config(module, flags=None,compare=None):
+def exec_scp(module, command):
+    connection = Connection(module._socket_path)
+    return connection.scp(**command)
+
+
+def get_config(module, flags=None, compare=None):
     flag_str = ' '.join(to_list(flags))
     try:
         return _DEVICE_CONFIGS[flag_str]
     except KeyError:
         connection = get_connection(module)
         try:
-            out = connection.get_config(flags=flags,compare=compare)
+            out = connection.get_config(flags=flags, compare=compare)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
 
+
 def check_args(module, warnings):
     pass
+
 
 def get_defaults_flag(module):
     connection = get_connection(module)
@@ -83,10 +89,11 @@ def get_defaults_flag(module):
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return to_text(out, errors='surrogate_then_replace').strip()
 
-def get_env_diff(module,compare=None):
+
+def get_env_diff(module, compare=None):
     connection = get_connection(module)
     try:
-        out=connection.get_env_diff(compare)
+        out = connection.get_env_diff(compare)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return out
