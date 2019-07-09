@@ -2,8 +2,7 @@
   azure_rm_recoveryservicesvault:
     resource_group: "{{ resource_group }}"
     name: testVault
-    sku:
-      name: Standard
+    sku_name: Standard
     location: "{{ location }}"  
   register: output
 

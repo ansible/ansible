@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2019 Liu Qingyi, (@smile37773)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -32,10 +32,6 @@ options:
     description:
       - Resource name associated with the resource.
     required: true
-    type: str
-  e_tag:
-    description:
-      - Optional ETag.
     type: str
   location:
     description:
@@ -84,17 +80,6 @@ options:
         description:
           - Resource ID of the vault before the upgrade.
         type: str
-  provisioning_state:
-    description:
-      - Provisioning State.
-    type: str
-    choices:
-      - Creating
-      - Deleting
-      - Failed
-      - Migrating
-      - Succeeded
-      - Updating
   sku_name:
     description:
       - The Sku name.
@@ -115,7 +100,7 @@ extends_documentation_fragment:
   - azure
   - azure_tags
 author:
-  - Zim Kalinowski (@zikalino)
+  - Liu Qingyi (@smile37773)
 
 '''
 
@@ -124,8 +109,7 @@ EXAMPLES = '''
   azure_rm_recoveryservicesvault:
     resource_group: myResourceGroup
     name: myVault
-    sku:
-      name: Standard
+    sku_name: Standard
     location: westus
 - name: Delete Recovery Services Vault
   azure_rm_recoveryservicesvault:
@@ -176,11 +160,6 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                 updatable=False,
                 disposition='vaultName',
                 required=True
-            ),
-            e_tag=dict(
-                type='str',
-                updatable=False,
-                disposition='/eTag'
             ),
             location=dict(
                 type='str',
@@ -238,16 +217,6 @@ class AzureRMVaults(AzureRMModuleBaseExt):
                         disposition='previousResourceId'
                     ),
                 )
-            ),
-            provisioning_state=dict(
-                type='str',
-                disposition='/properties/provisioningState',
-                choices=['Creating',
-                         'Deleting',
-                         'Failed',
-                         'Migrating',
-                         'Succeeded',
-                         'Updating']
             ),
             sku_name=dict(
                 type='str',
