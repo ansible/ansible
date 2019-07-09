@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - fix formatting of module name in error message (https://github.com/ansible/ansible/pull/58647)
