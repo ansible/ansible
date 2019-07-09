@@ -135,6 +135,8 @@ commands:
       - timers throttle lsa 60 1100 3000
 '''
 
+from __future__ import division
+
 import re
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
@@ -299,7 +301,7 @@ def state_present(module, existing, proposed, candidate):
                 if len(value) < 5:
                     command = '{0} {1} Mbps'.format(key, value)
                 else:
-                    value = str(int(value) / 1000)
+                    value = str(int(value) // 1000)
                     command = '{0} {1} Gbps'.format(key, value)
             elif key == 'bfd':
                 command = 'no bfd' if value == 'disable' else 'bfd'
