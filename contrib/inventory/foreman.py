@@ -22,6 +22,7 @@
 # Stdlib imports
 # __future__ imports must occur at the beginning of file
 from __future__ import print_function
+fomm __future__ import absolute_import
 import json
 import argparse
 import copy
