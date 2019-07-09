@@ -15,11 +15,11 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
       block:
       - name: install httpd and memcached
         yum:
-          name: "{{ item }}"
-          state: present
-        loop:
+          name:
           - httpd
           - memcached
+          state: present
+
       - name: apply the foo config template
         template:
           src: templates/src.j2
