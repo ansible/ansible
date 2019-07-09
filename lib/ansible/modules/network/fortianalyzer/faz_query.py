@@ -42,6 +42,7 @@ options:
       - The ADOM the configuration should belong to.
     required: false
     default: root
+    type: str
 
   object:
     description:
@@ -50,23 +51,27 @@ options:
     choices:
     - task
     - custom
+    type: str
 
   custom_endpoint:
     description:
         - ADVANCED USERS ONLY! REQUIRES KNOWLEDGE OF FAZ JSON API!
         - The HTTP Endpoint on FortiAnalyzer you wish to GET from.
     required: false
+    type: str
 
   custom_dict:
     description:
         - ADVANCED USERS ONLY! REQUIRES KNOWLEDGE OF FAZ JSON API!
         - DICTIONARY JSON FORMAT ONLY -- Custom dictionary/datagram to send to the endpoint.
     required: false
+    type: str
 
   task_id:
     description:
-      - The ID of the task you wish to query status on. If left blank and object = 'task' a list of tasks are returned.
+      - The ID of the task you wish to query status on. If left blank and object = 'task', a list of tasks are returned.
     required: false
+    type: str
 '''
 
 
