@@ -110,13 +110,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return to_text(result).strip()
 
-    def _get_docker_daemon_variables(self, id):
+    def _get_docker_daemon_variables(self, machine_name):
         '''
         Capture settings from Docker Machine that would be needed to connect to the remote Docker daemon installed on
         the Docker Machine remote host. Note: passing '--shell=sh' is a workaround for 'Error: Unknown shell'.
         '''
         try:
-            env_lines = self._run_command(['env', '--shell=sh', id]).splitlines()
+            env_lines = self._run_command(['env', '--shell=sh', machine_name]).splitlines()
         except subprocess.CalledProcessError:
             # This can happen when the machine is created but provisioning is incomplete
             return []
@@ -163,13 +163,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return json.loads(inspect_lines)
 
-    def _should_skip_host(self, id, env_var_tuples):
+    def _should_skip_host(self, machine_name, env_var_tuples):
         if not env_var_tuples:
             if self.get_option('daemon_required'):
-                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will be skipped'.format(id))
+                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will be skipped'.format(machine_name))
                 return True
             else:
-                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will lack dm_DOCKER_xxx variables'.format(id))
+                display.warning('Unable to fetch Docker daemon env vars from Docker Machine for host {0}: host will lack dm_DOCKER_xxx variables'.format(machine_name))
         return False
 
     def _populate(self):
@@ -179,46 +179,46 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if not self.node_attrs:
                     continue
 
-                id = self.node_attrs['Driver']['MachineName']
+                machine_name = self.node_attrs['Driver']['MachineName']
 
                 # query `docker-machine env` to obtain remote Docker daemon connection settings in the form of commands
                 # that could be used to set environment variables to influence a local Docker client:
-                env_var_tuples = self._get_docker_daemon_variables(id)
-                if self._should_skip_host(id, env_var_tuples):
+                env_var_tuples = self._get_docker_daemon_variables(machine_name)
+                if self._should_skip_host(machine_name, env_var_tuples):
                     continue
 
                 # add an entry in the inventory for this host
-                self.inventory.add_host(id)
+                self.inventory.add_host(machine_name)
 
                 # set standard Ansible remote host connection settings to details captured from `docker-machine`
                 # see: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
-                self.inventory.set_variable(id, 'ansible_host', self.node_attrs['Driver']['IPAddress'])
-                self.inventory.set_variable(id, 'ansible_port', self.node_attrs['Driver']['SSHPort'])
-                self.inventory.set_variable(id, 'ansible_user', self.node_attrs['Driver']['SSHUser'])
-                self.inventory.set_variable(id, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
+                self.inventory.set_variable(machine_name, 'ansible_host', self.node_attrs['Driver']['IPAddress'])
+                self.inventory.set_variable(machine_name, 'ansible_port', self.node_attrs['Driver']['SSHPort'])
+                self.inventory.set_variable(machine_name, 'ansible_user', self.node_attrs['Driver']['SSHUser'])
+                self.inventory.set_variable(machine_name, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
 
                 # set variables based on Docker Machine tags
                 tags = self.node_attrs['Driver'].get('Tags') or ''
-                self.inventory.set_variable(id, 'dm_tags', tags)
+                self.inventory.set_variable(machine_name, 'dm_tags', tags)
 
                 # set variables based on Docker Machine env variables
                 for kv in env_var_tuples:
-                    self.inventory.set_variable(id, 'dm_{0}'.format(kv[0]), kv[1])
+                    self.inventory.set_variable(machine_name, 'dm_{0}'.format(kv[0]), kv[1])
 
                 if self.get_option('verbose_output'):
-                    self.inventory.set_variable(id, 'docker_machine_node_attributes', self.node_attrs)
+                    self.inventory.set_variable(machine_name, 'docker_machine_node_attributes', self.node_attrs)
 
                 # Use constructed if applicable
                 strict = self.get_option('strict')
 
                 # Composed variables
-                self._set_composite_vars(self.get_option('compose'), self.node_attrs, id, strict=strict)
+                self._set_composite_vars(self.get_option('compose'), self.node_attrs, machine_name, strict=strict)
 
                 # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
-                self._add_host_to_composed_groups(self.get_option('groups'), self.node_attrs, id, strict=strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), self.node_attrs, machine_name, strict=strict)
 
                 # Create groups based on variable values and add the corresponding hosts to it
-                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), self.node_attrs, id, strict=strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), self.node_attrs, machine_name, strict=strict)
 
         except Exception as e:
             raise AnsibleError('Unable to fetch hosts from Docker Machine, this was the original exception: %s' %
