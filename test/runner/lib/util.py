@@ -44,7 +44,11 @@ except ImportError:
 
 import lib.types as t
 
-C = t.TypeVar('C')
+try:
+    C = t.TypeVar('C')
+except AttributeError:
+    C = None
+
 
 DOCKER_COMPLETION = {}  # type: dict[str, dict[str, str]]
 REMOTE_COMPLETION = {}  # type: dict[str, dict[str, str]]
