@@ -802,7 +802,7 @@
   when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
 
 # Test postgresql_user module
-- include: postgresql_user.yml
+- import_tasks: postgresql_user.yml
 
 # Test postgresql_set
 - include: postgresql_set.yml

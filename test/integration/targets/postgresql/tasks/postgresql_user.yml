@@ -26,7 +26,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: check that the user doesn't exist
@@ -47,7 +47,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: check that the user exists
@@ -69,7 +69,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   - name: check that the user exists
@@ -90,7 +90,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   - name: check that the user exists
@@ -113,7 +113,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: check that the user actually exists
@@ -135,7 +135,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: check that the user doesn't exist
@@ -158,7 +158,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   - name: Try to drop role in actual mode again
@@ -170,7 +170,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   #
@@ -186,7 +186,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: Check that the user exist with a proper password
@@ -209,7 +209,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
 
@@ -235,7 +235,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
     when: postgres_version_resp.stdout is version('10', '<')
 
@@ -261,7 +261,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: Check that the user exist with encrypted password
@@ -283,7 +283,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: Check the prev step
@@ -307,7 +307,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   - name: Check that nothing changed
@@ -334,7 +334,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: Check the prev step
@@ -358,7 +358,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   - name: Check the prev step
@@ -378,7 +378,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.user == '{{ test_user }}'
 
   - name: Check the prev step
@@ -402,7 +402,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
       - result.user == '{{ test_user }}'
 
   - name: Check the prev step
@@ -453,7 +453,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: Check that test_user is allowed to read the data
     <<: *task_parameters
@@ -476,7 +476,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   - name: Remove test table
     <<: *task_parameters
@@ -517,7 +517,7 @@
       
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   always:
   #
