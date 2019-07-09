@@ -22,5 +22,5 @@ Vault scripts provided here use this facility to retrieve the vault secret from 
 contributions welcome
 =====================
 
-Send in pull requests to add scripts of your own.  The sky is the limit!
+Send in pull requests to fix bugs in the scripts and add inventory plugins of your own. New features should be added to inventory plugins with accompanying tests.
 
