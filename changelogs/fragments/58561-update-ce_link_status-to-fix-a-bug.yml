@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_link_status - remove the 'data' tag to fix a bug,.(https://github.com/ansible/ansible/pull/58229)
