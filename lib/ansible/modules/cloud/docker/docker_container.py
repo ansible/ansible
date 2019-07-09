@@ -1911,7 +1911,7 @@ class Container(DockerBaseClass):
             res['type'] = mount.get('Type')
             res['source'] = mount.get('Source')
             res['target'] = mount.get('Target')
-            res['read_only'] = mount.get('ReadOnly')
+            res['read_only'] = mount.get('ReadOnly', False)  # golang's omitempty for bool returns None for False
             res['consistency'] = mount.get('Consistency')
             res['propagation'] = mount.get('BindOptions', empty_dict).get('Propagation')
             res['no_copy'] = mount.get('VolumeOptions', empty_dict).get('NoCopy', False)
