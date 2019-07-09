@@ -202,7 +202,7 @@
     - name: assert that the keys are correct
       assert:
         that:
-          - "'delete.txt' in result.s3_keys.Key"
+          - "'delete.txt' in result.s3_keys.0.Key"
           - result.msg == "LIST operation complete"
 
     - name: test delobj to just delete an object in the bucket
