@@ -64,31 +64,31 @@ vaults:
         - Resource Id represents the complete path to the resource.
       returned: always
       type: str
-      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
-      /providers/Microsoft.RecoveryServices/vaults/myVault"
+      sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+      /providers/Microsoft.RecoveryServices/vaults/myVault
     name:
       description:
         - Resource name associated with the resource.
       returned: always
       type: str
-      sample: "myVault"
+      sample: myVault
     e_tag:
       description:
         - Optional ETag.
       returned: always
       type: str
-      sample: "W/\"datetime'xxxx-xx-xxT12%3A36%3A51.68Z'\""
+      sample: W/\"datetime'xxxx-xx-xxT12%3A36%3A51.68Z'\"
     location:
       description:
         - Resource location.
       returned: always
       type: str
-      sample: "eastus"
+      sample: eastus
     sku_name:
       description:
         - The Sku name.
       type: str
-      sample: "Standard"
+      sample: Standard
     tags:
       description:
         - Resource tags.
@@ -104,7 +104,7 @@ vaults:
         description:
           - The current state of the gallery.
         type: str
-        sample: "Succeeded"
+        sample: Succeeded
 
 '''
 
