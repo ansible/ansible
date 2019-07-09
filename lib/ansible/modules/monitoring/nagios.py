@@ -62,7 +62,7 @@ options:
      - Comment for C(downtime) action.
     default: Scheduling downtime
   start:
-    version_added: "2.9"
+    version_added: "2.8"
     description:
       - When downtime should start, in time_t format (epoch seconds).
   minutes:
