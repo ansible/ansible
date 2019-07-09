@@ -353,7 +353,6 @@ def main():
         if target is None:
             module.fail_json(msg="with state=%s target is required" % state)
         if db == ['all']:
-            db = ['mysql']
             all_databases = True
         else:
             all_databases = False
@@ -402,10 +401,10 @@ def main():
                                  exception=traceback.format_exc())
         module.exit_json(changed=changed, db=db_name, db_list=db)
     elif state == "dump":
+        if non_existence_list and not all_databases:
+            module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
         if module.check_mode:
             module.exit_json(changed=not bool(non_existence_list), db=db_name, db_list=db)
-        if non_existence_list:
-            module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
@@ -417,7 +416,7 @@ def main():
         changed = True
         if module.check_mode:
             module.exit_json(changed=True, db=db_name, db_list=db)
-        if non_existence_list:
+        if non_existence_list and not all_databases:
             try:
                 changed = db_create(cursor, non_existence_list, encoding, collation)
             except Exception as e:
