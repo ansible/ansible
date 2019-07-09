@@ -61,7 +61,7 @@ certificates:
 '''
 
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     boto3_conn,
     ec2_argument_spec,
@@ -76,7 +76,7 @@ except ImportError:
     pass  # caught by imported AnsibleAWSModule
 
 
-def normalize_certificates(acm_certificates):
+def camel_dict_to_snake_dict(acm_certificates):
     certificate = acm_certificates.get('Certificate', None)
     certificate_chain = acm_certificates.get('CertificateChain', None)
     private_key = acm_certificates.get('PrivateKey', None)
@@ -100,8 +100,7 @@ def export_acm_certificates(connection, module):
     except (ClientError, ParamValidationError) as e:
         module.fail_json_aws(e)
 
-    acm_certificates = normalize_certificates(response)
-    module.exit_json(certificates=acm_certificates)
+    module.exit_json(certificates=camel_dict_to_snake_dict(response))
 
 
 def main():
@@ -113,23 +112,11 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
+    connection = module.client('acm')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required.')
-
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if region:
-        connection = boto3_conn(
-            module,
-            conn_type='client',
-            resource='acm',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_kwargs
-        )
-    else:
-        module.fail_json(msg="region must be specified")
 
     export_acm_certificates(connection, module)
 
