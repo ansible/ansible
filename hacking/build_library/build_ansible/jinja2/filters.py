@@ -54,15 +54,15 @@ def documented_type(text):
     ''' Convert any python type to a type for documentation '''
 
     if isinstance(text, Undefined):
-        return '-'
-    if text == 'str':
-        return 'string'
-    if text == 'bool':
-        return 'boolean'
-    if text == 'int':
-        return 'integer'
-    if text == 'dict':
-        return 'dictionary'
+        text = '-'  # eventually this should be string, but until most modules are fixed, stays -
+    elif text == 'str':
+        text = 'string'
+    elif text == 'bool':
+        text = 'boolean'
+    elif text == 'int':
+        text = 'integer'
+    elif text == 'dict':
+        text = 'dictionary'
     return text
 
 

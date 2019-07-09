@@ -554,9 +554,10 @@ class DocCLI(CLI):
             if conf:
                 text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
-            # ensure we always display type, use the default
+            # ensure we always display type, use the default (-) it should be 'string' in future
+            # but need to fix existing modules to not display incorrect information.
             if 'type' not in opt:
-                opt['type'] = 'str'
+                opt['type'] = '-'
 
             for k in sorted(opt):
                 if k.startswith('_'):
