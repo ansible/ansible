@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: icx_banner
 version_added: "2.9"
-author: "Ruckus: https://support.ruckuswireless.com/contact-us(support@commscope.com)"
+author: "Ruckus (https://support.ruckuswireless.com/contact-us)"
 short_description: Manage multiline banners on Ruckus ICX 7000 series switches
 description:
   - This will configure both login and motd banners on remote
@@ -182,7 +182,7 @@ def main():
         text=dict(),
         enterkey=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        check_running_config=dict(type='bool')
+        check_running_config=dict(default=True, type='bool')
     )
 
     required_one_of = [['text', 'enterkey', 'state']]
