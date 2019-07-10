@@ -15,6 +15,7 @@ from lib.util import (
     find_python,
     run_command,
     ApplicationError,
+    INSTALL_ROOT,
 )
 
 from lib.config import (
@@ -36,7 +37,7 @@ def ansible_environment(args, color=True, ansible_config=None):
     env = common_environment()
     path = env['PATH']
 
-    ansible_path = os.path.join(os.getcwd(), 'bin')
+    ansible_path = os.path.join(INSTALL_ROOT, 'bin')
 
     if not path.startswith(ansible_path + os.path.pathsep):
         path = ansible_path + os.path.pathsep + path
@@ -44,9 +45,9 @@ def ansible_environment(args, color=True, ansible_config=None):
     if ansible_config:
         pass
     elif isinstance(args, IntegrationConfig):
-        ansible_config = 'test/integration/%s.cfg' % args.command
+        ansible_config = os.path.join(INSTALL_ROOT, 'test/integration/%s.cfg' % args.command)
     else:
-        ansible_config = 'test/%s/ansible.cfg' % args.command
+        ansible_config = os.path.join(INSTALL_ROOT, 'test/%s/ansible.cfg' % args.command)
 
     if not args.explain and not os.path.exists(ansible_config):
         raise ApplicationError('Configuration not found: %s' % ansible_config)
@@ -59,7 +60,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=os.path.abspath(ansible_config),
         ANSIBLE_LIBRARY='/dev/null',
-        PYTHONPATH=os.path.abspath('lib'),
+        PYTHONPATH=os.path.join(INSTALL_ROOT, 'lib'),
         PAGER='/bin/cat',
         PATH=path,
     )
@@ -84,7 +85,7 @@ def check_pyyaml(args, version):
         return
 
     python = find_python(version)
-    stdout, _dummy = run_command(args, [python, 'test/runner/yamlcheck.py'], capture=True)
+    stdout, _dummy = run_command(args, [python, os.path.join(INSTALL_ROOT, 'test/runner/yamlcheck.py')], capture=True)
 
     if args.explain:
         return
