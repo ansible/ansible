@@ -38,9 +38,11 @@ class YamlChecker(object):
         """
         :type paths: str
         """
-        yaml_conf = YamlLintConfig(file='test/sanity/yamllint/config/default.yml')
-        module_conf = YamlLintConfig(file='test/sanity/yamllint/config/modules.yml')
-        plugin_conf = YamlLintConfig(file='test/sanity/yamllint/config/plugins.yml')
+        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
+
+        yaml_conf = YamlLintConfig(file=os.path.join(config_path, 'default.yml'))
+        module_conf = YamlLintConfig(file=os.path.join(config_path, 'modules.yml'))
+        plugin_conf = YamlLintConfig(file=os.path.join(config_path, 'plugins.yml'))
 
         for path in paths:
             extension = os.path.splitext(path)[1]

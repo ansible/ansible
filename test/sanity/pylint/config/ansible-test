@@ -31,6 +31,8 @@ good-names=i,
            k,
            ex,
            Run,
+           C,
+           __metaclass__,
 
 method-rgx=[a-z_][a-z0-9_]{2,40}$
 function-rgx=[a-z_][a-z0-9_]{2,40}$

@@ -61,6 +61,7 @@ from lib.util import (
     named_temporary_file,
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
+    INSTALL_ROOT,
 )
 
 from lib.docker_util import (
@@ -273,10 +274,10 @@ def generate_egg_info(args):
     """
     :type args: EnvironmentConfig
     """
-    if os.path.isdir('lib/ansible.egg-info'):
+    if os.path.isdir(os.path.join(INSTALL_ROOT, 'lib/ansible.egg-info')):
         return
 
-    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], capture=args.verbosity < 3)
+    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], cwd=INSTALL_ROOT, capture=args.verbosity < 3)
 
 
 def generate_pip_install(pip, command, packages=None):
@@ -1796,9 +1797,10 @@ class EnvironmentDescription(object):
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
+        version_check = os.path.join(INSTALL_ROOT, 'test/runner/versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
-        program_versions = dict((v, self.get_version([python_paths[v], 'test/runner/versions.py'], warnings)) for v in sorted(python_paths) if python_paths[v])
+        program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 

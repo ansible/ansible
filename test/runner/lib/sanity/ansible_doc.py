@@ -39,7 +39,7 @@ class AnsibleDocTest(SanityMultipleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/ansible-doc/skip.txt'
-        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True))
+        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
 
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([

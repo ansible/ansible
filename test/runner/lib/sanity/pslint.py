@@ -42,11 +42,11 @@ class PslintTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        skip_paths = read_lines_without_comments(PSLINT_SKIP_PATH)
+        skip_paths = read_lines_without_comments(PSLINT_SKIP_PATH, optional=True)
 
         invalid_ignores = []
 
-        ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH)
+        ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH, optional=True)
         ignore = collections.defaultdict(dict)
         line = 0
 
