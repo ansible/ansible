@@ -1,0 +1,2 @@
+bugfixes:
+- aws_s3 - Improve usability when the execution host lacks MD5 support (e.g. due to FIPS-140-2).
