@@ -17,6 +17,7 @@ from lib.util import (
     load_plugins,
     parse_to_list_of_dict,
     ABC,
+    INSTALL_ROOT,
     is_binary_file,
     read_lines_without_comments,
 )
@@ -138,9 +139,9 @@ def collect_code_smell_tests():
     :rtype: tuple[SanityCodeSmellTest]
     """
     skip_file = 'test/sanity/code-smell/skip.txt'
-    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True)
+    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
 
-    paths = glob.glob('test/sanity/code-smell/*')
+    paths = glob.glob(os.path.join(INSTALL_ROOT, 'test/sanity/code-smell/*'))
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityCodeSmellTest(p) for p in paths)
