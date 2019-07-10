@@ -818,3 +818,48 @@
       The regular expression is an empty string, which will match every line in the file.
       This may have unintended consequences, such as replacing the last line in the file rather than appending.
       If this is desired, use '^' to match every line in the file and avoid this warning.
+
+###################################################################
+# Issue #58923
+# Using firstmatch with insertafter and ensure multiple lines are not inserted
+
+- name: Deploy the firstmatch test file
+  copy:
+    src: firstmatch.txt
+    dest: "{{ output_dir }}/firstmatch.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '1d644e5e2e51c67f1bd12d7bbe2686017f39923d'
+      - result.state == 'file'
+
+- name: Insert a line before an existing line using firstmatch
+  lineinfile:
+    path: "{{ output_dir }}/firstmatch.txt"
+    line: INSERT
+    insertafter: line1
+    firstmatch: yes
+  register: insertafter1
+
+- name: Insert a line before an existing line using firstmatch again
+  lineinfile:
+    path: "{{ output_dir }}/firstmatch.txt"
+    line: INSERT
+    insertafter: line1
+    firstmatch: yes
+  register: insertafter2
+
+- name: Stat the file
+  stat:
+    path: "{{ output_dir }}/firstmatch.txt"
+  register: result
+
+- name: Assert that the file was modified appropriateyl
+  assert:
+    that:
+      - insertafter1 is changed
+      - insertafter2 is not changed
+      - result.stat.checksum == '114aae024073a3ee8ec8db0ada03c5483326dd86'

@@ -368,13 +368,14 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         # Do absolutely nothing, since it's not safe generating the line
         # without the regexp matching to populate the backrefs.
         pass
+
     # Add it to the beginning of the file
     elif insertbefore == 'BOF' or insertafter == 'BOF':
         b_lines.insert(0, b_line + b_linesep)
         msg = 'line added'
         changed = True
-    # Add it to the end of the file if requested or
-    # if insertafter/insertbefore didn't match anything
+
+    # Add it to the end of the file if requested or if insertafter/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
     elif insertafter == 'EOF' or index[1] == -1:
 
@@ -385,6 +386,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         b_lines.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
+
+    elif insertafter and index[1] != -1:
+
+        # Don't insert the line if it already matches at the index
+        if b_line != b_lines[index[1]].rstrip(b'\n\r'):
+            b_lines.insert(index[1], b_line + b_linesep)
+            msg = 'line added'
+            changed = True
+
     # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
