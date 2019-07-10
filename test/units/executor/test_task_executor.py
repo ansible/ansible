@@ -165,7 +165,7 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=mock_queue,
         )
 
-        def _execute(variables):
+        def _execute(variables, notify_scope='task'):
             return dict(item=variables.get('item'))
 
         te._squash_items = MagicMock(return_value=items)

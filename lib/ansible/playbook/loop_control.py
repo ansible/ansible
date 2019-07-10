@@ -26,6 +26,7 @@ from ansible.playbook.base import FieldAttributeBase
 class LoopControl(FieldAttributeBase):
 
     _loop_var = FieldAttribute(isa='str', default='item')
+    _notify_scope = FieldAttribute(isa='str', default='task')
     _index_var = FieldAttribute(isa='str')
     _label = FieldAttribute(isa='str')
     _pause = FieldAttribute(isa='float', default=0)
