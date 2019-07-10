@@ -6,4 +6,13 @@
     datacenter_name: '{{ dc1 }}'
     cluster_name: '{{ ccr1 }}'
     validate_certs: no
+
+- name: Enable DRS on Cluster
+  vmware_cluster_drs:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: '{{ ccr1 }}'
     enable_drs: yes
+    validate_certs: no
