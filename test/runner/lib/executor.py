@@ -1333,6 +1333,17 @@ def command_units(args):
             'test/results/junit/python%s-units.xml' % version,
         ]
 
+        plugins = []
+
+        if args.coverage:
+            plugins.append('ansible_pytest_coverage')
+
+        if plugins:
+            env['PYTHONPATH'] += ':%s' % os.path.join(INSTALL_ROOT, 'test/units/pytest/plugins')
+
+            for plugin in plugins:
+                cmd.extend(['-p', plugin])
+
         if args.collect_only:
             cmd.append('--collect-only')
 
