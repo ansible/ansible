@@ -34,6 +34,12 @@ options:
             - Limit results to a resource group. Required when filtering by name.
         aliases:
             - resource_group_name
+    return_access_keys:
+        description:
+            - Indicate weather to return access keys of the Azure Storage Account.
+        default: False
+        type: bool
+        version_added: "2.10"
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -366,7 +372,8 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
             resource_group=dict(type='str', aliases=['resource_group_name']),
             tags=dict(type='list'),
             show_connection_string=dict(type='bool'),
-            show_blob_cors=dict(type='bool')
+            show_blob_cors=dict(type='bool'),
+            return_access_keys=dict(type='bool', default=False)
         )
 
         self.results = dict(
@@ -471,7 +478,6 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
 
         id_dict = self.parse_resource_to_dict(account_obj.id)
         account_dict['resource_group'] = id_dict.get('resource_group')
-        account_key = self.get_connectionstring(account_dict['resource_group'], account_dict['name'])
         account_dict['custom_domain'] = None
         if account_obj.custom_domain:
             account_dict['custom_domain'] = dict(
@@ -480,23 +486,24 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
             )
 
         account_dict['primary_endpoints'] = None
+        account_keys = self.get_account_keys()
         if account_obj.primary_endpoints:
             account_dict['primary_endpoints'] = dict(
-                blob=self.format_endpoint_dict(account_dict['name'], account_key[0], account_obj.primary_endpoints.blob, 'blob'),
-                queue=self.format_endpoint_dict(account_dict['name'], account_key[0], account_obj.primary_endpoints.queue, 'queue'),
-                table=self.format_endpoint_dict(account_dict['name'], account_key[0], account_obj.primary_endpoints.table, 'table')
+                blob=self.format_endpoint_dict(account_dict['name'], account_keys["key1"], account_obj.primary_endpoints.blob, 'blob'),
+                queue=self.format_endpoint_dict(account_dict['name'], account_keys["key1"], account_obj.primary_endpoints.queue, 'queue'),
+                table=self.format_endpoint_dict(account_dict['name'], account_keys["key1"], account_obj.primary_endpoints.table, 'table')
             )
-            if account_key[0]:
-                account_dict['primary_endpoints']['key'] = '{0}'.format(account_key[0])
+            if account_keys["key1"]:
+                account_dict['primary_endpoints']['key'] = '{0}'.format(account_keys["key1"])
         account_dict['secondary_endpoints'] = None
         if account_obj.secondary_endpoints:
             account_dict['secondary_endpoints'] = dict(
-                blob=self.format_endpoint_dict(account_dict['name'], account_key[1], account_obj.primary_endpoints.blob, 'blob'),
-                queue=self.format_endpoint_dict(account_dict['name'], account_key[1], account_obj.primary_endpoints.queue, 'queue'),
-                table=self.format_endpoint_dict(account_dict['name'], account_key[1], account_obj.primary_endpoints.table, 'table'),
+                blob=self.format_endpoint_dict(account_dict['name'], account_keys["key2"], account_obj.primary_endpoints.blob, 'blob'),
+                queue=self.format_endpoint_dict(account_dict['name'], account_keys["key2"], account_obj.primary_endpoints.queue, 'queue'),
+                table=self.format_endpoint_dict(account_dict['name'], account_keys["key2"], account_obj.primary_endpoints.table, 'table'),
             )
-            if account_key[1]:
-                account_dict['secondary_endpoints']['key'] = '{0}'.format(account_key[1])
+            if account_keys["key2"]:
+                account_dict['secondary_endpoints']['key'] = '{0}'.format(account_keys["key2"])
         account_dict['tags'] = None
         if account_obj.tags:
             account_dict['tags'] = account_obj.tags
@@ -509,11 +516,14 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
                 exposed_headers=to_native(x.exposed_headers),
                 allowed_headers=to_native(x.allowed_headers)
             ) for x in blob_service_props.cors.cors_rules]
+        if self.return_access_keys:
+            account_dict["access_keys"] = self.get_account_keys()
+
         return account_dict
 
     def format_endpoint_dict(self, name, key, endpoint, storagetype, protocol='https'):
         result = dict(endpoint=endpoint)
-        if key:
+        if self.show_connection_string:
             result['connectionstring'] = 'DefaultEndpointsProtocol={0};EndpointSuffix={1};AccountName={2};AccountKey={3};{4}Endpoint={5}'.format(
                                          protocol,
                                          self._cloud_environment.suffixes.storage_endpoint,
@@ -533,20 +543,31 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
             pass
         return None
 
-    def get_connectionstring(self, resource_group, name):
-        keys = ['', '']
-        if not self.show_connection_string:
-            return keys
+    def get_account_keys(self):
+        account_keys = {}
         try:
-            cred = self.storage_client.storage_accounts.list_keys(resource_group, name)
-            # get the following try catch from CLI
-            try:
-                keys = [cred.keys[0].value, cred.keys[1].value]
-            except AttributeError:
-                keys = [cred.key1, cred.key2]
-        except Exception:
+            for account_key in self.list_keys().keys:
+                account_keys.update({
+                    account_key.key_name: account_key.value
+                })
+        except AttributeError:
             pass
-        return keys
+
+        return account_keys
+
+    def list_keys(self):
+        """List Azure Storage Account keys"""
+
+        self.log('List keys for {0}'.format(self.name))
+
+        item = None
+
+        try:
+            item = self.storage_client.storage_accounts.list_keys(resource_group_name=self.resource_group, account_name=self.name)
+        except CloudError as exc:
+            self.fail("Failed to list storage account_keys keys of {0} - {1}".format(self.name, str(exc)))
+
+        return item
 
 
 def main():
