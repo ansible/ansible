@@ -109,7 +109,8 @@ def test_bytes_to_human_unit_isbits(input_data, unit, expected):
 @pytest.mark.parametrize('input_data', [0j, u'1B', [1], {1: 1}, None, b'1B'])
 def test_bytes_to_human_illegal_size(input_data):
     """Test of bytes_to_human function, illegal objects are passed as a size."""
-    e_regexp = r'(no ordering relation is defined for complex numbers)|(unsupported operand type\(s\) '\
-               'for /)|(unorderable types)|(not supported between instances of)'
+    e_regexp = (r'(no ordering relation is defined for complex numbers)|'
+                r'(unsupported operand type\(s\) for /)|(unorderable types)|'
+                r'(not supported between instances of)')
     with pytest.raises(TypeError, match=e_regexp):
         bytes_to_human(input_data)
