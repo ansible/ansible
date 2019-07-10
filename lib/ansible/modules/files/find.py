@@ -112,7 +112,7 @@ options:
         default: no
     depth:
         description:
-            - Set the maximum number of levels to decend into.
+            - Set the maximum number of levels to descend into.
             - Setting recurse to C(no) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
