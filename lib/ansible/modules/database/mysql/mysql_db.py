@@ -346,16 +346,15 @@ def main():
     quick = module.params["quick"]
 
     if len(db) > 1 and state == 'import':
-        module.fail_json(msg="Multiple databases is not supported with state=import")
+        module.fail_json(msg="Multiple databases are not supported with state=import")
     db_name = ' '.join(db)
 
+    all_databases = False
     if state in ['dump', 'import']:
         if target is None:
             module.fail_json(msg="with state=%s target is required" % state)
         if db == ['all']:
             all_databases = True
-        else:
-            all_databases = False
     else:
         if db == ['all']:
             module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
@@ -375,11 +374,13 @@ def main():
 
     existence_list = []
     non_existence_list = []
-    for each_database in db:
-        if db_exists(cursor, [each_database]):
-            existence_list.append(each_database)
-        else:
-            non_existence_list.append(each_database)
+
+    if not all_databases:
+        for each_database in db:
+            if db_exists(cursor, [each_database]):
+                existence_list.append(each_database)
+            else:
+                non_existence_list.append(each_database)
 
     if state == "absent":
         if module.check_mode:
@@ -396,6 +397,8 @@ def main():
         if non_existence_list:
             try:
                 changed = db_create(cursor, non_existence_list, encoding, collation)
+                if changed >= 1:
+                    changed = True
             except Exception as e:
                 module.fail_json(msg="error creating database: %s" % to_native(e),
                                  exception=traceback.format_exc())
@@ -404,7 +407,7 @@ def main():
         if non_existence_list and not all_databases:
             module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
         if module.check_mode:
-            module.exit_json(changed=not bool(non_existence_list), db=db_name, db_list=db)
+            module.exit_json(changed=True, db=db_name, db_list=db)
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
@@ -413,24 +416,22 @@ def main():
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
     elif state == "import":
-        changed = True
         if module.check_mode:
             module.exit_json(changed=True, db=db_name, db_list=db)
         if non_existence_list and not all_databases:
             try:
-                changed = db_create(cursor, non_existence_list, encoding, collation)
+                db_create(cursor, non_existence_list, encoding, collation)
             except Exception as e:
                 module.fail_json(msg="error creating database: %s" % to_native(e),
                                  exception=traceback.format_exc())
-        if changed:
-            rc, stdout, stderr = db_import(module, login_host, login_user,
-                                           login_password, db, target,
-                                           all_databases,
-                                           login_port, config_file,
-                                           socket, ssl_cert, ssl_key, ssl_ca)
-            if rc != 0:
-                module.fail_json(msg="%s" % stderr)
-            module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
+        rc, stdout, stderr = db_import(module, login_host, login_user,
+                                       login_password, db, target,
+                                       all_databases,
+                                       login_port, config_file,
+                                       socket, ssl_cert, ssl_key, ssl_ca)
+        if rc != 0:
+            module.fail_json(msg="%s" % stderr)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
 
 
 if __name__ == '__main__':
