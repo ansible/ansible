@@ -35,7 +35,7 @@ if ($null -ne $domain_username) {
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
-if ($nul -ne $domain_server) {
+if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
