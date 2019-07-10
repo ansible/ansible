@@ -48,18 +48,18 @@ ansible-playbook -i inventory_1.docker_machine.yml playbooks/test_inventory_1.ym
 echo "Activate Docker Machine mock"
 PATH=${SCRIPT_DIR}:$PATH
 
-echo "Test docker_machine inventory 2: daemon_required=yes daemon env success=yes"
+echo "Test docker_machine inventory 2: daemon_env=require daemon env success=yes"
 ansible-inventory -i inventory_2.docker_machine.yml --list
 
-echo "Test docker_machine inventory 2: daemon_required=yes daemon env success=no"
+echo "Test docker_machine inventory 2: daemon_env=require daemon env success=no"
 export MOCK_ERROR_IN=env
 ansible-inventory -i inventory_2.docker_machine.yml --list
 unset MOCK_ERROR_IN
 
-echo "Test docker_machine inventory 3: daemon_required=no daemon env success=yes"
+echo "Test docker_machine inventory 3: daemon_env=optional daemon env success=yes"
 ansible-inventory -i inventory_3.docker_machine.yml --list
 
-echo "Test docker_machine inventory 3: daemon_required=no daemon env success=no"
+echo "Test docker_machine inventory 3: daemon_env=optional daemon env success=no"
 export MOCK_ERROR_IN=env
 ansible-inventory -i inventory_2.docker_machine.yml --list
 unset MOCK_ERROR_IN

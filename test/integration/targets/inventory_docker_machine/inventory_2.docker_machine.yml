@@ -1,2 +1,2 @@
 plugin: docker_machine
-daemon_required: yes
+daemon_env: require

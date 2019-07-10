@@ -25,10 +25,23 @@ DOCUMENTATION = '''
             description: token that ensures this is a source file for the C(docker_machine) plugin.
             required: yes
             choices: ['docker_machine']
-        daemon_required:
-            description: when true, hosts for which Docker Machine cannot output Docker daemon connection environment variables will be skipped.
-            type: bool
-            default: yes
+        daemon_env:
+            description:
+                - Whether docker daemon connection environment variables should be fetched, and how to behave if they cannot be fetched.
+                - With C(require) and C(require-silently), fetch them and skip any host for which they cannot be fetched.
+                  A warning will be issued for any skipped host if the choice is C(require).
+                - With C(optional) and C(optional-silently), fetch them and not skip hosts for which they cannot be fetched.
+                  A warning will be issued for hosts where they cannot be fetched if the choice is C(optional).
+                - With C(skip), do not attempt to fetch the docker daemon connection environment variables.
+                - If fetched successfully, the variables will be prefixed with I(dm_) and stored as host variables.
+            type: str
+            choices:
+                - require
+                - require-silently
+                - optional
+                - optional-silently
+                - skip
+            default: require
         running_required:
             description: when true, hosts which Docker Machine indicates are in a state other than C(running) will be skipped.
             type: bool
@@ -163,17 +176,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return json.loads(inspect_lines)
 
-    def _should_skip_host(self, machine_name, env_var_tuples):
+    def _should_skip_host(self, machine_name, env_var_tuples, daemon_env):
         if not env_var_tuples:
             warning_prefix = 'Unable to fetch Docker daemon env vars from Docker Machine for host {0}'.format(machine_name)
-            if self.get_option('daemon_required'):
-                display.warning('{0}: host will be skipped'.format(warning_prefix))
+            if daemon_env in ('require', 'require-silently'):
+                if demon_env == 'require':
+                    display.warning('{0}: host will be skipped'.format(warning_prefix))
                 return True
-            else:
-                display.warning('{0}: host will lack dm_DOCKER_xxx variables'.format(warning_prefix))
+            else:  # 'optional', 'optional-silently'
+                if daemon_env == 'optional':
+                    display.warning('{0}: host will lack dm_DOCKER_xxx variables'.format(warning_prefix))
         return False
 
     def _populate(self):
+        daemon_env = self.get_option('daemon_env')
         try:
             for self.node in self._get_machine_names():
                 self.node_attrs = self._inspect_docker_machine_host(self.node)
@@ -184,9 +200,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
                 # query `docker-machine env` to obtain remote Docker daemon connection settings in the form of commands
                 # that could be used to set environment variables to influence a local Docker client:
-                env_var_tuples = self._get_docker_daemon_variables(machine_name)
-                if self._should_skip_host(machine_name, env_var_tuples):
-                    continue
+                if daemon_env == 'skip':
+                    env_var_tuples = []
+                else:
+                    env_var_tuples = self._get_docker_daemon_variables(machine_name)
+                    if self._should_skip_host(machine_name, env_var_tuples, daemon_env):
+                        continue
 
                 # add an entry in the inventory for this host
                 self.inventory.add_host(machine_name)
