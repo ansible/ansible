@@ -311,7 +311,7 @@ def is_hash(password):
     return ishash
 
 
-def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
+def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module, mode):
     changed = False
     msg = "User unchanged"
     grant_option = False
@@ -390,7 +390,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
 
         # Handle privileges
         if new_priv is not None:
-            curr_priv = privileges_get(cursor, user, host)
+            curr_priv = privileges_get(cursor, user, host, mode)
 
             # If the user has privileges on a db.table that doesn't appear at all in
             # the new specification, then revoke all privileges on it.
@@ -459,7 +459,7 @@ def user_get_hostnames(cursor, user):
     return hostnames
 
 
-def privileges_get(cursor, user, host):
+def privileges_get(cursor, user, host, mode):
     """ MySQL doesn't have a better method of getting privileges aside from the
     SHOW GRANTS query syntax, which requires us to then parse the returned string.
     Here's an example of the string that is returned from MySQL:
@@ -469,6 +469,10 @@ def privileges_get(cursor, user, host):
     This function makes the query and returns a dictionary containing the results.
     The dictionary format is the same as that returned by privileges_unpack() below.
     """
+    if mode == 'ANSI':
+        quote = '"'
+    else:
+        quote = '`'
     output = {}
     cursor.execute("SHOW GRANTS FOR %s@%s", (user, host))
     grants = cursor.fetchall()
@@ -483,6 +487,7 @@ def privileges_get(cursor, user, host):
             colums = cols.group(2).split(', ')
             # sort the column names
             colums.sort()
+            colums = [quote + x + quote for x in colums]
             result = cols.group(1) + ' (' + ', '.join(colums) + ')'
             return result
 
@@ -548,6 +553,7 @@ def privileges_unpack(priv, mode):
                     colums = piece_privs_cols.group(2).split(',')
                     colums = [x.strip().strip('`') for x in colums]
                     colums.sort()
+                    colums = [quote + x + quote for x in colums]
                     output[pieces[0]].append(piece_privs_cols.group(1).strip() + ' (' + ', '.join(colums) + ')')
 
         else:
@@ -648,6 +654,7 @@ def main():
     ssl_ca = module.params["ca_cert"]
     db = ''
     sql_log_bin = module.params["sql_log_bin"]
+    mode = 'NOTANSI'
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -685,9 +692,9 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module)
+                    changed, msg = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module, mode)
                 else:
-                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
+                    changed, msg = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module, mode)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
