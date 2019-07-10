@@ -42,6 +42,8 @@ options:
     type: str
 notes:
   - The JBoss standalone deployment-scanner has to be enabled in standalone.xml
+  - The module can wait until I(deployment) file is deployed/undeployed by deployment-scanner.
+    Duration of waiting time depends on scan-interval parameter from standalone.xml.
   - Ensure no identically named application is deployed through the JBoss CLI
 author:
   - Jeroen Hoekx (@jhoekx)
@@ -115,12 +117,13 @@ def main():
 
     # === when check_mode ===
     if module.check_mode:
-        if state == 'present' and not deployed:
-            result['changed'] = True
-
-        elif state == 'present' and deployed:
-            if module.sha1(src) != module.sha1(os.path.join(deploy_path, deployment)):
+        if state == 'present':
+            if not deployed:
                 result['changed'] = True
+
+            elif deployed:
+                if module.sha1(src) != module.sha1(os.path.join(deploy_path, deployment)):
+                    result['changed'] = True
 
         elif state == 'absent' and deployed:
             result['changed'] = True
