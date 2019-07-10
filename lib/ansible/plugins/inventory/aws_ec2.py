@@ -29,6 +29,7 @@ DOCUMENTATION = '''
         iam_role_arn:
           description: The ARN of the IAM role to assume to perform the inventory lookup. You should still provide AWS
               credentials with enough privilege to perform the AssumeRole action.
+          version_added: '2.9'
         regions:
           description:
               - A list of regions in which to describe EC2 instances.
