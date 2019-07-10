@@ -19,42 +19,49 @@ module: zabbix_service
 short_description: Create/update/delete/dump Zabbix service
 description:
     - Create/update/delete/dump Zabbix service.
-    - Does not handle service parent update
 version_added: "2.9"
 author:
-    - Emmanuel Riviere (@emriver)
+    - "Emmanuel Riviere (@emriver)"
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "zabbix-api >= 0.5.3"
 options:
     name:
         description:
-            - Name of Zabbix service.
+            - Name of Zabbix service
         required: true
+        type: str
     parent:
         description:
-            - Name of Zabbix service parent.
+            - Name of Zabbix service parent
         required: false
+        type: str
     sla:
         description:
-            - Sla value (i.e 99.99), goodsla in Zabbix API.
+            - Sla value (i.e 99.99), goodsla in Zabbix API
         required: false
+        type: float
     calculate_sla:
         description:
-            - Calculate or nor the SLA value for this service, showsla in Zabbix API.
+            - If yes, calculate the SLA value for this service, showsla in Zabbix API
         required: false
+        type: bool
     algorithm:
         description:
-            - ALigorithm used to calculate the sla
+            - Algorithm used to calculate the sla
         required: false
+        type: str
+        choices: [no, one_child, all_childs]
     trigger_name:
         description:
-            - Name of trigger linked to the service.
+            - Name of trigger linked to the service
         required: false
+        type: str
     trigger_host:
         description:
-            - Name of host linked to the service.
+            - Name of host linked to the service
         required: false
+        type: str
     state:
         description:
             - 'State: present - create/update service; absent - delete service'
@@ -72,11 +79,26 @@ EXAMPLES = '''
 - name: Dump Zabbix service info
   local_action:
     module: zabbix_service
-    server_url: http://127.0.0.1
+    server_url: http://192.168.1.1
     login_user: username
     login_password: password
     name: apache2 availability
     state: dump
+
+# Creates a new Zabbix service
+- name: Manage services
+  local_action:
+        module: zabbix_service
+        server_url: "https://192.168.1.1"
+        login_user: username
+        login_password: password
+        name: apache2 service
+        sla: 99.99
+        calculate_sla: yes
+        algorithm: one_child
+        trigger_name: apache2 service status
+        trigger_host: webserver01
+        state: present
 '''
 
 RETURN = '''
@@ -100,14 +122,16 @@ template_json:
     ]
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPIException
-
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 
@@ -118,7 +142,7 @@ class Service(object):
 
     def get_service_ids(self, service_name):
         service_ids = []
-        services = self._zapi.service.get({'filter':{'name':service_name}})
+        services = self._zapi.service.get({'filter': {'name': service_name}})
         for service in services:
             service_ids.append(service['serviceid'])
         return service_ids
@@ -129,33 +153,30 @@ class Service(object):
         self._zapi.service.delete(service_ids)
 
     def dump_services(self, service_ids):
-        services = self._zapi.service.get({'output': 'extend', 'filter' : {'serviceid' : service_ids}})
+        services = self._zapi.service.get({'output': 'extend', 'filter': {'serviceid': service_ids}, 'selectParent': '1'})
         return services
 
     def generate_service_config(self, name, parent, sla, calculate_sla, trigger_name, trigger_host, algorithm):
-        if algorithm == "no":
-            algorithm = 0
-        elif algorithm == 'one_child':
-            algorithm = 1
-        elif algorithm == 'all_childs':
-            algorithm = 2
+        algorithms = {'no': '0', 'one_child': '1', 'all_childs': '2'}
+        algorithm = algorithms[algorithm]
 
         if calculate_sla:
             calculate_sla = 1
         else:
             calculate_sla = 0
 
-        trigger_id = 0 #zabbix api return when no trigger
+        # Zabbix api return when no trigger
+        trigger_id = 0
         if trigger_host and trigger_name:
-            #Retrieving the host to get the trigger
+            # Retrieving the host to get the trigger
             hosts = self._zapi.host.get({'filter': {'host': trigger_host}})
             if not hosts:
-                self._module.fail_json(msg="Target host %s not found for trigger" % trigger_host)
+                self._module.fail_json(msg="Target host %s not found" % trigger_host)
             host_id = hosts[0]['hostid']
 
-            triggers = self._zapi.trigger.get({'filter':{'description':trigger_name}, 'hostids':[host_id]})
+            triggers = self._zapi.trigger.get({'filter': {'description': trigger_name}, 'hostids': [host_id]})
             if not triggers:
-                self._module.fail_json(msg="Trigger "+trigger_name+" not found on host "+ trigger_host)
+                self._module.fail_json(msg="Trigger %s not found on host %s" % (trigger_name, trigger_host))
             trigger_id = triggers[0]['triggerid']
 
         request = {
@@ -163,8 +184,8 @@ class Service(object):
             'algorithm': algorithm,
             'showsla': calculate_sla,
             'sortorder': 1,
-            'goodsla': format(sla, '.4f'), #sla has 4 decimals
-            'triggerid' : trigger_id
+            'goodsla': format(sla, '.4f'),  # Sla has 4 decimals
+            'triggerid': trigger_id
         }
 
         if parent:
@@ -189,6 +210,18 @@ class Service(object):
             if str(generated_config[item]) != str(live_config[item]):
                 change = True
 
+        # In Zabbix 4.0
+        # No parent returns : "parent": []
+        # A parent returns : "parent": { "serviceid": 12 }
+        if 'parentid' in generated_config:
+            if 'serviceid' in live_config['parent']:
+                if generated_config['parentid'] != live_config['parent']['serviceid']:
+                    change = True
+            else:
+                change = True
+        elif 'serviceid' in live_config['parent']:
+            change = True
+
         if not change:
             self._module.exit_json(changed=False, msg="Service %s up to date" % name)
 
@@ -208,7 +241,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            name=dict(type='str', required=False),
+            name=dict(type='str', required=True),
             parent=dict(type='str', required=False),
             sla=dict(type='float', required=False),
             calculate_sla=dict(type='bool', required=False, default=True),
@@ -222,9 +255,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module " +
-                         "(check docs or install with: " +
-                         "pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -244,20 +275,20 @@ def main():
 
     zbx = None
 
-    #login to zabbix
+    # Login to zabbix
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except ZabbixAPIException as error:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % error)
 
-    #load service module
+    # Load service module
     service = Service(module, zbx)
     service_ids = service.get_service_ids(name)
     if service_ids:
         service_json = service.dump_services(service_ids)
 
-    #delete service
+    # Delete service
     if state == "absent":
         if not service_ids:
             module.exit_json(changed=False, msg="Service not found, no change: %s" % name)
@@ -270,13 +301,16 @@ def main():
         module.exit_json(changed=False, service_json=service_json)
 
     elif state == "present":
-        #does not exists going to create it
+        if (trigger_name and not trigger_host) or (trigger_host and not trigger_name):
+            module.fail_json(msg="Specify either both trigger_host and trigger_name or none to create or update a service")
+        # Does not exists going to create it
         if not service_ids:
             service.create_service(name, parent, sla, calculate_sla, trigger_name, trigger_host, algorithm)
-            module.exit_json(changed=True, msg="Service %s created" %name)
-        #else we update it if needed
+            module.exit_json(changed=True, msg="Service %s created" % name)
+        # Else we update it if needed
         else:
             service.update_service(service_ids[0], name, parent, sla, calculate_sla, trigger_name, trigger_host, algorithm)
+
 
 if __name__ == '__main__':
     main()
