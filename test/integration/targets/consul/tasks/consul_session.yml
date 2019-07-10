@@ -70,6 +70,18 @@
     that:
       - result is failed
 
+- name: ensure unknown scheme fails
+  consul_session:
+    state: info
+    id: '{{ session_id }}'
+    scheme: non_existent
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result is failed
+
 - name: delete a session
   consul_session:
     state: absent
