@@ -441,7 +441,7 @@
 
   - assert:
       that:
-      - result.failed == true
+      - result is failed
       - "{{ 'permission denied' in result.msg }}"
 
   - name: Grant privileges
@@ -505,7 +505,7 @@
 
   - assert:
       that:
-      - result.failed == true
+      - result is failed
       - result.msg == 'Unable to remove user'
       
   - name: Test fail_on_user
