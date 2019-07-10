@@ -46,7 +46,8 @@ class ImportTest(SanityMultipleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/import/skip.txt'
-        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True)
+        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
+
         skip_paths_set = set(skip_paths)
 
         paths = sorted(

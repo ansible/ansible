@@ -5,6 +5,8 @@ from __future__ import absolute_import, print_function
 import os
 import sys
 
+import lib.types as t
+
 from lib.util import (
     CommonConfig,
     is_shippable,
@@ -112,6 +114,7 @@ class TestConfig(EnvironmentConfig):
         self.coverage = args.coverage  # type: bool
         self.coverage_label = args.coverage_label  # type: str
         self.coverage_check = args.coverage_check  # type: bool
+        self.coverage_config_base_path = None  # type: t.Optional[str]
         self.include = args.include or []  # type: list [str]
         self.exclude = args.exclude or []  # type: list [str]
         self.require = args.require or []  # type: list [str]
