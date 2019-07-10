@@ -177,7 +177,7 @@ class NetAppONTAPGatherFacts(object):
                 'kwargs': {
                     'call': 'security-login-get-iter',
                     'attribute': 'security-login-account-info',
-                    'field': ('user-name', 'application', 'authentication-method'),
+                    'field': ('vserver', 'user-name', 'application', 'authentication-method'),
                     'query': {'max-records': '1024'},
                 },
                 'min_version': '0',
