@@ -258,7 +258,7 @@ class AzureRMVaultsInfo(AzureRMModuleBase):
             'id': item['id'],
             'name': item['name'],
             'location': item['location'],
-            'e_tag': item['eTag'],
+            'e_tag': item['etag'],
             'tags': item.get('tags'),
             'upgrade_details': item['properties'].get('upgradeDetails'),
             'sku_name': item['sku']['name'],
