@@ -53,6 +53,7 @@ def dummy_credentials():
     dummy_credentials['tenant'] = 'admin'
     return dummy_credentials
 
+
 @pytest.fixture
 def super_switcher(scope="function", autouse=True):
     # Mocking the inbuilt super as it is used in ApiSession initialization
@@ -61,7 +62,6 @@ def super_switcher(scope="function", autouse=True):
     yield
     # Revert the super to default state
     __builtin__.super = original_super
-
 
 
 def test_lookup_multiple_obj(dummy_credentials):
@@ -82,6 +82,7 @@ def test_lookup_single_obj(dummy_credentials):
         retval = avi_lookup.run([], {}, avi_credentials=dummy_credentials,
                                 obj_type="network", obj_name='PG-123')
         assert retval[0] == data["mock_single_obj"]
+
 
 def test_invalid_lookup(dummy_credentials):
     avi_lookup = lookup_loader.get('avi')
