@@ -70,9 +70,25 @@ DOCUMENTATION = """
               - section: sudo_become_plugin
                 key: password
         become_fail_match:
+            version_added: '2.9'
             default: ['Sorry, try again.']
+            ini:
+              - section: sudo_become_plugin
+                key: fail_match
+            env:
+              - name: ANSIBLE_SUDO_FAIL_MATCH
+            vars:
+              - name: ansible_sudo_fail_match
         become_missing_password_match:
+            version_added: '2.9'
             default: ['Sorry, a password is required to run sudo', 'sudo: a password is required']
+            ini:
+              - section: sudo_become_plugin
+                key: missing_password_match
+            env:
+              - name: ANSIBLE_SUDO_MISSING_PASSWORD_MATCH
+            vars:
+              - name: ansible_sudo_missing_passowrd_match
 """
 
 

@@ -7,7 +7,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = r'''
         become_fail_match:
-            version_added: '2.9'
             description: Strings to match to detect a privilege escalation failure
             required: False
             type: list
@@ -17,9 +16,8 @@ class ModuleDocFragment(object):
             env:
               - name: ANSIBLE_BECOME_FAIL_MATCH
             vars:
-              - name: ansible_fail_match
+              - name: ansible_become_fail_match
         become_missing_password_match:
-            version_added: '2.9'
             description: Strings to match to detect a missing, but required,  password
             required: False
             type: list
@@ -29,5 +27,5 @@ class ModuleDocFragment(object):
             env:
               - name: ANSIBLE_BECOME_MISSING_PASSWORD_MATCH
             vars:
-              - name: ansible_missing_passowrd_match
+              - name: ansible_become_missing_passowrd_match
     '''
