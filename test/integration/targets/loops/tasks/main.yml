@@ -334,3 +334,13 @@
     - 1
   loop_control:
     loop_var: alvin
+
+# https://github.com/ansible/ansible/issues/58820
+- name: Test using templated loop_var inside include_tasks
+  include_tasks: templated_loop_var_tasks.yml
+  loop:
+    - value
+  loop_control:
+    loop_var: "{{ loop_var_name }}"
+  vars:
+    loop_var_name: templated_loop_var_name
