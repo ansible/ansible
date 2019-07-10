@@ -291,7 +291,7 @@ def mandatory(a, msg=None):
             name = ''
 
         if msg is not None:
-            raise AnsibleFilterError(str(msg))
+            raise AnsibleFilterError(to_native(msg))
         else:
             raise AnsibleFilterError("Mandatory variable %s not defined." % name)
 
