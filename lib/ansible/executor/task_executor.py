@@ -381,6 +381,7 @@ class TaskExecutor:
             res['ansible_loop_var'] = loop_var
             if index_var:
                 res[index_var] = item_index
+                res['ansible_index_var'] = index_var
             if extended:
                 res['ansible_loop'] = task_vars['ansible_loop']
 
