@@ -1,0 +1,2 @@
+bugfixes:
+  - consul_session - ``sessions`` returned value is a list even though no sessions were found
