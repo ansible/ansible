@@ -1,9 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-#
-# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -61,7 +55,6 @@ EXAMPLES = r'''
     validate_certs: no
     datacenter: "{{ datacenter_name }}"
   register: dvpg_facts
-
 - name: Get number of ports for portgroup 'dvpg_001' in 'dvs_001'
   debug:
     msg: "{{ item.num_ports }}"
@@ -119,20 +112,30 @@ except ImportError as e:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, get_all_objs
+from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, get_all_objs, find_dvs_by_name
 
 
 class DVSPortgroupFactsManager(PyVmomi):
     def __init__(self, module):
         super(DVSPortgroupFactsManager, self).__init__(module)
         self.dc_name = self.params['datacenter']
+        self.dvs_name = self.params['dvsname']
 
     def gather_dvs_portgroup_facts(self):
         datacenter = self.find_datacenter_by_name(self.dc_name)
+        
         if datacenter is None:
             self.module.fail_json(msg="Failed to find the datacenter %s" % self.dc_name)
-
-        dvs_lists = get_all_objs(self.content, [vim.DistributedVirtualSwitch], folder=datacenter.networkFolder)
+                    
+        if self.dvs_name == 'all':
+            dvs_lists = get_all_objs(self.content, [vim.DistributedVirtualSwitch], folder=datacenter.networkFolder)
+        else:
+            dvsn = find_dvs_by_name(self.content, self.dvs_name)
+            if dvsn is None:
+                self.module.fail_json(msg="Failed to find the dvswitch %s" % self.dvs_name)
+            else:
+                dvs_lists=[dvsn]
+                    
 
         result = dict()
         for dvs in dvs_lists:
@@ -141,6 +144,7 @@ class DVSPortgroupFactsManager(PyVmomi):
                 network_policy = dict()
                 teaming_policy = dict()
                 port_policy = dict()
+                vlan_info = dict()
 
                 if self.module.params['show_network_policy'] and dvs_pg.config.defaultPortConfig.securityPolicy:
                     network_policy = dict(
@@ -171,6 +175,22 @@ class DVSPortgroupFactsManager(PyVmomi):
                         vlan_override=dvs_pg.config.policy.vlanOverrideAllowed
                     )
 
+                if self.params['show_vlan_info']:
+                    vlanInfo=dvs_pg.config.defaultPortConfig.vlan
+                    if isinstance(vlanInfo,vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
+                        vlan_id_list = []
+                        for vli in vlanInfo.vlanId:
+                            vlan_id_list.append(str(vli.start)+"-"+str(vli.end))
+                        vlan_info = dict(
+                            trunk=True,
+                            vlan_id=vlan_id_list
+                        )
+                    else:
+                        vlan_info = dict(
+                            trunk=False,
+                            vlan_id=vlanInfo.vlanId
+                        )
+
                 dvpg_details = dict(
                     portgroup_name=dvs_pg.name,
                     num_ports=dvs_pg.config.numPorts,
@@ -180,6 +200,7 @@ class DVSPortgroupFactsManager(PyVmomi):
                     teaming_policy=teaming_policy,
                     port_policy=port_policy,
                     network_policy=network_policy,
+                    vlan_info=vlan_info,
                 )
                 result[dvs.name].append(dvpg_details)
 
@@ -193,6 +214,8 @@ def main():
         show_network_policy=dict(type='bool', default=True),
         show_teaming_policy=dict(type='bool', default=True),
         show_port_policy=dict(type='bool', default=True),
+        dvsname=dict(type='str', default='all'),
+        show_vlan_info=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
