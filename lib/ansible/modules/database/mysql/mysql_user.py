@@ -477,13 +477,20 @@ def privileges_get(cursor, user, host):
         if x == 'ALL PRIVILEGES':
             return 'ALL'
         else:
-            return x
+            cols = re.match(r"(.+) \((.+)\)", x)
+            if cols is None:
+                return x
+            colums = cols.group(2).split(', ')
+            # sort the column names
+            colums.sort()
+            result = cols.group(1) + ' (' + ', '.join(colums) + ')'
+            return result
 
     for grant in grants:
         res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\\6)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
-        privileges = res.group(1).split(", ")
+        privileges = re.split(r", (?![^\(]*\))", res.group(1))
         privileges = [pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(7):
             privileges.append('GRANT')
@@ -530,9 +537,19 @@ def privileges_unpack(priv, mode):
         pieces[0] = object_type + '.'.join(dbpriv)
 
         if '(' in pieces[1]:
-            output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
-            for i in output[pieces[0]]:
+            piece_privs = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
+            output[pieces[0]] = []
+            for i in piece_privs:
                 privs.append(re.sub(r'\s*\(.*\)', '', i))
+                piece_privs_cols = re.match(r"(.+)\((.+)\)", i)
+                if piece_privs_cols is None:
+                    output[pieces[0]].append(i)
+                else:
+                    colums = piece_privs_cols.group(2).split(',')
+                    colums = [x.strip().strip('`') for x in colums]
+                    colums.sort()
+                    output[pieces[0]].append(piece_privs_cols.group(1).strip() + ' (' + ', '.join(colums) + ')')
+
         else:
             output[pieces[0]] = pieces[1].upper().split(',')
             privs = output[pieces[0]]

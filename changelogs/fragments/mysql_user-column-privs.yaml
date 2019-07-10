@@ -1,0 +1,2 @@
+bugfixes:
+  - mysql_user - column specific grants no longer report as changed (https://github.com/ansible/ansible/issues/25158).

@@ -1,0 +1,149 @@
+# test code for column privileges for mysql_user module
+
+# ============================================================
+- name: Copy SQL script to remote
+  copy:
+    src: "{{ item }}"
+    dest: "{{ remote_tmp_dir }}/{{ item | basename }}"
+  with_items:
+    - create-col-priv-db.sql
+    - drop-col-priv-db.sql
+
+- name: Create col priv test db
+  shell: "mysql < {{ remote_tmp_dir }}/create-col-priv-db.sql"
+
+- name: Add privs to specific table columns (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c1,c3)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed" }
+
+- name: Get grants for test user
+  shell: >
+      mysql -S {{ mysql_socket }} -D mysql -NBe \
+        "SELECT Column_name,Column_priv
+          FROM columns_priv
+          WHERE Db='colprivdb'
+            AND User='colprivuser1'
+            AND Table_name='t1'"
+  check_mode: no
+  register: result
+
+- name: Assert column privs for C1, C3, but not C2
+  assert:
+    that: >
+      "C1\tSelect" in result.stdout_lines
+      and "C3\tSelect" in result.stdout_lines
+      and "C2\tSelect" not in result.stdout_lines
+
+- name: Add privs to specific table columns (expect ok)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c3,c1)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv did not change
+  assert: { that: "not result.changed" }
+
+- name: Get grants for test user
+  shell: >
+      mysql -S {{ mysql_socket }} -D mysql -NBe \
+        "SELECT Column_name,Column_priv
+          FROM columns_priv
+          WHERE Db='colprivdb'
+            AND User='colprivuser1'
+            AND Table_name='t1'"
+  check_mode: no
+  register: result
+
+- name: Assert column privs for C1, C3, but not C2
+  assert:
+    that: >
+      "C1\tSelect" in result.stdout_lines
+      and "C3\tSelect" in result.stdout_lines
+      and "C2\tSelect" not in result.stdout_lines
+
+- name: Check privs to specific table columns (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c1,c2,c3)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  check_mode: yes
+  register: result
+
+- name: Assert that priv reports changed
+  assert: { that: "result.changed" }
+
+- name: Get grants for test user
+  shell: >
+      mysql -S {{ mysql_socket }} -D mysql -NBe \
+        "SELECT Column_name,Column_priv
+          FROM columns_priv
+          WHERE Db='colprivdb'
+            AND User='colprivuser1'
+            AND Table_name='t1'"
+  check_mode: no
+  register: result
+
+- name: Assert column privs for C1, C3, but not C2
+  assert:
+    that: >
+      "C1\tSelect" in result.stdout_lines
+      and "C3\tSelect" in result.stdout_lines
+      and "C2\tSelect" not in result.stdout_lines
+
+- name: Reduce privs to one table column (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c1)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed" }
+
+- name: Get grants for test user
+  shell: >
+      mysql -S {{ mysql_socket }} -D mysql -NBe \
+        "SELECT Column_name,Column_priv
+          FROM columns_priv
+          WHERE Db='colprivdb'
+            AND User='colprivuser1'
+            AND Table_name='t1'"
+  check_mode: no
+  register: result
+
+- name: Assert column privs
+  assert:
+    that: >
+      "C1\tSelect" in result.stdout_lines
+      and "C3\tSelect" not in result.stdout_lines
+      and "C2\tSelect" not in result.stdout_lines
+
+- name: Drop user privileges (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed" }
+
+- include: assert_no_user.yml user_name="colprivuser1"
+
+- name: Drop col priv test db
+  shell: "mysql < {{ remote_tmp_dir }}/drop-col-priv-db.sql"
