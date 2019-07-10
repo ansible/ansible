@@ -94,7 +94,8 @@ def main():
             deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
             state=dict(type='str', choices=['absent', 'present'], default='present'),
         ),
-        required_if=[('state', 'present', ('src',))]
+        required_if=[('state', 'present', ('src',))],
+        supports_check_mode=True
     )
 
     result = dict(changed=False)
@@ -107,11 +108,27 @@ def main():
     if not os.path.exists(deploy_path):
         module.fail_json(msg="deploy_path does not exist.")
 
+    if src and not os.path.exists(src):
+        module.fail_json(msg='Source file %s does not exist.' % src)
+
     deployed = is_deployed(deploy_path, deployment)
 
+    # === when check_mode ===
+    if module.check_mode:
+        if state == 'present' and not deployed:
+            result['changed'] = True
+
+        elif state == 'present' and deployed:
+            if module.sha1(src) != module.sha1(os.path.join(deploy_path, deployment)):
+                result['changed'] = True
+
+        elif state == 'absent' and deployed:
+            result['changed'] = True
+
+        module.exit_json(**result)
+    # =======================
+
     if state == 'present' and not deployed:
-        if not os.path.exists(src):
-            module.fail_json(msg='Source file %s does not exist.' % src)
         if is_failed(deploy_path, deployment):
             # Clean up old failed deployment
             os.remove(os.path.join(deploy_path, "%s.failed" % deployment))
