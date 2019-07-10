@@ -1,7 +1,12 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
 - name: Create Recovery Services vault
   azure_rm_recoveryservicesvault:
     resource_group: "{{ resource_group }}"
-    name: myVault
+    name: "myVault{{ rpfx }}"
     sku_name: Standard
     location: westus
   register: output
@@ -13,7 +18,7 @@
 - name: Update Recovery Services vault
   azure_rm_recoveryservicesvault:
     resource_group: "{{ resource_group }}"
-    name: myVault
+    name: "myVault{{ rpfx }}"
     upgrade_details:
       message: myMessage
   register: output
@@ -25,7 +30,7 @@
 - name: Get Info of Recovery Services Resource
   azure_rm_recoveryservicesvault_info:
     resource_group: "{{ resource_group }}"
-    name: myVault
+    name: "myVault{{ rpfx }}"
   register: output
 
 - assert:
@@ -42,7 +47,7 @@
 - name: Delete Recovery Services Vault
   azure_rm_recoveryservicesvault:
     resource_group: "{{ resource_group }}"
-    name: myVault
+    name: "myVault{{ rpfx }}"
     state: absent
   register: output
 
