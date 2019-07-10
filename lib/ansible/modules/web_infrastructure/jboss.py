@@ -13,56 +13,60 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = r"""
 module: jboss
 version_added: "1.4"
-short_description: deploy applications to JBoss
+short_description: Deploy applications to JBoss
 description:
-  - Deploy applications to JBoss standalone using the filesystem
+  - Deploy applications to JBoss standalone using the filesystem.
 options:
   deployment:
     required: true
     description:
-      - The name of the deployment
+      - The name of the deployment.
+    type: str
   src:
-    required: false
     description:
-      - The remote path of the application ear or war to deploy
+      - The remote path of the application ear or war to deploy.
+    type: path
   deploy_path:
-    required: false
     default: /var/lib/jbossas/standalone/deployments
     description:
-      - The location in the filesystem where the deployment scanner listens
+      - The location in the filesystem where the deployment scanner listens.
+    type: path
   state:
-    required: false
     choices: [ present, absent ]
     default: "present"
     description:
-      - Whether the application should be deployed or undeployed
+      - Whether the application should be deployed or undeployed.
+    type: str
 notes:
-  - "The JBoss standalone deployment-scanner has to be enabled in standalone.xml"
-  - "Ensure no identically named application is deployed through the JBoss CLI"
-author: "Jeroen Hoekx (@jhoekx)"
+  - The JBoss standalone deployment-scanner has to be enabled in standalone.xml
+  - Ensure no identically named application is deployed through the JBoss CLI
+author:
+  - Jeroen Hoekx (@jhoekx)
 """
 
-EXAMPLES = """
-# Deploy a hello world application
-- jboss:
+EXAMPLES = r"""
+- name: Deploy a hello world application
+  jboss:
     src: /tmp/hello-1.0-SNAPSHOT.war
     deployment: hello.war
     state: present
 
-# Update the hello world application
-- jboss:
+- name: Update the hello world application
+  jboss:
     src: /tmp/hello-1.1-SNAPSHOT.war
     deployment: hello.war
     state: present
 
-# Undeploy the hello world application
-- jboss:
+- name: Undeploy the hello world application
+  jboss:
     deployment: hello.war
     state: absent
 """
+
+RETURN = r""" # """
 
 import os
 import shutil
@@ -86,9 +90,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             src=dict(type='path'),
-            deployment=dict(required=True),
+            deployment=dict(type='str', required=True),
             deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
-            state=dict(choices=['absent', 'present'], default='present'),
+            state=dict(type='str', choices=['absent', 'present'], default='present'),
         ),
         required_if=[('state', 'present', ('src',))]
     )
