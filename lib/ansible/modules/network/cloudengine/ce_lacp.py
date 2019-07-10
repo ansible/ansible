@@ -149,8 +149,8 @@ EXAMPLES = r'''
       preempt_enable: True,
       state_flapping: True,
       port_id_extension_enable: True,
-      unexpected_mac_disable: True, 
-      timeout_type: 'Fast',
+      unexpected_mac_disable: True,
+      timeout_type: Fast,
       fast_timeout: 123,
       mixed_rate_link_enable: True,
       preempt_delay: 23,
@@ -432,6 +432,8 @@ class Lacp(object):
         for key in self.module.params.keys():
             if key in LACP.keys() and self.module.params[key] is not None:
                 self.param[key] = self.module.params[key]
+                if isinstance(self.module.params[key], bool):
+                    self.param[key] = str(self.module.params[key])
         msg = check_param(self.param)
         # if self.param.get('fast_timeout') is not None and self.param.get('timeout_type') is None:
         # self.param['timeout_type'] = 'Fast'
