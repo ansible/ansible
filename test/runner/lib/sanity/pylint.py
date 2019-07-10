@@ -7,6 +7,8 @@ import json
 import os
 import datetime
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -21,6 +23,7 @@ from lib.util import (
     display,
     read_lines_without_comments,
     ConfigParser,
+    INSTALL_ROOT,
 )
 
 from lib.executor import (
@@ -51,12 +54,6 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
-    def __init__(self):
-        super(PylintTest, self).__init__()
-
-        self.plugin_dir = 'test/sanity/pylint/plugins'
-        self.plugin_names = sorted(p[0] for p in [os.path.splitext(p) for p in os.listdir(self.plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
-
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -67,14 +64,18 @@ class PylintTest(SanitySingleVersion):
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        skip_paths = read_lines_without_comments(PYLINT_SKIP_PATH)
+        plugin_dir = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/plugins')
+        plugin_names = sorted(p[0] for p in [
+            os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
+
+        skip_paths = read_lines_without_comments(PYLINT_SKIP_PATH, optional=True)
 
         invalid_ignores = []
 
         supported_versions = set(SUPPORTED_PYTHON_VERSIONS) - set(UNSUPPORTED_PYTHON_VERSIONS)
         supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
 
-        ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH)
+        ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH, optional=True)
         ignore = collections.defaultdict(dict)
         line = 0
 
@@ -172,7 +173,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.utcnow()
-            messages += self.pylint(args, context, context_paths)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names)
             context_end = datetime.datetime.utcnow()
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -259,17 +260,13 @@ class PylintTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def pylint(self, args, context, paths):
-        """
-        :type args: SanityConfig
-        :type context: str
-        :type paths: list[str]
-        :rtype: list[dict[str, str]]
-        """
-        rcfile = 'test/sanity/pylint/config/%s' % context.split('/')[0]
+    @staticmethod
+    def pylint(args, context, paths, plugin_dir, plugin_names):  # type: (SanityConfig, str, t.List[str], str, t.List[str]) -> t.List[t.Dict[str, str]]
+        """Run pylint using the config specified by the context on the specified paths."""
+        rcfile = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
 
         if not os.path.exists(rcfile):
-            rcfile = 'test/sanity/pylint/config/default'
+            rcfile = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/config/default')
 
         parser = ConfigParser()
         parser.read(rcfile)
@@ -280,7 +277,7 @@ class PylintTest(SanitySingleVersion):
             config = dict()
 
         disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
-        load_plugins = set(self.plugin_names) - disable_plugins
+        load_plugins = set(plugin_names) - disable_plugins
 
         cmd = [
             args.python_executable,
@@ -294,7 +291,7 @@ class PylintTest(SanitySingleVersion):
         ] + paths
 
         env = ansible_environment(args)
-        env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, self.plugin_dir)
+        env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, plugin_dir)
 
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
