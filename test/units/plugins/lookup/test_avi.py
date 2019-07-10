@@ -23,13 +23,19 @@ __metaclass__ = type
 import os
 import pytest
 import json
-import __builtin__
 
 from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError
 from ansible.plugins.loader import lookup_loader
 from ansible.plugins.lookup import avi
+
+
+try:
+    import builtins as __builtin__
+except ImportError:
+    import __builtin__
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 
@@ -47,13 +53,21 @@ def dummy_credentials():
     dummy_credentials['tenant'] = 'admin'
     return dummy_credentials
 
+@pytest.fixture
+def super_switcher(scope="function", autouse=True):
+    # Mocking the inbuilt super as it is used in ApiSession initialization
+    original_super = __builtin__.super
+    __builtin__.super = MagicMock()
+    yield
+    # Revert the super to default state
+    __builtin__.super = original_super
+
+
 
 def test_lookup_multiple_obj(dummy_credentials):
     avi_lookup = lookup_loader.get('avi')
     avi_mock = MagicMock()
     avi_mock.return_value.get.return_value.json.return_value = data["mock_multiple_obj"]
-    # Mocking the inbuilt super as it is used in ApiSession initialization
-    __builtin__.super = MagicMock()
     with patch.object(avi, 'ApiSession', avi_mock):
         retval = avi_lookup.run([], {}, avi_credentials=dummy_credentials,
                                 obj_type="network")
@@ -64,17 +78,14 @@ def test_lookup_single_obj(dummy_credentials):
     avi_lookup = lookup_loader.get('avi')
     avi_mock = MagicMock()
     avi_mock.return_value.get_object_by_name.return_value = data["mock_single_obj"]
-    __builtin__.super = MagicMock()
     with patch.object(avi, 'ApiSession', avi_mock):
         retval = avi_lookup.run([], {}, avi_credentials=dummy_credentials,
                                 obj_type="network", obj_name='PG-123')
         assert retval[0] == data["mock_single_obj"]
 
-
 def test_invalid_lookup(dummy_credentials):
     avi_lookup = lookup_loader.get('avi')
     avi_mock = MagicMock()
-    __builtin__.super = MagicMock()
     with pytest.raises(AnsibleError):
         with patch.object(avi, 'ApiSession', avi_mock):
             avi_lookup.run([], {}, avi_credentials=dummy_credentials)
