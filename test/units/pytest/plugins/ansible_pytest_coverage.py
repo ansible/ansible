@@ -1,21 +1,23 @@
 """Monkey patch os._exit when running under coverage so we don't lose coverage data in forks, such as with `pytest --boxed`."""
-import gc
-import os
-
-try:
-    import coverage
-except ImportError:
-    coverage = None
-
-try:
-    test = coverage.Coverage
-except AttributeError:
-    coverage = None
+from __future__ import (absolute_import, division, print_function)
 
 
 def pytest_configure():
+    try:
+        import coverage
+    except ImportError:
+        coverage = None
+
+    try:
+        test = coverage.Coverage
+    except AttributeError:
+        coverage = None
+
     if not coverage:
         return
+
+    import gc
+    import os
 
     coverage_instances = []
 
