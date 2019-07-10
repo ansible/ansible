@@ -135,9 +135,26 @@ EXAMPLES = r'''
 
   tasks:
   - name: Ensure Eth-Trunk100 is created, add two members, and set to mode lacp-static
-    ce_eth_trunk:
+    ce_lacp:
       trunk_id: 100
       mode: 'lacp-static'
+      state: present
+    ce_lacp:
+      trunk_id: 100
+      global_priority: 1231
+      state: present
+    ce_lacp:
+      trunk_id: 100
+      mode: Dynamic
+      preempt_enable: True,
+      state_flapping: True,
+      port_id_extension_enable: True,
+      unexpected_mac_disable: True, 
+      timeout_type: 'Fast',
+      fast_timeout: 123,
+      mixed_rate_link_enable: True,
+      preempt_delay: 23,
+      collector_delay: 33,
       state: present
 '''
 
@@ -170,11 +187,6 @@ updates:
              "mode lacp-static",
              "interface 10GE1/0/25",
              "eth-trunk 100"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: bool
-    sample: true
 '''
 
 import xml.etree.ElementTree as ET
@@ -204,9 +216,7 @@ LACP = {'trunk_id': 'ifName',
 
 
 def has_element(parent, xpath):
-    """
-    get or create a element by xpath
-    """
+    """get or create a element by xpath"""
     ele = parent.find('./' + xpath)
     if ele is not None:
         return ele
@@ -265,10 +275,7 @@ def bulid_xml(kwargs, operation='get'):
 
 
 def check_param(kwargs):
-    """
-    check args list
-    the boolean or list values cloud not be checked,because they are limit by args list in main
-    """
+    """check args list,the boolean or list values cloud not be checked,because they are limit by args list in main"""
 
     for key in kwargs:
         if kwargs[key] is None:
@@ -486,7 +493,6 @@ class Lacp(object):
 
 
 def main():
-    """Module main"""
 
     argument_spec = dict(
         mode=dict(required=False,
