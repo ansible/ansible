@@ -15,19 +15,6 @@
     that: 
       - output.changed
 
-- name: Update Recovery Services vault
-  azure_rm_recoveryservicesvault:
-    resource_group: "{{ resource_group }}"
-    name: "myVault{{ rpfx }}"
-    sku_name: RS0
-    upgrade_details:
-      message: myMessage
-  register: output
-
-- assert:
-    that: 
-      - output.changed
-
 - name: Get Info of Recovery Services Resource
   azure_rm_recoveryservicesvault_info:
     resource_group: "{{ resource_group }}"
