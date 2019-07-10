@@ -145,7 +145,7 @@ class AnsibleCollectionLoader(object):
             package_paths = [self._extend_path_with_ns(p, fullname) for p in parent_pkg.__path__]
 
         for candidate_child_path in package_paths:
-            source = None
+            code_object = None
             is_package = True
             location = None
             # check for implicit sub-package first
@@ -162,6 +162,8 @@ class AnsibleCollectionLoader(object):
 
                     with open(source_path, 'rb') as fd:
                         source = fd.read()
+
+                    code_object = compile(source=source, filename=source_path, mode='exec', flags=0, dont_inherit=True)
                     location = source_path
                     is_package = source_path.endswith('__init__.py')
                     break
@@ -170,7 +172,6 @@ class AnsibleCollectionLoader(object):
                     continue
 
             newmod = ModuleType(fullname)
-            newmod.__package__ = fullname
             newmod.__file__ = location
             newmod.__loader__ = self
 
@@ -180,11 +181,15 @@ class AnsibleCollectionLoader(object):
                 else:
                     newmod.__path__ = package_paths
 
-            if source:
-                # FIXME: decide cases where we don't actually want to exec the code?
-                exec(source, newmod.__dict__)
+                newmod.__package__ = fullname
+            else:
+                newmod.__package__ = parent_pkg_name
 
             sys.modules[fullname] = newmod
+
+            if code_object:
+                # FIXME: decide cases where we don't actually want to exec the code?
+                exec(code_object, newmod.__dict__)
 
             return newmod
 
