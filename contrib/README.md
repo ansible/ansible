@@ -22,5 +22,5 @@ Vault scripts provided here use this facility to retrieve the vault secret from 
 contributions welcome
 =====================
 
-Send in pull requests to fix bugs in the scripts and add inventory plugins of your own. New features should be added to inventory plugins with accompanying tests.
+We are only accepting bugfixes for inventory scripts. If you want to add features or a new inventory type, target [inventory plugins](https://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html#inventory-plugins).
 
