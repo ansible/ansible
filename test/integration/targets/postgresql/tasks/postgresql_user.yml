@@ -442,7 +442,7 @@
   - assert:
       that:
       - result is failed
-      - "{{ 'permission denied' in result.msg }}"
+      - "'permission denied' in result.msg"
 
   - name: Grant privileges
     <<: *task_parameters
