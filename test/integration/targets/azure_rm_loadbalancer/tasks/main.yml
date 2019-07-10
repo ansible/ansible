@@ -5,7 +5,8 @@
     lbvnname: "lbvn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     lbname_a: "lba{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     lbname_b: "lbb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    lbname_c: "lbc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_c1: "lbc1-{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_c2: "lbc2-{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     lbname_d: "lbd{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
@@ -148,7 +149,7 @@
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname_c }}"
+    name: "{{ lbname_c1 }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         public_ip_address: "{{ pipaname }}"
@@ -180,13 +181,13 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname_c }}"
+    name: "{{ lbname_c1 }}"
     state: absent
 
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname_c }}"
+    name: "{{ lbname_c2 }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         public_ip_address: "{{ pipaname }}"
@@ -217,7 +218,7 @@
 - name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname_c }}"
+    name: "{{ lbname_c2 }}"
     state: absent
 
 - name: Create virtual network
