@@ -1,0 +1,3 @@
+bugfixes:
+- handlers - Cache templated handler name on included handlers to avoid
+  later templating errors (https://github.com/ansible/ansible/issues/58769)
