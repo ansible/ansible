@@ -180,7 +180,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not env_var_tuples:
             warning_prefix = 'Unable to fetch Docker daemon env vars from Docker Machine for host {0}'.format(machine_name)
             if daemon_env in ('require', 'require-silently'):
-                if demon_env == 'require':
+                if daemon_env == 'require':
                     display.warning('{0}: host will be skipped'.format(warning_prefix))
                 return True
             else:  # 'optional', 'optional-silently'
