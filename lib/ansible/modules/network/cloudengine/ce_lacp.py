@@ -24,7 +24,7 @@ DOCUMENTATION = r'''
 ---
 module: ce_lacp
 version_added: "2.9"
-short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches.
+short_description: Manages Eth-Trunk interfaces on HUAWEI CloudEngine switches
 description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
 author: xuxiaowei0512 (@CloudEngine-Ansible)
@@ -76,13 +76,11 @@ options:
     timeout_type:
         description:
             - Lacp timeout type,that may be 'Fast' or 'Slow'.
-        required: false
         choices: ['Slow', 'Fast']
         type: str
     fast_timeout:
         description:
             - When lacp timeout type is 'Fast', user-defined time can be a number(3~90).
-        required: false
         type: int
     mixed_rate_link_enable:
         description:
@@ -91,43 +89,35 @@ options:
     preempt_delay:
         description:
             - Value of preemption delay time.
-        required: false
         type: int
     collector_delay:
         description:
             - Value of delay time in units of 10 microseconds.
-        required: false
         type: int
     max_active_linknumber:
         description:
             - Max active linknumber in link aggregation group.
-        required: false
         type: int
     select:
         description:
             - Select priority or speed to preempt.
-        required: false
         choices: ['Speed', 'Prority']
         type: str
     member_if:
         description:
             - The member interface of eth-trunk that is selected is merge priority.
-        required: false
         type: str
     priority:
         description:
             - The priority of eth-trunk member interface,and 'member_if' is need when priority is not none.
-        required: false
         type: int
     global_priority:
         description:
             - Configure lacp priority on system-view.
-        required: false
         type: int
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
         type: str
@@ -136,7 +126,6 @@ options:
         description:
             - A dict specified some options about connection  that is not required from version 2.9.
             - And provider is unnecessary when using network_cli and will be ignored.
-        required: false
 '''
 EXAMPLES = r'''
 - name: eth_trunk module test
