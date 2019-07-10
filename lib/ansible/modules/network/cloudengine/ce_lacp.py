@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ce_lacp
 version_added: "2.9"
@@ -43,12 +43,10 @@ options:
               When 256 is specified, the value ranges from 0 to 255.
               When 512 is specified, the value ranges from 0 to 511.
               When 1024 is specified, the value ranges from 0 to 1023.
-        required: true
-        type: str
+        type: int
     mode:
         description:
             - Specifies the working mode of an Eth-Trunk interface.
-        required: false
         default: null
         choices: ['Manual','Dynamic','Static']
         type: str
@@ -56,30 +54,19 @@ options:
         description:
             - Specifies lacp preempt enable of Eth-Trunk lacp.
               The value is an boolean 'true' or 'false'.
-        required: false
-        default: null
-        choices: ['true', 'false']
-        type: str
+        type: bool
     state_flapping:
         description:
             - Lacp dampening state-flapping.
-        required: false
-        default: null
-        choices: ['true', 'false']
-        type: str
+        type: bool
     port_id_extension_enable:
         description:
             - Enable the function of extending the LACP negotiation port number.
-        required: false
-        default: null
-        choices: ['true', 'false']
-        type: str
+        type: bool
     unexpected_mac_disable:
         description:
             - Lacp dampening unexpected-mac disable.
-        required: false
-        choices: ['true', 'false']
-        type: str
+        type: bool
     system_id:
         description:
             - Link Aggregation Control Protocol System ID,interface Eth-Trunk View.
@@ -100,9 +87,7 @@ options:
     mixed_rate_link_enable:
         description:
             - Value of max active linknumber.
-        required: false
-        choices: ['true', 'false']
-        type: str
+        type: bool
     preempt_delay:
         description:
             - Value of preemption delay time.
@@ -153,7 +138,7 @@ options:
             - And provider is unnecessary when using network_cli and will be ignored.
         required: false
 '''
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: eth_trunk module test
   hosts: cloudengine
   connection: local
@@ -163,12 +148,11 @@ EXAMPLES = '''
   - name: Ensure Eth-Trunk100 is created, add two members, and set to mode lacp-static
     ce_eth_trunk:
       trunk_id: 100
-      members: ['10GE1/0/24','10GE1/0/25']
       mode: 'lacp-static'
       state: present
 '''
 
-RETURN = '''
+RETURN = r'''
 proposed:
     description: k/v pairs of parameters passed into module
     returned: always
@@ -519,15 +503,15 @@ def main():
         mode=dict(required=False,
                   choices=['Manual', 'Dynamic', 'Static'],
                   type='str'),
-        trunk_id=dict(required=False, type='str'),
-        preempt_enable=dict(required=False, choices=['true', 'false']),
-        state_flapping=dict(required=False, choices=['true', 'false']),
-        port_id_extension_enable=dict(required=False, choices=['true', 'false']),
-        unexpected_mac_disable=dict(required=False, choices=['true', 'false']),
+        trunk_id=dict(required=False, type='int'),
+        preempt_enable=dict(required=False, type='bool'),
+        state_flapping=dict(required=False, type='bool'),
+        port_id_extension_enable=dict(required=False, type='bool'),
+        unexpected_mac_disable=dict(required=False, type='bool'),
         system_id=dict(required=False, type='str'),
         timeout_type=dict(required=False, type='str', choices=['Slow', 'Fast']),
         fast_timeout=dict(required=False, type='int'),
-        mixed_rate_link_enable=dict(required=False, choices=['true', 'false']),
+        mixed_rate_link_enable=dict(required=False, type='bool'),
         preempt_delay=dict(required=False, type='int'),
         collector_delay=dict(required=False, type='int'),
         max_active_linknumber=dict(required=False, type='int'),
