@@ -162,7 +162,7 @@ def lookup_sessions(module):
         if state == 'list':
             sessions_list = consul_client.session.list(dc=datacenter)
             # Ditch the index, this can be grabbed from the results
-            if sessions_list and sessions_list[1]:
+            if sessions_list and len(sessions_list) >= 2:
                 sessions_list = sessions_list[1]
             module.exit_json(changed=True,
                              sessions=sessions_list)
