@@ -105,12 +105,16 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Create or Update Recovery Services vault
+- name: Create Recovery Services vault
   azure_rm_recoveryservicesvault:
     resource_group: myResourceGroup
     name: myVault
     sku_name: Standard
     location: westus
+- name: Update Recovery Services vault
+  azure_rm_recoveryservicesvault:
+    resource_group: myResourceGroup
+    name: myVault
     upgrade_details:
       message: myMessage
 - name: Delete Recovery Services Vault
