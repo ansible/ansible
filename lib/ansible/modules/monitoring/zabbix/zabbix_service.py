@@ -51,7 +51,8 @@ options:
             - Algorithm used to calculate the sla
         required: false
         type: str
-        choices: [no, one_child, all_childs]
+        choices: ["no", "one_child", "all_childs"]
+        default: one_child
     trigger_name:
         description:
             - Name of trigger linked to the service
@@ -68,6 +69,7 @@ options:
         required: false
         choices: [present, absent, dump]
         default: "present"
+        type: str
 
 extends_documentation_fragment:
     - zabbix
@@ -120,6 +122,7 @@ template_json:
             "triggerid": "16313"
         }
     ]
+  }
 '''
 
 import traceback
@@ -244,7 +247,7 @@ def main():
             name=dict(type='str', required=True),
             parent=dict(type='str', required=False),
             sla=dict(type='float', required=False),
-            calculate_sla=dict(type='bool', required=False, default=True),
+            calculate_sla=dict(type='bool', required=False, default=False),
             algorithm=dict(default='one_child', required=False, choices=['no', 'one_child', 'all_childs']),
             trigger_name=dict(type='str', required=False),
             trigger_host=dict(type='str', required=False),
