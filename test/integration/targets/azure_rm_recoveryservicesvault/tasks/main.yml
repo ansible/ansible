@@ -19,6 +19,7 @@
   azure_rm_recoveryservicesvault:
     resource_group: "{{ resource_group }}"
     name: "myVault{{ rpfx }}"
+    sku_name: RS0
     upgrade_details:
       message: myMessage
   register: output
