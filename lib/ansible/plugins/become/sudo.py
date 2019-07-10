@@ -11,6 +11,8 @@ DOCUMENTATION = """
         - This become plugins allows your remote/login user to execute commands as another user via the sudo utility.
     author: ansible (@core)
     version_added: "2.8"
+    extends_documentation_fragment:
+        - become_matches
     options:
         become_user:
             description: User you 'become' to execute the task
@@ -67,6 +69,10 @@ DOCUMENTATION = """
             ini:
               - section: sudo_become_plugin
                 key: password
+        become_fail_match:
+            default: ['Sorry, try again.']
+        become_missing_password_match:
+            default: ['Sorry, a password is required to run sudo', 'sudo: a password is required']
 """
 
 
@@ -75,11 +81,12 @@ from ansible.plugins.become import BecomeBase
 
 class BecomeModule(BecomeBase):
 
+    # me
     name = 'sudo'
 
     # messages for detecting prompted password issues
-    fail = ('Sorry, try again.',)
-    missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
+    fail = None
+    missing = None
 
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)

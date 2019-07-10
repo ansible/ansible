@@ -77,12 +77,23 @@ class BecomeBase(AnsiblePlugin):
         return b_fail and b_fail in b_out
 
     def check_incorrect_password(self, b_output):
+        try:
+            self.fail = self.get_option('become_fail_match')
+        except KeyError:
+            pass  # no configurable fail
+
         for errstring in self.fail:
             if self._check_password_error(b_output, errstring):
                 return True
+
         return False
 
     def check_missing_password(self, b_output):
+        try:
+            self.missing = self.get_option('become_password_missing_match')
+        except KeyError:
+            pass  # no configurable missing
+
         for errstring in self.missing:
             if self._check_password_error(b_output, errstring):
                 return True
