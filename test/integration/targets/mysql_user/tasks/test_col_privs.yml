@@ -45,6 +45,39 @@
     login_unix_socket: '{{ mysql_socket }}'
   register: result
 
+- name: Add privs to reserved keyword table column (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(ssl)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed" }
+
+- name: Add privs to reserved keyworld table column (expect ok)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(ssl)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv did not change
+  assert: { that: "not result.changed" }
+
+- name: Drop privs for reserved keyword table column (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(ssl)'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
 - include: assert_no_user.yml user_name="colprivuser1"
 
 - name: Drop col priv test db

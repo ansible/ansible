@@ -1,0 +1,2 @@
+bugfixes:
+  - mysql_user - column names are quoted when adding column specific grants
