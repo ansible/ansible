@@ -134,15 +134,17 @@ EXAMPLES = r'''
   gather_facts: no
 
   tasks:
-  - name: Ensure Eth-Trunk100 is created, add two members, and set to mode lacp-static
+  - name: Ensure Eth-Trunk100 is created, and set to mode lacp-static
     ce_lacp:
       trunk_id: 100
       mode: 'lacp-static'
       state: present
+  - name: Ensure Eth-Trunk100 is created, add two members, and set global priority to 1231
     ce_lacp:
       trunk_id: 100
       global_priority: 1231
       state: present
+  - name: Ensure Eth-Trunk100 is created, and set mode to Dynamic and configure other options
     ce_lacp:
       trunk_id: 100
       mode: Dynamic
