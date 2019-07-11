@@ -1,10 +1,10 @@
-ffffffffff# This code is part of Ansible, but is an independent component.
+# This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by Ansible
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2017 Fortinet, Inc
+# (c) 2017 Fortinet, Incddddd
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
