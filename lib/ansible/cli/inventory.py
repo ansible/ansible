@@ -18,6 +18,7 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
+from ansible.vars.reserved import warn_if_reserved
 
 display = Display()
 
@@ -132,6 +133,7 @@ class InventoryCLI(CLI):
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
 
             myvars = self._get_host_variables(host=hosts[0])
+            warn_if_reserved(myvars)
 
             # FIXME: should we template first?
             results = self.dump(myvars)
@@ -330,6 +332,7 @@ class InventoryCLI(CLI):
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
+                warn_if_reserved(hvars)
                 results['_meta']['hostvars'][host.name] = hvars
 
         return results

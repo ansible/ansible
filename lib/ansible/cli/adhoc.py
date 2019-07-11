@@ -16,6 +16,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.utils.display import Display
+from ansible.vars.reserved import warn_if_reserved
 
 display = Display()
 
@@ -121,6 +122,10 @@ class AdHocCLI(CLI):
         if context.CLIARGS['module_name'] in ('import_playbook',):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
+
+        for host in hosts:
+            host_vars = variable_manager.get_vars(host=host)
+            warn_if_reserved(host_vars)
 
         play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
