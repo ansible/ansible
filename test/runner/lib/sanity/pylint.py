@@ -26,7 +26,6 @@ from lib.util import (
 )
 
 from lib.util_common import (
-    intercept_command,
     run_command,
 )
 
@@ -80,7 +79,7 @@ class PylintTest(SanitySingleVersion):
         supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
 
         ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH, optional=True)
-        ignore = collections.defaultdict(dict)
+        ignore = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
         line = 0
 
         for ignore_entry in ignore_entries:
@@ -207,7 +206,7 @@ class PylintTest(SanitySingleVersion):
 
         for error in errors:
             if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
+                ignore[error.path][error.code] = 0  # error ignored, clear line number of ignore entry to track usage
             else:
                 filtered.append(error)  # error not ignored
 

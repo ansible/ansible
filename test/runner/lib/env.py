@@ -304,6 +304,7 @@ def get_git_details(args):
     return git_details
 
 
+# noinspection PyUnusedLocal
 def get_merged_commit(args, commit):  # pylint: disable=unused-argument
     """
     :type args: CommonConfig
