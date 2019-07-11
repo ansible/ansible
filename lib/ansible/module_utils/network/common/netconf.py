@@ -31,7 +31,7 @@ from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
 
 try:
-    from ncclient.xml_ import NCElement, to_ele, to_xml, new_ele, sub_ele
+    from ncclient.xml_ import NCElement, new_ele, sub_ele
     HAS_NCCLIENT = True
 except (ImportError, AttributeError):
     HAS_NCCLIENT = False

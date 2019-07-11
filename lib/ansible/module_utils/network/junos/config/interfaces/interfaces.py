@@ -57,14 +57,13 @@ class Interfaces(ConfigBase):
         :returns: The result from module execution
         """
         result = {'changed': False}
-        warnings = list()
 
         existing_interfaces_facts = self.get_interfaces_facts()
 
         config_xmls = self.set_config(existing_interfaces_facts)
         with locked_config(self._module):
             for config_xml in to_list(config_xmls):
-                diff = load_config(self._module, config_xml, warnings)
+                diff = load_config(self._module, config_xml, [])
 
             commit = not self._module.check_mode
             if diff:
@@ -158,7 +157,8 @@ class Interfaces(ConfigBase):
             else:
                 delete_obj.append(have_obj)
 
-        interface_xmls_obj.extend(self._state_deleted(delete_obj, have))
+        if delete_obj:
+            interface_xmls_obj.extend(self._state_deleted(delete_obj, have))
         return interface_xmls_obj
 
     def _state_merged(self, want, have):
