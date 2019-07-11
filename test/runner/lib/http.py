@@ -113,6 +113,8 @@ class HttpClient(object):
             6,  # CURLE_COULDNT_RESOLVE_HOST
         )
 
+        stdout = ''
+
         while True:
             attempts += 1
 

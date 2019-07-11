@@ -226,8 +226,8 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     :type cmd: list[str]
     :type options: list[str] | None
     :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
+    :type stdin: BinaryIO | None
+    :type stdout: BinaryIO | None
     :rtype: str | None, str | None
     """
     if not options:
