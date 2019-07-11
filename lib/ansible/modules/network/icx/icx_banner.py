@@ -56,6 +56,7 @@ options:
        by specifying it as module parameter.
     type: bool
     default: yes
+<<<<<<< 620c3dc6ceb75d13dc3a6248dc41f13454f015c1
 <<<<<<< 07a2e8d7f18612a6d0f9ad34085e94db1d1440bf
 <<<<<<< 3fbe6494404da6befe1a8d24567f5934295faf82
 <<<<<<< adfbd04b3ab611a9807a36c7d4ab648d53a811be
@@ -69,6 +70,8 @@ options:
 >>>>>>> new changes
 
 >>>>>>> added notes
+=======
+>>>>>>> new module
 """
 
 EXAMPLES = """
