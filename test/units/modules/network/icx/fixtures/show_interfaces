@@ -2374,8 +2374,4 @@ GigEthernetmgmt1 is up, line protocol is up
   0 runts, 0 giants
   22670 packets output, 8363988 bytes, 0 underruns
   Transmitted 6 broadcasts, 0 multicasts, 22664 unicasts
-<<<<<<< cf7a047d6267094bfa786db40851ba673b407f8a
   0 output errors, 0 collisions
-=======
-  0 output errors, 0 collisions
->>>>>>> icx test units module
