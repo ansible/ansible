@@ -126,8 +126,9 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         # default isn't a bad idea
         self.lockfile = '/var/run/yum.pid'
 
+    @abstractmethod
     def is_lockfile_pid_valid(self):
-        raise NotImplementedError
+        return
 
     def _is_lockfile_present(self):
         return (os.path.isfile(self.lockfile) or glob.glob(self.lockfile)) and self.is_lockfile_pid_valid()
