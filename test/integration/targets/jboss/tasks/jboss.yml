@@ -1,7 +1,31 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # Integration tests for jboss module.
+
+# helloworld.war (got from https://github.com/aeimer/java-example-helloworld-war/) license:
+# MIT License
 #
+# Copyright (c) 2017 Alex Eimer
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# ===============================
 # Module's note section contains:
 # "- The JBoss standalone deployment-scanner has to be enabled in standalone.xml"
 #
@@ -13,118 +37,113 @@
 # The scanner periodically checks the contents of the deployments directory
 # and reacts to changes by updating the server."
 # Regarding the information above JBoss server must be installed and running for full test suite.
-# Without that it is possible to check check_mode only.
+# We use WildFly server, free alternative, instead. See setup_wildfly_server role for more information.
 
 - vars:
-    jboss_root: /var/lib/jbossas
-    deploy_dir: '{{ jboss_root }}/standalone/deployments'
-    war_src_dir: '{{ jboss_root }}/standalone/war_src_dir'
-    war_file_1: '{{ war_src_dir }}/hello-0.war'
-    war_file_2: '{{ war_src_dir }}/hello-1.war'
-    test_deployment: hello-2.war
+    war_file_1: 'helloworld-1.war'
+    war_file_1_path: '{{ war_src_dir }}/{{ war_file_1 }}'
+    test_deployment: helloworld-1.war
     task_parameters: &task_parameters
-      become_user: root
+      become_user: '{{ wf_user }}'
       become: yes
       register: result
 
   block:
-  - name: Create test directories
-    <<: *task_parameters
-    file:
-      path: '{{ item }}'
-      state: directory
-      recurse: yes
-    loop:
-    - '{{ deploy_dir }}'
-    - '{{ war_src_dir }}'
-
   - name: Create test files
     <<: *task_parameters
-    file:
-      path: '{{ item }}'
-      state: touch
-    loop:
-    - '{{ war_file_1 }}'
-    - '{{ war_file_2 }}'
-
-  - name: Add lines in war_file_2 to make it different from war_file_1
-    <<: *task_parameters
-    lineinfile:
-      line: 'hello'
-      path: '{{ war_file_2 }}'
+    copy:
+      src: '{{ war_file_1 }}'
+      dest: '{{ war_src_dir }}'
 
   ##################
   # Start the tests:
 
-  # Test if state=present and not deployed:
-  - name: jboss - deploy war to default path in check_mode
+  # Test if state=present and not deployed, check_mode:
+  - name: jboss - deploy war in check_mode
     <<: *task_parameters
     jboss:
-      deployment: '{{ test_deployment }}'
-      src: '{{ war_file_1 }}'
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      src: '{{ war_file_1_path }}'
     check_mode: yes
 
   - assert:
       that:
       - result is changed
 
-  # Check (it makes sense while JBoss is not installed and running).
-  # Remove this test after it is installed:
+  # Check 
   - name: check that nothing changed after the previous step
     <<: *task_parameters
     file:
-      path: '{{ deploy_dir }}/{{ test_deployment }}'
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
     ignore_errors: yes
 
   - assert:
       that:
-      - result is failed
+      - "'is absent' in result.msg"
 
-  # Check, if JBoss is running and has enabled deployment-scanner,
-  # it creates a new file called like the war file with .deployed extension automatically,
-  # so, we must check that:
-  - name: check that nothing changed after the previous step
-    <<: *task_parameters
-    file:
-      path: '{{ deploy_dir }}/{{ test_deployment }}.deployed'
-    ignore_errors: yes
-
-  - assert:
-      that:
-      - result is failed
-
-  # (Remove this after JBoss is installed and running)
-  - name: copy war file to deployment directory
-    <<: *task_parameters
-    copy:
-      remote_src: yes
-      src: '{{ war_file_1 }}'
-      dest: '{{ deploy_dir }}/{{ test_deployment }}'
-
-  # (Remove this after JBoss is installed and running)
-  - name: add deployment file to emulate deployment-scanner activity
-    <<: *task_parameters
-    file:
-      path: '{{ deploy_dir }}/{{ test_deployment }}.deployed'
-      state: touch
-
-  # Test if state=present and deployed:
-  - name: jboss - deploy war to default path in check_mode, war is deployed now
+  # Test if state=present and not deployed, actual mode:
+  - name: jboss - deploy war
     <<: *task_parameters
     jboss:
-      deployment: '{{ test_deployment }}'
-      src: '{{ war_file_1 }}'
+      deployment: helloworld-1.war
+      deploy_path: '{{ deploy_dir }}'
+      src: '{{ war_file_1_path }}'
+
+  - assert:
+      that:
+      - result is changed
+
+  # Check 
+  - name: check that the file is deployed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
+
+  - assert:
+      that:
+      - result.state == 'file'
+
+  # Test if state=present and deployed in check mode, try again:
+  - name: jboss - try again to deploy war in check_mode, war is deployed now
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      src: '{{ war_file_1_path }}'
+      deploy_path: '{{ deploy_dir }}'
     check_mode: yes
 
   - assert:
       that:
       - result is not changed
 
+  # Test if state=present and deployed, try again:
+  - name: jboss - try again to deploy war in actual mode, war is deployed now
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      src: '{{ war_file_1_path }}'
+      deploy_path: '{{ deploy_dir }}'
+
+  - assert:
+      that:
+      - result is not changed
+
+  # Check 
+  - name: check that nothing changed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
+
+  - assert:
+      that:
+      - result.state == 'file'
+
   # Test if state=absent and deployed:
   - name: jboss - undeploy war in check_mode, war is deployed already
     <<: *task_parameters
     jboss:
-      deployment: '{{ test_deployment }}'
+      deployment: '{{ war_file_1 }}'
       deploy_path: '{{ deploy_dir }}'
       state: absent
     check_mode: yes
@@ -136,36 +155,38 @@
   - name: check that nothing actually changed after the previous step
     <<: *task_parameters
     file:
-      path: '{{ deploy_dir }}/{{ test_deployment }}.deployed'
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
 
   - assert:
       that:
       - result.state == 'file'
 
-  # Test if state=present and another file is deployed:
-  - name: jboss - deploy war to default path in check_mode
+  # Test if state=absent and deployed:
+  - name: jboss - undeploy war in actual mode, war is deployed already
     <<: *task_parameters
     jboss:
-      deployment: '{{ test_deployment }}'
-      src: '{{ war_file_2 }}'
-    check_mode: yes
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      state: absent
 
   - assert:
       that:
       - result is changed
 
-  # Remove deployed file for the next test:
-  - name: jboss - remove deployed file
+  - name: check that file is undeployed after the previous step
     <<: *task_parameters
     file:
-      path: '{{ deploy_dir }}/{{ test_deployment }}.deployed'
-      state: absent
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.undeployed'
 
-  # Test if state=absent and not deployed:
-  - name: jboss - undeploy war in check_mode, war is deployed already
+  - assert:
+      that:
+      - result.state == 'file'
+
+  # Test if state=absent and undeployed:
+  - name: jboss - undeploy war in check_mode, war is undeployed already
     <<: *task_parameters
     jboss:
-      deployment: '{{ test_deployment }}'
+      deployment: '{{ war_file_1 }}'
       deploy_path: '{{ deploy_dir }}'
       state: absent
     check_mode: yes
@@ -174,10 +195,14 @@
       that:
       - result is not changed
 
-  always:
-  # Clean up:
-  - name: Remove jboss test directory
+  # Test if state=absent and undeployed:
+  - name: jboss - undeploy war in actual_mode, war is undeployed already
     <<: *task_parameters
-    file:
-      path: '{{ jboss_root }}'
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
       state: absent
+
+  - assert:
+      that:
+      - result is not changed

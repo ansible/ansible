@@ -1,0 +1,4 @@
+jboss_root: /opt/wildfly
+deploy_dir: '{{ jboss_root }}/standalone/deployments'
+war_src_dir: '{{ jboss_root }}'
+wf_user: wildfly

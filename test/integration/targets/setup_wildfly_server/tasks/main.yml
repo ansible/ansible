@@ -1,0 +1,75 @@
+- name: Install java
+  package:
+    name: java-1.8.0-openjdk-devel
+
+- name: Download wildfly
+  get_url:
+    url: 'https://download.jboss.org/wildfly/{{ wf_version }}/wildfly-{{ wf_version }}.tar.gz'
+    dest: '/tmp/wildfly-{{ wf_version }}.tar.gz'
+
+- name: Unarchive tar
+  unarchive:
+    src: '/tmp/wildfly-{{ wf_version }}.tar.gz'
+    dest: /opt
+    remote_src: yes
+
+- name: Remove tar
+  file:
+    path: '/tmp/wildfly-{{ wf_version }}.tar.gz'
+    state: absent
+
+- name: Create symlink
+  file:
+    src: '/opt/wildfly-{{ wf_version }}'
+    dest: '/opt/wildfly'
+    state: link
+
+- name: Create group for wildfly
+  group:
+    name: '{{ wf_user }}'
+    system: yes
+
+- name: Create user for wildfly
+  user:
+    name: '{{ wf_user }}'
+    system: yes
+    group: '{{ wf_user }}'
+    home: '{{ wf_homedir }}'
+
+- name: Set permissions
+  file:
+    path: '/opt/wildfly-{{ wf_version }}'
+    state: directory
+    owner: '{{ wf_user }}'
+    group: '{{ wf_user }}'
+    recurse: yes
+
+- name: Create conf dir
+  file:
+    path: '{{ wf_confdir }}'
+    state: directory
+
+- name: Create config file
+  copy:
+    src: wildfly.conf
+    dest: '{{ wf_confdir }}/wildfly.conf'
+
+- name: Copy launcher
+  copy:
+    src: launch.sh
+    dest: '{{ wf_homedir }}/bin/launch.sh'
+
+- name: Make scripts executable
+  shell: 'chmod +x {{ wf_homedir }}/bin/*.sh'
+
+
+- name: Copy service file
+  copy:
+    src: wildfly.service
+    dest: /etc/systemd/system/
+
+- name: Reload systemd and start wildfly
+  systemd:
+    daemon_reload: yes
+    name: wildfly
+    state: started

@@ -1,0 +1,4 @@
+wf_version: 16.0.0.Final
+wf_homedir: /opt/wildfly
+wf_confdir: /etc/wildfly
+wf_user: wildfly
