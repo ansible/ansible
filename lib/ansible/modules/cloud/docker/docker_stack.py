@@ -96,30 +96,30 @@ stack_spec_diff:
 '''
 
 EXAMPLES = '''
--   name: deploy 'stack1' stack from file
+  - name: Deploy stack from a compose file
     docker_stack:
-        state: present
-        name: stack1
-        compose:
-        -   /opt/stack.compose
+      state: present
+      name: mystack
+      compose:
+        - /opt/docker-compose.yml
 
--   name: deploy 'stack2' from base file and yaml overrides
+  - name: Deploy stack from base compose file and override the web service
     docker_stack:
-        state: present
-        name: stack2
-        compose:
-        -   /opt/stack.compose
-        -   version: '3'
-            services:
-                web:
-                    image: nginx:latest
-                    environment:
-                        ENVVAR: envvar
+      state: present
+      name: mystack
+      compose:
+        - /opt/docker-compose.yml
+        - version: '3'
+          services:
+            web:
+              image: nginx:latest
+              environment:
+                ENVVAR: envvar
 
--   name: deprovision 'stack1'
+  - name: Remove stack
     docker_stack:
-        name: stack1
-        state: absent
+      name: mystack
+      state: absent
 '''
 
 
