@@ -168,8 +168,8 @@ def test_has_dict_changed(docker_swarm_service):
     )
 
 
-def test_has_list_of_dicts_changed(docker_swarm_service):
-    assert docker_swarm_service.has_list_of_dicts_changed(
+def test_has_list_changed(docker_swarm_service):
+    assert docker_swarm_service.has_list_changed(
         [
             {"a": 1},
             {"b": 1}
@@ -178,7 +178,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"a": 1}
         ]
     )
-    assert docker_swarm_service.has_list_of_dicts_changed(
+    assert docker_swarm_service.has_list_changed(
         [
             {"a": 1},
         ],
@@ -187,7 +187,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"b": 1},
         ]
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         [
             {"a": 1},
             {"b": 1},
@@ -197,33 +197,33 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"b": 1}
         ]
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         None,
         [
             {"b": 1},
             {"a": 1}
         ]
     )
-    assert docker_swarm_service.has_list_of_dicts_changed(
+    assert docker_swarm_service.has_list_changed(
         [],
         [
             {"b": 1},
             {"a": 1}
         ]
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         None,
         None
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         [],
         None
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         None,
         []
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         [
             {"src": 1, "dst": 2},
             {"src": 1, "dst": 2, "protocol": "udp"},
@@ -233,7 +233,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"src": 1, "dst": 2, "protocol": "udp"},
         ]
     )
-    assert not docker_swarm_service.has_list_of_dicts_changed(
+    assert not docker_swarm_service.has_list_changed(
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
             {"src": 1, "dst": 3, "protocol": "tcp"},
@@ -243,7 +243,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"src": 1, "dst": 3, "protocol": "tcp"},
         ]
     )
-    assert docker_swarm_service.has_list_of_dicts_changed(
+    assert docker_swarm_service.has_list_changed(
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
             {"src": 1, "dst": 2},
@@ -255,7 +255,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"src": 3, "dst": 4, "protocol": "tcp"},
         ]
     )
-    assert docker_swarm_service.has_list_of_dicts_changed(
+    assert docker_swarm_service.has_list_changed(
         [
             {"src": 1, "dst": 3, "protocol": "tcp"},
             {"src": 1, "dst": 2, "protocol": "udp"},
@@ -265,7 +265,7 @@ def test_has_list_of_dicts_changed(docker_swarm_service):
             {"src": 1, "dst": 2, "protocol": "udp"},
         ]
     )
-    assert docker_swarm_service.has_list_of_dicts_changed(
+    assert docker_swarm_service.has_list_changed(
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
             {"src": 1, "dst": 2, "protocol": "tcp", "extra": {"test": "foo"}},

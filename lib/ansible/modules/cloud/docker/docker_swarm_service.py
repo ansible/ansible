@@ -1202,9 +1202,9 @@ def has_dict_changed(new_dict, old_dict):
     return False
 
 
-def has_list_of_dicts_changed(new_list, old_list):
+def has_list_changed(new_list, old_list):
     """
-    Check two lists of dicts has differences.
+    Check two lists has differences.
     """
     if new_list is None:
         return False
@@ -1212,8 +1212,15 @@ def has_list_of_dicts_changed(new_list, old_list):
     if len(new_list) != len(old_list):
         return True
     for new_item, old_item in zip(new_list, old_list):
-        if has_dict_changed(new_item, old_item):
+        is_same_type = type(new_item) != type(old_item)
+        if is_same_type:
             return True
+        if isinstance(new_item, dict):
+            if has_dict_changed(new_item, old_item):
+                return True
+        elif new_item != old_item:
+            return True
+
     return False
 
 
@@ -1700,13 +1707,13 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if has_list_of_dicts_changed(self.mounts, os.mounts):
+        if has_list_changed(self.mounts, os.mounts):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if has_list_of_dicts_changed(self.configs, os.configs):
+        if has_list_changed(self.configs, os.configs):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if has_list_of_dicts_changed(self.secrets, os.secrets):
+        if has_list_changed(self.secrets, os.secrets):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if self.networks is not None and self.networks != (os.networks or []):
+        if has_list_changed(self.networks, os.networks):
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
