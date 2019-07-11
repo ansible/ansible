@@ -21,6 +21,7 @@ from lib.util import (
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
+    INSTALL_ROOT,
 )
 
 from lib.delegation import (
@@ -86,8 +87,7 @@ import lib.cover
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
-        os.chdir(git_root)
+        os.chdir(INSTALL_ROOT)
         initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
