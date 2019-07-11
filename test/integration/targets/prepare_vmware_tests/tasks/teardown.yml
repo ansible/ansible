@@ -1,16 +1,28 @@
 ---
-- name: Remove VM
+- name: Remove the VM prepared by prepare_vmware_tests
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     validate_certs: no
-    cluster: "{{ ccr1 }}"
     name: "{{ item.name }}"
     force: yes
     state: absent
   with_items: '{{ virtual_machines + virtual_machines_in_cluster }}'
-  ignore_errors: yes
+
+- name: Remove the test_vm* VMs
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ item }}"
+    force: yes
+    state: absent
+  with_items:
+    - test_vm1
+    - test_vm2
+    - test_vm3
 
 - name: Remove the DVSwitch
   vmware_dvswitch:
