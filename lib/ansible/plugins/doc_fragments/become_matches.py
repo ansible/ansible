@@ -6,6 +6,7 @@ class ModuleDocFragment(object):
 
     # Standard files documentation fragment
     DOCUMENTATION = r'''
+    options:
         become_fail_match:
             description: Strings to match to detect a privilege escalation failure
             required: False
