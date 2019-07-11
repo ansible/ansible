@@ -185,7 +185,10 @@ def register_target(connection, module):
     target_description = describe_targets(connection, module, target_group_arn, [target])
 
     if 'Reason' in target_description['TargetHealth']:
-        if target_description['TargetHealth']['Reason'] == "Target.NotRegistered":
+        not_registered = target_description['TargetHealth']['Reason'] == "Target.NotRegistered"
+        is_draining = target_is_draining(connection, module, target_group_arn, target)
+
+        if not_registered or is_draining:
             try:
                 connection.register_targets(TargetGroupArn=target_group_arn, Targets=[target])
                 changed = True
@@ -269,13 +272,26 @@ def target_status_check(connection, module, target_group_arn, target, target_sta
     reached_state = False
     timeout = target_status_timeout + time()
     while time() < timeout:
-        health_state = describe_targets(connection, module, target_group_arn, [target])['TargetHealth']['State']
+        health_state = get_target_state(connection, module, target_group_arn, target)
         if health_state == target_status:
             reached_state = True
             break
         sleep(1)
     if not reached_state:
         module.fail_json(msg='Status check timeout of {0} exceeded, last status was {1}: '.format(target_status_timeout, health_state))
+
+
+def target_has_status(connection, module, target_group_arn, target, status):
+    health_state = get_target_state(connection, module, target_group_arn, target)
+    return health_state == status
+
+
+def target_is_draining(connection, module, target_group_arn, target):
+    return target_has_status(connection, module, target_group_arn, target, 'draining')
+
+
+def get_target_state(connection, module, target_group_arn, target):
+    return describe_targets(connection, module, target_group_arn, [target])['TargetHealth']['State']
 
 
 def main():
