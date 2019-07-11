@@ -1145,7 +1145,7 @@ class Nmcli(object):
             cmd.append('vlan%s' % self.vlanid)
 
         params = {'dev': self.vlandev,
-                  'id': self.vlanid,
+                  'id': str(self.vlanid),
                   'ip4': self.ip4 or '',
                   'gw4': self.gw4 or '',
                   'ip6': self.ip6 or '',
@@ -1170,7 +1170,7 @@ class Nmcli(object):
             cmd.append('vlan%s' % self.vlanid)
 
         params = {'vlan.parent': self.vlandev,
-                  'vlan.id': self.vlanid,
+                  'vlan.id': str(self.vlanid),
                   'ipv4.address': self.ip4 or '',
                   'ipv4.gateway': self.gw4 or '',
                   'ipv4.dns': self.dns4 or '',
