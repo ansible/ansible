@@ -176,4 +176,3 @@
     that:
     - set_dhcp is changed
     - set_dhcp_actual.stdout_lines == []
-
