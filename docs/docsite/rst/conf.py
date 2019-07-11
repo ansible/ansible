@@ -62,7 +62,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible'
-copyright = "2013-2018 Ansible, Inc"
+copyright = "2019 Red Hat, Inc."
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -129,6 +129,7 @@ rst_epilog = """
 html_theme_path = ['../_themes']
 html_theme = 'sphinx_rtd_theme'
 html_short_title = 'Ansible Documentation'
+html_show_sphinx = False
 
 html_theme_options = {
     'canonical_url': "https://docs.ansible.com/ansible/latest/",
