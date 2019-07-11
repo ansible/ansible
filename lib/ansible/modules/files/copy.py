@@ -35,9 +35,9 @@ options:
     type: path
   content:
     description:
-    - Works only when M(dest) is a file. Creates the file if it does not exist.
+    - Works only when C(dest) is a file. Creates the file if it does not exist.
     - When used instead of C(src), sets the contents of a file directly to the specified value.
-    - For advanced formatting or if C(content) contains a variable, use the C(template) module.
+    - For advanced formatting or if M(content) contains a variable, use the M(template) module.
     type: str
     version_added: '1.1'
   dest:
