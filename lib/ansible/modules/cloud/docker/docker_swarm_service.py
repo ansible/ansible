@@ -1280,7 +1280,6 @@ class DockerService(DockerBaseClass):
         self.update_max_failure_ratio = None
         self.update_order = None
         self.working_dir = None
-        self.can_update_networks = None
 
         self.docker_api_version = docker_api_version
         self.docker_py_version = docker_py_version
@@ -1337,6 +1336,13 @@ class DockerService(DockerBaseClass):
             'working_dir': self.working_dir,
         }
 
+    @property
+    def can_update_networks(self):
+        # Before Docker API 1.29 adding/removing networks was not supported
+        return (
+            self.docker_api_version >= LooseVersion('1.29') and
+            self.docker_py_version >= LooseVersion('2.7')
+        )
     @staticmethod
     def get_restart_config_from_ansible_params(params):
         restart_config = params['restart_config'] or {}
@@ -1542,7 +1548,6 @@ class DockerService(DockerBaseClass):
     ):
         s = DockerService(docker_api_version, docker_py_version)
         s.image = image_digest
-        s.can_update_networks = can_update_networks
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
         s.dns = ap['dns']
@@ -2368,11 +2373,6 @@ class DockerServiceManager(object):
         digest = distribution_data['Descriptor']['digest']
         return '%s@%s' % (name, digest)
 
-    def can_update_networks(self):
-        # Before Docker API 1.29 adding/removing networks was not supported
-        return (
-            self.client.docker_api_version >= LooseVersion('1.29') and
-            self.client.docker_py_version >= LooseVersion('2.7')
     def get_networks_names_ids(self):
         return dict(
             (network['Name'], network['Id']) for network in self.client.networks()
@@ -2450,7 +2450,6 @@ class DockerServiceManager(object):
                 % (module.params['name'], e)
             )
         try:
-            can_update_networks = self.can_update_networks()
             secret_ids = self.get_missing_secret_ids()
             config_ids = self.get_missing_config_ids()
             network_ids = self.get_networks_names_ids()
@@ -2458,7 +2457,6 @@ class DockerServiceManager(object):
                 module.params,
                 current_service,
                 image_digest,
-                can_update_networks,
                 secret_ids,
                 config_ids,
                 network_ids,
