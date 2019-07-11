@@ -580,7 +580,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', default='present', choices=state_map.keys()),
-            name=dict(type='list'),
+            name=dict(type='list', elements='str'),
             version=dict(type='str'),
             requirements=dict(type='str'),
             virtualenv=dict(type='path'),
