@@ -1343,6 +1343,15 @@ class DockerService(DockerBaseClass):
             self.docker_api_version >= LooseVersion('1.29') and
             self.docker_py_version >= LooseVersion('2.7')
         )
+
+    @property
+    def can_use_task_template_networks(self):
+        # In Docker API 1.25 attaching networks to TaskTemplate is preferred over Spec
+        return (
+            self.docker_api_version >= LooseVersion('1.25') and
+            self.docker_py_version >= LooseVersion('2.7')
+        )
+
     @staticmethod
     def get_restart_config_from_ansible_params(params):
         restart_config = params['restart_config'] or {}
@@ -2070,6 +2079,10 @@ class DockerService(DockerBaseClass):
             task_template_args['resources'] = resources
         if self.force_update:
             task_template_args['force_update'] = self.force_update
+        if self.can_use_task_template_networks:
+            networks = self.build_networks()
+            if networks:
+                task_template_args['networks'] = networks
         return types.TaskTemplate(container_spec=container_spec, **task_template_args)
 
     def build_service_mode(self):
@@ -2077,7 +2090,7 @@ class DockerService(DockerBaseClass):
             self.replicas = None
         return types.ServiceMode(self.mode, replicas=self.replicas)
 
-    def build_networks(self, docker_networks):
+    def build_networks(self):
         networks = None
         if self.networks is not None:
             networks = []
@@ -2108,7 +2121,7 @@ class DockerService(DockerBaseClass):
             endpoint_spec_args['mode'] = self.endpoint_mode
         return types.EndpointSpec(**endpoint_spec_args) if endpoint_spec_args else None
 
-    def build_docker_service(self, docker_networks):
+    def build_docker_service(self):
         container_spec = self.build_container_spec()
         placement = self.build_placement()
         task_template = self.build_task_template(container_spec, placement)
@@ -2116,7 +2129,6 @@ class DockerService(DockerBaseClass):
         update_config = self.build_update_config()
         rollback_config = self.build_rollback_config()
         service_mode = self.build_service_mode()
-        networks = self.build_networks(docker_networks)
         endpoint_spec = self.build_endpoint_spec()
 
         service = {'task_template': task_template, 'mode': service_mode}
@@ -2124,12 +2136,14 @@ class DockerService(DockerBaseClass):
             service['update_config'] = update_config
         if rollback_config:
             service['rollback_config'] = rollback_config
-        if networks:
-            service['networks'] = networks
         if endpoint_spec:
             service['endpoint_spec'] = endpoint_spec
         if self.labels:
             service['labels'] = self.labels
+        if not self.can_use_task_template_networks:
+            networks = self.build_networks()
+            if networks:
+                service['networks'] = networks
         return service
 
 
