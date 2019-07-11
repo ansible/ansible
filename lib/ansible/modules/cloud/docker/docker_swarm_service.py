@@ -358,7 +358,9 @@ options:
     required: yes
   networks:
     description:
-      - List of the service networks names.
+      - List of the service networks names or dictionaries.
+      - When passed dictionaries valid sub-options are C(name) which is required and
+        C(aliases) and C(options).
       - Prior to API version 1.29, updating and removing networks is not supported.
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
@@ -1116,6 +1118,47 @@ def get_docker_environment(env, env_files):
     return sorted(env_list)
 
 
+def get_docker_networks(networks, network_ids):
+    """
+    Validate a list of network names or a list of network dictionaries.
+    Network names will be resolved to ids by using the network_ids mapping.
+    """
+    if networks is None:
+        return None
+    parsed_networks = []
+    for network in networks:
+        if isinstance(network, string_types):
+            parsed_network = {'name': network}
+        elif isinstance(network, dict):
+            if 'name' not in network:
+                raise TypeError(
+                    '"name" is required when networks are passed as dictionaries.'
+                )
+            parsed_network = {'name': network['name']}
+            if 'aliases' in network:
+                if not all(
+                    isinstance(alias, string_types) for alias in network['aliases']
+                ):
+                    raise TypeError('Only strings are allowed as network aliases.')
+                parsed_network['aliases'] = network['aliases']
+            if 'options' in network:
+                options = network['options']
+                if not isinstance(options, dict):
+                    raise TypeError('Only dict is allowed as network options.')
+                parsed_network['options'] = network['options']
+        else:
+            raise TypeError(
+                'Only a list of strings or dictionaries are allowed to be passed as networks.'
+            )
+        network_name = parsed_network.pop('name')
+        try:
+            parsed_network['id'] = network_ids[network_name]
+        except KeyError as e:
+            raise ValueError('Could not find a network named: %s.' % e)
+        parsed_networks.append(parsed_network)
+    return parsed_networks or []
+
+
 def get_nanoseconds_from_raw_option(name, value):
     if value is None:
         return None
@@ -1474,7 +1517,13 @@ class DockerService(DockerBaseClass):
 
     @classmethod
     def from_ansible_params(
-        cls, ap, old_service, image_digest, can_update_networks, secret_ids, config_ids
+        cls,
+        ap,
+        old_service,
+        image_digest,
+        secret_ids,
+        config_ids,
+        network_ids,
     ):
         s = DockerService()
         s.image = image_digest
@@ -1491,11 +1540,12 @@ class DockerService(DockerBaseClass):
         s.labels = ap['labels']
         s.container_labels = ap['container_labels']
         s.mode = ap['mode']
-        s.networks = ap['networks']
         s.stop_signal = ap['stop_signal']
         s.user = ap['user']
         s.working_dir = ap['working_dir']
         s.read_only = ap['read_only']
+
+        s.networks = get_docker_networks(ap['networks'], network_ids)
 
         s.command = ap['command']
         if isinstance(s.command, string_types):
@@ -2011,18 +2061,13 @@ class DockerService(DockerBaseClass):
         networks = None
         if self.networks is not None:
             networks = []
-            for network_name in self.networks:
-                network_id = None
-                try:
-                    network_id = list(
-                        filter(lambda n: n['name'] == network_name, docker_networks)
-                    )[0]['id']
-                except (IndexError, KeyError):
-                    pass
-                if network_id:
-                    networks.append({'Target': network_id})
-                else:
-                    raise Exception('no docker networks named: %s' % network_name)
+            for network in self.networks:
+                docker_network = {'Target': network['id']}
+                if 'aliases' in network:
+                    docker_network['Aliases'] = network['aliases']
+                if 'options' in network:
+                    docker_network['DriverOpts'] = network['options']
+                networks.append(docker_network)
         return networks
 
     def build_endpoint_spec(self):
@@ -2074,9 +2119,6 @@ class DockerServiceManager(object):
         self.client = client
         self.retries = 2
         self.diff_tracker = None
-
-    def get_networks_names_ids(self):
-        return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
     def get_service(self, name):
         try:
@@ -2263,24 +2305,22 @@ class DockerServiceManager(object):
                     'mode': secret_data['File'].get('Mode')
                 })
 
-        networks_names_ids = self.get_networks_names_ids()
         raw_networks_data = task_template_data.get('Networks', raw_data['Spec'].get('Networks'))
         if raw_networks_data:
             ds.networks = []
             for network_data in raw_networks_data:
-                network_name = [network_name_id['name'] for network_name_id in networks_names_ids if
-                                network_name_id['id'] == network_data['Target']]
-                if len(network_name) == 0:
-                    ds.networks.append(network_data['Target'])
-                else:
-                    ds.networks.append(network_name[0])
-
+                network = {'id': network_data['Target']}
+                if 'Aliases' in network_data:
+                    network['aliases'] = network_data['Aliases']
+                if 'DriverOpts' in network_data:
+                    network['options'] = network_data['DriverOpts']
+                ds.networks.append(network)
         ds.service_version = raw_data['Version']['Index']
         ds.service_id = raw_data['ID']
         return ds
 
     def update_service(self, name, old_service, new_service):
-        service_data = new_service.build_docker_service(self.get_networks_names_ids())
+        service_data = new_service.build_docker_service()
         result = self.client.update_service(
             old_service.service_id,
             old_service.service_version,
@@ -2292,7 +2332,7 @@ class DockerServiceManager(object):
         self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):
-        service_data = service.build_docker_service(self.get_networks_names_ids())
+        service_data = service.build_docker_service()
         result = self.client.create_service(name=name, **service_data)
         self.client.report_warnings(result, ['Warning'])
 
@@ -2318,6 +2358,9 @@ class DockerServiceManager(object):
         return (
             self.client.docker_api_version >= LooseVersion('1.29') and
             self.client.docker_py_version >= LooseVersion('2.7')
+    def get_networks_names_ids(self):
+        return dict(
+            (network['Name'], network['Id']) for network in self.client.networks()
         )
 
     def get_missing_secret_ids(self):
@@ -2395,6 +2438,7 @@ class DockerServiceManager(object):
             can_update_networks = self.can_update_networks()
             secret_ids = self.get_missing_secret_ids()
             config_ids = self.get_missing_config_ids()
+            network_ids = self.get_networks_names_ids()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
@@ -2402,6 +2446,8 @@ class DockerServiceManager(object):
                 can_update_networks,
                 secret_ids,
                 config_ids
+                config_ids,
+                network_ids,
             )
         except Exception as e:
             return self.client.fail(
@@ -2567,7 +2613,7 @@ def main():
             gid=dict(type='str'),
             mode=dict(type='int'),
         )),
-        networks=dict(type='list', elements='str'),
+        networks=dict(type='list'),
         command=dict(type='raw'),
         args=dict(type='list', elements='str'),
         env=dict(type='raw'),
