@@ -1331,7 +1331,7 @@ def command_units(args):
             'pytest',
             '--boxed',
             '-r', 'a',
-            '-n', 'auto',
+            '-n', str(args.num_workers) if args.num_workers else 'auto',
             '--color',
             'yes' if args.color else 'no',
             '--junit-xml',
