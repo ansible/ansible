@@ -28,13 +28,6 @@ from ansible.module_utils._text import to_text, to_bytes
 import json
 
 
-# try:
-#     from __main__ import display
-# except ImportError:
-#     from ansible.utils.display import Display
-#     display = Display()
-
-
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
