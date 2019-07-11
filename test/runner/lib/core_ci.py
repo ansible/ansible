@@ -18,10 +18,13 @@ from lib.http import (
 
 from lib.util import (
     ApplicationError,
-    run_command,
     make_dirs,
     display,
     is_shippable,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (

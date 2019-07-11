@@ -12,7 +12,6 @@ from lib.util import (
     ApplicationError,
     SubprocessError,
     display,
-    run_command,
     import_plugins,
     load_plugins,
     parse_to_list_of_dict,
@@ -20,6 +19,10 @@ from lib.util import (
     INSTALL_ROOT,
     is_binary_file,
     read_lines_without_comments,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.ansible_util import (

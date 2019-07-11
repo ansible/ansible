@@ -19,11 +19,15 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     display,
     read_lines_without_comments,
     ConfigParser,
     INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    intercept_command,
+    run_command,
 )
 
 from lib.executor import (
