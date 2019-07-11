@@ -20,6 +20,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: ios
+short_description: Use icx cliconf to run command on Cisco ICX platform
+description:
+  - This icx plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Ruckus ICX network devices.
+version_added: "2.4"
+"""
+
+
 import re
 import time
 import json
