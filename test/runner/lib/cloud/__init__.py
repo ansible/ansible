@@ -30,6 +30,10 @@ from lib.config import (
     IntegrationConfig,
 )
 
+from lib.data import (
+    data_context,
+)
+
 PROVIDERS = {}
 ENVIRONMENTS = {}
 
@@ -194,7 +198,7 @@ class CloudBase(ABC):
         """
         :rtype: str
         """
-        return os.path.join(os.getcwd(), self._get_cloud_config(self._CONFIG_PATH))
+        return os.path.join(data_context().content.root, self._get_cloud_config(self._CONFIG_PATH))
 
     @config_path.setter
     def config_path(self, value):

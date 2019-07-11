@@ -10,6 +10,7 @@ from lib.util import (
     SubprocessError,
     ApplicationError,
     cmd_quote,
+    display,
 )
 
 from lib.util_common import (
@@ -214,22 +215,31 @@ class ManagePosixCI:
     def setup(self, python_version):
         """Start instance and wait for it to become ready and respond to an ansible ping.
         :type python_version: str
+        :rtype: str
         """
-        self.wait()
+        pwd = self.wait()
+
+        display.info('Remote working directory: %s' % pwd, verbosity=1)
 
         if isinstance(self.core_ci.args, ShellConfig):
             if self.core_ci.args.raw:
-                return
+                return pwd
 
         self.configure(python_version)
         self.upload_source()
 
-    def wait(self):
+        return pwd
+
+    def wait(self):  # type: () -> str
         """Wait for instance to respond to SSH."""
         for dummy in range(1, 90):
             try:
-                self.ssh('id')
-                return
+                pwd = self.ssh('pwd', capture=True)[0]
+
+                if self.core_ci.args.explain:
+                    return '/pwd'
+
+                return pwd.strip()
             except SubprocessError:
                 time.sleep(10)
 
@@ -268,10 +278,12 @@ class ManagePosixCI:
         """
         self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
 
-    def ssh(self, command, options=None):
+    def ssh(self, command, options=None, capture=False):
         """
         :type command: str | list[str]
         :type options: list[str] | None
+        :type capture: bool
+        :rtype: str | None, str | None
         """
         if not options:
             options = []
@@ -279,12 +291,12 @@ class ManagePosixCI:
         if isinstance(command, list):
             command = ' '.join(cmd_quote(c) for c in command)
 
-        run_command(self.core_ci.args,
-                    ['ssh', '-tt', '-q'] + self.ssh_args +
-                    options +
-                    ['-p', str(self.core_ci.connection.port),
-                     '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                    self.become + [cmd_quote(command)])
+        return run_command(self.core_ci.args,
+                           ['ssh', '-tt', '-q'] + self.ssh_args +
+                           options +
+                           ['-p', str(self.core_ci.connection.port),
+                            '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
+                           self.become + [cmd_quote(command)], capture=capture)
 
     def scp(self, src, dst):
         """

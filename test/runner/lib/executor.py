@@ -125,6 +125,14 @@ from lib.integration import (
     setup_common_temp_dir,
 )
 
+from lib.coverage_util import (
+    coverage_context,
+)
+
+from lib.data import (
+    data_context,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
@@ -179,6 +187,10 @@ def install_command_requirements(args, python_version=None):
     :type args: EnvironmentConfig
     :type python_version: str | None
     """
+    if not args.explain:
+        make_dirs('test/results/coverage')
+        make_dirs('test/results/data')
+
     if isinstance(args, ShellConfig):
         if args.raw:
             return
@@ -1345,6 +1357,9 @@ def command_units(args):
         if args.coverage:
             plugins.append('ansible_pytest_coverage')
 
+        if data_context().content.collection:
+            plugins.append('ansible_pytest_collections')
+
         if plugins:
             env['PYTHONPATH'] += ':%s' % os.path.join(INSTALL_ROOT, 'test/units/pytest/plugins')
 
@@ -1370,7 +1385,8 @@ def command_units(args):
         display.info('Unit test with Python %s' % version)
 
         try:
-            intercept_command(args, command, target_name='units', env=env, python_version=version)
+            with coverage_context(args):
+                intercept_command(args, command, target_name='units', env=env, python_version=version)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:

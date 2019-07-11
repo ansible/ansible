@@ -40,6 +40,10 @@ from lib.test import (
     calculate_best_confidence,
 )
 
+from lib.data import (
+    data_context,
+)
+
 VALIDATE_SKIP_PATH = 'test/sanity/validate-modules/skip.txt'
 VALIDATE_IGNORE_PATH = 'test/sanity/validate-modules/ignore.txt'
 
@@ -60,6 +64,13 @@ class ValidateModulesTest(SanitySingleVersion):
         if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
             display.warning('Skipping validate-modules on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
+
+        if data_context().content.is_install:
+            ignore_codes = ()
+        else:
+            ignore_codes = ((
+                'E502',  # only ansible content requires __init__.py for module subdirectories
+            ))
 
         skip_paths = read_lines_without_comments(VALIDATE_SKIP_PATH, optional=True)
         skip_paths_set = set(skip_paths)
@@ -137,6 +148,8 @@ class ValidateModulesTest(SanitySingleVersion):
                 ))
 
         filtered = []
+
+        errors = [error for error in errors if error.code not in ignore_codes]
 
         for error in errors:
             if error.code in ignore[error.path]:

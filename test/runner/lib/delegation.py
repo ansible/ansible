@@ -69,6 +69,10 @@ from lib.target import (
     IntegrationTarget,
 )
 
+from lib.data import (
+    data_context,
+)
+
 from lib.payload import (
     create_payload,
 )
@@ -96,7 +100,7 @@ def delegate(args, exclude, require, integration_targets):
     :rtype: bool
     """
     if isinstance(args, TestConfig):
-        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=os.getcwd()) as metadata_fd:
+        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=data_context().content.root) as metadata_fd:
             args.metadata_path = os.path.basename(metadata_fd.name)
             args.metadata.to_file(args.metadata_path)
 
@@ -165,7 +169,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, None, INSTALL_ROOT, INSTALL_ROOT, options, exclude, require)
+        cmd = generate_command(args, None, INSTALL_ROOT, data_context().content.root, options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -228,7 +232,11 @@ def delegate_docker(args, exclude, require, integration_targets):
     python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
 
     install_root = '/root/ansible'
-    content_root = install_root
+
+    if data_context().content.collection:
+        content_root = os.path.join(install_root, data_context().content.collection.directory)
+    else:
+        content_root = install_root
 
     cmd = generate_command(args, python_interpreter, install_root, content_root, options, exclude, require)
 
@@ -310,13 +318,18 @@ def delegate_docker(args, exclude, require, integration_targets):
             # also disconnect from the network once requirements have been installed
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
-                    os.path.join(content_root, '.pytest_cache'),
+                    os.path.join(install_root, '.pytest_cache'),
                 ]
+
+                if content_root != install_root:
+                    writable_dirs.append(os.path.join(content_root, 'test/results/junit'))
+                    writable_dirs.append(os.path.join(content_root, 'test/results/coverage'))
 
                 docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
                 docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
 
-                docker_exec(args, test_id, ['find', os.path.join(content_root, 'test/results/'), '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
+                if content_root == install_root:
+                    docker_exec(args, test_id, ['find', os.path.join(content_root, 'test/results/'), '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
 
                 docker_exec(args, test_id, ['chmod', '755', '/root'])
                 docker_exec(args, test_id, ['chmod', '644', os.path.join(content_root, args.metadata_path)])
@@ -387,22 +400,35 @@ def delegate_remote(args, exclude, require, integration_targets):
 
         core_ci.wait()
 
+        python_version = get_python_version(args, get_remote_completion(), args.remote)
+
         if platform == 'windows':
             # Windows doesn't need the ansible-test fluff, just run the SSH command
             manage = ManageWindowsCI(core_ci)
+            manage.setup(python_version)
+
             cmd = ['powershell.exe']
         elif raw:
             manage = ManagePosixCI(core_ci)
+            manage.setup(python_version)
+
             cmd = create_shell_command(['bash'])
         else:
+            manage = ManagePosixCI(core_ci)
+            pwd = manage.setup(python_version)
+
             options = {
                 '--remote': 1,
             }
 
             python_interpreter = get_python_interpreter(args, get_remote_completion(), args.remote)
 
-            install_root = 'ansible'
-            content_root = install_root
+            install_root = os.path.join(pwd, 'ansible')
+
+            if data_context().content.collection:
+                content_root = os.path.join(install_root, data_context().content.collection.directory)
+            else:
+                content_root = install_root
 
             cmd = generate_command(args, python_interpreter, install_root, content_root, options, exclude, require)
 
@@ -420,11 +446,6 @@ def delegate_remote(args, exclude, require, integration_targets):
             # remote instances are only expected to have a single python version available
             if isinstance(args, UnitsConfig) and not args.python:
                 cmd += ['--python', 'default']
-
-            manage = ManagePosixCI(core_ci)
-
-        python_version = get_python_version(args, get_remote_completion(), args.remote)
-        manage.setup(python_version)
 
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)

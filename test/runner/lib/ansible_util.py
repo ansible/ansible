@@ -26,6 +26,9 @@ from lib.config import (
     EnvironmentConfig,
 )
 
+from lib.data import (
+    data_context,
+)
 
 CHECK_YAML_VERSIONS = {}
 
@@ -74,6 +77,11 @@ def ansible_environment(args, color=True, ansible_config=None):
         env.update(dict(
             ANSIBLE_DEBUG='true',
             ANSIBLE_LOG_PATH=os.path.abspath('test/results/logs/debug.log'),
+        ))
+
+    if data_context().content.collection:
+        env.update(dict(
+            ANSIBLE_COLLECTIONS_PATHS=data_context().content.collection.root,
         ))
 
     return env

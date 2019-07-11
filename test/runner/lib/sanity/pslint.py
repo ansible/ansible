@@ -37,6 +37,10 @@ from lib.test import (
     calculate_best_confidence,
 )
 
+from lib.data import (
+    data_context,
+)
+
 PSLINT_SKIP_PATH = 'test/sanity/pslint/skip.txt'
 PSLINT_IGNORE_PATH = 'test/sanity/pslint/ignore.txt'
 
@@ -113,7 +117,7 @@ class PslintTest(SanitySingleVersion):
             'ParseError',
         ]
 
-        cwd = os.getcwd() + '/'
+        cwd = data_context().content.root + '/'
 
         # replace unicode smart quotes and ellipsis with ascii versions
         stdout = re.sub(u'[\u2018\u2019]', "'", stdout)

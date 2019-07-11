@@ -35,12 +35,20 @@ from lib.util_common import (
     named_temporary_file,
 )
 
+from lib.coverage_util import (
+    generate_collection_coverage_config,
+)
+
 from lib.cache import (
     CommonCache,
 )
 
 from lib.cloud import (
     CloudEnvironmentConfig,
+)
+
+from lib.data import (
+    data_context,
 )
 
 
@@ -57,7 +65,14 @@ def setup_common_temp_dir(args, path):
 
     coverage_config_path = os.path.join(path, COVERAGE_CONFIG_PATH)
 
-    shutil.copy(COVERAGE_CONFIG_PATH, coverage_config_path)
+    if data_context().content.collection:
+        coverage_config = generate_collection_coverage_config(args)
+
+        with open(coverage_config_path, 'w') as coverage_config_fd:
+            coverage_config_fd.write(coverage_config)
+    else:
+        shutil.copy(os.path.join(INSTALL_ROOT, COVERAGE_CONFIG_PATH), coverage_config_path)
+
     os.chmod(coverage_config_path, MODE_FILE)
 
     coverage_output_path = os.path.join(path, COVERAGE_OUTPUT_PATH)

@@ -26,7 +26,6 @@ from lib.util import (
 from lib.util_common import (
     intercept_command,
     run_command,
-    INSTALL_ROOT,
 )
 
 from lib.ansible_util import (
@@ -39,6 +38,15 @@ from lib.executor import (
 
 from lib.config import (
     SanityConfig,
+)
+
+from lib.coverage_util import (
+    coverage_context,
+)
+
+from lib.data import (
+    data_context,
+    INSTALL_ROOT,
 )
 
 
@@ -60,7 +68,7 @@ class ImportTest(SanityMultipleVersion):
             i.path
             for i in targets.include
             if os.path.splitext(i.path)[1] == '.py' and
-            (is_subdir(i.path, 'lib/ansible/modules/') or is_subdir(i.path, 'lib/ansible/module_utils/')) and
+            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path)) and
             i.path not in skip_paths_set
         )
 
@@ -96,13 +104,14 @@ class ImportTest(SanityMultipleVersion):
         ansible_link = os.path.join(ansible_path, 'module_utils')
 
         if not args.explain:
+            remove_tree(ansible_path)
+
             make_dirs(ansible_path)
 
             with open(ansible_init, 'w'):
                 pass
 
-            if not os.path.exists(ansible_link):
-                os.symlink('../../../../../../lib/ansible/module_utils', ansible_link)
+            os.symlink(os.path.join(INSTALL_ROOT, 'lib/ansible/module_utils'), ansible_link)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
@@ -126,7 +135,9 @@ class ImportTest(SanityMultipleVersion):
         virtualenv_python = os.path.join(virtual_environment_bin, 'python')
 
         try:
-            stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version, virtualenv=virtualenv_python)
+            with coverage_context(args):
+                stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version,
+                                                   virtualenv=virtualenv_python)
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)

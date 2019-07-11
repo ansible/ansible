@@ -17,6 +17,10 @@ from lib.util import (
     is_subdir,
 )
 
+from lib.data import (
+    data_context,
+)
+
 MODULE_EXTENSIONS = '.py', '.ps1'
 
 
@@ -145,7 +149,7 @@ def walk_module_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    for target in walk_test_targets(path='lib/ansible/modules', module_path='lib/ansible/modules/', extensions=MODULE_EXTENSIONS):
+    for target in walk_test_targets(path=data_context().content.module_path, module_path=data_context().content.module_path, extensions=MODULE_EXTENSIONS):
         if not target.module:
             continue
 
@@ -156,21 +160,21 @@ def walk_units_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(path='test/units', module_path='test/units/modules/', extensions=('.py',), prefix='test_')
+    return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
 def walk_compile_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path='lib/ansible/modules/', extensions=('.py',), extra_dirs=('bin',))
+    return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',))
 
 
 def walk_sanity_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    return walk_test_targets(module_path='lib/ansible/modules/')
+    return walk_test_targets(module_path=data_context().content.module_path)
 
 
 def walk_posix_integration_targets(include_hidden=False):
@@ -209,7 +213,7 @@ def walk_integration_targets():
     """
     path = 'test/integration/targets'
     modules = frozenset(target.module for target in walk_module_targets())
-    paths = sorted(path for path in [os.path.join(path, p) for p in os.listdir(path)] if os.path.isdir(path))
+    paths = data_context().content.get_dirs(path)
     prefixes = load_integration_prefixes()
 
     for path in paths:
@@ -221,7 +225,7 @@ def load_integration_prefixes():
     :rtype: dict[str, str]
     """
     path = 'test/integration'
-    file_paths = sorted(os.path.join(path, f) for f in os.listdir(path) if os.path.splitext(f)[0] == 'target-prefixes')
+    file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
     prefixes = {}
 
     for file_path in file_paths:
@@ -241,26 +245,10 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
     :type extra_dirs: tuple[str] | None
     :rtype: collections.Iterable[TestTarget]
     """
-    file_paths = []
-
-    for root, _dir_names, file_names in os.walk(path or '.', topdown=False):
-        if root.endswith('/__pycache__'):
-            continue
-
-        if '/.tox/' in root:
-            continue
-
-        if path is None:
-            root = root[2:]
-
-        if root.startswith('.') and root != '.github':
-            continue
-
-        for file_name in file_names:
-            if file_name.startswith('.'):
-                continue
-
-            file_paths.append(os.path.join(root, file_name))
+    if path:
+        file_paths = data_context().content.walk_files(path)
+    else:
+        file_paths = data_context().content.all_files()
 
     for file_path in file_paths:
         name, ext = os.path.splitext(os.path.basename(file_path))
@@ -282,13 +270,8 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
 
     if extra_dirs:
         for extra_dir in extra_dirs:
-            file_names = os.listdir(extra_dir)
-
-            for file_name in file_names:
-                file_path = os.path.join(extra_dir, file_name)
-
-                if os.path.isfile(file_path):
-                    file_paths.append(file_path)
+            for file_path in data_context().content.get_files(extra_dir):
+                file_paths.append(file_path)
 
     for file_path in file_paths:
         if os.path.islink(file_path):
@@ -322,13 +305,7 @@ def analyze_integration_target_dependencies(integration_targets):
     # handle symlink dependencies between targets
     # this use case is supported, but discouraged
     for target in integration_targets:
-        paths = []
-
-        for root, _dummy, file_names in os.walk(target.path):
-            for name in file_names:
-                paths.append(os.path.join(root, name))
-
-        for path in paths:
+        for path in data_context().content.walk_files(target.path):
             if not os.path.islink(path):
                 continue
 
@@ -352,7 +329,7 @@ def analyze_integration_target_dependencies(integration_targets):
         if not os.path.isdir(meta_dir):
             continue
 
-        meta_paths = sorted([os.path.join(meta_dir, name) for name in os.listdir(meta_dir)])
+        meta_paths = data_context().content.get_files(meta_dir)
 
         for meta_path in meta_paths:
             if os.path.exists(meta_path):
@@ -517,7 +494,7 @@ class IntegrationTarget(CompletionTarget):
 
         # script_path and type
 
-        contents = sorted(os.listdir(path))
+        contents = [os.path.basename(p) for p in data_context().content.get_files(path)]
 
         runme_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'runme')
         test_files = tuple(c for c in contents if os.path.splitext(c)[0] == 'test')

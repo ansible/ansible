@@ -48,6 +48,11 @@ from lib.test import (
     calculate_best_confidence,
 )
 
+from lib.data import (
+    data_context,
+)
+
+
 PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
 PYLINT_IGNORE_PATH = 'test/sanity/pylint/ignore.txt'
 
@@ -116,15 +121,16 @@ class PylintTest(SanitySingleVersion):
 
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/')) and i.path not in skip_paths_set)
 
-        module_paths = [os.path.relpath(p, 'lib/ansible/modules/').split(os.path.sep) for p in paths if is_subdir(p, 'lib/ansible/modules/')]
+        module_paths = [os.path.relpath(p, data_context().content.module_path).split(os.path.sep) for p in
+                        paths if is_subdir(p, data_context().content.module_path)]
         module_dirs = sorted(set([p[0] for p in module_paths if len(p) > 1]))
 
         large_module_group_threshold = 500
         large_module_groups = [key for key, value in
                                itertools.groupby(module_paths, lambda p: p[0] if len(p) > 1 else '') if len(list(value)) > large_module_group_threshold]
 
-        large_module_group_paths = [os.path.relpath(p, 'lib/ansible/modules/').split(os.path.sep) for p in paths
-                                    if any(is_subdir(p, os.path.join('lib/ansible/modules/', g)) for g in large_module_groups)]
+        large_module_group_paths = [os.path.relpath(p, data_context().content.module_path).split(os.path.sep) for p in paths
+                                    if any(is_subdir(p, os.path.join(data_context().content.module_path, g)) for g in large_module_groups)]
         large_module_group_dirs = sorted(set([os.path.sep.join(p[:2]) for p in large_module_group_paths if len(p) > 2]))
 
         contexts = []
@@ -154,23 +160,26 @@ class PylintTest(SanitySingleVersion):
 
             return context_filter
 
-        for large_module_group_dir in large_module_group_dirs:
-            add_context(remaining_paths, 'modules/%s' % large_module_group_dir, filter_path('lib/ansible/modules/%s/' % large_module_group_dir))
+        for large_module_dir in large_module_group_dirs:
+            add_context(remaining_paths, 'modules/%s' % large_module_dir, filter_path(os.path.join(data_context().content.module_path, large_module_dir)))
 
         for module_dir in module_dirs:
-            add_context(remaining_paths, 'modules/%s' % module_dir, filter_path('lib/ansible/modules/%s/' % module_dir))
+            add_context(remaining_paths, 'modules/%s' % module_dir, filter_path(os.path.join(data_context().content.module_path, module_dir)))
 
-        add_context(remaining_paths, 'modules', filter_path('lib/ansible/modules/'))
-        add_context(remaining_paths, 'module_utils', filter_path('lib/ansible/module_utils/'))
+        add_context(remaining_paths, 'modules', filter_path(data_context().content.module_path))
+        add_context(remaining_paths, 'module_utils', filter_path(data_context().content.module_utils_path))
 
-        add_context(remaining_paths, 'units', filter_path('test/units/'))
+        add_context(remaining_paths, 'units', filter_path(data_context().content.unit_path))
 
-        add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
-        add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
-        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
-        add_context(remaining_paths, 'test', filter_path('test/'))
-        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
-        add_context(remaining_paths, 'ansible', lambda p: True)
+        if data_context().content.collection:
+            add_context(remaining_paths, 'collection', lambda p: True)
+        else:
+            add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
+            add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
+            add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+            add_context(remaining_paths, 'test', filter_path('test/'))
+            add_context(remaining_paths, 'hacking', filter_path('hacking/'))
+            add_context(remaining_paths, 'ansible', lambda p: True)
 
         messages = []
         context_times = []
@@ -300,6 +309,9 @@ class PylintTest(SanitySingleVersion):
         ] + paths
 
         append_python_path = [plugin_dir]
+
+        if data_context().content.collection:
+            append_python_path.append(data_context().content.collection.root)
 
         env = ansible_environment(args)
         env['PYTHONPATH'] += os.path.pathsep + os.path.pathsep.join(append_python_path)

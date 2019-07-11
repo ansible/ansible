@@ -532,7 +532,7 @@ class Display:
 
     def __init__(self):
         self.verbosity = 0
-        self.color = True
+        self.color = sys.stdout.isatty()
         self.warnings = []
         self.warnings_unique = set()
         self.info_stderr = False
