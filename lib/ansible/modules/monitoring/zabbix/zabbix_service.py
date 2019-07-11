@@ -49,9 +49,12 @@ options:
     algorithm:
         description:
             - Algorithm used to calculate the sla
+            - C(no), sla is not calculated
+            - C(one_child), problem if at least one child has a problem
+            - C(all_children), problem if all children have problems
         required: false
         type: str
-        choices: ["no", "one_child", "all_childs"]
+        choices: ["no", "one_child", "all_children"]
         default: one_child
     trigger_name:
         description:
@@ -160,7 +163,7 @@ class Service(object):
         return services
 
     def generate_service_config(self, name, parent, sla, calculate_sla, trigger_name, trigger_host, algorithm):
-        algorithms = {'no': '0', 'one_child': '1', 'all_childs': '2'}
+        algorithms = {'no': '0', 'one_child': '1', 'all_children': '2'}
         algorithm = algorithms[algorithm]
 
         if calculate_sla:
@@ -248,7 +251,7 @@ def main():
             parent=dict(type='str', required=False),
             sla=dict(type='float', required=False),
             calculate_sla=dict(type='bool', required=False, default=False),
-            algorithm=dict(default='one_child', required=False, choices=['no', 'one_child', 'all_childs']),
+            algorithm=dict(default='one_child', required=False, choices=['no', 'one_child', 'all_children']),
             trigger_name=dict(type='str', required=False),
             trigger_host=dict(type='str', required=False),
             state=dict(default="present", choices=['present', 'absent', 'dump']),
