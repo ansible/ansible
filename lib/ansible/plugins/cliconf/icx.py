@@ -1,26 +1,30 @@
-# Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# (c) 2017 Red Hat Inc.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-author: Ruckus Wireless (@Commscope)
-cliconf: icx
-short_description: Use icx cliconf to run command on Ruckus ICX platform
-description:
-  - This icx plugin provides low level abstraction APIs for
-    sending and receiving CLI commands from Ruckus ICX network devices.
-version_added: "2.9"
-"""
-
-
+import collections
 import re
 import time
 import json
 import os
-
 from itertools import chain
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
@@ -28,7 +32,6 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
-from ansible.module_utils.common._collections_compat import Mapping
 
 
 class Cliconf(CliconfBase):
@@ -44,7 +47,7 @@ class Cliconf(CliconfBase):
         if not flags:
             flags = []
 
-        if compare is False:
+        if self.get_env_diff(compare) is False:
             return ''
         else:
             if source == 'running':
@@ -56,6 +59,18 @@ class Cliconf(CliconfBase):
             cmd = cmd.strip()
 
             return self.send_command(cmd)
+
+    def get_env_diff(self, compare=None):
+        if compare is not None:
+            diff = compare
+        elif os.environ.get('CHECK_RUNNING_CONFIG') is not None:
+            if os.environ.get('CHECK_RUNNING_CONFIG') == 'False':
+                diff = False
+            else:
+                diff = True
+        else:
+            diff = True
+        return diff
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         """
@@ -143,7 +158,7 @@ class Cliconf(CliconfBase):
             self.send_command('configure terminal')
 
             for line in to_list(candidate):
-                if not isinstance(line, Mapping):
+                if not isinstance(line, collections.Mapping):
                     line = {'command': line}
 
                 cmd = line['command']
@@ -158,6 +173,59 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         resp['response'] = results
         return resp
+
+    # @enable_mode
+    # def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
+    #     resp = {}
+    #     # operations = self.get_device_operations()
+    #     # self.check_edit_config_capability(operations, candidate, commit, replace, comment)
+
+    #     results = []
+    #     requests = []
+    #     if commit:
+    #         self.send_command('configure terminal')
+    #         for line in to_list(candidate):
+    #             if not isinstance(line, collections.Mapping):
+    #                 line = {'command': line}
+
+    #             cmd = line['command']
+    #             if cmd != 'end' and cmd[0] != '!':
+    #                 results.append(self.send_command(**line))
+    #                 requests.append(cmd)
+
+    #         self.send_command('end')
+    #     else:
+    #         raise ValueError('check mode is not supported')
+
+    #     resp['request'] = requests
+    #     resp['response'] = results
+    #     return resp
+
+    # def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
+    #     resp = {}
+    #     operations = self.get_device_operations()
+    #     self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+
+    #     results = []
+    #     requests = []
+    #     if commit:
+    #         commands = ''
+    #         for line in candidate:
+    #             if line != 'None':
+    #                 commands += (' ' + line + '\n')
+    #             self.send_command('config terminal', sendonly=True)
+    #             obj = {'command': commands, 'sendonly': True}
+    #             results.append(self.send_command(**obj))
+    #             requests.append(commands)
+
+    #         self.send_command('end', sendonly=True)
+    #         time.sleep(0.1)
+    #         results.append(self.send_command('\n'))
+    #         requests.append('\n')
+
+    #     resp['request'] = requests
+    #     resp['response'] = results
+    #     return resp
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:
@@ -225,6 +293,7 @@ class Cliconf(CliconfBase):
         result = dict()
         result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands', 'get_defaults_flag']
         result['network_api'] = 'cliconf'
+        # result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
@@ -270,7 +339,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, Mapping):
+            if not isinstance(cmd, collections.Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -287,6 +356,25 @@ class Cliconf(CliconfBase):
             responses.append(out)
 
         return responses
+
+    # def get_defaults_flag(self):
+    #     """
+    #     The method identifies the filter that should be used to fetch running-configuration
+    #     with defaults.
+    #     :return: valid default filter
+    #     """
+    #     out = self.get('show running-config ?')
+    #     out = to_text(out, errors='surrogate_then_replace')
+
+    #     commands = set()
+    #     for line in out.splitlines():
+    #         if line.strip():
+    #             commands.add(line.strip().split()[0])
+
+    #     if 'all' in commands:
+    #         return 'all'
+    #     else:
+    #         return 'full'
 
     def _extract_banners(self, config):
         banners = {}
