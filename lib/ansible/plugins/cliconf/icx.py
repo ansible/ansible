@@ -21,7 +21,6 @@ import time
 import json
 import os
 
-from collections import Mapping
 from itertools import chain
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
