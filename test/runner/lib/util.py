@@ -29,14 +29,16 @@ except ImportError:
 
 try:
     # noinspection PyCompatibility
-    from ConfigParser import SafeConfigParser as ConfigParser
+    from configparser import ConfigParser
 except ImportError:
     # noinspection PyCompatibility
-    from configparser import ConfigParser
+    from ConfigParser import SafeConfigParser as ConfigParser
 
 try:
+    # noinspection PyProtectedMember
     from shlex import quote as cmd_quote
 except ImportError:
+    # noinspection PyProtectedMember
     from pipes import quote as cmd_quote
 
 import lib.types as t
@@ -47,11 +49,12 @@ except AttributeError:
     C = None
 
 
-DOCKER_COMPLETION = {}  # type: dict[str, dict[str, str]]
-REMOTE_COMPLETION = {}  # type: dict[str, dict[str, str]]
-PYTHON_PATHS = {}  # type: dict[str, str]
+DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
+PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
 try:
+    # noinspection PyUnresolvedReferences
     MAXFD = subprocess.MAXFD
 except AttributeError:
     MAXFD = -1
@@ -776,9 +779,12 @@ def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C
 def load_module(path, name):  # type: (str, str) -> None
     """Load a Python module using the given name and path."""
     if sys.version_info >= (3, 4):
+        # noinspection PyUnresolvedReferences
         import importlib.util
 
+        # noinspection PyUnresolvedReferences
         spec = importlib.util.spec_from_file_location(name, path)
+        # noinspection PyUnresolvedReferences
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
