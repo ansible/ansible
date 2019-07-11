@@ -72,7 +72,7 @@ options:
   device_unique_name:
     description:
       - The desired "friendly" name of the device being added to FortiAnalyzer.
-    required: 
+    required: false
     type: str
 
   device_serial:
