@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from units.compat.mock import patch
+from ansible.compat.tests.mock import patch
 # from ansible.module_utils.basic import get_timestamp
 from ansible.modules.network.icx import icx_command
 from units.modules.utils import set_module_args

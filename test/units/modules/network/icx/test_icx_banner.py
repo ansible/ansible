@@ -1,8 +1,22 @@
-# Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-from units.compat.mock import patch
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.icx import icx_banner
 from units.modules.utils import set_module_args
 from .icx_module import TestICXModule, load_fixture
@@ -23,6 +37,8 @@ class TestICXBannerModule(TestICXModule):
         self.mock_get_config = patch('ansible.modules.network.icx.icx_banner.get_config')
         self.get_config = self.mock_get_config.start()
 
+        self.mock_get_env_diff = patch('ansible.modules.network.icx.icx_banner.get_env_diff')
+        self.get_env_diff = self.mock_get_env_diff.start()
         self.set_running_config()
 
     def tearDown(self):
@@ -30,6 +46,7 @@ class TestICXBannerModule(TestICXModule):
         self.mock_exec_command.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
+        self.mock_get_env_diff.stop()
 
     def load_fixtures(self, commands=None):
         compares = None
@@ -37,10 +54,17 @@ class TestICXBannerModule(TestICXModule):
         def load_file(*args, **kwargs):
             module = args
             for arg in args:
-                if arg.params['check_running_config'] is True:
-                    return load_fixture('icx_banner_show_banner.txt').strip()
+                if arg.params['check_running_config'] is not None:
+                    compares = arg.params['check_running_config']
+                    break
                 else:
-                    return ''
+                    compares = None
+            env = self.get_running_config(compares)
+            self.get_env_diff.return_value = self.get_running_config(compare=compares)
+            if env is True:
+                return load_fixture('icx_banner_show_banner.txt').strip()
+            else:
+                return ''
 
         self.exec_command.return_value = (0, '', None)
         self.get_config.side_effect = load_file
