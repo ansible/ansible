@@ -284,6 +284,13 @@ def db_create(cursor, db, encoding, collation):
         res += cursor.execute(query, query_params)
     return res == len(db)
 
+
+def any_db_exists(cursor, db):
+    for each_db in db:
+        if cursor.execute("SHOW DATABASES LIKE %s", (each_db.replace("_", r"\_"),)):
+            return True
+    return False
+
 # ===========================================
 # Module execution.
 #
@@ -397,11 +404,12 @@ def main():
         if non_existence_list:
             try:
                 changed = db_create(cursor, non_existence_list, encoding, collation)
-                if changed >= 1:
-                    changed = True
             except Exception as e:
                 module.fail_json(msg="error creating database: %s" % to_native(e),
                                  exception=traceback.format_exc())
+            # If atleast one database was created by db_create then changed should be True
+            if not changed and any_db_exists(non_existence_list):
+                changed = True
         module.exit_json(changed=changed, db=db_name, db_list=db)
     elif state == "dump":
         if non_existence_list and not all_databases:
