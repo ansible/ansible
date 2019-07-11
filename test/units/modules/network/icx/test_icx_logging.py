@@ -23,7 +23,7 @@ __metaclass__ = type
 
 import json
 
-from units.compat.mock import patch
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.icx import icx_logging
 from units.modules.utils import set_module_args
 from .icx_module import TestICXModule, load_fixture

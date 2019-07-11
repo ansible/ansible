@@ -16,7 +16,7 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-from units.compat.mock import patch
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.icx import icx_interface
 from units.modules.utils import set_module_args
 from .icx_module import TestICXModule, load_fixture
