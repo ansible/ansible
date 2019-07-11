@@ -8,13 +8,12 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'thin_' + item.name }}"
-    template: "{{ item.name }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item.folder }}"
+    folder: "{{ virtual_machines[0].folder }}"
     convert: thin
-  with_items: "{{ virtual_machines }}"
   register: clone_thin
 
 - debug: var=clone_thin
@@ -22,7 +21,7 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_thin.results|map(attribute='changed')|unique|list == [true]"
+        - clone_thin is changed
 
 - name: clone vm from template and convert to thick
   vmware_guest:
@@ -30,13 +29,12 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'thick_' + item.name }}"
-    template: "{{ item.name }}"
+    name: test_vm2
+    template: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item.folder }}"
+    folder: "{{ virtual_machines[0].folder }}"
     convert: thick
-  with_items: "{{ virtual_machines }}"
   register: clone_thick
 
 - debug: var=clone_thick
@@ -44,7 +42,7 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_thick.results|map(attribute='changed')|unique|list == [true]"
+        - clone_thick is changed
 
 - name: clone vm from template and convert to eagerzeroedthick
   vmware_guest:
@@ -52,13 +50,12 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'eagerzeroedthick_' + item.name }}"
-    template: "{{ item.name }}"
+    name: test_vm3
+    template: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item.folder }}"
+    folder: "{{ virtual_machines[0].folder }}"
     convert: eagerzeroedthick
-  with_items: "{{ virtual_machines }}"
   register: clone_eagerzeroedthick
 
 - debug: var=clone_eagerzeroedthick
@@ -66,4 +63,4 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_eagerzeroedthick.results|map(attribute='changed')|unique|list == [true]"
+        - clone_eagerzeroedthick is changed

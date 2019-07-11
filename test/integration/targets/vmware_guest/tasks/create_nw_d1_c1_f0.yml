@@ -8,7 +8,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvmnw_4
+    name: test_vm1
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
