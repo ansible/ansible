@@ -1,0 +1,51 @@
+# test code for column privileges for mysql_user module
+
+# ============================================================
+- name: Copy SQL script to remote
+  copy:
+    src: "{{ item }}"
+    dest: "{{ remote_tmp_dir }}/{{ item | basename }}"
+  with_items:
+    - create-col-priv-db.sql
+    - drop-col-priv-db.sql
+
+- name: Create col priv test db
+  shell: "mysql < {{ remote_tmp_dir }}/create-col-priv-db.sql"
+
+- name: Add privs to specific table columns (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c1,c3)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv changed
+  assert: { that: "result.changed" }
+
+- name: Add privs to specific table columns (expect ok)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c1,c3)'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert that priv did not change
+  assert: { that: "not result.changed" }
+
+- name: Drop privs for specific table columns (expect changed)
+  mysql_user:
+    name: 'colprivuser1'
+    password: 'colprivpass1'
+    priv: 'colprivdb.t1:SELECT(c1,c3)'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- include: assert_no_user.yml user_name="colprivuser1"
+
+- name: Drop col priv test db
+  shell: "mysql < {{ remote_tmp_dir }}/drop-col-priv-db.sql"
