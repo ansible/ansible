@@ -21,24 +21,25 @@ __metaclass__ = type
 
 import json
 
-from units.compat.mock import patch
-from ansible.modules.network.ios import ios_command
+from ansible.compat.tests.mock import patch
+# from ansible.module_utils.basic import get_timestamp
+from ansible.modules.network.icx import icx_command
 from units.modules.utils import set_module_args
-from .ios_module import TestIosModule, load_fixture
+from .icx_module import TestICXModule, load_fixture
 
 
-class TestIosCommandModule(TestIosModule):
+class TestICXCommandModule(TestICXModule):
 
-    module = ios_command
+    module = icx_command
 
     def setUp(self):
-        super(TestIosCommandModule, self).setUp()
+        super(TestICXCommandModule, self).setUp()
 
-        self.mock_run_commands = patch('ansible.modules.network.ios.ios_command.run_commands')
+        self.mock_run_commands = patch('ansible.modules.network.icx.icx_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
-        super(TestIosCommandModule, self).tearDown()
+        super(TestICXCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
@@ -49,65 +50,69 @@ class TestIosCommandModule(TestIosModule):
 
             for item in commands:
                 try:
+                    if item == 'skip':
+                        continue
                     obj = json.loads(item['command'])
                     command = obj['command']
                 except ValueError:
                     command = item['command']
                 filename = str(command).replace(' ', '_')
                 output.append(load_fixture(filename))
+
             return output
 
         self.run_commands.side_effect = load_from_file
 
-    def test_ios_command_simple(self):
+    def test_icx_command_simple(self):
         set_module_args(dict(commands=['show version']))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue(result['stdout'][0].startswith('Cisco IOS Software'))
+        self.assertTrue(result['stdout'][0].startswith('Copyright (c) 1996-2017 Brocade Communications Systems'))
 
-    def test_ios_command_multiple(self):
+    def test_icx_command_multiple(self):
         set_module_args(dict(commands=['show version', 'show version']))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 2)
-        self.assertTrue(result['stdout'][0].startswith('Cisco IOS Software'))
+        self.assertTrue(result['stdout'][0].startswith('Copyright (c) 1996-2017 Brocade Communications Systems'))
 
-    def test_ios_command_wait_for(self):
-        wait_for = 'result[0] contains "Cisco IOS"'
+    def test_icx_command_wait_for(self):
+        wait_for = 'result[0] contains "ICX"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for))
         self.execute_module()
 
-    def test_ios_command_wait_for_fails(self):
+    def test_icx_command_wait_for_fails(self):
         wait_for = 'result[0] contains "test string"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for))
         self.execute_module(failed=True)
-        self.assertEqual(self.run_commands.call_count, 10)
+        # run_commands call count is 1(skip) + 10(current)
+        self.assertEqual(self.run_commands.call_count, 11)
 
-    def test_ios_command_retries(self):
+    def test_icx_command_retries(self):
         wait_for = 'result[0] contains "test string"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for, retries=2))
         self.execute_module(failed=True)
-        self.assertEqual(self.run_commands.call_count, 2)
+        self.assertEqual(self.run_commands.call_count, 3)
 
-    def test_ios_command_match_any(self):
-        wait_for = ['result[0] contains "Cisco IOS"',
+    def test_icx_command_match_any(self):
+        wait_for = ['result[0] contains "ICX"',
                     'result[0] contains "test string"']
         set_module_args(dict(commands=['show version'], wait_for=wait_for, match='any'))
         self.execute_module()
 
-    def test_ios_command_match_all(self):
-        wait_for = ['result[0] contains "Cisco IOS"',
-                    'result[0] contains "IOSv Software"']
+    def test_icx_command_match_all(self):
+        wait_for = ['result[0] contains "ICX"',
+                    'result[0] contains "Version:10.1.09T225"']
         set_module_args(dict(commands=['show version'], wait_for=wait_for, match='all'))
         self.execute_module()
 
-    def test_ios_command_match_all_failure(self):
-        wait_for = ['result[0] contains "Cisco IOS"',
+    def test_icx_command_match_all_failure(self):
+        wait_for = ['result[0] contains "ICX"',
                     'result[0] contains "test string"']
         commands = ['show version', 'show version']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
 
-    def test_ios_command_configure_check_warning(self):
+    def test_icx_command_configure_check_warning(self):
         commands = ['configure terminal']
         set_module_args({
             'commands': commands,
@@ -119,7 +124,7 @@ class TestIosCommandModule(TestIosModule):
             ['Only show commands are supported when using check mode, not executing configure terminal'],
         )
 
-    def test_ios_command_configure_not_warning(self):
+    def test_icx_command_configure_not_warning(self):
         commands = ['configure terminal']
         set_module_args(dict(commands=commands))
         result = self.execute_module()
