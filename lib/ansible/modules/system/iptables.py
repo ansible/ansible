@@ -301,6 +301,11 @@ options:
         the rule to apply instead to all users except that one specified.
     type: str
     version_added: "2.1"
+  gid_owner:
+    description:
+      - Specifies the GID or group to use in match by owner rule.
+    type: str
+    version_added: "2.9"
   reject_with:
     description:
       - 'Specifies the error packet type to return while rejecting. It implies
@@ -558,6 +563,9 @@ def construct_rule(params):
     append_match(rule, params['uid_owner'], 'owner')
     append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
     append_param(rule, params['uid_owner'], '--uid-owner', False)
+    append_match(rule, params['gid_owner'], 'owner')
+    append_match_flag(rule, params['gid_owner'], '--gid-owner', True)
+    append_param(rule, params['gid_owner'], '--gid-owner', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
@@ -669,6 +677,7 @@ def main():
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
+            gid_owner=dict(type='str'),
             reject_with=dict(type='str'),
             icmp_type=dict(type='str'),
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
