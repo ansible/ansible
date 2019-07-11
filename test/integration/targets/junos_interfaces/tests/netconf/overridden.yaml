@@ -11,6 +11,8 @@
         enable: true
       - name: fxp0
         enable: true
+      - name: lo0
+        enable: true
 
 - block:
     - name: Configure initial state for interface
