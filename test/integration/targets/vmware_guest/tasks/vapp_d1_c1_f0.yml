@@ -11,7 +11,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: "vm"
-    name: vApp-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     resource_pool: Resources
@@ -67,7 +67,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     folder: "vm"
-    name: vApp-Test
+    name: test_vm1
     datacenter: "{{ dc1 }}"
     vapp_properties:
     - id: prop_id1

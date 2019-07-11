@@ -5,13 +5,13 @@
 - when: vcsim is not defined
   block:
     - &add_mk_conn
-      name: Create new VMs again with max_connections as 4
+      name: Create new VM with max_connections as 4
       vmware_guest:
         validate_certs: False
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        name: "{{ 'newvm_mk_conn_' + item.name }}"
+        name: test_vm1
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
@@ -23,8 +23,7 @@
             type: thin
             autoselect_datastore: True
         state: present
-        folder: "{{ item.folder }}"
-      with_items: "{{ virtual_machines }}"
+        folder: "{{ f0 }}"
       register: mk_conn_result_0001
 
     - debug: var=mk_conn_result_0001
@@ -32,7 +31,7 @@
     - name: Assert that changes were made
       assert:
         that:
-          - "mk_conn_result_0001.results|map(attribute='changed')|unique|list == [true]"
+          - mk_conn_result_0001 is changed
     
     - <<: *add_mk_conn
       name: Again create new VMs again with max_connections as 4
@@ -43,4 +42,4 @@
     - name: Assert that changes were not made
       assert:
         that:
-          - "mk_conn_result_0002.results|map(attribute='changed')|unique|list == [false]"
+          - not (mk_conn_result_0002 is changed)

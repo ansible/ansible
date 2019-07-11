@@ -8,7 +8,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'newvm_' + item.name }}"
+    name: test_vm1
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
@@ -20,8 +20,7 @@
           type: thin
           autoselect_datastore: True
     state: poweredoff
-    folder: "{{ item.folder }}"
-  with_items: "{{ virtual_machines }}"
+    folder: "{{ f0 }}"
   register: clone_d1_c1_f0
 
 - debug: var=clone_d1_c1_f0
@@ -29,7 +28,7 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+        - clone_d1_c1_f0 is changed
 
 # VCSIM does not recognizes existing VMs boot firmware
 - when: vcsim is not defined
@@ -40,7 +39,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        name: "{{ 'newvm_' + item.name }}"
+        name: test_vm2
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
@@ -52,14 +51,13 @@
             type: thin
             autoselect_datastore: True
         state: poweredoff
-        folder: "{{ item.folder }}"
-      with_items: "{{ virtual_machines }}"
+        folder: "{{ f0 }}"
       register: clone_d1_c1_f0
     - debug: var=clone_d1_c1_f0
     - name: assert that changes were not made
       assert:
         that:
-          - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
+          - clone_d1_c1_f0 is changed
 
 - name: create new VMs with boot_firmware as 'efi'
   vmware_guest:
@@ -67,7 +65,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'newvm_efi_' + item.name }}"
+    name: test_vm3
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
@@ -79,8 +77,7 @@
           type: thin
           autoselect_datastore: True
     state: poweredoff
-    folder: "{{ item.folder }}"
-  with_items: "{{ virtual_machines }}"
+    folder: "{{ f0 }}"
   register: clone_d1_c1_f0
 
 - debug: var=clone_d1_c1_f0
@@ -88,7 +85,7 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+        - clone_d1_c1_f0 is changed
 
 # VCSIM does not recognizes existing VMs boot firmware
 - when: vcsim is not defined
@@ -99,7 +96,7 @@
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
-        name: "{{ 'newvm_efi_' + item.name }}"
+        name: test_vm3
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
@@ -111,11 +108,10 @@
             type: thin
             autoselect_datastore: True
         state: poweredoff
-        folder: "{{ item.folder }}"
-      with_items: "{{ virtual_machines }}"
+        folder: "{{ f0 }}"
       register: clone_d1_c1_f0
     - debug: var=clone_d1_c1_f0
     - name: assert that changes were not made
       assert:
         that:
-          - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
+          - not (clone_d1_c1_f0 is changed)

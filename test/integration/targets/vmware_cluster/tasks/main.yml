@@ -4,6 +4,8 @@
 
 - import_role:
     name: prepare_vmware_tests
+  vars:
+    setup_datacenter: true
 
 # Testcase 0001: Add Cluster
 - &add_cluster

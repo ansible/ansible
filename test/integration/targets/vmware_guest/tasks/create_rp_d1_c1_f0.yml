@@ -5,7 +5,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -33,7 +33,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -55,7 +55,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -84,7 +84,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -107,7 +107,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -137,7 +137,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -160,7 +160,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -189,7 +189,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
