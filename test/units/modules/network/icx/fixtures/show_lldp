@@ -1,0 +1,9 @@
+LLDP transmit interval           : 30 seconds
+LLDP transmit hold multiplier    : 4  (transmit TTL: 120 seconds)
+LLDP transmit delay              : 2 seconds
+LLDP SNMP notification interval  : 5 seconds
+LLDP reinitialize delay          : 2 seconds
+LLDP-MED fast start repeat count : 3
+
+LLDP maximum neighbors           : 2048
+LLDP maximum neighbors per port  : 4
