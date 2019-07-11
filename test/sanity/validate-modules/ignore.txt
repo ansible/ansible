@@ -3032,9 +3032,6 @@ lib/ansible/modules/packaging/language/pear.py E322
 lib/ansible/modules/packaging/language/pear.py E326
 lib/ansible/modules/packaging/language/pear.py E337
 lib/ansible/modules/packaging/language/pear.py E338
-lib/ansible/modules/packaging/language/pip.py E322
-lib/ansible/modules/packaging/language/pip.py E324
-lib/ansible/modules/packaging/language/pip.py E337
 lib/ansible/modules/packaging/language/yarn.py E337
 lib/ansible/modules/packaging/language/yarn.py E338
 lib/ansible/modules/packaging/os/apk.py E326
