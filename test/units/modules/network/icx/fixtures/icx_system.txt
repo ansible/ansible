@@ -1,7 +1,0 @@
-ip dns domain-list ansib.eg.com
-ip dns domain-list red.com
-ip dns domain-list test1.com
-ip dns server-address 10.22.22.64
-ip dns server-address 172.22.22.64
-radius-server host 172.16.20.14 auth-port 1837 acct-port 5021 accounting-only key database mac-auth
-tacacs-server host 182.16.10.20
