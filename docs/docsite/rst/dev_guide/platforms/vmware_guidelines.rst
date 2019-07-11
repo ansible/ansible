@@ -136,6 +136,10 @@ Once your configuration is ready, you can trigger a run with the following comma
 
 ``vmware_host_firewall_manager`` is the name of the module to test.
 
+``vmware_guest`` is much larger than any other test role and is rather slow. You can enable or disable some of its test playbooks in
+:file:`test/integration/targets/vmware_guest/defaults/main.yml`.
+
+
 Unit-test
 =========
 
@@ -173,6 +177,22 @@ Depending upon the functionality provided by ESXi or vCenter, some modules can s
         self.host = find_obj(self.content, [vim.HostSystem], None)
     if self.host is None:
         self.module.fail_json(msg="Failed to find host system.")
+
+Functional tests
+----------------
+
+No need to create too much resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most of the time, it's not necessary to use ``with_items`` to create multiple resources. By avoiding it,
+you speed up the test execution and you simplify the clean up afterwards.
+
+VM names should be predictable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to create a new VM during your test, you can use ``test_vm1``, ``test_vm2`` or ``test_vm3``. This
+way it will be automatically clean up for you.
+
 
 Typographic convention
 ======================

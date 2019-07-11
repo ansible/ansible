@@ -8,13 +8,12 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'net_customize_' + item.name }}"
-    template: "{{ item.name }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item.folder }}"
+    folder: "{{ virtual_machines[0].folder }}"
     convert: thin
-  with_items: "{{ virtual_machines }}"
   register: clone_customize
 
 - debug:
@@ -23,7 +22,7 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_customize.results|map(attribute='changed')|unique|list == [true]"
+        - clone_customize is changed
 
 - name: clone vm from template and customize GOS again
   vmware_guest:
@@ -31,13 +30,12 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ 'net_customize_' + item.name }}"
-    template: "{{ item.name }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
     datacenter: "{{ dc1 }}"
     state: poweredoff
-    folder: "{{ item.folder }}"
+    folder: "{{ virtual_machines[0].folder }}"
     convert: thin
-  with_items: "{{ virtual_machines }}"
   register: clone_customize_again
 
 - debug:
@@ -46,4 +44,4 @@
 - name: assert that changes were not made
   assert:
     that:
-        - "clone_customize_again.results|map(attribute='changed')|unique|list == [false]"
+        - not (clone_customize_again is changed)
