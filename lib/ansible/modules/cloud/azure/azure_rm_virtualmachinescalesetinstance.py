@@ -48,7 +48,7 @@ options:
             - 'deallocated'
     state:
         description:
-            - Assert the state of the VMSS instance. Use C(present) to update a instance and C(absent) to delete instance.
+            - State of the VMSS instance. Use C(present) to update an instance and C(absent) to delete an instance.
         default: present
         choices:
             - absent
