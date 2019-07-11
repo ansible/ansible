@@ -1,5 +1,5 @@
 #
-# (c) 2017 Red Hat Inc.
+# (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -20,11 +20,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import re
 import time
 import json
 import os
+
+from collections import Mapping
 from itertools import chain
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
@@ -158,7 +159,7 @@ class Cliconf(CliconfBase):
             self.send_command('configure terminal')
 
             for line in to_list(candidate):
-                if not isinstance(line, collections.Mapping):
+                if not isinstance(line, Mapping):
                     line = {'command': line}
 
                 cmd = line['command']
@@ -185,7 +186,7 @@ class Cliconf(CliconfBase):
     #     if commit:
     #         self.send_command('configure terminal')
     #         for line in to_list(candidate):
-    #             if not isinstance(line, collections.Mapping):
+    #             if not isinstance(line, Mapping):
     #                 line = {'command': line}
 
     #             cmd = line['command']
@@ -339,7 +340,7 @@ class Cliconf(CliconfBase):
 
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
