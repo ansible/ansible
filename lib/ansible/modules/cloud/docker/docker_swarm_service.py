@@ -1197,7 +1197,10 @@ def has_dict_changed(new_dict, old_dict):
         if value is not None
     )
     for option, value in defined_options.items():
-        if value != old_dict.get(option):
+        old_value = old_dict.get(option)
+        if not value and not old_value:
+            continue
+        if value != old_value:
             return True
     return False
 
