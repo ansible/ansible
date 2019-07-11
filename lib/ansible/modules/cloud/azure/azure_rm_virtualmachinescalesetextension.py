@@ -19,10 +19,10 @@ module: azure_rm_virtualmachinescalesetextension
 
 version_added: "2.8"
 
-short_description: Managed Azure Virtual Machine Scale Set extension
+short_description: Manage Azure Virtual Machine Scale Set (VMSS) extensions
 
 description:
-    - Create, update and delete Azure Virtual Machine Extension.
+    - Create, update and delete Azure Virtual Machine Scale Set (VMSS) extensions.
 
 options:
     resource_group:

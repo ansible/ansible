@@ -77,13 +77,13 @@ extensions:
             sample: myrg
         vmss_name:
             description:
-                - Virtual machine name.
+                - Virtual machine scale set name.
             returned: always
             type: str
             sample: myvmss
         name:
             description:
-                - Virtual machine name.
+                - Virtual machine extention name.
             returned: always
             type: str
             sample: myextension
