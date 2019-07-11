@@ -1,2 +1,0 @@
-bugfixes:
-  - azure_rm_loadbalancer intergration test target causing resource leakage on azure cloud(https://github.com/ansible/ansible/issues/58933)
