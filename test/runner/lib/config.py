@@ -261,6 +261,7 @@ class UnitsConfig(TestConfig):
         super(UnitsConfig, self).__init__(args, 'units')
 
         self.collect_only = args.collect_only  # type: bool
+        self.num_workers = args.num_workers  # type: int
 
         self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
 
