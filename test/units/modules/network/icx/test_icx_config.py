@@ -1,9 +1,26 @@
-# Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# (c) 2016 Red Hat Inc.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch, MagicMock
+from ansible.compat.tests.mock import patch, MagicMock
 from ansible.modules.network.icx import icx_config
 from ansible.plugins.cliconf.icx import Cliconf
 from units.modules.utils import set_module_args
@@ -78,6 +95,16 @@ class TestICXConfigModule(TestICXModule):
         self.assertEqual(self.run_commands.call_count, 1)
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.conn.edit_config.call_count, 0)
+
+    def test_icx_config_save(self):
+        self.run_commands.return_value = "hostname foo"
+        set_module_args(dict(save=True))
+        self.execute_module(changed=True)
+        self.assertEqual(self.run_commands.call_count, 2)
+        self.assertEqual(self.get_config.call_count, 0)
+        self.assertEqual(self.conn.edit_config.call_count, 0)
+        args = self.run_commands.call_args[0][1]
+        self.assertIn('write memory', args)
 
     def test_icx_config_lines_wo_parents(self):
         lines = ['hostname foo']

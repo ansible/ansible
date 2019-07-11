@@ -1,9 +1,7 @@
-# Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.icx import icx_facts
 from units.modules.utils import set_module_args
 from .icx_module import TestICXModule, load_fixture
@@ -30,8 +28,7 @@ class TestICXFactsModule(TestICXModule):
                 resp = list()
                 for cmd in commands:
                     fixtureName = cmd.replace(" ", "_")
-                    newFixtureName = fixtureName.replace("_|_", "_")
-                    output = load_fixture(newFixtureName).strip()
+                    output = load_fixture(fixtureName).strip()
                     if(output):
                         resp.append(output)
                 return resp
@@ -82,6 +79,9 @@ class TestICXFactsModule(TestICXModule):
             result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
         )
         self.assertEqual(
+            result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
+        )
+        self.assertEqual(
             result['ansible_facts']['ansible_net_memfree_mb'], 367152
         )
         self.assertEqual(
@@ -98,6 +98,9 @@ class TestICXFactsModule(TestICXModule):
         result = self.execute_module()
         self.assertEqual(
             result['ansible_facts']['ansible_net_filesystems'], "flash"
+        )
+        self.assertEqual(
+            result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
         )
         self.assertEqual(
             result['ansible_facts']['ansible_net_filesystems_info'], {'flash': {'Stack unit 1': {'spacetotal': '2GiB', 'spacefree': '1287792Kb'}}}
