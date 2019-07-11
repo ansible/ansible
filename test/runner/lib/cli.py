@@ -382,6 +382,11 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    # noinspection PyTypeChecker
+    units.add_argument('--num-workers',
+                       type=int,
+                       help='number of workers to use (default: auto)')
+
     units.add_argument('--requirements-mode',
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
