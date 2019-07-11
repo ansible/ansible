@@ -240,7 +240,9 @@ def check_vendor_specific_dhcp_option(module, ib_spec):
         if isinstance(module.params[key], list):
             temp_dict = module.params[key][0]
             if 'num' in temp_dict:
-                if temp_dict['num'] in (43, 124, 125):
+                # use_option only applies to special options that are displayed separately
+                # from other options as per NIOS use_option flags documentation
+                if temp_dict['num'] in (43, 124, 125, 119, 242):
                     del module.params[key][0]['use_option']
     return ib_spec
 
