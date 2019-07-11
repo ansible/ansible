@@ -282,6 +282,8 @@ def main():
             n0 = i
         if line == marker1:
             n1 = i
+            if (n0 != None):
+              break
 
     if None in (n0, n1):
         n0 = None
