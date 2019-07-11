@@ -44,24 +44,27 @@ from lib.util import (
     ApplicationError,
     SubprocessError,
     display,
-    run_command,
-    intercept_command,
     remove_tree,
     make_dirs,
     is_shippable,
     is_binary_file,
     find_executable,
     raw_command,
-    get_python_path,
     get_available_port,
     generate_pip_command,
     find_python,
     get_docker_completion,
     get_remote_completion,
-    named_temporary_file,
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
     INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    get_python_path,
+    intercept_command,
+    named_temporary_file,
+    run_command,
 )
 
 from lib.docker_util import (

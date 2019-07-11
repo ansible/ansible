@@ -8,9 +8,12 @@ from lib.util import (
     display,
     ApplicationError,
     is_shippable,
-    run_command,
     SubprocessError,
     ConfigParser,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.cloud import (

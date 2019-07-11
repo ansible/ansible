@@ -22,11 +22,14 @@ except ImportError:
     from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
 
 from lib.util import (
-    CommonConfig,
     ApplicationError,
-    run_command,
     SubprocessError,
     display,
+)
+
+from lib.util_common import (
+    CommonConfig,
+    run_command,
 )
 
 

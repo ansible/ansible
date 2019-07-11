@@ -8,13 +8,16 @@ import sys
 import lib.types as t
 
 from lib.util import (
-    CommonConfig,
     is_shippable,
     docker_qualify_image,
     find_python,
     generate_pip_command,
     get_docker_completion,
     ApplicationError,
+)
+
+from lib.util_common import (
+    CommonConfig,
 )
 
 from lib.metadata import (

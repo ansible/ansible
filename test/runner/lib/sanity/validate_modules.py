@@ -16,9 +16,12 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    run_command,
     read_lines_without_comments,
     INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.ansible_util import (
