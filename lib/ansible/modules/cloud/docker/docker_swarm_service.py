@@ -999,6 +999,17 @@ EXAMPLES = '''
     networks:
       - mynetwork
 
+- name: Set networks as a dictionary
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    networks:
+      - name: "mynetwork"
+        aliases:
+          - "mynetwork_alias"
+        options:
+          foo: bar
+
 - name: Set secrets
   docker_swarm_service:
     name: myservice
