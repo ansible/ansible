@@ -275,3 +275,69 @@ def test_has_list_changed(docker_swarm_service):
             {"src": 1, "dst": 2, "protocol": "tcp"},
         ]
     )
+    assert not docker_swarm_service.has_list_changed(
+        [{'id': '123', 'aliases': []}],
+        [{'id': '123'}]
+    )
+
+
+def test_get_docker_networks(docker_swarm_service):
+    network_names = [
+        'network_1',
+        'network_2',
+        'network_3',
+        'network_4',
+    ]
+    networks = [
+        network_names[0],
+        {'name': network_names[1]},
+        {'name': network_names[2], 'aliases': 'networkalias1'},
+        {'name': network_names[3], 'aliases': 'networkalias2', 'options': {'foo': 'bar'}},
+    ]
+    network_ids = {
+        network_names[0]: '1',
+        network_names[1]: '2',
+        network_names[2]: '3',
+        network_names[3]: '4',
+    }
+    parsed_networks = docker_swarm_service.get_docker_networks(
+        networks,
+        network_ids
+    )
+    assert len(parsed_networks) == 4
+    for i, network in enumerate(parsed_networks):
+        assert 'name' not in network
+        assert 'id' in network
+        expected_name = network_names[i]
+        assert network['id'] == network_ids[expected_name]
+        if i == 2:
+            assert network['aliases'] == 'networkalias1'
+        if i == 3:
+            assert network['aliases'] == 'networkalias2'
+        if i == 3:
+            assert 'foo' in network['options']
+
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks([{'invalid': 'err'}], {'err': 1})
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'aliases': 1}],
+            {'test': 1}
+        )
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            [{'name': 'test', 'options': 1}],
+            {'test': 1}
+        )
+    with pytest.raises(TypeError):
+        docker_swarm_service.get_docker_networks(
+            1,
+            {'test': 1}
+        )
+    with pytest.raises(ValueError):
+        docker_swarm_service.get_docker_networks(
+            {'name': 'idontexist'},
+            {'test': 1}
+        )
+    assert docker_swarm_service.get_docker_networks([], {}) == []
+    assert docker_swarm_service.get_docker_networks(None, {}) is None
