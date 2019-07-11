@@ -16,9 +16,12 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     find_executable,
     read_lines_without_comments,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (

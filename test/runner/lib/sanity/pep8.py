@@ -14,10 +14,13 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    run_command,
     read_lines_without_comments,
     parse_to_list_of_dict,
     INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
