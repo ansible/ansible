@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # import untangle
 
@@ -18,38 +18,53 @@ description:
 extends_documentation_fragment:
   - netapp.na_ontap
 module: na_ontap_cifs
+
 options:
+
   path:
     description:
       The file system path that is shared through this CIFS share. The path is the full, user visible path relative
       to the vserver root, and it might be crossing junction mount points. The path is in UTF8 and uses forward
       slash as directory separator
     required: false
+
   vserver:
     description:
       - "Vserver containing the CIFS share."
     required: true
+
   share_name:
     description:
       The name of the CIFS share. The CIFS share name is a UTF-8 string with the following characters being
       illegal; control characters from 0x00 to 0x1F, both inclusive, 0x22 (double quotes)
     required: true
+
   share_properties:
     description:
       - The list of properties for the CIFS share
     required: false
     version_added: '2.8'
+
   symlink_properties:
     description:
       - The list of symlink properties for this CIFS share
     required: false
     version_added: '2.8'
+
   state:
     choices: ['present', 'absent']
     description:
       - "Whether the specified CIFS share should exist or not."
     required: false
     default: present
+
+  vscan_fileop_profile:
+    choices: ['no_scan', 'standard', 'strict', 'writes_only']
+    description:
+      - Profile_set of file_ops to which vscan on access scanning is applicable.
+    required: false
+    version_added: '2.9'
+
 short_description: NetApp ONTAP Manage cifs-share
 version_added: "2.6"
 
@@ -83,6 +98,7 @@ EXAMPLES = """
         path: /
         share_properties: show_previous_versions
         symlink_properties: disable
+        vscan_fileop_profile: no_scan
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -116,7 +132,8 @@ class NetAppONTAPCifsShare(object):
             path=dict(required=False, type='str'),
             vserver=dict(required=True, type='str'),
             share_properties=dict(required=False, type='list'),
-            symlink_properties=dict(required=False, type='list')
+            symlink_properties=dict(required=False, type='list'),
+            vscan_fileop_profile=dict(required=False, type='str', choices=['no_scan', 'standard', 'strict', 'writes_only'])
         ))
 
         self.module = AnsibleModule(
@@ -145,6 +162,7 @@ class NetAppONTAPCifsShare(object):
         cifs_iter = netapp_utils.zapi.NaElement('cifs-share-get-iter')
         cifs_info = netapp_utils.zapi.NaElement('cifs-share')
         cifs_info.add_new_child('share-name', self.parameters.get('share_name'))
+        cifs_info.add_new_child('vserver', self.parameters.get('vserver'))
 
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(cifs_info)
@@ -175,6 +193,8 @@ class NetAppONTAPCifsShare(object):
                 'share_properties': properties_list,
                 'symlink_properties': symlink_list
             }
+            if cifs_attrs.get_child_by_name('vscan-fileop-profile'):
+                return_value['vscan_fileop_profile'] = cifs_attrs['vscan-fileop-profile']
 
         return return_value
 
@@ -196,6 +216,10 @@ class NetAppONTAPCifsShare(object):
             cifs_create.add_child_elem(symlink_attrs)
             for symlink in self.parameters.get('symlink_properties'):
                 symlink_attrs.add_new_child('cifs-share-symlink-properties', symlink)
+        if self.parameters.get('vscan_fileop_profile'):
+            fileop_attrs = netapp_utils.zapi.NaElement('vscan-fileop-profile')
+            fileop_attrs.set_content(self.parameters['vscan_fileop_profile'])
+            cifs_create.add_child_elem(fileop_attrs)
 
         try:
             self.server.invoke_successfully(cifs_create,
@@ -240,6 +264,10 @@ class NetAppONTAPCifsShare(object):
             cifs_modify.add_child_elem(symlink_attrs)
             for property in self.parameters.get('symlink_properties'):
                 symlink_attrs.add_new_child('cifs-share-symlink-properties', property)
+        if self.parameters.get('vscan_fileop_profile'):
+            fileop_attrs = netapp_utils.zapi.NaElement('vscan-fileop-profile')
+            fileop_attrs.set_content(self.parameters['vscan_fileop_profile'])
+            cifs_modify.add_child_elem(fileop_attrs)
         try:
             self.server.invoke_successfully(cifs_modify,
                                             enable_tunneling=True)
