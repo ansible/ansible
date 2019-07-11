@@ -1228,7 +1228,7 @@ def has_list_changed(new_list, old_list):
 
 
 class DockerService(DockerBaseClass):
-    def __init__(self):
+    def __init__(self, docker_api_version, docker_py_version):
         super(DockerService, self).__init__()
         self.image = ""
         self.command = None
@@ -1281,6 +1281,9 @@ class DockerService(DockerBaseClass):
         self.update_order = None
         self.working_dir = None
         self.can_update_networks = None
+
+        self.docker_api_version = docker_api_version
+        self.docker_py_version = docker_py_version
 
     def get_facts(self):
         return {
@@ -1534,8 +1537,10 @@ class DockerService(DockerBaseClass):
         secret_ids,
         config_ids,
         network_ids,
+        docker_api_version,
+        docker_py_version,
     ):
-        s = DockerService()
+        s = DockerService(docker_api_version, docker_py_version)
         s.image = image_digest
         s.can_update_networks = can_update_networks
         s.args = ap['args']
@@ -2135,7 +2140,7 @@ class DockerServiceManager(object):
             raw_data = self.client.inspect_service(name)
         except NotFound:
             return None
-        ds = DockerService()
+        ds = DockerService(self.client.docker_api_version, self.client.docker_py_version)
 
         task_template_data = raw_data['Spec']['TaskTemplate']
         ds.image = task_template_data['ContainerSpec']['Image']
@@ -2455,9 +2460,10 @@ class DockerServiceManager(object):
                 image_digest,
                 can_update_networks,
                 secret_ids,
-                config_ids
                 config_ids,
                 network_ids,
+                self.client.docker_api_version,
+                self.client.docker_py_version
             )
         except Exception as e:
             return self.client.fail(
