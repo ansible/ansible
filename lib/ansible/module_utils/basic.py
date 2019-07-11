@@ -193,6 +193,7 @@ from ansible.module_utils.common.validation import (
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.common.warnings import AnsibleWarning, AnsibleDeprecationWarning, global_warnings
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -613,6 +614,7 @@ class AnsibleModule(object):
         # run_command invocation
         self.run_command_environ_update = {}
         self._warnings = []
+        self._global_warnings = global_warnings
         self._deprecations = []
         self._clean = {}
         self._string_conversion_action = ''
@@ -2015,6 +2017,12 @@ class AnsibleModule(object):
     def _return_formatted(self, kwargs):
 
         self.add_path_info(kwargs)
+
+        for w in self._global_warnings:
+            if isinstance(w, AnsibleWarning):
+                self.warn(w.msg)
+            elif isinstance(w, AnsibleDeprecationWarning):
+                self.deprecate(w.msg, w.version)
 
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
