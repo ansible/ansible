@@ -1853,18 +1853,6 @@ class DockerService(DockerBaseClass):
             old_image = old_image.split('@')[0]
         return self.image != old_image, old_image
 
-    def __str__(self):
-        return str({
-            'mode': self.mode,
-            'env': self.env,
-            'endpoint_mode': self.endpoint_mode,
-            'mounts': self.mounts,
-            'configs': self.configs,
-            'secrets': self.secrets,
-            'networks': self.networks,
-            'replicas': self.replicas
-        })
-
     def build_container_spec(self):
         mounts = None
         if self.mounts is not None:
