@@ -145,7 +145,7 @@ EXAMPLES = r'''
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
     state: hard
-  with_items:
+  loop:
     - { src: x, dest: y }
     - { src: z, dest: k }
 
