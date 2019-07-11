@@ -122,7 +122,7 @@ dvs_portgroup_facts:
                 },
                 "vlan_info": {
                     "trunk": false,
-                    "vlan_id": true,
+                    "vlan_id": 0
                 },
                 "type": "earlyBinding"
             },
