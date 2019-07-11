@@ -42,7 +42,7 @@ options:
       description:
         - Aliyun availability zone ID in which to launch the instance.
           If it is not specified, it will be allocated by system automatically.
-      aliases: ['alicloud_zone']
+      aliases: ['alicloud_zone', 'zone_id']
     image_id:
       description:
         - Image ID used to launch instances. Required when C(state=present) and creating new ECS instances.
@@ -54,6 +54,7 @@ options:
     security_groups:
       description:
         - A list of security group IDs.
+      aliases: ['group_ids']
     vswitch_id:
       description:
         - The subnet ID in which to launch the instances (VPC).
@@ -110,7 +111,7 @@ options:
       description:
       - I(count) determines how many instances based on a specific tag criteria should be present.
         This can be expressed in multiple ways and is shown in the EXAMPLES section.
-        The specified count_tag must already exist or be passed in as the I(instance_tags) option.
+        The specified count_tag must already exist or be passed in as the I(tags) option.
         If it is not specified, it will be replaced by I(instance_name).
     allocate_public_ip:
       description:
@@ -146,10 +147,17 @@ options:
         - Whether the current operation needs to be execute forcibly.
       default: False
       type: bool
-    instance_tags:
+    tags:
       description:
         - A hash/dictionaries of instance tags, to add to the new instance or for starting/stopping instance by tag. C({"key":"value"})
-      aliases: ["tags"]
+      aliases: ["instance_tags"]
+    purge_tags:
+      description:
+        - Delete any tags not specified in the task that are on the instance.
+          If True, it means you have to specify all the desired tags on each task affecting an instance.
+      default: False
+      type: bool
+      version_added: '2.9'
     key_name:
       description:
         - The name of key pair which is used to access ECS instance in SSH.
@@ -164,7 +172,7 @@ author:
     - "He Guimin (@xiaozhu36)"
 requirements:
     - "python >= 2.6"
-    - "footmark >= 1.1.16"
+    - "footmark >= 1.12.0"
 extends_documentation_fragment:
     - alicloud
 '''
@@ -206,7 +214,7 @@ EXAMPLES = '''
         assign_public_ip: '{{ assign_public_ip }}'
         internet_charge_type: '{{ internet_charge_type }}'
         max_bandwidth_out: '{{ max_bandwidth_out }}'
-        instance_tags:
+        tags:
             Name: created_one
         host_name: '{{ host_name }}'
         password: '{{ password }}'
@@ -224,7 +232,7 @@ EXAMPLES = '''
         security_groups: '{{ security_groups }}'
         internet_charge_type: '{{ internet_charge_type }}'
         max_bandwidth_out: '{{ max_bandwidth_out }}'
-        instance_tags:
+        tags:
             Name: created_one
             Version: 0.1
         count: 2
@@ -268,7 +276,7 @@ instances:
         availability_zone:
             description: The availability zone of the instance is in.
             returned: always
-            type: str
+            type: string
             sample: cn-beijing-a
         block_device_mappings:
             description: Any block device mapping entries for the instance.
@@ -278,12 +286,12 @@ instances:
                 device_name:
                     description: The device name exposed to the instance (for example, /dev/xvda).
                     returned: always
-                    type: str
+                    type: string
                     sample: /dev/xvda
                 attach_time:
                     description: The time stamp when the attachment initiated.
                     returned: always
-                    type: str
+                    type: string
                     sample: "2018-06-25T04:08:26Z"
                 delete_on_termination:
                     description: Indicates whether the volume is deleted on instance termination.
@@ -293,12 +301,12 @@ instances:
                 status:
                     description: The attachment state.
                     returned: always
-                    type: str
+                    type: string
                     sample: in_use
                 volume_id:
                     description: The ID of the cloud disk.
                     returned: always
-                    type: str
+                    type: string
                     sample: d-2zei53pjsi117y6gf9t6
         cpu:
             description: The CPU core count of the instance.
@@ -308,12 +316,12 @@ instances:
         creation_time:
             description: The time the instance was created.
             returned: always
-            type: str
+            type: string
             sample: "2018-06-25T04:08Z"
         description:
             description: The instance description.
             returned: always
-            type: str
+            type: string
             sample: "my ansible instance"
         eip:
             description: The attribution of EIP associated with the instance.
@@ -323,25 +331,25 @@ instances:
                 allocation_id:
                     description: The ID of the EIP.
                     returned: always
-                    type: str
+                    type: string
                     sample: eip-12345
                 internet_charge_type:
                     description: The internet charge type of the EIP.
                     returned: always
-                    type: str
+                    type: string
                     sample: "paybybandwidth"
                 ip_address:
                     description: EIP address.
                     returned: always
-                    type: str
+                    type: string
                     sample: 42.10.2.2
         expired_time:
             description: The time the instance will expire.
             returned: always
-            type: str
+            type: string
             sample: "2099-12-31T15:59Z"
         gpu:
-            description: The attribution of instance GPU.
+            description: The attribution of instane GPU.
             returned: always
             type: complex
             contains:
@@ -353,52 +361,52 @@ instances:
                 spec:
                     description: The specification of the GPU.
                     returned: always
-                    type: str
+                    type: string
                     sample: ""
         host_name:
             description: The host name of the instance.
             returned: always
-            type: str
+            type: string
             sample: iZ2zewaoZ
         id:
             description: Alias of instance_id.
             returned: always
-            type: str
+            type: string
             sample: i-abc12345
         instance_id:
             description: ECS instance resource ID.
             returned: always
-            type: str
+            type: string
             sample: i-abc12345
         image_id:
             description: The ID of the image used to launch the instance.
             returned: always
-            type: str
+            type: string
             sample: m-0011223344
-        inner_ip_address:
-            description: The inner IPv4 address of the classic instance.
-            returned: always
-            type: str
-            sample: 10.0.0.2
         instance_charge_type:
             description: The instance charge type.
             returned: always
-            type: str
+            type: string
             sample: PostPaid
         instance_name:
             description: The name of the instance.
             returned: always
-            type: str
+            type: string
             sample: my-ecs
         instance_type:
             description: The instance type of the running instance.
             returned: always
-            type: str
+            type: string
             sample: ecs.sn1ne.xlarge
+        instance_type_family:
+            description: The instance type family of the instance belongs.
+            returned: always
+            type: string
+            sample: ecs.sn1ne
         internet_charge_type:
             description: The billing method of the network bandwidth.
             returned: always
-            type: str
+            type: string
             sample: PayByBandwidth
         internet_max_bandwidth_in:
             description: Maximum incoming bandwidth from the internet network.
@@ -428,42 +436,42 @@ instances:
                 mac_address:
                     description: The MAC address.
                     returned: always
-                    type: str
+                    type: string
                     sample: "00:11:22:33:44:55"
                 network_interface_id:
                     description: The ID of the network interface.
                     returned: always
-                    type: str
+                    type: string
                     sample: eni-01234567
                 primary_ip_address:
                     description: The primary IPv4 address of the network interface within the vswitch.
                     returned: always
-                    type: str
+                    type: string
                     sample: 10.0.0.1
         osname:
             description: The operation system name of the instance owned.
             returned: always
-            type: str
+            type: string
             sample: CentOS
         ostype:
             description: The operation system type of the instance owned.
             returned: always
-            type: str
+            type: string
             sample: linux
         private_ip_address:
             description: The IPv4 address of the network interface within the subnet.
             returned: always
-            type: str
+            type: string
             sample: 10.0.0.1
         public_ip_address:
-            description: The public IPv4 address assigned to the instance
+            description: The public IPv4 address assigned to the instance or eip address
             returned: always
-            type: str
+            type: string
             sample: 43.0.0.1
         resource_group_id:
             description: The id of the resource group to which the instance belongs.
             returned: always
-            type: str
+            type: string
             sample: my-ecs-group
         security_groups:
             description: One or more security groups for the instance.
@@ -473,27 +481,32 @@ instances:
                 - group_id:
                       description: The ID of the security group.
                       returned: always
-                      type: str
+                      type: string
                       sample: sg-0123456
                 - group_name:
                       description: The name of the security group.
                       returned: always
-                      type: str
+                      type: string
                       sample: my-security-group
         status:
             description: The current status of the instance.
             returned: always
-            type: str
+            type: string
             sample: running
         tags:
             description: Any tags assigned to the instance.
             returned: always
             type: dict
             sample:
+        user_data:
+            description: User-defined data.
+            returned: always
+            type: dict
+            sample:
         vswitch_id:
             description: The ID of the vswitch in which the instance is running.
             returned: always
-            type: str
+            type: string
             sample: vsw-dew00abcdef
         vpc_id:
             description: The ID of the VPC the instance is in.
@@ -524,9 +537,12 @@ except ImportError:
 
 def get_instances_info(connection, ids):
     result = []
-    instances = connection.get_all_instances(instance_ids=ids)
+    instances = connection.describe_instances(instance_ids=ids)
     if len(instances) > 0:
         for inst in instances:
+            volumes = connection.describe_disks(instance_id=inst.id)
+            setattr(inst, 'block_device_mappings', volumes)
+            setattr(inst, 'user_data', inst.describe_user_data())
             result.append(inst.read())
     return result
 
@@ -551,7 +567,6 @@ def create_instance(module, ecs, exact_count):
     system_disk_name = module.params['system_disk_name']
     system_disk_description = module.params['system_disk_description']
     allocate_public_ip = module.params['allocate_public_ip']
-    instance_tags = module.params['instance_tags']
     period = module.params['period']
     auto_renew = module.params['auto_renew']
     instance_charge_type = module.params['instance_charge_type']
@@ -573,17 +588,17 @@ def create_instance(module, ecs, exact_count):
 
     try:
         # call to create_instance method from footmark
-        instances = ecs.create_instance(image_id=image_id, instance_type=instance_type, security_group_id=security_groups[0],
-                                        zone_id=zone_id, instance_name=instance_name, description=description,
-                                        internet_charge_type=internet_charge_type, max_bandwidth_out=max_bandwidth_out,
-                                        max_bandwidth_in=max_bandwidth_in, host_name=host_name, password=password,
-                                        io_optimized='optimized', system_disk_category=system_disk_category,
-                                        system_disk_size=system_disk_size, system_disk_name=system_disk_name,
-                                        system_disk_description=system_disk_description,
-                                        vswitch_id=vswitch_id, count=exact_count, allocate_public_ip=allocate_public_ip,
-                                        instance_charge_type=instance_charge_type, period=period, auto_renew=auto_renew,
-                                        auto_renew_period=auto_renew_period, instance_tags=instance_tags,
-                                        key_pair_name=key_name, user_data=user_data, client_token=client_token)
+        instances = ecs.create_instances(image_id=image_id, instance_type=instance_type, security_group_id=security_groups[0],
+                                         zone_id=zone_id, instance_name=instance_name, description=description,
+                                         internet_charge_type=internet_charge_type, internet_max_bandwidth_out=max_bandwidth_out,
+                                         internet_max_bandwidth_in=max_bandwidth_in, host_name=host_name, password=password,
+                                         io_optimized='optimized', system_disk_category=system_disk_category,
+                                         system_disk_size=system_disk_size, system_disk_disk_name=system_disk_name,
+                                         system_disk_description=system_disk_description, vswitch_id=vswitch_id,
+                                         count=exact_count, allocate_public_ip=allocate_public_ip,
+                                         instance_charge_type=instance_charge_type, period=period, period_unit="Month",
+                                         auto_renew=auto_renew, auto_renew_period=auto_renew_period, key_pair_name=key_name,
+                                         user_data=user_data, client_token=client_token)
 
     except Exception as e:
         module.fail_json(msg='Unable to create instance, error: {0}'.format(e))
@@ -591,11 +606,43 @@ def create_instance(module, ecs, exact_count):
     return instances
 
 
+def modify_instance(module, instance):
+    # According to state to modify instance's some special attribute
+    state = module.params["state"]
+    name = module.params['instance_name']
+    if not name:
+        name = instance.name
+
+    description = module.params['description']
+    if not description:
+        description = instance.description
+
+    host_name = module.params['host_name']
+    if not host_name:
+        host_name = instance.host_name
+
+    # password can be modified only when restart instance
+    password = ""
+    if state == "restarted":
+        password = module.params['password']
+
+    # userdata can be modified only when instance is stopped
+    setattr(instance, "user_data", instance.describe_user_data())
+    user_data = instance.user_data
+    if state == "stopped":
+        user_data = module.params['user_data']
+
+    try:
+        return instance.modify(name=name, description=description, host_name=host_name, password=password, user_data=user_data)
+    except Exception as e:
+        module.fail_json(msg="Modify instance {0} attribute got an error: {1}".format(instance.id, e))
+
+
 def main():
     argument_spec = ecs_argument_spec()
     argument_spec.update(dict(
-        security_groups=dict(type='list'),
-        availability_zone=dict(type='str', aliases=['alicloud_zone']),
+        security_groups=dict(type='list', aliases=['group_ids']),
+        availability_zone=dict(type='str', aliases=['alicloud_zone', 'zone_id']),
         instance_type=dict(type='str', aliases=['type']),
         image_id=dict(type='str', aliases=['image']),
         count=dict(type='int', default=1),
@@ -612,7 +659,8 @@ def main():
         system_disk_name=dict(type='str'),
         system_disk_description=dict(type='str'),
         force=dict(type='bool', default=False),
-        instance_tags=dict(type='dict', aliases=['tags']),
+        tags=dict(type='dict', aliases=['instance_tags']),
+        purge_tags=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'running', 'stopped', 'restarted', 'absent']),
         description=dict(type='str'),
         allocate_public_ip=dict(type='bool', aliases=['assign_public_ip'], default=False),
@@ -639,22 +687,41 @@ def main():
     force = module.params['force']
     zone_id = module.params['availability_zone']
     key_name = module.params['key_name']
+    tags = module.params['tags']
     changed = False
 
     instances = []
     if instance_ids:
         if not isinstance(instance_ids, list):
             module.fail_json(msg='The parameter instance_ids should be a list, aborting')
-        instances = ecs.get_all_instances(zone_id=zone_id, instance_ids=instance_ids)
+        instances = ecs.describe_instances(zone_id=zone_id, instance_ids=instance_ids)
         if not instances:
             module.fail_json(msg="There are no instances in our record based on instance_ids {0}. "
                                  "Please check it and try again.".format(instance_ids))
     elif count_tag:
-        instances = ecs.get_all_instances(zone_id=zone_id, instance_tags=eval(count_tag))
+        instances = ecs.describe_instances(zone_id=zone_id, tags=eval(count_tag))
     elif instance_name:
-        instances = ecs.get_all_instances(zone_id=zone_id, instance_name=instance_name)
+        instances = ecs.describe_instances(zone_id=zone_id, instance_name=instance_name)
 
     ids = []
+    if state == 'absent':
+        if len(instances) < 1:
+            module.fail_json(msg='Please specify ECS instances that you want to operate by using '
+                                 'parameters instance_ids, tags or instance_name, aborting')
+        try:
+            targets = []
+            for inst in instances:
+                if inst.status != 'stopped' and not force:
+                    module.fail_json(msg="Instance is running, and please stop it or set 'force' as True.")
+                targets.append(inst.id)
+            if ecs.delete_instances(instance_ids=targets, force=force):
+                changed = True
+                ids.extend(targets)
+
+            module.exit_json(changed=changed, ids=ids, instances=[])
+        except Exception as e:
+            module.fail_json(msg='Delete instance got an error: {0}'.format(e))
+
     if state == 'present':
         if not instance_ids:
             if len(instances) > count:
@@ -664,7 +731,8 @@ def main():
                         module.fail_json(msg="That to delete instance {0} is failed results from it is running, "
                                              "and please stop it or set 'force' as True.".format(inst.id))
                     try:
-                        changed = inst.terminate(force=force)
+                        if inst.terminate(force=force):
+                            changed = True
                     except Exception as e:
                         module.fail_json(msg="Delete instance {0} got an error: {1}".format(inst.id, e))
                     instances.pop(len(instances) - 1)
@@ -677,11 +745,28 @@ def main():
                 except Exception as e:
                     module.fail_json(msg="Create new instances got an error: {0}".format(e))
 
+        # Allocate instance public ip
+        if module.params['allocate_public_ip']:
+            for inst in instances:
+                if inst.public_ip_address:
+                    continue
+                if inst.allocate_public_ip():
+                    changed = True
+
+        # start the stopped instances
+        stopped = []
+        for inst in instances:
+            if inst.status == "stopped":
+                stopped.append(inst.id)
+        if stopped:
+            if ecs.start_instances(instance_ids=stopped):
+                changed = True
+
         # Security Group join/leave begin
         security_groups = module.params['security_groups']
-        if not isinstance(security_groups, list):
-            module.fail_json(msg='The parameter security_groups should be a list, aborting')
-        if len(security_groups) > 0:
+        if security_groups:
+            if not isinstance(security_groups, list):
+                module.fail_json(msg='The parameter security_groups should be a list, aborting')
             for inst in instances:
                 existing = inst.security_group_ids['security_group_id']
                 remove = list(set(existing).difference(set(security_groups)))
@@ -699,80 +784,88 @@ def main():
         for inst in instances:
             if key_name is not None and key_name != inst.key_name:
                 if key_name == "":
-                    changed = inst.detach_key_pair()
+                    if inst.detach_key_pair():
+                        changed = True
                 else:
                     inst_ids.append(inst.id)
         if inst_ids:
             changed = ecs.attach_key_pair(instance_ids=inst_ids, key_pair_name=key_name)
 
         # Modify instance attribute
-        description = module.params['description']
-        host_name = module.params['host_name']
-        password = module.params['password']
         for inst in instances:
-            if not instance_name:
-                instance_name = inst.name
-            if not description:
-                description = inst.description
-            if not host_name:
-                host_name = inst.host_name
-            try:
-                if inst.modify(name=instance_name, description=description, host_name=host_name, password=password):
-                    changed = True
-            except Exception as e:
-                module.fail_json(msg="Modify instance attribute {0} got an error: {1}".format(inst.id, e))
-
+            if modify_instance(module, inst):
+                changed = True
             if inst.id not in ids:
                 ids.append(inst.id)
-
-        module.exit_json(changed=changed, ids=ids, instances=get_instances_info(ecs, ids))
-
     else:
         if len(instances) < 1:
             module.fail_json(msg='Please specify ECS instances that you want to operate by using '
-                                 'parameters instance_ids, instance_tags or instance_name, aborting')
-        force = module.params['force']
+                                 'parameters instance_ids, tags or instance_name, aborting')
         if state == 'running':
             try:
+                targets = []
                 for inst in instances:
-                    if inst.start():
+                    if modify_instance(module, inst):
                         changed = True
-                        ids.append(inst.id)
-
-                module.exit_json(changed=changed, ids=ids, instances=get_instances_info(ecs, ids))
+                    if inst.status != "running":
+                        targets.append(inst.id)
+                    ids.append(inst.id)
+                if targets and ecs.start_instances(instance_ids=targets):
+                    changed = True
+                    ids.extend(targets)
             except Exception as e:
                 module.fail_json(msg='Start instances got an error: {0}'.format(e))
         elif state == 'stopped':
             try:
+                targets = []
                 for inst in instances:
-                    if inst.stop(force=force):
+                    if inst.status != "stopped":
+                        targets.append(inst.id)
+                if targets and ecs.stop_instances(instance_ids=targets, force_stop=force):
+                    changed = True
+                    ids.extend(targets)
+                for inst in instances:
+                    if modify_instance(module, inst):
                         changed = True
-                        ids.append(inst.id)
-
-                module.exit_json(changed=changed, ids=ids, instances=get_instances_info(ecs, ids))
             except Exception as e:
                 module.fail_json(msg='Stop instances got an error: {0}'.format(e))
         elif state == 'restarted':
             try:
+                targets = []
                 for inst in instances:
-                    if inst.reboot(force=module.params['force']):
+                    if modify_instance(module, inst):
                         changed = True
-                        ids.append(inst.id)
-
-                module.exit_json(changed=changed, ids=ids, instances=get_instances_info(ecs, ids))
+                        targets.append(inst.id)
+                if ecs.reboot_instances(instance_ids=targets, force_stop=module.params['force']):
+                    changed = True
+                    ids.extend(targets)
             except Exception as e:
                 module.fail_json(msg='Reboot instances got an error: {0}'.format(e))
-        else:
-            try:
-                for inst in instances:
-                    if inst.status != 'stopped' and not force:
-                        module.fail_json(msg="Instance is running, and please stop it or set 'force' as True.")
-                    if inst.terminate(force=module.params['force']):
-                        changed = True
 
-                module.exit_json(changed=changed, ids=[], instances=[])
+    tags = module.params['tags']
+    if tags or module.params['purge_tags']:
+        for inst in instances:
+            removed = {}
+            if not tags:
+                removed = inst.tags
+            else:
+                for key, value in inst.tags.items():
+                    if key not in tags.keys():
+                        removed[key] = value
+            try:
+                if inst.remove_tags(removed):
+                    changed = True
             except Exception as e:
-                module.fail_json(msg='Delete instance got an error: {0}'.format(e))
+                module.fail_json(msg="{0}".format(e))
+
+            if tags:
+                try:
+                    if inst.add_tags(tags):
+                        changed = True
+                except Exception as e:
+                    module.fail_json(msg="{0}".format(e))
+
+    module.exit_json(changed=changed, ids=ids, instances=get_instances_info(ecs, ids))
 
 
 if __name__ == '__main__':
