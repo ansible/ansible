@@ -105,6 +105,7 @@ DOCUMENTATION = '''
                 note: fail_on_errors is always True when using filters
             type: dictionary or string
             default: None
+            version_added: "2.9"
 '''
 
 EXAMPLES = '''
