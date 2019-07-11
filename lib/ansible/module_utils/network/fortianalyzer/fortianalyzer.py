@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2017 Fortinet, Incddddd
+# (c) 2017 Fortinet, Inc
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -26,6 +26,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
 
 from ansible.module_utils.network.fortianalyzer.common import FAZ_RC
 from ansible.module_utils.network.fortianalyzer.common import FAZBaseException
