@@ -1,4 +1,4 @@
-# (c) 2019 Ericsson.
+# (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -21,24 +21,25 @@ __metaclass__ = type
 
 import json
 
-from units.compat.mock import patch
-from ansible.modules.network.eric_eccli import eric_eccli_command
+from ansible.compat.tests.mock import patch
+# from ansible.module_utils.basic import get_timestamp
+from ansible.modules.network.icx import icx_command
 from units.modules.utils import set_module_args
-from .eccli_module import TestEccliModule, load_fixture
+from .ios_module import TestIosModule, load_fixture
 
 
-class TestEccliCommandModule(TestEccliModule):
+class TestIosCommandModule(TestIosModule):
 
-    module = eric_eccli_command
+    module = ios_command
 
     def setUp(self):
-        super(TestEccliCommandModule, self).setUp()
+        super(TestIosCommandModule, self).setUp()
 
-        self.mock_run_commands = patch('ansible.modules.network.eric_eccli.eric_eccli_command.run_commands')
+        self.mock_run_commands = patch('ansible.modules.network.ios.ios_command.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
     def tearDown(self):
-        super(TestEccliCommandModule, self).tearDown()
+        super(TestIosCommandModule, self).tearDown()
         self.mock_run_commands.stop()
 
     def load_fixtures(self, commands=None):
@@ -59,55 +60,55 @@ class TestEccliCommandModule(TestEccliModule):
 
         self.run_commands.side_effect = load_from_file
 
-    def test_eric_eccli_command_simple(self):
+    def test_ios_command_simple(self):
         set_module_args(dict(commands=['show version']))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue(result['stdout'][0].startswith('Ericsson IPOS Version'))
+        self.assertTrue(result['stdout'][0].startswith('Cisco IOS Software'))
 
-    def test_eric_eccli_command_multiple(self):
+    def test_ios_command_multiple(self):
         set_module_args(dict(commands=['show version', 'show version']))
         result = self.execute_module()
         self.assertEqual(len(result['stdout']), 2)
-        self.assertTrue(result['stdout'][0].startswith('Ericsson IPOS Version'))
+        self.assertTrue(result['stdout'][0].startswith('Cisco IOS Software'))
 
-    def test_eric_eccli_command_wait_for(self):
-        wait_for = 'result[0] contains "Ericsson IPOS"'
+    def test_ios_command_wait_for(self):
+        wait_for = 'result[0] contains "Cisco IOS"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for))
         self.execute_module()
 
-    def test_eric_eccli_command_wait_for_fails(self):
+    def test_ios_command_wait_for_fails(self):
         wait_for = 'result[0] contains "test string"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for))
         self.execute_module(failed=True)
         self.assertEqual(self.run_commands.call_count, 10)
 
-    def test_eric_eccli_command_retries(self):
+    def test_ios_command_retries(self):
         wait_for = 'result[0] contains "test string"'
         set_module_args(dict(commands=['show version'], wait_for=wait_for, retries=2))
         self.execute_module(failed=True)
         self.assertEqual(self.run_commands.call_count, 2)
 
-    def test_eric_eccli_command_match_any(self):
-        wait_for = ['result[0] contains "Ericsson IPOS"',
+    def test_ios_command_match_any(self):
+        wait_for = ['result[0] contains "Cisco IOS"',
                     'result[0] contains "test string"']
         set_module_args(dict(commands=['show version'], wait_for=wait_for, match='any'))
         self.execute_module()
 
-    def test_eric_eccli_command_match_all(self):
-        wait_for = ['result[0] contains "Ericsson IPOS"',
-                    'result[0] contains "Version IPOS"']
+    def test_ios_command_match_all(self):
+        wait_for = ['result[0] contains "Cisco IOS"',
+                    'result[0] contains "IOSv Software"']
         set_module_args(dict(commands=['show version'], wait_for=wait_for, match='all'))
         self.execute_module()
 
-    def test_eric_eccli_command_match_all_failure(self):
-        wait_for = ['result[0] contains "Ericsson IPOS"',
+    def test_ios_command_match_all_failure(self):
+        wait_for = ['result[0] contains "Cisco IOS"',
                     'result[0] contains "test string"']
         commands = ['show version', 'show version']
         set_module_args(dict(commands=commands, wait_for=wait_for, match='all'))
         self.execute_module(failed=True)
 
-    def test_eric_eccli_command_configure_check_warning(self):
+    def test_ios_command_configure_check_warning(self):
         commands = ['configure terminal']
         set_module_args({
             'commands': commands,
@@ -116,10 +117,10 @@ class TestEccliCommandModule(TestEccliModule):
         result = self.execute_module()
         self.assertEqual(
             result['warnings'],
-            ['only non-config commands are supported when using check mode, not executing configure terminal'],
+            ['Only show commands are supported when using check mode, not executing configure terminal'],
         )
 
-    def test_eric_eccli_command_configure_not_warning(self):
+    def test_ios_command_configure_not_warning(self):
         commands = ['configure terminal']
         set_module_args(dict(commands=commands))
         result = self.execute_module()
