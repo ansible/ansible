@@ -180,4 +180,5 @@ class TestNiosPTRRecordModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'ipv6addr': '2002:8ac3:802d:1242:20d:60ff:fe38:6d16', 'ptrdname': 'ansible6.test.com', 'view': 'default'})
+        wapi.create_object.assert_called_once_with('testobject', {'ipv6addr': '2002:8ac3:802d:1242:20d:60ff:fe38:6d16',
+                                                                  'ptrdname': 'ansible6.test.com', 'view': 'default'})
