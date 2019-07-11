@@ -440,13 +440,16 @@ else:
     ACTIVE_ANSIBALLZ_TEMPLATE = _strip_comments(ANSIBALLZ_TEMPLATE)
 
 
+COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
+
+
 class ModuleDepFinder(ast.NodeVisitor):
     # Caveats:
     # This code currently does not handle:
     # * relative imports from py2.6+ from . import urls
     IMPORT_PREFIX_SIZE = len('ansible.module_utils.')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, module_path, *args, **kwargs):
         """
         Walk the ast tree for the python module.
 
@@ -464,6 +467,7 @@ class ModuleDepFinder(ast.NodeVisitor):
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
         self.submodules = set()
+        self.module_path = module_path
 
     def visit_Import(self, node):
         # import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
@@ -478,12 +482,39 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
+        if node.level > 0:
+            parts = None
+
+            if isinstance(self.module_path, tuple):
+                # the module_path we're given is already a tuple with the correct namespace
+                parts = tuple(self.module_path)
+            else:
+                # the module_path is a file path from which we need to extract the collection namespace, name and relative path
+                match = COLLECTION_PATH_RE.search(self.module_path)
+
+                if match:
+                    parts = tuple(match.group('path').split('/'))
+
+            if parts:
+                if node.module:
+                    # relative import: from .module import x
+                    node_module = '.'.join(parts[:-node.level] + (node.module,))
+                else:
+                    # relative import: from . import x
+                    node_module = '.'.join(parts[:-node.level])
+            else:
+                # fall back to an absolute import
+                node_module = node.module
+        else:
+            # absolute import: from module import x
+            node_module = node.module
+
         # Specialcase: six is a special case because of its
         # import logic
         if node.names[0].name == '_six':
             self.submodules.add(('_six',))
-        elif node.module.startswith('ansible.module_utils'):
-            where_from = node.module[self.IMPORT_PREFIX_SIZE:]
+        elif node_module.startswith('ansible.module_utils'):
+            where_from = node_module[self.IMPORT_PREFIX_SIZE:]
             if where_from:
                 # from ansible.module_utils.MODULE1[.MODULEn] import IDENTIFIER [as asname]
                 # from ansible.module_utils.MODULE1[.MODULEn] import MODULEn+1 [as asname]
@@ -496,16 +527,16 @@ class ModuleDepFinder(ast.NodeVisitor):
                 for alias in node.names:
                     self.submodules.add((alias.name,))
 
-        elif node.module.startswith('ansible_collections.'):
+        elif node_module.startswith('ansible_collections.'):
             # TODO: finish out the subpackage et al cases
-            if node.module.endswith('plugins.module_utils'):
+            if node_module.endswith('plugins.module_utils'):
                 # from ansible_collections.ns.coll.plugins.module_utils import MODULE [as aname] [,MODULE2] [as aname]
-                py_mod = tuple(node.module.split('.'))
+                py_mod = tuple(node_module.split('.'))
                 for alias in node.names:
                     self.submodules.add(py_mod + (alias.name,))
             else:
                 # from ansible_collections.ns.coll.plugins.module_utils.MODULE import IDENTIFIER [as aname]
-                self.submodules.add(tuple(node.module.split('.')))
+                self.submodules.add(tuple(node_module.split('.')))
 
         self.generic_visit(node)
 
@@ -602,7 +633,7 @@ class ModuleInfo:
         return _slurp(self.path)
 
 
-def recursive_finder(name, data, py_module_names, py_module_cache, zf):
+def recursive_finder(name, path, data, py_module_names, py_module_cache, zf):
     """
     Using ModuleDepFinder, make sure we have all of the module_utils files that
     the module its module_utils files needs.
@@ -612,7 +643,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         tree = ast.parse(data)
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
-    finder = ModuleDepFinder()
+    finder = ModuleDepFinder(path)
     finder.visit(tree)
 
     #
@@ -650,7 +681,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             try:
                 # FIXME: need this in py2 for some reason TBD, but we shouldn't (get_data delegates to wrong loader without it)
                 pkg = import_module(package_name)
-                module_info = pkgutil.get_data(package_name, resource_name)
+                module_info = pkgutil.get_data(to_native(package_name), to_native(resource_name))
             except FileNotFoundError:
                 # FIXME: implement package fallback code
                 raise AnsibleError('unable to load collection-hosted module_util {0}.{1}'.format(to_native(package_name),
@@ -792,7 +823,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     py_module_names.update(unprocessed_py_module_names)
 
     for py_module_file in unprocessed_py_module_names:
-        recursive_finder(py_module_file, py_module_cache[py_module_file][0], py_module_names, py_module_cache, zf)
+        recursive_finder(py_module_file, py_module_file, py_module_cache[py_module_file][0], py_module_names, py_module_cache, zf)
         # Save memory; the file won't have to be read again for this ansible module.
         del py_module_cache[py_module_file]
 
@@ -908,10 +939,22 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                 to_bytes(__author__) + b'"\n')
                     zf.writestr('ansible/module_utils/__init__.py', b'from pkgutil import extend_path\n__path__=extend_path(__path__,__name__)\n')
 
-                    zf.writestr('__main__.py', b_module_data)
+                    match = COLLECTION_PATH_RE.search(module_path)
+
+                    if match:
+                        collection_path = tuple(match.group('path').split('/'))
+                        entry_path = '/'.join(collection_path) + '.py'
+                        zf.writestr(entry_path, b_module_data)
+                        tgt = b'.'.join(cp.encode('utf-8') for cp in collection_path)
+                        b_wrapper = b'from %s import main; main()' % tgt
+                        remote_module_package_path = '/'.join(tuple(collection_path[:-1]) + tuple(['__init__.py']))
+                        zf.writestr(remote_module_package_path, b'')
+                        zf.writestr('__main__.py', b_wrapper)
+                    else:
+                        zf.writestr('__main__.py', b_module_data)
 
                     py_module_cache = {('__init__',): (b'', '[builtin]')}
-                    recursive_finder(module_name, b_module_data, py_module_names, py_module_cache, zf)
+                    recursive_finder(module_name, module_path, b_module_data, py_module_names, py_module_cache, zf)
                     zf.close()
                     zipdata = base64.b64encode(zipoutput.getvalue())
 
