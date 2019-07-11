@@ -460,8 +460,13 @@ class Connection(NetworkConnectionBase):
             if prompt_len != answer_len:
                 raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
-            self._history.append(command)
-            self._ssh_shell.sendall(b'%s\r' % command)
+            cmd = b'%s\r' % command
+            self._history.append(cmd)
+            self._log_messages("command executed: %s" % cmd)
+            self._log_messages("prompt: %s" % prompt)
+            self._log_messages("answer: %s" % answer)
+            self._log_messages("sendonly: %s" % sendonly)
+            self._ssh_shell.sendall(cmd)
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
