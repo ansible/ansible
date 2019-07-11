@@ -1,0 +1,2 @@
+bugfixes:
+    - gather_facts now correctly passes back the full output of modules on error and skipped, fixes #57204
