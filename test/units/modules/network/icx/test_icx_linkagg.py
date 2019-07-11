@@ -1,11 +1,3 @@
-<<<<<<< 49a2f047d4f446f3211dcdff427f9a633cf29f06
-# Copyright: (c) 2019, Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-from units.compat.mock import patch
-=======
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -25,8 +17,7 @@ from units.compat.mock import patch
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
->>>>>>> icx test units module
+from units.compat.mock import patch
 from ansible.modules.network.icx import icx_linkagg
 from units.modules.utils import set_module_args
 from .icx_module import TestICXModule, load_fixture
@@ -58,12 +49,6 @@ class TestICXLinkaggModule(TestICXModule):
         def load_from_file(*args, **kwargs):
             module = args
             for arg in args:
-<<<<<<< 49a2f047d4f446f3211dcdff427f9a633cf29f06
-                if arg.params['check_running_config'] is True:
-                    return load_fixture('lag_running_config.txt').strip()
-                else:
-                    return ''
-=======
                 if arg is not None:
                     if arg.params['check_running_config'] is not None:
                         compares = arg.params['check_running_config']
@@ -76,7 +61,6 @@ class TestICXLinkaggModule(TestICXModule):
                 return load_fixture('lag_running_config.txt').strip()
             else:
                 return ''
->>>>>>> icx test units module
 
         self.get_config.side_effect = load_from_file
         self.load_config.return_value = None
