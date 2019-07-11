@@ -36,6 +36,7 @@ options:
   content:
     description:
     - When used instead of C(src), sets the contents of a file directly to the specified value.
+    - C(dest) file is created if it does not already exists.
     - For advanced formatting or if C(content) contains a variable, use the C(template) module.
     type: str
     version_added: '1.1'
@@ -46,7 +47,6 @@ options:
     - If C(dest) is a non-existent path and if either C(dest) ends with "/" or C(src) is a directory, C(dest) is created.
     - If I(dest) is a relative path, the starting directory is determined by the remote host.
     - If C(src) and C(dest) are files, the parent directory of C(dest) is not created and the task fails if it does not already exist.
-    - If C(content) is used and C(dest) is a file, file is created if it does not already exist.
     type: path
     required: yes
   backup:
