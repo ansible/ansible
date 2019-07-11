@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 
 DOCUMENTATION = """
@@ -21,8 +21,6 @@ description:
   - This will configure both login and motd banners on remote
     ruckus ICX 7000 series switches. It allows playbooks to add or remove
     banner text from the active running configuration.
-notes:
-  - Tested against ICX 10.1
 options:
   banner:
     description:
@@ -99,8 +97,8 @@ commands:
 import re
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.network.icx.icx import load_config, get_config
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.icx.icx import load_config, get_config, get_env_diff
 from ansible.module_utils.connection import Connection, ConnectionError
 
 
@@ -160,7 +158,7 @@ def map_config_to_obj(module):
     if output_text:
         obj['text'] = output_text
         obj['state'] = 'present'
-    if module.params['check_running_config'] is False:
+    if get_env_diff(module, module.params['check_running_config']) is False:
         obj = {'banner': module.params['banner'], 'state': 'absent', 'enterkey': False, 'text': 'JUNK'}
     return obj
 
@@ -186,7 +184,7 @@ def main():
         text=dict(),
         enterkey=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG']))
+        check_running_config=dict(default=True, type='bool')
     )
 
     required_one_of = [['text', 'enterkey', 'state']]
@@ -199,6 +197,10 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
+
+    # results['want']=want
+    # results['have']=have
+
     commands = map_obj_to_commands((want, have), module)
     results['commands'] = commands
 
