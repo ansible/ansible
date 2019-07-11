@@ -31,6 +31,7 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+
 from ansible.module_utils.network.fortianalyzer.common import FAZ_RC
 from ansible.module_utils.network.fortianalyzer.common import FAZBaseException
 from ansible.module_utils.network.fortianalyzer.common import FAZCommon
