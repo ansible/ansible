@@ -1,0 +1,2377 @@
+GigabitEthernet1/1/1 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d600 (bia 609c.9fe7.d600)
+  Configured speed 10Mbit, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  Port name is test name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  Internet address is 192.168.1.1/24, MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/2 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d601 (bia 609c.9fe7.d601)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/3 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d602 (bia 609c.9fe7.d602)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/4 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d603 (bia 609c.9fe7.d603)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  Member of configured trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/5 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d603 (bia 609c.9fe7.d604)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  Member of configured trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/6 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d603 (bia 609c.9fe7.d605)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  Member of configured trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/7 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d603 (bia 609c.9fe7.d606)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  Member of configured trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/8 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d607 (bia 609c.9fe7.d607)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/9 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d608 (bia 609c.9fe7.d608)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/10 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d609 (bia 609c.9fe7.d609)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/11 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d60a (bia 609c.9fe7.d60a)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/12 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d60b (bia 609c.9fe7.d60b)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  Member of configured trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/13 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d60b (bia 609c.9fe7.d60c)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  Member of configured trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/14 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d60b (bia 609c.9fe7.d60d)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  Member of configured trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/15 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d60b (bia 609c.9fe7.d60e)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  Member of configured trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/16 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d60f (bia 609c.9fe7.d60f)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/17 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d610 (bia 609c.9fe7.d610)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/18 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d611 (bia 609c.9fe7.d611)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/19 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d612 (bia 609c.9fe7.d612)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/20 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d613 (bia 609c.9fe7.d613)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/21 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d614 (bia 609c.9fe7.d614)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/22 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d615 (bia 609c.9fe7.d615)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/23 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d616 (bia 609c.9fe7.d616)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/24 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d617 (bia 609c.9fe7.d617)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/25 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d618 (bia 609c.9fe7.d618)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/26 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d619 (bia 609c.9fe7.d619)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/27 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d61a (bia 609c.9fe7.d61a)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/28 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d61b (bia 609c.9fe7.d61b)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/29 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d61c (bia 609c.9fe7.d61c)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/30 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d61d (bia 609c.9fe7.d61d)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/31 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d61e (bia 609c.9fe7.d61e)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/32 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d61f (bia 609c.9fe7.d61f)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/33 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d620 (bia 609c.9fe7.d620)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/34 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d621 (bia 609c.9fe7.d621)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/35 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d622 (bia 609c.9fe7.d622)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/36 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d623 (bia 609c.9fe7.d623)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/37 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d624 (bia 609c.9fe7.d624)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/38 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d625 (bia 609c.9fe7.d625)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/39 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d626 (bia 609c.9fe7.d626)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/40 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d627 (bia 609c.9fe7.d627)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/41 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d628 (bia 609c.9fe7.d628)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/42 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d629 (bia 609c.9fe7.d629)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/43 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d62a (bia 609c.9fe7.d62a)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/44 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d62b (bia 609c.9fe7.d62b)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/45 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d62c (bia 609c.9fe7.d62c)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/46 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d62d (bia 609c.9fe7.d62d)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/47 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d62e (bia 609c.9fe7.d62e)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/48 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d62f (bia 609c.9fe7.d62f)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/2/1 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 19 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d631 (bia 609c.9fe7.d631)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/2/2 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 19 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d632 (bia 609c.9fe7.d632)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+10GigabitEthernet1/3/1 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 19 second(s) 
+  Hardware is 10GigabitEthernet, address is 609c.9fe7.d633 (bia 609c.9fe7.d633)
+  Configured speed 10Gbit, actual unknown, configured duplex fdx, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG XGMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+10GigabitEthernet1/3/2 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 19 second(s) 
+  Hardware is 10GigabitEthernet, address is 609c.9fe7.d634 (bia 609c.9fe7.d634)
+  Configured speed 10Gbit, actual unknown, configured duplex fdx, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG XGMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+10GigabitEthernet1/3/3 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 19 second(s) 
+  Hardware is 10GigabitEthernet, address is 609c.9fe7.d635 (bia 609c.9fe7.d635)
+  Configured speed 10Gbit, actual unknown, configured duplex fdx, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG XGMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+10GigabitEthernet1/3/4 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 19 second(s) 
+  Hardware is 10GigabitEthernet, address is 609c.9fe7.d636 (bia 609c.9fe7.d636)
+  Configured speed 10Gbit, actual unknown, configured duplex fdx, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG XGMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+Lag lg100 is down, line protocol is down
+  Configured speed Auto, actual None, configured duplex fdx, actual none
+  Member of L2 VLAN ID 1, port is untagged, port state is None
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled,  Openflow Hybrid mode is Disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  Member of configured trunk ports 1/1/4,1/1/5,1/1/6,1/1/7,lg100, Lag Interface is lg100
+  No port name
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+Lag lg200 is down, line protocol is down
+  Configured speed Auto, actual None, configured duplex fdx, actual none
+  Member of L2 VLAN ID 1, port is untagged, port state is None
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled,  Openflow Hybrid mode is Disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Member of active trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  Member of configured trunk ports 1/1/12,1/1/13,1/1/14,1/1/15,lg200, Lag Interface is lg200
+  No port name
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+GigEthernetmgmt1 is up, line protocol is up 
+  Port up for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigEthernet, address is 609c.9fe7.d600 (bia 609c.9fe7.d630)
+  Configured speed auto, actual 1Gbit, configured duplex fdx, actual fdx
+  Configured mdi mode AUTO, actual none
+  Not a Member of any VLAN , port is untagged, port state is NONE
+  No port name
+  Internet address is 10.10.10.148/24, MTU 1500 bytes, encapsulation ethernet
+  300 second input rate: 5488 bits/sec, 3 packets/sec, 0.00% utilization
+  300 second output rate: 3784 bits/sec, 0 packets/sec, 0.00% utilization
+  392034 packets input, 90017132 bytes, 0 no buffer
+  Received 150902 broadcasts, 221306 multicasts, 19826 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  22670 packets output, 8363988 bytes, 0 underruns
+  Transmitted 6 broadcasts, 0 multicasts, 22664 unicasts
+  0 output errors, 0 collisions
