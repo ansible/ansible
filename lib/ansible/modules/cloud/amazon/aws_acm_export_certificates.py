@@ -50,8 +50,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-certificates:
-    description: The list of certificates and private key returned by the AWS Certificate Manager
+export:
+    description: Export the certificate, the certificate chain, and the encrypted private key associated with the public key embedded in the certificate
     returned: always
     type: dict
     sample:
@@ -60,13 +60,12 @@ certificates:
       private_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 '''
 
+import traceback
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
-    boto3_conn,
+    camel_dict_to_snake_dict,
     ec2_argument_spec,
-    get_aws_connection_info,
-    HAS_BOTO3
 )
 
 
@@ -74,17 +73,6 @@ try:
     from botocore.exceptions import ClientError, ParamValidationError
 except ImportError:
     pass  # caught by imported AnsibleAWSModule
-
-
-def camel_dict_to_snake_dict(acm_certificates):
-    certificate = acm_certificates.get('Certificate', None)
-    certificate_chain = acm_certificates.get('CertificateChain', None)
-    private_key = acm_certificates.get('PrivateKey', None)
-    return {
-        'certificate': certificate,
-        'certificate_chain': certificate_chain,
-        'private_key': private_key
-    }
 
 
 def export_acm_certificates(connection, module):
@@ -97,8 +85,10 @@ def export_acm_certificates(connection, module):
 
     try:
         response = connection.export_certificate(**kwargs)
-    except (ClientError, ParamValidationError) as e:
-        module.fail_json_aws(e)
+    except (ClientError, ParamValidationError) as error:
+        module.fail_json(msg="Couldn't obtain private certificates",
+                         exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(error.response))
 
     module.exit_json(certificates=camel_dict_to_snake_dict(response))
 
@@ -107,16 +97,13 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            certificate_arn=dict(type='str', required=True),
-            passphrase=dict(type='str', required=True)
+            certificate_arn=dict(required=True),
+            passphrase=dict(required=True)
         )
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
     connection = module.client('acm')
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore are required.')
 
     export_acm_certificates(connection, module)
 
