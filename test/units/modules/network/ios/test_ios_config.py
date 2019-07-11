@@ -21,8 +21,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat.mock import patch, MagicMock
-from ansible.modules.network.ios import ios_config
-from ansible.plugins.cliconf.ios import Cliconf
+from ansible.modules.network.icx import icx_config
+from ansible.plugins.cliconf.icx import Cliconf
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
