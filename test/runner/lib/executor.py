@@ -18,6 +18,8 @@ import random
 import string
 import shutil
 
+import lib.types as t
+
 import lib.pytar
 import lib.thread
 
@@ -358,7 +360,7 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
 
     if args.platform:
         get_python_path(args, args.python_executable)  # initialize before starting threads
@@ -411,9 +413,9 @@ def network_init(args, internal_targets):
     if args.metadata.instance_config is not None:
         return
 
-    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+    platform_targets = set(a for target in internal_targets for a in target.aliases if a.startswith('network/'))
 
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
 
     # generate an ssh key (if needed) up front once, instead of for each instance
     SshKey(args)
@@ -523,7 +525,7 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
     pre_target = None
     post_target = None
     httptester_id = None
@@ -553,7 +555,7 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-        use_httptester = args.httptester and any('needs/httptester/' in t.aliases for t in internal_targets)
+        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
         # if running under Docker delegation, the httptester may have already been started
         docker_httptester = bool(os.environ.get("HTTPTESTER", False))
 
@@ -638,7 +640,7 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     if args.metadata.instance_config is not None:
         return
 
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
 
     for version in args.windows:
         instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
@@ -765,7 +767,7 @@ def command_integration_filter(args, targets, init_callback=None):
     if not internal_targets:
         raise AllTargetsSkipped()
 
-    if args.start_at and not any(t.name == args.start_at for t in internal_targets):
+    if args.start_at and not any(target.name == args.start_at for target in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
 
     if init_callback:
@@ -835,7 +837,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     results = {}
 
-    current_environment = None  # type: EnvironmentDescription | None
+    current_environment = None  # type: t.Optional[EnvironmentDescription]
 
     # common temporary directory path that will be valid on both the controller and the remote
     # it must be common because it will be referenced in environment variables that are shared across multiple hosts
@@ -1944,7 +1946,7 @@ class EnvironmentDescription(object):
     def get_version(command, warnings):
         """
         :type command: list[str]
-        :type warnings: list[str]
+        :type warnings: list[text]
         :rtype: list[str]
         """
         try:

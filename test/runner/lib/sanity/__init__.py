@@ -8,6 +8,8 @@ import os
 import re
 import sys
 
+import lib.types as t
+
 from lib.util import (
     ApplicationError,
     SubprocessError,
@@ -76,16 +78,16 @@ def command_sanity(args):
     tests = sanity_get_tests()
 
     if args.test:
-        tests = [t for t in tests if t.name in args.test]
+        tests = [target for target in tests if target.name in args.test]
     else:
-        disabled = [t.name for t in tests if not t.enabled and not args.allow_disabled]
-        tests = [t for t in tests if t.enabled or args.allow_disabled]
+        disabled = [target.name for target in tests if not target.enabled and not args.allow_disabled]
+        tests = [target for target in tests if target.enabled or args.allow_disabled]
 
         if disabled:
             display.warning('Skipping tests disabled by default without --allow-disabled: %s' % ', '.join(sorted(disabled)))
 
     if args.skip_test:
-        tests = [t for t in tests if t.name not in args.skip_test]
+        tests = [target for target in tests if target.name not in args.skip_test]
 
     total = 0
     failed = []
@@ -383,7 +385,7 @@ SANITY_TESTS = (
 def sanity_init():
     """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
     import_plugins('sanity')
-    sanity_plugins = {}  # type: dict[str, type]
+    sanity_plugins = {}  # type: t.Dict[str, type]
     load_plugins(SanityFunc, sanity_plugins)
     sanity_tests = tuple([plugin() for plugin in sanity_plugins.values()])
     global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement

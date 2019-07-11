@@ -75,12 +75,14 @@ def parse_args():
                         const='yes',
                         default='auto')
 
+    # noinspection PyTypeChecker
     parser.add_argument('--tries',
                         metavar='TRIES',
                         type=int,
                         default=3,
                         help='number of tries to execute command (default: %(default)s)')
 
+    # noinspection PyTypeChecker
     parser.add_argument('--sleep',
                         metavar='SECONDS',
                         type=int,

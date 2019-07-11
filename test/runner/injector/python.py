@@ -18,8 +18,10 @@ def main():
             args += ['-m', 'coverage.__main__', 'run', '--rcfile', coverage_config]
         else:
             if sys.version_info >= (3, 4):
+                # noinspection PyUnresolvedReferences
                 import importlib.util
 
+                # noinspection PyUnresolvedReferences
                 found = bool(importlib.util.find_spec('coverage'))
             else:
                 import imp
