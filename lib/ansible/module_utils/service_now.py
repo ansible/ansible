@@ -32,7 +32,7 @@ class ServiceNowClient(object):
         self.client_secret = self.params['client_secret']
         self.username = self.params['username']
         self.password = self.params['password']
-        self.instance = None
+        self.instance = self.params['instance']
         self.session = {'token': None}
         self.conn = None
 
