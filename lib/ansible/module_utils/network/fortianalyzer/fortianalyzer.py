@@ -39,7 +39,7 @@ from ansible.module_utils.network.fortianalyzer.common import scrub_dict
 from ansible.module_utils.network.fortianalyzer.common import FAZMethods
 
 
-# ACTIVE BUG WITH OUR DEBUG IMPORT CALL -- BECAUSE IT'S UNDER MODULE_UTILITIES
+# ACTIVE BUG WITH OUR DEBUG IMPORT CALL - BECAUSE IT'S UNDER MODULE_UTILITIES
 # WHEN module_common.recursive_finder() runs under the module loader, it looks for this namespace debug import
 # and because it's not there, it always fails, regardless of it being under a try/catch here.
 # we're going to move it to a different namespace.
