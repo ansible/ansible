@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -21,6 +21,10 @@ short_description: Manage link aggregation groups on Cisco NXOS devices.
 description:
   - This module provides declarative management of link aggregation groups
     on Cisco NXOS devices.
+deprecated:
+  removed_in: "2.13"
+  why: Updated modules released with more functionality
+  alternative: Use M(nxos_lag_interfaces) instead.
 author:
   - Trishna Guha (@trishnaguha)
 notes:
