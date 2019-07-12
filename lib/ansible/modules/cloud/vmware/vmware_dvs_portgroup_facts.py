@@ -150,7 +150,16 @@ class DVSPortgroupFactsManager(PyVmomi):
 
         if datacenter is None:
             self.module.fail_json(msg="Failed to find the datacenter %s" % self.dc_name)
-        if self.dvs_name == 'all':
+        if self.dvs_name:
+            # User specified specific dvswitch name to gather information
+            dvsn = find_dvs_by_name(self.content, self.dvs_name)
+            if dvsn is None:
+                self.module.fail_json(msg="Failed to find the dvswitch %s" % self.dvs_name)
+            
+            dvs_lists = [dvsn]
+        else:
+             # default behaviour, gather information about all dvswitches
+            dvs_lists = get_all_objs(self.content, [vim.DistributedVirtualSwitch], folder=datacenter.networkFolder)
             dvs_lists = get_all_objs(self.content, [vim.DistributedVirtualSwitch], folder=datacenter.networkFolder)
         else:
             dvsn = find_dvs_by_name(self.content, self.dvs_name)
