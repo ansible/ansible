@@ -80,7 +80,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that address was deleted
   gcp_compute_address_facts:
       filters:
@@ -110,4 +109,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
