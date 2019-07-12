@@ -405,7 +405,7 @@ class CloudEnvironment(CloudBase):
         pass
 
 
-class CloudEnvironmentConfig(object):
+class CloudEnvironmentConfig:
     """Configuration for the environment."""
     def __init__(self, env_vars=None, ansible_vars=None, module_defaults=None, callback_plugins=None):
         """

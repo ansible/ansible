@@ -199,7 +199,7 @@ class SanityMessage(TestMessage):
     pass
 
 
-class SanityTargets(object):
+class SanityTargets:
     """Sanity test target information."""
     def __init__(self, include, exclude, require):
         """

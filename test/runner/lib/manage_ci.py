@@ -32,7 +32,7 @@ from lib.config import (
 )
 
 
-class ManageWindowsCI(object):
+class ManageWindowsCI:
     """Manage access to a Windows instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -136,7 +136,7 @@ class ManageWindowsCI(object):
         raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
 
 
-class ManageNetworkCI(object):
+class ManageNetworkCI:
     """Manage access to a network instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -177,7 +177,7 @@ class ManageNetworkCI(object):
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
 
 
-class ManagePosixCI(object):
+class ManagePosixCI:
     """Manage access to a POSIX instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """

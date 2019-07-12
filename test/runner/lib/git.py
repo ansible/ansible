@@ -10,7 +10,7 @@ from lib.util import (
 )
 
 
-class Git(object):
+class Git:
     """Wrapper around git command-line tools."""
     def __init__(self, root=None):  # type: (t.Optional[str]) -> None
         self.git = 'git'

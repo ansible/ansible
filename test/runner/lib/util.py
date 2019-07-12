@@ -513,7 +513,7 @@ def generate_password():
     return password
 
 
-class Display(object):
+class Display:
     """Manages color console output."""
     clear = '\033[0m'
     red = '\033[31m'

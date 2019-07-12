@@ -17,7 +17,7 @@ from lib.diff import (
 )
 
 
-class Metadata(object):
+class Metadata:
     """Metadata object for passing data to delegated tests."""
     def __init__(self):
         """Initialize metadata."""
@@ -102,7 +102,7 @@ class Metadata(object):
         return metadata
 
 
-class ChangeDescription(object):
+class ChangeDescription:
     """Description of changes."""
     def __init__(self):
         self.command = ''  # type: str

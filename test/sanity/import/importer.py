@@ -31,7 +31,7 @@ class ImporterAnsibleModuleException(Exception):
     pass
 
 
-class ImporterAnsibleModule(object):
+class ImporterAnsibleModule:
     """Replacement for AnsibleModule to support import testing."""
     def __init__(self, *args, **kwargs):
         raise ImporterAnsibleModuleException()
@@ -142,7 +142,7 @@ def test_python_module(path, base_dir, messages, ansible_module):
         report_message(error, messages)
 
 
-class Capture(object):
+class Capture:
     """Captured output and/or exception."""
     def __init__(self):
         self.stdout = StringIO()

@@ -21,7 +21,7 @@ def main():
     checker.report()
 
 
-class YamlChecker(object):
+class YamlChecker:
     """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
     def __init__(self):
         self.messages = []

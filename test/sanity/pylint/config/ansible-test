@@ -12,7 +12,6 @@ disable=
     too-many-statements,
     unnecessary-pass,
     unused-import,
-    useless-object-inheritance,
     consider-using-dict-comprehension,
     consider-using-set-comprehension,
 

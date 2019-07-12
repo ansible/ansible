@@ -185,7 +185,7 @@ class TowerCloudEnvironment(CloudEnvironment):
         )
 
 
-class TowerConfig(object):
+class TowerConfig:
     """Tower settings."""
     def __init__(self, values):
         self.version = values.get('version')
