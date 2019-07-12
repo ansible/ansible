@@ -44,7 +44,7 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, passwords):
+    def __init__(self, playbooks, inventory, variable_manager, loader, passwords, stdout_callback=None):
         self._playbooks = playbooks
         self._inventory = inventory
         self._variable_manager = variable_manager
@@ -62,6 +62,7 @@ class PlaybookExecutor:
                 loader=loader,
                 passwords=self.passwords,
                 forks=context.CLIARGS.get('forks'),
+                stdout_callback=stdout_callback,
             )
 
         # Note: We run this here to cache whether the default ansible ssh

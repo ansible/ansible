@@ -116,7 +116,7 @@ class PlaybookCLI(CLI):
         # create the playbook executor, which manages running the plays via a task queue manager
         pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
                                 variable_manager=variable_manager, loader=loader,
-                                passwords=passwords)
+                                passwords=passwords, stdout_callback=self.callback)
 
         results = pbex.run()
 
