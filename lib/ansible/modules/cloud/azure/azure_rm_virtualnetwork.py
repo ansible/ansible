@@ -133,7 +133,8 @@ state:
                 - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/
+                    Microsoft.Network/virtualNetworks/myVirtualNetwork"
         location:
             description:
                 - The Geo-location where the resource lives.

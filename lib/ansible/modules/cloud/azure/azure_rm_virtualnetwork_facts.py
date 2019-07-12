@@ -142,7 +142,8 @@ virtualnetworks:
                             - Resource ID.
                         returned: always
                         type: str
-                        sample: "/subscriptions/f64d4ee8-be94-457d-ba26-3fa6b6506cef/resourceGroups/v-xisuRG/providers/Microsoft.Network/virtualNetworks/vnetb57dc95232/subnets/vnetb57dc95232"
+                        sample: "/subscriptions/f64d4ee8-be94-457d-ba26-3fa6b6506cef/resourceGroups/v-xisuRG/providers/
+                                Microsoft.Network/virtualNetworks/vnetb57dc95232/subnets/vnetb57dc95232"
                     name:
                         description:
                             - Resource Name.
