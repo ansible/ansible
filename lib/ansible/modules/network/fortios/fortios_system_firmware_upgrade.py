@@ -17,9 +17,6 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-import os
-import base64
-
 from ansible.module_utils.basic import AnsibleModule
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -34,7 +31,7 @@ description:
       user to set and modify system feature and firmware category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.2
-version_added: "2.8"
+version_added: "2.9"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
     - Nicolas Thomas (@thomnico)
@@ -45,22 +42,26 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
+        description:
             - FortiOS or FortiGate ip address.
-       required: true
+        type: str
+        required: true
     username:
         description:
             - FortiOS or FortiGate username.
+        type: str
         required: true
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
@@ -68,29 +69,29 @@ options:
               protocol
         type: bool
         default: true
-    state:
-        description:
-            - Indicates whether to create or remove the object
-        choices:
-            - present
-            - absent
     system_firmware:
         description:
             - Perform firmware upgrade with local firmware file.
+        type: dict
         default: null
         suboptions:
             filename:
                 description:
                     - Name and path of the local firmware file.
+                type: str
             format_partition:
                 description:
                     - Set to true to format boot partition before upgrade.
+                type: bool
             source:
                 description:
-                    - Firmware file data source [upload].
+                    - Firmware file data source [upload|usb|fortiguard].
+                type: str
                 required: true
                 choices:
                     - upload
+                    - usb
+                    - fortiguard
 '''
 
 EXAMPLES = '''
@@ -110,13 +111,51 @@ EXAMPLES = '''
       https: "False"
       system_firmware:
         filename: "<your_own_value>"
+        format_partition: "<your_own_value>"
         source: "upload"
     register: fortios_system_firmware_upgrade_result
 
   - debug:
-      var: 
+      var:
         # please check the following status to confirm
         fortios_system_firmware_upgrade_result.meta.results.status
+
+  - name: Perform firmware upgrade with firmware file on USB.
+    fortios_system_firmware_upgrade:
+      host:  "{{ host }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      vdom:  "{{ vdom }}"
+      https: "False"
+      system_firmware:
+        filename: "<your_own_value>"
+        format_partition: "<your_own_value>"
+        source: "usb"
+    register: fortios_system_firmware_upgrade_result
+
+  - debug:
+      var:
+        # please check the following status to confirm
+        fortios_system_firmware_upgrade_result.meta.results.status
+
+  - name: Perform firmware upgrade from FortiGuard.
+    fortios_system_firmware_upgrade:
+      host:  "{{ host }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      vdom:  "{{ vdom }}"
+      https: "False"
+      system_firmware:
+        filename: "<your_own_value>"
+        format_partition: "<your_own_value>"
+        source: "fortiguard"
+    register: fortios_system_firmware_upgrade_result
+
+  - debug:
+      var:
+        # please check the following status to confirm
+        fortios_system_firmware_upgrade_result.meta.results.status
+
 '''
 
 RETURN = '''
@@ -130,16 +169,6 @@ http_method:
   returned: always
   type: str
   sample: 'PUT'
-http_status:
-  description: Last result given by FortiGate on last operation applied
-  returned: always
-  type: str
-  sample: "200"
-mkey:
-  description: Master key (id) used in the last call to FortiGate
-  returned: success
-  type: str
-  sample: "id"
 name:
   description: Name of the table used to fulfill the request
   returned: always
@@ -150,11 +179,6 @@ path:
   returned: always
   type: str
   sample: "webfilter"
-revision:
-  description: Internal revision number
-  returned: always
-  type: str
-  sample: "17.0.2.10658"
 serial:
   description: Serial number of the unit
   returned: always
@@ -175,9 +199,10 @@ version:
   returned: always
   type: str
   sample: "v5.6.3"
-
 '''
 
+import os
+import base64
 
 def login(data, fos):
     host = data['host']
@@ -215,10 +240,15 @@ def system_firmware(data, fos, check_mode=False):
 
     filtered_data = {}
     filtered_data['source'] = system_firmware_data['source']
-    try:
-        filtered_data['file_content'] = base64.b64encode(open(system_firmware_data['filename'], 'rb').read()).decode('utf-8')
-    except Exception:
-        filtered_data['file_content'] = ''
+    if hasattr(system_firmware_data, 'format_partition'):
+        filtered_data['format_partition'] = system_firmware_data['format_partition']
+    if filtered_data['source'] == 'upload':
+        try:
+            filtered_data['file_content'] = base64.b64encode(open(system_firmware_data['filename'], 'rb').read()).decode('utf-8')
+        except Exception:
+            filtered_data['file_content'] = ''
+    else:
+        filtered_data['filename'] = system_firmware_data['filename']
 
     return fos.execute('system',
                        'firmware/upgrade',
@@ -254,9 +284,9 @@ def main():
             "required": True, "type": "dict",
             "options": {
                 "filename": {"required": True, "type": "str"},
-                "format_partition": {"required": False, "type": "str"},
+                "format_partition": {"required": False, "type": "bool"},
                 "source": {"required": True, "type": "str",
-                           "choices": ["upload"]}
+                           "choices": ["upload", "usb", "fortiguard"]}
 
             }
         }
