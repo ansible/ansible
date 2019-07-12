@@ -7,8 +7,14 @@
     - ansible_distribution_major_version is version('7', '>=')
 
   always:
+  # Stop service:
+  - name: Stop wildfly (jboss)
+    systemd:
+      name: wildfly
+      state: stopped
+
   # Clean up:
   - name: Remove jboss test directory
     file:
-      path: '{{ jboss_root }}'
+      path: '{{ remote_tmp_dir }}'
       state: absent
