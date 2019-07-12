@@ -28,7 +28,6 @@ import ansible.module_utils.common.removed
 
 class ImporterAnsibleModuleException(Exception):
     """Exception thrown during initialization of ImporterAnsibleModule."""
-    pass
 
 
 class ImporterAnsibleModule:
