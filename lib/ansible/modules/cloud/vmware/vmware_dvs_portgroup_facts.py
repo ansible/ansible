@@ -39,6 +39,7 @@ options:
     description:
     - Name of a dvswitch to look for.
     required: false
+    type: str
     version_added: "2.9"
   show_network_policy:
     description:
