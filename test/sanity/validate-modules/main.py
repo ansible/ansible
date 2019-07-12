@@ -94,7 +94,7 @@ class ReporterEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-class Reporter(object):
+class Reporter:
     def __init__(self):
         self.files = OrderedDict()
 
@@ -1699,7 +1699,7 @@ def main():
         sys.exit(reporter.json(warnings=args.warnings, output=args.output))
 
 
-class GitCache(object):
+class GitCache:
     def __init__(self, base_branch):
         self.base_branch = base_branch
 

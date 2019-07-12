@@ -392,7 +392,7 @@ def analyze_integration_target_dependencies(integration_targets):
     return dependencies
 
 
-class CompletionTarget(object):
+class CompletionTarget:
     """Command-line argument completion target base class."""
     __metaclass__ = abc.ABCMeta
 

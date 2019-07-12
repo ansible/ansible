@@ -92,9 +92,9 @@ def main():
                 is_integration = True
 
                 if dirname.endswith('/library') or dirname.endswith('/plugins/modules') or dirname in (
-                    # non-standard module library directories
-                    'test/integration/targets/module_precedence/lib_no_extension',
-                    'test/integration/targets/module_precedence/lib_with_extension',
+                        # non-standard module library directories
+                        'test/integration/targets/module_precedence/lib_no_extension',
+                        'test/integration/targets/module_precedence/lib_with_extension',
                 ):
                     is_module = True
             elif dirname == 'plugins/modules':

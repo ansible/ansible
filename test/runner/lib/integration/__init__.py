@@ -255,7 +255,7 @@ def integration_test_config_file(args, env_config, integration_dir):
         yield path
 
 
-class IntegrationEnvironment(object):
+class IntegrationEnvironment:
     """Details about the integration environment."""
     def __init__(self, integration_dir, inventory_path, ansible_config, vars_file):
         self.integration_dir = integration_dir

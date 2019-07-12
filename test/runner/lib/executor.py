@@ -1795,7 +1795,7 @@ def get_python_interpreter(args, configs, name):
     return python_interpreter
 
 
-class EnvironmentDescription(object):
+class EnvironmentDescription:
     """Description of current running environment."""
     def __init__(self, args):
         """Initialize snapshot of environment configuration.

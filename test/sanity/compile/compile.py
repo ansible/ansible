@@ -20,7 +20,7 @@ def main():
         try:
             parser.suite(source)
         except SyntaxError:
-            ex_type, ex, ex_traceback = sys.exc_info()
+            ex = sys.exc_info()[1]
             status = 1
             message = ex.text.splitlines()[0].strip()
             sys.stdout.write("%s:%d:%d: SyntaxError: %s\n" % (path, ex.lineno, ex.offset, message))

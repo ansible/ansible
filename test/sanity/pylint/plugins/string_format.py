@@ -74,7 +74,7 @@ class AnsibleStringFormatChecker(BaseChecker):
         if node.starargs or node.kwargs:
             return
         try:
-            fields, num_args, manual_pos = parse_format_method_string(strnode.value)
+            num_args = parse_format_method_string(strnode.value)[1]
         except utils.IncompleteFormatString:
             return
 

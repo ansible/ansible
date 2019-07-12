@@ -70,7 +70,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         if len(node.keywords) == 1 and keyword.arg is None:
                             # This is likely a **kwargs splat
                             return
-                        elif keyword.arg == 'version':
+                        if keyword.arg == 'version':
                             if isinstance(keyword.value.value, astroid.Name):
                                 # This is likely a variable
                                 return

@@ -21,7 +21,7 @@ def main():
     checker.report()
 
 
-class YamlChecker(object):
+class YamlChecker:
     """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
     def __init__(self):
         self.messages = []
@@ -177,7 +177,7 @@ class YamlChecker(object):
                 column=ex.offset,
                 level='error',
             ))
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             self.messages.append(dict(
                 code='python-parse-error',
                 message=str(ex),
