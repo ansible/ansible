@@ -177,7 +177,7 @@ class YamlChecker:
                 column=ex.offset,
                 level='error',
             ))
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             self.messages.append(dict(
                 code='python-parse-error',
                 message=str(ex),

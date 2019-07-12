@@ -27,7 +27,7 @@ def main():
     except yaml.error.MarkedYAMLError as ex:
         print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
         sys.exit()
-    except Exception as ex:
+    except Exception as ex:  # pylint: disable=broad-except
         print('%s:%d:%d: YAML load failed: %s' % (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
         sys.exit()
 
