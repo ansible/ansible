@@ -156,7 +156,7 @@
       - result.state == 'file'
 
   # Test if state=absent and deployed:
-  - name: jboss - undeploy war in check_mode, war is deployed already
+  - name: jboss - undeploy war in check_mode, war is deployed
     <<: *task_parameters
     jboss:
       deployment: '{{ war_file_1 }}'
@@ -178,7 +178,7 @@
       - result.state == 'file'
 
   # Test if state=absent and deployed:
-  - name: jboss - undeploy war in actual mode, war is deployed already
+  - name: jboss - undeploy war in actual mode, war is deployed
     <<: *task_parameters
     jboss:
       deployment: '{{ war_file_1 }}'
@@ -199,7 +199,7 @@
       - result.state == 'file'
 
   # Test if state=absent and undeployed:
-  - name: jboss - undeploy war in check_mode, war is undeployed already
+  - name: jboss - undeploy war in check_mode, war is undeployed
     <<: *task_parameters
     jboss:
       deployment: '{{ war_file_1 }}'
@@ -212,7 +212,7 @@
       - result is not changed
 
   # Test if state=absent and undeployed:
-  - name: jboss - undeploy war in actual_mode, war is undeployed already
+  - name: jboss - undeploy war in actual_mode, war is undeployed
     <<: *task_parameters
     jboss:
       deployment: '{{ war_file_1 }}'
