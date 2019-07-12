@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetinstance_facts
 version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set Instance facts.
+short_description: Get Azure Virtual Machine Scale Set Instance facts
 description:
     - Get facts of Azure Virtual Machine Scale Set VMs.
 
@@ -41,7 +41,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -54,56 +54,57 @@ EXAMPLES = '''
 
 RETURN = '''
 instances:
-    description: A list of dictionaries containing facts for Virtual Machine Scale Set VM.
+    description:
+        - A list of dictionaries containing facts for Virtual Machine Scale Set VM.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource Id
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/my
                      VMSS/virtualMachines/2"
         tags:
             description:
-                - Resource tags
+                - Resource tags.
             returned: always
-            type: complex
+            type: dict
             sample: { 'tag1': 'abc' }
         instance_id:
             description:
-                - Virtual Machine instance Id
+                - Virtual Machine instance ID.
             returned: always
             type: str
             sample: 0
         name:
             description:
-                - Virtual Machine name
+                - Virtual Machine name.
             returned: always
             type: str
             sample: myVMSS_2
         latest_model:
             description:
-                - Is latest model applied?
+                - Whether applied latest model.
             returned: always
             type: bool
             sample: True
         provisioning_state:
             description:
-                - Provisioning state of the Virtual Machine
+                - Provisioning state of the Virtual Machine.
             returned: always
             type: str
             sample: Succeeded
         power_state:
             description:
-                - Provisioning state of the Virtual Machine
+                - Provisioning state of the Virtual Machine's power.
             returned: always
             type: str
             sample: running
         vm_id:
             description:
-                - Virtual Machine Id
+                - Virtual Machine ID
             returned: always
             type: str
             sample: 94a141a9-4530-46ac-b151-2c7ff09aa823

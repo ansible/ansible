@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetinstance
 version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set Instance facts.
+short_description: Get Azure Virtual Machine Scale Set Instance facts
 description:
     - Get facts of Azure Virtual Machine Scale Set VMs.
 
@@ -48,8 +48,7 @@ options:
             - 'deallocated'
     state:
         description:
-            - Assert the state of the VMSS instance. Use 'present' to update a instance and
-              'absent' to delete instance.
+            - State of the VMSS instance. Use C(present) to update an instance and C(absent) to delete an instance.
         default: present
         choices:
             - absent
@@ -59,7 +58,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -74,13 +73,14 @@ EXAMPLES = '''
 
 RETURN = '''
 instances:
-    description: A list of instances.
+    description:
+        - A list of instances.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Instance resource ID
+                - Instance resource ID.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.Compute/scalesets/myscaleset/vms/myvm
