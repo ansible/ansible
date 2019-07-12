@@ -2,26 +2,31 @@
   package:
     name: java-1.8.0-openjdk-devel
 
+- name: Create remote_tmp_dir
+  file:
+    path: '{{ remote_tmp_dir }}'
+    state: directory
+
 - name: Download wildfly
   get_url:
     url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_wildfly_server/wildfly-{{ wf_version }}.tar.gz'
-    dest: '/tmp/wildfly-{{ wf_version }}.tar.gz'
+    dest: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
 
 - name: Unarchive tar
   unarchive:
-    src: '/tmp/wildfly-{{ wf_version }}.tar.gz'
-    dest: /opt
+    src: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+    dest: '{{ remote_tmp_dir }}'
     remote_src: yes
 
 - name: Remove tar
   file:
-    path: '/tmp/wildfly-{{ wf_version }}.tar.gz'
+    path: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
     state: absent
 
 - name: Create symlink
   file:
-    src: '/opt/wildfly-{{ wf_version }}'
-    dest: '/opt/wildfly'
+    src: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}'
+    dest: '{{ remote_tmp_dir }}/wildfly'
     state: link
 
 - name: Create group for wildfly
@@ -38,35 +43,29 @@
 
 - name: Set permissions
   file:
-    path: '/opt/wildfly-{{ wf_version }}'
+    path: '{{ remote_tmp_dir }}'
     state: directory
     owner: '{{ wf_user }}'
     group: '{{ wf_user }}'
     recurse: yes
 
-- name: Create conf dir
-  file:
-    path: '{{ wf_confdir }}'
-    state: directory
-
 - name: Create config file
   copy:
     src: wildfly.conf
-    dest: '{{ wf_confdir }}/wildfly.conf'
+    dest: '{{ wf_homedir }}/wildfly.conf'
 
-- name: Copy launcher
-  copy:
-    src: launch.sh
+- name: Create launcher
+  template:
+    src: launch.sh.j2
     dest: '{{ wf_homedir }}/bin/launch.sh'
 
 - name: Make scripts executable
   shell: 'chmod +x {{ wf_homedir }}/bin/*.sh'
 
-
-- name: Copy service file
-  copy:
-    src: wildfly.service
-    dest: /etc/systemd/system/
+- name: Create service file
+  template:
+    src: wildfly.service.j2
+    dest: /etc/systemd/system/wildfly.service
 
 - name: Reload systemd and start wildfly
   systemd:
