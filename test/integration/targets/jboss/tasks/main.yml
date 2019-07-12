@@ -12,6 +12,10 @@
     systemd:
       name: wildfly
       state: stopped
+    when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')
+    ignore_errors: yes
 
   - name: Remove files
     file:
@@ -20,3 +24,6 @@
     loop:
     - '{{ remote_tmp_dir }}'
     - '{{ wf_service_file_path }}'
+    when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')
