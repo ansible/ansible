@@ -25,9 +25,9 @@ import os
 import re
 import sys
 
-import yaml
-
 from distutils.version import StrictVersion
+
+import yaml
 
 import ansible.config
 
