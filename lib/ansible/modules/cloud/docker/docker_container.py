@@ -1767,7 +1767,7 @@ class TaskParameters(DockerBaseClass):
                 tmpfs_mode='tmpfs',
             )
             for option, req_type in mount_option_types.items():
-                if mount_dict.get(option) is None and type != req_type:
+                if mount_dict.get(option) is not None and type != req_type:
                     self.client.fail('{0} cannot be specified for mount "{1}" of type "{2}" (needs type "{3}")'.format(option, target, type, req_type))
             # Handle volume_driver and volume_options
             volume_driver = mount_dict.pop('volume_driver')
