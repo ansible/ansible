@@ -2,7 +2,7 @@
 - name: collect all netconf test cases
   find:
     paths: "{{ role_path }}/tests/netconf"
-    patterns: "{{ testcase }}.yml"
+    patterns: "{{ testcase }}.yaml"
     use_regex: true
   connection: local
   register: test_cases

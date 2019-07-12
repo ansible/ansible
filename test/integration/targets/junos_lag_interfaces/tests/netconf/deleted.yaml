@@ -78,10 +78,9 @@
       assert:
         that:
           - "result['changed'] == false"
-          -
 
   always:
     - include_tasks: _remove_config.yaml
 
 - debug:
-    msg: "END junos_lag_interfaces overridden integration tests on connection={{ ansible_connection }}"
+    msg: "END junos_lag_interfaces deleted integration tests on connection={{ ansible_connection }}"
