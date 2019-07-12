@@ -1,3 +1,2 @@
 ---
 resource_name: "{{ resource_prefix }}"
-sa_name: sa-{{ 100000 | random }}@graphite-playground.google.com.iam.gserviceaccount.com
