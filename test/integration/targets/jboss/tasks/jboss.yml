@@ -56,22 +56,6 @@
       url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/jboss/{{ war_file_1 }}'
       dest: '{{ war_src_dir }}'
 
-  - name: Create directories for testing the default deploy_path
-    become: yes
-    file:
-      path: '{{ default_deploy_root }}'
-      state: directory
-      recurse: yes
-      owner: '{{ wf_user }}'
-      group: '{{ wf_user }}'
-
-  - name: Create simlink for testing the default deploy_path
-    <<: *task_parameters
-    file:
-      state: link
-      src: '{{ deploy_dir }}'
-      dest: '{{ default_deploy_root }}/deployments'
-
   ##################
   # Start the tests:
 

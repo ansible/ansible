@@ -72,6 +72,21 @@
     src: wildfly.service.j2
     dest: '{{ wf_service_file_path }}'
 
+- name: Create directories for testing the default deploy_path
+  become: yes
+  file:
+    path: '{{ default_deploy_root }}'
+    state: directory
+    recurse: yes
+    owner: '{{ wf_user }}'
+    group: '{{ wf_user }}'
+
+- name: Create simlink for testing the default deploy_path
+  file:
+    state: link
+    src: '{{ deploy_dir }}'
+    dest: '{{ default_deploy_root }}/deployments'
+
 - name: Reload systemd and start wildfly
   systemd:
     daemon_reload: yes
