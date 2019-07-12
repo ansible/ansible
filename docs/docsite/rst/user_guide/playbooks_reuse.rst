@@ -24,23 +24,23 @@ Ansible has two modes of operation for reusable content: dynamic and static.
 
 In Ansible 2.0, the concept of *dynamic* includes was introduced. Due to some limitations with making all includes dynamic in this way, the ability to force includes to be *static* was introduced in Ansible 2.1. Because the *include* task became overloaded to encompass both static and dynamic syntaxes, and because the default behavior of an include could change based on other options set on the Task, Ansible 2.4 introduces the concept of ``include`` vs. ``import``.
 
-If you use any ``import*`` Task (``import_playbook``, ``import_tasks``, etc.), it will be *static*.
 If you use any ``include*`` Task (``include_tasks``, ``include_role``, etc.), it will be *dynamic*.
+If you use any ``import*`` Task (``import_playbook``, ``import_tasks``, etc.), it will be *static*.
 
 The bare ``include`` task (which was used for both Task files and Playbook-level includes) is still available, however it is now considered *deprecated*.
 
-Differences Between Static and Dynamic
+Differences Between Dynamic and Static
 ``````````````````````````````````````
 
 The two modes of operation are pretty simple:
 
-* Ansible pre-processes all static imports during Playbook parsing time.
 * Dynamic includes are processed during runtime at the point in which that task is encountered.
+* Ansible pre-processes all static imports during Playbook parsing time.
 
 When it comes to Ansible task options like ``tags`` and conditional statements (``when:``):
 
-* For static imports, the parent task options will be copied to all child tasks contained within the import.
 * For dynamic includes, the task options will *only* apply to the dynamic task as it is evaluated, and will not be copied to child tasks.
+* For static imports, the parent task options will be copied to all child tasks contained within the import.
 
 .. note::
     Roles are a somewhat special case. Prior to Ansible 2.3, roles were always statically included via the special ``roles:`` option for a given play and were always executed first before any other play tasks (unless ``pre_tasks`` were used). Roles can still be used this way, however, Ansible 2.3 introduced the ``include_role`` option to allow roles to be executed inline with other tasks.
