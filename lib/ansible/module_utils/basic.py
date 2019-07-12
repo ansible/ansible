@@ -196,7 +196,6 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, 
 from ansible.module_utils.common.warnings import (
     global_warnings,
     global_deprecations,
-    global_debug,
     warn,
     deprecate,
 )

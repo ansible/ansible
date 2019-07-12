@@ -9,7 +9,6 @@ from ansible.module_utils.six import string_types
 
 global_warnings = []
 global_deprecations = []
-global_debug = False
 
 
 def warn(warning):
@@ -21,6 +20,6 @@ def warn(warning):
 
 def deprecate(msg, version=None):
     if isinstance(msg, string_types):
-        global_warnings.append({'msg': msg,'version':version})
+        global_deprecations.append({'msg': msg, 'version': version})
     else:
         raise TypeError("deprecate requires a string not a %s" % type(msg))
