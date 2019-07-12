@@ -4,7 +4,7 @@
 
 - name: Download wildfly
   get_url:
-    url: 'https://download.jboss.org/wildfly/{{ wf_version }}/wildfly-{{ wf_version }}.tar.gz'
+    url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_wildfly_server/wildfly-{{ wf_version }}.tar.gz'
     dest: '/tmp/wildfly-{{ wf_version }}.tar.gz'
 
 - name: Unarchive tar
