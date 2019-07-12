@@ -513,7 +513,7 @@ def generate_password():
     return password
 
 
-class Display(object):
+class Display:
     """Manages color console output."""
     clear = '\033[0m'
     red = '\033[31m'
@@ -626,12 +626,10 @@ class Display(object):
 
 class ApplicationError(Exception):
     """General application error."""
-    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    pass
 
 
 class SubprocessError(ApplicationError):

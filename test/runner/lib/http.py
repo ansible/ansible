@@ -33,7 +33,7 @@ from lib.util_common import (
 )
 
 
-class HttpClient(object):
+class HttpClient:
     """Make HTTP requests via curl."""
     def __init__(self, args, always=False, insecure=False, proxy=None):
         """
@@ -146,7 +146,7 @@ class HttpClient(object):
         return HttpResponse(method, url, status_code, body)
 
 
-class HttpResponse(object):
+class HttpResponse:
     """HTTP response from curl."""
     def __init__(self, method, url, status_code, response):
         """

@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-class CommonCache(object):
+class CommonCache:
     """Common cache."""
     def __init__(self, args):
         """

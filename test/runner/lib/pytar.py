@@ -28,7 +28,6 @@ class TarFilter(ABC):
         :type item: tarfile.TarInfo
         :rtype: tarfile.TarInfo | None
         """
-        pass
 
 
 class DefaultTarFilter(TarFilter):

@@ -22,7 +22,7 @@ def main():
 
                 if match:
                     print('%s:%d:%d: use only one of `default` or `required` with `FieldAttribute`' % (
-                          path, line + 1, match.start(1) + 1))
+                        path, line + 1, match.start(1) + 1))
 
 
 if __name__ == '__main__':

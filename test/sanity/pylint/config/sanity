@@ -10,6 +10,7 @@ disable=
     too-many-nested-blocks,
     too-many-return-statements,
     too-many-statements,
+    missing-docstring,
     unused-import,  # pylint does not understand PEP 484 type hints
     consider-using-dict-comprehension,  # requires Python 2.6, which we still support
     consider-using-set-comprehension,  # requires Python 2.6, which we still support
@@ -27,10 +28,13 @@ bad-names=foo,
 good-names=i,
            j,
            k,
+           f,
+           e,
            ex,
            Run,
            C,
            __metaclass__,
 
+module-rgx=[a-z_][a-z0-9_-]{2,40}$
 method-rgx=[a-z_][a-z0-9_]{2,40}$
 function-rgx=[a-z_][a-z0-9_]{2,40}$
