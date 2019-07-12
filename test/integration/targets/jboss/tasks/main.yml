@@ -12,16 +12,11 @@
     systemd:
       name: wildfly
       state: stopped
-    register: wildfly_stopped
-    when:
-    - ansible_distribution == 'CentOS'
-    - ansible_distribution_major_version is version('7', '>=')
 
-  - name: Remove jboss test directory
+  - name: Remove files
     file:
-      path: '{{ remote_tmp_dir }}'
+      path: '{{ item }}'
       state: absent
-    when: wildfly_stopped
-    when:
-    - ansible_distribution == 'CentOS'
-    - ansible_distribution_major_version is version('7', '>=')
+    loop:
+    - '{{ remote_tmp_dir }}'
+    - '{{ wf_service_file_path }}'

@@ -65,7 +65,7 @@
 - name: Create service file
   template:
     src: wildfly.service.j2
-    dest: /etc/systemd/system/wildfly.service
+    dest: '{{ wf_service_file_path }}'
 
 - name: Reload systemd and start wildfly
   systemd:

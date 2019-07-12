@@ -1,4 +1,5 @@
 remote_tmp_dir: /tmp/wildfly_tmp
 wf_homedir: '{{ remote_tmp_dir }}/wildfly'
+wf_service_file_path: /etc/systemd/system/wildfly.service
 wf_version: 16.0.0.Final
 wf_user: wildfly
