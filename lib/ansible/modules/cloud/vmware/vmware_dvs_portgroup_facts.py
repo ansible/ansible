@@ -248,7 +248,7 @@ def main():
         show_network_policy=dict(type='bool', default=True),
         show_teaming_policy=dict(type='bool', default=True),
         show_port_policy=dict(type='bool', default=True),
-        dvswitch=dict(type='str', default='all'),
+        dvswitch=dict(),
         show_vlan_info=dict(type='bool', default=False),
     )
     module = AnsibleModule(
