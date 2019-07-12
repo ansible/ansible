@@ -250,7 +250,6 @@ def convertOsLookupPath(path, project_path):
 def convertPythonVarValueToTerraformVarCommandlineParameter(varValue):
     if(isinstance(varValue, list)):
         varstring = ""
-        listVars = []
         for index, val in enumerate(varValue):
             varstring = varstring + formatSimpleValue(val)
 
@@ -261,7 +260,7 @@ def convertPythonVarValueToTerraformVarCommandlineParameter(varValue):
     elif(isinstance(varValue, dict)):
         varstring = ""
         i = 0
-        for k, v in varValue.items():
+        for k, v in varValue.items().sort():
             varstring = varstring + k + " = " + formatSimpleValue(v)
             if i < (len(varValue) - 1):
                 varstring = varstring + ", "
