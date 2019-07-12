@@ -1,21 +1,5 @@
-#
-# (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -61,11 +45,6 @@ class TerminalModule(TerminalBase):
 
     def on_open_shell(self):
         pass
-        # try:
-        # for c in (b''):
-        # self._exec_cli_command(c)
-        # except AnsibleConnectionFailure:
-        # raise AnsibleConnectionFailure('unable to set terminal parameters')
 
     def __del__(self):
         try:
@@ -78,10 +57,6 @@ class TerminalModule(TerminalBase):
             return
 
         cmd = {u'command': u'enable'}
-        # if passwd:
-        # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
-        # an r string and use to_text to ensure it's text on both py2 and py3.
-        #
         cmd[u'prompt'] = to_text(r"[\r\n](?:Local_)?[Pp]assword: ?$", errors='surrogate_or_strict')
         cmd[u'answer'] = passwd
         cmd[u'prompt_retry_check'] = True
@@ -97,7 +72,6 @@ class TerminalModule(TerminalBase):
     def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
-            # if prompt is None most likely the terminal is hung up at a prompt
             return
 
         if b'(config' in prompt:
@@ -106,20 +80,3 @@ class TerminalModule(TerminalBase):
         elif prompt.endswith(b'#'):
             self._exec_cli_command(b'exit')
 
-    # def get_mode(self):
-
-    #     prompt = self._get_prompt()
-    #     if prompt is None:
-    #         # if prompt is None most likely the terminal is hung up at a prompt
-    #         return
-
-    #     if b'(config-if' in prompt:
-    #         return 3
-
-    #     if b'(config' in prompt:
-    #         return 2
-
-    #     elif prompt.endswith(b'#'):
-    #         return 1
-
-    #     return 0
