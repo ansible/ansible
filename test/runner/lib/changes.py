@@ -42,7 +42,6 @@ class InvalidBranch(ApplicationError):
 
 class ChangeDetectionNotSupported(ApplicationError):
     """Exception for cases where change detection is not supported."""
-    pass
 
 
 class ShippableChanges:

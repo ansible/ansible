@@ -626,12 +626,10 @@ class Display:
 
 class ApplicationError(Exception):
     """General application error."""
-    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    pass
 
 
 class SubprocessError(ApplicationError):

@@ -96,23 +96,19 @@ class TestResult:
 
     def write_console(self):
         """Write results to console."""
-        pass
 
     def write_lint(self):
         """Write lint results to stdout."""
-        pass
 
     def write_bot(self, args):
         """
         :type args: TestConfig
         """
-        pass
 
     def write_junit(self, args):
         """
         :type args: TestConfig
         """
-        pass
 
     def create_path(self, directory, extension):
         """

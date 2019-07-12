@@ -56,7 +56,6 @@ class ManageWindowsCI:
         """Used in delegate_remote to setup the host, no action is required for Windows.
         :type python_version: str
         """
-        pass
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
