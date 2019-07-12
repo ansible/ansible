@@ -32,13 +32,6 @@ DOCUMENTATION = '''
                 - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
             default: True
             type: boolean
-        config_context:
-            description:
-                - If True, it adds config-context in host vars.
-                - Config-context enables the association of arbitrary data to devices and virtual machines grouped by
-                  region, site, role, platform, and/or tenant. Please check official netbox docs for more info.
-            default: False
-            type: boolean
         token:
             required: True
             description: NetBox token.
@@ -80,7 +73,6 @@ EXAMPLES = '''
 plugin: netbox
 api_endpoint: http://localhost:8000
 validate_certs: True
-config_context: False
 group_by:
   - device_roles
 query_filters:
@@ -261,10 +253,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
     def extract_config_context(self, host):
         try:
-            if self.config_context:
-                url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
-                device_lookup = self._fetch_information(url)
-                return [device_lookup["config_context"]]
+            return [host["config_context"]]
         except Exception:
             return
 
@@ -452,7 +441,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.api_endpoint = self.get_option("api_endpoint").strip('/')
         self.timeout = self.get_option("timeout")
         self.validate_certs = self.get_option("validate_certs")
-        self.config_context = self.get_option("config_context")
         self.headers = {
             'Authorization': "Token %s" % token,
             'User-Agent': "ansible %s Python %s" % (ansible_version, python_version.split(' ')[0]),
