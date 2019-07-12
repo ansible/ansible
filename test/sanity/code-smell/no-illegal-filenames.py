@@ -3,6 +3,8 @@
 # a script to check for illegal filenames on various Operating Systems. The
 # main rules are derived from restrictions on Windows
 # https://msdn.microsoft.com/en-us/library/aa365247#naming_conventions
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re

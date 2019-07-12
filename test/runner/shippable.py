@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 """Verify the current Shippable run has the required number of jobs."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # noinspection PyCompatibility
 import argparse

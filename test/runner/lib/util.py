@@ -1,6 +1,6 @@
 """Miscellaneous utility functions and classes."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import contextlib
 import errno

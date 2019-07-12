@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import sys
 
@@ -20,7 +22,9 @@ def main():
         'contrib/vault/',
         'docs/',
         'examples/',
-        'test/',
+        'test/integration/',
+        'test/legacy/',
+        'test/units/',
     )
 
     # These files pre-date the boilerplate test and should be fixed up as time goes on

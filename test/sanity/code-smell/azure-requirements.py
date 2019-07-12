@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Make sure the Azure requirements files match."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import filecmp
 import os
