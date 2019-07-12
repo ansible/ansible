@@ -15,6 +15,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         datacenter: "{{ dc1 }}"
+        dvswitch: "{{ dvswitch1 }}"
       register: dvs_results
 
     - debug:
