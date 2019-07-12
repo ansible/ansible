@@ -39,7 +39,7 @@ class ImporterAnsibleModule:
 # stop Ansible module execution during AnsibleModule instantiation
 ansible.module_utils.basic.AnsibleModule = ImporterAnsibleModule
 # no-op for _load_params since it may be called before instantiating AnsibleModule
-ansible.module_utils.basic._load_params = lambda *args, **kwargs: {}
+ansible.module_utils.basic._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
 # no-op for removed_module since it is called in place of AnsibleModule instantiation
 ansible.module_utils.common.removed.removed_module = lambda *args, **kwargs: None
 
