@@ -54,6 +54,8 @@ import time
 import traceback
 import types
 
+import ansible.module_utils.common.warnings as warnings
+
 from collections import deque
 from itertools import chain, repeat
 
@@ -194,8 +196,6 @@ from ansible.module_utils.common.validation import (
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
-    global_warnings,
-    global_deprecations,
     warn,
     deprecate,
 )
@@ -1429,7 +1429,7 @@ class AnsibleModule(object):
         except TypeError as te:
             self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
-        global_deprecations.extend(list_deprecations(spec, param))
+        warnings.global_deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
@@ -2020,8 +2020,8 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if global_warnings:
-            kwargs['warnings'] = global_warnings
+        if warnings.global_warnings:
+            kwargs['warnings'] = warnings.global_warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2035,8 +2035,8 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if global_deprecations:
-            kwargs['deprecations'] = global_deprecations
+        if warnings.global_deprecations:
+            kwargs['deprecations'] = warnings.global_deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
