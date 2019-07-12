@@ -3412,7 +3412,6 @@ lib/ansible/modules/storage/netapp/na_ontap_lun_map.py E337
 lib/ansible/modules/storage/netapp/na_ontap_lun_map.py E338
 lib/ansible/modules/storage/netapp/na_ontap_lun.py E337
 lib/ansible/modules/storage/netapp/na_ontap_lun.py E338
-lib/ansible/modules/storage/netapp/na_ontap_motd.py E337
 lib/ansible/modules/storage/netapp/na_ontap_motd.py E338
 lib/ansible/modules/storage/netapp/na_ontap_net_ifgrp.py E337
 lib/ansible/modules/storage/netapp/na_ontap_net_ifgrp.py E338
