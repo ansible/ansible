@@ -20,7 +20,6 @@ def test_terraform_without_argument(capfd):
     assert 'project_path' in json.loads(out)['msg']
 
 
-
 @pytest.fixture
 def project_path():
     return "terraform_modules/module_tc_0_0_no_config"
