@@ -6,13 +6,13 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 ---
-author: Ansible Networking Team
+author: Ruckus Wireless (@Commscope)
 cliconf: icx
 short_description: Use icx cliconf to run command on Cisco ICX platform
 description:
   - This icx plugin provides low level abstraction apis for
     sending and receiving CLI commands from Ruckus ICX network devices.
-version_added: "2.4"
+version_added: "2.9"
 """
 
 
