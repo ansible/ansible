@@ -17,7 +17,6 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -155,7 +154,6 @@ EXAMPLES = '''
       var:
         # please check the following status to confirm
         fortios_system_firmware_upgrade_result.meta.results.status
-
 '''
 
 RETURN = '''
@@ -199,10 +197,13 @@ version:
   returned: always
   type: str
   sample: "v5.6.3"
+
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 import os
 import base64
+
 
 def login(data, fos):
     host = data['host']
