@@ -194,9 +194,9 @@ from ansible.module_utils.common.validation import (
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
-    AnsibleWarning,
-    AnsibleDeprecationWarning,
     global_warnings,
+    global_deprecations,
+    global_debug,
     warn,
     deprecate,
 )
@@ -619,8 +619,6 @@ class AnsibleModule(object):
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
-        self._warnings = []
-        self._deprecations = []
         self._clean = {}
         self._string_conversion_action = ''
 
@@ -1432,7 +1430,7 @@ class AnsibleModule(object):
         except TypeError as te:
             self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
-        self._deprecations.extend(list_deprecations(spec, param))
+        global_deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
@@ -2013,17 +2011,8 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        # for w in self._global_warnings:
-        #     if isinstance(w, AnsibleWarning):
-        #         self.warn(w.msg)
-        #     elif isinstance(w, AnsibleDeprecationWarning):
-        #         self.deprecate(w.msg, w.version)
-
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
-
-        for w in global_warnings:
-            if isinstance(w, AnsibleWarning):
 
         if 'warnings' in kwargs:
             if isinstance(kwargs['warnings'], list):
@@ -2032,8 +2021,8 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if self._warnings:
-            kwargs['warnings'] = self._warnings
+        if global_warnings:
+            kwargs['warnings'] = global_warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2047,8 +2036,8 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if self._deprecations:
-            kwargs['deprecations'] = self._deprecations
+        if global_deprecations:
+            kwargs['deprecations'] = global_deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
