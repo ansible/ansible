@@ -157,7 +157,7 @@ EXAMPLES = '''
 - name: create a region disk
   gcp_compute_region_disk:
     name: test_object
-    size_gb: 50
+    size_gb: 500
     disk_encryption_key:
       raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
     region: us-central1
