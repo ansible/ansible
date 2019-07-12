@@ -260,7 +260,7 @@ def convertPythonVarValueToTerraformVarCommandlineParameter(varValue):
     elif(isinstance(varValue, dict)):
         varstring = ""
         i = 0
-        for k, v in varValue.items().sort():
+        for k, v in varValue.items():
             varstring = varstring + k + " = " + formatSimpleValue(v)
             if i < (len(varValue) - 1):
                 varstring = varstring + ", "
