@@ -155,7 +155,7 @@ vms:
             contains:
                 offer:
                     description:
-                        - Specifies the offer of the platform image or marketplace image used to create the virtual machine.
+                        - The offer of the platform image or marketplace image used to create the virtual machine.
                     type: str
                     returned: when created from marketplace image
                     sample: RHEL
