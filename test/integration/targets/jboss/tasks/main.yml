@@ -7,14 +7,21 @@
     - ansible_distribution_major_version is version('7', '>=')
 
   always:
-  # Stop service:
+  # Clean up:
   - name: Stop wildfly (jboss)
     systemd:
       name: wildfly
       state: stopped
+    register: wildfly_stopped
+    when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')
 
-  # Clean up:
   - name: Remove jboss test directory
     file:
       path: '{{ remote_tmp_dir }}'
       state: absent
+    when: wildfly_stopped
+    when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')
