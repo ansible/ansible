@@ -2,7 +2,9 @@
   block:
 
   - import_tasks: jboss.yml
-    when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+    when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')
 
   always:
   # Clean up:
