@@ -1,6 +1,6 @@
 """Functions for accessing docker via the docker cli."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os

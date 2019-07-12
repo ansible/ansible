@@ -2,8 +2,8 @@
 Primitive replacement for requests to avoid extra dependency.
 Avoids use of urllib2 due to lack of SNI support.
 """
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import time
