@@ -1,5 +1,6 @@
 """Sanity test for PEP 8 style guidelines using pycodestyle."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re

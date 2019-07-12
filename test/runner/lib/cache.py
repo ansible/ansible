@@ -1,6 +1,6 @@
 """Cache for commonly shared data that is intended to be immutable."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 class CommonCache(object):

@@ -7,6 +7,8 @@
 #   1) cd <checkoutdir>
 #   2) source hacking/env-setup
 #   3) PYTHONPATH=./lib pytest -v sanity/validate-modules
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import re
 import unittest

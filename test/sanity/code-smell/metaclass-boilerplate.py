@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import sys
 
@@ -18,7 +20,9 @@ def main():
         'contrib/vault/',
         'docs/',
         'examples/',
-        'test/'
+        'test/integration/',
+        'test/legacy/',
+        'test/units/',
     )
 
     grandfathered = frozenset((
