@@ -36,7 +36,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the vm extension. Use C(present) to create or update a vm extension and C(absent) to delete a vm extension.
+            - State of the vm extension. Use C(present) to create or update a vm extension and C(absent) to delete a vm extension.
         default: present
         choices:
             - absent
@@ -103,7 +103,7 @@ state:
         - Current state of the vm extension.
     returned: always
     type: dict
-    sample: { "status":"Deleted" }
+    sample: { "state":"Deleted" }
 
 changed:
     description:
