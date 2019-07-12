@@ -19,7 +19,6 @@ class OpenNebulaCloudProvider(CloudProvider):
 
     def filter(self, targets, exclude):
         """ no need to filter modules, they can either run from config file or from fixtures"""
-        pass
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""

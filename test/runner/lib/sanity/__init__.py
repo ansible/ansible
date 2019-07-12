@@ -196,10 +196,9 @@ class SanityFailure(TestFailure):
 
 class SanityMessage(TestMessage):
     """Single sanity test message for one file."""
-    pass
 
 
-class SanityTargets(object):
+class SanityTargets:
     """Sanity test target information."""
     def __init__(self, include, exclude, require):
         """
@@ -363,7 +362,6 @@ class SanitySingleVersion(SanityFunc):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        pass
 
 
 class SanityMultipleVersion(SanityFunc):
@@ -376,7 +374,6 @@ class SanityMultipleVersion(SanityFunc):
         :type python_version: str
         :rtype: TestResult
         """
-        pass
 
 
 SANITY_TESTS = (

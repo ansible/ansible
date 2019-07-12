@@ -21,7 +21,7 @@ def parse_diff(lines):
     return DiffParser(lines).files
 
 
-class FileDiff(object):
+class FileDiff:
     """Parsed diff for a single file."""
     def __init__(self, old_path, new_path):
         """
@@ -47,7 +47,7 @@ class FileDiff(object):
         return self.old.is_complete and self.new.is_complete
 
 
-class DiffSide(object):
+class DiffSide:
     """Parsed diff for a single 'side' of a single file."""
     def __init__(self, path, new):
         """
@@ -134,7 +134,7 @@ class DiffSide(object):
         return ['%s:%4d %s' % (self.path, line[0], line[1]) for line in lines]
 
 
-class DiffParser(object):
+class DiffParser:
     """Parse diff lines."""
     def __init__(self, lines):
         """

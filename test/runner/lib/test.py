@@ -55,7 +55,7 @@ def calculate_confidence(path, line, metadata):
     return 50
 
 
-class TestResult(object):
+class TestResult:
     """Base class for test results."""
     def __init__(self, command, test, python_version=None):
         """
@@ -96,23 +96,19 @@ class TestResult(object):
 
     def write_console(self):
         """Write results to console."""
-        pass
 
     def write_lint(self):
         """Write lint results to stdout."""
-        pass
 
     def write_bot(self, args):
         """
         :type args: TestConfig
         """
-        pass
 
     def write_junit(self, args):
         """
         :type args: TestConfig
         """
-        pass
 
     def create_path(self, directory, extension):
         """
@@ -419,7 +415,7 @@ class TestFailure(TestResult):
         return message
 
 
-class TestMessage(object):
+class TestMessage:
     """Single test message for one file."""
     def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
         """

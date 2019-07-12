@@ -24,7 +24,7 @@ from lib.util import (
 )
 
 
-class CommonConfig(object):
+class CommonConfig:
     """Configuration common to all commands."""
     def __init__(self, args, command):
         """

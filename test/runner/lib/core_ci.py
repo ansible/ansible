@@ -37,7 +37,7 @@ AWS_ENDPOINTS = {
 }
 
 
-class AnsibleCoreCI(object):
+class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
     def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None, provider=None):
         """
@@ -537,7 +537,7 @@ class CoreHttpError(HttpError):
         self.remote_stack_trace = remote_stack_trace
 
 
-class SshKey(object):
+class SshKey:
     """Container for SSH key used to connect to remote instances."""
     KEY_NAME = 'id_rsa'
     PUB_NAME = 'id_rsa.pub'
@@ -574,7 +574,7 @@ class SshKey(object):
                 self.pub_contents = pub_fd.read().strip()
 
 
-class InstanceConnection(object):
+class InstanceConnection:
     """Container for remote instance status and connection details."""
     def __init__(self, running, hostname, port, username, password):
         """

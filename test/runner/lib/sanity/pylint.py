@@ -153,6 +153,8 @@ class PylintTest(SanitySingleVersion):
             return context_filter
 
         add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+        add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
+        add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
         add_context(remaining_paths, 'units', filter_path('test/units/'))
         add_context(remaining_paths, 'test', filter_path('test/'))
         add_context(remaining_paths, 'hacking', filter_path('hacking/'))

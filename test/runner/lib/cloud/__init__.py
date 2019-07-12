@@ -388,24 +388,21 @@ class CloudEnvironment(CloudBase):
 
     def setup(self):
         """Setup which should be done once per environment instead of once per test target."""
-        pass
 
     @abc.abstractmethod
     def get_environment_config(self):
         """
         :rtype: CloudEnvironmentConfig
         """
-        pass
 
     def on_failure(self, target, tries):
         """
         :type target: IntegrationTarget
         :type tries: int
         """
-        pass
 
 
-class CloudEnvironmentConfig(object):
+class CloudEnvironmentConfig:
     """Configuration for the environment."""
     def __init__(self, env_vars=None, ansible_vars=None, module_defaults=None, callback_plugins=None):
         """
