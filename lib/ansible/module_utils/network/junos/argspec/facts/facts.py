@@ -9,6 +9,7 @@ The arg spec for the junos facts module.
 CHOICES = [
     'all',
     'interfaces'
+    'lag_interfaces'
 ]
 
 

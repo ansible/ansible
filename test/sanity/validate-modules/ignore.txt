@@ -2537,9 +2537,9 @@ lib/ansible/modules/network/junos/junos_l2_interface.py E337
 lib/ansible/modules/network/junos/junos_l2_interface.py E338
 lib/ansible/modules/network/junos/junos_l3_interface.py E337
 lib/ansible/modules/network/junos/junos_l3_interface.py E338
-lib/ansible/modules/network/junos/junos_linkagg.py E324
-lib/ansible/modules/network/junos/junos_linkagg.py E337
-lib/ansible/modules/network/junos/junos_linkagg.py E338
+lib/ansible/modules/network/junos/_junos_linkagg.py E324
+lib/ansible/modules/network/junos/_junos_linkagg.py E337
+lib/ansible/modules/network/junos/_junos_linkagg.py E338
 lib/ansible/modules/network/junos/junos_lldp_interface.py E338
 lib/ansible/modules/network/junos/junos_lldp.py E337
 lib/ansible/modules/network/junos/junos_lldp.py E338
