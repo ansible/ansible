@@ -2530,9 +2530,9 @@ lib/ansible/modules/network/junos/junos_config.py E337
 lib/ansible/modules/network/junos/junos_config.py E338
 lib/ansible/modules/network/junos/junos_facts.py E337
 lib/ansible/modules/network/junos/junos_facts.py E338
-lib/ansible/modules/network/junos/junos_interface.py E324
-lib/ansible/modules/network/junos/junos_interface.py E337
-lib/ansible/modules/network/junos/junos_interface.py E338
+lib/ansible/modules/network/junos/_junos_interface.py E324
+lib/ansible/modules/network/junos/_junos_interface.py E337
+lib/ansible/modules/network/junos/_junos_interface.py E338
 lib/ansible/modules/network/junos/junos_l2_interface.py E337
 lib/ansible/modules/network/junos/junos_l2_interface.py E338
 lib/ansible/modules/network/junos/junos_l3_interface.py E337
