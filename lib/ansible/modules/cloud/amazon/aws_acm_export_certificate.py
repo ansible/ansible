@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 module: aws_acm_export_certificate
 short_description: Exports a private certificate issued by a private certificate authority (CA) for use anywhere
 description:
-    - Exports a private certificate issued by a private certificate authority (CA) for use anywhere
+  - Exports a private certificate issued by a private certificate authority (CA) for use anywhere
 version_added: "2.9"
 author:
   - diodonfrost (@diodonfrost)
@@ -59,7 +59,7 @@ certificate_chain:
     returned: always
     type: str
 private_key:
-    description: The encrypted private key associated with the public key in the certificate. The key is output in PKCS #8 format and is base64 PEM-encoded
+    description: The encrypted private key associated with the public key in the certificate
     returned: always
     type: str
 '''
@@ -110,3 +110,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
