@@ -31,7 +31,7 @@ class Lag_interfacesFacts(object):
 
     def __init__(self, module, subspec='config', options='options'):
         self._module = module
-        self.argument_spec =  Lag_interfacesArgs.argument_spec
+        self.argument_spec = Lag_interfacesArgs.argument_spec
         spec = deepcopy(self.argument_spec)
         if subspec:
             if options:
