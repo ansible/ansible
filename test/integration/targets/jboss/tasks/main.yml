@@ -18,3 +18,4 @@
     loop:
     - '{{ remote_tmp_dir }}'
     - '{{ wf_service_file_path }}'
+    - '{{ default_deploy_root }}'

@@ -28,6 +28,8 @@ options:
   src:
     description:
       - The remote path of the application ear or war to deploy.
+      - Required when I(state=present).
+      - Ignored when I(state=absent).
     type: path
   deploy_path:
     default: /var/lib/jbossas/standalone/deployments
@@ -50,19 +52,20 @@ author:
 """
 
 EXAMPLES = r"""
-- name: Deploy a hello world application
+- name: Deploy a hello world application to the default deploy_path
   jboss:
     src: /tmp/hello-1.0-SNAPSHOT.war
     deployment: hello.war
     state: present
 
-- name: Update the hello world application
+- name: Update the hello world application to the non-default deploy_path
   jboss:
     src: /tmp/hello-1.1-SNAPSHOT.war
+    deploy_path: /opt/wildfly/deployment
     deployment: hello.war
     state: present
 
-- name: Undeploy the hello world application
+- name: Undeploy the hello world application from the default deploy_path
   jboss:
     deployment: hello.war
     state: absent
@@ -74,6 +77,9 @@ import os
 import shutil
 import time
 from ansible.module_utils.basic import AnsibleModule
+
+
+DEFAULT_DEPLOY_PATH = '/var/lib/jbossas/standalone/deployments'
 
 
 def is_deployed(deploy_path, deployment):
@@ -93,7 +99,7 @@ def main():
         argument_spec=dict(
             src=dict(type='path'),
             deployment=dict(type='str', required=True),
-            deploy_path=dict(type='path', default='/var/lib/jbossas/standalone/deployments'),
+            deploy_path=dict(type='path', default=DEFAULT_DEPLOY_PATH),
             state=dict(type='str', choices=['absent', 'present'], default='present'),
         ),
         required_if=[('state', 'present', ('src',))],
@@ -110,7 +116,9 @@ def main():
     if not os.path.exists(deploy_path):
         module.fail_json(msg="deploy_path does not exist.")
 
-    if src and not os.path.exists(src):
+    if state == 'absent' and src:
+        module.warn('Parameter src is ignored when state=absent')
+    elif state == 'present' and not os.path.exists(src):
         module.fail_json(msg='Source file %s does not exist.' % src)
 
     deployed = is_deployed(deploy_path, deployment)

@@ -42,6 +42,7 @@
 - vars:
     war_file_1: 'helloworld-1.war'
     war_file_1_path: '{{ war_src_dir }}/{{ war_file_1 }}'
+    fake_src_path: /fake/src
     test_deployment: helloworld-1.war
     task_parameters: &task_parameters
       become_user: '{{ wf_user }}'
@@ -55,15 +56,30 @@
       url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/jboss/{{ war_file_1 }}'
       dest: '{{ war_src_dir }}'
 
+  - name: Create directories for testing the default deploy_path
+    become: yes
+    file:
+      path: '{{ default_deploy_root }}'
+      state: directory
+      recurse: yes
+      owner: '{{ wf_user }}'
+      group: '{{ wf_user }}'
+
+  - name: Create simlink for testing the default deploy_path
+    <<: *task_parameters
+    file:
+      state: link
+      src: '{{ deploy_dir }}'
+      dest: '{{ default_deploy_root }}/deployments'
+
   ##################
   # Start the tests:
 
   # Test if state=present and not deployed, check_mode:
-  - name: jboss - deploy war in check_mode
+  - name: jboss - deploy war in check_mode, the default deploy_path
     <<: *task_parameters
     jboss:
       deployment: '{{ war_file_1 }}'
-      deploy_path: '{{ deploy_dir }}'
       src: '{{ war_file_1_path }}'
     check_mode: yes
 
@@ -206,3 +222,31 @@
   - assert:
       that:
       - result is not changed
+
+  # Test fake src:
+  - name: jboss - test fake src
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      src: '{{ fake_src_path }}'
+      state: present
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - "'Source file {{ fake_src_path }} does not exist.' in result.msg"
+
+  # Test errors where state=present and src is not passed:
+  - name: jboss - must fail when state=present and src is not passed
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      state: present
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - "'state is present but all of the following are missing: src' in result.msg"
