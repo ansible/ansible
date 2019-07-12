@@ -12,6 +12,7 @@ calls the appropriate facts gathering function
 from ansible.module_utils.network.junos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardware, Config, Interfaces, OFacts, HAS_PYEZ
+from ansible.module_utils.network.junos.facts.interfaces.interfaces import InterfacesFacts
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -20,6 +21,7 @@ FACT_LEGACY_SUBSETS = dict(
     interfaces=Interfaces,
 )
 FACT_RESOURCE_SUBSETS = dict(
+    interfaces=InterfacesFacts,
 )
 
 
