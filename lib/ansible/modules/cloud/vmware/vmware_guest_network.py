@@ -314,8 +314,8 @@ class PyVmomiHelper(PyVmomi):
                         self.module.fail_json(msg="networks.start_connected parameter should be boolean.")
                     if network['state'].lower() == 'new' and not network['start_connected']:
                         network['connected'] = False
-                # specified network not exist
-                if 'name' in network and not self.network_exists_by_name(self.content, network['name']):
+                # specified network does not exist
+                if 'name' in network and not self.network_exists_by_name(network['name']):
                     self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
                 elif 'vlan' in network:
                     objects = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
