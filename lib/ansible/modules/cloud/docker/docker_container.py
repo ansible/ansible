@@ -1754,13 +1754,28 @@ class TaskParameters(DockerBaseClass):
             target = mount['target']
             type = mount['type']
             mount_dict = dict(mount)
+            # Sanity checks (so we don't wait for docker-py to barf on input)
+            if mount_dict.get('source') is None and type != 'tmpfs':
+                self.client.fail('source must be specified for mount "{0}" of type "{1}"'.format(target, type))
+            mount_option_types = dict(
+                volume_driver='volume',
+                volume_driver='volume',
+                propagation='bind',
+                no_copy='volume',
+                labels='volume',
+                tmpfs_size='tmpfs',
+                tmpfs_mode='tmpfs',
+            )
+            for option, req_type in mount_option_types.items():
+                if mount_dict.get(option) is None and type != req_type:
+                    self.client.fail('{0} cannot be specified for mount "{1}" of type "{2}" (needs type "{3}")'.format(option, target, type, req_type))
             # Handle volume_driver and volume_options
             volume_driver = mount_dict.pop('volume_driver')
             volume_options = mount_dict.pop('volume_options')
             if volume_driver:
+                if volume_options:
+                    volume_options = clean_dict_booleans_for_docker_api(volume_options)
                 mount_dict['driver_config'] = docker_types.DriverConfig(name=volume_driver, options=volume_options)
-            if volume_options:
-                volume_options = clean_dict_booleans_for_docker_api(volume_options)
             if mount_dict['labels']:
                 mount_dict['labels'] = clean_dict_booleans_for_docker_api(mount_dict['labels'])
             if mount_dict.get('tmpfs_size') is not None:
@@ -1773,21 +1788,6 @@ class TaskParameters(DockerBaseClass):
                     mount_dict['tmpfs_mode'] = int(mount_dict['tmpfs_mode'], 8)
                 except Exception as dummy:
                     self.client.fail('tmp_fs mode of mount "{0}" is not an octal string!'.format(target))
-            # Sanity checks (so we don't wait for docker-py to barf on input)
-            if mount_dict.get('source') is None and type != 'tmpfs':
-                self.client.fail('source must be specified for mount "{0}" of type "{1}"'.format(target, type))
-            if volume_driver and type != 'volume':
-                self.client.fail('volume_driver cannot be specified for mount "{0}" of type "{1}"'.format(target, type))
-            if mount_dict.get('propagation') is not None and type != 'bind':
-                self.client.fail('propagation cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
-            if mount_dict.get('no_copy') is not None and type != 'volume':
-                self.client.fail('no_copy cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
-            if mount_dict.get('labels') is not None and type != 'volume':
-                self.client.fail('labels cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
-            if mount_dict.get('tmpfs_size') is not None and type != 'tmpfs':
-                self.client.fail('tmpfs_size cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
-            if mount_dict.get('tmpfs_mode') is not None and type != 'tmpfs':
-                self.client.fail('tmpfs_mode cannot be specified for mount "{0}" of type "{1}"!'.format(target, type))
             # Fill expected mount dict
             mount_expected = dict(mount)
             mount_expected['tmpfs_size'] = mount_dict['tmpfs_size']
