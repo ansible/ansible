@@ -66,7 +66,7 @@ options:
       description:
       - key, value pairs of data to load into the record. See Examples.
       - Required for C(state:present).
-      type: str
+      type: dict
     number:
       description:
       - Record number to update.
