@@ -48,7 +48,7 @@ options:
         default: yes
     conn_name:
         description:
-            - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
+            - The name used to call the connection. Pattern is <type>[-<ifname>][-<num>].
         type: str
         required: true
     ifname:
