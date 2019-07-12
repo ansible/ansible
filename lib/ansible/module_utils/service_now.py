@@ -8,6 +8,8 @@ __metaclass__ = type
 
 import traceback
 
+from ansible.module_utils.basic import missing_required_lib
+
 # Pull in pysnow
 HAS_PYSNOW = False
 PYSNOW_IMP_ERR = None
@@ -37,14 +39,14 @@ class ServiceNowClient(object):
         self.conn = None
 
     def login(self):
-        result = {
-            changed = False,
-        }
+        result = dict(
+            changed=False
+        )
 
         if self.params['client_id'] is not None:
             try:
                 self.conn = pysnow.OAuthClient(client_id=self.client_id,
-                                               client_secret=client_secret,
+                                               client_secret=self.client_secret,
                                                token_updater=self.updater,
                                                instance=self.instance)
             except Exception as detail:
@@ -52,7 +54,7 @@ class ServiceNowClient(object):
         if not self.session['token']:
             # No previous token exists, Generate new.
             try:
-                session['token'] = conn.generate_token(self.username, self.password)
+                self.session['token'] = self.conn.generate_token(self.username, self.password)
             except pysnow.exceptions.TokenCreateError as detail:
                 self.module.fail_json(msg='Unable to generate a new token: {0}'.format(str(detail)), **result)
 
