@@ -69,6 +69,7 @@ options:
     - If C(state) is absent then it will wait until the regex does not match.
     - Defaults to a multiline regex.
     type: str
+    aliases: [ "regex", "regexp" ]
   sleep:
     description:
     - Number of seconds to sleep between checks.

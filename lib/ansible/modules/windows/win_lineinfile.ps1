@@ -311,7 +311,7 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 
 # Initialize defaults for input parameters.
 $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","destfile","name";
-$regexp = Get-AnsibleParam -obj $params -name "regexp" -type "str";
+$regexp = Get-AnsibleParam -obj $params -name "regexp" -type "str" -aliases "regex";
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent";
 $line = Get-AnsibleParam -obj $params -name "line" -type "str";
 $backrefs = Get-AnsibleParam -obj $params -name "backrefs" -type "bool" -default $false;

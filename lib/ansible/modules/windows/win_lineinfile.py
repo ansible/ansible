@@ -36,6 +36,7 @@ options:
       - The regular expression to look for in every line of the file. For C(state=present), the pattern to replace if found; only the last line found
         will be replaced. For C(state=absent), the pattern of the line to remove. Uses .NET compatible regular expressions;
         see U(https://msdn.microsoft.com/en-us/library/hs600312%28v=vs.110%29.aspx).
+    aliases: [ "regex" ]
   state:
     description:
       - Whether the line should be there or not.
