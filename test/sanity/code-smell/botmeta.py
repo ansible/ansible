@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Make sure the data in BOTMETA.yml is valid"""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import glob
 import os

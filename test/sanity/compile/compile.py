@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Python syntax checker with lint friendly output."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import parser
 import sys

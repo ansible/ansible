@@ -1,6 +1,6 @@
 """Classes for storing and processing test results."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import datetime
 import json
