@@ -2,16 +2,5 @@ destructive
 shippable/posix/group1
 skip/osx
 skip/freebsd
-skip/ubuntu
-skip/opensuse
-skip/windows
-skip/fedora
 skip/rhel
-skip/aws
-skip/network
-skip/azure
-skip/vcenter
-skip/cs
-skip/tower
-skip/cloud
-skip/hcloud
+needs/root
