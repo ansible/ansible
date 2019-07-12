@@ -1759,7 +1759,7 @@ class TaskParameters(DockerBaseClass):
                 self.client.fail('source must be specified for mount "{0}" of type "{1}"'.format(target, type))
             mount_option_types = dict(
                 volume_driver='volume',
-                volume_driver='volume',
+                volume_options='volume',
                 propagation='bind',
                 no_copy='volume',
                 labels='volume',
