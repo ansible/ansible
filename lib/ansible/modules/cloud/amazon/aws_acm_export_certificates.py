@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: aws_acm_export_certificates
+module: aws_acm_export_certificate
 short_description: Exports a private certificate issued by a private certificate authority (CA) for use anywhere
 description:
     - Exports a private certificate issued by a private certificate authority (CA) for use anywhere
@@ -42,22 +42,26 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 # Exporting a private certificate and private key (more details: https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-export-private.html#export-cli)
 
-- name: obtain specific privates certificates
-  aws_acm_export_certificates:
+- name: obtain specific privates certificate
+  aws_acm_export_certificate:
     certificate_arn: "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
     passphrase: secretpassword
-  register: acm_certificates
+  register: acm_certificate
 '''
 
 RETURN = '''
-export:
-    description: Export the certificate, the certificate chain, and the encrypted private key associated with the public key embedded in the certificate
+certificate:
+    Description: The base64 PEM-encoded certificate
     returned: always
-    type: dict
-    sample:
-      certificate: XXXXXXXXXXXXXXXXXXXX
-      certificate_chain: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-      private_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    type: string
+certificate_chain:
+    Description: The base64 PEM-encoded certificate chain. This does not include the certificate that you are exporting
+    returned: always
+    type: string
+private_key:
+    Description: The encrypted private key associated with the public key in the certificate. The key is output in PKCS #8 format and is base64 PEM-encoded
+    returned: always
+    type: string
 '''
 
 import traceback
@@ -75,7 +79,7 @@ except ImportError:
     pass  # caught by imported AnsibleAWSModule
 
 
-def export_acm_certificates(connection, module):
+def export_acm_certificate(connection, module):
     params = {
         'CertificateArn': module.params.get('certificate_arn'),
         'Passphrase': module.params.get('passphrase')
@@ -86,26 +90,21 @@ def export_acm_certificates(connection, module):
     try:
         response = connection.export_certificate(**kwargs)
     except (ClientError, ParamValidationError) as error:
-        module.fail_json(msg="Couldn't obtain private certificates",
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(error.response))
+        module.fail_json_aws(error, msg="Couldn't obtain private certificate")
 
-    module.exit_json(certificates=camel_dict_to_snake_dict(response))
+    module.exit_json(**camel_dict_to_snake_dict(response))
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            certificate_arn=dict(required=True),
-            passphrase=dict(required=True)
-        )
+    argument_spec = dict(
+        certificate_arn=dict(required=True),
+        passphrase=dict(required=True)
     )
-
-    module = AnsibleAWSModule(argument_spec=argument_spec)
+   
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False,)
     connection = module.client('acm')
 
-    export_acm_certificates(connection, module)
+    export_acm_certificate(connection, module)
 
 
 if __name__ == '__main__':
