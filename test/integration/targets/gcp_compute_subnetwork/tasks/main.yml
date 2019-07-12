@@ -97,7 +97,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that subnetwork was deleted
   gcp_compute_subnetwork_facts:
       filters:
@@ -129,7 +128,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
