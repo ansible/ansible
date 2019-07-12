@@ -215,8 +215,8 @@ class VcenterProvider(CloudProvider):
     def _setup_static(self):
         parser = ConfigParser({
             'vcenter_port': '443',
-            'vmware_proxy_host': None,
-            'vmware_proxy_port': None})
+            'vmware_proxy_host': '',
+            'vmware_proxy_port': ''})
         parser.read(self.config_static_path)
 
         self.endpoint = parser.get('DEFAULT', 'vcenter_hostname')
