@@ -2020,8 +2020,8 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if warnings.global_warnings:
-            kwargs['warnings'] = warnings.global_warnings
+        if warnings._global_warnings:
+            kwargs['warnings'] = warnings._global_warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2035,8 +2035,8 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if warnings.global_deprecations:
-            kwargs['deprecations'] = warnings.global_deprecations
+        if warnings._global_deprecations:
+            kwargs['deprecations'] = warnings._global_deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
