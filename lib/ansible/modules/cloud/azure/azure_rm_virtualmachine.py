@@ -51,26 +51,27 @@ options:
     state:
         description:
             - Assert the state of the virtual machine.
-            - I(state=present) will check that the machine exists with the requested configuration. If the configuration of the existing machine does not match,
-              the machine will be updated. Use options I(started), I(allocated) and I(restarted) to change the machine's power state.
-            - C(state=absent) will remove the virtual machine.
+            - Set to C(present) to check that the machine exists with the requested configuration. If the configuration of the existing machine does not match,
+              the machine will be updated.
+            - Use options I(started), I(allocated) and I(restarted) to change the machine's power state.
+            - Set to C(absent) to remove the virtual machine.
         default: present
         choices:
             - absent
             - present
     started:
         description:
-            - Use with I(state=present) to start the machine. Set to C(false) to have the machine be 'stopped'.
+            - Set to (true) with I(state=present) to start the machine. Set to C(false) to have the machine be 'stopped'.
         default: true
         type: bool
     allocated:
         description:
-            - Toggle that controls if the machine is allocated/deallocated, only useful with I(state=present).
+            - Controls if the machine is allocated/deallocated, only useful with I(state=present).
         default: True
         type: bool
     generalized:
         description:
-            - Use with I(state=present) to generalize the machine. Set to true to generalize the machine.
+            - Set to C(true) with I(state=present) to generalize the machine.
             - Please note that this operation is irreversible.
         type: bool
         version_added: "2.8"
@@ -88,7 +89,8 @@ options:
     vm_size:
         description:
             - A valid Azure VM size value. For example, C(Standard_D4).
-            - The list of choices varies depending on the subscription and location. Check your subscription for available choices. Required when creating a VM.
+            - The list of choices varies depending on the subscription and location. Check your subscription for available choices.
+            - Required when creating a VM.
     admin_username:
         description:
             - Admin username used to access the host after it is created. Required when creating a VM.
@@ -104,7 +106,7 @@ options:
     ssh_public_keys:
         description:
             - For I(os_type=Linux) provide a list of SSH keys.
-            - Each item in the list should be a dictionary where the dictionary contains two keys, I(path) and I(key_data).
+            - Accepts a list of dicts where each dictionary contains two keys, I(path) and I(key_data).
               Set the I(path) to the default location of the authorized_keys files. On an Enterprise Linux host,
               for example, will setting I(path=/home/<admin username>/.ssh/authorized_keys). Set I(key_data) to the actual value of the public key.
     image:
@@ -112,7 +114,7 @@ options:
             - Specifies the image used to build the VM.
             - If a string, the image is sourced from a custom image based on the name.
             - If a dict with the keys I(publisher), I(offer), I(sku), and I(version), the image is sourced from a Marketplace image.
-              Note that set I(version=latest) to get the most recent version of a given image.
+              Set I(version=latest) to get the most recent version of a given image.
             - If a dict with the keys I(name) and I(resource_group), the image is sourced from a custom image based on the I(name) and I(resource_group) set.
               Note that the key I(resource_group) is optional and if omitted, all images in the subscription will be searched for by I(name).
             - Custom image support was added in Ansible 2.5.
@@ -136,7 +138,8 @@ options:
     storage_blob_name:
         description:
             - Name of the storage blob used to hold the VM's OS disk image.
-            - If no name is provided, defaults to the VM name + '.vhd'. If you provide a name, it must end with '.vhd'.
+            - Must end with '.vhd'.
+            - If no name is provided, defaults to the VM name + '.vhd'.
         aliases:
             - storage_blob
     managed_disk_type:
@@ -232,29 +235,27 @@ options:
             - public_ip_allocation
     open_ports:
         description:
-            - If a network interface is created when creating the VM, a security group will be created as well.i
+            - If a network interface is created when creating the VM, a security group will be created as well.
             - For Linux hosts a rule will be added to the security group allowing inbound TCP connections to the default SSH port 22,
                and for Windows hosts ports 3389 and 5986 will be opened. Override the default open ports by providing a list of ports.
     network_interface_names:
         description:
             - List of existing network interface names to add to the VM.
-            - Item can be a str of name or resource id of the network interface.
-            - Item can also be a dict contains I(resource_group) and I(name) of the network interface.
+            - Can be a string of name or resource ID of the network interface.
+            - Can be a dict containing I(resource_group) and I(name) of the network interface.
             - If a network interface name is not provided when the VM is created, a default network interface will be created.
-            - In order for the module to create a new network interface, at least one Virtual Network with one Subnet must exist.
+            - To create a new network interface, at least one Virtual Network with one Subnet must exist.
         aliases:
             - network_interfaces
     virtual_network_resource_group:
         description:
-            - When creating a virtual machine, if a specific virtual network from another resource group should be use this parameter
-              to specify the resource group to use.
+            - The resource group to use when creating a virtual machine with another resource group's virtual network.
         version_added: "2.4"
     virtual_network_name:
         description:
-            - When creating a virtual machine, if a network interface name is not provided, one will be created.
-            - The network interface will be assigned to the first virtual network found in the resource group.
-            - Use this parameter to provide a specific virtual network instead.
-            - If the virtual network in in another resource group, specific resource group by I(virtual_network_resource_group).
+            - The virtual network to use when creating a virtual machine.
+            - If not specified, a new virtual network will be created and assigned to the first virtual network found in the resource group.
+            - Use with I(virtual_network_resource_group) to place the virtual network in another resource group.
         aliases:
             - virtual_network
     subnet_name:
@@ -269,8 +270,8 @@ options:
         description:
             - When removing a VM using I(state=absent), also remove associated resources.
             - It can be a list with any of the following ['all', 'all_autocreated', 'network_interfaces', 'virtual_storage', 'public_ips'].
-            - To remove all resources referred by VM use all (this includes autocreated).
-            - To remove all resources that were automatically created while provisioning VM use all_autocreated.
+            - To remove all resources related to the VM being removed, including auto-created resources, set to C(all).
+            - To remove only resources that were automatically created while provisioning the VM being removed, set to C(all_autocreated).
             - Any other input will be ignored.
         type: list
         default: ['all']
@@ -310,8 +311,8 @@ options:
     license_type:
         description:
             - Specifies that the image or disk that is being used was licensed on-premises.
-            - This option is only used for images that contain the Windows Server operating system.
-            - Note that to unset this value, it has to be set to the string 'None'.
+            - Only used for images that contain the Windows Server operating system.
+            - To remove all license type settings, set to the string C(None).
         version_added: "2.8"
         choices:
             - Windows_Server
