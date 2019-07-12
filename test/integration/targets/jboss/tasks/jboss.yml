@@ -51,8 +51,8 @@
   block:
   - name: Create test files
     <<: *task_parameters
-    copy:
-      src: '{{ war_file_1 }}'
+    get_url:
+      url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/jboss/{{ war_file_1 }}'
       dest: '{{ war_src_dir }}'
 
   ##################
