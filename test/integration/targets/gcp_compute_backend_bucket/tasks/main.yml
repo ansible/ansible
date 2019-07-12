@@ -95,7 +95,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that backend_bucket was deleted
   gcp_compute_backend_bucket_facts:
       filters:
@@ -126,7 +125,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

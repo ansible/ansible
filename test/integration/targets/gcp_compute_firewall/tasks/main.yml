@@ -111,7 +111,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that firewall was deleted
   gcp_compute_firewall_facts:
       filters:
@@ -148,4 +147,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
