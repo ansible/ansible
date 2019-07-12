@@ -51,17 +51,17 @@ EXAMPLES = '''
 
 RETURN = '''
 certificate:
-    Description: The base64 PEM-encoded certificate
+    description: The base64 PEM-encoded certificate
     returned: always
-    type: string
+    type: str
 certificate_chain:
-    Description: The base64 PEM-encoded certificate chain. This does not include the certificate that you are exporting
+    description: The base64 PEM-encoded certificate chain. This does not include the certificate that you are exporting
     returned: always
-    type: string
+    type: str
 private_key:
-    Description: The encrypted private key associated with the public key in the certificate. The key is output in PKCS #8 format and is base64 PEM-encoded
+    description: The encrypted private key associated with the public key in the certificate. The key is output in PKCS #8 format and is base64 PEM-encoded
     returned: always
-    type: string
+    type: str
 '''
 
 import traceback
@@ -96,14 +96,15 @@ def export_acm_certificate(connection, module):
 
 
 def main():
-    argument_spec = dict(
-        certificate_arn=dict(required=True),
-        passphrase=dict(required=True)
+    module = AnsibleAWSModule(
+        argument_spec={
+            'certificate_arn': dict(required=True),
+            'passphrase': dict(required=True),
+        },
+        supports_check_mode=False,
     )
-   
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False,)
-    connection = module.client('acm')
 
+    connection = module.client('acm')
     export_acm_certificate(connection, module)
 
 
