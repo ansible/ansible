@@ -1,3 +1,8 @@
+- name: Skip unsupported platforms
+  meta: end_play
+  when: (ansible_distribution != 'CentOS') or
+        (ansible_distribution == 'CentOS' and ansible_distribution_major_version is not version('7', '>='))
+
 - name: Install java
   package:
     name: java-1.8.0-openjdk-devel

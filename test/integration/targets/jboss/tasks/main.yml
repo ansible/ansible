@@ -2,9 +2,6 @@
   block:
 
   - import_tasks: jboss.yml
-    when:
-    - ansible_distribution == 'CentOS'
-    - ansible_distribution_major_version is version('7', '>=')
 
   always:
   # Clean up:
@@ -12,9 +9,6 @@
     systemd:
       name: wildfly
       state: stopped
-    when:
-    - ansible_distribution == 'CentOS'
-    - ansible_distribution_major_version is version('7', '>=')
     ignore_errors: yes
 
   - name: Remove files
@@ -24,6 +18,3 @@
     loop:
     - '{{ remote_tmp_dir }}'
     - '{{ wf_service_file_path }}'
-    when:
-    - ansible_distribution == 'CentOS'
-    - ansible_distribution_major_version is version('7', '>=')
