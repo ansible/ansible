@@ -31,6 +31,9 @@ ansible_loop
 ansible_loop_var
     The name of the value provided to ``loop_control.loop_var``. Added in ``2.8``
 
+ansible_index_var
+    The name of the value provided to ``loop_control.index_var``. Added in ``2.9``
+
 ansible_parent_role_names
     When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
     When multiple inclusions occur, this list lists the *last* role (i.e. the role that included this role) as the *first* item in the list. It is also possible that a specific role exists more than once in this list.
