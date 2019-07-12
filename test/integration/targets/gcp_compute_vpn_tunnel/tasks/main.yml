@@ -128,7 +128,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that vpn_tunnel was deleted
   gcp_compute_vpn_tunnel_facts:
       filters:
@@ -161,7 +160,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
