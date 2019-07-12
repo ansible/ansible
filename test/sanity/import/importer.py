@@ -12,9 +12,9 @@ import warnings
 
 try:
     import importlib.util
-    imp = None
+    imp = None  # pylint: disable=invalid-name
 except ImportError:
-    importlib = None
+    importlib = None  # pylint: disable=invalid-name
     import imp
 
 try:
