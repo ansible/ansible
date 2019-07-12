@@ -61,7 +61,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 # ----------------------------------------------------------------------------
 - name: delete a bucket that does not exist
   gcp_storage_bucket:
@@ -75,4 +74,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

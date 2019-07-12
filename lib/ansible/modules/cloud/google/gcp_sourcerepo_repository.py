@@ -153,7 +153,7 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {u'name': name_partial_to_full(module.params.get('name'), module.params)}
+    request = {u'name': name_pattern(module.params.get('name'), module)}
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -217,17 +217,17 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {u'name': name_partial_to_full(module.params.get('name'), module.params), u'url': response.get(u'url'), u'size': response.get(u'size')}
+    return {u'name': name_pattern(module.params.get('name'), module), u'url': response.get(u'url'), u'size': response.get(u'size')}
 
 
-def name_partial_to_full(name, params):
+def name_pattern(name, module):
     if name is None:
         return
 
-    url = r"projects/.*/repos/.*"
+    regex = r"projects/.*/repos/.*"
 
-    if not re.match(url, name):
-        name = "projects/{project}/repos/{name}".format(**params)
+    if not re.match(regex, name):
+        name = "projects/{project}/repos/{name}".format(**module.params)
 
     return name
 
