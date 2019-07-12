@@ -20,7 +20,7 @@ if [[ "${version}" = "2.6" ]]; then
     # Eventually this logic will move into ansible-test itself.
     targets=("test/units/(modules|module_utils)/")
 else
-    targets=("test/units/")
+    targets=("${D}")
 fi
 
 # shellcheck disable=SC2086
