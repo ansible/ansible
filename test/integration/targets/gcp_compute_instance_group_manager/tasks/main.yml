@@ -130,7 +130,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that instance_group_manager was deleted
   gcp_compute_instance_group_manager_facts:
       filters:
@@ -163,7 +162,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

@@ -91,7 +91,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that http_health_check was deleted
   gcp_compute_http_health_check_facts:
       filters:
@@ -123,4 +122,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
