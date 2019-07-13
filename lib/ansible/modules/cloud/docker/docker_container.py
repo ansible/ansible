@@ -955,6 +955,7 @@ from ansible.module_utils.docker.common import (
     sanitize_result,
     parse_healthcheck,
     DOCKER_COMMON_ARGS,
+    RequestException,
 )
 from ansible.module_utils.six import string_types
 
@@ -1419,7 +1420,7 @@ class TaskParameters(DockerBaseClass):
                         break
                 except NotFound as e:
                     self.client.fail(
-                        "Cannot inspect the network '{0}' to determine the default IP.".format(net['name']),
+                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], e),
                         exception=traceback.format_exc()
                     )
         return ip
@@ -2651,9 +2652,9 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 if self.parameters.stop_timeout:
-                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                    dummy = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
                 else:
-                    response = self.client.restart(container_id)
+                    dummy = self.client.restart(container_id)
             except Exception as exc:
                 self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
@@ -3029,6 +3030,8 @@ def main():
         client.module.exit_json(**sanitize_result(cm.results))
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
