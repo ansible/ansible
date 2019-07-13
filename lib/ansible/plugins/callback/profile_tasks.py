@@ -130,12 +130,15 @@ class CallbackModule(CallbackBase):
 
         self.sort_order = self.get_option('sort_order')
         if self.sort_order is not None:
-            if self.sort_order == 'ascending':
+            if self.sort_order == 'none':
+                self.sort_order = None
+            elif self.sort_order == 'ascending':
                 self.sort_order = False
             elif self.sort_order == 'descending':
                 self.sort_order = True
-            elif self.sort_order == 'none':
-                self.sort_order = None
+            else:
+                self._display.warning('Invalid value configured for sort_order, using default value')
+                self.sort_order = True
 
         self.task_output_limit = self.get_option('output_limit')
         if self.task_output_limit is not None:
@@ -182,6 +185,8 @@ class CallbackModule(CallbackBase):
                 key=lambda x: x[1]['time'],
                 reverse=self.sort_order,
             )
+        else:
+            results = list(results)
 
         # Display the number of tasks specified or the default of 20
         results = results[:self.task_output_limit]
