@@ -94,6 +94,9 @@ class HcloudCloudEnvironment(CloudEnvironment):
     """
 
     def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
+        """
         parser = ConfigParser()
         parser.read(self.config_path)
 
