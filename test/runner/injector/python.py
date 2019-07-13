@@ -26,9 +26,11 @@ def main():
                 # noinspection PyUnresolvedReferences
                 found = bool(importlib.util.find_spec('coverage'))
             else:
+                # noinspection PyDeprecation
                 import imp
 
                 try:
+                    # noinspection PyDeprecation
                     imp.find_module('coverage')
                     found = True
                 except ImportError:
