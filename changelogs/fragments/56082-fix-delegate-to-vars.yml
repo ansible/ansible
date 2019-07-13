@@ -1,0 +1,2 @@
+bugfixes:
+  - correctly template delegated hosts vars (Fixes https://github.com/ansible/ansible/issues/34259)
