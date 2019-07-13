@@ -31,7 +31,7 @@ try:
     # noinspection PyCompatibility
     from configparser import ConfigParser
 except ImportError:
-    # noinspection PyCompatibility
+    # noinspection PyCompatibility,PyUnresolvedReferences
     from ConfigParser import SafeConfigParser as ConfigParser
 
 try:
@@ -788,9 +788,11 @@ def load_module(path, name):  # type: (str, str) -> None
 
         sys.modules[name] = module
     else:
+        # noinspection PyDeprecation
         import imp
 
         with open(path, 'r') as module_file:
+            # noinspection PyDeprecation
             imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
 
 
