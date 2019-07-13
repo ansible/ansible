@@ -32,6 +32,7 @@ options:
    domain:
      description:
         - Name or ID of the domain containing the group if the cloud supports domains
+     type: str
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
