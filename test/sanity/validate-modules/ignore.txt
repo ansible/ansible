@@ -3004,8 +3004,6 @@ lib/ansible/modules/notification/sendgrid.py E337
 lib/ansible/modules/notification/sendgrid.py E338
 lib/ansible/modules/notification/slack.py E324
 lib/ansible/modules/notification/slack.py E337
-lib/ansible/modules/notification/snow_record.py E317
-lib/ansible/modules/notification/snow_record.py E337
 lib/ansible/modules/notification/syslogger.py E337
 lib/ansible/modules/notification/telegram.py E337
 lib/ansible/modules/notification/twilio.py E337
