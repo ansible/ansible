@@ -192,6 +192,15 @@ else:
         LZMA_IMP_ERR = format_exc()
         HAS_LZMA = False
 
+PATH_SEP = to_bytes(os.sep, errors='surrogate_or_strict')
+
+
+def format_path(path, sep=PATH_SEP):
+    if os.path.isdir(path) and not path.endswith(sep):
+        return path + sep
+    else:
+        return path
+
 
 def main():
     module = AnsibleModule(
@@ -216,7 +225,7 @@ def main():
     remove = params['remove']
 
     b_expanded_paths = []
-    b_expanded_exclude_paths = []
+    b_expanded_exclude_paths = set()
     fmt = params['format']
     b_fmt = to_bytes(fmt, errors='surrogate_or_strict')
     force_archive = params['force_archive']
@@ -244,13 +253,13 @@ def main():
         # Expand any glob characters. If found, add the expanded glob to the
         # list of expanded_paths, which might be empty.
         if (b'*' in b_path or b'?' in b_path):
-            b_expanded_paths.extend(glob.glob(b_path))
+            b_expanded_paths.extend(format_path(glob_path) for glob_path in glob.glob(b_path))
             globby = True
 
         # If there are no glob characters the path is added to the expanded paths
         # whether the path exists or not
         else:
-            b_expanded_paths.append(b_path)
+            b_expanded_paths.append(format_path(b_path))
 
     # Only attempt to expand the exclude paths if it exists
     if exclude_paths:
@@ -264,12 +273,12 @@ def main():
             # Expand any glob characters. If found, add the expanded glob to the
             # list of expanded_paths, which might be empty.
             if (b'*' in b_exclude_path or b'?' in b_exclude_path):
-                b_expanded_exclude_paths.extend(glob.glob(b_exclude_path))
+                b_expanded_exclude_paths.update(format_path(glob_path) for glob_path in glob.glob(b_exclude_path))
 
                 # If there are no glob character the exclude path is added to the expanded
                 # exclude paths whether the path exists or not.
             else:
-                b_expanded_exclude_paths.append(b_exclude_path)
+                b_expanded_exclude_paths.add(format_path(b_exclude_path))
 
     if not b_expanded_paths:
         return module.fail_json(
@@ -295,8 +304,6 @@ def main():
     if archive and not b_dest:
         module.fail_json(dest=dest, path=', '.join(paths), msg='Error, must specify "dest" when archiving multiple files or trees')
 
-    b_sep = to_bytes(os.sep, errors='surrogate_or_strict')
-
     b_archive_paths = []
     b_missing = []
     b_arcroot = b''
@@ -305,7 +312,7 @@ def main():
         # Use the longest common directory name among all the files
         # as the archive root path
         if b_arcroot == b'':
-            b_arcroot = os.path.dirname(b_path) + b_sep
+            b_arcroot = format_path(os.path.dirname(b_path))
         else:
             for i in range(len(b_arcroot)):
                 if b_path[i] != b_arcroot[i]:
@@ -314,15 +321,11 @@ def main():
             if i < len(b_arcroot):
                 b_arcroot = os.path.dirname(b_arcroot[0:i + 1])
 
-            b_arcroot += b_sep
+            b_arcroot = format_path(b_arcroot)
 
         # Don't allow archives to be created anywhere within paths to be removed
         if remove and os.path.isdir(b_path):
-            b_path_dir = b_path
-            if not b_path.endswith(b'/'):
-                b_path_dir += b'/'
-
-            if b_dest.startswith(b_path_dir):
+            if b_dest.startswith(b_path):
                 module.fail_json(
                     path=', '.join(paths),
                     msg='Error, created archive can not be contained in source paths when remove=True'
@@ -392,8 +395,11 @@ def main():
                         if os.path.isdir(b_path):
                             # Recurse into directories
                             for b_dirpath, b_dirnames, b_filenames in os.walk(b_path, topdown=True):
-                                if not b_dirpath.endswith(b_sep):
-                                    b_dirpath += b_sep
+                                b_dirpath = format_path(b_dirpath)
+
+                                # Filter excluded paths
+                                b_dirnames[:] = [b_dname for b_dname in b_dirnames if format_path(b_dirpath + b_dname) not in b_expanded_exclude_paths]
+                                b_filenames[:] = [b_fname for b_fname in b_filenames if b_dirpath + b_fname not in b_expanded_exclude_paths]
 
                                 for b_dirname in b_dirnames:
                                     b_fullpath = b_dirpath + b_dirname
