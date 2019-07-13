@@ -28,6 +28,7 @@ options:
      description:
         - Name or ID of the group
      required: true
+     type: str
    domain:
      description:
         - Name or ID of the domain containing the group if the cloud supports domains
