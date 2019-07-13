@@ -138,7 +138,13 @@ except ImportError:
     pass
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.docker.common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DEFAULT_DOCKER_REGISTRY,
+    DockerBaseClass,
+    EMAIL_REGEX,
+    RequestException,
+)
 
 
 class LoginManager(DockerBaseClass):
@@ -331,6 +337,8 @@ def main():
         client.module.exit_json(**results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':
