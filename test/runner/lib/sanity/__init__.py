@@ -142,7 +142,7 @@ def command_sanity(args):
 
 def collect_code_smell_tests():
     """
-    :rtype: tuple[SanityCodeSmellTest]
+    :rtype: tuple[SanityFunc]
     """
     skip_file = 'test/sanity/code-smell/skip.txt'
     skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
@@ -383,7 +383,7 @@ SANITY_TESTS = (
 def sanity_init():
     """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
     import_plugins('sanity')
-    sanity_plugins = {}  # type: t.Dict[str, type]
+    sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityFunc]]
     load_plugins(SanityFunc, sanity_plugins)
     sanity_tests = tuple([plugin() for plugin in sanity_plugins.values()])
     global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
