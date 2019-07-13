@@ -641,8 +641,8 @@ options:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
       - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
-        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
-        Note that the docker daemon might not support all modes and combinations of such modes."
+        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave), and
+        C(nocopy). Note that the docker daemon might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
@@ -982,7 +982,7 @@ REQUIRES_CONVERSION_TO_BYTES = [
 
 def is_volume_permissions(input):
     for part in input.split(','):
-        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave'):
+        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave', 'nocopy'):
             return False
     return True
 
