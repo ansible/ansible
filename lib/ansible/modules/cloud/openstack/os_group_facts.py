@@ -41,6 +41,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+     type: str
 '''
 
 EXAMPLES = '''
