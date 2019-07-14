@@ -266,7 +266,7 @@
 
 - name: check what would be removed if folder state was absent and diff is enabled
   file: 
-    path: "{{ output_dir }}"
+    path: "{{ item }}"
     state: absent
   check_mode: yes
   diff: yes
