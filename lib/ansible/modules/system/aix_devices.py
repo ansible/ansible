@@ -165,28 +165,27 @@ def _check_device_attr(module, device, attr):
         device: device to check attributes.
         attr: attribute to be checked.
 
-    Returns:
-
+    Returns: A list of all of the current attribute values. (NB: some attributes can have multiple values, such as alias4 and alias6)
     """
     lsattr_cmd = module.get_bin_path('lsattr', True)
     rc, lsattr_out, err = module.run_command(["%s" % lsattr_cmd, '-El', "%s" % device, '-a', "%s" % attr])
 
+    # delaliast4 and delalias6 are special aliases to remove ip4 and ip6 addresses from en0
     hidden_attrs = ['delalias4', 'delalias6']
 
     if rc == 255:
-
         if attr in hidden_attrs:
             current_param = ''
         else:
             current_param = None
-
         return current_param
 
     elif rc != 0:
-        module.fail_json(msg="Failed to run lsattr: %s" % err, rc=rc, err=err)
+        msg = "Failed to run lsattr: %s" % err
+        module.fail_json(msg=msg , rc=rc, err=err)
 
-    current_param = lsattr_out.split()[1]
-    return current_param
+    current_params = [line.split()[1] for line in lsattr_out.splitlines()]
+    return current_params
 
 
 def discover_device(module, device):
@@ -195,7 +194,6 @@ def discover_device(module, device):
 
     if device is not None:
         device = "-l %s" % device
-
     else:
         device = ''
 
@@ -225,19 +223,20 @@ def change_device_attr(module, attributes, device, force):
 
     for attr in list(attributes.keys()):
         new_param = attributes[attr]
-        current_param = _check_device_attr(module, device, attr)
+        current_params = _check_device_attr(module, device, attr)
 
-        if current_param is None:
+        if not current_params:
             attr_invalid.append(attr)
 
-        elif current_param != new_param:
+        elif new_param not in current_params:
             cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
             if force:
                 cmd.append(force)
             if not module.check_mode:
                 rc, chdev_out, err = module.run_command(cmd)
                 if rc != 0:
-                    module.exit_json(msg="Failed to run chdev.", rc=rc, err=err)
+                    msg = "Failed to run chdev: %s" % cmd
+                    module.exit_json(msg=msg, rc=rc, err=err)
 
             attr_changed.append(attributes[attr])
         else:
