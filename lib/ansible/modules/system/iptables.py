@@ -340,7 +340,7 @@ options:
       - Wait N seconds for the xtables lock to prevent multiple instances of
         the program from running concurrently.
     type: str
-    version_added: "2.8"
+    version_added: "2.9"
 '''
 
 EXAMPLES = r'''
@@ -598,13 +598,14 @@ def push_arguments(iptables_path, action, params, make_rule=True):
 def check_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-C', params)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if rc == 0: # Rule exists
-      return True
-    elif rc == 1: # Rule doesn't exist
-      return False
-    else: # Some other error
-      msg = heuristic_log_sanitize(stderr.rstrip(), module.no_log_values)
-      module.fail_json(cmd=module._clean_args(cmd), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+    if rc == 0:  # Rule exists
+        return True
+    elif rc == 1:  # Rule doesn't exist
+        return False
+    else:  # Some other error
+        msg = heuristic_log_sanitize(stderr.rstrip(), module.no_log_values)
+        module.fail_json(cmd=module._clean_args(cmd), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
+
 
 def append_rule(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-A', params)
