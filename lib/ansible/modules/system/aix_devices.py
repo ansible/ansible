@@ -231,11 +231,9 @@ def change_device_attr(module, attributes, device, force):
             attr_invalid.append(attr)
 
         elif current_param != new_param:
+            cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
             if force:
-                cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr]), "%s" % force]
-            else:
-                cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
-
+                cmd.append(force)                
             if not module.check_mode:
                 rc, chdev_out, err = module.run_command(cmd)
                 if rc != 0:
@@ -276,35 +274,33 @@ def remove_device(module, device, force, recursive, state):
     state_opt = {
         'removed': '-d',
         'absent': '-d',
-        'defined': ''
+        'defined': None
     }
-
-    recursive_opt = {
-        True: '-R',
-        False: ''
-    }
+    state = state_opt[state]
 
     # Force in rmdev is -g:
-    # 7.1: https://www.ibm.com/support/knowledgecenter/ssw_aix_71/r_commands/rmdev.html
-    # 7.2: https://www.ibm.com/support/knowledgecenter/ssw_aix_72/r_commands/rmdev.html
     if force:
         force = '-g'
-
-    recursive = recursive_opt[recursive]
-    state = state_opt[state]
+    if recursive:
+        recursive = '-R'
 
     changed = True
     msg = ''
     rmdev_cmd = module.get_bin_path('rmdev', True)
 
     if not module.check_mode:
+        cmd = ["%s" % rmdev_cmd, "-l", "%s" % device ]
         if state:
-            rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive, "%s" % force])
-        else:
-            rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive])
+            cmd.append(state)
+        if force:
+            cmd.append(force)
+        if recursive:
+            cmd.append(recursive)
+        rc, rmdev_out, err = module.run_command(cmd)
 
         if rc != 0:
-            module.fail_json(msg="Failed to run rmdev", rc=rc, err=err)
+            msg = "Failed to run rmdev (%s) (raw: %s)" % (' '.join(cmd), cmd)
+            module.fail_json(msg=msg, rc=rc, err=err)
 
         msg = rmdev_out
 
