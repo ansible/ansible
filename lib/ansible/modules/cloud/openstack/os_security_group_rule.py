@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: os_security_group_rule
 short_description: Add/Delete rule from an existing security group
-authors:
+author:
    - "Benno Joy (@bennojoy)"
    - "Jeffrey van Pelt (@Thulium-Drake)"
 extends_documentation_fragment: openstack
@@ -213,7 +213,7 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
 
     # Rules with 'any' protocol do not match ports
     if protocol == 'any':
-      return True
+        return True
 
     # Check if the user is supplying -1 or None values for full TPC/UDP port range.
     if protocol in ['tcp', 'udp'] or protocol is None:
@@ -286,7 +286,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol=dict(default=None,
-                      choices=['any', 'tcp', 'udp', 'icmp', '112', '132']),
+                      choices=[None, 'any', 'tcp', 'udp', 'icmp', '112', '132']),
         port_range_min=dict(required=False, type='int'),
         port_range_max=dict(required=False, type='int'),
         remote_ip_prefix=dict(required=False, default=None),
