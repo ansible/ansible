@@ -183,7 +183,7 @@ def get_tables(service):
     for df_list in html_list:
         for df in df_list:
             table = json.loads(df.to_json(orient='split'))
-            table_data = table['data'][0]
+            table_data = df
             if 'Actions' in table_data and 'Resource Types (*required)' in table_data:
                 action_tables.append(table['data'][1::])
             elif 'Resource Types' in table_data and 'ARN' in table_data:
