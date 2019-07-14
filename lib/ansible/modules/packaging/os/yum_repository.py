@@ -230,7 +230,7 @@ options:
       - Password for this proxy.
   proxy_username:
     description:
-      - Username to use for proxy.      
+      - Username to use for proxy.
   repo_gpgcheck:
     description:
       - This tells yum whether or not it should perform a GPG signature check
