@@ -326,7 +326,7 @@ def main():
 
     msg = MIMEMultipart(_charset=charset)
     msg['From'] = formataddr((sender_phrase, sender_addr))
-    msg['Date'] = = formatdate(localtime=True)
+    msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = Header(subject, charset)
     msg.preamble = "Multipart message"
 
