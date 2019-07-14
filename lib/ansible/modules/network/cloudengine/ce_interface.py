@@ -159,7 +159,7 @@ CE_NC_GET_INTFS = """
     <interfaces>
       <interface>
         <ifName></ifName>
-        <ifPhyType></ifPhyType>
+        <ifPhyType>%s</ifPhyType>
         <ifNumber></ifNumber>
         <ifDescr></ifDescr>
         <ifAdminStatus></ifAdminStatus>
@@ -370,7 +370,7 @@ class Interface(object):
         """ get interfaces attributes dict."""
 
         intfs_info = dict()
-        conf_str = CE_NC_GET_INTFS
+        conf_str = CE_NC_GET_INTFS % self.interface_type
         recv_xml = get_nc_config(self.module, conf_str)
 
         if "<data/>" in recv_xml:
