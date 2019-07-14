@@ -463,7 +463,7 @@ EXAMPLES = r'''
 
 import re
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, heuristic_log_sanitize
 
 
 BINS = dict(
@@ -596,9 +596,14 @@ def push_arguments(iptables_path, action, params, make_rule=True):
 
 def check_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-C', params)
-    rc, _, __ = module.run_command(cmd, check_rc=False)
-    return (rc == 0)
-
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    if rc == 0: # Rule exists
+      return True
+    elif rc == 1: # Rule doesn't exist
+      return False
+    else: # Some other error
+      msg = heuristic_log_sanitize(stderr.rstrip(), module.no_log_values)
+      module.fail_json(cmd=module._clean_args(cmd), rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
 def append_rule(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-A', params)
