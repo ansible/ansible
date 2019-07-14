@@ -299,7 +299,7 @@ def remove_device(module, device, force, recursive, state):
         rc, rmdev_out, err = module.run_command(cmd)
 
         if rc != 0:
-            msg = "Failed to run rmdev (%s) (raw: %s)" % (' '.join(cmd), cmd)
+            msg = "Failed to run rmdev (%s)" % (' '.join(cmd), cmd)
             module.fail_json(msg=msg, rc=rc, err=err)
 
         msg = rmdev_out
