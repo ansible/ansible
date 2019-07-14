@@ -378,7 +378,7 @@ def initial_diff(path, state, prev_state):
     if prev_state != state:
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
-        if state == 'absent' and prev_state == 'directory' :
+        if state == 'absent' and prev_state == 'directory':
             walklist = {
                 'directories': [],
                 'files': [],
