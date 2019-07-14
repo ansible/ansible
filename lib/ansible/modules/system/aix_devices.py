@@ -182,7 +182,7 @@ def _check_device_attr(module, device, attr):
 
     elif rc != 0:
         msg = "Failed to run lsattr: %s" % err
-        module.fail_json(msg=msg , rc=rc, err=err)
+        module.fail_json(msg=msg, rc=rc, err=err)
 
     current_params = [line.split()[1] for line in lsattr_out.splitlines()]
     return current_params
@@ -295,7 +295,6 @@ def remove_device(module, device, force, recursive, state):
             cmd.append(force)
         if recursive:
             cmd.append(recursive)
-        
         rc, rmdev_out, err = module.run_command(cmd)
 
         if rc != 0:
