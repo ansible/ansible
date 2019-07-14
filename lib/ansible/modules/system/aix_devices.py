@@ -233,7 +233,7 @@ def change_device_attr(module, attributes, device, force):
         elif current_param != new_param:
             cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
             if force:
-                cmd.append(force)                
+                cmd.append(force)
             if not module.check_mode:
                 rc, chdev_out, err = module.run_command(cmd)
                 if rc != 0:
@@ -289,7 +289,7 @@ def remove_device(module, device, force, recursive, state):
     rmdev_cmd = module.get_bin_path('rmdev', True)
 
     if not module.check_mode:
-        cmd = ["%s" % rmdev_cmd, "-l", "%s" % device ]
+        cmd = ["%s" % rmdev_cmd, "-l", "%s" % device]
         if state:
             cmd.append(state)
         if force:
@@ -319,7 +319,6 @@ def main():
         ),
         supports_check_mode=True,
     )
-
 
     attributes = module.params['attributes']
     device = module.params['device']
