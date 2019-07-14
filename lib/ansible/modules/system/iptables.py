@@ -339,6 +339,7 @@ options:
     description:
       - Wait N seconds for the xtables lock to prevent multiple instances of
         the program from running concurrently.
+    type: str
     version_added: "2.8"
 '''
 
