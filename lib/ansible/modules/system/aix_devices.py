@@ -218,7 +218,7 @@ def change_device_attr(module, attributes, device, force):
     chdev_cmd = module.get_bin_path('chdev', True)
 
     # Force in chdev is -g:
-    # 7.1: https://www.ibm.com/support/knowledgecenter/ssw_aix_71/c_commands/chdev.html
+    # 7.1: https://www.ibm.com/support/knowledgecenter/ssw_aix_71/com.ibm.aix.cmds1/chdev.htm
     # 7.2: https://www.ibm.com/support/knowledgecenter/ssw_aix_72/c_commands/chdev.html
     if force:
         force = '-g'
@@ -269,6 +269,9 @@ def change_device_attr(module, attributes, device, force):
 
 def remove_device(module, device, force, recursive, state):
     """ Puts device in defined state or removes device. """
+
+    # 7.1: https://www.ibm.com/support/knowledgecenter/ssw_aix_71/com.ibm.aix.cmds4/rmdev.htm
+    # 7.2: https://www.ibm.com/support/knowledgecenter/ssw_aix_72/r_commands/rmdev.html
 
     state_opt = {
         'removed': '-d',
