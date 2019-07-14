@@ -217,6 +217,12 @@ def change_device_attr(module, attributes, device, force):
     attr_invalid = []
     chdev_cmd = module.get_bin_path('chdev', True)
 
+    # Force in chdev is -g:
+    # 7.1: https://www.ibm.com/support/knowledgecenter/ssw_aix_71/c_commands/chdev.html
+    # 7.2: https://www.ibm.com/support/knowledgecenter/ssw_aix_72/c_commands/chdev.html
+    if force:
+        force = '-g'
+
     for attr in list(attributes.keys()):
         new_param = attributes[attr]
         current_param = _check_device_attr(module, device, attr)
@@ -275,6 +281,12 @@ def remove_device(module, device, force, recursive, state):
         False: ''
     }
 
+    # Force in rmdev is -g:
+    # 7.1: https://www.ibm.com/support/knowledgecenter/ssw_aix_71/r_commands/rmdev.html
+    # 7.2: https://www.ibm.com/support/knowledgecenter/ssw_aix_72/r_commands/rmdev.html
+    if force:
+        force = '-g'
+
     recursive = recursive_opt[recursive]
     state = state_opt[state]
 
@@ -309,14 +321,10 @@ def main():
         supports_check_mode=True,
     )
 
-    force_opt = {
-        True: '-f',
-        False: '',
-    }
 
     attributes = module.params['attributes']
     device = module.params['device']
-    force = force_opt[module.params['force']]
+    force = module.params['force']
     recursive = module.params['recursive']
     state = module.params['state']
 
