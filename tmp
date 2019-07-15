@@ -1,0 +1,2 @@
+- List of Linux images with cloud-init enabled: U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview).
+- To enable cloud-init on other Linux images: U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
