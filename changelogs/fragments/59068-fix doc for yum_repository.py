@@ -1,2 +1,2 @@
 bugfixes:
-- fix doc for yum_repository.py (https://github.com/ansible/ansible/pull/59068)
+- Fix doc for proxy_username and proxy_password in yum_repository.py (https://github.com/ansible/ansible/pull/59068).
