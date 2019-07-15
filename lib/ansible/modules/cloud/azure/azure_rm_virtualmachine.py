@@ -26,11 +26,8 @@ short_description: Manage Azure virtual machines
 description:
     - Manage and configure virtual machines (VMs) and associated resources on Azure.
     - Requires a resource group containing at least one virtual network with at least one subnet.
-    - Supports images from the Azure Marketplace, which can be discovered with M(azure_rm_virtualmachineimage_facts).
-    - Supports custom images since Ansible 2.5.
-    - To use the I(custom_data) option on a Linux image, the image must have cloud-init enabled. If the image does not have cloud-init enabled, data in I(custom_data) is ignored.
-    - List of Linux images with cloud-init enabled: U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview).
-    - To enable cloud-init on other Linux images: U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
+    - Supports images from the Azure Marketplace, which can be discovered with M(azure_rm_virtualmachineimage_facts), plus custom images (since Ansible 2.5).
+    - To use I(custom_data) on a Linux image, the image must have cloud-init enabled. If cloud-init is not enabled, I(custom_data) is ignored.
 
 options:
     resource_group:
@@ -44,13 +41,16 @@ options:
     custom_data:
         description:
             - Data made available to the VM and used by C(cloud-init).
+            - Only used on Linux images with C(cloud-init) enabled.
+            - Consult U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview) for cloud-init ready images.
+            - To enable cloud-init on a Linux image, follow U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
         version_added: "2.5"
     state:
         description:
-            - State and configuration of the VM.
-            - Does not affect power state. Use options I(started), I(allocated) and I(restarted) to change the power state of a VM.
-            - Set to C(present) to create a VM with the requested configuration or to update the configuration of an existing VM.
-            - Set to C(absent) to remove the VM.
+            - State of the VM.
+            - Set to C(present) to create a VM with the configuration specified by other options, or to update the configuration of an existing VM.
+            - Set to C(absent) to remove a VM.
+            - Does not affect power state. Use I(started)/I(allocated)/I(restarted) parameters to change the power state of a VM.
         default: present
         choices:
             - absent
@@ -92,7 +92,7 @@ options:
             - Required when creating a VM.
     admin_username:
         description:
-            - Admin username used to access the host after it is created.
+            - Admin username used to access the VM after it is created.
             - Required when creating a VM.
     admin_password:
         description:
@@ -108,12 +108,14 @@ options:
         description:
             - For I(os_type=Linux) provide a list of SSH keys.
             - Accepts a list of dicts where each dictionary contains two keys, I(path) and I(key_data).
-            - Set the I(path) to the default location of the authorized_keys files. On an Enterprise Linux host, for example, I(path=/home/<admin username>/.ssh/authorized_keys). Set I(key_data) to the actual value of the public key.
+            - Set I(path) to the default location of the authorized_keys files. For example, I(path=/home/<admin username>/.ssh/authorized_keys).
+            - Set I(key_data) to the actual value of the public key.
     image:
         description:
             - The image used to build the VM.
             - For custom images, the name of the image. To narrow the search to a specific resource group, a dict with the keys I(name) and I(resource_group).
-            - For Marketplace images, a dict with the keys I(publisher), I(offer), I(sku), and I(version). Set I(version=latest) to get the most recent version of a given image.
+            - For Marketplace images, a dict with the keys I(publisher), I(offer), I(sku), and I(version).
+            - Set I(version=latest) to get the most recent version of a given image.
         required: true
     availability_set:
         description:
@@ -128,7 +130,7 @@ options:
     storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs.
-            - If not specified, a default container will created.
+            - If not specified, a default container will be created.
         default: vhds
         aliases:
             - storage_container
@@ -253,7 +255,7 @@ options:
     virtual_network_name:
         description:
             - The virtual network to use when creating a VM.
-            - If not specified, a new virtual network will be created and assigned to the first virtual network found in the resource group.
+            - If not specified, a new network interface will be created and assigned to the first virtual network found in the resource group.
             - Use with I(virtual_network_resource_group) to place the virtual network in another resource group.
         aliases:
             - virtual_network
@@ -359,7 +361,7 @@ options:
                 description:
                     - The name of an existing storage account to use for boot diagnostics.
                     - If not specified, uses I(storage_account_name) defined one level up.
-                    - If not specified and I(storage_account_name) is not specified one level up, and C(enabled) is C(true), a default storage account is created or used for boot diagnostics data.
+                    - If storage account is not specified anywhere, and C(enabled) is C(true), a default storage account is created for boot diagnostics data.
                 required: false
 
 extends_documentation_fragment:
