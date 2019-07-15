@@ -29,11 +29,10 @@ The module file for nxos_lag_interfaces
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
@@ -46,7 +45,6 @@ options:
   config:
     description: A list of link aggregation group configurations.
     type: list
-    elements: dict
     suboptions:
       id:
         description:
@@ -57,13 +55,11 @@ options:
         description:
           - The list of interfaces that are part of the group.
         type: list
-        required: true
-        elements: dict
         suboptions:
           member:
             description:
               - The interface name.
-          type: str
+            type: str
           mode:
             description:
               - Link aggregation group (LAG).
@@ -172,7 +168,7 @@ EXAMPLES = """
 # interface Ethernet1/4
 #   channel-group 99 mode active
 
-- name: Delete LAG attributes of given interface (Note: This won't delete the port-channel itself).
+- name: Delete LAG attributes of given interface (This won't delete the port-channel itself).
   nxos_lag_interfaces:
     config:
       - id: 99
