@@ -106,7 +106,7 @@ cmd:
   description: Executed command to get action done
   returned: changed and failure
   type: str
-  sample: "openssl x509 -noout -in /tmp/cert.crt -fingerprint -sha1"
+  sample: "openssl x509 -noout -in /tmp/cert.crt -fingerprint -sha256"
 '''
 
 
@@ -116,7 +116,7 @@ import re
 
 
 def read_certificate_fingerprint(module, openssl_bin, certificate_path):
-    current_certificate_fingerprint_cmd = "%s x509 -noout -in %s -fingerprint -sha1" % (openssl_bin, certificate_path)
+    current_certificate_fingerprint_cmd = "%s x509 -noout -in %s -fingerprint -sha256" % (openssl_bin, certificate_path)
     (rc, current_certificate_fingerprint_out, current_certificate_fingerprint_err) = run_commands(module, current_certificate_fingerprint_cmd)
     if rc != 0:
         return module.fail_json(msg=current_certificate_fingerprint_out,
@@ -136,7 +136,7 @@ def read_certificate_fingerprint(module, openssl_bin, certificate_path):
 
 
 def read_stored_certificate_fingerprint(module, keytool_bin, alias, keystore_path, keystore_password):
-    stored_certificate_fingerprint_cmd = "%s -list -alias '%s' -keystore '%s' -storepass '%s'" % (keytool_bin, alias, keystore_path, keystore_password)
+    stored_certificate_fingerprint_cmd = "%s -list -alias '%s' -keystore '%s' -storepass '%s' -v" % (keytool_bin, alias, keystore_path, keystore_password)
     (rc, stored_certificate_fingerprint_out, stored_certificate_fingerprint_err) = run_commands(module, stored_certificate_fingerprint_cmd)
     if rc != 0:
         if "keytool error: java.lang.Exception: Alias <%s> does not exist" % alias not in stored_certificate_fingerprint_out:
@@ -147,7 +147,7 @@ def read_stored_certificate_fingerprint(module, keytool_bin, alias, keystore_pat
         else:
             return None
     else:
-        stored_certificate_match = re.search(r": ([\w:]+)", stored_certificate_fingerprint_out)
+        stored_certificate_match = re.search(r"SHA256: ([\w:]+)", stored_certificate_fingerprint_out)
         if not stored_certificate_match:
             return module.fail_json(
                 msg="Unable to find the stored certificate fingerprint in %s" % stored_certificate_fingerprint_out,
