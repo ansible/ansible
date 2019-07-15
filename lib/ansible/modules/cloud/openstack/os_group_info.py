@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2016 Hewlett-Packard Enterprise Corporation
+
+# Copyright (c) 2019, Phillipe Smith <phillipelnx@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,13 +14,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: os_group_facts
-short_description: Retrieve facts about one or more OpenStack groups
+module: os_group_info
+short_description: Retrieve info about one or more OpenStack groups
 extends_documentation_fragment: openstack
 version_added: "2.9"
 author: "Phillipe Smith (@phsmith)"
 description:
-    - Retrieve facts about a one or more OpenStack groups
+    - Retrieve info about a one or more OpenStack groups
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
@@ -45,34 +46,38 @@ options:
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created groups
-- os_group_facts:
+# Gather info about previously created groups
+- os_group_info:
     cloud: awesomecloud
+  register: openstack_groups
 - debug:
     var: openstack_groups
 
-# Gather facts about a previously created group by name
-- os_group_facts:
+# Gather info about a previously created group by name
+- os_group_info:
     cloud: awesomecloud
     name: demogroup
+  register: openstack_groups
 - debug:
     var: openstack_groups
 
-# Gather facts about a previously created group in a specific domain
-- os_group_facts:
+# Gather info about a previously created group in a specific domain
+- os_group_info:
     cloud: awesomecloud
     name: demogroup
     domain: admindomain
+  register: openstack_groups
 - debug:
     var: openstack_groups
 
-# Gather facts about a previously created group in a specific domain with filter
-- os_group_facts:
+# Gather info about a previously created group in a specific domain with filter
+- os_group_info:
     cloud: awesomecloud
     name: demogroup
     domain: admindomain
     filters:
       enabled: False
+  register: openstack_groups
 - debug:
     var: openstack_groups
 '''
@@ -80,14 +85,10 @@ EXAMPLES = '''
 
 RETURN = '''
 openstack_groups:
-    description: has all the OpenStack facts about groups
+    description: Dictionary describing all the matching groups.
     returned: always, but can be null
     type: complex
     contains:
-        id:
-            description: Unique UUID.
-            returned: success
-            type: string
         name:
             description: Name given to the group.
             returned: success
@@ -96,10 +97,10 @@ openstack_groups:
             description: Description of the group
             returned: success
             type: string
-        enabled:
-            description: Flag to indicate if the group is enabled
+        id:
+            description: Unique UUID.
             returned: success
-            type: bool
+            type: string
         domain_id:
             description: Domain ID containing the group (keystone v3 clouds only)
             returned: success
@@ -144,8 +145,7 @@ def main():
                 filters = {}
 
         groups = opcloud.search_groups(name, filters, domain_id=domain)
-        module.exit_json(changed=False, ansible_facts=dict(
-            openstack_groups=groups))
+        module.exit_json(changed=False, groups=groups)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
