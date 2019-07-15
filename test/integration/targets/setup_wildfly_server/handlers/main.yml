@@ -1,0 +1,13 @@
+- name: Stop wildfly (jboss)
+  systemd:
+    name: wildfly
+    state: stopped
+  ignore_errors: yes
+
+- name: Remove files
+  file:
+    path: '{{ item }}'
+    state: absent
+  loop:
+  - '{{ wf_service_file_path }}'
+  - '{{ default_deploy_root }}'
