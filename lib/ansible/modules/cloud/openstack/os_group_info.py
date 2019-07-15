@@ -20,7 +20,7 @@ extends_documentation_fragment: openstack
 version_added: "2.9"
 author: "Phillipe Smith (@phsmith)"
 description:
-    - Retrieve info about a one or more OpenStack groups
+    - Retrieve info about a one or more OpenStack groups.
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
