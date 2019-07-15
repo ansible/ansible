@@ -94,7 +94,7 @@ openstack_groups:
             returned: success
             type: string
         description:
-            description: Description of the group
+            description: Description of the group.
             returned: success
             type: string
         id:
