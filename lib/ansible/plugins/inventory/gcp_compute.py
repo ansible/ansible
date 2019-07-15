@@ -317,7 +317,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return a dict with key/value pairs for each in list.
         '''
         new_metadata = {}
-        print(metadata)
         for pair in metadata:
             new_metadata[pair["key"]] = pair["value"]
         return new_metadata
