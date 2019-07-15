@@ -2,6 +2,9 @@
 # Copyright (c) 2019, Tom De Keyser (@tdekeyser)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -18,7 +21,7 @@ version_added: "2.9"
 
 description:
     - Create, update and delete state machines in AWS Step Functions.
-    - Calling the module in C(state=present) for an existing AWS Step Functions state machine 
+    - Calling the module in C(state=present) for an existing AWS Step Functions state machine
       will attempt to update the state machine definition, IAM Role, or tags with the provided data.
 
 options:
@@ -29,8 +32,8 @@ options:
         type: str
     definition:
         description:
-            - The Amazon States Language definition of the state machine. See 
-              U(https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for more 
+            - The Amazon States Language definition of the state machine. See
+              U(https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for more
               information on the Amazon States Language.
             - "This parameter is required when C(state=present)."
         type: json
