@@ -15,7 +15,7 @@ import tempfile
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils.basic import is_executable
-from ansible.module_utils.six import binary_type, text_type
+from ansible.module_utils.six import binary_type, text_type, string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
@@ -171,9 +171,16 @@ class DataLoader:
             self._basedir = to_text(basedir)
 
     def path_dwim(self, given):
-        '''
-        make relative paths work like folks expect.
-        '''
+        """Make relative paths work like folks expect.
+
+        :parama given: The path
+        :type data: str
+
+        :return: The modify path
+        :rtype: str
+        """
+        if not isinstance(given, string_types):
+            return given
 
         given = unquote(given)
         given = to_text(given, errors='surrogate_or_strict')
