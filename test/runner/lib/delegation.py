@@ -42,13 +42,10 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
+    run_command,
     common_environment,
     pass_vars,
     display,
-)
-
-from lib.util_common import (
-    run_command,
 )
 
 from lib.docker_util import (

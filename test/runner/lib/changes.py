@@ -9,11 +9,8 @@ from lib.util import (
     ApplicationError,
     SubprocessError,
     MissingEnvironmentVariable,
-    display,
-)
-
-from lib.util_common import (
     CommonConfig,
+    display,
 )
 
 from lib.http import (

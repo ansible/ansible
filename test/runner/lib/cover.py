@@ -13,11 +13,8 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    common_environment,
-)
-
-from lib.util_common import (
     run_command,
+    common_environment,
 )
 
 from lib.config import (

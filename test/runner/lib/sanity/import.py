@@ -13,17 +13,14 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
+    run_command,
+    intercept_command,
     remove_tree,
     display,
     find_python,
     read_lines_without_comments,
     parse_to_list_of_dict,
     make_dirs,
-)
-
-from lib.util_common import (
-    intercept_command,
-    run_command,
 )
 
 from lib.ansible_util import (

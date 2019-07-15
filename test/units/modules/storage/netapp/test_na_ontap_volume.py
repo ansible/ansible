@@ -102,20 +102,15 @@ class MockONTAPConnection(object):
                         'is-atime-update-enabled': 'true'
                     },
                     'volume-state-attributes': {
-                        'state': "online",
-                        'is-nvfail-enabled': 'true'
+                        'state': "online"
                     },
                     'volume-space-attributes': {
                         'space-guarantee': 'none',
                         'size': vol_details['size'],
-                        'percentage-snapshot-reserve': vol_details['percent_snapshot_space'],
-                        'space-slo': 'thick'
+                        'percentage-snapshot-reserve': vol_details['percent_snapshot_space']
                     },
                     'volume-snapshot-attributes': {
                         'snapshot-policy': vol_details['snapshot_policy']
-                    },
-                    'volume-comp-aggr-attributes': {
-                        'tiering-policy': 'snapshot-only'
                     },
                     'volume-security-attributes': {
                         'volume-security-unix-attributes': {
@@ -269,9 +264,7 @@ class TestMyModule(unittest.TestCase):
             'size_unit': 'mb',
             'junction_path': '/test',
             'percent_snapshot_space': 60,
-            'type': 'type',
-            'nvfail_enabled': True,
-            'space_slo': 'thick'
+            'type': 'type'
         }
         if tag is None:
             args['aggregate_name'] = self.mock_vol['aggregate']
@@ -348,7 +341,6 @@ class TestMyModule(unittest.TestCase):
         ''' Test successful create '''
         data = self.mock_args()
         data['size'] = 20
-        data['encrypt'] = True
         set_module_args(data)
         with pytest.raises(AnsibleExitJson) as exc:
             self.get_volume_mock_object().apply()
@@ -402,7 +394,7 @@ class TestMyModule(unittest.TestCase):
         data = self.mock_args()
         set_module_args(data)
         with pytest.raises(AnsibleFailJson) as exc:
-            self.get_volume_mock_object('error_modify').volume_modify_attributes(dict())
+            self.get_volume_mock_object('error_modify').volume_modify_attributes()
         assert exc.value.args[0]['msg'] == 'Error modifying volume test_vol: modify error message'
 
     def test_mount_volume(self):
@@ -916,12 +908,3 @@ class TestMyModule(unittest.TestCase):
         with pytest.raises(AnsibleFailJson) as exc:
             obj.assign_efficiency_policy_async()
         assert exc.value.args[0]['msg'] == 'Error enable efficiency on volume test_vol: NetApp API failed. Reason - test:error'
-
-    def test_successful_modify_tiering_policy(self):
-        ''' Test successful modify tiering policy '''
-        data = self.mock_args()
-        data['tiering_policy'] = 'auto'
-        set_module_args(data)
-        with pytest.raises(AnsibleExitJson) as exc:
-            self.get_volume_mock_object('volume').apply()
-        assert exc.value.args[0]['changed']

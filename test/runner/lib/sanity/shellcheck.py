@@ -18,11 +18,8 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    read_lines_without_comments,
-)
-
-from lib.util_common import (
     run_command,
+    read_lines_without_comments,
 )
 
 from lib.config import (

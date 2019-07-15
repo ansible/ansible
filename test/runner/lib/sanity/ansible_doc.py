@@ -16,11 +16,8 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    read_lines_without_comments,
-)
-
-from lib.util_common import (
     intercept_command,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (

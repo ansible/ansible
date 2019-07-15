@@ -23,16 +23,13 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
+    named_temporary_file,
     COVERAGE_CONFIG_PATH,
     COVERAGE_OUTPUT_PATH,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
     INSTALL_ROOT,
-)
-
-from lib.util_common import (
-    named_temporary_file,
 )
 
 from lib.cache import (

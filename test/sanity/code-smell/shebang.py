@@ -39,7 +39,7 @@ def main():
         'test/utils/shippable/timing.py',
         'test/integration/targets/old_style_modules_posix/library/helloworld.sh',
         # The following are Python 3.6+.  Only run by release engineers
-        'hacking/build-ansible.py',
+        'hacking/build-ansible',
     ])
 
     # see https://unicode.org/faq/utf_bom.html#bom1
