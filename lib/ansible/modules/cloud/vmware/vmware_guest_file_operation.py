@@ -346,7 +346,7 @@ class VmwareGuestFileManager(PyVmomi):
             self.module.fail_json(msg="copy does not support copy of directory: %s" % src)
 
         data = None
-        with open(b_src, "r") as local_file:
+        with open(b_src, "rb") as local_file:
             data = local_file.read()
         file_size = os.path.getsize(b_src)
 
