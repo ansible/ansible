@@ -808,11 +808,7 @@ class PyVmomi(object):
         self.module = module
         self.params = module.params
         self.current_vm_obj = None
-<<<<<<< HEAD
         self.si, self.content = connect_to_api(self.module, return_si=True)
-=======
-        self.si, self.content = connect_to_api(self.module)
->>>>>>> [WIP] new module VMware vSAN health facts (#9)
         self.custom_field_mgr = []
         if self.content.customFieldsManager:  # not an ESXi
             self.custom_field_mgr = self.content.customFieldsManager.field
