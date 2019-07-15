@@ -1,0 +1,94 @@
+- name: Skip unsupported platforms
+  meta: end_play
+  when: (ansible_distribution != 'CentOS') or
+        (ansible_distribution == 'CentOS' and ansible_distribution_major_version is not version('7', '>='))
+
+- name: Install java
+  package:
+    name: java-1.8.0-openjdk-devel
+
+- name: Create wf_tmp_dir
+  file:
+    path: '{{ wf_tmp_dir }}'
+    state: directory
+
+- name: Download wildfly
+  get_url:
+    url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_wildfly_server/wildfly-{{ wf_version }}.tar.gz'
+    dest: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+
+- name: Unarchive tar
+  unarchive:
+    src: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+    dest: '{{ wf_tmp_dir }}'
+    remote_src: yes
+
+- name: Remove tar
+  file:
+    path: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+    state: absent
+
+- name: Create symlink
+  file:
+    src: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}'
+    dest: '{{ wf_tmp_dir }}/wildfly'
+    state: link
+
+- name: Create group for wildfly
+  group:
+    name: '{{ wf_user }}'
+    system: yes
+
+- name: Create user for wildfly
+  user:
+    name: '{{ wf_user }}'
+    system: yes
+    group: '{{ wf_user }}'
+    home: '{{ wf_homedir }}'
+
+- name: Set permissions
+  file:
+    path: '{{ remote_tmp_dir }}'
+    state: directory
+    owner: '{{ wf_user }}'
+    group: '{{ wf_user }}'
+    recurse: yes
+
+- name: Create config file
+  copy:
+    src: wildfly.conf
+    dest: '{{ wf_homedir }}/wildfly.conf'
+
+- name: Create launcher
+  template:
+    src: launch.sh.j2
+    dest: '{{ wf_homedir }}/bin/launch.sh'
+
+- name: Make scripts executable
+  shell: 'chmod +x {{ wf_homedir }}/bin/*.sh'
+
+- name: Create service file
+  template:
+    src: wildfly.service.j2
+    dest: '{{ wf_service_file_path }}'
+
+- name: Create directories for testing the default deploy_path
+  become: yes
+  file:
+    path: '{{ default_deploy_root }}'
+    state: directory
+    recurse: yes
+    owner: '{{ wf_user }}'
+    group: '{{ wf_user }}'
+
+- name: Create simlink for testing the default deploy_path
+  file:
+    state: link
+    src: '{{ deploy_dir }}'
+    dest: '{{ default_deploy_root }}/deployments'
+
+- name: Reload systemd and start wildfly
+  systemd:
+    daemon_reload: yes
+    name: wildfly
+    state: started
