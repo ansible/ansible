@@ -3231,10 +3231,8 @@ lib/ansible/modules/remote_management/stacki/stacki_host.py E324
 lib/ansible/modules/remote_management/stacki/stacki_host.py E326
 lib/ansible/modules/remote_management/stacki/stacki_host.py E337
 lib/ansible/modules/remote_management/ucs/ucs_disk_group_policy.py E337
-lib/ansible/modules/remote_management/ucs/ucs_ip_pool.py E323
 lib/ansible/modules/remote_management/ucs/ucs_ip_pool.py E337
 lib/ansible/modules/remote_management/ucs/ucs_lan_connectivity.py E337
-lib/ansible/modules/remote_management/ucs/ucs_mac_pool.py E323
 lib/ansible/modules/remote_management/ucs/ucs_mac_pool.py E337
 lib/ansible/modules/remote_management/ucs/ucs_managed_objects.py E337
 lib/ansible/modules/remote_management/ucs/ucs_ntp_server.py E337
