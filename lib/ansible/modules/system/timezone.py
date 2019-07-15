@@ -21,9 +21,11 @@ description:
   - Several different tools are used depending on the OS/Distribution involved.
     For Linux it can use C(timedatectl) or edit C(/etc/sysconfig/clock) or C(/etc/timezone) and C(hwclock).
     On SmartOS, C(sm-set-timezone), for macOS, C(systemsetup), for BSD, C(/etc/localtime) is modified.
+    On AIX, C(chtz) is used.
   - As of Ansible 2.3 support was added for SmartOS and BSDs.
   - As of Ansible 2.4 support was added for macOS.
-  - Windows, AIX and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
+  - As of Ansible 2.9 support was added for AIX 6.1+
+  - Windows and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
 version_added: "2.2"
 options:
   name:
@@ -45,6 +47,8 @@ options:
     choices: [ local, UTC ]
 notes:
   - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
+  - On AIX only Olson/tz database timezones are useable (POSIX is not supported).
+    - An OS reboot is also required on AIX for the new timezone setting to take effect.
 author:
   - Shinichi TAMURA (@tmshn)
   - Jasper Lievisse Adriaanse (@jasperla)
@@ -126,6 +130,12 @@ class Timezone(object):
             return super(Timezone, DarwinTimezone).__new__(DarwinTimezone)
         elif re.match('^(Free|Net|Open)BSD', platform.platform()):
             return super(Timezone, BSDTimezone).__new__(BSDTimezone)
+        elif platform.system() == 'AIX':
+            AIXoslevel = int(platform.version() + platform.release())
+            if AIXoslevel >= 61:
+                return super(Timezone, AIXTimezone).__new__(AIXTimezone)
+            else:
+                module.fail_json(msg='AIX os level must be >= 61 for timezone module (Target: %s).' % AIXoslevel)
         else:
             # Not supported yet
             return super(Timezone, Timezone).__new__(Timezone)
@@ -764,6 +774,94 @@ class BSDTimezone(Timezone):
             except Exception:
                 os.remove(new_localtime)
                 self.module.fail_json(msg='Could not update /etc/localtime')
+        else:
+            self.module.fail_json(msg='%s is not a supported option on target platform' % key)
+
+
+class AIXTimezone(Timezone):
+    """This is a Timezone manipulation class for AIX instances.
+
+    It uses the C(chtz) utility to set the timezone, and
+    inspects C(/etc/environment) to determine the current timezone.
+
+    While AIX time zones can be set using two formats (POSIX and
+    Olson) the prefered method is Olson.
+    See the following article for more information:
+    https://developer.ibm.com/articles/au-aix-posix/
+
+    NB: AIX needs to be rebooted in order for the change to be
+    activated.
+    """
+
+    def __init__(self, module):
+        super(AIXTimezone, self).__init__(module)
+        self.settimezone = self.module.get_bin_path('chtz', required=True)
+
+    def __get_timezone(self):
+        """ Return the current value of TZ= in /etc/environment """
+        try:
+            f = open('/etc/environment', 'r')
+            etcenvironment = f.read()
+            f.close()
+        except Exception:
+            self.module.fail_json(msg='Issue reading contents of /etc/environment')
+
+        match = re.search(r'^TZ=(.*)$', etcenvironment, re.MULTILINE)
+        if match:
+            return match.group(1)
+        else:
+            return None
+
+    def get(self, key, phase):
+        """Lookup the current timezone name in `/etc/environment`. If anything else
+        is requested, or if the TZ field is not set we fail.
+        """
+        if key == 'name':
+            return self.__get_timezone()
+        else:
+            self.module.fail_json(msg='%s is not a supported option on target platform' % key)
+
+    def set(self, key, value):
+        """Set the requested timezone through chtz, an invalid timezone name
+        will be rejected and we have no further input validation to perform.
+        """
+        if key == 'name':
+            # chtz seems to always return 0 on AIX 7.2, even for invalid timezone values.
+            # It will only return non-zero if the chtz command itself fails, it does not check for
+            #  valid timezones. We need to perform a basic check to confirm that the timezone
+            #  definition exists in /usr/share/lib/zoneinfo
+            # This does mean that we can only support Olson for now. The below commented out regex
+            #  detects Olson date formats, so in the future we could detect Posix or Olson and
+            #  act accordingly.
+
+            # regex_olson = re.compile('^([a-z0-9_\-\+]+\/?)+$', re.IGNORECASE)
+            # if not regex_olson.match(value):
+            #     msg = 'Supplied timezone (%s) does not appear to a be valid Olson string' % value
+            #     self.module.fail_json(msg=msg)
+
+            # First determine if the requested timezone is valid by looking in the zoneinfo
+            #  directory.
+            zonefile = '/usr/share/lib/zoneinfo/' + value
+            try:
+                if not os.path.isfile(zonefile):
+                    self.module.fail_json(msg='%s is not a recognized timezone.' % value)
+            except Exception:
+                self.module.fail_json(msg='Failed to check %s.' % zonefile)
+
+            # Now set the TZ using chtz
+            cmd = 'chtz %s' % value
+            (rc, stdout, stderr) = self.module.run_command(cmd)
+
+            if rc != 0:
+                self.module.fail_json(msg=stderr)
+
+            # The best condition check we can do is to check the value of TZ after making the
+            #  change.
+            TZ = self.__get_timezone()
+            if TZ != value:
+                msg = 'TZ value does not match post-change (Actual: %s, Expected: %s).' % (TZ, value)
+                self.module.fail_json(msg=msg)
+
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
 
