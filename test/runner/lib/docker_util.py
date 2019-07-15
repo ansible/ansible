@@ -6,16 +6,16 @@ import json
 import os
 import time
 
-from lib.executor import (
-    SubprocessError,
-)
-
 from lib.util import (
     ApplicationError,
-    run_command,
     common_environment,
     display,
     find_executable,
+    SubprocessError,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -226,8 +226,8 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     :type cmd: list[str]
     :type options: list[str] | None
     :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
+    :type stdin: BinaryIO | None
+    :type stdout: BinaryIO | None
     :rtype: str | None, str | None
     """
     if not options:

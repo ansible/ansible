@@ -22,11 +22,14 @@ except ImportError:
     from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
 
 from lib.util import (
-    CommonConfig,
     ApplicationError,
-    run_command,
     SubprocessError,
     display,
+)
+
+from lib.util_common import (
+    CommonConfig,
+    run_command,
 )
 
 
@@ -109,6 +112,8 @@ class HttpClient(object):
         retry_on_status = (
             6,  # CURLE_COULDNT_RESOLVE_HOST
         )
+
+        stdout = ''
 
         while True:
             attempts += 1

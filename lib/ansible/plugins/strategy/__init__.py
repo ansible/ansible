@@ -711,7 +711,7 @@ class StrategyBase:
             new_groups = host_info.get('groups', [])
             for group_name in new_groups:
                 if group_name not in self._inventory.groups:
-                    self._inventory.add_group(group_name)
+                    group_name = self._inventory.add_group(group_name)
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
@@ -738,11 +738,15 @@ class StrategyBase:
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
-        for name in [group_name] + parent_group_names:
+        if group_name not in self._inventory.groups:
+            group_name = self._inventory.add_group(group_name)
+
+        for name in parent_group_names:
             if name not in self._inventory.groups:
                 # create the new group and add it to inventory
                 self._inventory.add_group(name)
                 changed = True
+
         group = self._inventory.groups[group_name]
         for parent_group_name in parent_group_names:
             parent_group = self._inventory.groups[parent_group_name]

@@ -6,6 +6,8 @@ import json
 import os
 import re
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -16,9 +18,12 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     find_executable,
     read_lines_without_comments,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -47,7 +52,7 @@ class PslintTest(SanitySingleVersion):
         invalid_ignores = []
 
         ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH, optional=True)
-        ignore = collections.defaultdict(dict)
+        ignore = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
         line = 0
 
         for ignore_entry in ignore_entries:
@@ -81,6 +86,8 @@ class PslintTest(SanitySingleVersion):
             ['test/runner/requirements/sanity.ps1'],
             ['test/sanity/pslint/pslint.ps1'] + paths
         ]
+
+        stdout = ''
 
         for cmd in cmds:
             try:
@@ -128,7 +135,7 @@ class PslintTest(SanitySingleVersion):
 
         for error in errors:
             if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
+                ignore[error.path][error.code] = 0  # error ignored, clear line number of ignore entry to track usage
             else:
                 filtered.append(error)  # error not ignored
 
