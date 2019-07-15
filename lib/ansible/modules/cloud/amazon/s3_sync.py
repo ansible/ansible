@@ -230,7 +230,6 @@ except ImportError:
     # Handled by imported HAS_BOTO3
     pass
 
-
 # the following function, calculate_multipart_etag, is from tlastowka
 # on github and is used under its (compatible) GPL license. So this
 # license applies to the following function.
@@ -254,7 +253,11 @@ except ImportError:
 # You should have received a copy of the GNU General Public License
 # along with calculate_multipart_etag.  If not, see <http://www.gnu.org/licenses/>.
 
-DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024
+if HAS_BOTO3:
+    from boto3.s3.transfer import TransferConfig
+    DEFAULT_CHUNK_SIZE = TransferConfig().multipart_chunksize
+else:
+    DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024
 
 
 def calculate_multipart_etag(source_path, chunk_size=DEFAULT_CHUNK_SIZE):
@@ -342,12 +345,11 @@ def calculate_s3_path(filelist, key_prefix=''):
 def calculate_local_etag(filelist, key_prefix=''):
     '''Really, "calculate md5", but since AWS uses their own format, we'll just call
        it a "local etag". TODO optimization: only calculate if remote key exists.'''
-    chunk_size = TransferConfig().multipart_chunksize
     ret = []
     for fileentry in filelist:
         # don't modify the input dict
         retentry = fileentry.copy()
-        retentry['local_etag'] = calculate_multipart_etag(fileentry['fullpath'], chunk_size=chunk_size)
+        retentry['local_etag'] = calculate_multipart_etag(fileentry['fullpath'])
         ret.append(retentry)
     return ret
 
