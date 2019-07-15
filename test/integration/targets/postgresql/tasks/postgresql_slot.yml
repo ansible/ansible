@@ -8,7 +8,7 @@
     login_user: "{{ pg_user }}"
     db: postgres
     name: max_replication_slots
-    value: 10
+    value: '10'
 
 - name: postgresql_slot - set wal_level to logical
   become_user: "{{ pg_user }}"
@@ -42,7 +42,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == []
 
 # Check, rowcount must be 0
@@ -72,13 +72,13 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_create_physical_replication_slot('slot0', False)"]
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_create_physical_replication_slot('slot0')"]
   when: postgres_version_resp.stdout is version('9.6', '<')
 
@@ -110,7 +110,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -141,7 +141,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -176,7 +176,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_create_physical_replication_slot('slot1', True)"]
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
@@ -223,7 +223,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -258,7 +258,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_create_logical_replication_slot('slot2', 'test_decoding')"]
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -294,7 +294,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -329,7 +329,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -368,7 +368,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_create_logical_replication_slot('slot3', 'test_decoding')"]
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -408,7 +408,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -443,7 +443,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_drop_replication_slot('slot2')"]
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -479,7 +479,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -514,7 +514,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=') and ansible_distribution == 'Ubuntu'
 
@@ -553,7 +553,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
@@ -588,7 +588,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ["SELECT pg_drop_replication_slot('slot1')"]
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
@@ -624,7 +624,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('9.6', '>=')
 
@@ -659,7 +659,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('9.6', '>=')
 

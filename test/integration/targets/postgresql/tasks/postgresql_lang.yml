@@ -29,7 +29,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == []
 
 - name: postgresql_lang - check that lang doesn't exist after previous step, rowcount must be 0
@@ -58,7 +58,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['CREATE LANGUAGE "plperl"']
 
 - name: postgresql_lang - check that lang exists after previous step
@@ -89,7 +89,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == []
 
 - name: postgresql_lang - check that lang exists after previous step, rowcount must be 1
@@ -119,7 +119,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['DROP LANGUAGE "plperl"']
 
 - name: postgresql_lang - check that lang doesn't exist after previous step, rowcount must be 0
@@ -184,7 +184,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['CREATE TRUSTED LANGUAGE "plpythonu"', "UPDATE pg_language SET lanpltrusted = 'True' WHERE lanname = 'plpythonu'"]
 
 - name: postgresql_lang - check that lang exists and it's trusted after previous step
@@ -216,7 +216,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['DROP LANGUAGE "plpythonu" CASCADE']
 
 - name: postgresql_lang - check that lang doesn't exist after previous step, rowcount must be 0

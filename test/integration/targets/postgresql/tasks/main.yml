@@ -3,7 +3,7 @@
 #
 - name: Create DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: present
     name: "{{ db_name }}"
@@ -13,12 +13,12 @@
 - name: assert that module reports the db was created
   assert:
     that:
-       - "result.changed == true"
+       - result is changed
        - "result.db =='{{ db_name }}'"
 
 - name: Check that database created
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -28,7 +28,7 @@
 
 - name: Run create on an already created db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: present
     name: "{{ db_name }}"
@@ -38,11 +38,11 @@
 - name: assert that module reports the db was unchanged
   assert:
     that:
-       - "result.changed == false"
+       - result is not changed
 
 - name: Destroy DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: absent
     name: "{{ db_name }}"
@@ -52,11 +52,11 @@
 - name: assert that module reports the db was changed
   assert:
     that:
-       - "result.changed == true"
+       - result is changed
 
 - name: Check that database was destroyed
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -66,7 +66,7 @@
 
 - name: Destroy DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     state: absent
     name: "{{ db_name }}"
@@ -76,7 +76,7 @@
 - name: assert that removing an alreaady removed db makes no change
   assert:
     that:
-       - "result.changed == false"
+       - result is not changed
 
 
 # This corner case works to add but not to drop.  This is sufficiently crazy
@@ -105,7 +105,7 @@
 #
 - name: Create a DB with conn_limit, encoding, collate, ctype, and template options
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -118,7 +118,7 @@
 
 - name: Check that the DB has all of our options
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datname, datconnlimit, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -134,7 +134,7 @@
 
 - name: Check that running db cration with options a second time does nothing
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -148,12 +148,12 @@
 
 - assert:
     that:
-      - 'result.changed == False'
+      - result is not changed
 
 
 - name: Check that attempting to change encoding returns an error
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -163,15 +163,15 @@
     template: 'template0'
     login_user: "{{ pg_user }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.failed == True'
+      - result is failed
 
 - name: Check that changing the conn_limit actually works
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: '{{ db_name }}'
     state: 'present'
@@ -185,11 +185,11 @@
 
 - assert:
     that:
-      - 'result.changed == True'
+      - result is changed
 
 - name: Check that conn_limit has actually been set / updated to 200
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "SELECT datconnlimit AS conn_limit FROM pg_database WHERE datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -200,7 +200,7 @@
 
 - name: Cleanup test DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: '{{ db_name }}'
     state: 'absent'
@@ -208,7 +208,7 @@
 
 - shell: echo "select datname, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   register: result
 
 - assert:
@@ -222,7 +222,7 @@
 # do not run the encrypted: no tests if on 10+
 - name: Get PostgreSQL version
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
   register: postgres_version_resp
 
@@ -238,11 +238,13 @@
     encryption_values: '{{ encryption_values + ["no"]}}'
   when: postgres_version_resp.stdout is version('10', '<=')
 
-- include: test_password.yml
+- include_tasks: test_password.yml
   vars:
-    encrypted: '{{ item }}'
+    encrypted: '{{ loop_item }}'
     db_password1: 'secretù' # use UTF-8
   loop: '{{ encryption_values }}'
+  loop_control:
+    loop_var: loop_item
 
 # BYPASSRLS role attribute was introduced in PostgreSQL 9.5, so
 # we want to test atrribute management differently depending
@@ -251,12 +253,14 @@
     bypassrls_supported: "{{ postgres_version_resp.stdout is version('9.5.0', '>=') }}"
 
 # test 'no_password_change' and 'role_attr_flags' parameters
-- include: test_no_password_change.yml
+- include_tasks: test_no_password_change.yml
   vars:
-    no_password_changes: '{{ item }}'
-  with_items:
+    no_password_changes: '{{ loop_item }}'
+  loop:
     - 'yes'
     - 'no'
+  loop_control:
+    loop_var: loop_item
 
 ### TODO: fail_on_user
 
@@ -265,7 +269,7 @@
 #
 - name: Create an unprivileged user to own a DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -275,7 +279,7 @@
 
 - name: Create db with user ownership
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: "{{ db_name }}"
     state: "present"
@@ -284,7 +288,7 @@
 
 - name: Check that the user owns the newly created DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -295,7 +299,7 @@
 
 - name: Change the owner on an existing db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: "{{ db_name }}"
     state: "present"
@@ -306,11 +310,11 @@
 - name: assert that ansible says it changed the db
   assert:
     that:
-      - "result.changed == True"
+      - result is changed
 
 - name: Check that the user owns the newly created DB
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -321,7 +325,7 @@
 
 - name: Cleanup db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: "{{ db_name }}"
     state: "absent"
@@ -329,7 +333,7 @@
 
 - name: Check that database was destroyed
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -339,7 +343,7 @@
 
 - name: Cleanup test user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
@@ -348,7 +352,7 @@
 
 - name: Check that they were removed
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
   register: result
 
@@ -361,7 +365,7 @@
 #
 - name: Create db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: "{{ db_name }}"
     state: "present"
@@ -369,11 +373,11 @@
 
 - name: Create some tables on the db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "create table test_table1 (field text);" | psql {{ db_name }}
 
 - become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "create table test_table2 (field text);" | psql {{ db_name }}
 
 - vars:
@@ -381,7 +385,7 @@
   block:
     - name: Create a user with some permissions on the db
       become_user: "{{ pg_user }}"
-      become: True
+      become: yes
       postgresql_user:
         name: "{{ db_user1 }}"
         encrypted: 'yes'
@@ -390,23 +394,23 @@
         priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
         login_user: "{{ pg_user }}"
 
-    - include: pg_authid_not_readable.yml
+    - include_tasks: pg_authid_not_readable.yml
 
 - name: Check that the user has the requested permissions (table1)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
 - name: Check that the user has the requested permissions (table2)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
 - name: Check that the user has the requested permissions (database)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -427,7 +431,7 @@
 
 - name: Add another permission for the user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -435,16 +439,16 @@
     db: "{{ db_name }}"
     priv: 'test_table2:select'
     login_user: "{{ pg_user }}"
-  register: results
+  register: result
 
 - name: Check that ansible reports it changed the user
   assert:
     that:
-      - "results.changed == True"
+      - result is changed
 
 - name: Check that the user has the requested permissions (table2)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -462,7 +466,7 @@
 
 - name: Revoke a privilege
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     type: "table"
     state: "absent"
@@ -471,16 +475,16 @@
     objs: "test_table2"
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
-  register: results
+  register: result
 
 - name: Check that ansible reports it changed the user
   assert:
     that:
-      - "results.changed == True"
+      - result is changed
 
 - name: Check that the user has the requested permissions (table2)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -491,7 +495,7 @@
 
 - name: Revoke many privileges on multiple tables
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     state: "absent"
     roles: "{{ db_user1 }}"
@@ -499,22 +503,22 @@
     objs: "test_table2,test_table1"
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
-  register: results
+  register: result
 
 - name: Check that ansible reports it changed the user
   assert:
     that:
-      - "results.changed == True"
+      - result is changed
 
 - name: Check that permissions were revoked (table1)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
 - name: Check that permissions were revoked (table2)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -525,7 +529,7 @@
 
 - name: Revoke database privileges
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     type: "database"
     state: "absent"
@@ -537,7 +541,7 @@
 
 - name: Check that the user has the requested permissions (database)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -548,7 +552,7 @@
 
 - name: Grant database privileges
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     type: "database"
     state: "present"
@@ -557,16 +561,16 @@
     objs: "{{ db_name }}"
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
-  register: results
+  register: result
 
 - name: Check that ansible reports it changed the user
   assert:
     that:
-      - "results.changed == True"
+      - result is changed
 
 - name: Check that the user has the requested permissions (database)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
 
@@ -577,7 +581,7 @@
 
 - name: Grant a single privilege on a table
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     state: "present"
     roles: "{{ db_user1 }}"
@@ -588,7 +592,7 @@
 
 - name: Check that permissions were added (table1)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
@@ -599,7 +603,7 @@
 
 - name: Grant many privileges on multiple tables
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_privs:
     state: "present"
     roles: "{{ db_user1 }}"
@@ -610,13 +614,13 @@
 
 - name: Check that permissions were added (table1)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
   register: result_table1
 
 - name: Check that permissions were added (table2)
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
   register: result_table2
 
@@ -644,7 +648,7 @@
 #
 - name: Cleanup db
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_db:
     name: "{{ db_name }}"
     state: "absent"
@@ -652,7 +656,7 @@
 
 - name: Check that database was destroyed
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
 
@@ -662,7 +666,7 @@
 
 - name: Cleanup test user
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_user:
     name: "{{ db_user1 }}"
     state: 'absent'
@@ -671,7 +675,7 @@
 
 - name: Check that they were removed
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
   register: result
 
@@ -683,7 +687,7 @@
 # Test login_user functionality
 #
 - name: Create a user to test login module parameters
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
     name: "{{ db_user1 }}"
@@ -703,7 +707,7 @@
     login_host: "localhost"
 
 - name: Check that database created
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
@@ -724,7 +728,7 @@
     login_host: "localhost"
 
 - name: Check that it was created
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
   register: result
@@ -746,7 +750,7 @@
     host: "localhost"
 
 - name: Check that the user has the requested permissions (database)
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
   register: result_database
@@ -767,7 +771,7 @@
     login_host: "localhost"
 
 - name: Check that they were removed
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
   register: result
@@ -785,7 +789,7 @@
     login_host: "localhost"
 
 - name: Check that database was destroyed
-  become: True
+  become: yes
   become_user: "{{ pg_user }}"
   shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
   register: result
@@ -798,50 +802,78 @@
 # Restricted using Debian family because of there are errors on other distributions
 # that not related with PostgreSQL or psycopg2 SSL support.
 # The tests' key point is to be sure that ssl options work in general
-- include: ssl.yml
+- include_tasks: ssl.yml
   when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
 
-# Test postgresql_user module
-- import_tasks: postgresql_user.yml
+- include_tasks: '{{ loop_item }}'
+  loop:
+  # Test postgresql_set
+  - postgresql_set.yml
 
-# Test postgresql_set
-- include: postgresql_set.yml
+  # Test postgresql_copy module
+  - postgresql_copy.yml
+
+  # Test postgresql_slot module.
+  # Physical replication slots are available from PostgreSQL 9.4
+  - postgresql_slot.yml
+  loop_control:
+    loop_var: loop_item
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
-# Verify different session_role scenarios
-- include: session_role.yml
+- include_tasks: '{{ loop_item }}'
+  loop:
+  # Test postgresql_user module
+  - postgresql_user.yml
 
-# Test postgresql_idx module
-- include: postgresql_idx.yml
+  # Verify different session_role scenarios
+  - session_role.yml
 
-# Test postgresql_query module
-- include: postgresql_query.yml
+  # Test postgresql_idx module
+  - postgresql_idx.yml
 
-# Verify postgresql_ping module
-- include: postgresql_ping.yml db_name_nonexist=fake_db
+  # Test postgresql_query module
+  - postgresql_query.yml
 
-# Test postgresql_tablespace module
-- include: postgresql_tablespace.yml
+  # Test postgresql_tablespace module
+  - postgresql_tablespace.yml
 
-# Test postgresql_db module, specific options:
-- include: postgresql_db.yml
+  # Test postgresql_db module, specific options
+  - postgresql_db.yml
 
-# Test postgresql_privs
-- include: postgresql_privs.yml
+  # Test postgresql_privs
+  - postgresql_privs.yml
 
-# Test postgresql_info module
-- include: postgresql_info.yml
+  # Test postgresql_info module
+  - postgresql_info.yml
+
+  # Test postgresql_schema module
+  - postgresql_schema.yml
+
+  # Test postgresql_membership module
+  - postgresql_membership.yml
+
+  # Test postgresql_table module
+  - postgresql_table.yml
+
+  # Test postgresql_owner module
+  - postgresql_owner.yml
+
+  # Test postgres_pg_hba module
+  - postgresql_pg_hba.yml
+  loop_control:
+    loop_var: loop_item
+
+# Test postgresql_ping module
+- include_tasks: postgresql_ping.yml
+  vars:
+    db_name_nonexist: fake_db
 
 # Test default_privs with target_role
-- include: test_target_role.yml
+- include_tasks: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
 
-# Test postgresql_copy module
-- include: postgresql_copy.yml
-  when: postgres_version_resp.stdout is version('9.4', '>=')
-
 # Test postgresql_sequence module
-- include: postgresql_sequence.yml
+- include_tasks: postgresql_sequence.yml
   when: postgres_version_resp.stdout is version('9.0', '>=')
 
 # Test postgresql_ext.
@@ -851,25 +883,11 @@
 # missing postgis package in repositories.
 # Anyway, these tests completely depend on Postgres version,
 # not specific distributions.
-- include: postgresql_ext.yml
+- include_tasks: postgresql_ext.yml
   when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
 
-- include: postgresql_ext_version_opt.yml
+- include_tasks: postgresql_ext_version_opt.yml
   when: ansible_distribution == 'Ubuntu'
-
-# Test postgresql_slot module.
-# Physical replication slots are available from PostgreSQL 9.4
-- include: postgresql_slot.yml
-  when: postgres_version_resp.stdout is version('9.4', '>=')
-
-# Test postgresql_schema module
-- include: postgresql_schema.yml
-
-# Test postgresql_membership module
-- include: postgresql_membership.yml
-
-# Test postgresql_table module
-- include: postgresql_table.yml
 
 # Test postgresql_lang module.
 # To implement tests, it needs to install some additional packages
@@ -877,49 +895,30 @@
 # so I restricted the tests using CentOS because the results
 # depend only on Postgres version
 # (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
-- include: postgresql_lang.yml
+- include_tasks: postgresql_lang.yml
   when: ansible_distribution == 'CentOS'
-
-# Test postgresql_owner module
-- include: postgresql_owner.yml
 
 # dump/restore tests per format
 # ============================================================
-- include: state_dump_restore.yml test_fixture=user file=dbdata.sql
-- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.gz
-- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.bz2
-- include: state_dump_restore.yml test_fixture=user file=dbdata.sql.xz
-- include: state_dump_restore.yml test_fixture=user file=dbdata.tar
-- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.gz
-- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.bz2
-- include: state_dump_restore.yml test_fixture=user file=dbdata.tar.xz
+- include_tasks: state_dump_restore.yml
+  vars:
+    test_fixture: user
+    file: '{{ loop_item }}'
+  loop:
+  - dbdata.sql
+  - dbdata.sql.gz
+  - dbdata.sql.bz2
+  - dbdata.sql.xz
+  - dbdata.tar
+  - dbdata.tar.gz
+  - dbdata.tar.bz2
+  - dbdata.tar.xz
+  loop_control:
+    loop_var: loop_item
 
 # dump/restore tests per other logins
 # ============================================================
-- include: state_dump_restore.yml file=dbdata.tar test_fixture=admin
-
-# postgres_pg_hba module checks
-# ============================================================
-- include: postgresql_pg_hba.yml
-
-#
-# Cleanup
-#
-- name: Cleanup test user
-  become: True
-  become_user: "{{ pg_user }}"
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: 'absent'
-    db: postgres
-    login_user: "{{ pg_user }}"
-
-- name: Check that they were removed
-  become: True
-  become_user: "{{ pg_user }}"
-  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(0 rows)'"
+- include_tasks: state_dump_restore.yml
+  vars:
+    file: dbdata.tar
+    test_fixture: admin
