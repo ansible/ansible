@@ -8,6 +8,7 @@ import os
 
 from lib.util import (
     display,
+    make_dirs,
 )
 
 from lib.config import (
@@ -331,6 +332,8 @@ class TestFailure(TestResult):
 
         if args.explain:
             return
+
+        make_dirs(os.path.dirname(path))
 
         with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
