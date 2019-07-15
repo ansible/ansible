@@ -6,8 +6,6 @@ import os
 import tempfile
 import time
 
-import lib.pytar
-
 from lib.util import (
     SubprocessError,
     ApplicationError,
@@ -17,6 +15,7 @@ from lib.util import (
 from lib.util_common import (
     intercept_command,
     run_command,
+    INSTALL_ROOT,
 )
 
 from lib.core_ci import (
@@ -29,6 +28,10 @@ from lib.ansible_util import (
 
 from lib.config import (
     ShellConfig,
+)
+
+from lib.payload import (
+    create_payload,
 )
 
 
@@ -237,7 +240,7 @@ class ManagePosixCI:
         """Configure remote host for testing.
         :type python_version: str
         """
-        self.upload('test/runner/setup/remote.sh', '/tmp')
+        self.upload(os.path.join(INSTALL_ROOT, 'test/runner/setup/remote.sh'), '/tmp')
         self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
 
     def upload_source(self):
@@ -246,8 +249,7 @@ class ManagePosixCI:
             remote_source_dir = '/tmp'
             remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
-            if not self.core_ci.args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.DefaultTarFilter())
+            create_payload(self.core_ci.args, local_source_fd.name)
 
             self.upload(local_source_fd.name, remote_source_dir)
             self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)

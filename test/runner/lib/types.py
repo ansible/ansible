@@ -5,6 +5,7 @@ __metaclass__ = type
 try:
     from typing import (
         Any,
+        Callable,
         Dict,
         FrozenSet,
         Iterable,

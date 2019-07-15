@@ -24,6 +24,7 @@ from lib.util import (
     read_lines_without_comments,
     ConfigParser,
     INSTALL_ROOT,
+    is_subdir,
 )
 
 from lib.util_common import (
@@ -113,16 +114,17 @@ class PylintTest(SanitySingleVersion):
 
         skip_paths_set = set(skip_paths)
 
-        paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
+        paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/')) and i.path not in skip_paths_set)
 
-        module_paths = [p.split(os.path.sep) for p in paths if p.startswith('lib/ansible/modules/')]
+        module_paths = [p.split(os.path.sep) for p in paths if is_subdir(p, 'lib/ansible/modules/')]
         module_dirs = sorted(set([p[3] for p in module_paths if len(p) > 4]))
 
         large_module_group_threshold = 500
         large_module_groups = [key for key, value in
                                itertools.groupby(module_paths, lambda p: p[3] if len(p) > 4 else '') if len(list(value)) > large_module_group_threshold]
 
-        large_module_group_paths = [p.split(os.path.sep) for p in paths if any(p.startswith('lib/ansible/modules/%s/' % g) for g in large_module_groups)]
+        large_module_group_paths = [p.split(os.path.sep) for p in paths
+                                    if any(is_subdir(p, os.path.join('lib/ansible/modules/', g)) for g in large_module_groups)]
         large_module_group_dirs = sorted(set([os.path.sep.join(p[3:5]) for p in large_module_group_paths if len(p) > 5]))
 
         contexts = []
@@ -148,7 +150,7 @@ class PylintTest(SanitySingleVersion):
                 :type path_to_filter: str
                 :rtype: bool
                 """
-                return path_to_filter.startswith(path_filter)
+                return is_subdir(path_to_filter, path_filter)
 
             return context_filter
 
