@@ -152,7 +152,7 @@ def check_legacy_modules():
     for directory in 'core', 'extras':
         path = 'lib/ansible/modules/%s' % directory
 
-        for root, _, file_names in os.walk(path):
+        for root, _dir_names, file_names in os.walk(path):
             if file_names:
                 # the directory shouldn't exist, but if it does, it must contain no files
                 raise ApplicationError('Files prohibited in "%s". '
@@ -271,7 +271,7 @@ def pip_list(args, pip):
     :type pip: list[str]
     :rtype: str
     """
-    stdout, _ = run_command(args, pip + ['list'], capture=True)
+    stdout = run_command(args, pip + ['list'], capture=True)[0]
     return stdout
 
 
@@ -841,7 +841,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     # common temporary directory path that will be valid on both the controller and the remote
     # it must be common because it will be referenced in environment variables that are shared across multiple hosts
-    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(8))
 
     setup_common_temp_dir(args, common_temp_path)
 
@@ -1039,7 +1039,7 @@ def run_httptester(args, ports=None):
         for localhost_port, container_port in ports.items():
             options += ['-p', '%d:%d' % (localhost_port, container_port)]
 
-    httptester_id, _ = docker_run(args, args.httptester, options=options)
+    httptester_id = docker_run(args, args.httptester, options=options)[0]
 
     if args.explain:
         httptester_id = 'httptester_id'

@@ -758,7 +758,7 @@ def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> Non
     path = os.path.join(root, directory)
     prefix = 'lib.%s.' % directory.replace(os.sep, '.')
 
-    for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
+    for (_module_loader, name, _ispkg) in pkgutil.iter_modules([path], prefix=prefix):
         module_path = os.path.join(root, name[4:].replace('.', os.sep) + '.py')
         load_module(module_path, name)
 
