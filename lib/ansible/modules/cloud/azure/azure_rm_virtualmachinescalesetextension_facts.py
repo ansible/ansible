@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetextension_facts
 version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set Extension facts.
+short_description: Get Azure Virtual Machine Scale Set Extension facts
 description:
     - Get facts of Azure Virtual Machine Scale Set Extension.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,62 +57,63 @@ EXAMPLES = '''
 
 RETURN = '''
 extensions:
-    description: A list of dictionaries containing facts for Virtual Machine Extension.
+    description:
+        - A list of dictionaries containing facts for Virtual Machine Extension.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource Id
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/
                      myvmss/extensions/myextension"
         resource_group:
             description:
-                - Resource group name
+                - Resource group name.
             returned: always
             type: str
             sample: myrg
         vmss_name:
             description:
-                - Virtual machine name
+                - Virtual machine scale set name.
             returned: always
             type: str
             sample: myvmss
         name:
             description:
-                - Virtual machine name
+                - Virtual machine extension name.
             returned: always
             type: str
             sample: myextension
         publisher:
             description:
-                - Extension publisher
+                - Extension publisher.
             returned: always
             type: str
             sample: Microsoft.Azure.Extensions
         type:
             description:
-                - Extension type
+                - Extension type.
             returned: always
             type: str
             sample: CustomScript
         settings:
             description:
-                - Extension specific settings dictionary
+                - Extension specific settings dictionary.
             returned: always
-            type: complex
-            sample: "{'commandToExecute': 'hostname'}"
+            type: dict
+            sample: { 'commandToExecute':'hostname' }
         auto_upgrade_minor_version:
             description:
-                - Autoupgrade minor version flag
+                - Autoupgrade minor version flag.
             returned: always
             type: bool
             sample: true
         provisioning_state:
             description:
-                - Provisioning state of the extension
+                - Provisioning state of the extension.
             returned: always
             type: str
             sample: Succeeded
