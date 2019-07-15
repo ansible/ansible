@@ -12,6 +12,11 @@ To break into a module running on ``localhost`` and step through with the debugg
 - Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
 - Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
 
+Example
+-------
+
+`echo '{"msg": "hello"}' | python ./my_new_test_module.py`
+
 Debugging (remote)
 ==================
 
