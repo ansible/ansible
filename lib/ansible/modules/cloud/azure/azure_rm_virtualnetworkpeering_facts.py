@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 RETURN = '''
 vnetpeerings:
-    description:i
+    description:
         - A list of Virtual Network Peering facts.
     returned: always
     type: complex
