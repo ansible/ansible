@@ -57,7 +57,7 @@ options:
                 description:
                     - Name of the framework.
                     - Supported framework list for Windows web app and Linux web app is different.
-                    - For Windows web app, supported names(June 2018) C(java), C(net_framework), C(php), C(python), C(node). 
+                    - For Windows web app, supported names(June 2018) C(java), C(net_framework), C(php), C(python), C(node).
                       Multiple framework can be set at same time.
                     - For Linux web app, supported names(June 2018) C(java), C(ruby), C(php), C(dotnetcore), C(node). Only one framework can be set.
                     - Java framework is mutually exclusive with others.
