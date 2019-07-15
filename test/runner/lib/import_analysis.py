@@ -122,23 +122,27 @@ def enumerate_module_utils():
     module_utils = []
     base_path = 'lib/ansible/module_utils'
 
+    paths = []
+
     for root, _dir_names, file_names in os.walk(base_path):
         for file_name in file_names:
-            path = os.path.join(root, file_name)
-            name, ext = os.path.splitext(file_name)
+            paths.append(os.path.join(root, file_name))
 
-            if path == 'lib/ansible/module_utils/__init__.py':
-                continue
+    for path in paths:
+        name, ext = os.path.splitext(path)
 
-            if ext != '.py':
-                continue
+        if path == 'lib/ansible/module_utils/__init__.py':
+            continue
 
-            if name == '__init__':
-                module_util = root
-            else:
-                module_util = os.path.join(root, name)
+        if ext != '.py':
+            continue
 
-            module_utils.append(module_util[4:].replace('/', '.'))
+        if name.endswith('/__init__'):
+            module_util = os.path.dirname(name)
+        else:
+            module_util = name
+
+        module_utils.append(module_util[4:].replace('/', '.'))
 
     return set(module_utils)
 

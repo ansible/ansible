@@ -20,7 +20,6 @@ import shutil
 
 import lib.types as t
 
-import lib.pytar
 import lib.thread
 
 from lib.core_ci import (
@@ -279,6 +278,9 @@ def generate_egg_info(args):
     """
     :type args: EnvironmentConfig
     """
+    if not os.path.exists(os.path.join(INSTALL_ROOT, 'setup.py')):
+        return
+
     if os.path.isdir(os.path.join(INSTALL_ROOT, 'lib/ansible.egg-info')):
         return
 
@@ -292,8 +294,8 @@ def generate_pip_install(pip, command, packages=None):
     :type packages: list[str] | None
     :rtype: list[str] | None
     """
-    constraints = 'test/runner/requirements/constraints.txt'
-    requirements = 'test/runner/requirements/%s.txt' % command
+    constraints = os.path.join(INSTALL_ROOT, 'test/runner/requirements/constraints.txt')
+    requirements = os.path.join(INSTALL_ROOT, 'test/runner/requirements/%s.txt' % command)
 
     options = []
 
