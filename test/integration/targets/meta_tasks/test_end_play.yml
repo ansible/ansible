@@ -1,4 +1,4 @@
-- name: Testing end_play with strategy {{ test_strateg | default('linear') }}
+- name: Testing end_play with strategy {{ test_strategy | default('linear') }}
   hosts: testhost:testhost2
   gather_facts: no
   strategy: "{{ test_strategy | default('linear') }}"
@@ -9,5 +9,4 @@
     - meta: end_play
 
     - fail:
-        msg: 'Failed to end using "meta: end_play"'
-
+        msg: 'Failed to end using end_play'

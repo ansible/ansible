@@ -27,4 +27,5 @@ for test_strategy in linear free; do
   out="$(ansible-playbook test_end_play.yml -i inventory.yml -e test_strategy=$test_strategy -vv "$@")"
 
   grep -q "META: ending play" <<< "$out"
+  grep -qv 'Failed to end using end_play' <<< "$out"
 done
