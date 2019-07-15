@@ -102,7 +102,7 @@ state:
     description:
        - Current state of the virtual network.
     returned: always
-    type: sample
+    type: complex
     contains:
         address_prefixes:
             description:
