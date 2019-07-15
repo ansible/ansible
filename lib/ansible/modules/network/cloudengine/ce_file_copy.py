@@ -303,7 +303,6 @@ class FileCopy(object):
                 self.module.fail_json(msg='Could not transfer file. There was an error '
                                       'during transfer. Please make sure the format of '
                                       'input parameters is right.')
-
         scp.close()
         return True
 
@@ -327,8 +326,7 @@ class FileCopy(object):
             return scp_enable
 
         for eles in topo:
-            if eles.tag in ["scpEnable"]:
-                scp_enable[eles.tag] = eles.text
+            scp_enable[eles.tag] = eles.text
 
         return scp_enable
 
