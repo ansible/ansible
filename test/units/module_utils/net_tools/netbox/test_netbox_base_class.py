@@ -109,7 +109,7 @@ def mock_netbox_module(mocker, mock_ansible_module, find_ids_return):
 @pytest.fixture
 def changed_serialized_obj(nb_obj_mock):
     changed_serialized_obj = nb_obj_mock.serialize().copy()
-    changed_serialized_obj[list(changed_serialized_obj.keys())[0]] += " (modified)"
+    changed_serialized_obj["name"] += " (modified)"
 
     return changed_serialized_obj
 

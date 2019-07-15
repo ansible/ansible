@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
 # Import necessary packages
-from __future__ import absolute_import, division, print_function
 import traceback
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
