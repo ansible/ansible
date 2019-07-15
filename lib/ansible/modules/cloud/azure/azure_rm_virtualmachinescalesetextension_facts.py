@@ -83,7 +83,7 @@ extensions:
             sample: myvmss
         name:
             description:
-                - Virtual machine extention name.
+                - Virtual machine extension name.
             returned: always
             type: str
             sample: myextension
