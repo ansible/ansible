@@ -8,13 +8,9 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=units/3.8 D=test/units/cli/arguments/test_optparse_helpers.py
-    - env: T=units/3.8 D=test/units/cli/test_adhoc.py
-    - env: T=units/3.8 D=test/units/cli/test_cli.py
-    - env: T=units/3.8 D=test/units/cli/test_console.py
-    - env: T=units/3.8 D=test/units/cli/test_galaxy.py
-    - env: T=units/3.8 D=test/units/cli/test_playbook.py
-    - env: T=units/3.8 D=test/units/cli/test_vault.py
+    - env: T=units/3.8 D=test/units/cli/test_adhoc_ansible_version.py
+    - env: T=units/3.8 D=test/units/cli/test_adhoc_did_you_mean_playbook.py
+    - env: T=units/3.8 D=test/units/cli/test_adhoc_simple_command.py
 
 branches:
   except:
