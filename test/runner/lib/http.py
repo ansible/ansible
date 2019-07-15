@@ -123,7 +123,7 @@ class HttpClient:
             attempts += 1
 
             try:
-                stdout, _ = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)
+                stdout = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)[0]
                 break
             except SubprocessError as ex:
                 if ex.status in retry_on_status and attempts < max_attempts:

@@ -288,7 +288,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 for cloud_platform in cloud_platforms:
                     test_options += cloud_platform.get_docker_run_options()
 
-            test_id, _ = docker_run(args, test_image, options=test_options)
+            test_id = docker_run(args, test_image, options=test_options)[0]
 
             if args.explain:
                 test_id = 'test_id'

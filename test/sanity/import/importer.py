@@ -104,7 +104,7 @@ def test_python_module(path, base_dir, messages, ansible_module):
     except BaseException as ex:  # pylint: disable=locally-disabled, broad-except
         capture_report(path, capture, messages)
 
-        exc_type, _, exc_tb = sys.exc_info()
+        exc_type, _exc, exc_tb = sys.exc_info()
         message = str(ex)
         results = list(reversed(traceback.extract_tb(exc_tb)))
         source = None
