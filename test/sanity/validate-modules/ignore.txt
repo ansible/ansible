@@ -3461,6 +3461,7 @@ lib/ansible/modules/storage/netapp/na_ontap_user.py E337
 lib/ansible/modules/storage/netapp/na_ontap_user.py E338
 lib/ansible/modules/storage/netapp/na_ontap_user_role.py E337
 lib/ansible/modules/storage/netapp/na_ontap_user_role.py E338
+lib/ansible/modules/storage/netapp/na_ontap_volume_clone.py E337
 lib/ansible/modules/storage/netapp/na_ontap_volume_clone.py E338
 lib/ansible/modules/storage/netapp/na_ontap_volume.py E337
 lib/ansible/modules/storage/netapp/na_ontap_volume.py E338

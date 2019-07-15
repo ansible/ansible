@@ -13,12 +13,9 @@ from lib.util import (
     common_environment,
     display,
     find_python,
+    run_command,
     ApplicationError,
     INSTALL_ROOT,
-)
-
-from lib.util_common import (
-    run_command,
 )
 
 from lib.config import (

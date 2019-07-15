@@ -5,8 +5,6 @@ import re
 import textwrap
 import traceback
 
-import lib.types as t
-
 from lib.util import (
     ApplicationError,
 )
@@ -29,7 +27,7 @@ class FileDiff(object):
         """
         self.old = DiffSide(old_path, new=False)
         self.new = DiffSide(new_path, new=True)
-        self.headers = []  # type: t.List[str]
+        self.headers = []  # list [str]
         self.binary = False
 
     def append_header(self, line):
@@ -59,9 +57,9 @@ class DiffSide(object):
         self.eof_newline = True
         self.exists = True
 
-        self.lines = []  # type: t.List[t.Tuple[int, str]]
-        self.lines_and_context = []  # type: t.List[t.Tuple[int, str]]
-        self.ranges = []  # type: t.List[t.Tuple[int, int]]
+        self.lines = []  # type: list [tuple[int, str]]
+        self.lines_and_context = []  # type: list [tuple[int, str]]
+        self.ranges = []  # type: list [tuple[int, int]]
 
         self._next_line_number = 0
         self._lines_remaining = 0
@@ -140,13 +138,13 @@ class DiffParser(object):
         :type lines: list[str]
         """
         self.lines = lines
-        self.files = []  # type: t.List[FileDiff]
+        self.files = []  # type: list [FileDiff]
 
         self.action = self.process_start
         self.line_number = 0
-        self.previous_line = None  # type: t.Optional[str]
-        self.line = None  # type: t.Optional[str]
-        self.file = None  # type: t.Optional[FileDiff]
+        self.previous_line = None  # type: str
+        self.line = None  # type: str
+        self.file = None  # type: FileDiff
 
         for self.line in self.lines:
             self.line_number += 1

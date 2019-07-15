@@ -63,7 +63,7 @@ options:
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
-        required: true
+        default: '60'
     conditions:
         type: list
         description:
@@ -127,7 +127,6 @@ options:
                 description:
                     - Condition operator.
                     - When I(type) is set to C(time_period), the choices are C(in), C(not in).
-                    - C(matches), C(does not match), C(Yes) and C(No) condition operators work only with >= Zabbix 4.0
                 choices:
                     - '='
                     - '<>'
@@ -137,10 +136,6 @@ options:
                     - '>='
                     - '<='
                     - 'not in'
-                    - 'matches'
-                    - 'does not match'
-                    - 'Yes'
-                    - 'No'
             formulaid:
                 description:
                     - Arbitrary unique ID that is used to reference the condition from a custom expression.
@@ -1192,6 +1187,8 @@ class RecoveryOperations(Operations):
         Returns:
             list: constructed recovery operations data
         """
+        if operations is None:
+            return None
         constructed_data = []
         for op in operations:
             operation_type = self._construct_operationtype(op)
@@ -1257,6 +1254,8 @@ class AcknowledgeOperations(Operations):
         Returns:
             list: constructed acknowledge operations data
         """
+        if operations is None:
+            return None
         constructed_data = []
         for op in operations:
             operation_type = self._construct_operationtype(op)
@@ -1398,11 +1397,7 @@ class Filter(object):
                 "in",
                 ">=",
                 "<=",
-                "not in",
-                "matches",
-                "does not match",
-                "Yes",
-                "No"], _condition['operator']
+                "not in"], _condition['operator']
             )
         except Exception as e:
             self._module.fail_json(msg="Unsupported value '%s' for operator." % _condition['operator'])
@@ -1668,7 +1663,7 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            esc_period=dict(type='int', required=True),
+            esc_period=dict(type='int', required=False, default=60),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
             event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
@@ -1684,7 +1679,6 @@ def main():
             conditions=dict(
                 type='list',
                 required=False,
-                default=[],
                 elements='dict',
                 options=dict(
                     formulaid=dict(type='str', required=False),
@@ -1699,7 +1693,6 @@ def main():
             operations=dict(
                 type='list',
                 required=False,
-                default=[],
                 elements='dict',
                 options=dict(
                     type=dict(

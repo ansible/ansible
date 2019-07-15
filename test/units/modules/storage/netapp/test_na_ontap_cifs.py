@@ -75,11 +75,8 @@ class MockONTAPConnection(object):
         data = {'num-records': 1, 'attributes-list': {'cifs-share': {
             'share-name': 'test',
             'path': '/test',
-            'vscan-fileop-profile': 'standard',
-            'share-properties': [{'cifs-share-properties': 'browsable'},
-                                 {'cifs-share-properties': 'oplocks'}],
-            'symlink-properties': [{'cifs-share-symlink-properties': 'enable'},
-                                   {'cifs-share-symlink-properties': 'read_only'}],
+            'share-properties': {'cifs-share-properties': 'browsable'},
+            'symlink-properties': {'cifs-share-symlink-properties': 'enable'},
         }}}
         xml.translate_struct(data)
         print(xml.to_string())
@@ -107,7 +104,6 @@ class TestMyModule(unittest.TestCase):
             path = '/test'
             share_properties = 'browsable,oplocks'
             symlink_properties = 'disable'
-            vscan_fileop_profile = 'standard'
             vserver = 'abc'
         else:
             hostname = '10.193.77.37'
@@ -117,7 +113,6 @@ class TestMyModule(unittest.TestCase):
             path = '/test'
             share_properties = 'show_previous_versions'
             symlink_properties = 'disable'
-            vscan_fileop_profile = 'no_scan'
             vserver = 'abc'
         return dict({
             'hostname': hostname,
@@ -127,7 +122,6 @@ class TestMyModule(unittest.TestCase):
             'path': path,
             'share_properties': share_properties,
             'symlink_properties': symlink_properties,
-            'vscan_fileop_profile': vscan_fileop_profile,
             'vserver': vserver
         })
 

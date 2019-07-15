@@ -14,12 +14,9 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
+    run_command,
     display,
     INSTALL_ROOT,
-)
-
-from lib.util_common import (
-    run_command,
 )
 
 from lib.config import (

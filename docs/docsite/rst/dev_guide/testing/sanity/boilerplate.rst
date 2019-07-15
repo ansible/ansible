@@ -1,5 +1,3 @@
-:orphan:
-
 Sanity Tests » boilerplate
 ==========================
 
@@ -9,3 +7,4 @@ Most Python files should include the following boilerplate:
 
     from __future__ import (absolute_import, division, print_function)
     __metaclass__ = type
+

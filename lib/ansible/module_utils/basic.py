@@ -2511,9 +2511,9 @@ class AnsibleModule(object):
             old_env_vals['PATH'] = os.environ['PATH']
             os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
-        # If using test-module.py and explode, the remote lib path will resemble:
+        # If using test-module and explode, the remote lib path will resemble ...
         #   /tmp/test_module_scratch/debug_dir/ansible/module_utils/basic.py
-        # If using ansible or ansible-playbook with a remote system:
+        # If using ansible or ansible-playbook with a remote system ...
         #   /tmp/ansible_vmweLQ/ansible_modlib.zip/ansible/module_utils/basic.py
 
         # Clean out python paths set by ansiballz

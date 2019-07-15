@@ -11,12 +11,9 @@ import lib.pytar
 from lib.util import (
     SubprocessError,
     ApplicationError,
-    cmd_quote,
-)
-
-from lib.util_common import (
-    intercept_command,
     run_command,
+    intercept_command,
+    cmd_quote,
 )
 
 from lib.core_ci import (
