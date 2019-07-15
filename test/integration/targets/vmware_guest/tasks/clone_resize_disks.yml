@@ -1,0 +1,113 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Noe Gonzalez <noe.a.gonzalez@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- name: get a list of clusters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
+  register: clusters
+
+- name: get a list of clusters from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=DC
+  register: datacenters
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: create new VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: clone_resize_disks_original
+    datacenter: "{{ datacenters['json'][0]|basename }}"
+    cluster: "{{ clusters['json'][0]|basename }}"
+    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    hardware:
+      num_cpus: 1
+      memory_mb: 128
+    guest_id: centos7_64Guest
+    disk:
+      - size_gb: 1
+        type: thin
+        autoselect_datastore: True
+    state: poweredoff
+
+- name: convert to VM template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: clone_resize_disks_original
+    datacenter: "{{ datacenters['json'][0]|basename }}"
+    cluster: "{{ clusters['json'][0]|basename }}"
+    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    is_template: True
+
+- name: clone template and modify disks
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: clone_resize_disks_clone
+    datacenter: "{{ datacenters['json'][0]|basename }}"
+    cluster: "{{ clusters['json'][0]|basename }}"
+    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    disk:
+      - size_gb: 2
+        type: thin
+        autoselect_datastore: True
+      - size_gb: 3
+        type: thin
+        autoselect_datastore: True
+    template: clone_resize_disks_original
+    state: poweredoff
+  register: l_clone_template_modify_disks
+
+- assert:
+    that:
+      - l_clone_template_modify_disks.changed | bool
+
+- name: delete VM clone & original template
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ item }}"
+    datacenter: "{{ datacenters['json'][0]|basename }}"
+    cluster: "{{ clusters['json'][0]|basename }}"
+    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    state: absent
+  with_items:
+    - clone_resize_disks_original
+    - clone_resize_disks_clone

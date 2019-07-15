@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixed disk already exists issue while cloning guest in vmware_guest module (https://github.com/ansible/ansible/issues/56861).
