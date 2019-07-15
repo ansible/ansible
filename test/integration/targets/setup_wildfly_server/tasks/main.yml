@@ -7,31 +7,31 @@
   package:
     name: java-1.8.0-openjdk-devel
 
-- name: Create remote_tmp_dir
+- name: Create wf_tmp_dir
   file:
-    path: '{{ remote_tmp_dir }}'
+    path: '{{ wf_tmp_dir }}'
     state: directory
 
 - name: Download wildfly
   get_url:
     url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/setup_wildfly_server/wildfly-{{ wf_version }}.tar.gz'
-    dest: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+    dest: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
 
 - name: Unarchive tar
   unarchive:
-    src: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
-    dest: '{{ remote_tmp_dir }}'
+    src: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+    dest: '{{ wf_tmp_dir }}'
     remote_src: yes
 
 - name: Remove tar
   file:
-    path: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
+    path: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}.tar.gz'
     state: absent
 
 - name: Create symlink
   file:
-    src: '{{ remote_tmp_dir }}/wildfly-{{ wf_version }}'
-    dest: '{{ remote_tmp_dir }}/wildfly'
+    src: '{{ wf_tmp_dir }}/wildfly-{{ wf_version }}'
+    dest: '{{ wf_tmp_dir }}/wildfly'
     state: link
 
 - name: Create group for wildfly

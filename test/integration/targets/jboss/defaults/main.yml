@@ -1,1 +1,0 @@
-war_src_dir: '{{ jboss_root }}'
