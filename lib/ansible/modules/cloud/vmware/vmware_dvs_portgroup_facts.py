@@ -121,6 +121,7 @@ dvs_portgroup_facts:
                 },
                 "vlan_info": {
                     "trunk": false,
+                    "pvlan": false,
                     "vlan_id": 0
                 },
                 "type": "earlyBinding"
@@ -144,9 +145,7 @@ class DVSPortgroupFactsManager(PyVmomi):
         self.dc_name = self.params['datacenter']
         self.dvs_name = self.params['dvswitch']
 
-    def gather_dvs_portgroup_facts(self):
         datacenter = self.find_datacenter_by_name(self.dc_name)
-
         if datacenter is None:
             self.module.fail_json(msg="Failed to find the datacenter %s" % self.dc_name)
         if self.dvs_name:
@@ -155,11 +154,40 @@ class DVSPortgroupFactsManager(PyVmomi):
             if dvsn is None:
                 self.module.fail_json(msg="Failed to find the dvswitch %s" % self.dvs_name)
 
-            dvs_lists = [dvsn]
+            self.dvsls = [dvsn]
         else:
             # default behaviour, gather information about all dvswitches
-            dvs_lists = get_all_objs(self.content, [vim.DistributedVirtualSwitch], folder=datacenter.networkFolder)
+            self.dvsls = get_all_objs(self.content, [vim.DistributedVirtualSwitch], folder=datacenter.networkFolder)
 
+    def get_vlan_info(self, vlan_obj=None):
+        """
+        Return vlan information from given object
+        Args:
+            vlan_obj: vlan managed object
+        Returns: Dict of vlan details of the specific object
+        """
+
+        vdret = dict()
+        if not vlan_obj:
+            return vdret
+
+        if isinstance(vlan_obj, vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
+            vlan_id_list = []
+            for vli in vlan_obj.vlanId:
+                if vli.start == vli.end:
+                    vlan_id_list.append(str(vli.start))
+                else:
+                    vlan_id_list.append(str(vli.start) + "-" + str(vli.end))
+            vdret = dict(trunk=True, pvlan=False, vlan_id=vlan_id_list)
+        elif isinstance(vlan_obj, vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec):
+            vdret = dict(trunk=False, pvlan=True, vlan_id=str(vlan_obj.pvlanId))
+        else:
+            vdret = dict(trunk=False, pvlan=False, vlan_id=str(vlan_obj.vlanId))
+
+        return vdret
+
+    def gather_dvs_portgroup_facts(self):
+        dvs_lists = self.dvsls
         result = dict()
         for dvs in dvs_lists:
             result[dvs.name] = list()
@@ -199,23 +227,7 @@ class DVSPortgroupFactsManager(PyVmomi):
                     )
 
                 if self.params['show_vlan_info']:
-                    vlanInfo = dvs_pg.config.defaultPortConfig.vlan
-                    if isinstance(vlanInfo, vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
-                        vlan_id_list = []
-                        for vli in vlanInfo.vlanId:
-                            if vli.start == vli.end:
-                                vlan_id_list.append(str(vli.start))
-                            else:
-                                vlan_id_list.append(str(vli.start) + "-" + str(vli.end))
-                        vlan_info = dict(
-                            trunk=True,
-                            vlan_id=vlan_id_list
-                        )
-                    else:
-                        vlan_info = dict(
-                            trunk=False,
-                            vlan_id=vlanInfo.vlanId
-                        )
+                    vlan_info = self.get_vlan_info(dvs_pg.config.defaultPortConfig.vlan)
 
                 dvpg_details = dict(
                     portgroup_name=dvs_pg.name,
