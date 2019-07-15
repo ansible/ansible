@@ -20,14 +20,14 @@ extends_documentation_fragment: openstack
 version_added: "2.9"
 author: "Phillipe Smith (@phsmith)"
 description:
-    - Retrieve info about a one or more OpenStack groups.
+    - Retrieve info about a one or more OpenStack groups
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
 options:
    name:
      description:
-        - Name or ID of the group.
+        - Name or ID of the group
      required: true
      type: str
    domain:
@@ -47,55 +47,39 @@ options:
 
 EXAMPLES = '''
 # Gather info about previously created groups
-- name: gather info
-  hosts: localhost
-  tasks:
-    - name: Gather info about previously created groups
-      os_group_info:
-        cloud: awesomecloud
-      register: openstack_groups
-    - debug:
-        var: openstack_groups
+- os_group_info:
+    cloud: awesomecloud
+  register: openstack_groups
+- debug:
+    var: openstack_groups
 
 # Gather info about a previously created group by name
-- name: gather info
-  hosts: localhost
-  tasks:
-    - name: Gather info about a previously created group by name
-      os_group_info:
-        cloud: awesomecloud
-        name: demogroup
-      register: openstack_groups
-    - debug:
-        var: openstack_groups
+- os_group_info:
+    cloud: awesomecloud
+    name: demogroup
+  register: openstack_groups
+- debug:
+    var: openstack_groups
 
 # Gather info about a previously created group in a specific domain
-- name: gather info
-  hosts: localhost
-  tasks:
-    - name: Gather info about a previously created group in a specific domain
-      os_group_info:
-        cloud: awesomecloud
-        name: demogroup
-        domain: admindomain
-      register: openstack_groups
-    - debug:
-        var: openstack_groups
+- os_group_info:
+    cloud: awesomecloud
+    name: demogroup
+    domain: admindomain
+  register: openstack_groups
+- debug:
+    var: openstack_groups
 
 # Gather info about a previously created group in a specific domain with filter
-- name: gather info
-  hosts: localhost
-  tasks:
-    - name: Gather info about a previously created group in a specific domain with filter
-      os_group_info:
-        cloud: awesomecloud
-        name: demogroup
-        domain: admindomain
-        filters:
-          enabled: False
-      register: openstack_groups
-    - debug:
-        var: openstack_groups
+- os_group_info:
+    cloud: awesomecloud
+    name: demogroup
+    domain: admindomain
+    filters:
+      enabled: False
+  register: openstack_groups
+- debug:
+    var: openstack_groups
 '''
 
 
@@ -108,15 +92,15 @@ openstack_groups:
         name:
             description: Name given to the group.
             returned: success
-            type: str
+            type: string
         description:
-            description: Description of the group.
+            description: Description of the group
             returned: success
-            type: str
+            type: string
         id:
             description: Unique UUID.
             returned: success
-            type: str
+            type: string
         domain_id:
             description: Domain ID containing the group (keystone v3 clouds only)
             returned: success
