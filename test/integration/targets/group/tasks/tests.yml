@@ -192,3 +192,28 @@
   assert:
     that:
     - not delete_group_again is changed
+
+# https://github.com/ansible/ansible/issues/56481
+- block:
+  - name: Test duplicate GID with local=yes
+    group:
+      name: "{{ item }}"
+      gid: 1337
+      local: yes
+    loop:
+      - group1_local_test
+      - group2_local_test
+    ignore_errors: yes
+    register: local_duplicate_gid_result
+
+  - assert:
+     that:
+       - local_duplicate_gid_result['results'][0] is success
+       - local_duplicate_gid_result['results'][1]['msg'] == "GID '1337' already exists"
+  always:
+    - name: Cleanup
+      group:
+        name: group1_local_test
+        state: absent
+  # only applicable to Linux, limit further to CentOS where 'luseradd' is installed
+  when: ansible_distribution == 'CentOS'
