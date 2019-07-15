@@ -1,4 +1,6 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2019, Ansible Project
 # Copyright: (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
