@@ -14,6 +14,7 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 PYNETBOX_IMP_ERR = None
 try:
     import pynetbox
+
     HAS_PYNETBOX = True
 except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
@@ -222,11 +223,13 @@ REQUIRED_ID_FIND = {
     "sites": [{"status": SITE_STATUS}],
 }
 
+
 class NetboxModule(object):
     """
     Initialize connection to Netbox, sets AnsibleModule passed in to
     self.module to be used throughout the class
     """
+
     def __init__(self, module, endpoint, nb_client=None):
         self.module = module
         self.state = self.module.params["state"]
@@ -234,7 +237,9 @@ class NetboxModule(object):
         self.endpoint = endpoint
 
         if not HAS_PYNETBOX:
-            self.module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
+            self.module.fail_json(
+                msg=missing_required_lib("pynetbox"), exception=PYNETBOX_IMP_ERR
+            )
         # These should not be required after making connection to Netbox
         url = self.module.params["netbox_url"]
         token = self.module.params["netbox_token"]
@@ -286,7 +291,7 @@ class NetboxModule(object):
             if result:
                 return result.id
             else:
-                return data 
+                return data
 
     def _build_query_params(self, parent, module_data, child=None):
         """
@@ -400,7 +405,7 @@ class NetboxModule(object):
                 elif query_id:
                     data[k] = query_id.id
                 else:
-                   self._handle_errors(msg="Could not resolve id of %s: %s" % (k, v))
+                    self._handle_errors(msg="Could not resolve id of %s: %s" % (k, v))
 
         return data
 
@@ -419,7 +424,7 @@ class NetboxModule(object):
         """
         :returns data (dict): Normalized module data to formats accepted by Netbox searches
         such as changing from user specified value to slug
-        ex. Test Rack -> test-rack 
+        ex. Test Rack -> test-rack
         :params data (dict): Original data from Netbox module
         """
         for k, v in data.items():
@@ -487,7 +492,7 @@ class NetboxModule(object):
                 except KeyError:
                     self._handle_errors(
                         msg="%s does not exist on existing object. Check to make sure valid field."
-                            % (key)
+                        % (key)
                     )
 
             if not self.check_mode:
@@ -531,11 +536,11 @@ class NetboxModule(object):
         """
         if self.nb_object:
             diff = self._delete_netbox_object()
-            self.result["msg"] = '%s %s deleted' % (endpoint_name, name)
+            self.result["msg"] = "%s %s deleted" % (endpoint_name, name)
             self.result["changed"] = True
             self.result["diff"] = diff
         else:
-            self.result["msg"] = '%s %s already absent' % (endpoint_name, name)
+            self.result["msg"] = "%s %s already absent" % (endpoint_name, name)
 
     def run(self):
         """

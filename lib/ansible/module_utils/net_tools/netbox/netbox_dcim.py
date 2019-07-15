@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Mikhail Yohman (@fragmentedpacket) <mikhail.yohman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
@@ -34,9 +35,7 @@ class NetboxDcimModule(NetboxModule):
         # Used to dynamically set key when returning results
         endpoint_name = ENDPOINT_NAME_MAPPING[self.endpoint]
 
-        self.result = {
-            "changed": False,
-        }
+        self.result = {"changed": False}
 
         application = self._find_app(self.endpoint)
         nb_app = getattr(self.nb, application)
@@ -51,13 +50,11 @@ class NetboxDcimModule(NetboxModule):
         try:
             self.nb_object = nb_endpoint.get(**object_query_params)
         except ValueError:
-            self._handle_errors(msg="More than one result returned for %s"
-                % (name)
-            )
+            self._handle_errors(msg="More than one result returned for %s" % (name))
 
         if self.state == "present":
             self._ensure_object_exists(nb_endpoint, endpoint_name, name, data)
-          
+
         elif self.state == "absent":
             self._ensure_object_absent(endpoint_name, name)
 
