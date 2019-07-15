@@ -180,10 +180,10 @@ options:
         description:
             - State of the Web App.
             - Use C(present) to create or update a Web App and C(absent) to delete it.
-      default: present
-      choices:
-          - absent
-          - present
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
