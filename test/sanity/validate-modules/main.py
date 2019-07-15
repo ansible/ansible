@@ -186,7 +186,7 @@ class Reporter:
 
         warnings is not respected in this output
         """
-        ret = [len(r['errors']) for _, r in self.files.items()]
+        ret = [len(r['errors']) for r in self.files.values()]
 
         with Reporter._output_handle(output) as handle:
             print(json.dumps(Reporter._filter_out_ok(self.files), indent=4, cls=ReporterEncoder), file=handle)
@@ -242,7 +242,7 @@ class ModuleValidator(Validator):
 
         self.path = path
         self.basename = os.path.basename(self.path)
-        self.name, _ = os.path.splitext(self.basename)
+        self.name = os.path.splitext(self.basename)[0]
 
         self.analyze_arg_spec = analyze_arg_spec
 
@@ -1022,9 +1022,9 @@ class ModuleValidator(Validator):
                     msg='No EXAMPLES provided'
                 )
             else:
-                _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
-                                               doc_info['EXAMPLES']['lineno'],
-                                               self.name, 'EXAMPLES', load_all=True)
+                _doc, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
+                                                  doc_info['EXAMPLES']['lineno'],
+                                                  self.name, 'EXAMPLES', load_all=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -1487,7 +1487,7 @@ class ModuleValidator(Validator):
     @staticmethod
     def is_blacklisted(path):
         base_name = os.path.basename(path)
-        file_name, _ = os.path.splitext(base_name)
+        file_name = os.path.splitext(base_name)[0]
 
         if file_name.startswith('_') and os.path.islink(path):
             return True

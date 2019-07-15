@@ -186,7 +186,7 @@ class AnsibleCoreCI:
         display.info('Getting available endpoints...', verbosity=1)
         sleep = 3
 
-        for _ in range(1, 10):
+        for _iteration in range(1, 10):
             response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
 
             if response.status_code == 200:
@@ -324,7 +324,7 @@ class AnsibleCoreCI:
 
     def wait(self):
         """Wait for the instance to become ready."""
-        for _ in range(1, 90):
+        for _iteration in range(1, 90):
             if self.get().running:
                 return
             time.sleep(10)

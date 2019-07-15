@@ -91,7 +91,7 @@ def docker_pull(args, image):
         display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
         return
 
-    for _ in range(1, 10):
+    for _iteration in range(1, 10):
         try:
             docker_command(args, ['pull', image])
             return
@@ -142,7 +142,7 @@ def docker_run(args, image, options, cmd=None):
     if not cmd:
         cmd = []
 
-    for _ in range(1, 3):
+    for _iteration in range(1, 3):
         try:
             return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
         except SubprocessError as ex:
@@ -182,7 +182,7 @@ def docker_inspect(args, container_id):
         return []
 
     try:
-        stdout, _ = docker_command(args, ['inspect', container_id], capture=True)
+        stdout = docker_command(args, ['inspect', container_id], capture=True)[0]
         return json.loads(stdout)
     except SubprocessError as ex:
         try:
@@ -210,7 +210,7 @@ def docker_network_inspect(args, network):
         return []
 
     try:
-        stdout, _ = docker_command(args, ['network', 'inspect', network], capture=True)
+        stdout = docker_command(args, ['network', 'inspect', network], capture=True)[0]
         return json.loads(stdout)
     except SubprocessError as ex:
         try:

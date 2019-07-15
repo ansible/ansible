@@ -122,7 +122,7 @@ def enumerate_module_utils():
     module_utils = []
     base_path = 'lib/ansible/module_utils'
 
-    for root, _, file_names in os.walk(base_path):
+    for root, _dir_names, file_names in os.walk(base_path):
         for file_name in file_names:
             path = os.path.join(root, file_name)
             name, ext = os.path.splitext(file_name)
