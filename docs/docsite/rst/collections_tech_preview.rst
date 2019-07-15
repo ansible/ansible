@@ -123,7 +123,7 @@ module_utils
 When working with ``module_utils`` in a collection, the Python ``import`` statement will need to take into account the FQCN along with the ``ansible_collections`` convention. The resulting import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
 Example snippet of a module using both default Ansible ``module_utils`` and
-those provided by a collection. In this example the Collection is
+those provided by a collection. In this example the collection is
 ``ansible_security``, the namespace is ``community``, and the ``module_util`` in
 question is called ``qradar`` such that the Fully Qualified Collection Name
 (FQCN) is ``ansible_security.community.plugins.module_utils.qradar``:
