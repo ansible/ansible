@@ -353,7 +353,7 @@ class FileCopy(object):
         if len(cur_state) > 0 and (cur_state.get('scpIpv4Enable').lower() == 'disable' or cur_state.get('scpIpv6Enable').lower() == 'disable'):
             self.module.fail_json(
                 msg="'Error: Please ensure ipv4 and ipv6 SCP server are enabled.'")
-        else:
+        elif len(cur_state) == 0:
             self.module.fail_json(
                 msg="'Error: Please ensure ipv4 and ipv6 SCP server are enabled.'")
 
