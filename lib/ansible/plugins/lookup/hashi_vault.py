@@ -98,6 +98,10 @@ EXAMPLES = """
 - name: Return all secrets from a path in a namespace
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
+- name: authenticate via AWS IAM auth
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=aws_iam access_key=access secret_key=secret role=myrole url=http://myvault:8200')}}"
+
 """
 
 RETURN = """
@@ -128,10 +132,10 @@ if os.getenv('VAULT_ADDR') is not None:
 
 class HashiVault:
     def __init__(self, **kwargs):
-
-        self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
+        self.variables = kwargs.get('variables', None)
+        self.url = kwargs.get('url', self.variables.get('vault_uri', ANSIBLE_HASHI_VAULT_ADDR))
         self.namespace = kwargs.get('namespace', None)
-        self.avail_auth_method = ['approle', 'userpass', 'ldap']
+        self.avail_auth_method = ['approle', 'userpass', 'ldap', 'aws_iam', 'aws_ec2']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -153,7 +157,7 @@ class HashiVault:
         #
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
-        self.auth_method = kwargs.get('auth_method', os.environ.get('VAULT_AUTH_METHOD'))
+        self.auth_method = kwargs.get('auth_method', self.variables.get('vault_auth_method', None))
         self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
         if self.auth_method and self.auth_method != 'token':
             try:
@@ -189,7 +193,10 @@ class HashiVault:
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
 
     def get(self):
-        data = self.client.read(self.secret)
+        if 'data' in self.client.read(self.secret):
+            data = self.client.read(self.secret)['data']
+        else:
+            data = self.client.read(self.secret)
 
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
@@ -198,7 +205,8 @@ class HashiVault:
             return data['data']
 
         if self.secret_field not in data['data']:
-            raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (self.secret, self.secret_field))
+            raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (
+            self.secret, self.secret_field))
 
         return data['data'][self.secret_field]
 
@@ -251,14 +259,43 @@ class HashiVault:
 
         self.client.auth_approle(role_id, secret_id)
 
+    def auth_aws_iam(self, **kwargs):
+        access_key = kwargs.get('access_key')
+        secret_key = kwargs.get('secret_key')
+        session_token = kwargs.get('session_token')
 
+        if access_key is None or secret_key is None:
+            import boto3
+            creds = boto3.Session().get_credentials()
+            if creds is None:
+                raise AnsibleError("Authentication method aws iam requires AWS credentials")
+            access_key, secret_key, session_token = creds.access_key, creds.secret_key, creds.token
+
+        header_value = kwargs.get('header_value', self.variables.get('vault_header_value', None))
+
+        mount_point = kwargs.get('mount_point')
+        if mount_point is None:
+            mount_point = 'aws'
+
+        role = kwargs.get('role', self.variables.get('vault_aws_role', None))
+        if role is None:
+            raise AnsibleError("Authentication method aws iam requires a role")
+
+        region = kwargs.get('region', os.environ.get('AWS_DEFAULT_REGION'))
+        if region is None:
+            region = 'us-east-1'
+
+        self.client.auth.aws.iam_login(access_key=access_key, secret_key=secret_key, session_token=session_token,
+                                       header_value=header_value, role=role, region=region, mount_point=mount_point)
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         if not HAS_HVAC:
             raise AnsibleError("Please pip install hvac to use the hashi_vault lookup module.")
 
         vault_args = terms[0].split()
-        vault_dict = {}
+        vault_dict = {
+            'variables':  variables
+        }
         ret = []
 
         for param in vault_args:
