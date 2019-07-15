@@ -45,6 +45,6 @@ class Lag_interfacesArgs(object):
                                                         'type': 'list'},
                                             'id': {'required': True, 'type': 'int'}},
                                 'type': 'list'},
-                    'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-                              'default': 'merged',
-                              'type': 'str'}}
+                     'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+                               'default': 'merged',
+                               'type': 'str'}}

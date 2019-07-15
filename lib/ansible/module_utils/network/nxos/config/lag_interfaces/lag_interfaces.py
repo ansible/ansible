@@ -42,8 +42,7 @@ class Lag_interfaces(ConfigBase):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset,
-                                             self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         lag_interfaces_facts = facts['ansible_network_resources'].get('lag_interfaces')
         if not lag_interfaces_facts:
             return []
@@ -125,7 +124,6 @@ class Lag_interfaces(ConfigBase):
                     commands.extend(self._state_replaced(w, have))
         return commands
 
-
     def _state_replaced(self, w, have):
         """ The command generator when state is replaced
 
@@ -140,7 +138,6 @@ class Lag_interfaces(ConfigBase):
             commands.extend(replaced_commands)
             commands.extend(merged_commands)
         return commands
-
 
     def _state_overridden(self, want, have):
         """ The command generator when state is overridden
@@ -159,7 +156,6 @@ class Lag_interfaces(ConfigBase):
             commands.extend(self.set_commands(w, have))
         return commands
 
-
     def _state_merged(self, w, have):
         """ The command generator when state is merged
 
@@ -168,7 +164,6 @@ class Lag_interfaces(ConfigBase):
                   the current configuration
         """
         return self.set_commands(w, have)
-
 
     def _state_deleted(self, want, have):
         """ The command generator when state is deleted

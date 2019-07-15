@@ -42,8 +42,6 @@ version_added: 2.9
 short_description: Manages link aggregation groups of NX-OS Interfaces
 description: This module manages attributes of link aggregation groups of NX-OS Interfaces.
 author: Trishna Guha (@trishnaguha)
-notes:
-  - Tested against <network_os> 7.3.(0)D1(1) on VIRL
 options:
   config:
     description: A list of link aggregation group configurations.
@@ -89,6 +87,9 @@ options:
       - overridden
       - deleted
     default: merged
+notes:
+  - Tested against NXOS 7.3.(0)D1(1) on VIRL.
+  - This module works with connection C(network_cli).
 """
 EXAMPLES = """
 # Using merged
@@ -103,7 +104,7 @@ EXAMPLES = """
     config:
       - id: 99
         members:
-	  - member: Ethernet1/4
+          - member: Ethernet1/4
     state: merged
 
 # After state:
@@ -125,8 +126,8 @@ EXAMPLES = """
   nxos_lag_interfaces:
     config:
       - id: 10
-	members:
-	  - member: Ethernet1/4
+        members:
+          - member: Ethernet1/4
     state: replaced
 
 # After state:
@@ -150,9 +151,9 @@ EXAMPLES = """
   nxos_lag_interfaces:
     config:
       - id: 20
-	members:
-	  - member: Ethernet1/6
-	    force: True
+        members:
+          - member: Ethernet1/6
+            force: True
     state: overridden
 
 # After state:
@@ -193,12 +194,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -213,7 +216,6 @@ commands:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.argspec.lag_interfaces.lag_interfaces import Lag_interfacesArgs
 from ansible.module_utils.network.nxos.config.lag_interfaces.lag_interfaces import Lag_interfaces
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 
 
 def main():
@@ -222,9 +224,7 @@ def main():
 
     :returns: the result form module invocation
     """
-    argument_spec = Lag_interfacesArgs.argument_spec
-    argument_spec.update(nxos_argument_spec)
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=Lag_interfacesArgs.argument_spec,
                            supports_check_mode=True)
 
     result = Lag_interfaces(module).execute_module()

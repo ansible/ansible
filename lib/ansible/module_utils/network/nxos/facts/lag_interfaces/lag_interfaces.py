@@ -16,7 +16,7 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.nxnos.argspec.lag_interfaces.lag_interfaces import Lag_interfacesArgs
+from ansible.module_utils.network.nxos.argspec.lag_interfaces.lag_interfaces import Lag_interfacesArgs
 from ansible.module_utils.network.nxos.utils.utils import get_interface_type, normalize_interface
 
 
@@ -56,38 +56,36 @@ class Lag_interfacesFacts(object):
                 if obj and len(obj.keys()) > 1:
                     objs.append(obj)
 
-        ansible_facts['ansible_network_resources'].pop('lag_interfaces', None) 
+        ansible_facts['ansible_network_resources'].pop('lag_interfaces', None)
         facts = {}
         if objs:
-            #facts['lag_interfaces'] = objs
             facts['lag_interfaces'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
             for cfg in params['config']:
                 facts['lag_interfaces'].append(utils.remove_empties(cfg))
 
-        self.ansible_facts['ansible_network_resources'].update(facts)
-        return self.ansible_facts
+        ansible_facts['ansible_network_resources'].update(facts)
+        return ansible_facts
 
     def get_members(self, id, connection):
         """
         Returns members associated with a channel-group
-        
+
         :param name: The channel group
         :rtype: list
         :returns: Members
         """
         members = []
         data = connection.get('show port-channel summary')
-        match = re.search(r'{} (.+)(|\n)'.format(id), data)
+        match = re.search(r'{0} (.+)(|\n)'.format(id), data)
         if match:
-            interfaces = re.search('Eth\d(.+)$', match.group())
+            interfaces = re.search(r'Eth\d(.+)$', match.group())
             if interfaces:
                 for i in interfaces.group().split():
                     if get_interface_type(i[:-3]) != 'unknown':
                         members.append(normalize_interface(i[:-3]))
 
         return members
-
 
     def render_config(self, spec, conf, connection):
         """
