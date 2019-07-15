@@ -101,9 +101,9 @@ class Lag_interfacesFacts(object):
         match = re.search(r'(\d+)( |)(force )?(mode \S+)?', conf, re.M)
         if match:
             matches = match.groups()
-            config['id'] = int(matches[0])
+            config['name'] = 'port-channel' + str(matches[0])
             config['members'] = []
-            members = self.get_members(config['id'], connection)
+            members = self.get_members(config['name'].strip('port-channel'), connection)
             if members:
                 for m in members:
                     m_dict = {}

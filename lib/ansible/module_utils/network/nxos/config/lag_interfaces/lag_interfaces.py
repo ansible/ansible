@@ -148,7 +148,7 @@ class Lag_interfaces(ConfigBase):
         """
         commands = []
         for h in have:
-            obj_in_want = search_obj_in_list(h['id'], want, 'id')
+            obj_in_want = search_obj_in_list(h['name'], want, 'name')
             if h == obj_in_want:
                 continue
             commands.extend(self.del_all_commands(h))
@@ -175,7 +175,7 @@ class Lag_interfaces(ConfigBase):
         commands = []
         if want:
             for w in want:
-                obj_in_have = search_obj_in_list(w['id'], have, 'id')
+                obj_in_have = search_obj_in_list(w['name'], have, 'name')
                 commands.extend(self.del_all_commands(obj_in_have))
         else:
             if not have:
@@ -210,6 +210,7 @@ class Lag_interfaces(ConfigBase):
 
     def add_commands(self, diff, name):
         commands = []
+        name = name.strip('port-channel')
         for d in diff:
             commands.append('interface' + ' ' + d['member'])
             cmd = ''
@@ -228,12 +229,12 @@ class Lag_interfaces(ConfigBase):
 
     def set_commands(self, w, have):
         commands = []
-        obj_in_have = search_obj_in_list(w['id'], have, 'id')
+        obj_in_have = search_obj_in_list(w['name'], have, 'name')
         if not obj_in_have:
-            commands = self.add_commands(w['members'], w['id'])
+            commands = self.add_commands(w['members'], w['name'])
         else:
             diff = self.diff_list_of_dicts(w['members'], obj_in_have['members'])
-            commands = self.add_commands(diff, w['id'])
+            commands = self.add_commands(diff, w['name'])
         return commands
 
     def del_all_commands(self, obj_in_have):
@@ -247,7 +248,7 @@ class Lag_interfaces(ConfigBase):
 
     def del_intf_commands(self, w, have):
         commands = []
-        obj_in_have = search_obj_in_list(w['id'], have, 'id')
+        obj_in_have = search_obj_in_list(w['name'], have, 'name')
         if obj_in_have:
             lst_to_del = self.intersect_list_of_dicts(w['members'], obj_in_have['members'])
             if lst_to_del:

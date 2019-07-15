@@ -46,10 +46,10 @@ options:
     description: A list of link aggregation group configurations.
     type: list
     suboptions:
-      id:
+      name:
         description:
-          - ID of the link aggregation group (LAG).
-        type: int
+          - Name of the link aggregation group (LAG).
+        type: str
         required: true
       members:
         description:
@@ -98,7 +98,7 @@ EXAMPLES = """
 - name: Merge provided configuration with device configuration.
   nxos_lag_interfaces:
     config:
-      - id: 99
+      - name: port-channel99
         members:
           - member: Ethernet1/4
     state: merged
@@ -121,7 +121,7 @@ EXAMPLES = """
 - name: Replace device configuration of specified LAG attributes of given interfaces with provided configuration.
   nxos_lag_interfaces:
     config:
-      - id: 10
+      - name: port-channel10
         members:
           - member: Ethernet1/4
     state: replaced
@@ -146,7 +146,7 @@ EXAMPLES = """
 - name: Override device configuration of all LAG attributes of given interfaces on device with provided configuration.
   nxos_lag_interfaces:
     config:
-      - id: 20
+      - name: port-channel20
         members:
           - member: Ethernet1/6
             force: True
@@ -171,7 +171,7 @@ EXAMPLES = """
 - name: Delete LAG attributes of given interface (This won't delete the port-channel itself).
   nxos_lag_interfaces:
     config:
-      - id: 99
+      - port-channel: port-channel99
     state: deleted
 
 - name: Delete LAG attributes of all the interfaces
