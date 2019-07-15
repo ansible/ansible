@@ -433,9 +433,9 @@ options:
             - Associated resources to remove when removing a VM using I(state=absent).
             - To remove all resources related to the VM being removed, including auto-created resources, set to C(all).
             - To remove only resources that were automatically created while provisioning the VM being removed, set to C(all_autocreated).
+            - To remove only specific resources, set to C(network_interfaces), C(virtual_storage) or C(public_ips).
             - Any other input will be ignored.
         type: list
-        choices: ['all', 'all_autocreated', 'network_interfaces', 'virtual_storage', 'public_ips']
         default: ['all']
     plan:
         description:
