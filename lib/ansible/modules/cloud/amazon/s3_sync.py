@@ -216,6 +216,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info, HAS_BOTO3, boto_exception
 from ansible.module_utils._text import to_text
+from boto3.s3.transfer import TransferConfig
 
 try:
     from dateutil import tz
@@ -341,11 +342,12 @@ def calculate_s3_path(filelist, key_prefix=''):
 def calculate_local_etag(filelist, key_prefix=''):
     '''Really, "calculate md5", but since AWS uses their own format, we'll just call
        it a "local etag". TODO optimization: only calculate if remote key exists.'''
+    chunk_size = TransferConfig().multipart_chunksize
     ret = []
     for fileentry in filelist:
         # don't modify the input dict
         retentry = fileentry.copy()
-        retentry['local_etag'] = calculate_multipart_etag(fileentry['fullpath'])
+        retentry['local_etag'] = calculate_multipart_etag(fileentry['fullpath'], chunk_size=chunk_size)
         ret.append(retentry)
     return ret
 
