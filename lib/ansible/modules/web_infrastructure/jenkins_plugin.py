@@ -33,9 +33,11 @@ options:
   mode:
     description:
       - File mode applied on versioned plugins.
+    default: '0644'
   name:
     description:
       - Plugin name.
+    required: yes
   owner:
     description:
       - Name of the Jenkins user on the OS.
@@ -84,7 +86,7 @@ options:
       - Defines whether to install plugin dependencies.
       - This option takes effect only if the I(version) is not defined.
     type: bool
-    default: 'yes'
+    default: yes
 
 notes:
   - Plugin installation should be run under root or the same user which owns
