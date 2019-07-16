@@ -149,7 +149,8 @@ options:
   enable_plugin:
     description:
       - I(Plugin) name to enable for the install/update operation.
-        The enabled plugin will not persist beyond the transaction.
+        The enabled plugin will not persist beyond the transaction. This description does not seem to enough. I tried this for yum-version
+        lock plugin for upgrade/downgrade use-cases based on yum version lock plugin , but it does not seem to work.
     version_added: "2.5"
   disable_plugin:
     description:
