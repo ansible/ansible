@@ -203,6 +203,9 @@ def discover_device(module, device):
     msg = ''
     if not module.check_mode:
         rc, cfgmgr_out, err = module.run_command(cmd)
+        if rc != 0:
+            msg = "Failed to run cfgmgr (%s)" % ' '.join(cmd)
+            module.fail_json(msg=msg, rc=rc, err=err)
         changed = True
         msg = cfgmgr_out
 
