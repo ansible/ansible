@@ -17,23 +17,16 @@ DOCUMENTATION = '''
 module: azure_rm_netapp_account
 
 short_description: Manage NetApp Azure Files Account
-extends_documentation_fragment:
-    - azure
-    - azure_tags
 version_added: "2.9"
 author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
     - Create and delete NetApp Azure account.
       Provide the Resource group name for the NetApp account to be created.
-      Azure NetApp Authentication is done based on the client CLI profile ('az login').
+extends_documentation_fragment:
+    - netapp.azure_rm_netapp
 
 options:
-    resource_group:
-        description:
-            - Name of the resource group.
-        required: true
-        type: str
     name:
         description:
             - The name of the NetApp account.
@@ -43,16 +36,16 @@ options:
         description:
             - Resource location.
             - Required for create.
-        type: str 
+        type: str
     state:
         description:
-            - State C(present) will check that the NetApp account exists with the requested configuration. 
+            - State C(present) will check that the NetApp account exists with the requested configuration.
             - State C(absent) will delete the NetApp account.
         default: present
         choices:
             - absent
             - present
-    
+
 '''
 EXAMPLES = '''
 
@@ -82,22 +75,20 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.basic import to_native, to_bytes
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, normalize_location_name, format_resource_id
+from ansible.module_utils.basic import to_native
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils.netapp_module import NetAppModule
 from ansible.module_utils.basic import AnsibleModule
-from azure.mgmt.netapp.azure_net_app_files_management_client import AzureNetAppFilesManagementClient
 from azure.common.client_factory import get_client_from_cli_profile
-from azure.mgmt.netapp.models import NetAppAccount
 import traceback
 
-AZURE_OBJECT_CLASS = 'NetAppAccount'
-
-# pre-requisites to be added to requirements.txt
-# azure-cli-core
-# azure-mgmt
-# azure-storage
-# azure-mgmt-netapp
+HAS_AZURE_MGMT_NETAPP = False
+try:
+    from azure.mgmt.netapp.azure_net_app_files_management_client import AzureNetAppFilesManagementClient
+    from azure.mgmt.netapp.models import NetAppAccount
+    HAS_AZURE_MGMT_NETAPP = True
+except ImportError:
+    HAS_AZURE_MGMT_NETAPP = False
 
 
 class AzureRMNetAppAccount(AzureRMModuleBase):
@@ -118,6 +109,8 @@ class AzureRMNetAppAccount(AzureRMModuleBase):
         self.parameters = self.na_helper.set_parameters(self.module.params)
 
         # authentication - using CLI
+        if HAS_AZURE_MGMT_NETAPP is False:
+            self.module.fail_json(msg="the python Azure-mgmt-NetApp module is required")
         self.client = get_client_from_cli_profile(AzureNetAppFilesManagementClient)
         super(AzureRMNetAppAccount, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                    supports_check_mode=True)
@@ -142,9 +135,9 @@ class AzureRMNetAppAccount(AzureRMModuleBase):
             location=self.parameters['location']
         )
         try:
-            response = self.client.accounts.create_or_update(body=account_body,
-                                                             resource_group_name=self.parameters['resource_group'],
-                                                             account_name=self.parameters['name'])
+            self.client.accounts.create_or_update(body=account_body,
+                                                  resource_group_name=self.parameters['resource_group'],
+                                                  account_name=self.parameters['name'])
         except CloudError as error:
             self.module.fail_json(msg='Error creating Azure NetApp account %s: %s'
                                       % (self.parameters['name'], to_native(error)),
@@ -156,8 +149,8 @@ class AzureRMNetAppAccount(AzureRMModuleBase):
             :return: None
         """
         try:
-            response = self.client.accounts.delete(resource_group_name=self.parameters['resource_group'],
-                                                             account_name=self.parameters['name'])
+            self.client.accounts.delete(resource_group_name=self.parameters['resource_group'],
+                                        account_name=self.parameters['name'])
         except CloudError as error:
             self.module.fail_json(msg='Error deleting Azure NetApp account %s: %s'
                                       % (self.parameters['name'], to_native(error)),
