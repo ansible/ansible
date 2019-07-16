@@ -848,13 +848,12 @@ def complete_network_testcase(prefix, parsed_args, **_):
         return []
 
     test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
-    connections = os.listdir(test_dir)
+    connection_dirs = [path for path in [os.path.join(test_dir, name) for name in os.listdir(test_dir)] if os.path.isdir(path)]
 
-    for conn in connections:
-        if os.path.isdir(os.path.join(test_dir, conn)):
-            for testcase in os.listdir(os.path.join(test_dir, conn)):
-                if testcase.startswith(prefix):
-                    testcases.append(testcase.split('.')[0])
+    for connection_dir in connection_dirs:
+        for testcase in os.listdir(connection_dir):
+            if testcase.startswith(prefix):
+                testcases.append(testcase.split('.')[0])
 
     return testcases
 
