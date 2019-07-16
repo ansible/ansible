@@ -16,7 +16,7 @@ options:
 
 requirements:
   - python >= 2.7
-  - ns1 >= 0.9.19
+  - ns1-python >= 0.9.19
 
 seealso:
   - name: Documentation for NS1 API
