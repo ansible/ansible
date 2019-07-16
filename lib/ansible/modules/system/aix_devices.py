@@ -195,7 +195,7 @@ def discover_device(module, device):
 
     # device is mandatory according to doc spec,
     #  if  device == 'all', run bare cfgmgr.  else, scan specific device
-    if device.lower() == 'all':
+    if device == 'all':
         cmd = [cfgmgr_cmd]
     else:
         cmd = ["%s" % cfgmgr_cmd, "%s" % device]
