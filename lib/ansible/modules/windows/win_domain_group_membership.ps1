@@ -35,7 +35,7 @@ if ($null -ne $domain_username) {
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
-if ($nul -ne $domain_server) {
+if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
@@ -52,7 +52,7 @@ $members_before = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = [System.Collections.Generic.List`1[String]]@()
 
 foreach ($member in $members) {
-    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName @extra_vars
+    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName @extra_args
     if (!$group_member) {
         Fail-Json -obj $result "Could not find domain user, group, service account or computer named $member"
     }
