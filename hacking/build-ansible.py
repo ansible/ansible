@@ -21,18 +21,17 @@ except ImportError:
     argcomplete = None
 
 
-def set_sys_path(this_script=__file__):
-    """Add path to the common librarydirectory to :attr:`sys.path`"""
+def build_lib_path(this_script=__file__):
+    """Return path to the common build library directory"""
     hacking_dir = os.path.dirname(this_script)
     libdir = os.path.abspath(os.path.join(hacking_dir, 'build_library'))
 
-    if libdir not in sys.path:
-        sys.path.insert(0, libdir)
+    return libdir
 
 
-set_sys_path()
+sys.path.insert(0, build_lib_path())
 
-from build_ansible import commands
+from build_ansible import commands, errors
 
 
 def create_arg_parser(program_name):
@@ -63,13 +62,26 @@ def main():
         argcomplete.autocomplete(arg_parser)
 
     args = arg_parser.parse_args(sys.argv[1:])
+    if args.command is None:
+        print('Please specify a subcommand to run')
+        sys.exit(1)
 
     for subcommand in subcommands:
         if subcommand.name == args.command:
-            sys.exit(subcommand.main(args))
+            command = subcommand
+            break
+    else:
+        # Note: We should never trigger this because argparse should shield us from it
+        print('Error: {0} was not a recognized subcommand'.format(args.command))
+        sys.exit(1)
 
-    print('Error: Select a subcommand')
-    arg_parser.print_usage()
+    try:
+        retval = command.main(args)
+    except errors.DependencyError as e:
+        print(e)
+        sys.exit(2)
+
+    sys.exit(retval)
 
 
 if __name__ == '__main__':

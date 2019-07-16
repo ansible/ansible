@@ -1,25 +1,27 @@
-#!/usr/bin/env python
+# coding: utf-8
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 import argparse
-import os
+import os.path
+import pathlib
 import sys
 
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
-from ansible.utils._build_helpers import update_file_if_different
+
+# Pylint doesn't understand Python3 namespace modules.
+from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
+from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
-def generate_parser():
-    p = argparse.ArgumentParser(
-        description='Generate cli documentation from cli docstrings',
-    )
-
-    p.add_argument("-t", "--template-file", action="store", dest="template_file", default="../templates/man.j2", help="path to jinja2 template")
-    p.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
-    p.add_argument("-f", "--output-format", action="store", dest="output_format", default='man', help="Output format for docs (the default 'man' or 'rst')")
-    p.add_argument('args', help='CLI module(s)', metavar='module', nargs='*')
-    return p
+DEFAULT_TEMPLATE_FILE = pathlib.Path(__file__).parents[4] / 'docs/templates/man.j2'
 
 
 # from https://www.python.org/dev/peps/pep-0257/
@@ -213,78 +215,89 @@ def opts_docs(cli_class_name, cli_module_name):
     return docs
 
 
-if __name__ == '__main__':
+class GenerateMan(Command):
+    name = 'generate-man'
 
-    parser = generate_parser()
+    @classmethod
+    def init_parser(cls, add_parser):
+        parser = add_parser(name=cls.name,
+                            description='Generate cli documentation from cli docstrings')
 
-    options = parser.parse_args()
+        parser.add_argument("-t", "--template-file", action="store", dest="template_file",
+                            default=DEFAULT_TEMPLATE_FILE, help="path to jinja2 template")
+        parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
+                            default='/tmp/', help="Output directory for rst files")
+        parser.add_argument("-f", "--output-format", action="store", dest="output_format",
+                            default='man',
+                            help="Output format for docs (the default 'man' or 'rst')")
+        parser.add_argument('cli_modules', help='CLI module name(s)', metavar='MODULE_NAME', nargs='*')
 
-    template_file = options.template_file
-    template_path = os.path.expanduser(template_file)
-    template_dir = os.path.abspath(os.path.dirname(template_path))
-    template_basename = os.path.basename(template_file)
+    @staticmethod
+    def main(args):
+        template_file = args.template_file
+        template_path = os.path.expanduser(template_file)
+        template_dir = os.path.abspath(os.path.dirname(template_path))
+        template_basename = os.path.basename(template_file)
 
-    output_dir = os.path.abspath(options.output_dir)
-    output_format = options.output_format
+        output_dir = os.path.abspath(args.output_dir)
+        output_format = args.output_format
 
-    cli_modules = options.args
+        cli_modules = args.cli_modules
 
-    # various cli parsing things checks sys.argv if the 'args' that are passed in are []
-    # so just remove any args so the cli modules dont try to parse them resulting in warnings
-    sys.argv = [sys.argv[0]]
-    # need to be in right dir
-    os.chdir(os.path.dirname(__file__))
+        # various cli parsing things checks sys.argv if the 'args' that are passed in are []
+        # so just remove any args so the cli modules dont try to parse them resulting in warnings
+        sys.argv = [sys.argv[0]]
 
-    allvars = {}
-    output = {}
-    cli_list = []
-    cli_bin_name_list = []
+        allvars = {}
+        output = {}
+        cli_list = []
+        cli_bin_name_list = []
 
-    # for binary in os.listdir('../../lib/ansible/cli'):
-    for cli_module_name in cli_modules:
-        binary = os.path.basename(os.path.expanduser(cli_module_name))
+        # for binary in os.listdir('../../lib/ansible/cli'):
+        for cli_module_name in cli_modules:
+            binary = os.path.basename(os.path.expanduser(cli_module_name))
 
-        if not binary.endswith('.py'):
-            continue
-        elif binary == '__init__.py':
-            continue
+            if not binary.endswith('.py'):
+                continue
+            elif binary == '__init__.py':
+                continue
 
-        cli_name = os.path.splitext(binary)[0]
+            cli_name = os.path.splitext(binary)[0]
 
-        if cli_name == 'adhoc':
-            cli_class_name = 'AdHocCLI'
-            # myclass = 'AdHocCLI'
-            output[cli_name] = 'ansible.1.rst.in'
-            cli_bin_name = 'ansible'
-        else:
-            # myclass = "%sCLI" % libname.capitalize()
-            cli_class_name = "%sCLI" % cli_name.capitalize()
-            output[cli_name] = 'ansible-%s.1.rst.in' % cli_name
-            cli_bin_name = 'ansible-%s' % cli_name
+            if cli_name == 'adhoc':
+                cli_class_name = 'AdHocCLI'
+                # myclass = 'AdHocCLI'
+                output[cli_name] = 'ansible.1.rst.in'
+                cli_bin_name = 'ansible'
+            else:
+                # myclass = "%sCLI" % libname.capitalize()
+                cli_class_name = "%sCLI" % cli_name.capitalize()
+                output[cli_name] = 'ansible-%s.1.rst.in' % cli_name
+                cli_bin_name = 'ansible-%s' % cli_name
 
-        # FIXME:
-        allvars[cli_name] = opts_docs(cli_class_name, cli_name)
-        cli_bin_name_list.append(cli_bin_name)
+            # FIXME:
+            allvars[cli_name] = opts_docs(cli_class_name, cli_name)
+            cli_bin_name_list.append(cli_bin_name)
 
-    cli_list = allvars.keys()
+        cli_list = allvars.keys()
 
-    doc_name_formats = {'man': '%s.1.rst.in',
-                        'rst': '%s.rst'}
+        doc_name_formats = {'man': '%s.1.rst.in',
+                            'rst': '%s.rst'}
 
-    for cli_name in cli_list:
+        for cli_name in cli_list:
 
-        # template it!
-        env = Environment(loader=FileSystemLoader(template_dir))
-        template = env.get_template(template_basename)
+            # template it!
+            env = Environment(loader=FileSystemLoader(template_dir))
+            template = env.get_template(template_basename)
 
-        # add rest to vars
-        tvars = allvars[cli_name]
-        tvars['cli_list'] = cli_list
-        tvars['cli_bin_name_list'] = cli_bin_name_list
-        tvars['cli'] = cli_name
-        if '-i' in tvars['options']:
-            print('uses inventory')
+            # add rest to vars
+            tvars = allvars[cli_name]
+            tvars['cli_list'] = cli_list
+            tvars['cli_bin_name_list'] = cli_bin_name_list
+            tvars['cli'] = cli_name
+            if '-i' in tvars['options']:
+                print('uses inventory')
 
-        manpage = template.render(tvars)
-        filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
-        update_file_if_different(filename, to_bytes(manpage))
+            manpage = template.render(tvars)
+            filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
+            update_file_if_different(filename, to_bytes(manpage))

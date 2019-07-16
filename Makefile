@@ -33,7 +33,7 @@ ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is 
 endif
 
 PYTHON=python
-GENERATE_CLI = $(PYTHON) docs/bin/generate_man.py
+GENERATE_CLI = hacking/build-ansible.py generate-man
 
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
