@@ -26,9 +26,11 @@ options:
         description:
             - Vault uri where the key stored in.
         required: True
+        type: str
     name:
         description:
             - Key name. If not set, will list all keys in vault_uri.
+        type: str
     version:
         description:
             - Key version.
@@ -36,6 +38,7 @@ options:
             - Set it to C(all) to list all versions of a key.
             - Set it to specific version to list specific version of a key. eg. fd2682392a504455b79c90dd04a1bf46
         default: current
+        type: str
     show_deleted_key:
         description:
             - Set to true to show deleted keys. Set to False to show not deleted keys.
@@ -261,7 +264,7 @@ class AzureRMKeyVaultKeyInfo(AzureRMModuleBase):
             name=dict(type='str'),
             vault_uri=dict(type='str', required=True),
             show_deleted_key=dict(type='bool', default=False),
-            tags=dict(type='str')
+            tags=dict(type='list')
         )
 
         self.vault_uri = None
