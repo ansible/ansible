@@ -536,6 +536,7 @@ def get_cserver(connection, is_rest=False):
 
     return None
 
+
 class OntapRestAPI(object):
     def __init__(self, module, timeout=60):
         self.module = module
