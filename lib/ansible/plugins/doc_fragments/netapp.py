@@ -53,13 +53,13 @@ options:
         For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
       type: str
       required: true
-      aliases: ['user']
+      aliases: [user]
   password:
       description:
       - Password for the specified user.
       type: str
       required: true
-      aliases: ['pass']
+      aliases: [pass]
   https:
       description:
       - Enable and disable https
@@ -190,4 +190,4 @@ notes:
     the storage-system, or an E-Series storage-system that supports the Embedded Web Services API.
   - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
   - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
-    '''
+'''
