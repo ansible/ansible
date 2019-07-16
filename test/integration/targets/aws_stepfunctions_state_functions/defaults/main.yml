@@ -1,2 +1,2 @@
 state_machine_name: "{{ resource_prefix }}_stepfunctions_state_machine_ansible_test"
-stepfunctions_role_name: "ansible-test-states-{{ resource_prefix }}-stepfunctions-role"
+stepfunctions_role_name: "ansible-test-sts-{{ resource_prefix }}-stepfunctions-role"
