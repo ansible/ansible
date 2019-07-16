@@ -590,3 +590,15 @@ class Connection(NetworkConnectionBase):
     def _validate_timeout_value(self, timeout, timer_name):
         if timeout < 0:
             raise AnsibleConnectionFailure("'%s' timer value '%s' is invalid, value should be greater than or equal to zero." % (timer_name, timeout))
+
+    def transport_test(self, connect_timeout):
+        """This method enables wait_for_connection to work.
+
+        As it is used by wait_for_connection, it is called by that module's action plugin,
+        which is on the controller process, which means that nothing done on this instance
+        should impact the actual persistent conneciton... this check is for informational
+        purposes only and should be properly cleaned up.
+        """
+
+        self._connect()
+        self.close()
