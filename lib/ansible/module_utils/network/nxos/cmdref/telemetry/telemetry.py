@@ -101,3 +101,34 @@ path:
     query_condition: ~
     filter_condition: ~
 '''
+
+TMS_SUBSCRIPTION = '''
+# The cmd_ref is a yaml formatted list of module commands.
+# A leading underscore denotes a non-command variable; e.g. _template.
+# TBD: Use Structured Where Possible
+---
+_template: # _template holds common settings for all commands
+  # Enable feature telemetry if disabled
+  feature: telemetry
+  # Common get syntax for TMS commands
+  get_command: show run telemetry all
+  # Parent configuration for TMS commands
+  context:
+    - telemetry
+destination_group:
+  _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
+  multiple: true
+  kind: int
+  getval: dst-grp (\\S+)$
+  setval: 'dst-grp {0}'
+  default: ~
+sensor_group:
+  _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
+  multiple: true
+  kind: dict
+  getval: snsr-grp (?P<id>\\S+) sample-interval (?P<sample_interval>\\S+)$
+  setval: snsr-grp {id} sample-interval {sample_interval}
+  default:
+    id: ~
+    sample_interval: ~
+'''

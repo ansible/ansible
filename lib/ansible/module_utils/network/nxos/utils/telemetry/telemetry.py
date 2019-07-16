@@ -35,6 +35,12 @@ def get_module_params_subsection(module_params, tms_config, resource_key=None):
             if sensor['id'] == resource_key:
                 mp['sensor_groups'].append(sensor)
 
+    if tms_config == 'TMS_SUBSCRIPTION':
+        mp['subscriptions'] = []
+        for sensor in module_params['subscriptions']:
+            if sensor['id'] == resource_key:
+                mp['subscriptions'].append(sensor)
+
     return mp
 
 
@@ -90,6 +96,11 @@ def get_instance_data(key, cr_key, cr, existing_key):
         instance_key = m.group(1)
         data = {'id': instance_key, cr_key: instance}
 
+    if key == 'subscriptions':
+        m = re.search("subscription (\d+)", cr._ref['_resource_key'])
+        instance_key = m.group(1)
+        data = {'id': instance_key, cr_key: instance}
+
     # Remove None values
     data = dict((k, v) for k, v in data.items() if v is not None)
     return data
@@ -104,6 +115,8 @@ def cr_key_lookup(key, mo):
         cr_keys = ['destination']
     elif key == 'sensor_groups' and mo == 'TMS_SENSORGROUP':
         cr_keys = ['data_source', 'path']
+    elif key == 'subscriptions' and mo == 'TMS_SUBSCRIPTION':
+        cr_keys = ['destination_group', 'sensor_group']
 
     return cr_keys
 
@@ -156,7 +169,7 @@ def get_setval_path(module):
           - query-condition {query_condition},
           - filter-condition {filter_condition}
     '''
-    path = module.params['config'][0]['sensor_groups'][0].get('path')
+    path = module.params['config']['sensor_groups'][0].get('path')
     if path is None:
         return path
 

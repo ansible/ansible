@@ -1011,7 +1011,7 @@ class NxosCmdRef:
         params = {}
         if module.params.get('config'):
             # Resource module builder packs playvals under 'config' key
-            param_data = module.params.get('config')[0]
+            param_data = module.params.get('config')
             params['global'] = param_data
             for key in param_data.keys():
                 if isinstance(param_data[key], list):
