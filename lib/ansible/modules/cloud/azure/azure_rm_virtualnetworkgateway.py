@@ -44,17 +44,18 @@ options:
         required: false
     virtual_network:
         description:
-            - An existing virtual network with which the VPN Gateway will be associated. Required when creating a VPN Gateway.
-            - It can be the virtual network's name.
-            - Make sure your virtual network is in the same resource group as VPN gateway when you give only the name.
-            - It can be the virtual network's resource ID.
-            - It can be a dict which contains I(name) and I(resource_group) of the virtual network.
+            - An existing virtual network with which the VPN Gateway will be associated.
+            - Required when creating a VPN Gateway.
+            - Can be the name of the virtual network.
+            - Must be in the same resource group as VPN gateway when specified by name.
+            - Can be the resource ID of the virtual network.
+            - Can be a dict which contains I(name) and I(resource_group) of the virtual network.
         aliases:
             - virtual_network_name
         required: true
     ip_configurations:
         description:
-            - List of IP configurations
+            - List of IP configurations.
         suboptions:
             name:
                 description:
@@ -69,7 +70,7 @@ options:
                 default: dynamic
             public_ip_address_name:
                 description:
-                    - Name of the public IP address. None for disable IP address.
+                    - Name of the public IP address. Use 'None' to disable the public IP address.
             subnet:
                 description:
                     - ID of the gateway subnet for VPN.
@@ -83,7 +84,7 @@ options:
             - express_route
     vpn_type:
         description:
-            - The type of this virtual network gateway.
+            - The type of this virtual private network.
         default: route_based
         choices:
             - route_based

@@ -91,7 +91,7 @@ virtualnetworks:
     contains:
             id:
                 description:
-                    - Resource ID.
+                    - Resource ID of the virtual network.
                 sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet2001
                 returned: always
                 type: str
@@ -123,7 +123,7 @@ virtualnetworks:
                 description:
                     - Provisioning state of the resource.
                 returned: always
-                sample: Successed
+                sample: Succeeded
                 type: str
             name:
                 description:
@@ -133,29 +133,29 @@ virtualnetworks:
                 sample: foo
             subnets:
                 description:
-                    - Subnets associate to this virtual network.
+                    - Subnets associated with the virtual network.
                 returned: always
                 type: list
                 contains:
                     id:
                         description:
-                            - Resource ID.
+                            - Resource ID of the subnet.
                         returned: always
                         type: str
                         sample: "/subscriptions/f64d4ee8-be94-457d-ba26-3fa6b6506cef/resourceGroups/v-xisuRG/providers/
                                 Microsoft.Network/virtualNetworks/vnetb57dc95232/subnets/vnetb57dc95232"
                     name:
                         description:
-                            - Resource Name.
+                            - Name of the subnet.
                         returned: always
                         type: str
                         sample: vnetb57dc95232
                     provisioning_state:
                         description:
-                            - Provision state of the Resource.
+                            - Provisioning state of the subnet.
                         returned: always
                         type: str
-                        sample: Successed
+                        sample: Succeeded
                     address_prefix:
                         description:
                             - The address prefix for the subnet.
