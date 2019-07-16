@@ -198,7 +198,7 @@ def discover_device(module, device):
     if device == 'all':
         cmd = [cfgmgr_cmd]
     else:
-        cmd = ["%s" % cfgmgr_cmd, "%s" % device]
+        cmd = ["%s" % cfgmgr_cmd, "-l", "%s" % device]
 
     msg = ''
     if not module.check_mode:
