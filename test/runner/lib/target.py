@@ -209,12 +209,11 @@ def walk_integration_targets():
     """
     path = 'test/integration/targets'
     modules = frozenset(target.module for target in walk_module_targets())
-    paths = sorted(os.path.join(path, p) for p in os.listdir(path))
+    paths = sorted(path for path in [os.path.join(path, p) for p in os.listdir(path)] if os.path.isdir(path))
     prefixes = load_integration_prefixes()
 
     for path in paths:
-        if os.path.isdir(path):
-            yield IntegrationTarget(path, modules, prefixes)
+        yield IntegrationTarget(path, modules, prefixes)
 
 
 def load_integration_prefixes():
@@ -222,12 +221,12 @@ def load_integration_prefixes():
     :rtype: dict[str, str]
     """
     path = 'test/integration'
-    names = sorted(f for f in os.listdir(path) if os.path.splitext(f)[0] == 'target-prefixes')
+    file_paths = sorted(os.path.join(path, f) for f in os.listdir(path) if os.path.splitext(f)[0] == 'target-prefixes')
     prefixes = {}
 
-    for name in names:
-        prefix = os.path.splitext(name)[1][1:]
-        with open(os.path.join(path, name), 'r') as prefix_fd:
+    for file_path in file_paths:
+        prefix = os.path.splitext(file_path)[1][1:]
+        with open(file_path, 'r') as prefix_fd:
             prefixes.update(dict((k, prefix) for k in prefix_fd.read().splitlines()))
 
     return prefixes
@@ -242,6 +241,8 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
     :type extra_dirs: tuple[str] | None
     :rtype: collections.Iterable[TestTarget]
     """
+    file_paths = []
+
     for root, _dir_names, file_names in os.walk(path or '.', topdown=False):
         if root.endswith('/__pycache__'):
             continue
@@ -256,25 +257,28 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
             continue
 
         for file_name in file_names:
-            name, ext = os.path.splitext(os.path.basename(file_name))
-
-            if name.startswith('.'):
+            if file_name.startswith('.'):
                 continue
 
-            if extensions and ext not in extensions:
+            file_paths.append(os.path.join(root, file_name))
+
+    for file_path in file_paths:
+        name, ext = os.path.splitext(os.path.basename(file_path))
+
+        if extensions and ext not in extensions:
+            continue
+
+        if prefix and not name.startswith(prefix):
+            continue
+
+        if os.path.islink(file_path):
+            # special case to allow a symlink of ansible_release.py -> ../release.py
+            if file_path != 'lib/ansible/module_utils/ansible_release.py':
                 continue
 
-            if prefix and not name.startswith(prefix):
-                continue
+        yield TestTarget(file_path, module_path, prefix, path)
 
-            file_path = os.path.join(root, file_name)
-
-            if os.path.islink(file_path):
-                # special case to allow a symlink of ansible_release.py -> ../release.py
-                if file_path != 'lib/ansible/module_utils/ansible_release.py':
-                    continue
-
-            yield TestTarget(file_path, module_path, prefix, path)
+    file_paths = []
 
     if extra_dirs:
         for extra_dir in extra_dirs:
@@ -283,8 +287,14 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
             for file_name in file_names:
                 file_path = os.path.join(extra_dir, file_name)
 
-                if os.path.isfile(file_path) and not os.path.islink(file_path):
-                    yield TestTarget(file_path, module_path, prefix, path)
+                if os.path.isfile(file_path):
+                    file_paths.append(file_path)
+
+    for file_path in file_paths:
+        if os.path.islink(file_path):
+            continue
+
+        yield TestTarget(file_path, module_path, prefix, path)
 
 
 def analyze_integration_target_dependencies(integration_targets):
@@ -312,24 +322,27 @@ def analyze_integration_target_dependencies(integration_targets):
     # handle symlink dependencies between targets
     # this use case is supported, but discouraged
     for target in integration_targets:
+        paths = []
+
         for root, _dummy, file_names in os.walk(target.path):
             for name in file_names:
-                path = os.path.join(root, name)
+                paths.append(os.path.join(root, name))
 
-                if not os.path.islink(path):
-                    continue
+        for path in paths:
+            if not os.path.islink(path):
+                continue
 
-                real_link_path = os.path.realpath(path)
+            real_link_path = os.path.realpath(path)
 
-                if not real_link_path.startswith(real_target_root):
-                    continue
+            if not real_link_path.startswith(real_target_root):
+                continue
 
-                link_target = real_link_path[len(real_target_root):].split('/')[0]
+            link_target = real_link_path[len(real_target_root):].split('/')[0]
 
-                if link_target == target.name:
-                    continue
+            if link_target == target.name:
+                continue
 
-                dependencies[link_target].add(target.name)
+            dependencies[link_target].add(target.name)
 
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
     # script based targets are scanned as they may execute a playbook with role dependencies
