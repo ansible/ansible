@@ -41,9 +41,9 @@ options:
             - Set to true to show deleted keys. Set to False to show not deleted keys.
         type: bool
         default: false
-    tags:	
-        description:	
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.	
+    tags:
+        description:
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
         type: list
 
 extends_documentation_fragment:
