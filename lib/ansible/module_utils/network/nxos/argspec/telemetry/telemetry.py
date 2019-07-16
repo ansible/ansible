@@ -81,7 +81,6 @@ class TelemetryArgs(object):  # pylint: disable=R0903
                                 'sample_interval': {'type': 'int'}},
                             'type': 'dict'}},
                     'type': 'list'}},
-                # 'vrf': {'type': 'str'}},
             'type': 'dict'},
         'state': {
             'choices': ['merged', 'replaced', 'overridden', 'deleted'],
