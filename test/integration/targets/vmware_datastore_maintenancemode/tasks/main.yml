@@ -1,0 +1,84 @@
+# Test code for the vmware_datastore_maintenancemode module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support datastore maintenance mode properties
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+
+  - name: Enter datastore in maintenance mode
+    vmware_datastore_maintenancemode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      state: present
+      datastore: "{{ ds1 }}"
+      validate_certs: no
+    register: test_result_0001
+
+  - debug:
+      var: test_result_0001
+
+  - name: assert that changes were made
+    assert:
+      that:
+        - test_result_0001 is changed
+
+  - name: Enter datastore in maintenance mode again
+    vmware_datastore_maintenancemode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      state: present
+      datastore: "{{ ds1 }}"
+      validate_certs: no
+    register: test_result_0002
+
+  - debug:
+      var: test_result_0002
+
+  - name: assert that no changes were made
+    assert:
+      that:
+        - not (test_result_0002 is changed)
+
+  - name: Exit datastores from maintenance mode
+    vmware_datastore_maintenancemode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      state: absent
+      datastore: "{{ ds1 }}"
+      validate_certs: no
+    register: test_result_0003
+
+  - debug:
+      var: test_result_0003
+
+  - name: assert that changes were made
+    assert:
+      that:
+        - test_result_0003 is changed
+
+  - name: Exit datastores from maintenance mode again
+    vmware_datastore_maintenancemode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      state: absent
+      datastore: "{{ ds1 }}"
+      validate_certs: no
+    register: test_result_0004
+
+  - debug:
+      var: test_result_0004
+
+  - name: assert that no changes were made
+    assert:
+      that:
+        - not (test_result_0004 is changed)

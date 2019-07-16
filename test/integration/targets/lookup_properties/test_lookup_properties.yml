@@ -9,32 +9,63 @@
         test2:            "{{lookup('ini', 'value2            type=properties  file=lookup.properties')}}"
         test_dot:         "{{lookup('ini', 'value.dot         type=properties  file=lookup.properties')}}"
         field_with_space: "{{lookup('ini', 'field.with.space  type=properties  file=lookup.properties')}}"
-    - debug: var={{item}}
+    - assert:
+        that: "{{item}} is defined"
       with_items: [ 'test1', 'test2', 'test_dot', 'field_with_space' ]
     - name: "read ini value"
       set_fact:
         value1_global:    "{{lookup('ini', 'value1            section=global   file=lookup.ini')}}"
         value2_global:    "{{lookup('ini', 'value2            section=global   file=lookup.ini')}}"
         value1_section1:  "{{lookup('ini', 'value1            section=section1 file=lookup.ini')}}"
+        field_with_unicode: "{{lookup('ini', 'unicode         section=global   file=lookup.ini')}}"
     - debug: var={{item}}
-      with_items: [ 'value1_global', 'value2_global', 'value1_section1' ]
+      with_items: [ 'value1_global', 'value2_global', 'value1_section1', 'field_with_unicode' ]
+    - assert:
+        that:
+          - "field_with_unicode == 'été indien où à château français ïîôû'"
+    - name: "read ini value from iso8859-15 file"
+      set_fact:
+        field_with_unicode: "{{lookup('ini', 'field_with_unicode section=global encoding=iso8859-1 file=lookup-8859-15.ini')}}"
+    - assert:
+        that:
+          - "field_with_unicode == 'été indien où à château français ïîôû'"
     - name: "read ini value with section and regexp"
       set_fact:
         value_section:    "{{lookup('ini', 'value[1-2]        section=value_section file=lookup.ini re=true')}}"
         other_section:    "{{lookup('ini', 'other[1-2]        section=other_section file=lookup.ini re=true')}}"
     - debug: var={{item}}
       with_items: [ 'value_section', 'other_section' ]
+    - assert:
+        that:
+          - "value_section == '1,2'"
+          - "other_section == '4,5'"
     - name: "Reading unknown value"
       set_fact:
-        unknown:  "{{lookup('ini', 'value2           default=unknown section=section1 file=lookup.ini')}}"
+        unknown:  "{{lookup('ini', 'unknown  default=unknown section=section1 file=lookup.ini')}}"
     - debug: var=unknown
+    - assert:
+        that:
+          - 'unknown == "unknown"'
     - name: "Looping over section section1"
       debug: msg="{{item}}"
       with_ini: value[1-2] section=section1      file=lookup.ini re=true
+      register: _
+    - assert:
+        that:
+          - '_.results.0.item == "section1/value1"'
+          - '_.results.1.item == "section1/value2"'
     - name: "Looping over section value_section"
       debug: msg="{{item}}"
       with_ini: value[1-2] section=value_section file=lookup.ini re=true
+      register: _
+    - assert:
+        that:
+          - '_.results.0.item == "1"'
+          - '_.results.1.item == "2"'
     - debug: msg="{{item}}"
       with_ini: value[1-2] section=section1 file=lookup.ini re=true
       register: _
-    - debug: var=_
+    - assert:
+        that:
+          - '_.results.0.item == "section1/value1"'
+          - '_.results.1.item == "section1/value2"'

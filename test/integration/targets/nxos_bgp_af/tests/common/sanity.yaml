@@ -1,0 +1,337 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_bgp_af sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: advertise_l2vpn_evpn="true"
+  when: platform is search('N9K')
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- name: "Enable feature nv overlay"
+  nxos_feature:
+    feature: nv overlay
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- name: "Setup"
+  nxos_bgp: &remove
+    asn: 65535
+    provider: "{{ connection }}"
+    state: absent
+  ignore_errors: yes
+
+- block:
+  - name: "Enable nv overlay evpn"
+    nxos_config:
+      lines:
+        - nv overlay evpn
+    when: platform is search('N9K')
+
+  - name: "Configure BGP_AF 1"
+    nxos_bgp_af: &configure1
+      asn: 65535
+      vrf: testing
+      afi: ipv4
+      safi: unicast
+      advertise_l2vpn_evpn: "{{advertise_l2vpn_evpn|default(omit)}}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure1
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Remove BGP"
+    nxos_bgp_af: &remove_af
+      asn: 65535
+      vrf: testing
+      afi: ipv4
+      safi: unicast
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP_AF 2"
+    nxos_bgp_af: &configure2
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampening_state: True
+      additional_paths_install: true
+      additional_paths_receive: true
+      additional_paths_selection: RouteMap
+      additional_paths_send: true
+      client_to_client: False
+      default_information_originate: true
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure2
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP_AF def2"
+    nxos_bgp_af: &configuredef2
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampening_state: False
+      additional_paths_install: False
+      additional_paths_receive: False
+      additional_paths_selection: default
+      additional_paths_send: False
+      client_to_client: True
+      default_information_originate: False
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configuredef2
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_af: &remove_af_vrf
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      provider: "{{ connection }}"
+      state: absent
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP_AF 3"
+    nxos_bgp_af: &configure3
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampening_routemap: 'abcd'
+      default_metric: 50
+      distance_ebgp: 30
+      distance_ibgp: 60
+      distance_local: 90
+      maximum_paths: 9
+      maximum_paths_ibgp: 9
+      next_hop_route_map: RouteMap
+      suppress_inactive: true
+      table_map: RouteMap
+      table_map_filter: true
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure3
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP_AF def3"
+    nxos_bgp_af: &configuredef3
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampening_routemap: default
+      default_metric: default
+      distance_ebgp: default
+      distance_ibgp: default
+      distance_local: default
+      maximum_paths: default
+      maximum_paths_ibgp: default
+      next_hop_route_map: default
+      suppress_inactive: False
+      table_map: default
+      table_map_filter: False
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configuredef3
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_af: *remove_af_vrf
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP_AF 4"
+    nxos_bgp_af: &configure4
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampen_igp_metric: 200
+      dampening_half_time: 1
+      dampening_max_suppress_time: 4
+      dampening_reuse_time: 2
+      dampening_suppress_time: 3
+      inject_map: [['lax_inject_map', 'lax_exist_map'], ['nyc_inject_map', 'nyc_exist_map', 'copy-attributes'], ['fsd_inject_map', 'fsd_exist_map']]
+      networks: [['10.0.0.0/16', 'routemap_LA'], ['192.168.1.1/32', 'Chicago'], ['192.168.2.0/24'], ['192.168.3.0/24', 'routemap_NYC']]
+      redistribute: [['direct', 'rm_direct'], ['lisp', 'rm_lisp']]
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure4
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP_AF 5"
+    nxos_bgp_af: &configure5
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampen_igp_metric: 300
+      dampening_half_time: 10
+      dampening_max_suppress_time: 40
+      dampening_reuse_time: 20
+      dampening_suppress_time: 30
+      inject_map: [['fsd_inject_map', 'fsd_exist_map']]
+      networks: [['192.168.2.0/24']]
+      redistribute: [['lisp', 'rm_lisp']]
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configure5
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP_AF def5"
+    nxos_bgp_af: &configuredef5
+      asn: 65535
+      vrf: "{{ item }}"
+      afi: ipv4
+      safi: unicast
+      dampen_igp_metric: default
+      dampening_half_time: default
+      dampening_max_suppress_time: default
+      dampening_reuse_time: default
+      dampening_suppress_time: default
+      inject_map: default
+      networks: default
+      redistribute: default
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *configuredef5
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_af: *remove_af_vrf
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_af: *remove_af_vrf
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  rescue:
+  - name: "Cleanup BGP"
+    nxos_bgp: *remove
+    ignore_errors: yes
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature: &disable_bgp
+      feature: bgp
+      provider: "{{ connection }}"
+      state: disabled
+
+  - name: "Disable feature nv overlay"
+    nxos_feature: &disable_nvoverlay
+      feature: nv overlay
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+  # Some platforms will timeout if the
+  # 'no nv overlay evpn' command is sent
+  # too quickly following bgp disablement.
+  - pause:
+      seconds: 5
+
+  - name: "Remove nv overlay evpn"
+    nxos_config:
+      lines:
+        - no nv overlay evpn
+    when: platform is search('N9K')
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_bgp_af sanity test"

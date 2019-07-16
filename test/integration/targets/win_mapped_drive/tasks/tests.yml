@@ -1,0 +1,344 @@
+---
+- name: fail with invalid path
+  win_mapped_drive:
+    letter: invalid
+    state: absent
+  register: fail_invalid_letter
+  failed_when: "fail_invalid_letter.msg != 'letter must be a single letter from A-Z, was: invalid'"
+
+- name: fail without specify path when creating drive
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    state: present
+  register: fail_path_missing
+  failed_when: "fail_path_missing.msg != 'state is present but all of the following are missing: path'"
+
+- name: fail when specifying letter with existing physical path
+  win_mapped_drive:
+    letter: c
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  register: fail_local_letter
+  failed_when: fail_local_letter.msg != 'failed to create mapped drive c, this letter is in use and is pointing to a non UNC path'
+
+- name: create mapped drive check
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  register: create_drive_check
+  check_mode: yes
+
+- name: get actual of create mapped drive check
+  win_command: 'net use {{test_win_mapped_drive_letter}}:' # Get-PSDrive/Get-WmiObject/Get-CimInstance doesn't work over WinRM
+  register: create_drive_actual_check
+  failed_when: False
+
+- name: assert create mapped drive check
+  assert:
+    that:
+    - create_drive_check is changed
+    - create_drive_actual_check.rc == 2 # should fail with this error code when it isn't found
+
+- name: create mapped drive
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  register: create_drive
+
+- name: get actual of create mapped drive
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: create_drive_actual
+
+- name: assert create mapped drive
+  assert:
+    that:
+    - create_drive is changed
+    - create_drive_actual.rc == 0
+    - create_drive_actual.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path}}"
+
+- name: create mapped drive again
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  register: create_drive_again
+
+- name: assert create mapped drive again
+  assert:
+    that:
+    - create_drive_again is not changed
+
+- name: change mapped drive target check
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path2}}
+    state: present
+  register: change_drive_target_check
+  check_mode: yes
+
+- name: get actual of change mapped drive target check
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: change_drive_target_actual_check
+
+- name: assert change mapped drive target check
+  assert:
+    that:
+    - change_drive_target_check is changed
+    - change_drive_target_actual_check.rc == 0
+    - change_drive_target_actual_check.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path}}"
+
+- name: change mapped drive target
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path2}}
+    state: present
+  register: change_drive_target
+
+- name: get actual of change mapped drive target
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: change_drive_target_actual
+
+- name: assert change mapped drive target
+  assert:
+    that:
+    - change_drive_target is changed
+    - change_drive_target_actual.rc == 0
+    - change_drive_target_actual.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path2}}"
+
+- name: fail to delete mapped drive if target doesn't match
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: absent
+  register: fail_delete_incorrect_target
+  failed_when: fail_delete_incorrect_target.msg != 'did not delete mapped drive ' + test_win_mapped_drive_letter + ', the target path is pointing to a different location at \\\\' + ansible_hostname + '\\' + test_win_mapped_drive_path2
+
+- name: delete mapped drive check
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path2}}
+    state: absent
+  register: delete_drive_check
+  check_mode: yes
+
+- name: get actual of delete mapped drive check
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: delete_drive_actual_check
+
+- name: assert delete mapped drive check
+  assert:
+    that:
+    - delete_drive_check is changed
+    - delete_drive_actual_check.rc == 0
+    - delete_drive_actual_check.stdout_lines[1] == "Remote name       \\\\{{ansible_hostname}}\\{{test_win_mapped_drive_path2}}"
+
+- name: delete mapped drive
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path2}}
+    state: absent
+  register: delete_drive
+
+- name: get actual of delete mapped drive
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: delete_drive_actual
+  failed_when: False
+
+- name: assert delete mapped drive
+  assert:
+    that:
+    - delete_drive is changed
+    - delete_drive_actual.rc == 2
+
+- name: delete mapped drive again
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path2}}
+    state: absent
+  register: delete_drive_again
+
+- name: assert delete mapped drive again
+  assert:
+    that:
+    - delete_drive_again is not changed
+
+# not much we can do to test out the credentials except that it sets it, winrm
+# makes it hard to actually test out we can still access the mapped drive
+- name: map drive with current credentials check
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+    username: '{{ansible_hostname}}\{{test_win_mapped_drive_temp_user}}'
+    password: '{{test_win_mapped_drive_temp_password}}'
+  register: map_with_credentials_check
+  check_mode: yes
+
+- name: get actual of map drive with current credentials check
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: map_with_credentials_actual_check
+  failed_when: False
+
+- name: assert map drive with current credentials check
+  assert:
+    that:
+    - map_with_credentials_check is changed
+    - map_with_credentials_actual_check.rc == 2
+
+- name: map drive with current credentials
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+    username: '{{ansible_hostname}}\{{test_win_mapped_drive_temp_user}}'
+    password: '{{test_win_mapped_drive_temp_password}}'
+  register: map_with_credentials
+
+- name: get actual of map drive with current credentials
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: map_with_credentials_actual
+
+- name: get username of mapped network drive with credentials
+  win_reg_stat:
+    path: HKCU:\Network\{{test_win_mapped_drive_letter}}
+    name: UserName
+  register: map_with_credential_actual_username
+
+- name: assert map drive with current credentials
+  assert:
+    that:
+    - map_with_credentials is changed
+    - map_with_credentials_actual.rc == 0
+    - map_with_credential_actual_username.value == ''  # we explicitly remove the username part in the module
+
+- name: map drive with current credentials again
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+    username: '{{ansible_hostname}}\{{test_win_mapped_drive_temp_user}}'
+    password: '{{test_win_mapped_drive_temp_password}}'
+  register: map_with_credentials_again
+
+- name: assert map drive with current credentials again
+  assert:
+    that:
+    - not map_with_credentials_again is changed
+
+- name: delete mapped drive without path check
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    state: absent
+  register: delete_without_path_check
+  check_mode: yes
+
+- name: get actual delete mapped drive without path check
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: delete_without_path_actual_check
+
+- name: assert delete mapped drive without path check
+  assert:
+    that:
+    - delete_without_path_check is changed
+    - delete_without_path_actual_check.rc == 0
+
+- name: delete mapped drive without path
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    state: absent
+  register: delete_without_path
+
+- name: get actual delete mapped drive without path
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: delete_without_path_actual
+  failed_when: False
+
+- name: assert delete mapped drive without path check
+  assert:
+    that:
+    - delete_without_path is changed
+    - delete_without_path_actual.rc == 2
+
+- name: delete mapped drive without path again
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    state: absent
+  register: delete_without_path_again
+
+- name: assert delete mapped drive without path check again
+  assert:
+    that:
+    - delete_without_path_again is not changed
+
+- name: store credential for test network account
+  win_credential:
+    name: '{{ ansible_hostname }}'
+    type: domain_password
+    username: '{{ test_win_mapped_drive_temp_user }}'
+    secret: '{{ test_win_mapped_drive_temp_password }}'
+    state: present
+  vars: &become_vars
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: '{{ ansible_user }}'
+    ansible_become_pass: '{{ ansible_password }}'
+
+- name: map drive with stored cred (check mode)
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  check_mode: yes
+  vars: *become_vars
+  register: map_with_stored_cred_check
+
+- name: get actual of map drive with stored cred (check mode)
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: map_with_stored_cred_actual_check
+  failed_when: False
+
+- name: assert map drive with stored cred (check mode)
+  assert:
+    that:
+    - map_with_stored_cred_check is changed
+    - map_with_stored_cred_actual_check.rc == 2
+
+- name: map drive with stored cred
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  vars: *become_vars
+  register: map_with_stored_cred
+
+- name: get actual of map drive with stored cred
+  win_command: 'net use {{test_win_mapped_drive_letter}}:'
+  register: map_with_stored_cred_actual
+
+- name: get username of mapped network drive with stored cred
+  win_reg_stat:
+    path: HKCU:\Network\{{test_win_mapped_drive_letter}}
+    name: UserName
+  register: map_with_stored_cred_actual_username
+
+- name: assert map drive with stored cred
+  assert:
+    that:
+    - map_with_stored_cred is changed
+    - map_with_stored_cred_actual.rc == 0
+    - map_with_stored_cred_actual_username.value == ''
+
+- name: map drive with stored cred again
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    path: \\{{ansible_hostname}}\{{test_win_mapped_drive_path}}
+    state: present
+  vars: *become_vars
+  register: map_with_stored_cred_again
+
+- name: assert map drive with stored cred again
+  assert:
+    that:
+    - not map_with_stored_cred_again is changed

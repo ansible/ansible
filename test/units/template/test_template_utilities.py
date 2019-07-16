@@ -20,55 +20,57 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import jinja2
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.template import _escape_backslashes, _count_newlines_from_end
 
 # These are internal utility functions only needed for templating.  They're
 # algorithmic so good candidates for unittesting by themselves
 
+
 class TestBackslashEscape(unittest.TestCase):
 
     test_data = (
-                # Test backslashes in a filter arg are double escaped
-                dict(
-                    template=u"{{ 'test2 %s' | format('\\1') }}",
-                    intermediate=u"{{ 'test2 %s' | format('\\\\1') }}",
-                    expectation=u"test2 \\1",
-                    args=dict()
-                ),
-                # Test backslashes inside the jinja2 var itself are double
-                # escaped
-                dict(
-                    template=u"Test 2\\3: {{ '\\1 %s' | format('\\2') }}",
-                    intermediate=u"Test 2\\3: {{ '\\\\1 %s' | format('\\\\2') }}",
-                    expectation=u"Test 2\\3: \\1 \\2",
-                    args=dict()
-                ),
-                # Test backslashes outside of the jinja2 var are not double
-                # escaped
-                dict(
-                    template=u"Test 2\\3: {{ 'test2 %s' | format('\\1') }}; \\done",
-                    intermediate=u"Test 2\\3: {{ 'test2 %s' | format('\\\\1') }}; \\done",
-                    expectation=u"Test 2\\3: test2 \\1; \\done",
-                    args=dict()
-                ),
-                # Test backslashes in a variable sent to a filter are handled
-                dict(
-                    template=u"{{ 'test2 %s' | format(var1) }}",
-                    intermediate=u"{{ 'test2 %s' | format(var1) }}",
-                    expectation=u"test2 \\1",
-                    args=dict(var1=u'\\1')
-                ),
-                # Test backslashes in a variable expanded by jinja2 are double
-                # escaped
-                dict(
-                    template=u"Test 2\\3: {{ var1 | format('\\2') }}",
-                    intermediate=u"Test 2\\3: {{ var1 | format('\\\\2') }}",
-                    expectation=u"Test 2\\3: \\1 \\2",
-                    args=dict(var1=u'\\1 %s')
-                ),
-            )
+        # Test backslashes in a filter arg are double escaped
+        dict(
+            template=u"{{ 'test2 %s' | format('\\1') }}",
+            intermediate=u"{{ 'test2 %s' | format('\\\\1') }}",
+            expectation=u"test2 \\1",
+            args=dict()
+        ),
+        # Test backslashes inside the jinja2 var itself are double
+        # escaped
+        dict(
+            template=u"Test 2\\3: {{ '\\1 %s' | format('\\2') }}",
+            intermediate=u"Test 2\\3: {{ '\\\\1 %s' | format('\\\\2') }}",
+            expectation=u"Test 2\\3: \\1 \\2",
+            args=dict()
+        ),
+        # Test backslashes outside of the jinja2 var are not double
+        # escaped
+        dict(
+            template=u"Test 2\\3: {{ 'test2 %s' | format('\\1') }}; \\done",
+            intermediate=u"Test 2\\3: {{ 'test2 %s' | format('\\\\1') }}; \\done",
+            expectation=u"Test 2\\3: test2 \\1; \\done",
+            args=dict()
+        ),
+        # Test backslashes in a variable sent to a filter are handled
+        dict(
+            template=u"{{ 'test2 %s' | format(var1) }}",
+            intermediate=u"{{ 'test2 %s' | format(var1) }}",
+            expectation=u"test2 \\1",
+            args=dict(var1=u'\\1')
+        ),
+        # Test backslashes in a variable expanded by jinja2 are double
+        # escaped
+        dict(
+            template=u"Test 2\\3: {{ var1 | format('\\2') }}",
+            intermediate=u"Test 2\\3: {{ var1 | format('\\\\2') }}",
+            expectation=u"Test 2\\3: \\1 \\2",
+            args=dict(var1=u'\\1 %s')
+        ),
+    )
+
     def setUp(self):
         self.env = jinja2.Environment()
 
@@ -83,6 +85,7 @@ class TestBackslashEscape(unittest.TestCase):
             template = jinja2.Template(intermediate)
             args = test['args']
             self.assertEquals(template.render(**args), test['expectation'])
+
 
 class TestCountNewlines(unittest.TestCase):
 

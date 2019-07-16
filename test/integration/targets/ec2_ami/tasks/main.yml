@@ -1,0 +1,462 @@
+---
+# tasks file for test_ec2_ami
+
+- block:
+
+    # ============================================================
+
+    # SETUP: vpc, ec2 key pair, subnet, security group, ec2 instance, snapshot
+    - name: set aws_connection_info fact
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_region: '{{aws_region}}'
+          aws_access_key: '{{aws_access_key}}'
+          aws_secret_key: '{{aws_secret_key}}'
+          security_token: '{{security_token}}'
+      no_log: yes
+
+    - name: create a VPC to work in
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/24
+        state: present
+        name: '{{ ec2_ami_name }}_setup'
+        resource_tags:
+          Name: '{{ ec2_ami_name }}_setup'
+        <<: *aws_connection_info
+      register: setup_vpc
+
+    - name: create a key pair to use for creating an ec2 instance
+      ec2_key:
+        name: '{{ ec2_ami_name }}_setup'
+        state: present
+        <<: *aws_connection_info
+      register: setup_key
+
+    - name: create a subnet to use for creating an ec2 instance
+      ec2_vpc_subnet:
+        az: '{{ ec2_region }}a'
+        tags: '{{ ec2_ami_name }}_setup'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: 10.0.0.0/24
+        state: present
+        resource_tags:
+          Name: '{{ ec2_ami_name }}_setup'
+        <<: *aws_connection_info
+      register: setup_subnet
+
+    - name: create a security group to use for creating an ec2 instance
+      ec2_group:
+        name: '{{ ec2_ami_name }}_setup'
+        description: 'created by Ansible integration tests'
+        state: present
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      register: setup_sg
+
+    - name: provision ec2 instance to create an image
+      ec2:
+        key_name: '{{ setup_key.key.name }}'
+        instance_type: t2.micro
+        state: present
+        image: '{{ ec2_region_images[ec2_region] }}'
+        wait: yes
+        instance_tags:
+          '{{ec2_ami_name}}_instance_setup': 'integration_tests'
+        group_id: '{{ setup_sg.group_id }}'
+        vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+        <<: *aws_connection_info
+      register: setup_instance
+
+    - name: take a snapshot of the instance to create an image
+      ec2_snapshot:
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        device_name: /dev/xvda
+        state: present
+        <<: *aws_connection_info
+      register: setup_snapshot
+
+    # ============================================================
+
+    - name: test clean failure if not providing image_id or name with state=present
+      ec2_ami:
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: present
+        description: '{{ ec2_ami_description }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        root_device_name: /dev/xvda
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: yes
+
+    - name: assert error message is helpful
+      assert:
+        that:
+          - result.failed
+          - "result.msg == 'one of the following is required: name, image_id'"
+
+    # ============================================================
+
+    - name: create an image from the instance
+      ec2_ami:
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: present
+        name: '{{ ec2_ami_name }}_ami'
+        description: '{{ ec2_ami_description }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        root_device_name: /dev/xvda
+        <<: *aws_connection_info
+      register: result
+
+    - name: set image id fact for deletion later
+      set_fact:
+        ec2_ami_image_id: "{{ result.image_id }}"
+
+    - name: assert that image has been created
+      assert:
+        that:
+          - "result.changed"
+          - "result.image_id.startswith('ami-')"
+          - "'Name' in result.tags and result.tags.Name == ec2_ami_name + '_ami'"
+
+    # ============================================================
+
+    - name: gather facts about the image created
+      ec2_ami_info:
+        image_ids: '{{ ec2_ami_image_id }}'
+        <<: *aws_connection_info
+      register: ami_facts_result
+      ignore_errors: true
+
+    - name: assert that the right image was found
+      assert:
+        that:
+          - "ami_facts_result.images[0].image_id == ec2_ami_image_id"
+
+    # ============================================================
+
+    - name: delete the image
+      ec2_ami:
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: absent
+        delete_snapshot: yes
+        name: '{{ ec2_ami_name }}_ami'
+        description: '{{ ec2_ami_description }}'
+        image_id: '{{ result.image_id }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        <<: *aws_connection_info
+      ignore_errors: true
+      register: result
+
+    - name: assert that the image has been deleted
+      assert:
+        that:
+          - "result.changed"
+          - "'image_id' not in result"
+          - "result.snapshots_deleted"
+
+    # ============================================================
+
+    - name: test removing an ami if no image ID is provided (expected failed=true)
+      ec2_ami:
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: yes
+
+    - name: assert that an image ID is required
+      assert:
+        that:
+          - "result.failed"
+          - "result.msg == 'state is absent but all of the following are missing: image_id'"
+
+    # ============================================================
+
+    - name: create an image from the snapshot
+      ec2_ami:
+        name: '{{ ec2_ami_name }}_ami'
+        description: '{{ ec2_ami_description }}'
+        state: present
+        launch_permissions:
+          user_ids: []
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        root_device_name: /dev/xvda
+        device_mapping:
+          - device_name: /dev/xvda
+            volume_type: gp2
+            size: 8
+            delete_on_termination: true
+            snapshot_id: '{{ setup_snapshot.snapshot_id }}'
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: set image id fact for deletion later
+      set_fact:
+        ec2_ami_image_id: "{{ result.image_id }}"
+        ec2_ami_snapshot: "{{ result.block_device_mapping['/dev/xvda'].snapshot_id }}"
+
+    - name: assert a new ami has been created
+      assert:
+        that:
+          - "result.changed"
+          - "result.image_id.startswith('ami-')"
+
+    # ============================================================
+
+    - name: test default launch permissions idempotence
+      ec2_ami:
+        description: '{{ ec2_ami_description }}'
+        state: present
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        root_device_name: /dev/xvda
+        image_id: '{{ result.image_id }}'
+        launch_permissions:
+          user_ids: []
+        device_mapping:
+          - device_name: /dev/xvda
+            volume_type: gp2
+            size: 8
+            delete_on_termination: true
+            snapshot_id: '{{ setup_snapshot.snapshot_id }}'
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert a new ami has not been created
+      assert:
+        that:
+          - "not result.changed"
+          - "result.image_id.startswith('ami-')"
+
+    # ============================================================
+
+    - name: add a tag to the AMI
+      ec2_ami:
+        state: present
+        description: '{{ ec2_ami_description }}'
+        image_id: '{{ result.image_id }}'
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          New: Tag
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert a tag was added
+      assert:
+        that:
+          - "'Name' in result.tags and result.tags.Name == ec2_ami_name + '_ami'"
+          - "'New' in result.tags and result.tags.New == 'Tag'"
+
+    - name: use purge_tags to remove a tag from the AMI
+      ec2_ami:
+        state: present
+        description: '{{ ec2_ami_description }}'
+        image_id: '{{ result.image_id }}'
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          New: Tag
+        purge_tags: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert a tag was removed
+      assert:
+        that:
+          - "'Name' not in result.tags"
+          - "'New' in result.tags and result.tags.New == 'Tag'"
+
+    # ============================================================
+
+    - name: update AMI launch permissions
+      ec2_ami:
+        state: present
+        image_id: '{{ result.image_id }}'
+        description: '{{ ec2_ami_description }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        launch_permissions:
+          group_names: ['all']
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert launch permissions were updated
+      assert:
+        that:
+          - "result.changed"
+
+    # ============================================================
+
+    - name: modify the AMI description
+      ec2_ami:
+        state: present
+        image_id: '{{ result.image_id }}'
+        name: '{{ ec2_ami_name }}_ami'
+        description: '{{ ec2_ami_description }}CHANGED'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        launch_permissions:
+          group_names: ['all']
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert the description changed
+      assert:
+        that:
+          - "result.changed"
+
+    # ============================================================
+
+    - name: remove public launch permissions
+      ec2_ami:
+        state: present
+        image_id: '{{ result.image_id }}'
+        name: '{{ ec2_ami_name }}_ami'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        launch_permissions:
+          group_names: []
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert launch permissions were updated
+      assert:
+        that:
+          - "result.changed"
+
+    # ============================================================
+
+    - name: delete ami without deleting the snapshot (default is not to delete)
+      ec2_ami:
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: absent
+        name: '{{ ec2_ami_name }}_ami'
+        image_id: '{{ ec2_ami_image_id }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        <<: *aws_connection_info
+      ignore_errors: true
+      register: result
+
+    - name: assert that the image has been deleted
+      assert:
+        that:
+          - "result.changed"
+          - "'image_id' not in result"
+
+    - name: ensure the snapshot still exists
+      ec2_snapshot_info:
+        snapshot_ids:
+          - '{{ ec2_ami_snapshot }}'
+        <<: *aws_connection_info
+      register: snapshot_result
+
+    - name: assert the snapshot wasn't deleted
+      assert:
+        that:
+          - "snapshot_result.snapshots[0].snapshot_id == ec2_ami_snapshot"
+
+    - name: delete ami for a second time
+      ec2_ami:
+        instance_id: '{{ setup_instance.instance_ids[0] }}'
+        state: absent
+        name: '{{ ec2_ami_name }}_ami'
+        image_id: '{{ ec2_ami_image_id }}'
+        tags:
+          Name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert that image does not exist
+      assert:
+        that:
+          - not result.changed
+          - not result.failed
+
+
+    # ============================================================
+
+  always:
+
+    # ============================================================
+
+    # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
+    - name: Announce teardown start
+      debug:
+        msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
+
+    - name: delete ami
+      ec2_ami:
+        state: absent
+        image_id: "{{ ec2_ami_image_id }}"
+        name: '{{ ec2_ami_name }}_ami'
+        wait: yes
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup snapshot of ec2 instance
+      ec2_snapshot:
+        state: absent
+        snapshot_id: '{{ setup_snapshot.snapshot_id }}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup ec2 instance
+      ec2:
+        instance_type: t2.micro
+        instance_ids: '{{ setup_instance.instance_ids }}'
+        state: absent
+        wait: yes
+        instance_tags:
+          '{{ec2_ami_name}}_instance_setup': 'integration_tests'
+        group_id: '{{ setup_sg.group_id }}'
+        vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup keypair
+      ec2_key:
+        name: '{{ec2_ami_name}}_setup'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup security group
+      ec2_group:
+        name: '{{ ec2_ami_name }}_setup'
+        description: 'created by Ansible integration tests'
+        state: absent
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup subnet
+      ec2_vpc_subnet:
+        az: '{{ ec2_region }}a'
+        tags: '{{ec2_ami_name}}_setup'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: 10.0.0.0/24
+        state: absent
+        resource_tags:
+          Name: '{{ ec2_ami_name }}_setup'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: remove setup VPC
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/24
+        state: absent
+        name: '{{ ec2_ami_name }}_setup'
+        resource_tags:
+          Name: '{{ ec2_ami_name }}_setup'
+        <<: *aws_connection_info
+      ignore_errors: yes

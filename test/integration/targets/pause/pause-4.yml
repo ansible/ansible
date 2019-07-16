@@ -1,0 +1,13 @@
+- name: Test pause module with pause and custom prompt
+  hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - name: EXPECTED FAILURE
+      pause:
+        seconds: 2
+        prompt: Waiting for two seconds
+
+    - debug:
+        msg: Task after pause

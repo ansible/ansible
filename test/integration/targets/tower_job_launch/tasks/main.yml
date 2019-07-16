@@ -1,0 +1,58 @@
+- name: Launch a Job Template
+  tower_job_launch:
+    job_template: "Demo Job Template"
+    inventory: "Demo Inventory"
+    credential: "Demo Credential"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+      - "result.status == 'pending'"
+
+- name: Wait for a job template to complete
+  tower_job_wait:
+    job_id: "{{ result.id }}"
+    max_interval: 10
+    timeout: 120
+  register: result
+
+- assert:
+    that:
+      - "result is not changed"
+      - "result.status == 'successful'"
+
+- name: Check module fails with correct msg
+  tower_job_launch:
+     job_template: "Non Existing Job Template"
+     inventory: "Test Inventory"
+     credential: "Test Credential"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Unable to launch job, job_template/Non Existing Job Template was not found: The requested object could not be found.'"
+
+- name: Create a Job Template for testing prompt on launch
+  tower_job_template:
+    name: "Demo Job Template - ask inventory and credential"
+    project: Demo Project
+    playbook: hello_world.yml
+    job_type: run
+    ask_credential: yes
+    ask_inventory: yes
+    state: present
+  register: result
+
+- name: Launch job template with inventory and credential for prompt on launch
+  tower_job_launch:
+    job_template: "Demo Job Template - ask inventory and credential"
+    inventory: "Demo Inventory"
+    credential: "Demo Credential"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+      - "result.status == 'pending'"

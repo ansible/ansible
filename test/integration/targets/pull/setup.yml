@@ -1,0 +1,11 @@
+- hosts: localhost
+  tasks:
+    - name: install git
+      package:
+        name: git
+      when: ansible_distribution != "MacOSX"
+      register: git_install
+    - name: save install result
+      copy:
+        content: '{{ git_install }}'
+        dest: '{{ lookup("env", "OUTPUT_DIR") }}/git_install.json'

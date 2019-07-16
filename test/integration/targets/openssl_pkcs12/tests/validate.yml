@@ -1,0 +1,55 @@
+- name: 'Validate PKCS#12'
+  command: "openssl pkcs12 -info -in {{ output_dir }}/ansible.p12 -nodes -passin pass:''"
+  register: p12
+
+- name: 'Validate PKCS#12 with no private key'
+  command: "openssl pkcs12 -info -in {{ output_dir }}/ansible_no_pkey.p12 -nodes -passin pass:''"
+  register: p12_validate_no_pkey
+
+- name: 'Validate PKCS#12 with multiple certs'
+  shell: "openssl pkcs12 -info -in {{ output_dir }}/ansible_multi_certs.p12 -nodes -passin pass:'' | grep subject"
+  register: p12_validate_multi_certs
+
+- name: 'Validate PKCS#12 (assert)'
+  assert:
+    that:
+      - p12.stdout_lines[2].split(':')[-1].strip() == 'abracadabra'
+      - p12_standard.mode == '0400'
+      - p12_no_pkey.changed
+      - p12_validate_no_pkey.stdout_lines[-1] == '-----END CERTIFICATE-----'
+      - p12_force.changed
+      - p12_force_and_mode.mode == '0644' and p12_force_and_mode.changed
+      - not p12_standard_idempotency.changed
+      - not p12_multiple_certs_idempotency.changed
+      - "'www.' in p12_validate_multi_certs.stdout"
+      - "'www2.' in p12_validate_multi_certs.stdout"
+      - "'www3.' in p12_validate_multi_certs.stdout"
+
+- name: Check passphrase on private key
+  assert:
+    that:
+      - passphrase_error_1 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_1.msg"
+      - passphrase_error_2 is failed
+      - "'assphrase' in passphrase_error_2.msg or 'assword' in passphrase_error_2.msg or 'serializ' in passphrase_error_2.msg"
+      - passphrase_error_3 is failed
+      - "'assphrase' in passphrase_error_3.msg or 'assword' in passphrase_error_3.msg or 'serializ' in passphrase_error_3.msg"
+
+- name: "Verify that broken PKCS#12 will be regenerated"
+  assert:
+    that:
+      - output_broken is changed
+
+- name: Check backup
+  assert:
+    that:
+      - p12_backup_1 is changed
+      - p12_backup_1.backup_file is undefined
+      - p12_backup_2 is not changed
+      - p12_backup_2.backup_file is undefined
+      - p12_backup_3 is changed
+      - p12_backup_3.backup_file is string
+      - p12_backup_4 is changed
+      - p12_backup_4.backup_file is string
+      - p12_backup_5 is not changed
+      - p12_backup_5.backup_file is undefined

@@ -1,1 +1,2 @@
-CHANGELOG.md merge=union
+.github/ export-ignore
+hacking/ export-ignore

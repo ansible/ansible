@@ -43,21 +43,21 @@
 import argparse
 import os.path
 import sys
+
+import json
+
 import paramiko
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.module_utils.common._collections_compat import MutableSequence
 
 SSH_CONF = '~/.ssh/config'
 
 _key = 'ssh_config'
 
 _ssh_to_ansible = [('user', 'ansible_ssh_user'),
-                  ('hostname', 'ansible_ssh_host'),
-                  ('identityfile', 'ansible_ssh_private_key_file'),
-                  ('port', 'ansible_ssh_port')]
+                   ('hostname', 'ansible_ssh_host'),
+                   ('identityfile', 'ansible_ssh_private_key_file'),
+                   ('port', 'ansible_ssh_port')]
 
 
 def get_config():
@@ -68,7 +68,7 @@ def get_config():
         cfg.parse(f)
         ret_dict = {}
         for d in cfg._config:
-            if type(d['host']) is list:
+            if isinstance(d['host'], MutableSequence):
                 alias = d['host'][0]
             else:
                 alias = d['host']
@@ -93,7 +93,7 @@ def print_list():
                 # If the attribute is a list, just take the first element.
                 # Private key is returned in a list for some reason.
                 attr = attributes[ssh_opt]
-                if type(attr) is list:
+                if isinstance(attr, MutableSequence):
                     attr = attr[0]
                 tmp_dict[ans_opt] = attr
         if tmp_dict:
@@ -109,7 +109,7 @@ def print_host(host):
 
 def get_args(args_list):
     parser = argparse.ArgumentParser(
-            description='ansible inventory script parsing .ssh/config')
+        description='ansible inventory script parsing .ssh/config')
     mutex_group = parser.add_mutually_exclusive_group(required=True)
     help_list = 'list all hosts from .ssh/config inventory'
     mutex_group.add_argument('--list', action='store_true', help=help_list)

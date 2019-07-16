@@ -1,0 +1,38 @@
+---
+# Run the tests
+- block:
+  - include_tasks: run-test.yml
+    with_fileglob:
+    - "tests/*.yml"
+
+  always:
+  - name: Cleanup (trying)
+    docker_swarm:
+      state: absent
+      force: true
+    diff: no
+    ignore_errors: yes
+
+  - name: Kill docker daemon
+    command: systemctl kill -s 9 docker
+    become: yes
+
+  - name: Restart docker daemon
+    service:
+      name: docker
+      state: restarted
+    become: yes
+
+  - name: Wait for docker daemon to be fully restarted
+    command: docker ps
+
+  - name: Cleanup
+    docker_swarm:
+      state: absent
+      force: true
+    diff: no
+
+  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.25', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_swarm tests!"
+  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

@@ -1,0 +1,124 @@
+---
+- debug: msg="START junos_lldp_interface netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: get supported protocols
+  junos_command:
+    commands: show lldp
+  register: result
+  ignore_errors: yes
+
+- name: lldp supported
+  set_fact:
+    lldp_supported: True
+  when: not result.failed
+
+- name: lldp not supported
+  set_fact:
+    lldp_supported: False
+  when: result.failed
+
+- block:
+  - name: setup - Remove lldp interface configuration
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: absent
+      provider: "{{ netconf }}"
+
+  - name: lldp interface configuration
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: present
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - result.diff.prepared is search("\+ *interface ge-0/0/5")
+
+  - name: lldp interface configuration (idempotent)
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: present
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Deactivate lldp interface configuration
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: present
+      active: False
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - result.diff.prepared is search("! *inactive[:] interface ge-0/0/5")
+
+  - name: Activate lldp interface configuration
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: present
+      active: True
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - result.diff.prepared is search("! *active[:] interface ge-0/0/5")
+
+  - name: Disable lldp on particular interface
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: disabled
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - result.diff.prepared is search("\+ *disable")
+
+  - name: Enable lldp on particular interface
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: enabled
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - result.diff.prepared is search("\- *disable")
+
+  - name: Delete lldp on particular interface
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: absent
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - result.diff.prepared is search("\- *interface ge-0/0/5")
+
+  - name: Delete lldp on particular interface (idempotent)
+    junos_lldp_interface:
+      name: ge-0/0/5
+      state: absent
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+  when: lldp_supported
+
+- debug: msg="END junos_lldp_interface netconf/basic.yaml on connection={{ ansible_connection }}"

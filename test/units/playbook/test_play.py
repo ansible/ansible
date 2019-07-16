@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block
@@ -77,7 +77,7 @@ class TestPlay(unittest.TestCase):
             name="test play",
             hosts=['foo'],
             gather_facts=False,
-            tasks=[dict(action='shell echo "hello world"')], 
+            tasks=[dict(action='shell echo "hello world"')],
         ))
 
     def test_play_with_handlers(self):

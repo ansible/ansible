@@ -1,0 +1,99 @@
+---
+- name: Find out which elliptic curves are supported by installed OpenSSL
+  command: openssl ecparam -list_curves
+  register: openssl_ecc
+
+- name: Compile list of elliptic curves supported by OpenSSL
+  set_fact:
+    openssl_ecc_list: |
+      {{
+        openssl_ecc.stdout_lines
+        | map('regex_search', '^ *([a-zA-Z0-9_-]+) *: .*$')
+        | select()
+        | map('regex_replace', '^ *([a-zA-Z0-9_-]+) *: .*$', '\1')
+        | list
+      }}
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '6'
+  # CentOS comes with a very old jinja2 which does not include the map() filter...
+- name: Compile list of elliptic curves supported by OpenSSL (CentOS 6)
+  set_fact:
+    openssl_ecc_list:
+    - secp384r1
+    - secp521r1
+    - prime256v1
+  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6'
+
+- name: List of elliptic curves supported by OpenSSL
+  debug: var=openssl_ecc_list
+
+- name: Run module with backend autodetection
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_backend_selection.pem'
+
+- block:
+  - name: Running tests with pyOpenSSL backend
+    include_tasks: impl.yml
+    vars:
+      select_crypto_backend: pyopenssl
+
+  - import_tasks: ../tests/validate.yml
+
+  # FIXME: minimal pyOpenSSL version?!
+  when: pyopenssl_version.stdout is version('0.6', '>=')
+
+- name: Remove output directory
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: Re-create output directory
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
+- block:
+  - name: Running tests with cryptography backend
+    include_tasks: impl.yml
+    vars:
+      select_crypto_backend: cryptography
+
+  - import_tasks: ../tests/validate.yml
+
+  when: cryptography_version.stdout is version('0.5', '>=')
+
+- name: Check that fingerprints do not depend on the backend
+  block:
+  - name: "Fingerprint comparison: pyOpenSSL"
+    openssl_privatekey:
+      path: '{{ output_dir }}/fingerprint-{{ item }}.pem'
+      type: "{{ item }}"
+      size: 1024
+      select_crypto_backend: pyopenssl
+    loop:
+    - RSA
+    - DSA
+    register: fingerprint_pyopenssl
+
+  - name: "Fingerprint comparison: cryptography"
+    openssl_privatekey:
+      path: '{{ output_dir }}/fingerprint-{{ item }}.pem'
+      type: "{{ item }}"
+      size: 1024
+      select_crypto_backend: cryptography
+    loop:
+    - RSA
+    - DSA
+    register: fingerprint_cryptography
+
+  - name: Verify that fingerprints match
+    assert:
+      that: item.0.fingerprint[item.2] == item.1.fingerprint[item.2]
+    when: item.0 is not skipped and item.1 is not skipped
+    loop: |
+      {{ query('nested',
+            fingerprint_pyopenssl.results | zip(fingerprint_cryptography.results),
+            fingerprint_pyopenssl.results[0].fingerprint.keys()
+      ) if fingerprint_pyopenssl.results[0].fingerprint else [] }}
+    loop_control:
+      label: "{{ [item.0.item, item.2] }}"
+  when: pyopenssl_version.stdout is version('0.6', '>=') and cryptography_version.stdout is version('0.5', '>=')

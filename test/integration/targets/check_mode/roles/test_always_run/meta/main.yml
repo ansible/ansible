@@ -1,4 +1,4 @@
-# test code for the always_run option
+# test code for the check_mode: no option
 # (c) 2014, James Cammarata <jcammarata@ansible.com>
 
 # This file is part of Ansible
@@ -15,4 +15,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-

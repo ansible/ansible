@@ -1,0 +1,56 @@
+- name: setup custom security group
+  cs_securitygroup: name={{ cs_resource_prefix }}_sg
+  register: sg
+- name: verify setup
+  assert:
+    that:
+    - sg is successful
+
+- name: setup default security group
+  cs_securitygroup: name=default
+  register: sg
+- name: verify setup
+  assert:
+    that:
+    - sg is successful
+
+- name: setup remove icmp rule
+  cs_securitygroup_rule:
+    security_group: default
+    protocol: icmp
+    type: ingress
+    icmp_type: -1
+    icmp_code: -1
+    state: absent
+  register: sg_rule
+- name: verify remove icmp rule
+  assert:
+    that:
+    - sg_rule is successful
+
+- name: setup remove http range rule
+  cs_securitygroup_rule:
+    security_group: default
+    start_port: 8000
+    end_port: 8888
+    cidr: 1.2.3.4/32
+    state: absent
+  register: sg_rule
+- name: verify remove http range rule
+  assert:
+    that:
+    - sg_rule is successful
+
+- name: setup remove single port udp rule
+  cs_securitygroup_rule:
+    security_group: default
+    port: 5353
+    protocol: udp
+    type: egress
+    user_security_group: '{{ cs_resource_prefix }}-user-sg'
+    state: absent
+  register: sg_rule
+- name: verify remove single port udp rule
+  assert:
+    that:
+    - sg_rule is successful

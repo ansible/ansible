@@ -1,0 +1,38 @@
+# Test code for the vmware_host_capability_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support host system capabilities
+
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+
+  - name: Gather capability facts for all ESXi host from given cluster
+    vmware_host_capability_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      cluster_name: "{{ ccr1 }}"
+    register: capability_0001_results
+  - assert:
+      that:
+        - not (capability_0001_results is changed)
+        - capability_0001_results.hosts_capability_facts is defined
+
+  - name: Gather capability facts for ESXi host
+    vmware_host_capability_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      esxi_hostname: '{{ esxi1 }}'
+    register: capability_0002_results
+  - assert:
+      that:
+        - not (capability_0002_results is changed)
+        - capability_0002_results.hosts_capability_facts is defined

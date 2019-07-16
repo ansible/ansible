@@ -1,0 +1,246 @@
+---
+- debug: msg="START iosxr cli/iosxr_bgp.yaml on connection={{ ansible_connection }}"
+
+- name: Check IOS-XR version
+  iosxr_facts:
+    gather_subset: default
+  register: facts
+
+- block:
+    - name: Clear existing BGP config
+      iosxr_bgp:
+        operation: delete
+      ignore_errors: yes
+
+    - name: Configure BGP with AS 64496 and a router-id
+      iosxr_bgp: &config
+        operation: merge
+        config:
+          bgp_as: 64496
+          router_id: 192.0.2.2
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - "'router bgp 64496' in result.commands"
+          - "'bgp router-id 192.0.2.2' in result.commands"
+
+    - name: Configure BGP with AS 64496 and a router-id (idempotent)
+      iosxr_bgp: *config
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == false'
+
+    - name: Configure BGP neighbors
+      iosxr_bgp: &nbr
+        operation: merge
+        config:
+          bgp_as: 64496
+          neighbors:
+            - neighbor: 192.0.2.10
+              remote_as: 64496
+              description: IBGP_NBR_1
+              advertisement_interval: 120
+              timers:
+                keepalive: 300
+                holdtime: 360
+
+            - neighbor: 192.0.2.15
+              remote_as: 64496
+              description: IBGP_NBR_2
+              tcp_mss: 1500
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - "'router bgp 64496' in result.commands"
+          - "'neighbor 192.0.2.10' in result.commands"
+          - "'remote-as 64496' in result.commands"
+          - "'description IBGP_NBR_1' in result.commands"
+          - "'timers 300 360' in result.commands"
+          - "'advertisement-interval 120' in result.commands"
+          - "'neighbor 192.0.2.15' in result.commands"
+          - "'remote-as 64496' in result.commands"
+          - "'description IBGP_NBR_2' in result.commands"
+          - "'tcp mss 1500' in result.commands"
+
+    - name: Configure BGP neighbors (idempotent)
+      iosxr_bgp: *nbr
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == false'
+
+    - name: Configure BGP neighbors with operation replace
+      iosxr_bgp: &nbr_rplc
+        operation: replace
+        config:
+          bgp_as: 64496
+          neighbors:
+            - neighbor: 192.0.2.15
+              remote_as: 64496
+              description: IBGP_NBR_2
+              tcp_mss: 1500
+
+            - neighbor: 203.0.113.10
+              remote_as: 64511
+              description: EBGP_NBR_1
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - "'neighbor 203.0.113.10' in result.commands"
+          - "'remote-as 64511' in result.commands"
+          - "'description EBGP_NBR_1' in result.commands"
+          - "'no neighbor 192.0.2.10' in result.commands"
+
+    - name: Configure BGP neighbors with operation replace (idempotent)
+      iosxr_bgp: *nbr_rplc
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == false'
+
+    - name: create route-policy as prerequisite for BGP configuration
+      iosxr_config:
+        lines:
+        - no route-policy RMAP_1
+        - route-policy RMAP_1
+        - exit
+      register: result
+
+    - name: Configure networks under address family
+      iosxr_bgp: &af_net
+        operation: merge
+        config:
+          bgp_as: 64496
+          address_family:
+            - afi: ipv4
+              networks:
+                - prefix: 198.51.100.48
+                  masklen: 28
+                  route_map: RMAP_1
+
+                - prefix: 192.0.2.64
+                  masklen: 27
+
+                - prefix: 203.0.113.160
+                  masklen: 27
+
+            - afi: ipv4
+              safi: multicast
+              networks:
+                - prefix: 198.51.100.64
+                  masklen: 28
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - "'router bgp 64496' in result.commands"
+          - "'address-family ipv4 unicast' in result.commands"
+          - "'network 198.51.100.48/28 route-policy RMAP_1' in result.commands"
+          - "'network 192.0.2.64/27' in result.commands"
+          - "'network 203.0.113.160/27' in result.commands"
+          - "'address-family ipv4 multicast' in result.commands"
+          - "'network 198.51.100.64/28' in result.commands"
+
+    - name: Configure networks under address family (idempotent)
+      iosxr_bgp: *af_net
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == false'
+
+    - name: Configure networks under address family with operation replace
+      iosxr_bgp: &af_net_rplc
+        operation: replace
+        config:
+          bgp_as: 64496
+          address_family:
+            - afi: ipv4
+              safi: unicast
+              networks:
+                - prefix: 198.51.100.80
+                  masklen: 28
+
+                - prefix: 192.0.2.64
+                  masklen: 27
+
+                - prefix: 203.0.113.192
+                  masklen: 27
+
+            - afi: ipv4
+              safi: multicast
+              networks:
+                - prefix: 198.51.100.64
+                  masklen: 28
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - '"router bgp 64496" in result.commands'
+          - '"address-family ipv4 unicast" in result.commands'
+          - '"network 198.51.100.80/28" in result.commands'
+          - '"network 203.0.113.192/27" in result.commands'
+          - '"no network 198.51.100.48/28" in result.commands'
+          - '"no network 203.0.113.160/27" in result.commands'
+
+    - name: Configure networks under address family with operation replace (idempotent)
+      iosxr_bgp: *af_net_rplc
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == false'
+
+    - name: Override all the exisiting BGP config
+      iosxr_bgp:
+        operation: override
+        config:
+          bgp_as: 64497
+          router_id: 192.0.2.10
+          log_neighbor_changes: True
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - "'router bgp 64497' in result.commands"
+          - "'bgp router-id 192.0.2.10' in result.commands"
+          - "'bgp log neighbor changes detail' in result.commands"
+
+    - name: Teardown
+      iosxr_bgp: &rm
+        operation: delete
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == true'
+          - "'no router bgp 64497' in result.commands"
+
+    - name: Teardown again (idempotent)
+      iosxr_bgp: *rm
+      register: result
+
+    - assert:
+        that:
+          - 'result.changed == false'
+
+    - name: delete route-policy configures as prerequisite for BGP configuration (teardown)
+      iosxr_config:
+        lines: no route-policy RMAP_1
+
+  when: facts['ansible_facts']['ansible_net_version'].split('[')[0] == '6.1.3'
+
+- debug: msg="END iosxr cli/iosxr_bgp.yaml on connection={{ ansible_connection }}"

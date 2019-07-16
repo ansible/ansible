@@ -1,0 +1,205 @@
+---
+- name: setup zone is absent
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: zone
+- name: verify setup zone absent
+  assert:
+    that:
+      - zone is successful
+
+- name: test fail missing param
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+  register: zone
+  ignore_errors: true
+- name: verify test fail missing param
+  assert:
+    that:
+      - zone is failed
+      - "zone.msg == 'missing required arguments: dns1'"
+
+- name: test create zone in check mode
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    network_type: Basic
+  register: zone
+  check_mode: true
+- name: verify test create zone in check mode
+  assert:
+    that:
+      - zone is successful
+      - zone is changed
+
+- name: test create zone
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    network_type: Basic
+  register: zone
+- name: verify test create zone
+  assert:
+    that:
+      - zone is successful
+      - zone is changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "8.8.8.8"
+      - zone.internal_dns2 == "8.8.4.4"
+      - zone.local_storage_enabled == false
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+      - zone.dhcp_provider == "VirtualRouter"
+
+- name: test create zone idempotency
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    network_type: Basic
+  register: zone
+- name: verify test create zone idempotency
+  assert:
+    that:
+      - zone is successful
+      - zone is not changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "8.8.8.8"
+      - zone.internal_dns2 == "8.8.4.4"
+      - zone.local_storage_enabled == false
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+      - zone.dhcp_provider == "VirtualRouter"
+
+- name: test update zone in check mode
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    internal_dns1: 10.10.1.100
+    internal_dns2: 10.10.1.101
+    local_storage_enabled: true
+    network_type: Basic
+  register: zone
+  check_mode: true
+- name: verify test update zone in check mode
+  assert:
+    that:
+      - zone is successful
+      - zone is changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "8.8.8.8"
+      - zone.internal_dns2 == "8.8.4.4"
+      - zone.local_storage_enabled == false
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+      - zone.dhcp_provider == "VirtualRouter"
+
+- name: test update zone
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    internal_dns1: 10.10.1.100
+    internal_dns2: 10.10.1.101
+    local_storage_enabled: true
+    network_type: Basic
+  register: zone
+- name: verify test update zone
+  assert:
+    that:
+      - zone is successful
+      - zone is changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "10.10.1.100"
+      - zone.internal_dns2 == "10.10.1.101"
+      - zone.local_storage_enabled == true
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+      - zone.dhcp_provider == "VirtualRouter"
+
+- name: test update zone idempotency
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    internal_dns1: 10.10.1.100
+    internal_dns2: 10.10.1.101
+    local_storage_enabled: true
+    network_type: Basic
+  register: zone
+- name: verify test update zone idempotency
+  assert:
+    that:
+      - zone is successful
+      - zone is not changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "10.10.1.100"
+      - zone.internal_dns2 == "10.10.1.101"
+      - zone.local_storage_enabled == true
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+      - zone.dhcp_provider == "VirtualRouter"
+
+- name: test absent zone in check mode
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: zone
+  check_mode: true
+- name: verify test absent zone in check mode
+  assert:
+    that:
+      - zone is successful
+      - zone is changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "10.10.1.100"
+      - zone.internal_dns2 == "10.10.1.101"
+      - zone.local_storage_enabled == true
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+
+- name: test absent zone
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: zone
+- name: verify test absent zone
+  assert:
+    that:
+      - zone is successful
+      - zone is changed
+      - zone.dns1 == "8.8.8.8"
+      - zone.dns2 == "8.8.4.4"
+      - zone.internal_dns1 == "10.10.1.100"
+      - zone.internal_dns2 == "10.10.1.101"
+      - zone.local_storage_enabled == true
+      - zone.network_type == "Basic"
+      - zone.zone_token != ""
+      - zone.securitygroups_enabled == true
+
+- name: test absent zone idempotency
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    state: absent
+  register: zone
+- name: verify test absent zone idempotency
+  assert:
+    that:
+      - zone is successful
+      - zone is not changed

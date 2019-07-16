@@ -1,0 +1,43 @@
+{
+    "kind": "tm:ltm:dns:cache:resolver:resolverstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 666,
+    "selfLink": "https://localhost/mgmt/tm/ltm/dns/cache/resolver/~Common~foo?ver=13.1.0.7",
+    "allowedQueryTime": 200,
+    "answerDefaultZones": "no",
+    "maxConcurrentQueries": 1024,
+    "maxConcurrentTcp": 20,
+    "maxConcurrentUdp": 8192,
+    "msgCacheSize": 1048576,
+    "nameserverCacheCount": 16536,
+    "randomizeQueryNameCase": "yes",
+    "routeDomain": "/Common/0",
+    "routeDomainReference": {
+        "link": "https://localhost/mgmt/tm/net/route-domain/~Common~0?ver=13.1.0.7"
+    },
+    "rrsetCacheSize": 10485760,
+    "rrsetRotate": "none",
+    "unwantedQueryReplyThreshold": 0,
+    "useIpv4": "yes",
+    "useIpv6": "yes",
+    "useTcp": "yes",
+    "useUdp": "yes",
+    "forwardZones": [
+        {
+            "name": "foo1",
+            "nameservers": [
+                {
+                    "name": "1.1.1.1:53"
+                },
+                {
+                    "name": "2.2.2.2:53"
+                }
+            ]
+        },
+        {
+            "name": "foo2"
+        }
+    ]
+}

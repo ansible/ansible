@@ -1,0 +1,43 @@
+- name: SETUP | clean out the output_dir
+  file:
+    path: "{{ output_dir }}"
+    state: absent
+
+- name: SETUP | create clean output_dir
+  file:
+    path: "{{ output_dir }}"
+    state: directory
+
+- name: SETUP | install git
+  package:
+    name: git
+  when: ansible_distribution != "MacOSX"
+  notify:
+    - remove git
+    - remove git from FreeBSD
+
+- name: SETUP | verify that git is installed so this test can continue
+  shell: which git
+
+- name: SETUP | get git version, only newer than {{git_version_supporting_depth}} has fixed git depth
+  shell: git --version | grep 'git version' | sed 's/git version //'
+  register: git_version
+
+- name: SETUP | get gpg version
+  shell: gpg --version 2>1 | head -1 | sed -e 's/gpg (GnuPG) //'
+  register: gpg_version
+
+- name: SETUP | set git global user.email if not already set
+  shell: git config --global user.email || git config --global user.email "noreply@example.com"
+
+- name: SETUP | set git global user.name if not already set
+  shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
+
+- name: SETUP | create repo_dir
+  file:
+    path: "{{ repo_dir }}"
+    state: directory
+
+- name: SETUP | show git version
+  debug:
+    msg: "Running test with git {{ git_version.stdout }}"

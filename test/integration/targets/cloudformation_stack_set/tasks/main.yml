@@ -1,0 +1,186 @@
+---
+# tasks file for cloudformation_stack_set module tests
+# These tests require access to two separate AWS accounts
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+    aws_secondary_connection_info: &aws_secondary_connection_info
+      aws_access_key: "{{ secondary_aws_access_key }}"
+      aws_secret_key: "{{ secondary_aws_secret_key }}"
+      security_token: "{{ secondary_security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- block:
+    - name: Get current account ID
+      aws_caller_info:
+        <<: *aws_connection_info
+      register: whoami
+    - name: Get current account ID
+      aws_caller_info:
+        <<: *aws_secondary_connection_info
+      register: target_acct
+
+    - name: Policy to allow assuming stackset execution role
+      iam_managed_policy:
+        policy_name: AssumeCfnStackSetExecRole
+        state: present
+        <<: *aws_connection_info
+        policy:
+          Version: '2012-10-17'
+          Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Resource: arn:aws:iam::*:role/CfnStackSetExecRole
+        policy_description: Assume CfnStackSetExecRole
+
+    - name: Create an execution role for us to use
+      iam_role:
+        name: CfnStackSetExecRole
+        <<: *aws_secondary_connection_info
+        assume_role_policy_document:
+          Version: '2012-10-17'
+          Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: '{{ whoami.account }}'
+        managed_policy:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+
+    - name: Create an administration role for us to use
+      iam_role:
+        name: CfnStackSetAdminRole
+        <<: *aws_connection_info
+        assume_role_policy_document:
+          Version: '2012-10-17'
+          Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: 'cloudformation.amazonaws.com'
+        managed_policy:
+        - arn:aws:iam::{{ whoami.account }}:policy/AssumeCfnStackSetExecRole
+          #- arn:aws:iam::aws:policy/PowerUserAccess
+
+    - name: Should fail without account/regions
+      cloudformation_stack_set:
+        <<: *aws_connection_info
+        name: TestSetOne
+        description: TestStack Prime
+        tags:
+          Some: Thing
+          Type: Test
+        wait: true
+        template: test_bucket_stack.yml
+      register: result
+      ignore_errors: true
+    - name: assert that running with no account fails
+      assert:
+        that:
+          - result is failed
+          - >
+              "Can't create a stack set without choosing at least one account" in result.msg
+    - name: Should fail without roles
+      cloudformation_stack_set:
+        <<: *aws_connection_info
+        name: TestSetOne
+        description: TestStack Prime
+        tags:
+          Some: Thing
+          Type: Test
+        wait: true
+        regions:
+          - '{{ aws_region }}'
+        accounts:
+          - '{{ whoami.account }}'
+        template_body: '{{ lookup("file", "test_bucket_stack.yml") }}'
+      register: result
+      ignore_errors: true
+    - name: assert that running with no account fails
+      assert:
+        that:
+          - result is failed
+
+    - name: Create an execution role for us to use
+      iam_role:
+        name: CfnStackSetExecRole
+        state: absent
+        <<: *aws_connection_info
+        assume_role_policy_document:
+          Version: '2012-10-17'
+          Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::{{ whoami.account }}:root
+        managed_policy:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+
+    - name: Create stack with roles
+      cloudformation_stack_set:
+        <<: *aws_connection_info
+        name: TestSetTwo
+        description: TestStack Dos
+        tags:
+          Some: Thing
+          Type: Test
+        wait: true
+        regions:
+          - '{{ aws_region }}'
+        accounts:
+          - '{{ target_acct.account }}'
+        exec_role_name: CfnStackSetExecRole
+        admin_role_arn: arn:aws:iam::{{ whoami.account }}:role/CfnStackSetAdminRole
+        template_body: '{{ lookup("file", "test_bucket_stack.yml") }}'
+      register: result
+
+    - name: Update stack with roles
+      cloudformation_stack_set:
+        <<: *aws_connection_info
+        name: TestSetTwo
+        description: TestStack Dos
+        tags:
+          Some: Thing
+          Type: Test
+        wait: true
+        regions:
+          - '{{ aws_region }}'
+        accounts:
+          - '{{ target_acct.account }}'
+        exec_role_name: CfnStackSetExecRole
+        admin_role_arn: arn:aws:iam::{{ whoami.account }}:role/CfnStackSetAdminRole
+        template_body: '{{ lookup("file", "test_modded_bucket_stack.yml") }}'
+  always:
+    - name: Clean up stack one
+      cloudformation_stack_set:
+        <<: *aws_connection_info
+        name: TestSetOne
+        wait: true
+        regions:
+          - '{{ aws_region }}'
+        accounts:
+          - '{{ whoami.account }}'
+        purge_stacks: true
+        state: absent
+    - name: Clean up stack two
+      cloudformation_stack_set:
+        <<: *aws_connection_info
+        name: TestSetTwo
+        description: TestStack Dos
+        purge_stacks: true
+        tags:
+          Some: Thing
+          Type: Test
+        wait: true
+        regions:
+          - '{{ aws_region }}'
+        accounts:
+          - '{{ target_acct.account }}'
+        template_body: '{{ lookup("file", "test_bucket_stack.yml") }}'
+        state: absent

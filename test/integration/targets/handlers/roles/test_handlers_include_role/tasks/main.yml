@@ -1,0 +1,47 @@
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+- name: reset handler_called variable to false for all hosts
+  set_fact:
+    handler_called: False
+  tags: scenario1
+
+- name: notify the handler for host A only
+  shell: echo
+  notify:
+    - set handler fact
+  when: inventory_hostname == 'A'
+  tags: scenario1
+
+- name: force handler execution now
+  meta: "flush_handlers"
+  tags: scenario1
+
+- debug: var=handler_called
+  tags: scenario1
+
+- name: validate the handler only ran on one host
+  assert:
+    that:
+    - "inventory_hostname == 'A' and handler_called == True or handler_called == False"
+  tags: scenario1
+
+# item below is passed in by the playbook that calls this
+- name: 'test notify with loop'
+  debug: msg='a task'
+  changed_when: item == 1
+  notify: test handler
+  tags: scenario2

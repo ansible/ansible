@@ -1,0 +1,261 @@
+---
+- name: Since partition is not present, disk_number is required to create a new partition.
+  win_partition:
+    drive_letter: D
+  register: incorrect_attempt_1
+  ignore_errors: True
+
+- assert:
+    that:
+      - incorrect_attempt_1 is failed
+      - '"Missing required parameter: disk_number" in incorrect_attempt_1.msg'
+
+- name: Added disk_number but size is still absent
+  win_partition:
+    drive_letter: D
+    disk_number: 0
+  register: incorrect_attempt_2
+  ignore_errors: True
+
+- assert:
+    that:
+      - incorrect_attempt_2 is failed
+      - '"Missing required parameter: partition_size" in incorrect_attempt_2.msg'
+
+- name: Added size but the disk we specified earlier doesn't have enough space
+  win_partition:
+    drive_letter: D
+    disk_number: 1
+    partition_size: 20 GiB
+  register: incorrect_attempt_3
+  ignore_errors: True
+
+- assert:
+    that:
+      - incorrect_attempt_3 is failed
+      - '"Partition size is not supported by disk" in incorrect_attempt_3.msg'
+
+- name: Create 1 gib partition using drive_letter and default (huge) mbr type (check mode)
+  win_partition:
+    drive_letter: D
+    state: present
+    partition_size: 1 GiB
+    disk_number: 1
+    active: True
+  register: create_small_part_check
+  check_mode: True
+
+- name: Create 1 gib partition using drive_letter and default (huge) mbr type
+  win_partition:
+    drive_letter: D
+    state: present
+    partition_size: 1 GiB
+    disk_number: 1
+    active: True
+  register: create_small_part
+
+- name: Create 1 gib partition using drive_letter and default (huge) mbr type (idempotence)
+  win_partition:
+    drive_letter: D
+    state: present
+    partition_size: 1 GiB
+    disk_number: 1
+    active: True
+  register: create_small_part_idempotence
+
+- name: "Check if partition was created successfully"
+  win_shell: $AnsiPart = Get-Partition -DriveLetter D; "$($AnsiPart.DriveLetter),$($AnsiPart.Size),$($AnsiPart.IsActive),$($AnsiPart.MbrType)"
+  register: get_small_part
+
+- assert:
+    that:
+      - create_small_part_check is changed
+      - create_small_part is changed
+      - create_small_part_idempotence is not changed
+      - get_small_part.stdout | trim == "D,1073741824,True,6"
+
+- name: "Change drive letter, maximize partition size and set partition to read only (check mode)"
+  win_partition:
+    drive_letter: E
+    state: present
+    partition_size: -1
+    disk_number: 1
+    partition_number: 1
+    read_only: True
+  register: upgrade_small_part_check
+  check_mode: True
+
+- name: "Change drive letter, maximize partition size and set partition to read only"
+  win_partition:
+    drive_letter: E
+    state: present
+    partition_size: -1
+    disk_number: 1
+    partition_number: 1
+    read_only: True
+  register: upgrade_small_part
+
+- name: "Change drive letter, maximize partition size and set partition to read only (idempotence)"
+  win_partition:
+    drive_letter: E
+    state: present
+    partition_size: -1
+    disk_number: 1
+    partition_number: 1
+    read_only: True
+  register: upgrade_small_part_idempotence
+
+- win_shell: $AnsiPart = Get-Partition -DriveLetter E; "$($AnsiPart.DriveLetter),$($AnsiPart.Size),$($AnsiPart.IsReadOnly)"
+  register: get_max_part
+
+- name: Check if creation and updation were successful
+  assert:
+    that:
+      - upgrade_small_part_check is changed
+      - upgrade_small_part is changed
+      - upgrade_small_part_idempotence is not changed
+      - get_max_part.stdout | trim == "E,2096037888,True"
+
+- name: "Changing size of a read only partition"
+  win_partition:
+    drive_letter: E
+    partition_size: 1 GiB
+  register: modify_read_only_partition
+  ignore_errors: True
+
+- assert:
+    that:
+      - modify_read_only_partition is failed
+
+- name: "Delete partition (check mode)"
+  win_partition:
+    disk_number: 1
+    partition_number: 1
+    state: absent
+  register: delete_partition_check
+  check_mode: True
+
+- name: "Delete partition"
+  win_partition:
+    disk_number: 1
+    partition_number: 1
+    state: absent
+  register: delete_partition
+
+- name: "Delete partition (idempotence)"
+  win_partition:
+    disk_number: 1
+    partition_number: 1
+    state: absent
+  register: delete_partition_idempotence
+
+- name: "Confirm that the partition is absent"
+  win_shell: Get-Partition -DiskNumber 1 -PartitionNumber 1
+  register: confirm_partition_deletion
+  ignore_errors: True
+
+- assert:
+    that:
+      - delete_partition_check is changed
+      - delete_partition is changed
+      - delete_partition_idempotence is not changed
+      - '"No matching MSFT_Partition objects found" in confirm_partition_deletion.stderr'
+
+- name: "Create new partition without drive letter and ifs mbr type (check mode)"
+  win_partition:
+    disk_number: 1
+    partition_size: -1
+    mbr_type: ifs
+    offline: True
+  register: recreate_partition_check
+  check_mode: True
+
+- name: "Create new partition without drive letter and ifs mbr type"
+  win_partition:
+    disk_number: 1
+    partition_size: -1
+    mbr_type: ifs
+    offline: True
+  register: recreate_partition
+
+- name: "Create new partition without drive letter and ifs mbr type (idempotence failure)" # Disk is full now; no idempotence without drive letters
+  win_partition:
+    disk_number: 1
+    partition_size: -1
+    mbr_type: ifs
+    offline: True
+  register: recreate_partition_idempotence_failure
+  ignore_errors: True
+
+- name: "Confirm that new partition is created with maximum size, is offline and is IFS"
+  win_shell: $AnsiPart = Get-Partition -DiskNumber 1 -PartitionNumber 1; "$($AnsiPart.Size),$($AnsiPart.IsOffline),$($AnsiPart.MbrType)"
+  register: confirm_recreate_partition
+
+- assert:
+    that:
+      - recreate_partition_check is changed
+      - recreate_partition is changed
+      - recreate_partition_idempotence_failure is failed
+      - confirm_recreate_partition.stdout | trim == "2096037888,True,7"
+
+- name: "Adding a drive letter to our partition should bring it back online (check mode)"
+  win_partition:
+    drive_letter: D
+    disk_number: 1
+    partition_number: 1
+  register: add_drive_letter_check
+  ignore_errors: True
+  check_mode: True
+
+- name: "Adding a drive letter to our partition should bring it back online"
+  win_partition:
+    drive_letter: D
+    disk_number: 1
+    partition_number: 1
+  register: add_drive_letter
+  ignore_errors: True
+
+- name: "Adding a drive letter to our partition should bring it back online (idempotence)"
+  win_partition:
+    drive_letter: D
+    disk_number: 1
+    partition_number: 1
+  register: add_drive_letter_idempotence
+  ignore_errors: True
+
+- name: "Confirm that drive is back online"
+  win_shell: $AnsiPart = Get-Partition -DiskNumber 1 -PartitionNumber 1; "$($AnsiPart.DriveLetter),$($AnsiPart.IsOffline)"
+  register: confirm_add_drive_letter
+  ignore_errors: True
+
+- assert:
+    that:
+      - add_drive_letter_check is changed
+      - add_drive_letter is changed
+      - add_drive_letter_idempotence is not changed
+      - confirm_add_drive_letter.stdout | trim == "D,False"
+
+- name: "Remove partition again (check mode)"
+  win_partition:
+    drive_letter: D
+    state: absent
+  register: delete_partition_again_check
+  check_mode: True
+
+- name: "Remove partition again"
+  win_partition:
+    drive_letter: D
+    state: absent
+  register: delete_partition_again
+
+- name: "Remove partition again (idempotence)"
+  win_partition:
+    drive_letter: D
+    state: absent
+  register: delete_partition_again_idempotence
+
+- assert:
+    that:
+      - delete_partition_again_check is changed
+      - delete_partition_again is changed
+      - delete_partition_again_idempotence is not changed

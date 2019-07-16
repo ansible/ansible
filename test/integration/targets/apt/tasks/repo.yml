@@ -1,0 +1,253 @@
+- block:
+  - name: Install foo package version 1.0.0
+    apt:
+      name: foo=1.0.0
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
+
+  - name: Update to foo version 1.0.1
+    apt:
+      name: foo
+      state: latest
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.1' in dpkg_result.stdout"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+
+# https://github.com/ansible/ansible/issues/30638
+- block:
+  - name: Fail to install foo=1.0.1 since foo is not installed and only_upgrade is set
+    apt:
+      name: foo=1.0.1
+      state: present
+      only_upgrade: yes
+      allow_unauthenticated: yes
+    ignore_errors: yes
+    register: apt_result
+
+  - name: Check that foo was not upgraded
+    assert:
+      that:
+        - "apt_result is not changed"
+
+  - apt:
+      name: foo=1.0.0
+      allow_unauthenticated: yes
+
+  - name: Upgrade foo to 1.0.1
+    apt:
+      name: foo=1.0.1
+      state: present
+      only_upgrade: yes
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.1' in dpkg_result.stdout"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+
+# https://github.com/ansible/ansible/issues/35900
+- block:
+  - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+  - name: Install foobar, installs foo as a dependency
+    apt:
+      name: foobar=1.0.0
+      allow_unauthenticated: yes
+
+  - name: Upgrade foobar to a version which does not depend on foo, autoremove should remove foo
+    apt:
+      upgrade: dist
+      autoremove: yes
+      allow_unauthenticated: yes
+
+  - name: Check foo with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+    ignore_errors: yes
+
+  - name: Check that foo was removed by autoremove
+    assert:
+      that:
+        - "dpkg_result is failed"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: yes
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
+
+
+# https://github.com/ansible/ansible/issues/26298
+- block:
+  - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+  - name: Install foobar, installs foo as a dependency
+    apt:
+      name: foobar=1.0.0
+      allow_unauthenticated: yes
+
+  - name: Upgrade foobar to a version which does not depend on foo
+    apt:
+      upgrade: dist
+      force: yes  # workaround for --allow-unauthenticated used along with upgrade
+
+  - name: autoremove should remove foo
+    apt:
+      autoremove: yes
+    register: autoremove_result
+
+  - name: Check that autoremove correctly reports changed=True
+    assert:
+      that:
+        - "autoremove_result is changed"
+
+  - name: Check foo with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+    ignore_errors: yes
+
+  - name: Check that foo was removed by autoremove
+    assert:
+      that:
+        - "dpkg_result is failed"
+
+  - name: Nothing to autoremove
+    apt:
+      autoremove: yes
+    register: autoremove_result
+
+  - name: Check that autoremove correctly reports changed=False
+    assert:
+      that:
+        - "autoremove_result is not changed"
+
+  - name: Create a fake .deb file for autoclean to remove
+    file:
+      name: /var/cache/apt/archives/python3-q_2.4-1_all.deb
+      state: touch
+
+  - name: autoclean fake .deb file
+    apt:
+      autoclean: yes
+    register: autoclean_result
+
+  - name: Check if the .deb file exists
+    stat:
+      path: /var/cache/apt/archives/python3-q_2.4-1_all.deb
+    register: stat_result
+
+  - name: Check that autoclean correctly reports changed=True and file was removed
+    assert:
+      that:
+        - "autoclean_result is changed"
+        - "not stat_result.stat.exists"
+
+  - name: Nothing to autoclean
+    apt:
+      autoclean: yes
+    register: autoclean_result
+
+  - name: Check that autoclean correctly reports changed=False
+    assert:
+      that:
+        - "autoclean_result is not changed"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: yes
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
+
+
+- name: Upgrades
+  block:
+    - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type=dist force_apt_get={{ False | bool }}"
+
+    - name: Check if aptitude is installed
+      command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
+      register: aptitude_status
+
+    - name: Remove aptitude, if installed, to test fall-back to apt-get
+      apt:
+        pkg: aptitude
+        state: absent
+      when:
+        - aptitude_status.stdout.find('ii') != -1
+
+    - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+      with_items:
+        - { upgrade_type: safe, force_apt_get: False }
+        - { upgrade_type: full, force_apt_get: False }
+        - { upgrade_type: safe, force_apt_get: True }
+        - { upgrade_type: full, force_apt_get: True }
+
+    - name: (Re-)Install aptitude, run same tests again
+      apt:
+        pkg: aptitude
+        state: present
+
+    - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+      with_items:
+        - { upgrade_type: safe, force_apt_get: False }
+        - { upgrade_type: full, force_apt_get: False }
+        - { upgrade_type: safe, force_apt_get: True }
+        - { upgrade_type: full, force_apt_get: True }
+
+    - name: Remove aptitude if not originally present
+      apt:
+        pkg: aptitude
+        state: absent
+      when:
+        - aptitude_status.stdout.find('ii') == -1

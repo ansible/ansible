@@ -1,0 +1,199 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf intent & aggregate test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: testint1="{{ nxos_int1 }}"
+- set_fact: testint2="{{ nxos_int2 }}"
+
+- name: setup - remove vrf from interfaces used in test(part1)
+  nxos_config:
+    lines:
+      - no vrf member test1
+    parents: no switchport
+    before: "interface {{ testint1 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - remove vrf from interfaces used in test(part2)
+  nxos_config:
+    lines:
+      - no vrf member test1
+    parents: no switchport
+    before: "interface {{ testint2 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - delete VRF test1 used in test
+  nxos_config:
+    lines:
+      - no vrf context test1
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - remove VRF test2 used in test
+  nxos_config:
+    lines:
+      - no vrf context test2
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: aggregate definitions of VRFs
+  nxos_vrf: &create
+    aggregate:
+      - { name: test1, description: Configured by Ansible }
+      - { name: test2, description: Testing, admin_state: down }
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"vrf context test1" in result.commands'
+      - '"description Configured by Ansible" in result.commands'
+      - '"no shutdown" in result.commands' 
+      - '"vrf context test2" in result.commands'
+      - '"description Testing" in result.commands'
+      - '"shutdown" in result.commands'
+
+- name: aggregate definitions of VRFs(Idempotence)
+  nxos_vrf: *create
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Assign interfaces to VRF (Config + intent)
+  nxos_vrf: &interfaces
+    name: test1
+    interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    associated_interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "result.failed == false"
+      - '"interface {{ testint1 }}" in result.commands'
+      - '"vrf member test1" in result.commands'
+      - '"interface {{ testint2 }}" in result.commands'
+      - '"vrf member test1" in result.commands'
+
+- name: Assign interfaces to vrf(Idempotence)
+  nxos_vrf: *interfaces
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Check interfaces assigned to VRF (intent)
+  nxos_vrf:
+    name: test1
+    associated_interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Assign interfaces to VRF (intent fail)
+  nxos_vrf:
+    name: test1
+    associated_interfaces:
+      - test
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+
+- name: Remove interface from vrf
+  nxos_vrf: &single_int
+    name: test1
+    interfaces:
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"interface {{ testint1 }}" in result.commands'
+      - '"no vrf member test1" in result.commands'
+
+- name: Remove interface from vrf(idempotence)
+  nxos_vrf: *single_int
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Delete VRFs
+  nxos_vrf: &delete
+    aggregate:
+      - { name: test1, description: Configured by Ansible }
+      - { name: test2, description: Testing, admin_state: down }
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no vrf context test1" in result.commands'
+      - '"no vrf context test2" in result.commands'
+
+- name: Delete VRFs(Idempotence)
+  nxos_vrf: *delete
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: setup - remove vrf from interfaces used in test(part1)
+  nxos_config:
+    lines:
+      - no vrf member test1
+    parents: no switchport
+    before: "interface {{ testint1 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - remove vrf from interfaces used in test(part2)
+  nxos_config:
+    lines:
+      - no vrf member test1
+    parents: no switchport
+    before: "interface {{ testint2 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - delete VRF test1 used in test
+  nxos_config:
+    lines:
+      - no vrf context test1
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: setup - remove VRF test2 used in test
+  nxos_config:
+    lines:
+      - no vrf context test2
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf intent & aggregate test"

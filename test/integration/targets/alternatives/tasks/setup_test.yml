@@ -1,0 +1,22 @@
+- template:
+    src: dummy_alternative
+    dest: '{{ alternatives_dir }}/dummy'
+    owner: root
+    group: root
+    mode: 0644
+  when: with_alternatives or ansible_os_family != 'RedHat'
+
+# update-alternatives included in Fedora 26 (1.10) & Red Hat 7.4 (1.8) segfaults
+# when <admindir>/dummy file contains only mode and link. Hence the file is
+# deleted instead of containing only mode and link. The file below works fine with
+# newer version of update-alternatives:
+# """
+# auto
+# /usr/bin/dummy
+#
+#
+# """
+- file:
+    path: '{{ alternatives_dir }}/dummy'
+    state: absent
+  when: not with_alternatives and ansible_os_family == 'RedHat'

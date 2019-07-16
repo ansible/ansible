@@ -19,9 +19,9 @@
 # the following tests all raise errors, to use them in a Makefile, we run them with different flags, as
 # otherwise ansible stops at the first one and we want to ensure STOP conditions for each
 
-- set_fact: 
+- set_fact:
     test_file: "{{ output_dir }}/ansible_test_file"  # FIXME, use set tempdir
-    test_input: "owner=test" 
+    test_input: "owner=test"
     bad_var: "{{ output_dir }}' owner=test"
     chdir: "mom chdir=/tmp"
   tags: common
@@ -57,4 +57,4 @@
 
 - assert:
     that:
-     - filter_fail|failed
+     - filter_fail is failed

@@ -1,0 +1,64 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_location sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Setup - Remove snmp_location if configured
+  nxos_snmp_location: &remove
+    location: Test 
+    provider: "{{ connection }}"
+    state: absent
+
+- block:
+  - name: Configure snmp location 
+    nxos_snmp_location: &config
+      location: Testing
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence Check
+    nxos_snmp_location: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Change snmp location 
+    nxos_snmp_location: &config1
+      location: Test
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_location: *config1
+    register: result
+
+  - assert: *false
+
+  - name: remove snmp location
+    nxos_snmp_location: *remove
+    register: result
+
+  - assert: *true
+
+  - name: Remove Idempotence
+    nxos_snmp_location: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Cleanup
+    nxos_snmp_location: *remove
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_location sanity test"

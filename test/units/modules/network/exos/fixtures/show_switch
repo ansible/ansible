@@ -1,0 +1,33 @@
+
+SysName:          X870-32c
+SysLocation:      
+SysContact:       support@extremenetworks.com, +1 888 257 3000
+System MAC:       00:04:96:9A:B4:F7
+System Type:      X870-32c
+
+SysHealth check:  Enabled (Normal)
+Recovery Mode:    All
+System Watchdog:  Enabled
+
+Current Time:     Wed Jul 18 12:44:49 2018
+Timezone:         [Auto DST Disabled] GMT Offset: 0 minutes, name is UTC.
+Boot Time:        Tue Jul 17 12:49:58 2018
+Boot Count:       4970
+Next Reboot:      None scheduled
+System UpTime:    23 hours 54 minutes 50 seconds 
+
+Current State:    OPERATIONAL             
+Image Selected:   secondary               
+Image Booted:     secondary               
+Primary ver:      30.1.0.37               
+Secondary ver:    22.5.1.7    
+
+Config Selected:  primary.cfg                                          
+Config Booted:    primary.cfg                                          
+Config Automatic: NONE (Disabled)
+
+primary.cfg       Created by ExtremeXOS version 22.6.0.11
+                  983139 bytes saved on Wed Jun  6 16:59:49 2018
+
+LAA MAC:          Locally Administered MAC Address Disabled
+

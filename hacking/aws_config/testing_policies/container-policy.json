@@ -1,0 +1,77 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "UnspecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeRepositories",
+                "ecr:CreateRepository"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SpecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetRepositoryPolicy",
+                "ecr:SetRepositoryPolicy",
+                "ecr:DeleteRepository",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:DeleteRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:{{aws_region}}:{{aws_account}}:repository/ansible-*"
+            ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "application-autoscaling:Describe*",
+            "application-autoscaling:PutScalingPolicy",
+            "application-autoscaling:RegisterScalableTarget",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:PutMetricAlarm",
+            "ecs:CreateCluster",
+            "ecs:CreateService",
+            "ecs:DeleteCluster",
+            "ecs:DeleteService",
+            "ecs:DeregisterTaskDefinition",
+            "ecs:Describe*",
+            "ecs:List*",
+            "ecs:PutAccountSetting",
+            "ecs:RegisterTaskDefinition",
+            "ecs:RunTask",
+            "ecs:StartTask",
+            "ecs:StopTask",
+            "ecs:UpdateService",
+            "elasticloadbalancing:Describe*",
+            "iam:GetInstanceProfile",
+            "iam:GetPolicy",
+            "iam:GetPolicyVersion",
+            "iam:GetRole",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListGroups",
+            "iam:ListRoles",
+            "iam:ListUsers"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "eks:CreateCluster",
+            "eks:DeleteCluster",
+            "eks:DescribeCluster",
+            "eks:ListClusters"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+
+
+    ]
+}

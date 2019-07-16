@@ -1,0 +1,20 @@
+{
+  "vpc-domain-id": "not configured",
+  "vpc-peer-status": "peer-not-configured",
+  "vpc-peer-status-reason": "SUCCESS",
+  "vpc-peer-keepalive-status": "disabled",
+  "vpc-peer-consistency": "inconsistent",
+  "vpc-peer-consistency-status": "SYSERR_MCECM_MCT_DOES_NOT_EXISTS",
+  "vpc-per-vlan-peer-consistency": "inconsistent",
+  "vpc-type-2-consistency": "inconsistent",
+  "vpc-type-2-consistency-status": "SYSERR_MCECM_MCT_DOES_NOT_EXISTS",
+  "vpc-role": "none-established",
+  "num-of-vpcs": "0",
+  "peer-gateway": "disabled",
+  "dual-active-excluded-vlans": "-",
+  "vpc-graceful-consistency-check-status": "enabled",
+  "vpc-auto-recovery-status": "Enabled (timeout = 240 seconds)",
+  "operational-l3-peer": "disabled",
+  "vpc-isolation-status": "disabled-user",
+  "vpc-check-consist-note": "disabled"
+}

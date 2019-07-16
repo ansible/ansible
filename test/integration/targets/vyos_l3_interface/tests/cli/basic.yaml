@@ -1,0 +1,203 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Remove IP address
+  vyos_l3_interface:
+    name: eth1
+    state: absent
+
+- name: Remove IP address
+  vyos_l3_interface:
+    name: eth2
+    state: absent
+
+- name: Set IPv4 address
+  vyos_l3_interface:
+    name: eth1
+    ipv4: 192.168.2.10/24
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
+
+- name: Set IPv4 address (idempotent)
+  vyos_l3_interface:
+    name: eth1
+    ipv4: 192.168.2.10/24
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Set IPv6 address
+  vyos_l3_interface:
+    name: eth1
+    ipv6: fd5d:12c9:2201:1::1/64
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1 address fd5d:12c9:2201:1::1/64" in result.commands'
+
+- name: Set IPv6 address (idempotent)
+  vyos_l3_interface:
+    name: eth1
+    ipv6: fd5d:12c9:2201:1::1/64
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove all IP addresses
+  vyos_l3_interface:
+    name: eth1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 address" in result.commands'
+
+- name: Remove all IP addresses again (idempotent)
+  vyos_l3_interface:
+    name: eth1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Set IPv4 and IPv6 address
+  vyos_l3_interface:
+    name: eth1
+    ipv4: 192.168.2.10/24
+    ipv6: fd5d:12c9:2201:1::1/64
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
+      - '"set interfaces ethernet eth1 address fd5d:12c9:2201:1::1/64" in result.commands'
+
+- name: Set IPv4 and IPv6 address again (idempotent)
+  vyos_l3_interface:
+    name: eth1
+    ipv4: 192.168.2.10/24
+    ipv6: fd5d:12c9:2201:1::1/64
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove IPv4 address
+  vyos_l3_interface:
+    name: eth1
+    ipv4: 192.168.2.10/24
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
+
+- name: Remove IPv4 address again (idempotent)
+  vyos_l3_interface:
+    name: eth1
+    ipv4: 192.168.2.10/24
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove IPv6 address
+  vyos_l3_interface:
+    name: eth1
+    ipv6: fd5d:12c9:2201:1::1/64
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 address fd5d:12c9:2201:1::1/64" in result.commands'
+
+- name: Remove IPv6 address again (idempotent)
+  vyos_l3_interface:
+    name: eth1
+    ipv6: fd5d:12c9:2201:1::1/64
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Set IP addresses on aggregate
+  vyos_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
+      - '"set interfaces ethernet eth2 address 192.168.3.10/24" in result.commands'
+      - '"set interfaces ethernet eth2 address fd5d:12c9:2201:1::1/64" in result.commands'
+      - '"set interfaces ethernet eth2 address 192.168.4.10/24" in result.commands'
+
+- name: Set IP addresses on aggregate (idempotent)
+  vyos_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove IP addresses on aggregate
+  vyos_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 address 192.168.2.10/24" in result.commands'
+      - '"delete interfaces ethernet eth2 address 192.168.3.10/24" in result.commands'
+      - '"delete interfaces ethernet eth2 address fd5d:12c9:2201:1::1/64" in result.commands'
+      - '"delete interfaces ethernet eth2 address 192.168.4.10/24" in result.commands'
+
+- name: Remove IP addresses on aggregate (idempotent)
+  vyos_l3_interface:
+    aggregate:
+      - { name: eth1, ipv4: 192.168.2.10/24 }
+      - { name: eth2, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+      - { name: eth2, ipv4: 192.168.4.10/24 }
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

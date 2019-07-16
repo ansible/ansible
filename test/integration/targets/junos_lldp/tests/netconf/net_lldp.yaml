@@ -1,0 +1,44 @@
+---
+- debug: msg="START junos netconf/net_lldp.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+- name: get supported protocols
+  junos_command:
+    commands: show lldp
+  register: result
+  ignore_errors: yes
+
+- name: lldp supported
+  set_fact:
+    lldp_supported: True
+  when: not result.failed
+
+- name: lldp not supported
+  set_fact:
+    lldp_supported: False
+  when: result.failed
+
+- block:
+  - name: setup - Disable lldp - setup
+    net_lldp:
+      state: absent
+      provider: "{{ netconf }}"
+
+  - name: Enable lldp using platform agnostic module
+    net_lldp:
+      state: present
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: setup - Disable lldp - teardown
+    net_lldp:
+      state: absent
+      provider: "{{ netconf }}"
+  when: lldp_supported
+
+- debug: msg="START junos netconf/net_lldp.yaml on connection={{ ansible_connection }}"

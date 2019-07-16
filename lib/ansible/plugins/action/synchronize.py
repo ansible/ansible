@@ -19,11 +19,13 @@ __metaclass__ = type
 
 import os.path
 
-from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
-from ansible.plugins.action import ActionBase
-from ansible.plugins import connection_loader
-from ansible.utils.boolean import boolean
 from ansible import constants as C
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import MutableSequence
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.plugins.action import ActionBase
+from ansible.plugins.loader import connection_loader
 
 
 class ActionModule(ActionBase):
@@ -47,7 +49,7 @@ class ActionModule(ActionBase):
         return path
 
     def _host_is_ipv6_address(self, host):
-        return ':' in host
+        return ':' in to_text(host, errors='surrogate_or_strict')
 
     def _format_rsync_rsh_target(self, host, path, user):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
@@ -57,7 +59,8 @@ class ActionModule(ActionBase):
         if path.startswith('rsync://'):
             return path
 
-        if user:
+        # If using docker or buildah, do not add user information
+        if self._remote_transport not in ['docker', 'buildah'] and user:
             user_prefix = '%s@' % (user, )
 
         if self._host_is_ipv6_address(host):
@@ -74,7 +77,7 @@ class ActionModule(ActionBase):
             path = self._get_absolute_path(path=path)
         return path
 
-    def _process_remote(self, host, path, user, port_matches_localhost_port):
+    def _process_remote(self, task_args, host, path, user, port_matches_localhost_port):
         """
         :arg host: hostname for the path
         :arg path: file path
@@ -97,7 +100,7 @@ class ActionModule(ActionBase):
             # fix up the rsync path to use the controller's public DNS/IP
             # instead of "localhost"
             if port_matches_localhost_port and host in C.LOCALHOST:
-                self._task.args['_substitute_controller'] = True
+                task_args['_substitute_controller'] = True
             return self._format_rsync_rsh_target(host, path, user)
 
         if ':' not in path and not path.startswith('/'):
@@ -155,7 +158,22 @@ class ActionModule(ActionBase):
         if task_vars is None:
             task_vars = dict()
 
+        # We make a copy of the args here because we may fail and be asked to
+        # retry. If that happens we don't want to pass the munged args through
+        # to our next invocation. Munged args are single use only.
+        _tmp_args = self._task.args.copy()
+
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
+
+        # Store remote connection type
+        self._remote_transport = self._connection.transport
+
+        # Handle docker connection options
+        if self._remote_transport == 'docker':
+            self._docker_cmd = self._connection.docker_cmd
+            if self._play_context.docker_extra_args:
+                self._docker_cmd = "%s %s" % (self._docker_cmd, self._play_context.docker_extra_args)
 
         # self._connection accounts for delegate_to so
         # remote_transport is the transport ansible thought it would need
@@ -171,17 +189,23 @@ class ActionModule(ActionBase):
         except (AttributeError, KeyError):
             delegate_to = None
 
-        # ssh paramiko and local are fully supported transports.  Anything
+        # ssh paramiko docker buildah and local are fully supported transports.  Anything
         # else only works with delegate_to
-        if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local'):
+        if delegate_to is None and self._connection.transport not in \
+                ('ssh', 'paramiko', 'local', 'docker', 'buildah'):
             result['failed'] = True
-            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
+            result['msg'] = (
+                "synchronize uses rsync to function. rsync needs to connect to the remote "
+                "host via ssh, docker client or a direct filesystem "
+                "copy. This remote host is being accessed via %s instead "
+                "so it cannot work." % self._connection.transport)
             return result
 
-        use_ssh_args = self._task.args.pop('use_ssh_args', None)
+        use_ssh_args = _tmp_args.pop('use_ssh_args', None)
 
         # Parameter name needed by the ansible module
-        self._task.args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
+        _tmp_args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
+        _tmp_args['_local_rsync_password'] = task_vars.get('ansible_ssh_pass') or task_vars.get('ansible_password')
 
         # rsync thinks that one end of the connection is localhost and the
         # other is the host we're running the task for  (Note: We use
@@ -196,10 +220,15 @@ class ActionModule(ActionBase):
         except KeyError:
             dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
+        dest_host_ids = [hostid for hostid in (dest_host_inventory_vars.get('inventory_hostname'),
+                                               dest_host_inventory_vars.get('ansible_host'),
+                                               dest_host_inventory_vars.get('ansible_ssh_host'))
+                         if hostid is not None]
+
         localhost_ports = set()
         for host in C.LOCALHOST:
             localhost_vars = task_vars['hostvars'].get(host, {})
-            for port_var in MAGIC_VARIABLE_MAPPING['port']:
+            for port_var in C.MAGIC_VARIABLE_MAPPING['port']:
                 port = localhost_vars.get(port_var, None)
                 if port:
                     break
@@ -211,21 +240,21 @@ class ActionModule(ActionBase):
         # host rsync puts the files on.  This is about *rsync's connection*,
         # not about the ansible connection to run the module.
         dest_is_local = False
-        if not delegate_to and remote_transport is False:
+        if delegate_to is None and remote_transport is False:
             dest_is_local = True
-        elif delegate_to and delegate_to == dest_host:
+        elif delegate_to is not None and delegate_to in dest_host_ids:
             dest_is_local = True
 
         # CHECK FOR NON-DEFAULT SSH PORT
         inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
-        if self._task.args.get('dest_port', None) is None:
+        if _tmp_args.get('dest_port', None) is None:
             if inv_port is not None:
-                self._task.args['dest_port'] = inv_port
+                _tmp_args['dest_port'] = inv_port
 
         # Set use_delegate if we are going to run rsync on a delegated host
         # instead of localhost
         use_delegate = False
-        if dest_host == delegate_to:
+        if delegate_to is not None and delegate_to in dest_host_ids:
             # edge case: explicit delegate and dest_host are the same
             # so we run rsync on the remote machine targeting its localhost
             # (itself)
@@ -247,7 +276,7 @@ class ActionModule(ActionBase):
             localhost_shell = None
             for host in C.LOCALHOST:
                 localhost_vars = task_vars['hostvars'].get(host, {})
-                for shell_var in MAGIC_VARIABLE_MAPPING['shell']:
+                for shell_var in C.MAGIC_VARIABLE_MAPPING['shell']:
                     localhost_shell = localhost_vars.get(shell_var, None)
                     if localhost_shell:
                         break
@@ -257,50 +286,67 @@ class ActionModule(ActionBase):
                 localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
             self._play_context.shell = localhost_shell
 
+            # Unike port, there can be only one executable
+            localhost_executable = None
+            for host in C.LOCALHOST:
+                localhost_vars = task_vars['hostvars'].get(host, {})
+                for executable_var in C.MAGIC_VARIABLE_MAPPING['executable']:
+                    localhost_executable = localhost_vars.get(executable_var, None)
+                    if localhost_executable:
+                        break
+                if localhost_executable:
+                    break
+            else:
+                localhost_executable = C.DEFAULT_EXECUTABLE
+            self._play_context.executable = localhost_executable
+
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
+            # Override _remote_is_local as an instance attribute specifically for the synchronize use case
+            # ensuring we set local tmpdir correctly
+            self._connection._remote_is_local = True
             self._override_module_replaced_vars(task_vars)
 
         # SWITCH SRC AND DEST HOST PER MODE
-        if self._task.args.get('mode', 'push') == 'pull':
+        if _tmp_args.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
 
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
-        src = self._task.args.get('src', None)
-        dest = self._task.args.get('dest', None)
+        src = _tmp_args.get('src', None)
+        dest = _tmp_args.get('dest', None)
         if src is None or dest is None:
-            return dict(failed=True,
-                    msg="synchronize requires both src and dest parameters are set")
+            return dict(failed=True, msg="synchronize requires both src and dest parameters are set")
 
+        # Determine if we need a user@
+        user = None
         if not dest_is_local:
-            # Private key handling
-            private_key = self._play_context.private_key_file
-
-            if private_key is not None:
-                private_key = os.path.expanduser(private_key)
-                self._task.args['private_key'] = private_key
-
             # Src and dest rsync "path" handling
-            # Determine if we need a user@
-            user = None
-            if boolean(self._task.args.get('set_remote_user', 'yes')):
+            if boolean(_tmp_args.get('set_remote_user', 'yes'), strict=False):
                 if use_delegate:
                     user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
+                    if not user:
+                        user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
                     if not user:
                         user = C.DEFAULT_REMOTE_USER
 
                 else:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
+            # Private key handling
+            private_key = self._play_context.private_key_file
+
+            if private_key is not None:
+                _tmp_args['private_key'] = private_key
+
             # use the mode to define src and dest's url
-            if self._task.args.get('mode', 'push') == 'pull':
+            if _tmp_args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
-                src = self._process_remote(src_host, src, user, inv_port in localhost_ports)
+                src = self._process_remote(_tmp_args, src_host, src, user, inv_port in localhost_ports)
                 dest = self._process_origin(dest_host, dest, user)
             else:
                 # src is a local path, dest is a remote path: <user>@<host>
                 src = self._process_origin(src_host, src, user)
-                dest = self._process_remote(dest_host, dest, user, inv_port in localhost_ports)
+                dest = self._process_remote(_tmp_args, dest_host, dest, user, inv_port in localhost_ports)
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
@@ -309,14 +355,19 @@ class ActionModule(ActionBase):
             if not dest.startswith('/'):
                 dest = self._get_absolute_path(path=dest)
 
-        self._task.args['src'] = src
-        self._task.args['dest'] = dest
+        _tmp_args['src'] = src
+        _tmp_args['dest'] = dest
 
         # Allow custom rsync path argument
-        rsync_path = self._task.args.get('rsync_path', None)
+        rsync_path = _tmp_args.get('rsync_path', None)
+
+        # backup original become as we are probably about to unset it
+        become = self._play_context.become
 
         if not dest_is_local:
-            if self._play_context.become and not rsync_path:
+            # don't escalate for docker. doing --rsync-path with docker exec fails
+            # and we can switch directly to the user via docker arguments
+            if self._play_context.become and not rsync_path and self._remote_transport != 'docker':
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
@@ -328,9 +379,7 @@ class ActionModule(ActionBase):
             # to.
             self._play_context.become = False
 
-        # make sure rsync path is quoted.
-        if rsync_path:
-            self._task.args['rsync_path'] = '"%s"' % rsync_path
+        _tmp_args['rsync_path'] = rsync_path
 
         if use_ssh_args:
             ssh_args = [
@@ -338,14 +387,40 @@ class ActionModule(ActionBase):
                 getattr(self._play_context, 'ssh_common_args', ''),
                 getattr(self._play_context, 'ssh_extra_args', ''),
             ]
-            self._task.args['ssh_args'] = ' '.join([a for a in ssh_args if a])
+            _tmp_args['ssh_args'] = ' '.join([a for a in ssh_args if a])
+
+        # If launching synchronize against docker container
+        # use rsync_opts to support container to override rsh options
+        if self._remote_transport in ['docker', 'buildah']:
+            # Replicate what we do in the module argumentspec handling for lists
+            if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
+                tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
+                if isinstance(tmp_rsync_opts, string_types):
+                    tmp_rsync_opts = tmp_rsync_opts.split(',')
+                elif isinstance(tmp_rsync_opts, (int, float)):
+                    tmp_rsync_opts = [to_text(tmp_rsync_opts)]
+                _tmp_args['rsync_opts'] = tmp_rsync_opts
+
+            if '--blocking-io' not in _tmp_args['rsync_opts']:
+                _tmp_args['rsync_opts'].append('--blocking-io')
+
+            if self._remote_transport in ['docker']:
+                if become and self._play_context.become_user:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
+                elif user is not None:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
+                else:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
+            elif self._remote_transport in ['buildah']:
+                _tmp_args['rsync_opts'].append("--rsh=buildah run --")
 
         # run the module and store the result
-        result.update(self._execute_module('synchronize', task_vars=task_vars))
+        result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))
 
         if 'SyntaxError' in result.get('exception', result.get('msg', '')):
             # Emit a warning about using python3 because synchronize is
             # somewhat unique in running on localhost
             result['exception'] = result['msg']
-            result['msg'] = 'SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3.  You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this'
+            result['msg'] = ('SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3. '
+                             'You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this')
         return result

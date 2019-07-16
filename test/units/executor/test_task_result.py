@@ -19,10 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.executor.task_result import TaskResult
+
 
 class TestTaskResult(unittest.TestCase):
     def test_task_result_basic(self):
@@ -124,11 +125,11 @@ class TestTaskResult(unittest.TestCase):
         tr = TaskResult(mock_host, mock_task, dict())
         self.assertFalse(tr.is_failed())
 
-        # test failed result with rc values
+        # test failed result with rc values (should not matter)
         tr = TaskResult(mock_host, mock_task, dict(rc=0))
         self.assertFalse(tr.is_failed())
         tr = TaskResult(mock_host, mock_task, dict(rc=1))
-        self.assertTrue(tr.is_failed())
+        self.assertFalse(tr.is_failed())
 
         # test with failed in result
         tr = TaskResult(mock_host, mock_task, dict(failed=True))
@@ -137,3 +138,34 @@ class TestTaskResult(unittest.TestCase):
         # test with failed_when in result
         tr = TaskResult(mock_host, mock_task, dict(failed_when_result=True))
         self.assertTrue(tr.is_failed())
+
+    def test_task_result_no_log(self):
+        mock_host = MagicMock()
+        mock_task = MagicMock()
+
+        # no_log should remove secrets
+        tr = TaskResult(mock_host, mock_task, dict(_ansible_no_log=True, secret='DONTSHOWME'))
+        clean = tr.clean_copy()
+        self.assertTrue('secret' not in clean._result)
+
+    def test_task_result_no_log_preserve(self):
+        mock_host = MagicMock()
+        mock_task = MagicMock()
+
+        # no_log should not remove presrved keys
+        tr = TaskResult(
+            mock_host,
+            mock_task,
+            dict(
+                _ansible_no_log=True,
+                retries=5,
+                attempts=5,
+                changed=False,
+                foo='bar',
+            )
+        )
+        clean = tr.clean_copy()
+        self.assertTrue('retries' in clean._result)
+        self.assertTrue('attempts' in clean._result)
+        self.assertTrue('changed' in clean._result)
+        self.assertTrue('foo' not in clean._result)

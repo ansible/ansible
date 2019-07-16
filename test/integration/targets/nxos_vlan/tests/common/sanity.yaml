@@ -1,0 +1,240 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vlan sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: testint1="{{ nxos_int1 }}"
+- set_fact: testint2="{{ nxos_int2 }}"
+
+- block:
+  - name: Install and Enable FabricPath feature set
+    nxos_config:
+      lines:
+        - install feature-set fabricpath
+        - feature-set fabricpath
+      provider: "{{ connection }}"
+    when: platform is search('N5K|N7K')
+
+  - name: "Enable feature vn segment"
+    nxos_config:
+      commands:
+        - feature vn-segment-vlan-based
+      match: none
+      provider: "{{ connection }}"
+    when: platform is search('N9K')
+
+  - name: vlan teardown
+    nxos_vlan: &vlan_teardown
+      vlan_range: "2-200"
+      provider: "{{ connection }}"
+      state: absent
+    ignore_errors: yes
+
+  - name: Ensure a range of VLANs are present on the switch
+    nxos_vlan: &conf_vlan
+      vlan_range: "2-10,20,50,55-60,100-150"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Vlan Idempotence"
+    nxos_vlan: *conf_vlan
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
+    nxos_vlan: &web1
+      vlan_id: 50
+      vlan_state: suspend
+      admin_state: down
+      name: WEB
+      mapped_vni: 5555
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N9K')
+
+  - assert: *true
+    when: platform is search('N9K')
+
+  - name: "web1 Idempotence"
+    nxos_vlan: *web1
+    register: result
+    when: platform is search('N9K')
+
+  - assert: *false
+    when: platform is search('N9K')
+
+  - name: change name and vni to default
+    nxos_vlan: &web2
+      vlan_id: 50
+      vlan_state: active
+      admin_state: up
+      name: default
+      mapped_vni: default
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N9K')
+
+  - assert: *true
+    when: platform is search('N9K')
+
+  - name: "web2 Idempotence"
+    nxos_vlan: *web2
+    register: result
+    when: platform is search('N9K')
+
+  - assert: *false
+    when: platform is search('N9K')
+
+  - name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
+    nxos_vlan: &web3
+      vlan_id: 50
+      vlan_state: suspend
+      admin_state: down
+      name: WEB
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N3K|N7K')
+
+  - assert: *true
+    when: platform is search('N3K|N7K')
+
+  - name: "web3 Idempotence"
+    nxos_vlan: *web3
+    register: result
+    when: platform is search('N3K|N7K')
+
+  - assert: *false
+    when: platform is search('N3K|N7K')
+
+  - name: Change name to default
+    nxos_vlan: &web4
+      vlan_id: 50
+      vlan_state: active
+      admin_state: up
+      name: default
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N3K|N7K')
+
+  - assert: *true
+    when: platform is search('N3K|N7K')
+
+  - name: "web4 Idempotence"
+    nxos_vlan: *web4
+    register: result
+    when: platform is search('N3K|N7K')
+
+  - assert: *false
+    when: platform is search('N3K|N7K')
+
+  - name: Change mode
+    nxos_vlan: &mode1
+      vlan_id: 50
+      mode: fabricpath
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *true
+    when: platform is search('N5K|N7K')
+
+  - name: "mode1 Idempotence"
+    nxos_vlan: *mode1
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *false
+    when: platform is search('N5K|N7K')
+
+  - name: Change mode again
+    nxos_vlan: &mode2
+      vlan_id: 50
+      mode: ce
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *true
+    when: platform is search('N5K|N7K')
+
+  - name: "mode2 Idempotence"
+    nxos_vlan: *mode2
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *false
+    when: platform is search('N5K|N7K')
+
+  - name: Ensure VLAN is NOT on the device
+    nxos_vlan: &no_vlan
+      vlan_id: 50
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "no vlan Idempotence"
+    nxos_vlan: *no_vlan
+    register: result
+
+  - assert: *false
+
+  - name: Add interfaces to vlan
+    nxos_vlan: &addint
+      vlan_id: 101
+      vlan_state: suspend
+      interfaces:
+        - "{{ testint1 }}"
+        - "{{ testint2 }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Addint idempotence"
+    nxos_vlan: *addint
+    register: result
+
+  - assert: *false
+
+  - name: Remove interfaces from vlan
+    nxos_vlan: &remint
+      vlan_id: 101
+      interfaces: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Remint idempotence"
+    nxos_vlan: *remint
+    register: result
+
+  - assert: *false
+
+  always:
+    - name: Remove int from vlan
+      nxos_vlan: *remint
+      ignore_errors: yes
+
+    - name: vlan teardown final
+      nxos_vlan: *vlan_teardown
+      ignore_errors: yes
+
+    - name: "Disable feature vn segement"
+      nxos_feature:
+        feature: vn-segment-vlan-based
+        provider: "{{ connection }}"
+        state: disabled
+      ignore_errors: yes
+      when: platform is search('N9K')
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vlan sanity test"

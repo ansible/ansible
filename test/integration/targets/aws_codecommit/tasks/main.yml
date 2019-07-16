@@ -1,0 +1,67 @@
+---
+- block:
+  # ============================================================
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: true
+  # ============================================================
+  - name: Create a repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      comment: original comment
+      state: present
+      <<: *aws_connection_info
+    register: output
+  - assert:
+      that:
+        - output is changed
+        - output.repositoryName == '{{ resource_prefix }}_repo'
+        - output.repositoryDescription == 'original comment'
+  # ============================================================
+  - name: Create a repository (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_check_repo"
+      comment: original comment
+      state: present
+      <<: *aws_connection_info
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+        - output.repositoryName == '{{ resource_prefix }}_check_repo'
+        - output.repositoryDescription == 'original comment'
+  # ============================================================
+  - name: Delete  a repository (CHECK MODE)
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      state: absent
+      <<: *aws_connection_info
+    register: output
+    check_mode: yes
+  - assert:
+      that:
+        - output is changed
+  - name: Delete  a repository
+    aws_codecommit:
+      name: "{{ resource_prefix }}_repo"
+      state: absent
+      <<: *aws_connection_info
+    register: output
+  - assert:
+      that:
+        - output is changed
+
+  always:
+     ###### TEARDOWN STARTS HERE ######
+    - name: Delete  a repository
+      aws_codecommit:
+        name: "{{ resource_prefix }}_repo"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes

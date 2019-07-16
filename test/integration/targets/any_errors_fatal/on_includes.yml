@@ -1,0 +1,7 @@
+---
+# based on https://github.com/ansible/ansible/issues/22924
+- name: Test any errors fatal
+  hosts: testhost,testhost2
+  any_errors_fatal: True
+  tasks:
+     - include: test_fatal.yml

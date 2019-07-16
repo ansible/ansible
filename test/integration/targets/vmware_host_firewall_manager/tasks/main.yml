@@ -1,0 +1,204 @@
+# Test code for the vmware_host_firewall_manager module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Disable the Firewall vvold rule on the ESXi
+      vmware_host_firewall_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        cluster_name: '{{ ccr1 }}'
+        validate_certs: no
+        rules:
+            - name: vvold
+              enabled: False
+
+    - name: Enable vvold rule set on all hosts of {{ ccr1 }}
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        cluster_name: "{{ ccr1 }}"
+        rules:
+          - name: vvold
+            enabled: True
+      register: all_hosts_result
+    - debug: msg="{{ all_hosts_result }}"
+    - name: ensure everything is changed for all hosts of {{ ccr1 }}
+      assert:
+        that:
+            - all_hosts_result.changed
+            - all_hosts_result.rule_set_state is defined
+
+    - name: ensure facts are gathered for all hosts of {{ ccr1 }}
+      assert:
+        that:
+            - all_hosts_result.rule_set_state[item]['vvold']['current_state'] == True
+            - all_hosts_result.rule_set_state[item]['vvold']['desired_state'] == True
+            - all_hosts_result.rule_set_state[item]['vvold']['previous_state'] == False
+      with_items:
+        - '{{ esxi1 }}'
+        - '{{ esxi2 }}'
+
+    - name: Disable vvold for {{ host1 }}
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi1 }}'
+        rules:
+          - name: vvold
+            enabled: False
+      register: host_result
+    - debug: msg="{{ host_result }}"
+    - name: ensure vvold is disabled for {{ host1 }}
+      assert:
+        that:
+            - host_result.changed
+            - host_result.rule_set_state is defined
+
+    - name: ensure facts are gathered for {{ host1 }}
+      assert:
+        that:
+            - host_result.rule_set_state[item]['vvold']['current_state'] == False
+            - host_result.rule_set_state[item]['vvold']['desired_state'] == False
+            - host_result.rule_set_state[item]['vvold']['previous_state'] == True
+      with_items:
+        - '{{ esxi1 }}'
+
+    - name: Enable vvold rule set on all hosts of {{ ccr1 }} in check mode
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        cluster_name: "{{ ccr1 }}"
+        rules:
+          - name: vvold
+            enabled: True
+      register: all_hosts_result_check_mode
+      check_mode: yes
+    - debug: var=all_hosts_result_check_mode
+    - name: ensure everything is changed for all hosts of {{ ccr1 }}
+      assert:
+        that:
+            - all_hosts_result_check_mode.changed
+            - all_hosts_result_check_mode.rule_set_state is defined
+
+    - name: ensure facts are gathered for all hosts of {{ ccr1 }}
+      assert:
+        that:
+            - all_hosts_result_check_mode.rule_set_state[esxi1]['vvold']['current_state'] == True
+            - all_hosts_result_check_mode.rule_set_state[esxi2]['vvold']['current_state'] == True
+            - all_hosts_result_check_mode.rule_set_state[esxi2]['vvold']['desired_state'] == True
+
+    - name: Disable vvold for {{ host1 }} in check mode
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi1 }}'
+        rules:
+          - name: vvold
+            enabled: False
+      register: host_result_check_mode
+      check_mode: yes
+    - debug: msg="{{ host_result_check_mode }}"
+    - name: ensure vvold is disabled for {{ host1 }}
+      assert:
+        that:
+            - host_result_check_mode.changed == False
+            - host_result_check_mode.rule_set_state is defined
+
+    - name: ensure facts are gathered for {{ host1 }}
+      assert:
+        that:
+            - host_result_check_mode.rule_set_state[item]['vvold']['current_state'] == False
+            - host_result_check_mode.rule_set_state[item]['vvold']['desired_state'] == False
+            - host_result_check_mode.rule_set_state[item]['vvold']['previous_state'] == False
+      with_items:
+        - '{{ esxi1 }}'
+
+    - name: Configure CIMHttpServer rule set on all hosts of {{ ccr1 }}
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        cluster_name: "{{ ccr1 }}"
+        rules:
+          - name: CIMHttpServer
+            enabled: True
+            allowed_hosts:
+              - all_ip: False
+                ip_address:
+                  - "192.168.100.11"
+                ip_network:
+                  - "192.168.200.0/24"
+      register: all_hosts_ip_specific
+    - debug: var=all_hosts_ip_specific
+    - name: ensure everything is changed for all hosts of {{ ccr1 }}
+      assert:
+        that:
+          - all_hosts_ip_specific.changed
+          - all_hosts_ip_specific.rule_set_state is defined
+
+    - name: ensure CIMHttpServer is configured for all hosts in {{ ccr1 }}
+      assert:
+        that:
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['current_state'] == True
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['desired_state'] == True
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['previous_state'] == True
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_all'] == False
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_all'] == True
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_all'] == False
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_ip'] == ["192.168.100.11"]
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_ip'] == []
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_ip'] == ["192.168.100.11"]
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['current_allowed_networks'] == ["192.168.200.0/24"]
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['previous_allowed_networks'] == []
+          - all_hosts_ip_specific.rule_set_state[item]['CIMHttpServer']['allowed_hosts']['desired_allowed_networks'] == ["192.168.200.0/24"]
+      with_items:
+        - '{{ esxi1 }}'
+        - '{{ esxi2 }}'
+
+    - name: Configure the NFC firewall rule to only allow traffic from one IP on one ESXi host
+      vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: "{{ esxi1 }}"
+        rules:
+          - name: NFC
+            enabled: True
+            allowed_hosts:
+              - all_ip: False
+                ip_address:
+                  - "192.168.100.11"
+      register: single_host_ip_specific
+    - debug: var=single_host_ip_specific
+    - name: ensure NFC is configured on that host
+      assert:
+        that:
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['current_state'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['desired_state'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['previous_state'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_all'] == False
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_all'] == True
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_all'] == False
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_ip'] == ["192.168.100.11"]
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_ip'] == None
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_ip'] == ["192.168.100.11"]
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['current_allowed_networks'] == []
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['previous_allowed_networks'] == []
+          - single_host_ip_specific.rule_set_state[{{ esxi1 }}]['NFC']['allowed_hosts']['desired_allowed_networks'] == []

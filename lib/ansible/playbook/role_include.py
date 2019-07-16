@@ -1,4 +1,3 @@
-
 #
 # This file is part of Ansible
 #
@@ -23,95 +22,134 @@ from os.path import basename
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.task import Task
+from ansible.playbook.block import Block
+from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['IncludeRole']
 
+display = Display()
 
-class IncludeRole(Task):
+
+class IncludeRole(TaskInclude):
 
     """
     A Role include is derived from a regular role to handle the special
     circumstances related to the `- include_role: ...`
     """
 
+    BASE = ('name', 'role')  # directly assigned
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
+    OTHER_ARGS = ('apply', 'public', 'allow_duplicates')  # assigned to matching property
+    VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
+
     # =================================================================================
     # ATTRIBUTES
 
     # private as this is a 'module options' vs a task property
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
-    _static = FieldAttribute(isa='bool', default=None, private=True)
-    _private = FieldAttribute(isa='bool', default=None, private=True)
+    _public = FieldAttribute(isa='bool', default=False, private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
 
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
 
-        self.statically_loaded = False
         self._from_files = {}
         self._parent_role = role
         self._role_name = None
+        self._role_path = None
 
+    def get_name(self):
+        ''' return the name of the task '''
+        return self.name or "%s : %s" % (self.action, self._role_name)
 
     def get_block_list(self, play=None, variable_manager=None, loader=None):
 
         # only need play passed in when dynamic
         if play is None:
-            myplay =  self._parent._play
+            myplay = self._parent._play
         else:
             myplay = play
 
-        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader)
+        ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
         ri.vars.update(self.vars)
 
         # build role
-        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files)
+        actual_role = Role.load(ri, myplay, parent_role=self._parent_role, from_files=self._from_files,
+                                from_include=True)
         actual_role._metadata.allow_duplicates = self.allow_duplicates
 
-        # compile role
-        blocks = actual_role.compile(play=myplay)
+        if self.statically_loaded or self.public:
+            myplay.roles.append(actual_role)
 
-        # set parent to ensure proper inheritance
+        # save this for later use
+        self._role_path = actual_role._role_path
+
+        # compile role with parent roles as dependencies to ensure they inherit
+        # variables
+        if not self._parent_role:
+            dep_chain = []
+        else:
+            dep_chain = list(self._parent_role._parents)
+            dep_chain.append(self._parent_role)
+
+        p_block = self.build_parent_block()
+
+        # collections value is not inherited; override with the value we calculated during role setup
+        p_block.collections = actual_role.collections
+
+        blocks = actual_role.compile(play=myplay, dep_chain=dep_chain)
         for b in blocks:
-            b._parent = self
+            b._parent = p_block
+            # HACK: parent inheritance doesn't seem to have a way to handle this intermediate override until squashed/finalized
+            b.collections = actual_role.collections
 
         # updated available handlers in play
-        myplay.handlers = myplay.handlers + actual_role.get_handler_blocks(play=myplay)
-
-        return blocks
+        handlers = actual_role.get_handler_blocks(play=myplay)
+        for h in handlers:
+            h._parent = p_block
+        myplay.handlers = myplay.handlers + handlers
+        return blocks, handlers
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
 
         ir = IncludeRole(block, role, task_include=task_include).load_data(data, variable_manager=variable_manager, loader=loader)
 
-        ### Process options
+        # Validate options
+        my_arg_names = frozenset(ir.args.keys())
+
         # name is needed, or use role as alias
         ir._role_name = ir.args.get('name', ir.args.get('role'))
         if ir._role_name is None:
-            raise AnsibleParserError("'name' is a required field for include_role.")
+            raise AnsibleParserError("'name' is a required field for %s." % ir.action, obj=data)
+
+        if 'public' in ir.args and ir.action != 'include_role':
+            raise AnsibleParserError('Invalid options for %s: public' % ir.action, obj=data)
+
+        # validate bad args, otherwise we silently ignore
+        bad_opts = my_arg_names.difference(IncludeRole.VALID_ARGS)
+        if bad_opts:
+            raise AnsibleParserError('Invalid options for %s: %s' % (ir.action, ','.join(list(bad_opts))), obj=data)
 
         # build options for role includes
-        for key in ['tasks', 'vars', 'defaults']:
-            from_key ='%s_from' % key
-            if  ir.args.get(from_key):
-                ir._from_files[key] = basename(ir.args.get(from_key))
+        for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
+            from_key = key.replace('_from', '')
+            ir._from_files[from_key] = basename(ir.args.get(key))
 
-        #FIXME: find a way to make this list come from object ( attributes does not work as per below)
+        apply_attrs = ir.args.get('apply', {})
+        if apply_attrs and ir.action != 'include_role':
+            raise AnsibleParserError('Invalid options for %s: apply' % ir.action, obj=data)
+        elif not isinstance(apply_attrs, dict):
+            raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
+
         # manual list as otherwise the options would set other task parameters we don't want.
-        for option in ['static', 'private', 'allow_duplicates']:
-            if option in ir.args:
-                setattr(ir, option, ir.args.get(option))
+        for option in my_arg_names.intersection(IncludeRole.OTHER_ARGS):
+            setattr(ir, option, ir.args.get(option))
 
-        return ir.load_data(data, variable_manager=variable_manager, loader=loader)
+        return ir
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
 
@@ -119,7 +157,8 @@ class IncludeRole(Task):
         new_me.statically_loaded = self.statically_loaded
         new_me._from_files = self._from_files.copy()
         new_me._parent_role = self._parent_role
-        new_me._role_name   = self._role_name
+        new_me._role_name = self._role_name
+        new_me._role_path = self._role_path
 
         return new_me
 
@@ -127,4 +166,6 @@ class IncludeRole(Task):
         v = super(IncludeRole, self).get_include_params()
         if self._parent_role:
             v.update(self._parent_role.get_role_params())
+            v.setdefault('ansible_parent_role_names', []).insert(0, self._parent_role.get_name())
+            v.setdefault('ansible_parent_role_paths', []).insert(0, self._parent_role._role_path)
         return v

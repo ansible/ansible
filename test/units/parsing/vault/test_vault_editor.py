@@ -20,45 +20,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import os
 import tempfile
-from nose.plugins.skip import SkipTest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+import pytest
+
+from units.compat import unittest
+from units.compat.mock import patch
 
 from ansible import errors
-from ansible.parsing.vault import VaultLib
-from ansible.parsing.vault import VaultEditor
+from ansible.parsing import vault
+from ansible.parsing.vault import VaultLib, VaultEditor, match_encrypt_secret
+
 from ansible.module_utils._text import to_bytes, to_text
 
-
-# Counter import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Util import Counter
-    HAS_COUNTER = True
-except ImportError:
-    HAS_COUNTER = False
-
-# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
-try:
-    from Crypto.Protocol.KDF import PBKDF2
-    HAS_PBKDF2 = True
-except ImportError:
-    HAS_PBKDF2 = False
-
-# AES IMPORTS
-try:
-    from Crypto.Cipher import AES as AES
-    HAS_AES = True
-except ImportError:
-    HAS_AES = False
-
-v10_data = """$ANSIBLE_VAULT;1.0;AES
-53616c7465645f5fd0026926a2d415a28a2622116273fbc90e377225c12a347e1daf4456d36a77f9
-9ad98d59f61d06a4b66718d855f16fb7bdfe54d1ec8aeaa4d06c2dc1fa630ae1846a029877f0eeb1
-83c62ffb04c2512995e815de4b4d29ed"""
+from units.mock.vault_helper import TextVaultSecret
 
 v11_data = """$ANSIBLE_VAULT;1.1;AES256
 62303130653266653331306264616235333735323636616539316433666463323964623162386137
@@ -68,28 +44,400 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 3739"""
 
 
+@pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
+                    reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultEditor(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self._test_dir = None
+        self.vault_password = "test-vault-password"
+        vault_secret = TextVaultSecret(self.vault_password)
+        self.vault_secrets = [('vault_secret', vault_secret),
+                              ('default', vault_secret)]
+
+    @property
+    def vault_secret(self):
+        return match_encrypt_secret(self.vault_secrets)[1]
 
     def tearDown(self):
-        pass
+        if self._test_dir:
+            pass
+            # shutil.rmtree(self._test_dir)
+        self._test_dir = None
+
+    def _secrets(self, password):
+        vault_secret = TextVaultSecret(password)
+        vault_secrets = [('default', vault_secret)]
+        return vault_secrets
 
     def test_methods_exist(self):
-        v = VaultEditor(None)
+        v = vault.VaultEditor(None)
         slots = ['create_file',
                  'decrypt_file',
                  'edit_file',
                  'encrypt_file',
                  'rekey_file',
                  'read_data',
-                 'write_data',
-                 'shuffle_files']
+                 'write_data']
         for slot in slots:
             assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
 
-    @patch.object(VaultEditor, '_editor_shell_command')
+    def _create_test_dir(self):
+        suffix = '_ansible_unit_test_%s_' % (self.__class__.__name__)
+        return tempfile.mkdtemp(suffix=suffix)
+
+    def _create_file(self, test_dir, name, content=None, symlink=False):
+        file_path = os.path.join(test_dir, name)
+        opened_file = open(file_path, 'wb')
+        if content:
+            opened_file.write(content)
+        opened_file.close()
+        return file_path
+
+    def _vault_editor(self, vault_secrets=None):
+        if vault_secrets is None:
+            vault_secrets = self._secrets(self.vault_password)
+        return VaultEditor(VaultLib(vault_secrets))
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_helper_empty_target(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+
+        src_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        mock_sp_call.side_effect = self._faux_command
+        ve = self._vault_editor()
+
+        b_ciphertext = ve._edit_file_helper(src_file_path, self.vault_secret)
+
+        self.assertNotEqual(src_contents, b_ciphertext)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_helper_call_exception(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+
+        src_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        error_txt = 'calling editor raised an exception'
+        mock_sp_call.side_effect = errors.AnsibleError(error_txt)
+
+        ve = self._vault_editor()
+
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                error_txt,
+                                ve._edit_file_helper,
+                                src_file_path,
+                                self.vault_secret)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_helper_symlink_target(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        src_file_link_path = os.path.join(self._test_dir, 'a_link_to_dest_file')
+
+        os.symlink(src_file_path, src_file_link_path)
+
+        mock_sp_call.side_effect = self._faux_command
+        ve = self._vault_editor()
+
+        b_ciphertext = ve._edit_file_helper(src_file_link_path, self.vault_secret)
+
+        self.assertNotEqual(src_file_contents, b_ciphertext,
+                            'b_ciphertext should be encrypted and not equal to src_contents')
+
+    def _faux_editor(self, editor_args, new_src_contents=None):
+        if editor_args[0] == 'shred':
+            return
+
+        tmp_path = editor_args[-1]
+
+        # simulate the tmp file being editted
+        tmp_file = open(tmp_path, 'wb')
+        if new_src_contents:
+            tmp_file.write(new_src_contents)
+        tmp_file.close()
+
+    def _faux_command(self, tmp_path):
+        pass
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_helper_no_change(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        # editor invocation doesn't change anything
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, src_file_contents)
+
+        mock_sp_call.side_effect = faux_editor
+        ve = self._vault_editor()
+
+        ve._edit_file_helper(src_file_path, self.vault_secret, existing_data=src_file_contents)
+
+        new_target_file = open(src_file_path, 'rb')
+        new_target_file_contents = new_target_file.read()
+        self.assertEqual(src_file_contents, new_target_file_contents)
+
+    def _assert_file_is_encrypted(self, vault_editor, src_file_path, src_contents):
+        new_src_file = open(src_file_path, 'rb')
+        new_src_file_contents = new_src_file.read()
+
+        # TODO: assert that it is encrypted
+        self.assertTrue(vault.is_encrypted(new_src_file_contents))
+
+        src_file_plaintext = vault_editor.vault.decrypt(new_src_file_contents)
+
+        # the plaintext should not be encrypted
+        self.assertFalse(vault.is_encrypted(src_file_plaintext))
+
+        # and the new plaintext should match the original
+        self.assertEqual(src_file_plaintext, src_contents)
+
+    def _assert_file_is_link(self, src_file_link_path, src_file_path):
+        self.assertTrue(os.path.islink(src_file_link_path),
+                        'The dest path (%s) should be a symlink to (%s) but is not' % (src_file_link_path, src_file_path))
+
+    def test_rekey_file(self):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        # FIXME: update to just set self._secrets or just a new vault secret id
+        new_password = 'password2:electricbugaloo'
+        new_vault_secret = TextVaultSecret(new_password)
+        new_vault_secrets = [('default', new_vault_secret)]
+        ve.rekey_file(src_file_path, vault.match_encrypt_secret(new_vault_secrets)[1])
+
+        # FIXME: can just update self._secrets here
+        new_ve = vault.VaultEditor(VaultLib(new_vault_secrets))
+        self._assert_file_is_encrypted(new_ve, src_file_path, src_file_contents)
+
+    def test_rekey_file_no_new_password(self):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'The value for the new_password to rekey',
+                                ve.rekey_file,
+                                src_file_path,
+                                None)
+
+    def test_rekey_file_not_encrypted(self):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+
+        new_password = 'password2:electricbugaloo'
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'input is not vault encrypted data',
+                                ve.rekey_file,
+                                src_file_path, new_password)
+
+    def test_plaintext(self):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        res = ve.plaintext(src_file_path)
+        self.assertEqual(src_file_contents, res)
+
+    def test_plaintext_not_encrypted(self):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'input is not vault encrypted data',
+                                ve.plaintext,
+                                src_file_path)
+
+    def test_encrypt_file(self):
+        self._test_dir = self._create_test_dir()
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        ve = self._vault_editor()
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
+
+    def test_encrypt_file_symlink(self):
+        self._test_dir = self._create_test_dir()
+
+        src_file_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
+
+        src_file_link_path = os.path.join(self._test_dir, 'a_link_to_dest_file')
+        os.symlink(src_file_path, src_file_link_path)
+
+        ve = self._vault_editor()
+        ve.encrypt_file(src_file_link_path, self.vault_secret)
+
+        self._assert_file_is_encrypted(ve, src_file_path, src_file_contents)
+        self._assert_file_is_encrypted(ve, src_file_link_path, src_file_contents)
+
+        self._assert_file_is_link(src_file_link_path, src_file_path)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_no_vault_id(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        new_src_contents = to_bytes("The info is different now.")
+
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, new_src_contents)
+
+        mock_sp_call.side_effect = faux_editor
+
+        ve = self._vault_editor()
+
+        ve.encrypt_file(src_file_path, self.vault_secret)
+        ve.edit_file(src_file_path)
+
+        new_src_file = open(src_file_path, 'rb')
+        new_src_file_contents = new_src_file.read()
+
+        self.assertTrue(b'$ANSIBLE_VAULT;1.1;AES256' in new_src_file_contents)
+
+        src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
+        self.assertEqual(src_file_plaintext, new_src_contents)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_with_vault_id(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        new_src_contents = to_bytes("The info is different now.")
+
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, new_src_contents)
+
+        mock_sp_call.side_effect = faux_editor
+
+        ve = self._vault_editor()
+
+        ve.encrypt_file(src_file_path, self.vault_secret,
+                        vault_id='vault_secrets')
+        ve.edit_file(src_file_path)
+
+        new_src_file = open(src_file_path, 'rb')
+        new_src_file_contents = new_src_file.read()
+
+        self.assertTrue(b'$ANSIBLE_VAULT;1.2;AES256;vault_secrets' in new_src_file_contents)
+
+        src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
+        self.assertEqual(src_file_plaintext, new_src_contents)
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_symlink(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        new_src_contents = to_bytes("The info is different now.")
+
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, new_src_contents)
+
+        mock_sp_call.side_effect = faux_editor
+
+        ve = self._vault_editor()
+
+        ve.encrypt_file(src_file_path, self.vault_secret)
+
+        src_file_link_path = os.path.join(self._test_dir, 'a_link_to_dest_file')
+
+        os.symlink(src_file_path, src_file_link_path)
+
+        ve.edit_file(src_file_link_path)
+
+        new_src_file = open(src_file_path, 'rb')
+        new_src_file_contents = new_src_file.read()
+
+        src_file_plaintext = ve.vault.decrypt(new_src_file_contents)
+
+        self._assert_file_is_link(src_file_link_path, src_file_path)
+
+        self.assertEqual(src_file_plaintext, new_src_contents)
+
+        # self.assertEqual(src_file_plaintext, new_src_contents,
+        #                 'The decrypted plaintext of the editted file is not the expected contents.')
+
+    @patch('ansible.parsing.vault.subprocess.call')
+    def test_edit_file_not_encrypted(self, mock_sp_call):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        new_src_contents = to_bytes("The info is different now.")
+
+        def faux_editor(editor_args):
+            self._faux_editor(editor_args, new_src_contents)
+
+        mock_sp_call.side_effect = faux_editor
+
+        ve = self._vault_editor()
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'input is not vault encrypted data',
+                                ve.edit_file,
+                                src_file_path)
+
+    def test_create_file_exists(self):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        ve = self._vault_editor()
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'please use .edit. instead',
+                                ve.create_file,
+                                src_file_path,
+                                self.vault_secret)
+
+    def test_decrypt_file_exception(self):
+        self._test_dir = self._create_test_dir()
+        src_contents = to_bytes("some info in a file\nyup.")
+        src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
+
+        ve = self._vault_editor()
+        self.assertRaisesRegexp(errors.AnsibleError,
+                                'input is not vault encrypted data',
+                                ve.decrypt_file,
+                                src_file_path)
+
+    @patch.object(vault.VaultEditor, '_editor_shell_command')
     def test_create_file(self, mock_editor_shell_command):
 
         def sc_side_effect(filename):
@@ -99,48 +447,18 @@ class TestVaultEditor(unittest.TestCase):
         tmp_file = tempfile.NamedTemporaryFile()
         os.unlink(tmp_file.name)
 
-        ve = VaultEditor("ansible")
-        ve.create_file(tmp_file.name)
+        _secrets = self._secrets('ansible')
+        ve = self._vault_editor(_secrets)
+        ve.create_file(tmp_file.name, vault.match_encrypt_secret(_secrets)[1])
 
         self.assertTrue(os.path.exists(tmp_file.name))
 
-    def test_decrypt_1_0(self):
-        # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
-        v10_file = tempfile.NamedTemporaryFile(delete=False)
-        with v10_file as f:
-            f.write(to_bytes(v10_data))
-
-        ve = VaultEditor("ansible")
-
-        # make sure the password functions for the cipher
-        error_hit = False
-        try:
-            ve.decrypt_file(v10_file.name)
-        except errors.AnsibleError:
-            error_hit = True
-
-        # verify decrypted content
-        f = open(v10_file.name, "rb")
-        fdata = to_text(f.read())
-        f.close()
-
-        os.unlink(v10_file.name)
-
-        assert error_hit is False, "error decrypting 1.0 file"
-        assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
-
     def test_decrypt_1_1(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-
         v11_file = tempfile.NamedTemporaryFile(delete=False)
         with v11_file as f:
             f.write(to_bytes(v11_data))
 
-        ve = VaultEditor("ansible")
+        ve = self._vault_editor(self._secrets("ansible"))
 
         # make sure the password functions for the cipher
         error_hit = False
@@ -156,45 +474,44 @@ class TestVaultEditor(unittest.TestCase):
 
         os.unlink(v11_file.name)
 
-        assert error_hit is False, "error decrypting 1.0 file"
-        assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
+        assert error_hit is False, "error decrypting 1.1 file"
+        assert fdata.strip() == "foo", "incorrect decryption of 1.1 file: %s" % fdata.strip()
 
-    def test_rekey_migration(self):
-        # Skip testing rekeying files if we don't have access to AES, KDF or Counter.
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
+    def test_real_path_dash(self):
+        filename = '-'
+        ve = self._vault_editor()
 
-        v10_file = tempfile.NamedTemporaryFile(delete=False)
-        with v10_file as f:
-            f.write(to_bytes(v10_data))
+        res = ve._real_path(filename)
+        self.assertEqual(res, '-')
 
-        ve = VaultEditor("ansible")
+    def test_real_path_dev_null(self):
+        filename = '/dev/null'
+        ve = self._vault_editor()
 
-        # make sure the password functions for the cipher
-        error_hit = False
-        try:
-            ve.rekey_file(v10_file.name, 'ansible2')
-        except errors.AnsibleError:
-            error_hit = True
+        res = ve._real_path(filename)
+        self.assertEqual(res, '/dev/null')
 
-        # verify decrypted content
-        f = open(v10_file.name, "rb")
-        fdata = f.read()
-        f.close()
+    def test_real_path_symlink(self):
+        self._test_dir = self._create_test_dir()
+        file_path = self._create_file(self._test_dir, 'test_file', content=b'this is a test file')
+        file_link_path = os.path.join(self._test_dir, 'a_link_to_test_file')
 
-        assert error_hit is False, "error rekeying 1.0 file to 1.1"
+        os.symlink(file_path, file_link_path)
 
-        # ensure filedata can be decrypted, is 1.1 and is AES256
-        vl = VaultLib("ansible2")
-        dec_data = None
-        error_hit = False
-        try:
-            dec_data = vl.decrypt(fdata)
-        except errors.AnsibleError:
-            error_hit = True
+        ve = self._vault_editor()
 
-        os.unlink(v10_file.name)
+        res = ve._real_path(file_link_path)
+        self.assertEqual(res, file_path)
 
-        assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
-        assert error_hit is False, "error decrypting migrated 1.0 file"
-        assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
+
+@pytest.mark.skipif(not vault.HAS_PYCRYPTO,
+                    reason="Skipping pycrypto tests because pycrypto is not installed")
+class TestVaultEditorPyCrypto(unittest.TestCase):
+    def setUp(self):
+        self.has_cryptography = vault.HAS_CRYPTOGRAPHY
+        vault.HAS_CRYPTOGRAPHY = False
+        super(TestVaultEditorPyCrypto, self).setUp()
+
+    def tearDown(self):
+        vault.HAS_CRYPTOGRAPHY = self.has_cryptography
+        super(TestVaultEditorPyCrypto, self).tearDown()

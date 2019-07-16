@@ -1,0 +1,80 @@
+# Would use [] but this has troubles with PATH and trying to find the executable so just resort to keeping a space
+- name: record special path for tests
+  set_fact:
+    testing_dir: '{{ remote_tmp_dir }}\ansible win_psexec'
+
+- name: create special path testing dir
+  win_file:
+    path: '{{ testing_dir }}'
+    state: directory
+
+- name: Download PsExec
+  win_get_url:
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_psexec/PsExec.exe
+    dest: '{{ testing_dir }}\PsExec.exe'
+
+- name: Get the existing PATH env var
+  win_shell: '$env:PATH'
+  register: system_path
+  changed_when: False
+
+- name: Run whoami
+  win_psexec:
+    command: whoami.exe
+    nobanner: true
+  register: whoami
+  environment:
+    PATH: '{{ testing_dir }};{{ system_path.stdout | trim }}'
+
+- name: Test whoami
+  assert:
+    that:
+    - whoami.rc == 0
+    - whoami.stdout == ''
+    # FIXME: Standard output does not work or is truncated
+    #- whoami.stdout == '{{ ansible_hostname|lower }}'
+
+- name: Run whoami as SYSTEM
+  win_psexec:
+    command: whoami.exe
+    system: yes
+    nobanner: true
+    executable: '{{ testing_dir }}\PsExec.exe'
+  register: whoami_as_system
+  # Seems to be a bug with PsExec where the stdout can be empty, just retry the task to make this test a bit more stable
+  until: whoami_as_system.rc == 0 and whoami_as_system.stdout == 'nt authority\system'
+  retries: 3
+  delay: 2
+
+# FIXME: Behaviour is not consistent on all Windows systems
+#- name: Run whoami as ELEVATED
+#  win_psexec:
+#    command: whoami.exe
+#    elevated: yes
+#  register: whoami_as_elevated
+#
+## Ensure we have basic facts
+#- setup:
+#
+#- debug:
+#    msg: '{{ whoami_as_elevated.stdout|lower }} == {{ ansible_hostname|lower }}\{{ ansible_user_id|lower }}'
+#
+#- name: Test whoami
+#  assert:
+#    that:
+#    - whoami_as_elevated.rc == 0
+#    - whoami_as_elevated.stdout|lower == '{{ ansible_hostname|lower }}\{{ ansible_user_id|lower }}'
+
+- name: Run command with multiple arguments
+  win_psexec:
+    command: powershell.exe -NonInteractive "exit 1"
+  ignore_errors: yes
+  register: whoami_multiple_args
+  environment:
+    PATH: '{{ testing_dir }};{{ system_path.stdout | trim }}'
+
+- name: Test command with multiple argumetns
+  assert:
+    that:
+    - whoami_multiple_args.rc == 1
+    - whoami_multiple_args.psexec_command == "psexec.exe -accepteula powershell.exe -NonInteractive \"exit 1\""

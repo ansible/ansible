@@ -1,0 +1,51 @@
+---
+- name: Validate generated params
+  shell: 'openssl dhparam -in {{ output_dir }}/{{ item }}.pem -noout -check'
+  with_items:
+    - dh768
+    - dh512
+
+- name: Get bit size of 768
+  shell: 'openssl dhparam -noout -in {{ output_dir }}/dh768.pem -text | head -n1 | sed -ne "s@.*(\\([[:digit:]]\{1,\}\\) bit).*@\\1@p"'
+  register: bit_size_dhparam
+
+- name: Check bit size of default
+  assert:
+    that:
+      - bit_size_dhparam.stdout == "768"
+
+- name: Get bit size of 512
+  shell: 'openssl dhparam -noout -in {{ output_dir }}/dh512.pem -text | head -n1 | sed -ne "s@.*(\\([[:digit:]]\{1,\}\\) bit).*@\\1@p"'
+  register: bit_size_dhparam_512
+
+- name: Check bit size of default
+  assert:
+    that:
+      - bit_size_dhparam_512.stdout == "512"
+
+- name: Check if changed works correctly
+  assert:
+    that:
+      - dhparam_changed is not changed
+      - dhparam_changed_512 is not changed
+      - dhparam_changed_to_512 is changed
+      - dhparam_changed_force is changed
+
+- name: Verify that broken params will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
+- name: Check backup
+  assert:
+    that:
+      - dhparam_backup_1 is changed
+      - dhparam_backup_1.backup_file is undefined
+      - dhparam_backup_2 is not changed
+      - dhparam_backup_2.backup_file is undefined
+      - dhparam_backup_3 is changed
+      - dhparam_backup_3.backup_file is string
+      - dhparam_backup_4 is changed
+      - dhparam_backup_4.backup_file is string
+      - dhparam_backup_5 is not changed
+      - dhparam_backup_5.backup_file is undefined

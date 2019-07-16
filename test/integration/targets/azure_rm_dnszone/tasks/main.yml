@@ -1,0 +1,355 @@
+- name: Create random domain name
+  set_fact:
+    domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+
+- name: Create a DNS zone (check mode)
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+  register: results
+  check_mode: yes
+
+- assert:
+    that: results.changed
+
+- name: Create a DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: Update DNS zone with tags
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    tags:
+      test: modified
+  register: results
+
+- assert:
+    that: 
+      - results.changed
+      - results.state.tags.test == 'modified'
+
+- name: Retrieve DNS Zone Facts
+  azure_rm_dnszone_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+  register: zones
+
+- name: Assert that facts module returned result
+  assert:
+    that: 
+      - azure_dnszones[0].tags.test == 'modified'
+      - zones.dnszones[0].type == 'public'
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+  with_items:
+    - "{{ domain_name }}registration1"
+    - "{{ domain_name }}resolution1"
+    - "{{ domain_name }}registration2"
+    - "{{ domain_name }}resolution2"
+
+- name: Create private dns zone
+  azure_rm_dnszone:
+    name: "{{ domain_name }}.private"
+    resource_group: "{{ resource_group }}"
+    type: private
+    registration_virtual_networks:
+      - name: "{{ domain_name }}registration1"
+    resolution_virtual_networks:
+      - name: "{{ domain_name }}resolution1"
+      - name: "{{ domain_name }}resolution2"
+  register: results
+
+- assert:
+    that:
+        - "results.state.registration_virtual_networks | length == 1"
+        - "results.state.resolution_virtual_networks | length == 2"
+        - results.state.type == 'private'
+
+- name: Update private dns zone
+  azure_rm_dnszone:
+    name: "{{ domain_name }}.private"
+    resource_group: "{{ resource_group }}"
+    type: private
+    registration_virtual_networks:
+      - name: "{{ domain_name }}registration1"
+    resolution_virtual_networks:
+      - name: "{{ domain_name }}resolution1"
+  register: results
+
+- assert:
+    that:
+        - "results.state.registration_virtual_networks | length == 1"
+        - "results.state.resolution_virtual_networks | length == 1"
+        - results.state.type == 'private'
+
+- name: Test idempotent
+  azure_rm_dnszone:
+    name: "{{ item }}"
+    resource_group: "{{ resource_group }}"
+  with_items:
+    - "{{ domain_name }}.com"
+    - "{{ domain_name }}.private"
+  register: results
+
+- assert:
+    that:
+        - "not {{ item.changed }}"
+  with_items: "{{ results.results }}"
+
+#
+# azure_rm_dnsrecordset test
+#
+
+- name: create "A" record set with multiple records
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    records:
+      - entry: 192.168.100.101
+      - entry: 192.168.100.102
+      - entry: 192.168.100.103
+  register: results
+
+- name: Assert that A record set was created
+  assert:
+    that:
+        - results.changed
+        - 'results.state.arecords | length == 3'
+
+- name: re-run "A" record with same values
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    records:
+      - entry: 192.168.100.101
+      - entry: 192.168.100.102
+      - entry: 192.168.100.103
+  register: results
+
+- name: Assert that A record set was not changed
+  assert:
+    that: not results.changed
+
+- name: Update "A" record set with additional record
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_mode: append
+    records:
+      - entry: 192.168.100.104
+  register: results
+
+- name: Assert that new record was appended
+  assert:
+    that: 
+      - results.changed
+      - 'results.state.arecords | length == 4'
+
+- name: re-update "A" record set with additional record
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    record_mode: append
+    records:
+      - entry: 192.168.100.104
+  register: results
+
+- name: Assert that A record set was not changed
+  assert:
+    that:
+      - not results.changed
+
+- name: Remove 1 record from record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    records:
+      - entry: 192.168.100.101
+      - entry: 192.168.100.102
+      - entry: 192.168.100.103
+  register: results
+
+- name: Assert that record was deleted
+  assert:
+    that:
+      - results.changed
+      - 'results.state.arecords | length == 3'      
+
+- name: Check_mode test
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    records:
+      - entry: 192.168.100.105
+  check_mode: yes
+  register: results
+
+- name: Assert that check_mode returns new state
+  assert:
+    that: 
+      - results.changed
+
+# FUTURE: add facts module calls to ensure that we really didn't touch anything
+
+- name: create SRV records in a new record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: "_sip._tcp.{{ domain_name }}.com"
+    zone_name: "{{ domain_name }}.com"
+    time_to_live: 7200
+    record_type: SRV
+    records:
+    - entry: sip.{{ domain_name }}.com
+      priority: 20
+      weight: 10
+      port: 5060
+  register: results
+
+- name: Assert that SRV record set was created
+  assert:
+    that: 
+      - results.changed
+
+- name: create TXT records in a new record set
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: "_txt.{{ domain_name }}.com"
+    zone_name: "{{ domain_name }}.com"
+    record_type: TXT
+    records:
+      - entry: "v=spf1 a -all"
+      - entry: "foo"
+      - entry:
+          - "bar"
+          - "baz"
+  register: results
+
+- name: Assert that TXT record set was created
+  assert:
+    that:
+      - results.changed
+
+#
+# azure_rm_dnsrecordset_facts
+#
+
+- name: Retrieve DNS Record Set Facts for single Record Set
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+    relative_name: www
+    record_type: A
+  register: results
+
+- name: Assert that facts module returned result for single Record Set
+  assert:
+    that: 
+      - not results.changed
+      - azure_dnsrecordset[0].name == 'www'
+      - results.dnsrecordsets[0].relative_name == 'www'
+      - 'results.dnsrecordsets[0].records | length == 3'
+      - results.dnsrecordsets[0].record_type == 'A'
+
+- name: Retrieve DNS Record Set Facts for all Record Sets
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+  register: facts
+
+- name: Assert that facts module returned result for all Record Sets
+  assert:
+    that: 
+      - not facts.changed
+      - facts.ansible_facts.azure_dnsrecordset[0].name == '@'
+      - facts.ansible_facts.azure_dnsrecordset[1].name == '@'
+      - facts.ansible_facts.azure_dnsrecordset[4].name == 'www'
+
+#
+# azure_rm_dnsrecordset cleanup
+#
+- name: delete all record sets  except for @
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: "{{ item.relative_name }}"
+    zone_name: "{{ domain_name }}.com"
+    record_type: "{{ item.record_type }}"
+    state: absent
+  with_items: "{{ facts.dnsrecordsets }}"
+  when:
+    - item.relative_name != '@'
+  register: results
+
+- name: Assert that record set deleted
+  assert:
+    that: results.changed
+
+- name: Retrieve DNS Record Set Facts for all Record Sets
+  azure_rm_dnsrecordset_facts:
+    resource_group: "{{ resource_group }}"
+    zone_name: "{{ domain_name }}.com"
+  register: facts
+
+- name: Assert all record set deleted
+  assert:
+    that:
+       - item.relative_name == '@'
+  with_items: "{{ facts.dnsrecordsets }}"
+
+- name: (idempotence test) re-run record set absent
+  azure_rm_dnsrecordset:
+    resource_group: "{{ resource_group }}"
+    relative_name: www
+    zone_name: "{{ domain_name }}.com"
+    record_type: A
+    state: absent
+  register: results
+
+- name:
+  assert:
+    that: not results.changed
+
+#
+# azure_rm_dnszone cleanup
+#
+- name: Delete DNS zone
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ domain_name }}.com"
+    - "{{ domain_name }}.private"
+
+- name: Delete DNS zone (idempotent)
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+    state: absent
+  register: results
+
+- assert:
+    that: not results.changed

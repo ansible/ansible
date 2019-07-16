@@ -1,0 +1,34 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/not_hardware_facts.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+
+- name: test not hardware
+  nxos_facts:
+    gather_subset:
+      - "!hardware"
+    timeout: 30
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      # _facts modules should never report a change
+      - "result.changed == false"
+
+      # Correct subsets are present
+      - "'config' in result.ansible_facts.ansible_net_gather_subset"
+      - "'default' in result.ansible_facts.ansible_net_gather_subset"
+      - "'interfaces' in result.ansible_facts.ansible_net_gather_subset"
+
+      # ... and not present
+      - "'hardware' not in result.ansible_facts.ansible_net_gather_subset"
+
+      # Items from those subsets are present
+      # FIXME
+      #      - "result.ansible_facts.ansible_net_interfaces.['Ethernet2/15'].mtu > 1" # interfaces
+      # ... and not present
+      - "result.ansible_facts.ansible_net_filesystems is not defined"
+
+- debug: msg="END connection={{ ansible_connection }}/not_hardware_facts.yaml"

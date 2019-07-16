@@ -1,0 +1,61 @@
+---
+- set_fact: ignore_errors_httpapi='no'
+- set_fact: ignore_errors_httpapi='yes'
+  when: ansible_connection == 'httpapi'
+
+- include: targets/nxos_install_os/tasks/upgrade/enable_scp_server.yaml
+
+- name: 'Remove SSH known_hosts file before scp of image file'
+  nxos_command:
+    commands: 'run bash rm /var/home/admin/.ssh/known_hosts'
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Copy {{ si }} to bootflash"
+  nxos_file_copy:
+    file_pull: True
+    file_pull_timeout: 1200
+    remote_file: "{{image_dir}}{{ si }}"
+    remote_scp_server: "{{ remote_scp_server }}"
+    remote_scp_server_user: "{{ remote_scp_user }}"
+    remote_scp_server_password: "{{ remote_scp_password }}"
+  register: result
+
+#- name: "Copy {{ si }} to bootflash"
+#  expect:
+#    command: "scp {{image_dir}}{{ si }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }}:"
+#    responses:
+#      (?i)Are you sure you want to continue connecting.*: yes
+#      (?i)password: "{{ ansible_ssh_pass }}"
+#    timeout: 1800
+#  register: result
+
+- debug:
+    msg: "{{ item.key }} {{ item.value }}"
+  with_dict: "{{ result }}"
+
+- name: "Copy {{ ki }} to bootflash"
+  nxos_file_copy:
+    file_pull: True
+    file_pull_timeout: 1200
+    remote_file: "{{image_dir}}{{ ki }}"
+    remote_scp_server: "{{ remote_scp_server }}"
+    remote_scp_server_user: "{{ remote_scp_user }}"
+    remote_scp_server_password: "{{ remote_scp_password }}"
+  when: ki is defined
+  register: result
+
+#- name: "Copy {{ ki }} to bootflash"
+#  expect:
+#    command: "scp {{image_dir}}{{ ki }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }}:"
+#    responses:
+#      (?i)Are you sure you want to continue connecting.*: yes
+#      (?i)password: "{{ ansible_ssh_pass }}"
+#    timeout: 1800
+#  when: ki is defined
+#  register: result
+
+- debug:
+    msg: "{{ item.key }} {{ item.value }}"
+  with_dict: "{{ result }}"
+  when: ki is defined

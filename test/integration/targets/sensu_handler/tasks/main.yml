@@ -1,0 +1,119 @@
+- name: Creating a handler if the directory doesn't exist should work
+  sensu_handler:
+    name: "handler"
+    type: "pipe"
+    command: "/bin/bash"
+    state: "present"
+
+- name: Insert junk JSON in a handlers file
+  lineinfile:
+    state: "present"
+    create: "yes"
+    path: "/etc/sensu/conf.d/handlers/handler.json"
+    line: "{'foo' = bar}"
+
+- name: Configure a handler with an existing invalid file
+  sensu_handler:
+    name: "handler"
+    type: "pipe"
+    command: "/bin/bash"
+    state: "present"
+  register: handler
+
+- name: Configure a handler (again)
+  sensu_handler:
+    name: "handler"
+    type: "pipe"
+    command: "/bin/bash"
+    state: "present"
+  register: handler_twice
+
+- name: Retrieve configuration file
+  slurp:
+    src: "{{ handler['file'] }}"
+  register: handler_config
+
+- name: Assert that handler data was set successfully and properly
+  assert:
+    that:
+      - "handler is successful"
+      - "handler is changed"
+      - "handler_twice is successful"
+      - "handler_twice is not changed"
+      - "handler['name'] == 'handler'"
+      - "handler['file'] == '/etc/sensu/conf.d/handlers/handler.json'"
+      - "handler['config']['type'] == 'pipe'"
+      - "handler['config']['command'] == '/bin/bash'"
+      - "handler['config']['timeout'] == 10"
+      - "handler['config']['handle_flapping'] == false"
+      - "handler['config']['handle_silenced'] == false"
+
+- name: Assert that the handler configuration file is actually configured properly
+  vars:
+    config: "{{ handler_config.content | b64decode | from_json }}"
+  assert:
+    that:
+      - "'handler' in config['handlers']"
+      - "config['handlers']['handler']['type'] == 'pipe'"
+      - "config['handlers']['handler']['command'] == '/bin/bash'"
+      - "config['handlers']['handler']['timeout'] == 10"
+      - "config['handlers']['handler']['handle_flapping'] == false"
+      - "config['handlers']['handler']['handle_silenced'] == false"
+
+- name: Delete Sensu handler configuration
+  sensu_handler:
+    name: "handler"
+    state: "absent"
+  register: handler_delete
+
+- name: Delete Sensu handler configuration (again)
+  sensu_handler:
+    name: "handler"
+    state: "absent"
+  register: handler_delete_twice
+
+- name: Retrieve configuration file stat
+  stat:
+    path: "{{ handler['file'] }}"
+  register: handler_stat
+
+- name: Assert that handler deletion was successful
+  assert:
+    that:
+      - "handler_delete is successful"
+      - "handler_delete is changed"
+      - "handler_delete_twice is successful"
+      - "handler_delete_twice is not changed"
+      - "handler_stat.stat.exists == false"
+
+- name: Configuring a handler without a name should fail
+  sensu_handler:
+    type: "pipe"
+    command: "/bin/bash"
+  register: failure
+  ignore_errors: true
+
+- name: Assert that configuring a handler without a name fails
+  assert:
+    that:
+      - failure is failed
+      - "'required arguments: name' in failure['msg']"
+
+- name: Configuring a handler without a type should fail
+  sensu_handler:
+    name: "pipe"
+    command: "/bin/bash"
+  register: failure
+  ignore_errors: true
+
+- name: Assert that configuring a handler without a type fails
+  assert:
+    that:
+      - failure is failed
+      - "'the following are missing: type' in failure['msg']"
+
+- include: pipe.yml
+- include: tcp.yml
+- include: udp.yml
+- include: set.yml
+- include: transport.yml

@@ -1,0 +1,51 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ManageRoute53ForTests",
+            "Effect": "Allow",
+            "Action": [
+                "route53:CreateHostedZone",
+                "route53:DeleteHostedZone",
+                "route53:GetHostedZone",
+                "route53:ListHostedZones",
+                "route53:UpdateHostedZoneComment"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowTransitGatewayManagement",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateTransitGateway",
+                "ec2:DeleteTransitGateway",
+                "ec2:DescribeTransitGateways"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowCloudfrontUsage",
+            "Effect": "Allow",
+            "Action": [
+                "cloudfront:CreateDistribution",
+                "cloudfront:CreateDistributionWithTags",
+                "cloudfront:CreateCloudFrontOriginAccessIdentity",
+                "cloudfront:DeleteDistribution",
+                "cloudfront:GetDistribution",
+                "cloudfront:GetStreamingDistribution",
+                "cloudfront:GetDistributionConfig",
+                "cloudfront:GetStreamingDistributionConfig",
+                "cloudfront:GetInvalidation",
+                "cloudfront:ListDistributions",
+                "cloudfront:ListDistributionsByWebACLId",
+                "cloudfront:ListInvalidations",
+                "cloudfront:ListStreamingDistributions",
+                "cloudfront:ListTagsForResource",
+                "cloudfront:TagResource",
+                "cloudfront:UntagResource",
+                "cloudfront:UpdateDistribution"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

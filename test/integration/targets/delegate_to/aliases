@@ -1,0 +1,3 @@
+shippable/posix/group3
+needs/ssh
+needs/root  # only on macOS and FreeBSD to configure network interfaces

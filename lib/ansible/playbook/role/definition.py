@@ -19,41 +19,47 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
-
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+from ansible.utils.collection_loader import get_collection_role_path, is_collection_ref
 from ansible.utils.path import unfrackpath
-
+from ansible.utils.display import Display
 
 __all__ = ['RoleDefinition']
 
+display = Display()
 
-class RoleDefinition(Base, Become, Conditional, Taggable):
+
+class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
-        self._play             = play
-        self._variable_manager = variable_manager
-        self._loader           = loader
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
-        self._role_path    = None
-        self._role_basedir = role_basedir
-        self._role_params  = dict()
         super(RoleDefinition, self).__init__()
 
-    #def __repr__(self):
-    #    return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
+        self._play = play
+        self._variable_manager = variable_manager
+        self._loader = loader
+
+        self._role_path = None
+        self._role_collection = None
+        self._role_basedir = role_basedir
+        self._role_params = dict()
+        self._collection_list = collection_list
+
+    # def __repr__(self):
+    #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
@@ -65,7 +71,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if isinstance(ds, int):
             ds = "%s" % ds
 
-        assert isinstance(ds, dict) or isinstance(ds, string_types) or isinstance(ds, AnsibleBaseYAMLObject)
+        if not isinstance(ds, dict) and not isinstance(ds, string_types) and not isinstance(ds, AnsibleBaseYAMLObject):
+            raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
             ds = super(RoleDefinition, self).preprocess_data(ds)
@@ -120,10 +127,9 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # if we have the required datastructures, and if the role_name
         # contains a variable, try and template it now
         if self._variable_manager:
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
+            all_vars = self._variable_manager.get_vars(play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
-            if templar._contains_vars(role_name):
-                role_name = templar.template(role_name)
+            role_name = templar.template(role_name)
 
         return role_name
 
@@ -134,6 +140,31 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         basename as the role name, otherwise we take the name as-given and
         append it to the default role path
         '''
+
+        # create a templar class to template the dependency names, in
+        # case they contain variables
+        if self._variable_manager is not None:
+            all_vars = self._variable_manager.get_vars(play=self._play)
+        else:
+            all_vars = dict()
+
+        templar = Templar(loader=self._loader, variables=all_vars)
+        role_name = templar.template(role_name)
+
+        role_tuple = None
+
+        # try to load as a collection-based role first
+        if self._collection_list or is_collection_ref(role_name):
+            role_tuple = get_collection_role_path(role_name, self._collection_list)
+
+        if role_tuple:
+            # we found it, stash collection data and return the name/path tuple
+            self._role_collection = role_tuple[2]
+            return role_tuple[0:2]
+
+        # FUTURE: refactor this to be callable from internal so we can properly order ansible.legacy searches with the collections keyword
+        if self._collection_list and 'ansible.legacy' not in self._collection_list:
+            raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
@@ -153,16 +184,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # in the loader (which should be the playbook dir itself) but without
         # the roles/ dir appended
         role_search_paths.append(self._loader.get_basedir())
-
-        # create a templar class to template the dependency names, in
-        # case they contain variables
-        if self._variable_manager is not None:
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
-        else:
-            all_vars = dict()
-
-        templar = Templar(loader=self._loader, variables=all_vars)
-        role_name = templar.template(role_name)
 
         # now iterate through the possible paths and return the first one we find
         for path in role_search_paths:
@@ -196,7 +217,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             #        other mechanism where we exclude certain kinds of field attributes,
             #        or make this list more automatic in some way so we don't have to
             #        remember to update it manually.
-            if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
+            if key not in base_attribute_names:
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:

@@ -22,10 +22,9 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests import unittest
-from nose.tools import eq_, raises
-
+from units.compat import unittest
 from ansible.module_utils.json_utils import _filter_non_json_lines
+
 
 class TestAnsibleModuleExitJson(unittest.TestCase):
     single_line_json_dict = u"""{"key": "value", "olá": "mundo"}"""
@@ -38,20 +37,22 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
 "b",
 "c"]"""
 
-    all_inputs = [single_line_json_dict,
-              single_line_json_array,
-              multi_line_json_dict,
-              multi_line_json_array]
+    all_inputs = [
+        single_line_json_dict,
+        single_line_json_array,
+        multi_line_json_dict,
+        multi_line_json_array
+    ]
 
     junk = [u"single line of junk", u"line 1/2 of junk\nline 2/2 of junk"]
 
     unparsable_cases = (
-            u'No json here',
-            u'"olá": "mundo"',
-            u'{"No json": "ending"',
-            u'{"wrong": "ending"]',
-            u'["wrong": "ending"}',
-            )
+        u'No json here',
+        u'"olá": "mundo"',
+        u'{"No json": "ending"',
+        u'{"wrong": "ending"]',
+        u'["wrong": "ending"}',
+    )
 
     def test_just_json(self):
         for i in self.all_inputs:
@@ -82,7 +83,8 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
 
     def test_unparsable_filter_non_json_lines(self):
         for i in self.unparsable_cases:
-            self.assertRaises(ValueError,
-                lambda data: _filter_non_json_lines(data),
+            self.assertRaises(
+                ValueError,
+                _filter_non_json_lines,
                 data=i
             )

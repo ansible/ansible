@@ -1,20 +1,6 @@
 # test code for lookup plugins
-# (c) 2014, James Tanner <tanner.jc@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # FILE LOOKUP
 
@@ -22,13 +8,13 @@
   copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
 
 - name: load the file as a fact
-  set_fact: 
+  set_fact:
     foo: "{{ lookup('file', output_dir + '/foo.txt' ) }}"
 
 - debug: var=foo
 
-- name: verify file lookup 
-  assert: 
+- name: verify file lookup
+  assert:
     that:
         - "foo == 'bar'"
 
@@ -43,7 +29,7 @@
   - "{{output_dir}}/lookup"
 
 - name: create a password file
-  set_fact: 
+  set_fact:
     newpass: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
 
 - name: stat the password file directory
@@ -134,29 +120,36 @@
     that:
         - "newpass == newpass2"
 
+- name: verify that we can generate a 1st password without writing it
+  set_fact:
+    newpass: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify that we can generate a 2nd password without writing it
+  set_fact:
+    newpass2: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify lookup password behavior with /dev/null
+  assert:
+    that:
+        - "newpass != newpass2"
 
 # ENV LOOKUP
 
-- name: get first environment var name
-  shell: env | fgrep -v '.' | head -n1 | cut -d\= -f1
-  register: known_var_name
+- name: get HOME environment var value
+  shell: "echo $HOME"
+  register: home_var_value
 
-- name: get first environment var value
-  shell: echo {{ '$' + known_var_name.stdout }}
-  register: known_var_value 
-
-- name: use env lookup to get known var
+- name: use env lookup to get HOME var
   set_fact:
-    test_val: "{{ lookup('env', known_var_name.stdout) }}"
+    test_val: "{{ lookup('env', 'HOME') }}"
 
-- debug: var=known_var_name.stdout
-- debug: var=known_var_value.stdout
+- debug: var=home_var_value.stdout
 - debug: var=test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == known_var_value.stdout"
+        - "test_val == home_var_value.stdout"
 
 
 # PIPE LOOKUP
@@ -195,23 +188,24 @@
 
 - name: set variable that clashes
   set_fact:
-      LOGNAME: foobar
+      PATH: foobar
 
 
-- name: get LOGNAME environment var value
-  shell: echo {{ '$LOGNAME' }}
-  register: known_var_value
-
-- name: do the lookup for env LOGNAME
+- name: get PATH environment var value
   set_fact:
-    test_val: "{{ lookup('env', 'LOGNAME') }}"
+    known_var_value: "{{ lookup('pipe', 'echo $PATH') }}"
+
+- name: do the lookup for env PATH
+  set_fact:
+    test_val: "{{ lookup('env', 'PATH') }}"
 
 - debug: var=test_val
 
 - name: compare values
   assert:
     that:
-        - "test_val == known_var_value.stdout"
+        - "test_val != ''"
+        - "test_val == known_var_value"
 
 
 - name: set with_dict
@@ -238,7 +232,7 @@
 - assert:
     that:
       - "url_invalid_cert.failed"
-      - "'Error validating the server' in url_invalid_cert.msg"
+      - "'Error validating the server' in url_invalid_cert.msg or 'Hostname mismatch' in url_invalid_cert.msg or ( url_invalid_cert.msg is search('hostname .* doesn.t match .*'))"
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
@@ -250,7 +244,7 @@
       - "'{{ badssl_host_substring }}' in web_data"
 
 - name: Test cartesian lookup
-  debug: var={{item}}
+  debug: var=item
   with_cartesian:
     - ["A", "B", "C"]
     - ["1", "2", "3"]
@@ -268,3 +262,44 @@
         - product.results[6]['item'] == ["C", "1"]
         - product.results[7]['item'] == ["C", "2"]
         - product.results[8]['item'] == ["C", "3"]
+
+# Template lookups
+
+# ref #18526
+- name: Test that we have a proper jinja search path in template lookup
+  set_fact:
+    hello_world: "{{ lookup('template', 'hello.txt') }}"
+
+- assert:
+    that:
+      - "hello_world|trim == 'Hello world!'"
+
+
+- name: Test that we have a proper jinja search path in template lookup with different variable start and end string
+  vars:
+    my_var: world
+  set_fact:
+    hello_world_string: "{{ lookup('template', 'hello_string.txt', variable_start_string='[%', variable_end_string='%]') }}"
+
+- assert:
+    that:
+      - "hello_world_string|trim == 'Hello world!'"
+
+# Vars lookups
+
+- name: Test that we can give it a single value and receive a single value
+  set_fact:
+    var_host: '{{ lookup("vars", "ansible_host") }}'
+
+- assert:
+    that:
+      - 'var_host == ansible_host'
+
+- name: Test that we can give a list of values to var and receive a list of values back
+  set_fact:
+    var_host_info: '{{ query("vars", "ansible_host", "ansible_connection") }}'
+
+- assert:
+    that:
+      - 'var_host_info[0] == ansible_host'
+      - 'var_host_info[1] == ansible_connection'

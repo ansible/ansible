@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import codecs
+import re
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text
@@ -36,7 +36,7 @@ _ESCAPE_SEQUENCE_RE = re.compile(r'''
     | \\x{2}           # 2-digit hex escapes
     | \\N\{{[^}}]+\}}  # Unicode characters by name
     | \\[\\'"abfnrtv]  # Single-character escapes
-    )'''.format(_HEXCHAR*8, _HEXCHAR*4, _HEXCHAR*2), re.UNICODE | re.VERBOSE)
+    )'''.format(_HEXCHAR * 8, _HEXCHAR * 4, _HEXCHAR * 2), re.UNICODE | re.VERBOSE)
 
 
 def _decode_escapes(s):
@@ -62,7 +62,7 @@ def parse_kv(args, check_raw=False):
             vargs = split_args(args)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise AnsibleParserError("error parsing argument string, try quoting the entire line.")
+                raise AnsibleParserError("error parsing argument string, try quoting the entire line.", orig_exc=ve)
             else:
                 raise
 
@@ -97,7 +97,7 @@ def parse_kv(args, check_raw=False):
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
         if len(raw_params) > 0:
-            options[u'_raw_params'] = ' '.join(raw_params)
+            options[u'_raw_params'] = join_args(raw_params)
 
     return options
 
@@ -112,7 +112,7 @@ def _get_quote_state(token, quote_char):
     prev_char = None
     for idx, cur_char in enumerate(token):
         if idx > 0:
-            prev_char = token[idx-1]
+            prev_char = token[idx - 1]
         if cur_char in '"\'' and prev_char != '\\':
             if quote_char:
                 if cur_char == quote_char:
@@ -128,13 +128,27 @@ def _count_jinja2_blocks(token, cur_depth, open_token, close_token):
     given opening/closing type and adjusts the current depth for that
     block based on the difference
     '''
-    num_open  = token.count(open_token)
+    num_open = token.count(open_token)
     num_close = token.count(close_token)
     if num_open != num_close:
         cur_depth += (num_open - num_close)
         if cur_depth < 0:
             cur_depth = 0
     return cur_depth
+
+
+def join_args(s):
+    '''
+    Join the original cmd based on manipulations by split_args().
+    This retains the original newlines and whitespaces.
+    '''
+    result = ''
+    for p in s:
+        if len(result) == 0 or result.endswith('\n'):
+            result += p
+        else:
+            result += ' ' + p
+    return result
 
 
 def split_args(args):
@@ -157,9 +171,8 @@ def split_args(args):
     # this is going to be the result value when we are done
     params = []
 
-    # Initial split on white space
-    args = args.strip()
-    items = args.strip().split('\n')
+    # Initial split on newlines
+    items = args.split('\n')
 
     # iterate over the tokens, and reassemble any that may have been
     # split on a space inside a jinja2 block.
@@ -171,21 +184,27 @@ def split_args(args):
 
     quote_char = None
     inside_quotes = False
-    print_depth   = 0  # used to count nested jinja2 {{ }} blocks
-    block_depth   = 0  # used to count nested jinja2 {% %} blocks
+    print_depth = 0  # used to count nested jinja2 {{ }} blocks
+    block_depth = 0  # used to count nested jinja2 {% %} blocks
     comment_depth = 0  # used to count nested jinja2 {# #} blocks
 
     # now we loop over each split chunk, coalescing tokens if the white space
     # split occurred within quotes or a jinja2 block of some kind
-    for itemidx,item in enumerate(items):
+    for (itemidx, item) in enumerate(items):
 
         # we split on spaces and newlines separately, so that we
         # can tell which character we split on for reassembly
         # inside quotation characters
-        tokens = item.strip().split(' ')
+        tokens = item.split(' ')
 
         line_continuation = False
-        for idx,token in enumerate(tokens):
+        for (idx, token) in enumerate(tokens):
+
+            # Empty entries means we have subsequent spaces
+            # We want to hold onto them so we can reconstruct them later
+            if len(token) == 0 and idx != 0:
+                params[-1] += ' '
+                continue
 
             # if we hit a line continuation character, but
             # we're not inside quotes, ignore it and continue
@@ -261,6 +280,6 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise AnsibleParserError("failed at splitting arguments, either an unbalanced jinja2 block or quotes: {}".format(args))
+        raise AnsibleParserError(u"failed at splitting arguments, either an unbalanced jinja2 block or quotes: {0}".format(args))
 
     return params

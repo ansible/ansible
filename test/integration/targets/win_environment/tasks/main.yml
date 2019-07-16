@@ -1,0 +1,267 @@
+---
+- name: ensure test environment value is not set in all scope
+  win_environment:
+    name: "{{test_environment_name}}"
+    state: absent
+    level: "{{item}}"
+  with_items:
+  - machine
+  - process
+  - user
+
+- name: fail to create environment value with null value
+  win_environment:
+    name: "{{test_environment_name}}"
+    state: present
+    level: machine
+  register: create_fail_null
+  failed_when: 'create_fail_null.msg != "state is present but all of the following are missing: value"'
+
+- name: fail to create environment value with empty value
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: ''
+    state: present
+    level: machine
+  register: create_fail_empty_string
+  failed_when: create_fail_empty_string.msg != "When state=present, value must be defined and not an empty string, if you wish to remove the envvar, set state=absent"
+
+- name: create test environment value for machine check
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_machine_environment_value}}"
+    state: present
+    level: machine
+  register: create_machine_check
+  check_mode: True
+
+- name: get value of environment key for machine after changing check
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: create_machine_check_actual
+
+- name: assert change test environment value for machine check
+  assert:
+    that:
+    - create_machine_check is changed
+    - create_machine_check_actual.stdout == ""
+
+- name: create test environment value for machine
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_machine_environment_value}}"
+    state: present
+    level: machine
+  register: create_machine
+
+- name: get value of environment key for machine after changing
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: create_machine_actual
+
+- name: assert test environment value for machine
+  assert:
+    that:
+    - create_machine is changed
+    - create_machine.before_value == None
+    - create_machine_actual.stdout == "{{test_machine_environment_value}}\r\n"
+
+- name: create test environment value for machine again
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_machine_environment_value}}"
+    state: present
+    level: machine
+  register: create_machine_again
+
+- name: get value of environment key for machine after changing again
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: create_machine_actual_again
+
+- name: assert create test environment value for machine again
+  assert:
+    that:
+    - create_machine_again is not changed
+    - create_machine_again.before_value == test_machine_environment_value
+    - create_machine_actual_again.stdout == "{{test_machine_environment_value}}\r\n"
+
+- name: change test environment value for machine check
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_new_machine_environment_value}}"
+    state: present
+    level: machine
+  register: change_machine_check
+  check_mode: True
+
+- name: get value of environment key for machine after changing check
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: change_machine_actual_check
+
+- name: assert change test environment value for machine check
+  assert:
+    that:
+    - change_machine_check is changed
+    - change_machine_check.before_value == test_machine_environment_value
+    - change_machine_actual_check.stdout == "{{test_machine_environment_value}}\r\n"
+
+- name: change test environment value for machine
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_new_machine_environment_value}}"
+    state: present
+    level: machine
+  register: change_machine
+
+- name: get value of environment key for machine after changing
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: change_machine_actual
+
+- name: assert change test environment value for machine
+  assert:
+    that:
+    - change_machine is changed
+    - change_machine.before_value == test_machine_environment_value
+    - change_machine_actual.stdout == "{{test_new_machine_environment_value}}\r\n"
+
+- name: change test environment value for machine again
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_new_machine_environment_value}}"
+    state: present
+    level: machine
+  register: change_machine_again
+
+- name: get value of environment key for machine after changing again
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager\Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: change_machine_actual_again
+
+- name: assert change test environment value for machine again
+  assert:
+    that:
+    - change_machine_again is not changed
+    - change_machine_again.before_value == test_new_machine_environment_value
+    - change_machine_actual_again.stdout == "{{test_new_machine_environment_value}}\r\n"
+
+- name: create test environment value for user check
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_user_environment_value}}"
+    state: present
+    level: user
+  register: create_user_check
+  check_mode: True
+
+- name: get value of environment key for user after changing check
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: create_user_check_actual
+
+- name: assert change test environment value for user check
+  assert:
+    that:
+    - create_user_check is changed
+    - create_user_check_actual.stdout == ""
+
+- name: create test environment value for user
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_user_environment_value}}"
+    state: present
+    level: user
+  register: create_user
+
+- name: get value of environment key for user after changing
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: create_user_actual
+
+- name: assert test environment value for user
+  assert:
+    that:
+    - create_user is changed
+    - create_user.before_value == None
+    - create_user_actual.stdout == "{{test_user_environment_value}}\r\n"
+
+- name: create test environment value for user again
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_user_environment_value}}"
+    state: present
+    level: user
+  register: create_user_again
+
+- name: get value of environment key for user after changing again
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: create_user_actual_again
+
+- name: assert create test environment value for user again
+  assert:
+    that:
+    - create_user_again is not changed
+    - create_user_again.before_value == test_user_environment_value
+    - create_user_actual_again.stdout == "{{test_user_environment_value}}\r\n"
+
+- name: change test environment value for user check
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_new_user_environment_value}}"
+    state: present
+    level: user
+  register: change_user_check
+  check_mode: True
+
+- name: get value of environment key for user after changing check
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: change_user_actual_check
+
+- name: assert change test environment value for user check
+  assert:
+    that:
+    - change_user_check is changed
+    - change_user_check.before_value == test_user_environment_value
+    - change_user_actual_check.stdout == "{{test_user_environment_value}}\r\n"
+
+- name: change test environment value for user
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_new_user_environment_value}}"
+    state: present
+    level: user
+  register: change_user
+
+- name: get value of environment key for user after changing
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: change_user_actual
+
+- name: assert change test environment value for user
+  assert:
+    that:
+    - change_user is changed
+    - change_user.before_value == test_user_environment_value
+    - change_user_actual.stdout == "{{test_new_user_environment_value}}\r\n"
+
+- name: change test environment value for user again
+  win_environment:
+    name: "{{test_environment_name}}"
+    value: "{{test_new_user_environment_value}}"
+    state: present
+    level: user
+  register: change_user_again
+
+- name: get value of environment key for user after changing again
+  win_command: powershell.exe "[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true).GetValue('{{test_environment_name}}', $null, 'DoNotExpandEnvironmentNames')"
+  register: change_user_actual_again
+
+- name: assert change test environment value for user again
+  assert:
+    that:
+    - change_user_again is not changed
+    - change_user_again.before_value == test_new_user_environment_value
+    - change_user_actual_again.stdout == "{{test_new_user_environment_value}}\r\n"
+
+- name: cleanup test changes
+  win_environment:
+    name: "{{test_environment_name}}"
+    state: absent
+    level: "{{item}}"
+  with_items:
+  - machine
+  - process
+  - user

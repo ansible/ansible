@@ -1,0 +1,203 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_pim_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Setup: Disable features"
+  nxos_feature: &disable_feature
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: disabled
+  loop: ['pim', 'bfd']
+  ignore_errors: yes
+
+- name: "Setup: Enable features"
+  nxos_feature:
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: enabled
+  loop: ['pim', 'bfd']
+
+- set_fact: testint="{{ nxos_int1 }}"
+
+- name: "Setup: Put interface {{ testint }} into a default state"
+  nxos_config:
+    lines:
+      - "default interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Ensure {{testint}} is layer3"
+  nxos_interface:
+    interface: "{{ testint }}"
+    mode: layer3
+    description: 'Configured by Ansible - Layer3'
+    admin_state: 'up'
+    provider: "{{ connection }}"
+    state: present
+
+- block:
+  - name: Configure nxos_pim_interface state absent
+    nxos_pim_interface: &pimabsent
+      interface: "{{ testint }}"
+      provider: "{{ connection }}"
+      state: absent
+
+  - name: configure jp policy and type
+    nxos_pim_interface: &configjp
+      interface: "{{ testint }}"
+      jp_policy_in: JPIN
+      jp_policy_out: JPOUT
+      jp_type_in: routemap
+      jp_type_out: routemap
+      sparse: True
+      border: True
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Check idempotence
+    nxos_pim_interface: *configjp
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: configure neighbor policy and rm
+    nxos_pim_interface: &confignpr
+      interface: "{{ testint }}"
+      neighbor_policy: NPR
+      neighbor_type: routemap
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *confignpr
+    register: result
+
+  - assert: *false
+
+  - pause:
+      seconds: 5
+
+  - name: configure neighbor policy and prefix
+    nxos_pim_interface: &confignpp
+      interface: "{{ testint }}"
+      neighbor_policy: NPPF
+      neighbor_type: prefix
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *confignpp
+    register: result
+
+  - assert: *false
+
+  - name: configure hello_auth_key
+    nxos_pim_interface: &confighak1
+      interface: "{{ testint }}"
+      hello_auth_key: password1
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: configure pim other params
+    nxos_pim_interface: &configo
+      interface: "{{ testint }}"
+      dr_prio: 10
+      hello_interval: 40
+      sparse: True
+      border: True
+      bfd: enable
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configo
+    register: result
+
+  - assert: *false
+
+  - name: configure negative
+    nxos_pim_interface: &configno
+      interface: "{{ testint }}"
+      sparse: False
+      border: False
+      bfd: disable
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configno
+    register: result
+
+  - assert: *false
+
+  - pause:
+      seconds: 5
+
+  - name: configure state default
+    nxos_pim_interface: &configdefault
+      interface: "{{ testint }}"
+      provider: "{{ connection }}"
+      state: default
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configdefault
+    register: result
+
+  - assert: *false
+
+  - name: configure border
+    nxos_pim_interface: &configb
+      interface: "{{ testint }}"
+      border: True
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configb
+    register: result
+
+  - assert: *false
+
+  - name: configure state absent
+    nxos_pim_interface: *pimabsent
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *pimabsent
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Disable feature PIM"
+    nxos_feature: *disable_feature
+    loop: ['pim', 'bfd']
+
+- debug: msg="END connection={{ ansible_connection }} nxos_pim_interface sanity test"

@@ -1,0 +1,174 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    tenant: anstest
+  register: tenant_present
+
+- name: create vrf - check mode works
+  aci_vrf: &aci_vrf_present
+    <<: *aci_tenant_present
+    vrf: anstest
+    description: Ansible Test
+  check_mode: yes
+  register: vrf_present_check_mode
+
+- name: create vrf - creation works
+  aci_vrf:
+    <<: *aci_vrf_present
+  register: vrf_present
+
+- name: create vrf again - idempotency works
+  aci_vrf:
+    <<: *aci_vrf_present
+  register: vrf_present_idempotent
+
+- name: update vrf - update works
+  aci_vrf:
+    <<: *aci_vrf_present
+    description: Ansible Test Update
+    policy_control_preference: unenforced
+  register: vrf_update
+
+- name: create another vrf - check more params
+  aci_vrf:
+    <<: *aci_vrf_present
+    vrf: anstest2
+    policy_control_direction: egress
+  register: vrf_present_2
+
+- name: create vrf without all necessary params - failure message works
+  aci_vrf:
+    <<: *aci_vrf_present
+    tenant: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: vrf_present_missing_param
+
+- name: present asserts
+  assert:
+    that:
+      - vrf_present_check_mode is changed
+      - 'vrf_present_check_mode.sent == {"fvCtx": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - vrf_present is changed
+      - vrf_present.sent == vrf_present_check_mode.sent
+      - vrf_present.previous == []
+      - vrf_present_idempotent is not changed
+      - vrf_present_idempotent.previous != []
+      - vrf_update is changed
+      - vrf_update.previous != []
+      - vrf_update.sent != vrf_update.proposed
+      - 'vrf_update.sent == {"fvCtx": {"attributes": {"descr": "Ansible Test Update", "pcEnfPref": "unenforced"}}}'
+      - 'vrf_present_2.sent.fvCtx.attributes == {"name": "anstest2", "pcEnfDir": "egress", "descr": "Ansible Test"}'
+      - vrf_present_missing_param is failed
+      - 'vrf_present_missing_param.msg == "state is present but all of the following are missing: tenant"'
+
+- name: get all vrf
+  aci_vrf: &aci_query
+    <<: *aci_tenant_present
+    state: query
+    tenant: "{{ fake_var | default(omit) }}"
+  register: query_all
+
+- name: get all in tenant
+  aci_vrf:
+    <<: *aci_query
+    tenant: anstest
+  register: query_tenant
+
+- name: get all with name
+  aci_vrf:
+    <<: *aci_query
+    vrf: anstest
+  register: query_vrf_vrf
+
+- name: get vrf
+  aci_vrf:
+    <<: *aci_vrf_present
+    state: query
+  register: query_vrf
+
+- name: query asserts
+  assert:
+    that:
+      - query_all is not changed
+      - query_all.current | length > 1
+      - query_all.current.0.fvCtx is defined
+      - '"class/fvCtx.json" in query_all.url'
+      - query_tenant is not changed
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.children | length == 2
+      - query_tenant.current.0.fvTenant.attributes.name == "anstest"
+      - '"rsp-subtree-class=fvCtx" in query_tenant.filter_string'
+      - '"tn-anstest.json" in query_tenant.url'
+      - query_vrf_vrf is not changed
+      - query_vrf_vrf.current != []
+      - query_vrf_vrf.current.0.fvCtx.attributes.name == "anstest"
+      - '"query-target-filter=eq(fvCtx.name, \"anstest\")" in query_vrf_vrf.filter_string'
+      - '"class/fvCtx.json" in query_vrf_vrf.url'
+      - query_vrf is not changed
+      - query_vrf.current | length == 1
+      - '"tn-anstest/ctx-anstest.json" in query_vrf.url'
+
+- name: delete vrf - check mode works
+  aci_vrf: &aci_vrf_absent
+    <<: *aci_vrf_present
+    state: absent
+  check_mode: yes
+  register: vrf_absent_check_mode
+
+- name: delete vrf - delete works
+  aci_vrf:
+    <<: *aci_vrf_absent
+  register: vrf_absent
+
+- name: delete vrf again - idempotency works
+  aci_vrf:
+    <<: *aci_vrf_absent
+  register: vrf_absent_idempotent
+
+- name: delete vrf - cleanup
+  aci_vrf:
+    <<: *aci_vrf_absent
+    name: anstest2
+
+- name: delete vrf missing param - fails properly
+  aci_vrf:
+    <<: *aci_vrf_absent
+    vrf: "{{ fakevar | default(omit) }}"
+  ignore_errors: yes
+  register: vrf_absent_missing_param
+
+- name: asserts for deletion task
+  assert:
+    that:
+      - vrf_absent_check_mode is changed
+      - vrf_absent_check_mode.previous != []
+      - vrf_absent_check_mode.proposed == {}
+      - vrf_absent is changed
+      - vrf_absent.previous == vrf_absent_check_mode.previous
+      - vrf_absent_idempotent is not changed
+      - vrf_absent_idempotent.previous == []
+      - vrf_absent_missing_param is failed
+      - 'vrf_absent_missing_param.msg == "state is absent but all of the following are missing: vrf"'
+
+- name: delete tenant - cleanup before ending tests
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
+  when: tenant_present is changed

@@ -1,25 +1,36 @@
 # (c) 2012, Jan-Piet Mens <jpmens(at)gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: env
+    author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
+    version_added: "0.9"
+    short_description: read the value of environment variables
+    description:
+        - Allows you to query the environment variables available on the controller when you invoked Ansible.
+    options:
+      _terms:
+        description: Environment variable or list of them to lookup the values for
+        required: True
+"""
+
+EXAMPLES = """
+- debug: msg="{{ lookup('env','HOME') }} is an environment variable"
+"""
+
+RETURN = """
+  _list:
+    description:
+      - values from the environment variables.
+    type: list
+"""
 import os
 
 from ansible.plugins.lookup import LookupBase
+
 
 class LookupModule(LookupBase):
 

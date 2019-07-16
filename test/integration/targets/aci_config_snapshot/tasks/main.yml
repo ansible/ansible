@@ -1,0 +1,142 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: create a snapshot - creation works
+  aci_config_snapshot: &create_snapshot
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    export_policy: anstest
+    max_count: 10
+    include_secure: no
+    format: json
+    description: ansible test
+  register: create
+
+- name: update snapshot to include secure and use xml - update works
+  aci_config_snapshot:
+    <<: *create_snapshot
+    include_secure: yes
+    format: xml
+  register: create_update
+
+- name: create a snapshot invalid max_count - error message
+  aci_config_snapshot:
+    <<: *create_snapshot
+    max_count: 11
+  ignore_errors: yes
+  register: invalid_max_count
+
+- name: create a snapshot invalid max_count - error message
+  aci_config_snapshot:
+    <<: *create_snapshot
+    export_policy: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: missing_param
+
+- name: present assertion tests
+  assert:
+    that:
+      - create is not failed
+      - create is changed
+      - create.sent.configExportP.attributes.adminSt == "triggered"
+      - create_update is not failed
+      - create_update is changed
+      - 'create_update.sent == {"configExportP": {"attributes": {"adminSt": "triggered", "format": "xml", "includeSecureFields": "yes"}}}'
+      - invalid_max_count is failed
+      - invalid_max_count.msg == "Parameter 'max_count' must be a number between 1 and 10"
+      - missing_param is failed
+      - 'missing_param.msg == "state is present but all of the following are missing: export_policy"'
+
+- name: query with export_policy
+  aci_config_snapshot: &query_snapshot
+    <<: *create_snapshot
+    state: query
+  register: query_export
+
+- name: generate snapshot name
+  set_fact:
+    test_snapshot: "{{ query_export.current.0.configSnapshotCont.children.0.configSnapshot.attributes.rn.strip('snapshot-') }}"
+
+- name: query with export_policy and snapshot
+  aci_config_snapshot: &query_both
+    <<: *query_snapshot
+    snapshot: "{{ test_snapshot }}"
+  register: query_export_snapshot
+
+- name: query with snapshot - module add run- to snapshot
+  aci_config_snapshot:
+    <<: *query_snapshot
+    export_policy: "{{ fake_var | default(omit) }}"
+    snapshot: "{{ test_snapshot.strip('run-') }}"
+  register: query_snapshot
+
+- name: query no params
+  aci_config_snapshot:
+    <<: *query_snapshot
+    export_policy: "{{ fake_var | default(omit) }}"
+  register: query_all
+
+- name: query assertion tests
+  assert:
+    that:
+      - query_export is not failed
+      - query_export is not changed
+      - '"snapshots-[uni/fabric/configexp-anstest].json" in query_export.url'
+      - query_export.current.0.configSnapshotCont.attributes.name == "anstest"
+      - query_export.current.0.configSnapshotCont.children | length > 1
+      - query_export_snapshot is not failed
+      - query_export_snapshot is not changed
+      - '"snapshots-[uni/fabric/configexp-anstest]/snapshot-{{ test_snapshot }}.json" in query_export_snapshot.url'
+      - query_export_snapshot.current | length == 1
+      - query_snapshot is not failed
+      - query_snapshot is not changed
+      - '"class/configSnapshot.json" in query_snapshot.url'
+      - '"configSnapshot.name, \"{{ test_snapshot }}\"" in query_snapshot.filter_string'
+      - query_all is not failed
+      - query_all is not changed
+      - '"class/configSnapshot.json" in query_all.url'
+      - query_all.current | length > 1
+
+- name: delete works
+  aci_config_snapshot: &delete
+    <<: *query_both
+    state: absent
+  register: delete_snapshot
+
+- name: delete works - idempotency
+  aci_config_snapshot:
+    <<: *delete
+  register: delete_idempotent
+
+- name: delete missing param
+  aci_config_snapshot:
+    <<: *delete
+    snapshot: "{{ fake_var | default(omit) }}"
+  ignore_errors: yes
+  register: delete_missing_param
+
+- name: absent assertion tests
+  assert:
+    that:
+      - delete_snapshot is not failed
+      - delete_snapshot is changed
+      - 'delete_snapshot.sent == {"configSnapshot": {"attributes": {"retire": "yes"}}}'
+      - delete_snapshot.previous != []
+      - delete_snapshot.previous.0.configSnapshot.attributes.name == test_snapshot
+      - delete_idempotent is not failed
+      - delete_idempotent is not changed
+      - delete_idempotent.previous == []
+      - delete_missing_param is failed
+      - 'delete_missing_param.msg == "state is absent but all of the following are missing: snapshot"'

@@ -1,0 +1,88 @@
+---
+- block:
+    # This module generates unsafe parameters for testing purposes
+    # otherwise tests would be too slow
+    - name: Generate parameter
+      openssl_dhparam:
+        size: 768
+        path: '{{ output_dir }}/dh768.pem'
+
+    - name: Don't regenerate parameters with no change
+      openssl_dhparam:
+        size: 768
+        path: '{{ output_dir }}/dh768.pem'
+      register: dhparam_changed
+
+    - name: Generate parameters with size option
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh512.pem'
+        size: 512
+
+    - name: Don't regenerate parameters with size option and no change
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh512.pem'
+        size: 512
+      register: dhparam_changed_512
+
+    - copy:
+        src: '{{ output_dir }}/dh768.pem'
+        remote_src: yes
+        dest: '{{ output_dir }}/dh512.pem'
+
+    - name: Re-generate if size is different
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh512.pem'
+        size: 512
+      register: dhparam_changed_to_512
+
+    - name: Force re-generate parameters with size option
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh512.pem'
+        size: 512
+        force: yes
+      register: dhparam_changed_force
+
+    - name: Create broken params
+      copy:
+        dest: "{{ output_dir }}/dhbroken.pem"
+        content: "broken"
+    - name: Regenerate broken params
+      openssl_dhparam:
+        path: '{{ output_dir }}/dhbroken.pem'
+        size: 512
+        force: yes
+      register: output_broken
+
+    - name: Generate params
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh_backup.pem'
+        size: 512
+        backup: yes
+      register: dhparam_backup_1
+    - name: Generate params (idempotent)
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh_backup.pem'
+        size: 512
+        backup: yes
+      register: dhparam_backup_2
+    - name: Generate params (change)
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh_backup.pem'
+        size: 512
+        force: yes
+        backup: yes
+      register: dhparam_backup_3
+    - name: Generate params (remove)
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh_backup.pem'
+        state: absent
+        backup: yes
+      register: dhparam_backup_4
+    - name: Generate params (remove, idempotent)
+      openssl_dhparam:
+        path: '{{ output_dir }}/dh_backup.pem'
+        state: absent
+        backup: yes
+      register: dhparam_backup_5
+
+    - import_tasks: ../tests/validate.yml

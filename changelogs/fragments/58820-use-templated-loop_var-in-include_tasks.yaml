@@ -1,0 +1,2 @@
+bugfixes:
+  - Use templated loop_var/index_var when looping include_* (https://github.com/ansible/ansible/issues/58820)

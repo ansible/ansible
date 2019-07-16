@@ -1,0 +1,13 @@
+---
+# these hotfixes, are for Hyper-V, there may be a chance the system already has them
+# but in most cases for our CI purposes they wouldn't be present
+test_win_hotfix_good_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_hotfix/windows8.1-kb3027108-v2-x64_66366c7be2d64d83b63cac42bc40c0a3c01bc70d.msu
+test_win_hotfix_reboot_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_hotfix/windows8.1-kb2913659-v2-x64_963a4d890c9ff9cc83a97cf54305de6451038ba4.msu
+test_win_hotfix_bad_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_hotfix/windows8-rt-kb3172729-x64_69cab4c7785b1faa3fc450f32bed4873d53bb96f.msu
+test_win_hotfix_path: C:\ansible\win_hotfix
+
+test_win_hotfix_kb: KB3027108
+test_win_hotfix_identifier: Package_for_KB3027108~31bf3856ad364e35~amd64~~6.3.2.0
+
+test_win_hotfix_reboot_kb: KB2913659
+test_win_hotfix_reboot_identifier: Package_for_KB2913659~31bf3856ad364e35~amd64~~6.3.2.0

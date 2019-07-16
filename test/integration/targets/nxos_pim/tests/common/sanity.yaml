@@ -1,0 +1,91 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_pim sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Setup: Disable features"
+  nxos_feature: &disable_feature
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+  loop:
+    - pim
+    - bfd
+
+- name: "Setup: Enable features"
+  nxos_feature:
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: enabled
+  loop:
+    - pim
+    - bfd
+
+- name: "Setup: Configure ssm_range none"
+  nxos_pim: &none
+    ssm_range: "none"
+    provider: "{{ connection }}"
+
+- block:
+  - name: Initial config from none
+    nxos_pim: &configure
+      bfd: enable
+      ssm_range:
+        - "239.128.1.0/24"
+        - "224.0.0.0/8"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Initial config idempotence
+    nxos_pim: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure ssm_range default
+    nxos_pim: &conf_default
+      bfd: disable
+      ssm_range: "default"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: ssm_range default idempotence
+    nxos_pim: *conf_default
+    register: result
+
+  - assert: *false
+
+  - name: Configure ssm_range none
+    nxos_pim: *none
+    register: result
+
+  - assert: *true
+
+  - meta: end_play
+  - name: ssm_range none idempotence
+    nxos_pim: *none
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Teardown: Disable features"
+    nxos_feature:
+      feature: "{{ item }}"
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+    loop:
+      - pim
+      - bfd
+
+- debug: msg="END connection={{ ansible_connection }} nxos_pim sanity test"

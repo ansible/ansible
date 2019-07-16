@@ -1,0 +1,20 @@
+- name: Install Docker pre-reqs
+  dnf:
+    name: "{{ docker_prereq_packages }}"
+    state: present
+
+- name: Add repository
+  command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+  args:
+    warn: no
+
+- name: Update cache
+  command: dnf makecache
+  args:
+    warn: no
+
+- name: Install docker
+  dnf:
+    name: "{{ docker_packages }}"
+    state: present
+    enablerepo: docker-ce-test

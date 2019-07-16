@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ########################################################################
 #
 # (C) 2013, James Cammarata <jcammarata@ansible.com>
@@ -26,20 +24,18 @@ __metaclass__ = type
 
 import json
 
+from ansible import context
 import ansible.constants as C
-from ansible.compat.six import string_types
-from ansible.compat.six.moves.urllib.error import HTTPError
-from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.errors import AnsibleError
 from ansible.galaxy.token import GalaxyToken
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def g_connect(method):
@@ -68,7 +64,7 @@ class GalaxyAPI(object):
         self.galaxy = galaxy
         self.token = GalaxyToken()
         self._api_server = C.GALAXY_SERVER
-        self._validate_certs = not galaxy.options.ignore_certs
+        self._validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
         self.version = None
         self.initialized = False
@@ -76,8 +72,8 @@ class GalaxyAPI(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
-        if galaxy.options.api_server != C.GALAXY_SERVER:
-            self._api_server = galaxy.options.api_server
+        if context.CLIARGS['api_server'] != C.GALAXY_SERVER:
+            self._api_server = context.CLIARGS['api_server']
 
     def __auth_header(self):
         token = self.token.get()
@@ -93,9 +89,9 @@ class GalaxyAPI(object):
             display.vvv(url)
             resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method,
                             timeout=20)
-            data = json.load(resp)
+            data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         except HTTPError as e:
-            res = json.load(e)
+            res = json.loads(to_text(e.fp.read(), errors='surrogate_or_strict'))
             raise AnsibleError(res['detail'])
         return data
 
@@ -119,7 +115,7 @@ class GalaxyAPI(object):
             raise AnsibleError("Failed to get data from the API server (%s): %s " % (url, to_native(e)))
 
         try:
-            data = json.load(return_data)
+            data = json.loads(to_text(return_data.read(), errors='surrogate_or_strict'))
         except Exception as e:
             raise AnsibleError("Could not process data from the API server (%s): %s " % (url, to_native(e)))
 
@@ -136,7 +132,7 @@ class GalaxyAPI(object):
         url = '%s/tokens/' % self.baseurl
         args = urlencode({"github_token": github_token})
         resp = open_url(url, data=args, validate_certs=self._validate_certs, method="POST")
-        data = json.load(resp)
+        data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
 
     @g_connect
@@ -153,8 +149,8 @@ class GalaxyAPI(object):
         if role_name:
             args['alternate_role_name'] = role_name
         elif github_repo.startswith('ansible-role'):
-            args['alternate_role_name'] = github_repo[len('ansible-role')+1:]
-        data = self.__call_galaxy(url, args=urlencode(args))
+            args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
+        data = self.__call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']
         return data
@@ -166,9 +162,9 @@ class GalaxyAPI(object):
         """
         url = '%s/imports/' % self.baseurl
         if task_id is not None:
-            url = "%s?id=%d" % (url,task_id)
+            url = "%s?id=%d" % (url, task_id)
         elif github_user is not None and github_repo is not None:
-            url = "%s?github_user=%s&github_repo=%s" % (url,github_user,github_repo)
+            url = "%s?github_user=%s&github_repo=%s" % (url, github_user, github_repo)
         else:
             raise AnsibleError("Expected task_id or github_user and github_repo")
 
@@ -180,7 +176,7 @@ class GalaxyAPI(object):
         """
         Find a role by name.
         """
-        role_name = urlquote(role_name)
+        role_name = to_text(urlquote(to_bytes(role_name)))
 
         try:
             parts = role_name.split(".")
@@ -188,7 +184,7 @@ class GalaxyAPI(object):
             role_name = parts[-1]
             if notify:
                 display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
-        except:
+        except Exception:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
@@ -205,7 +201,7 @@ class GalaxyAPI(object):
         """
 
         try:
-            url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
+            url = '%s/roles/%s/%s/?page_size=50' % (self.baseurl, role_id, related)
             data = self.__call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
@@ -215,7 +211,7 @@ class GalaxyAPI(object):
                 results += data['results']
                 done = (data.get('next_link', None) is None)
             return results
-        except:
+        except Exception:
             return None
 
     @g_connect
@@ -240,7 +236,7 @@ class GalaxyAPI(object):
                 done = (data.get('next_link', None) is None)
             return results
         except Exception as error:
-            raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
+            raise AnsibleError("Failed to download the %s list: %s" % (what, to_native(error)))
 
     @g_connect
     def search_roles(self, search, **kwargs):
@@ -248,9 +244,9 @@ class GalaxyAPI(object):
         search_url = self.baseurl + '/search/roles/?'
 
         if search:
-            search_url += '&autocomplete=' + urlquote(search)
+            search_url += '&autocomplete=' + to_text(urlquote(to_bytes(search)))
 
-        tags = kwargs.get('tags',None)
+        tags = kwargs.get('tags', None)
         platforms = kwargs.get('platforms', None)
         page_size = kwargs.get('page_size', None)
         author = kwargs.get('author', None)
@@ -281,7 +277,7 @@ class GalaxyAPI(object):
             "github_repo": github_repo,
             "secret": secret
         })
-        data = self.__call_galaxy(url, args=args)
+        data = self.__call_galaxy(url, args=args, method="POST")
         return data
 
     @g_connect
@@ -298,6 +294,6 @@ class GalaxyAPI(object):
 
     @g_connect
     def delete_role(self, github_user, github_repo):
-        url = "%s/removerole/?github_user=%s&github_repo=%s" % (self.baseurl,github_user,github_repo)
+        url = "%s/removerole/?github_user=%s&github_repo=%s" % (self.baseurl, github_user, github_repo)
         data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
         return data

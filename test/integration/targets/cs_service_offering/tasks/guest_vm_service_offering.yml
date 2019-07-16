@@ -1,0 +1,223 @@
+---
+- name: setup service offering
+  cs_service_offering:
+    name: Micro
+    state: absent
+  register: so
+- name: verify setup service offering
+  assert:
+    that:
+    - so is successful
+
+- name: create service offering in check mode
+  cs_service_offering:
+    name: Micro
+    display_text: Micro 512mb 1cpu
+    cpu_number: 1
+    cpu_speed: 2198
+    memory: 512
+    host_tags: eco
+    storage_tags:
+      - eco
+      - backup
+    storage_type: local
+  register: so
+  check_mode: true
+- name: verify create service offering in check mode
+  assert:
+    that:
+    - so is changed
+
+- name: create service offering
+  cs_service_offering:
+    name: Micro
+    display_text: Micro 512mb 1cpu
+    cpu_number: 1
+    cpu_speed: 2198
+    memory: 512
+    host_tags: eco
+    storage_tags:
+      - eco
+      - backup
+    storage_type: local
+  register: so
+- name: verify create service offering
+  assert:
+    that:
+    - so is changed
+    - so.name == "Micro"
+    - so.display_text == "Micro 512mb 1cpu"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: create service offering idempotence
+  cs_service_offering:
+    name: Micro
+    display_text: Micro 512mb 1cpu
+    cpu_number: 1
+    cpu_speed: 2198
+    memory: 512
+    host_tags: eco
+    storage_tags:
+      - eco
+      - backup
+    storage_type: local
+  register: so
+- name: verify create service offering idempotence
+  assert:
+    that:
+    - so is not changed
+    - so.name == "Micro"
+    - so.display_text == "Micro 512mb 1cpu"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: update service offering in check mode
+  cs_service_offering:
+    name: Micro
+    display_text: Micro RAM 512MB 1vCPU
+  register: so
+  check_mode: true
+- name: verify create update offering in check mode
+  assert:
+    that:
+    - so is changed
+    - so.name == "Micro"
+    - so.display_text == "Micro 512mb 1cpu"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: update service offering
+  cs_service_offering:
+    name: Micro
+    display_text: Micro RAM 512MB 1vCPU
+  register: so
+- name: verify update service offerin
+  assert:
+    that:
+    - so is changed
+    - so.name == "Micro"
+    - so.display_text == "Micro RAM 512MB 1vCPU"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: update service offering idempotence
+  cs_service_offering:
+    name: Micro
+    display_text: Micro RAM 512MB 1vCPU
+  register: so
+- name: verify update service offering idempotence
+  assert:
+    that:
+    - so is not changed
+    - so.name == "Micro"
+    - so.display_text == "Micro RAM 512MB 1vCPU"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: remove service offering in check mode
+  cs_service_offering:
+    name: Micro
+    state: absent
+  check_mode: true
+  register: so
+- name: verify remove service offering in check mode
+  assert:
+    that:
+    - so is changed
+    - so.name == "Micro"
+    - so.display_text == "Micro RAM 512MB 1vCPU"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: remove service offering
+  cs_service_offering:
+    name: Micro
+    state: absent
+  register: so
+- name: verify remove service offering
+  assert:
+    that:
+    - so is changed
+    - so.name == "Micro"
+    - so.display_text == "Micro RAM 512MB 1vCPU"
+    - so.cpu_number == 1
+    - so.cpu_speed == 2198
+    - so.memory == 512
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: remove service offering idempotence
+  cs_service_offering:
+    name: Micro
+    state: absent
+  register: so
+- name: verify remove service offering idempotence
+  assert:
+    that:
+    - so is not changed
+
+- name: create custom service offering
+  cs_service_offering:
+    name: custom
+    display_text: custom offer
+    is_customized: yes
+    host_tags: eco
+    storage_tags:
+      - eco
+      - backup
+    storage_type: local
+  register: so
+- name: verify create custom service offering
+  assert:
+    that:
+    - so is changed
+    - so.name == "custom"
+    - so.display_text == "custom offer"
+    - so.is_customized == True
+    - so.cpu_number is not defined
+    - so.cpu_speed is not defined
+    - so.memory is not defined
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"
+
+- name: remove custom service offering
+  cs_service_offering:
+    name: custom
+    state: absent
+  register: so
+- name: verify remove service offering
+  assert:
+    that:
+    - so is changed
+    - so.name == "custom"
+    - so.display_text == "custom offer"
+    - so.host_tags == ['eco']
+    - so.storage_tags == ['eco', 'backup']
+    - so.storage_type == "local"

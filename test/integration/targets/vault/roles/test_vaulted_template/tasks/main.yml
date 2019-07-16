@@ -1,0 +1,19 @@
+---
+- name: Template from a vaulted template file
+  template:
+    src: vaulted_template.j2
+    dest: "{{ output_dir }}/vaulted_template.out"
+  vars:
+    vaulted_template_var: "here_i_am"
+
+- name: Get output template contents
+  slurp:
+    path: "{{ output_dir }}/vaulted_template.out"
+  register: vaulted_template_out
+
+- debug:
+    msg: "{{ vaulted_template_out.content|b64decode }}"
+
+- assert:
+    that:
+      - vaulted_template_out.content|b64decode == 'here_i_am\n'

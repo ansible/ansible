@@ -1,0 +1,19 @@
+---
+- include_tasks: setup.yml
+
+- include_tasks: present.yml
+- include_tasks: tags.yml
+- include_tasks: absent.yml
+
+- include_tasks: present_display_name.yml
+- include_tasks: absent_display_name.yml
+
+# TODO: These tests randomly fail in all kinds of unexpected states.
+# This needs to be verified by the cloudstack community.
+# - include_tasks: host.yml
+
+- include_tasks: sshkeys.yml
+
+- include_tasks: project.yml
+
+- include_tasks: cleanup.yml

@@ -1,0 +1,230 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_pim_rp_address sanity"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  # platforms do not support bidir
+  - set_fact: bidir_true="true"
+  - set_fact: bidir_false="false"
+  when: platform is not search('N3L')
+
+- block:
+  # platforms can only remove rpa, cannot remove rpa+prefixlist or rpa+routemap
+  - set_fact: pim_prefix_list="pim_prefix_list"
+  - set_fact: pim_route_map="pim_route_map"
+  when: platform is not search('N3L|N7K')
+
+- block:
+  - name: "Disable feature PIM"
+    nxos_feature: &disable_feature
+      feature: pim
+      provider: "{{ connection }}"
+      state: disabled
+
+  - name: "Enable feature PIM"
+    nxos_feature: &enable_feature
+      feature: pim
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: 1.0 Configure rp_address + group_list
+    # This test should always run regardless of bidir support
+    nxos_pim_rp_address: &configgl
+      rp_address: "10.1.1.1"
+      group_list: "224.0.0.0/8"
+      bidir: "{{ bidir_true|default(omit) }}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: 1.0 Idempotence rp_address + group_list
+    nxos_pim_rp_address: *configgl
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - block: # bidir test
+    - name: 1.1 Configure rp_address + group_list (bidir_false)
+      nxos_pim_rp_address: &config11
+        rp_address: "10.1.1.1"
+        group_list: "224.0.0.0/8"
+        bidir: false
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: 1.1 Idempotence rp_address + group_list (bidir_false)
+      nxos_pim_rp_address: *config11
+      register: result
+
+    - assert: *false
+
+    - name: 1.2 Configure rp_address (bidir_true)
+      nxos_pim_rp_address: &config12
+        rp_address: "10.1.1.1"
+        bidir: true
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: 1.2 Idempotence rp_address (bidir_true)
+      nxos_pim_rp_address: *config12
+      register: result
+
+    - assert: *false
+
+    - name: 1.3 Configure rp_address (bidir_false)
+      nxos_pim_rp_address: &config13
+        rp_address: "10.1.1.1"
+        bidir: false
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: 1.3 Idempotence rp_address (bidir_false)
+      nxos_pim_rp_address: *config13
+      register: result
+
+    - assert: *false
+    when: bidir_true is defined
+
+  - name: 1.4 Remove rp_address + group_list
+    nxos_pim_rp_address: &config14
+      rp_address: "10.1.1.1"
+      group_list: "224.0.0.0/8"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: 1.4 Idempotence remove rp_address + group_list
+    nxos_pim_rp_address: *config14
+    register: result
+
+  - assert: *false
+
+  - name: 2.0 Configure rp_address + prefix_list (bidir_true)
+    nxos_pim_rp_address: &config20
+      rp_address: "10.1.1.2"
+      prefix_list: "{{ pim_prefix_list|default(omit) }}"
+      bidir: "{{ bidir_true|default(omit) }}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: 2.0 Idempotence rp_address + prefix_list (bidir_true)
+    nxos_pim_rp_address: *config20
+    register: result
+
+  - assert: *false
+
+  - block: # bidir test
+    - name: 2.1 Configure rp_address + prefix_list (bidir_false)
+      nxos_pim_rp_address: &config21
+        rp_address: "10.1.1.2"
+        prefix_list: "{{ pim_prefix_list|default(omit) }}"
+        bidir: "{{ bidir_false|default(omit) }}"
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: 2.1 Idempotence rp_address + prefix_list (bidir_false)
+      nxos_pim_rp_address: *config21
+      register: result
+
+    - assert: *false
+    when: bidir_false is defined
+
+  - name: 2.2 Remove rp_address + prefix_list (bidir_false)
+    nxos_pim_rp_address: &config22
+      rp_address: "10.1.1.2"
+      prefix_list: "{{ pim_prefix_list|default(omit)}}"
+      bidir: "{{ bidir_false|default(omit)}}"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: 2.2 Idempotence remove rp_address + prefix_list (bidir_false)
+    nxos_pim_rp_address: *config22
+    register: result
+
+  - assert: *false
+
+  - name: 3.0 Configure rp_address + route_map + (bidir_true)
+    nxos_pim_rp_address: &config30
+      rp_address: "10.1.1.3"
+      route_map: "{{ pim_route_map|default(omit)}}"
+      bidir: "{{ bidir_true|default(omit) }}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: 3.0 Idempotence rp_address + route_map + (bidir_true)
+    nxos_pim_rp_address: *config30
+    register: result
+
+  - assert: *false
+
+  - block: # bidir test
+    - name: 3.1 Configure rp_address + route_map (bidir_false)
+      nxos_pim_rp_address: &config31
+        rp_address: "10.1.1.3"
+        route_map: "{{ pim_route_map|default(omit)}}"
+        bidir: "{{ bidir_false|default(omit)}}"
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: 3.1 Idempotence rp_address + route_map
+      nxos_pim_rp_address: *config31
+      register: result
+
+    - assert: *false
+    when: bidir_false is defined
+
+  - name: 3.2 Remove rp_address + route_map (bidir_false)
+    nxos_pim_rp_address: &config32
+      rp_address: "10.1.1.3"
+      route_map: "{{ pim_route_map|default(omit)}}"
+      bidir: "{{ bidir_false|default(omit)}}"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: 3.2 Idempotence remove rp_address + route_map (bidir_false)
+    nxos_pim_rp_address: *config32
+    register: result
+
+  - assert: *false
+
+  always:
+    - name: "Disable feature PIM"
+      nxos_feature: *disable_feature
+
+- debug: msg="END connection={{ ansible_connection }} nxos_pim_rp_address sanity"

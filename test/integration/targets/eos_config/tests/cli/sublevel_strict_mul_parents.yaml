@@ -1,0 +1,79 @@
+---
+- debug:
+    msg: "START cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  eos_config:
+    lines:
+      - class-map type qos match-any c1
+      - match ip access-group 10
+      - policy-map type qos p1
+      - class c1
+    before: ['no policy-map type qos p1', 'no class-map type qos match-any c1']
+    match: none
+  become: yes
+
+- block:
+  - name: configure sub level command using strict match
+    eos_config:
+      lines:
+        - set cos 1
+        - set dscp 62
+      parents: ['policy-map type qos p1', 'class c1']
+      match: strict
+      # session-config diffs does not produce a diff here for some reason.
+      # check against running-config instead.
+      diff_against: running
+    register: result
+    become: yes
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'set cos 1' in result.updates"
+        - "'set dscp 62' in result.updates"
+
+  - name: change sub level command order and config with strict match
+    eos_config:
+      lines:
+        - set dscp 62
+        - set cos 1
+      parents: ['policy-map type qos p1', 'class c1']
+      match: strict
+      diff_against: running
+    register: result
+    become: yes
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'set cos 1' in result.updates"
+        - "'set dscp 62' in result.updates"
+
+  - name: Config sub level command with strict match (Idempotency)
+    eos_config:
+      lines:
+        #EOS does not change order of class action if reconfigured
+        #so we have to use old order for Idempotency
+        - set cos 1
+        - set dscp 62
+      parents: ['policy-map type qos p1', 'class c1']
+      match: strict
+      diff_against: running
+    register: result
+    become: yes
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: teardown
+    eos_config:
+      lines:
+        - no policy-map type qos p1
+        - no class-map type qos match-any c1
+      match: none
+    become: yes
+
+- debug: msg="END cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,11 @@
+plugin: aws_rds
+cache: True
+cache_plugin: jsonfile
+cache_connection: aws_rds_cache_dir
+aws_access_key_id: '{{ aws_access_key }}'
+aws_secret_access_key: '{{ aws_secret_key }}'
+aws_security_token: '{{ security_token }}'
+regions:
+  - '{{ aws_region }}'
+filters:
+  db-instance-id: "{{ resource_prefix }}-mariadb"

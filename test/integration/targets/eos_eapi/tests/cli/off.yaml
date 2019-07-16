@@ -7,8 +7,8 @@
     enable_local_http: no
     enable_socket: no
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - debug: var=eos_eapi_output
 
@@ -17,7 +17,6 @@
       - show management api http-commands | json
     provider: "{{ cli }}"
   register: http_config
-  connection: local
 
 - debug: var=http_config
 
@@ -36,8 +35,8 @@
     enable_local_http: no
     enable_socket: no
     provider: "{{ cli }}"
+  become: yes
   register: eos_eapi_output
-  connection: local
 
 - debug: var=eos_eapi_output
   when: debug

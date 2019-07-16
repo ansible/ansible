@@ -1,0 +1,225 @@
+- name: create record with incorrect API key
+  memset_zone_record:
+    api_key: "wa9aerahhie0eekee9iaphoorovooyia"
+    state: present
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - "'Memset API returned a 403 response (ApiErrorForbidden, Bad api_key)' in result.msg"
+      - result is not successful
+
+- name: create record in non-existent zone
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "a-non-existent-zone"
+    type: A
+    address: 127.0.0.1
+  ignore_errors: true
+  register: result
+
+- name: assert that record is not created
+  assert:
+    that:
+      - "'DNS zone a-non-existent-zone does not exist.' in result.msg"
+      - result is not successful
+
+- name: create record in non-unique zone
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ duplicate_zone }}"
+    type: A
+    address: 127.0.0.1
+  ignore_errors: true
+  register: result
+
+- name: assert that record is not created
+  assert:
+    that:
+      - "'ansible-dns-zone-dupe matches multiple zones.' in result.msg"
+      - result is not successful
+
+- name: create record with invalid priority
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: SRV
+    address: "0 5269 hostname.example.com"
+    record: "_jabber._tcp"
+    priority: 1001
+  ignore_errors: true
+  register: result
+
+- name: assert that priority was out of range
+  assert:
+    that:
+      - "'Priority must be in the range 0 > 999 (inclusive).' in result.msg"
+      - result is not successful
+
+- name: create record with address longer than 250 chars
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: CNAME
+    address: "aaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com"
+    record: "aaa.ansible.com"
+  ignore_errors: true
+  register: result
+
+- name: assert that address was longer than allowed
+  assert:
+    that:
+      - "'Address must be less than 250 characters in length.' in result.msg"
+      - result is not successful
+
+- name: create record longer than 63 chars
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+    record: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ignore_errors: true
+  register: result
+
+- name: assert that record was longer than allowed
+  assert:
+    that:
+      - "'Record must be less than 63 characters in length.' in result.msg"
+      - result is not successful
+
+- name: create record which cannot have relative enabled
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+    relative: true
+  ignore_errors: true
+  register: result
+
+- name: assert that setting relative failed
+  assert:
+    that:
+      - "'Relative is only valid for CNAME, MX, NS and SRV record types' in result.msg"
+      - result is not successful
+
+- name: test creating valid A record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+    record: "www"
+  check_mode: true
+  register: result
+
+- name: assert that result would have changed
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: actually create valid A record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+    record: "www"
+  register: result
+
+- name: assert that result changed
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: create valid SPF record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: present
+    zone: "{{ test_zone }}"
+    type: TXT
+    address: "v=spf1 +a +mx +ip4:127.0.0.1 ?all"
+  register: result
+
+- name: assert that result changed
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: test deleting A record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: absent
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+    record: "www"
+  check_mode: true
+  register: result
+
+- name: assert that result changed
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: actually delete A record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: absent
+    zone: "{{ test_zone }}"
+    type: A
+    address: 127.0.0.1
+    record: "www"
+  register: result
+
+- name: assert that result changed
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: delete SPF record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: absent
+    zone: "{{ test_zone }}"
+    type: TXT
+    address: "v=spf1 +a +mx +ip4:127.0.0.1 ?all"
+  register: result
+
+- name: assert that result changed
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: delete non-existent SPF record
+  memset_zone_record:
+    api_key: "{{ api_key }}"
+    state: absent
+    zone: "{{ test_zone }}"
+    type: TXT
+    address: "v=spf1 +a +mx +ip4:127.0.0.1 ?all"
+  register: result
+
+- name: assert that result changed
+  assert:
+    that:
+      - result is not changed

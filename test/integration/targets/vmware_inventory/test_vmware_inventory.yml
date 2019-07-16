@@ -1,0 +1,18 @@
+# Test code for the vmware guest contrib inventory
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+---
+- name: Test VMware guest contrib inventroy script
+  hosts: localhost
+  tasks:
+    - name: store the vcenter container ip
+      set_fact:
+        vcsim: "{{ lookup('env', 'VCENTER_HOST') }}"
+
+    - name: Check that groups present in inventory
+      assert:
+        that:
+          - "'{{item}}' in groups"
+      with_items:
+      - all

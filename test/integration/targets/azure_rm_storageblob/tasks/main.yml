@@ -1,0 +1,119 @@
+- name: Create storage account name
+  set_fact:
+      storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
+- name: Create storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}" 
+    name: "{{ storage_account }}"
+    account_type: Standard_LRS
+
+- name: Create container
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}"
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs
+
+- name: Force upload blob
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}" 
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs
+    blob: 'Ratings.png'
+    src: './targets/azure_rm_storageblob/files/Ratings.png'
+    content_type: image/png
+    tags:
+        val1: foo
+        val2: bar
+    force: yes 
+
+- name: storage blob seems to have some timing issues
+  wait_for:
+    delay: 10
+
+- name: Upload blob idempotence
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}" 
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs
+    blob: 'Ratings.png'
+    src: './targets/azure_rm_storageblob/files/Ratings.png'
+    content_type: image/png
+    tags:
+        val1: foo
+        val2: bar
+  register: upload_facts
+
+- assert:
+      that: "not upload_facts.changed"
+
+- name: Download file idempotence 
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}" 
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs
+    blob: 'Ratings.png'
+    dest: './targets/azure_rm_storageblob/files/Ratings.png'
+  register: download_results
+
+- assert: 
+      that: not download_results.changed
+
+- file: path="/tmp/Ratings.png" state=absent
+
+- name: Download file 
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}" 
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs
+    blob: 'Ratings.png'
+    dest: '/tmp/Ratings.png'
+  register: download_results
+
+- assert: 
+      that: "download_results.changed"
+
+- find: paths='/tmp' patterns="Ratings.png"
+  register: find_results
+
+- assert: { that: "find_results['matched'] == 1" }
+
+- name: Do not delete container that has blobs 
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}"
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs 
+    state: absent
+  register: output
+
+- assert:
+      that: "not output.changed"
+
+- name: Delete blob object
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}" 
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs 
+    blob: "Ratings.png"
+    state: absent
+  register: output
+
+- assert:
+      that: "output.changed"
+
+- name: Delete container 
+  azure_rm_storageblob:
+    resource_group: "{{ resource_group }}"
+    account_name: "{{ storage_account }}"
+    container_name: my-blobs 
+    state: absent
+  register: output
+
+- assert:
+      that: "output.changed"
+
+- name: Delete storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}" 
+    name: "{{ storage_account }}"
+    state: absent 

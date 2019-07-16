@@ -1,0 +1,5 @@
+- include_tasks: test_secrets.yml
+  when: docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_secrets tests!"
+  when: not(docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

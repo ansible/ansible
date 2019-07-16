@@ -1,0 +1,56 @@
+# Test code for the vmware_host_snmp.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    # SNMP works only with standalone ESXi server
+    - name: Enable and configure SNMP community in check mode
+      vmware_host_snmp:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        community: [ test ]
+        state: enabled
+        validate_certs: no
+      register: snmp_enabled_check_mode
+      check_mode: yes
+    - debug: var=snmp_enabled_check_mode
+    - assert:
+        that:
+          - snmp_enabled_check_mode is defined
+          - snmp_enabled_check_mode.changed
+
+    - name: Enable and configure SNMP community
+      vmware_host_snmp:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        community: [ test ]
+        state: enabled
+        validate_certs: no
+      register: snmp_enabled
+    - debug: var=snmp_enabled
+    - assert:
+        that:
+          - snmp_enabled is defined
+          - snmp_enabled.changed
+
+    - name: Disable SNMP
+      vmware_host_snmp:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        state: disabled
+        validate_certs: no
+      register: snmp_disabled
+    - debug: var=snmp_enabled
+    - assert:
+        that:
+          - snmp_enabled is defined
+          - snmp_enabled.changed

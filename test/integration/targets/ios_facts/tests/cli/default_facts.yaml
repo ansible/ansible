@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/default_facts.yaml"
+- debug: msg="START cli/default_facts.yaml on connection={{ ansible_connection }}"
 
 
 - name: test getting default facts
@@ -28,4 +28,8 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_config is not defined" # config
 
-- debug: msg="END cli/default.yaml"
+- assert:
+    that: "{{ item.value.spacetotal_kb }} > {{ item.value.spacefree_kb }}"
+  loop: "{{ lookup('dict', result.ansible_facts.ansible_net_filesystems_info, wantlist=True) }}"
+
+- debug: msg="END cli/default.yaml on connection={{ ansible_connection }}"

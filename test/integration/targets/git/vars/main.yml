@@ -1,0 +1,79 @@
+git_archive_extensions:
+  default:
+    - tar.gz
+    - tar
+    - tgz
+    - zip
+  RedHat6:
+    - tar
+    - zip
+
+
+checkout_dir: '{{ output_dir }}/git'
+repo_dir: '{{ output_dir }}/local_repos'
+separate_git_dir: '{{ output_dir }}/sep_git_dir'
+repo_format1: 'https://github.com/jimi-c/test_role'
+repo_format2: 'git@github.com:jimi-c/test_role.git'
+repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
+repo_submodules: 'https://github.com/abadger/test_submodules_newer.git'
+repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
+repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
+repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
+repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
+known_host_files:
+  - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
+  - '/etc/ssh/ssh_known_hosts'
+git_version_supporting_depth: 1.9.1
+git_version_supporting_ls_remote: 1.7.5
+# path to a SSH private key for use with github.com (tests skipped if undefined)
+# github_ssh_private_key: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa"
+git_gpg_testkey: |
+  -----BEGIN PGP PRIVATE KEY BLOCK-----
+
+  lQOYBFlkmX0BCACtE81Xj/351nnvwnAWMf8ZUP9B1YOPe9ohqNsCQY1DxODVJc9y
+  ljCoh9fTdoHXuaUMUFistozxCMP81RuZxfbfsGePnl8OAOgWT5Sln6yEG45oClJ0
+  RmJJZdDT1lF3VaVwK9NQ5E1oqmk1IOjISi7iFa9TmMn1h7ISP/p+/xtMxQhzUXt8
+  APAEhRdc9FfwxaxCHKZBiM7ND+pAm6vpom07ZUgxSppsrXZAxDncTwAeCumDpeOL
+  LAcSBsw02swOIHFfqHNrkELLr4KJqws+zeAk6R2nq0k16AVdNX+Rb7T3OKmuLawx
+  HXe8rKpaw0RC+JCogZK4tz0KDNuZPLW2Y5JJABEBAAEAB/4zkKpFk79p35YNskLd
+  wgCMRN7/+MKNDavUCnBRsEELt0z7BBxVudx+YZaSSITvxj4fuJJqxqqgJ2no2n8y
+  JdJjG7YHCnqse+WpvAUAAV4PL/ySD704Kj4fOwfoDTrRUIGNNWlseNB9RgQ5UXg5
+  MCzeq/JD+En3bnnFySzzCENUcAQfu2FVYgKEiKaKL5Djs6p5w/jTm+Let3EsIczb
+  ykJ8D4/G/tSrNdp/g10DDy+VclWMhMFqmFesedvytE8jzCVxPKOoRkFTGrX76gIK
+  eMVxHIYxdCfSTHLjBykMGO9gxfk9lf18roNYs0VV2suyi4fVFxEozSAxwWlwKrXn
+  0arvBADPsm5NjlZ5uR06YKbpUUwPTYcwLbasic0qHuUWgNsTVv8dd2il/jbha77m
+  StU7qRJ1jwbFEFxx7HnTmeGfPbdyKe2qyLJUyD/rpQSC5YirisUchtG8nZsHlnzn
+  k10SIeB480tkgkdMQx1Eif40aiuQb09/TxaaXAEFKttZhEO4RwQA1VQ8a0IrMBI2
+  i4WqaIDNDl3x61JvvFD74v43I0AHKmZUPwcgAd6q2IvCDaKH0hIuBKu6BGq6DPvx
+  Oc/4r3iRn/xccconxRop2A9ffa00B/eQXrBq+uLBQfyiFL9UfkU8eTAAgbDKRxjY
+  ScaevoBbbYxkpgJUCL6VnoSdXlbNOO8EAL2ypsVkDmXNgR8ZT8cKSUft47di5T+9
+  mhT1qmD62B+D86892y2QAohmUDadYRK9m9WD91Y7gOMeNhYj9qbxyPprPYUL0aPt
+  L8KS1H73C5WQMOsl2RyIw81asss30LWghsFIJ1gz8gVEjXhV+YC6W9XQ42iabmRR
+  A67f5sqK1scuO0q0KUFuc2libGUgVGVzdCBSdW5uZXIgPG5vcmVwbHlAZXhhbXBs
+  ZS5jb20+iQE3BBMBCAAhBQJZZJl9AhsDBQsJCAcCBhUICQoLAgQWAgMBAh4BAheA
+  AAoJEK0vcLBcXpbYi/kH/R0xk42MFpGd4pndTAsVIjRk/VhmhFc1v6sBeR40GXlt
+  hyEeOQQnIeHKLhsVT6YnfFZa8b4JwgTD6NeIiibOAlLgaKOWNwZu8toixMPVAzfQ
+  cRei+/gFXNil0FmBwWreVBDppuIn6XiSEPik0C7eCcw4lD+A+BbL3WGkp+OSQPho
+  hodIU02hgkrgs/6YJPats8Rgzw9hICsa2j0MjnG6P2z9atMz6tw2SiE5iBl7mZ2Z
+  zG/HiplleMhf/G8OZOskrWkKiLbpSPfQSKdOFkw1C6yqOlQ+HmuCZ56oyxtpItET
+  R11uAKt+ABdi4DX3FQQ+A+bGJ1+aKrcorZ8Z8s0XhPo=
+  =tV71
+  -----END PGP PRIVATE KEY BLOCK-----
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mQENBFlkmX0BCACtE81Xj/351nnvwnAWMf8ZUP9B1YOPe9ohqNsCQY1DxODVJc9y
+  ljCoh9fTdoHXuaUMUFistozxCMP81RuZxfbfsGePnl8OAOgWT5Sln6yEG45oClJ0
+  RmJJZdDT1lF3VaVwK9NQ5E1oqmk1IOjISi7iFa9TmMn1h7ISP/p+/xtMxQhzUXt8
+  APAEhRdc9FfwxaxCHKZBiM7ND+pAm6vpom07ZUgxSppsrXZAxDncTwAeCumDpeOL
+  LAcSBsw02swOIHFfqHNrkELLr4KJqws+zeAk6R2nq0k16AVdNX+Rb7T3OKmuLawx
+  HXe8rKpaw0RC+JCogZK4tz0KDNuZPLW2Y5JJABEBAAG0KUFuc2libGUgVGVzdCBS
+  dW5uZXIgPG5vcmVwbHlAZXhhbXBsZS5jb20+iQE3BBMBCAAhBQJZZJl9AhsDBQsJ
+  CAcCBhUICQoLAgQWAgMBAh4BAheAAAoJEK0vcLBcXpbYi/kH/R0xk42MFpGd4pnd
+  TAsVIjRk/VhmhFc1v6sBeR40GXlthyEeOQQnIeHKLhsVT6YnfFZa8b4JwgTD6NeI
+  iibOAlLgaKOWNwZu8toixMPVAzfQcRei+/gFXNil0FmBwWreVBDppuIn6XiSEPik
+  0C7eCcw4lD+A+BbL3WGkp+OSQPhohodIU02hgkrgs/6YJPats8Rgzw9hICsa2j0M
+  jnG6P2z9atMz6tw2SiE5iBl7mZ2ZzG/HiplleMhf/G8OZOskrWkKiLbpSPfQSKdO
+  Fkw1C6yqOlQ+HmuCZ56oyxtpItETR11uAKt+ABdi4DX3FQQ+A+bGJ1+aKrcorZ8Z
+  8s0XhPo=
+  =mUYY
+  -----END PGP PUBLIC KEY BLOCK-----

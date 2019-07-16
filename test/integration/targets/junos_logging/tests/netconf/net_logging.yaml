@@ -1,0 +1,48 @@
+---
+- debug: msg="START junos netconf/net_logging.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove file logging
+  net_logging:
+    dest: file
+    name: test
+    facility: pfe
+    level: error
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Create file logging using platform agnostic module
+  net_logging:
+    dest: file
+    name: test_file
+    facility: pfe
+    level: error
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_file</name>' in config.xml"
+      - "'<name>pfe</name>' in config.xml"
+      - "'<error/>' in config.xml"
+
+- name: teardown - remove file logging
+  net_logging:
+    dest: file
+    name: test
+    facility: pfe
+    level: error
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_logging.yaml on connection={{ ansible_connection }}"

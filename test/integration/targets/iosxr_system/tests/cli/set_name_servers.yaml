@@ -1,0 +1,64 @@
+---
+- debug: msg="START cli/set_name_servers.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no ip name-server 192.0.2.1
+      - no ip name-server 192.0.2.2
+      - no ip name-server 192.0.2.3
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure name_servers
+  iosxr_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'domain name-server 192.0.2.1' in result.commands"
+      - "'domain name-server 192.0.2.2' in result.commands"
+      - "'domain name-server 192.0.2.3' in result.commands"
+
+- name: verify name_servers
+  iosxr_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one
+  iosxr_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 1
+      - "'no domain name-server 192.0.2.3' in result.commands"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no ip name-server 192.0.2.1
+      - no ip name-server 192.0.2.2
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"

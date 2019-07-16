@@ -1,0 +1,225 @@
+---
+- name: run win_whoami with normal execution
+  win_whoami:
+  register: win_whoami_result
+
+- name: assert win_whoami with normal execution
+  assert:
+    that:
+    - not win_whoami_result is changed
+    - win_whoami_result.account.account_name is defined
+    - win_whoami_result.account.domain_name is defined
+    - win_whoami_result.account.sid is defined
+    - win_whoami_result.account.type == 'User'
+    - win_whoami_result.authentication_package is defined
+    - win_whoami_result.dns_domain_name is defined
+    - win_whoami_result.groups|count >= 1
+    - win_whoami_result.groups[0].account_name is defined
+    - win_whoami_result.groups[0].attributes is defined
+    - win_whoami_result.groups[0].domain_name is defined
+    - win_whoami_result.groups[0].sid is defined
+    - win_whoami_result.groups[0].type is defined
+    - win_whoami_result.impersonation_level is defined
+    - win_whoami_result.label.account_name == 'High Mandatory Level'
+    - win_whoami_result.label.domain_name == 'Mandatory Label'
+    - win_whoami_result.label.sid == 'S-1-16-12288'
+    - win_whoami_result.label.type == 'Label'
+    - win_whoami_result.login_domain is defined
+    - win_whoami_result.login_time is defined
+    - win_whoami_result.logon_id is defined
+    - win_whoami_result.logon_server is defined
+    - win_whoami_result.logon_type.startswith('Network')
+    - win_whoami_result.privileges is defined
+    - win_whoami_result.rights|count >= 1
+    - win_whoami_result.token_type == 'TokenPrimary'
+    - win_whoami_result.upn is defined
+    - win_whoami_result.user_flags is defined
+
+- name: run win_whoami with SYSTEM execution
+  win_whoami:
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
+  register: win_whoami_result
+
+- name: assert win_whoami with SYSTEM execution
+  assert:
+    that:
+    - not win_whoami_result is changed
+    - win_whoami_result.account.account_name == 'SYSTEM'
+    - win_whoami_result.account.domain_name == 'NT AUTHORITY'
+    - win_whoami_result.account.sid == 'S-1-5-18'
+    - win_whoami_result.account.type == 'User'
+    - win_whoami_result.authentication_package is defined
+    - win_whoami_result.dns_domain_name is defined
+    - win_whoami_result.groups|count >= 1
+    - win_whoami_result.groups[0].account_name is defined
+    - win_whoami_result.groups[0].attributes is defined
+    - win_whoami_result.groups[0].domain_name is defined
+    - win_whoami_result.groups[0].sid is defined
+    - win_whoami_result.groups[0].type is defined
+    - win_whoami_result.impersonation_level == 'SecurityAnonymous'
+    - win_whoami_result.label.account_name == 'System Mandatory Level'
+    - win_whoami_result.label.domain_name == 'Mandatory Label'
+    - win_whoami_result.label.sid == 'S-1-16-16384'
+    - win_whoami_result.label.type == 'Label'
+    - win_whoami_result.login_domain is defined
+    - win_whoami_result.login_time is defined
+    - win_whoami_result.logon_id is defined
+    - win_whoami_result.logon_server is defined
+    - win_whoami_result.logon_type == 'System'
+    - win_whoami_result.privileges is defined
+    - win_whoami_result.rights|count >= 1
+    - win_whoami_result.token_type == 'TokenPrimary'
+    - win_whoami_result.upn is defined
+    - win_whoami_result.user_flags is defined
+
+- set_fact:
+    become_username: ansible_become
+    become_username_limited: ansible_limited
+    gen_pw: password123! + {{lookup('password', '/dev/null chars=ascii_letters,digits length=8')}}
+
+- name: ensure current user is not the become user
+  win_shell: whoami
+  register: whoami_out
+  failed_when: whoami_out.stdout_lines[0].endswith(become_username) or whoami_out.stdout_lines[0].endswith(become_username_limited)
+
+- name: create user
+  win_user:
+    name: '{{become_username}}'
+    password: '{{gen_pw}}'
+    update_password: always
+    groups: Administrators
+  register: become_user_info
+
+- name: create user limited
+  win_user:
+    name: '{{become_username_limited}}'
+    password: '{{gen_pw}}'
+    update_password: always
+    groups: Users
+  register: become_user_info_limited
+
+- block:
+  - name: get become user profile dir so we can clean it up later
+    vars: &become_vars
+      ansible_become_user: '{{become_username}}'
+      ansible_become_password: '{{gen_pw}}'
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: profile_dir_out
+
+  - name: ensure profile dir contains test username (eg, if become fails silently, prevent deletion of real user profile)
+    assert:
+      that:
+      - become_username in profile_dir_out.stdout_lines[0]
+
+  - name: get become user limited profile dir so we can clean it up later
+    vars: &become_vars_limited
+      ansible_become_user: '{{become_username_limited}}'
+      ansible_become_password: '{{gen_pw}}'
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: profile_dir_out_limited
+
+  - name: ensure limited profile dir contains test username (eg, if become fails silently, prevent deletion of real user profile)
+    assert:
+      that:
+      - become_username_limited in profile_dir_out_limited.stdout_lines[0]
+
+  - name: run win_whoami with become execution
+    win_whoami:
+    vars: *become_vars
+    register: win_whoami_result
+
+  - name: assert win_whoami with become execution
+    assert:
+      that:
+      - not win_whoami_result is changed
+      - win_whoami_result.account.account_name == "ansible_become"
+      - win_whoami_result.account.domain_name is defined
+      - win_whoami_result.account.sid == become_user_info.sid
+      - win_whoami_result.account.type == 'User'
+      - win_whoami_result.authentication_package == "NTLM"
+      - win_whoami_result.dns_domain_name == ""
+      - win_whoami_result.groups|count >= 1
+      - win_whoami_result.groups[0].account_name is defined
+      - win_whoami_result.groups[0].attributes is defined
+      - win_whoami_result.groups[0].domain_name is defined
+      - win_whoami_result.groups[0].sid is defined
+      - win_whoami_result.groups[0].type is defined
+      - win_whoami_result.impersonation_level is defined
+      - win_whoami_result.label.account_name == 'High Mandatory Level'
+      - win_whoami_result.label.domain_name == 'Mandatory Label'
+      - win_whoami_result.label.sid == 'S-1-16-12288'
+      - win_whoami_result.label.type == 'Label'
+      - win_whoami_result.login_domain is defined
+      - win_whoami_result.login_time is defined
+      - win_whoami_result.logon_id is defined
+      - win_whoami_result.logon_server is defined
+      - win_whoami_result.logon_type == "Interactive"
+      - win_whoami_result.privileges is defined
+      - '"SeInteractiveLogonRight" in win_whoami_result.rights'
+      - win_whoami_result.token_type == 'TokenPrimary'
+      - win_whoami_result.upn == ''
+      - win_whoami_result.user_flags is defined
+
+  - name: run win_whoami with limited become execution
+    win_whoami:
+    vars: *become_vars_limited
+    register: win_whoami_result
+
+  - name: assert win_whoami with limited become execution
+    assert:
+      that:
+      - not win_whoami_result is changed
+      - win_whoami_result.account.account_name == "ansible_limited"
+      - win_whoami_result.account.domain_name is defined
+      - win_whoami_result.account.sid == become_user_info_limited.sid
+      - win_whoami_result.account.type == 'User'
+      - win_whoami_result.authentication_package == "NTLM"
+      - win_whoami_result.dns_domain_name == ""
+      - win_whoami_result.groups|count >= 1
+      - win_whoami_result.groups[0].account_name is defined
+      - win_whoami_result.groups[0].attributes is defined
+      - win_whoami_result.groups[0].domain_name is defined
+      - win_whoami_result.groups[0].sid is defined
+      - win_whoami_result.groups[0].type is defined
+      - win_whoami_result.impersonation_level is defined
+      - win_whoami_result.label.account_name == 'Medium Mandatory Level'
+      - win_whoami_result.label.domain_name == 'Mandatory Label'
+      - win_whoami_result.label.sid == 'S-1-16-8192'
+      - win_whoami_result.label.type == 'Label'
+      - win_whoami_result.login_domain is defined
+      - win_whoami_result.login_time is defined
+      - win_whoami_result.logon_id is defined
+      - win_whoami_result.logon_server is defined
+      - win_whoami_result.logon_type == "Interactive"
+      - win_whoami_result.privileges is defined
+      - win_whoami_result.rights == []
+      - win_whoami_result.token_type == 'TokenPrimary'
+      - win_whoami_result.upn == ''
+      - win_whoami_result.user_flags is defined
+
+  always:
+  - name: ensure test user is deleted
+    win_user:
+      name: '{{item}}'
+      state: absent
+    with_items:
+    - '{{become_username}}'
+    - '{{become_username_limited}}'
+
+  - name: ensure test user profile is deleted
+    win_shell: rmdir /S /Q {{profile_dir_out.stdout_lines[0]}}
+    args:
+      executable: cmd.exe
+    when: become_username in profile_dir_out.stdout_lines[0]
+
+  - name: ensure limited test user profile is deleted
+    win_shell: rmdir /S /Q {{profile_dir_out_limited.stdout_lines[0]}}
+    args:
+      executable: cmd.exe
+    when: become_username_limited in profile_dir_out_limited.stdout_lines[0]

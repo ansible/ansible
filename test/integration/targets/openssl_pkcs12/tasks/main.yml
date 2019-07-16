@@ -1,0 +1,4 @@
+---
+- name: Run tests
+  include_tasks: impl.yml
+  when: pyopenssl_version.stdout is version('17.1.0', '>=')

@@ -1,0 +1,8 @@
+#pip packages required to build docsite
+jinja2
+PyYAML
+rstcheck
+sphinx
+sphinx-notfound-page
+Pygments >= 2.4.0
+straight.plugin # Needed for hacking/build-ansible.py which is the backend build script

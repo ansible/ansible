@@ -1,0 +1,53 @@
+---
+- name: prep pkcs12 file
+  copy: src="{{ test_pkcs12_path }}" dest="{{output_dir}}/{{ test_pkcs12_path }}"
+
+- name: import pkcs12
+  java_cert:
+     pkcs12_path: "{{output_dir}}/{{ test_pkcs12_path }}"
+     pkcs12_password: changeit
+     pkcs12_alias: default
+     cert_alias: default
+     keystore_path: "{{output_dir}}/{{ test_keystore_path }}"
+     keystore_pass: changeme_keystore
+     keystore_create: yes
+     state: present
+  register: result_success
+- name: verify success
+  assert:
+    that:
+    - result_success is successful
+
+- name: import pkcs12 with wrong password
+  java_cert:
+     pkcs12_path: "{{output_dir}}/{{ test_pkcs12_path }}"
+     pkcs12_password: wrong_pass
+     pkcs12_alias: default
+     cert_alias: default_new
+     keystore_path: "{{output_dir}}/{{ test_keystore_path }}"
+     keystore_pass: changeme_keystore
+     keystore_create: yes
+     state: present
+  ignore_errors: true
+  register: result_wrong_pass
+
+- name: verify fail with wrong import password
+  assert:
+    that:
+    - result_wrong_pass is failed
+
+- name: test fail on mutually exclusive params
+  java_cert:
+     cert_path: ca.crt
+     pkcs12_path: "{{output_dir}}/{{ test_pkcs12_path }}"
+     cert_alias: default
+     keystore_path: "{{output_dir}}/{{ test_keystore_path }}"
+     keystore_pass: changeme_keystore
+     keystore_create: yes
+     state: present
+  ignore_errors: true
+  register: result_excl_params
+- name: verify failed exclusive params
+  assert:
+    that:
+    - result_excl_params is failed

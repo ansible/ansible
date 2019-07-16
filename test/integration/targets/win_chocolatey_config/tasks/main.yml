@@ -1,0 +1,32 @@
+---
+- name: ensure Chocolatey is installed
+  win_chocolatey:
+    name: chocolatey
+    state: present
+
+- name: create a copy of the existing config file
+  win_copy:
+    src: C:\ProgramData\chocolatey\config\chocolatey.config
+    dest: C:\ProgramData\chocolatey\config\chocolatey.config.ansiblebak
+    remote_src: yes
+
+- name: unset config setting as baseline
+  win_chocolatey_config:
+    name: cacheLocation
+    state: absent
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: restore config file
+    win_copy:
+      src: C:\ProgramData\chocolatey\config\chocolatey.config.ansiblebak
+      dest: C:\ProgramData\chocolatey\config\chocolatey.config
+      remote_src: yes
+
+  - name: remove the backup config file
+    win_file:
+      path: C:\ProgramData\chocolatey\config\chocolatey.config.ansiblebak
+      state: absent

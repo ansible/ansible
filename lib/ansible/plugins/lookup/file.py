@@ -1,30 +1,58 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: file
+    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    version_added: "0.9"
+    short_description: read file contents
+    description:
+        - This lookup returns the contents from a file on the Ansible controller's file system.
+    options:
+      _terms:
+        description: path(s) of files to read
+        required: True
+      rstrip:
+        description: whether or not to remove whitespace from the ending of the looked-up file
+        type: bool
+        required: False
+        default: True
+      lstrip:
+        description: whether or not to remove whitespace from the beginning of the looked-up file
+        type: bool
+        required: False
+        default: False
+    notes:
+      - if read in variable context, the file can be interpreted as YAML if the content is valid to the parser.
+      - this lookup does not understand 'globing', use the fileglob lookup instead.
+"""
+
+EXAMPLES = """
+- debug: msg="the value of foo.txt is {{lookup('file', '/etc/foo.txt') }}"
+
+- name: display multiple file contents
+  debug: var=item
+  with_file:
+    - "/path/to/foo.txt"
+    - "bar.txt"  # will be looked in files/ dir relative to play or in role
+    - "/path/to/biz.txt"
+"""
+
+RETURN = """
+  _raw:
+    description:
+      - content of file(s)
+"""
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class LookupModule(LookupBase):
@@ -41,8 +69,13 @@ class LookupModule(LookupBase):
             display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
-                    contents, show_data = self._loader._get_file_contents(lookupfile)
-                    ret.append(contents.rstrip())
+                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                    contents = to_text(b_contents, errors='surrogate_or_strict')
+                    if kwargs.get('lstrip', False):
+                        contents = contents.lstrip()
+                    if kwargs.get('rstrip', True):
+                        contents = contents.rstrip()
+                    ret.append(contents)
                 else:
                     raise AnsibleParserError()
             except AnsibleParserError:

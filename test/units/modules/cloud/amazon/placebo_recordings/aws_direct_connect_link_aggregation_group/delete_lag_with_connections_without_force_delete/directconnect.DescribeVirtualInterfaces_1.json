@@ -1,0 +1,17 @@
+{
+    "data": {
+        "virtualInterfaces": [],
+        "ResponseMetadata": {
+            "RetryAttempts": 0,
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "content-type": "application/x-amz-json-1.1",
+                "x-amzn-requestid": "bc6dc8cb-70a7-11e7-a2a8-21d8bda1f5ec",
+                "content-length": "24",
+                "date": "Mon, 24 Jul 2017 19:38:57 GMT"
+            },
+            "RequestId": "bc6dc8cb-70a7-11e7-a2a8-21d8bda1f5ec"
+        }
+    },
+    "status_code": 200
+}

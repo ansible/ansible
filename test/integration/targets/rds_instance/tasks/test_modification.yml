@@ -1,0 +1,191 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create a mariadb instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: mariadb
+          engine_version: "10.1.26"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.db_instance_identifier == '{{ instance_id }}'"
+
+      - name: Modify the instance name without immediate application
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          new_id: "{{ modified_instance_id }}"
+          apply_immediately: False
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - 'result.db_instance_identifier == "{{ instance_id }}"'
+
+      - name: Immediately apply the pending update
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          new_id: "{{ modified_instance_id }}"
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - 'result.db_instance_identifier == "{{ modified_instance_id }}"'
+
+      - name: Modify the instance immediately
+        rds_instance:
+          id: '{{ modified_instance_id }}'
+          state: present
+          new_id: '{{ instance_id }}'
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - 'result.db_instance_identifier == "{{ instance_id }}"'
+
+      - name: Check mode - modify the password
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: present
+          password: '{{ password }}'
+          force_update_password: True
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+        check_mode: True
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Modify the password
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: present
+          password: '{{ password }}'
+          force_update_password: True
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      # TODO: test modifying db_subnet_group_name, db_security_groups, db_parameter_group_name, option_group_name,
+      # monitoring_role_arn, monitoring_interval, domain, domain_iam_role_name, cloudwatch_logs_export_configuration
+
+      - name: Modify several attributes
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: present
+          allocated_storage: 30
+          db_instance_class: "{{ modified_db_instance_class }}"
+          backup_retention_period: 2
+          preferred_backup_window: "05:00-06:00"
+          preferred_maintenance_window: "mon:06:20-mon:06:50"
+          engine_version: "10.2.21"
+          allow_major_version_upgrade: true
+          auto_minor_version_upgrade: false
+          port: 1150
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
+            - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
+            - '"engine_version" in result.pending_modified_values or result.engine_version == "10.2.21"'
+
+      - name: Idempotence modifying several pending attributes
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: present
+          allocated_storage: 30
+          db_instance_class: "{{ modified_db_instance_class }}"
+          backup_retention_period: 2
+          preferred_backup_window: "05:00-06:00"
+          preferred_maintenance_window: "mon:06:20-mon:06:50"
+          engine_version: "10.2.21"
+          allow_major_version_upgrade: true
+          auto_minor_version_upgrade: false
+          port: 1150
+          <<: *aws_connection_info
+        register: result
+        retries: 30
+        delay: 10
+        until: result is not failed
+
+      - assert:
+          that:
+            - not result.changed
+            - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
+            - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
+            - '"engine_version" in result.pending_modified_values or result.engine_version == "10.2.21"'
+
+      - name: Delete the instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - '"pending_modified_values" not in result'
+
+    always:
+
+      - name: Delete the instance
+        rds_instance:
+          id: '{{ item }}'
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        loop: ['{{ instance_id }}', '{{ modified_instance_id }}']
+        ignore_errors: yes

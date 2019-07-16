@@ -1,0 +1,26 @@
+---
+- name: ensure test folder exists
+  win_file:
+    path: '{{win_updates_dir}}'
+    state: directory
+
+- name: ensure WUA service is running
+  win_service:
+    name: wuauserv
+    state: started
+    start_mode: manual
+
+- block:
+  - include_tasks: tests.yml
+
+  always:
+  - name: ensure test folder is deleted
+    win_file:
+      path: '{{win_updates_dir}}'
+      state: absent
+  
+  - name: ensure WUA service is running
+    win_service:
+      name: wuauserv
+      state: started
+      start_mode: manual

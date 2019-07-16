@@ -1,0 +1,85 @@
+# Test code for the vmware_guest_custom_attribute_defs module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+- name: remove attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    state: absent
+    attribute_key: sample_5
+
+- name: add custom attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    state: present
+    attribute_key: sample_5
+  register: add_attrib_def
+
+- debug: var=add_attrib_def
+
+- assert:
+    that:
+      - add_attrib_def is changed
+      - "'sample_5' in add_attrib_def.custom_attribute_defs"
+
+- name: add attribute definition again
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    state: present
+    attribute_key: sample_5
+  register: add_attrib_def
+
+- debug: var=add_attrib_def
+
+- assert:
+    that:
+      - not (add_attrib_def is changed)
+
+- name: remove attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    state: absent
+    attribute_key: sample_5
+  register: remove_attrib_def
+
+- debug: var=remove_attrib_def
+
+- assert:
+    that:
+      - "remove_attrib_def.changed"
+      - "'sample_5' not in remove_attrib_def.custom_attribute_defs"
+
+- name: remove attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    state: absent
+    attribute_key: sample_5
+  register: remove_attrib_def
+
+- debug: var=remove_attrib_def
+
+- assert:
+    that:
+      - "not remove_attrib_def.changed"
+      - "'sample_5' not in remove_attrib_def.custom_attribute_defs"

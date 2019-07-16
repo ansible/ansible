@@ -1,0 +1,4 @@
+- name: Uninstall Paramiko for Python 3 on FreeBSD 11
+  pip: # no py36-paramiko package exists for FreeBSD 11
+    name: paramiko
+    state: absent

@@ -1,0 +1,126 @@
+# ============================================================
+# This file attempts to obtain a global lock (for a given
+# region / account combination.
+#
+# This makes one attempt to get the lock and will set the
+# won_lock variable to True or False to indicate whether
+# or not we got the lock.
+#
+# It's expected that this will be executed in a retry loop
+# so that if we don't get the lock we delay then try again.
+#
+# This should only be used in a block with cleanup-lock.yaml
+# included in the always clause to ensure the lock is released.
+#
+# There are several variables that control the locking behaviour:
+# * lock_timeout_seconds
+#     How old a lock must be before it's assumed to be an expired
+#     lock that was not cleaned up by the owner. Any locks older
+#     than this will not prevent a lock being obtained and will
+#     be deleted when a new process obtains the lock.
+# * lock_log_group_prefix
+#     The log_group prefix that represents the lock being obtained.
+#     This must be the same across all processes trying to obtain
+#     the lock.
+# * lock_process_id
+#     A unique identifier of this process. Each process that might
+#     attempt to lock the process must have a different identifier.
+#     This defaults to the resource_prefix which is generally
+#     appropriate.
+# * max_obtain_lock_attempts
+#     How many attempts to make to get the lock before giving up
+#     NB: This is actually done in main.yaml
+# * obtain_lock_delay_seconds:
+#     How long to delay after failing to get the lock before
+#     trying again.
+#     NB: This is actually done in obtain-lock-wrapper.yaml
+#
+# The locking here is based around creating cloudwatch log groups.
+# This resource was chosen because:
+#   A) it's free
+#   B) we have a built in grouping concept because of the hierarchy
+#      that allows us to easily group attempts for the same lock
+#   C) the creation time is tracked and returned which gives us
+#      a mechanism for deterministically picking a winner
+#
+# Each lock is represented by a log group prefix. Each attempt
+# to obtain the lock is a log group of the lock_process_id below
+# that prefix.
+#
+# The winning lock is the one with the earliest creation time.
+#
+# To prevent a hanging lock from permanently hanging the build
+# lock attempts older than the lock timeout are ignored and
+# cleaned up by the next process to win the lock.
+# ============================================================
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: Set lock_attempt_log_group_name
+  set_fact:
+    lock_attempt_log_group_name: "{{ lock_log_group_prefix }}/{{ lock_process_id|default(resource_prefix) }}"
+
+  # Note the overwrite below to ensure that the creation time
+  # is upated. This is important as we calculate expiry relative
+  # the attempt creation.
+  #
+  # Because of this it's imporatnt that we delete the attempt
+  # if we don't get the lock. Otherwise we can get a deadlock
+  # where the stale atttempt from one process wins, but then
+  # because that process updates the creation date it doesn't
+  # consider its self to havewone.
+- name: Create Lock Attempt Log Group
+  cloudwatchlogs_log_group:
+    log_group_name: "{{ lock_attempt_log_group_name }}"
+    state: present
+    overwrite: True
+    <<: *aws_connection_info
+  register: lock_attempt_log_group_result
+
+- name: Get Lock Attempt Lock Groups
+  cloudwatchlogs_log_group_info:
+    log_group_name: "{{ lock_log_group_prefix }}/"
+    <<: *aws_connection_info
+  register: lock_attempt_log_groups
+
+- name: Calculate Expired Lock Attempt Timestamp
+  set_fact:
+    expired_lock_timestamp: "{{ lock_attempt_log_group_result.creation_time - (lock_timeout_seconds * 1000) }}"
+
+- name: Get Expired and Active Lock Attempts
+  set_fact:
+    expired_lock_attempts: "{{ lock_attempt_log_groups.log_groups|selectattr('creation_time', 'lt', expired_lock_timestamp|int)|list }}"
+    active_lock_attempts: "{{ lock_attempt_log_groups.log_groups|selectattr('creation_time', 'ge', expired_lock_timestamp|int)|list }}"
+
+- name: Pick Winning Lock Attempt
+  set_fact:
+    winning_lock_attempt: "{{ active_lock_attempts|sort(attribute='creation_time')|first }}"
+
+- name: Determine if Won Lock
+  set_fact:
+    won_lock: "{{ winning_lock_attempt.log_group_name == lock_attempt_log_group_name }}"
+
+  # Remove the lock attempt if we didn't get the lock. This prevents
+  # our stale lock attempt blocking another process from getting the lock.
+  # See more detailed comment above Create Lock Attempt Log Group
+- name: Remove Failed Lock Attempt Log Group
+  cloudwatchlogs_log_group:
+    log_group_name: "{{ lock_attempt_log_group_name }}"
+    state: absent
+    <<: *aws_connection_info
+  when: "not won_lock|bool"
+
+- name: Delete Expired Lock Attempts
+  cloudwatchlogs_log_group:
+    log_group_name: "{{ item.log_group_name }}"
+    state: absent
+    <<: *aws_connection_info
+  when: "won_lock|bool"
+  loop: "{{ expired_lock_attempts }}"

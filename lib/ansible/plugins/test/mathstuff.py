@@ -20,17 +20,29 @@ __metaclass__ = type
 
 import math
 
+
 def issubset(a, b):
     return set(a) <= set(b)
 
+
 def issuperset(a, b):
     return set(a) >= set(b)
+
 
 def isnotanumber(x):
     try:
         return math.isnan(x)
     except TypeError:
         return False
+
+
+def contains(seq, value):
+    '''Opposite of the ``in`` test, allowing use as a test in filters like ``selectattr``
+
+    .. versionadded:: 2.8
+    '''
+    return value in seq
+
 
 class TestModule:
     ''' Ansible math jinja2 tests '''
@@ -39,6 +51,12 @@ class TestModule:
         return {
             # set theory
             'issubset': issubset,
+            'subset': issubset,
             'issuperset': issuperset,
+            'superset': issuperset,
+            'contains': contains,
+
+            # numbers
             'isnan': isnotanumber,
+            'nan': isnotanumber,
         }

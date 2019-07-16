@@ -1,0 +1,93 @@
+---
+- debug: msg="START eapi/set_name_servers.yaml"
+
+- name: setup
+  eos_config:
+    lines:
+      - no ip name-server
+      - vrf definition ansible
+    match: none
+  become: yes
+
+- name: configure name_servers
+  eos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 3
+      - "'ip name-server 192.0.2.1' in result.commands"
+      - "'ip name-server 192.0.2.2' in result.commands"
+      - "'ip name-server 192.0.2.3' in result.commands"
+
+- name: verify name_servers
+  eos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+#- name: change to vrf
+#  eos_system:
+#    name_servers:
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
+#  become: yes
+#  register: result
+
+#- assert:
+#    that:
+#      - result.changed == true
+#      - result.commands|length == 2
+#      - "'no ip name-server 192.0.2.2' in result.commands"
+#      - "'ip name-server 192.0.2.2 vrf ansible' in result.commands"
+
+#- name: verify change to vrf
+#  eos_system:
+#    name_servers:
+#      - 192.0.2.1
+#      - { server: 192.0.2.2, vrf: ansible }
+#      - 192.0.2.3
+#  become: yes
+#  register: result
+#
+#- assert:
+#    that:
+#      - result.changed == false
+
+- name: remove one
+  eos_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.commands|length == 1
+      - "'no ip name-server 192.0.2.3' in result.commands"
+
+- name: teardown
+  eos_config:
+    lines:
+      - no ip domain lookup source-interface
+      - no vrf definition ansible
+    match: none
+  become: yes
+
+- debug: msg="END eapi/set_name_servers.yaml"

@@ -1,0 +1,19 @@
+{
+    "kind": "tm:auth:tacacs:tacacsstate",
+    "name": "system-auth",
+    "partition": "Common",
+    "fullPath": "/Common/system-auth",
+    "generation": 484,
+    "selfLink": "https://localhost/mgmt/tm/auth/tacacs/~Common~system-auth?ver=13.1.0.1",
+    "accounting": "send-to-first-server",
+    "authentication": "use-first-server",
+    "debug": "disabled",
+    "encryption": "enabled",
+    "protocol": "ftp",
+    "secret": "secret",
+    "servers": [
+        "11.11.11.11"
+    ],
+    "service": "ppp",
+    "timeout": 10
+}

@@ -1,0 +1,6 @@
+---
+filter_version: '1.0'
+module_blacklist:
+  # List the modules to blacklist here
+  #- easy_install
+  #- s3

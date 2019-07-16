@@ -1,0 +1,178 @@
+# Test code for the vmware_host module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Testcase: Add Host
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Add first ESXi Host to vCenter
+      vmware_host:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        datacenter_name: '{{ dc1 }}'
+        cluster_name: '{{ ccr1 }}'
+        esxi_hostname: '{{ esxi1 }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        state: present
+        validate_certs: no
+      register: readd_host_result
+
+    - name: Add first ESXi Host to vCenter (again)
+      vmware_host:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        datacenter_name: '{{ dc1 }}'
+        cluster_name: '{{ ccr1 }}'
+        esxi_hostname: '{{ esxi1 }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        state: present
+        validate_certs: no
+      register: readd_host_result
+
+    - name: ensure precend task didn't changed anything
+      assert:
+        that:
+          - not ( readd_host_result is changed)
+
+    - name: add second host via add_or_reconnect
+      vmware_host:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi2 }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: "{{ ccr1 }}"
+        state: add_or_reconnect
+      register: add_or_reconnect_host_result
+    - name: ensure host system is present
+      assert:
+        that:
+          - add_or_reconnect_host_result is changed
+
+- when: vcsim is not defined
+  block:
+    - name: disconnect host 2
+      vmware_host:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi2 }}'
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: "{{ ccr1 }}"
+        fetch_ssl_thumbprint: False
+        state: absent
+
+    - name: remove host again
+      vmware_host:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi2 }}'
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: "{{ ccr1 }}"
+        state: absent
+      register: reremove_host_result
+    - name: ensure precend task didn't changed anything
+      assert:
+        that:
+          - not ( reremove_host_result is changed)
+
+
+## Testcase: Add Host to folder
+#
+# It's not possible to connect an ESXi host via vcsim.
+- when: vcsim is not defined
+  block:
+    - name: Create host folder
+      vcenter_folder:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        datacenter: "{{ dc1 }}"
+        folder_name: "Staging"
+        folder_type: host
+        state: present
+      register: folder_results
+
+    - debug: msg="{{ folder_results }}"
+
+    - name: ensure folder is present
+      assert:
+        that:
+          - folder_results.changed
+
+    - name: Add host to folder in check mode
+      vmware_host:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi2 }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        datacenter_name: "{{ dc1 }}"
+        folder_name: "/{{ dc1 }}/host/Staging"
+        state: present
+      register: add_host_to_folder_result
+      check_mode: yes
+
+    - name: ensure host system is not present
+      assert:
+        that:
+          - add_host_to_folder_result is changed
+
+    - name: Add host to folder
+      vmware_host:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi2 }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        datacenter_name: "{{ dc1 }}"
+        folder_name: "/{{ dc1 }}/host/Staging"
+        state: present
+      register: add_host_to_folder_result
+
+    - name: ensure host system is present
+      assert:
+        that:
+          - add_host_to_folder_result is changed
+
+    - name: reconnect host
+      vmware_host:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        esxi_hostname: '{{ esxi2 }}'
+        esxi_username: '{{ esxi_user }}'
+        esxi_password: '{{ esxi_password }}'
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: "{{ ccr1 }}"
+        state: reconnect
+      register: reconnect_host_result
+
+    - name: ensure host system has been reconnected
+      assert:
+        that:
+          - reconnect_host_result is changed
+          # it would be a good idea to check the events on the host to see the reconnect
+          # https://github.com/vmware/govmomi/blob/master/govc/USAGE.md#events
+          # "govc events ..." need to be callable from
+          # https://github.com/ansible/vcenter-test-container/flask_control.py

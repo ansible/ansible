@@ -1,0 +1,2 @@
+- include_tasks: setup.yml
+- include_tasks: test.yml

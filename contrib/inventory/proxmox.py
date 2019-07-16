@@ -25,22 +25,21 @@
 #
 # { "groups": ["utility", "databases"], "a": false, "b": true }
 
-import urllib
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 import os
 import sys
 from optparse import OptionParser
 
-from six import iteritems
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
+
 
 class ProxmoxNodeList(list):
     def get_names(self):
         return [node['node'] for node in self]
+
 
 class ProxmoxVM(dict):
     def get_variables(self):
@@ -49,8 +48,11 @@ class ProxmoxVM(dict):
             variables['proxmox_' + key] = value
         return variables
 
+
 class ProxmoxVMList(list):
-    def __init__(self, data=[]):
+    def __init__(self, data=None):
+        data = [] if data is None else data
+
         for item in data:
             self.append(ProxmoxVM(item))
 
@@ -68,13 +70,16 @@ class ProxmoxVMList(list):
 
         return variables
 
+
 class ProxmoxPoolList(list):
     def get_names(self):
         return [pool['poolid'] for pool in self]
 
+
 class ProxmoxPool(dict):
     def get_members_name(self):
         return [member['name'] for member in self['members'] if member['template'] != 1]
+
 
 class ProxmoxAPI(object):
     def __init__(self, options):
@@ -89,9 +94,9 @@ class ProxmoxAPI(object):
             raise Exception('Missing mandatory parameter --password (or PROXMOX_PASSWORD).')
 
     def auth(self):
-        request_path = '{}api2/json/access/ticket'.format(self.options.url)
+        request_path = '{0}api2/json/access/ticket'.format(self.options.url)
 
-        request_params = urllib.urlencode({
+        request_params = urlencode({
             'username': self.options.username,
             'password': self.options.password,
         })
@@ -104,9 +109,9 @@ class ProxmoxAPI(object):
         }
 
     def get(self, url, data=None):
-        request_path = '{}{}'.format(self.options.url, url)
+        request_path = '{0}{1}'.format(self.options.url, url)
 
-        headers = {'Cookie': 'PVEAuthCookie={}'.format(self.credentials['ticket'])}
+        headers = {'Cookie': 'PVEAuthCookie={0}'.format(self.credentials['ticket'])}
         request = open_url(request_path, data=data, headers=headers)
 
         response = json.load(request)
@@ -116,10 +121,10 @@ class ProxmoxAPI(object):
         return ProxmoxNodeList(self.get('api2/json/nodes'))
 
     def vms_by_type(self, node, type):
-        return ProxmoxVMList(self.get('api2/json/nodes/{}/{}'.format(node, type)))
+        return ProxmoxVMList(self.get('api2/json/nodes/{0}/{1}'.format(node, type)))
 
     def vm_description_by_type(self, node, vm, type):
-        return self.get('api2/json/nodes/{}/{}/{}/config'.format(node, type, vm))
+        return self.get('api2/json/nodes/{0}/{1}/{2}/config'.format(node, type, vm))
 
     def node_qemu(self, node):
         return self.vms_by_type(node, 'qemu')
@@ -137,7 +142,8 @@ class ProxmoxAPI(object):
         return ProxmoxPoolList(self.get('api2/json/pools'))
 
     def pool(self, poolid):
-        return ProxmoxPool(self.get('api2/json/pools/{}'.format(poolid)))
+        return ProxmoxPool(self.get('api2/json/pools/{0}'.format(poolid)))
+
 
 def main_list(options):
     results = {
@@ -199,6 +205,7 @@ def main_list(options):
 
     return results
 
+
 def main_host(options):
     proxmox_api = ProxmoxAPI(options)
     proxmox_api.auth()
@@ -210,6 +217,7 @@ def main_host(options):
             return qemu.get_variables()
 
     return {}
+
 
 def main():
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
@@ -234,6 +242,7 @@ def main():
         indent = 2
 
     print(json.dumps(data, indent=indent))
+
 
 if __name__ == '__main__':
     main()

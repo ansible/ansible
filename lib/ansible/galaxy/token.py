@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ########################################################################
 #
 # (C) 2015, Chris Houseknecht <chouse@ansible.com>
@@ -24,14 +22,13 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import yaml
-from stat import *
+from stat import S_IRUSR, S_IWUSR
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+import yaml
+
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class GalaxyToken(object):
@@ -42,26 +39,25 @@ class GalaxyToken(object):
         self.config = yaml.safe_load(self.__open_config_for_read())
         if not self.config:
             self.config = {}
-        
+
     def __open_config_for_read(self):
         if os.path.isfile(self.file):
             display.vvv('Opened %s' % self.file)
             return open(self.file, 'r')
         # config.yml not found, create and chomd u+rw
-        f = open(self.file,'w')
+        f = open(self.file, 'w')
         f.close()
-        os.chmod(self.file,S_IRUSR|S_IWUSR) # owner has +rw
-        display.vvv('Created %s' % self.file) 
+        os.chmod(self.file, S_IRUSR | S_IWUSR)  # owner has +rw
+        display.vvv('Created %s' % self.file)
         return open(self.file, 'r')
 
-    def set(self, token): 
+    def set(self, token):
         self.config['token'] = token
         self.save()
-    
+
     def get(self):
         return self.config.get('token', None)
-    
+
     def save(self):
-        with open(self.file,'w') as f:
-            yaml.safe_dump(self.config,f,default_flow_style=False)
-        
+        with open(self.file, 'w') as f:
+            yaml.safe_dump(self.config, f, default_flow_style=False)

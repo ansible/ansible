@@ -1,0 +1,86 @@
+# (c) 2017, Martin Krizek <mkrizek@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install requirements for RHEL 7 and earlier
+  package:
+    name: policycoreutils-python
+  when:
+    - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('7', '<=')
+
+- name: install requirements for RHEL 8 and later
+  package:
+    name: policycoreutils-python-utils
+  when:
+    - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
+
+- name: Cleanup
+  shell: setsebool -P httpd_can_network_connect 0
+##########################################################################################
+- name: set flag and don't keep it persistent
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+  register: output
+
+- name: get getsebool output
+  shell: semanage boolean -l | grep 'httpd_can_network_connect\W'
+  register: getsebool_output
+
+- name: check output
+  assert:
+    that:
+      - output is changed
+      - output is not failed
+      - output.name == 'httpd_can_network_connect'
+      - getsebool_output.stdout.startswith('httpd_can_network_connect      (on   ,  off)')
+##########################################################################################
+- name: unset flag
+  seboolean:
+    name: httpd_can_network_connect
+    state: no
+
+- name: get getsebool output
+  shell: semanage boolean -l | grep 'httpd_can_network_connect\W'
+  register: getsebool_output
+
+- name: check output
+  assert:
+    that:
+      - output is changed
+      - output is not failed
+      - output.name == 'httpd_can_network_connect'
+      - getsebool_output.stdout.startswith('httpd_can_network_connect      (off  ,  off)')
+##########################################################################################
+- name: set flag and keep it persistent
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes
+  register: output
+
+- name: get getsebool output
+  shell: semanage boolean -l | grep 'httpd_can_network_connect\W'
+  register: getsebool_output
+
+- name: check output
+  assert:
+    that:
+      - output is changed
+      - output is not failed
+      - output.name == 'httpd_can_network_connect'
+      - getsebool_output.stdout.startswith('httpd_can_network_connect      (on   ,   on)')
+##########################################################################################

@@ -1,0 +1,44 @@
+processor	: 0
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 1
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 2
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 3
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 4
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 5
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 6
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+processor	: 7
+cpu		    : POWER7 (architected), altivec supported
+clock		: 3550.000000MHz
+revision	: 2.1 (pvr 003f 0201)
+
+timebase	: 512000000
+platform	: pSeries
+model		: IBM,8231-E2B
+machine		: CHRP IBM,8231-E2B

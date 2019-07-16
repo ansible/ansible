@@ -1,0 +1,91 @@
+# Test code for the vmware_datastore_cluster module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: Add a datastore cluster to datacenter (check-mode)
+  vmware_datastore_cluster: &add_datastore_cluster
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    datacenter_name: "{{ dc1 }}"
+    datastore_cluster_name: DSC1
+    state: present
+  check_mode: yes
+  register: add_dsc_check
+
+- assert:
+    that:
+     - add_dsc_check.changed
+
+- name: Add a datastore cluster to datacenter
+  vmware_datastore_cluster: *add_datastore_cluster
+  register: add_dsc
+
+- assert:
+    that:
+     - add_dsc.changed
+
+- name: Add a datastore cluster to datacenter again
+  vmware_datastore_cluster: *add_datastore_cluster
+  register: add_dsc
+
+- assert:
+    that:
+     - not add_dsc.changed
+
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: 'my_datastore_folder'
+    folder_type: datastore
+    state: present
+    validate_certs: no
+  register: my_datastore_folder
+
+- name: Add a datastore cluster using folder
+  vmware_datastore_cluster:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    folder: "{{ my_datastore_folder.result.path }}"
+    datastore_cluster_name: DSC2
+    state: present
+  register: add_dsc_folder_check
+
+- assert:
+    that:
+     - add_dsc_folder_check.changed
+
+- name: Delete a datastore cluster to datacenter (check-mode)
+  vmware_datastore_cluster: &delete_datastore_cluster
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    datacenter_name: "{{ dc1 }}"
+    datastore_cluster_name: DSC1
+    state: absent
+  check_mode: yes
+  register: delete_dsc_check
+
+- assert:
+    that:
+     - delete_dsc_check.changed
+
+- when: vcsim is not defined
+  block:
+  - name: Delete a datastore cluster to datacenter
+    vmware_datastore_cluster: *delete_datastore_cluster
+    register: delete_dsc_check
+
+  - assert:
+      that:
+        - delete_dsc_check.changed

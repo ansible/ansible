@@ -1,0 +1,53 @@
+---
+- debug: msg="START cli/route_policy.yaml on connection={{ ansible_connection }}"
+
+- name: Cleanup
+  iosxr_config:
+    src: basic/route_policy_clean.j2
+
+- name: config setup route-policy/prefix-set/as-path-set/community-set
+  iosxr_config:
+    src: basic/route_policy.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Configure same route-policy/prefix-set ... verify change=0
+  iosxr_config:
+    src: basic/route_policy.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Do a change in multi-sublevel route-policy/prefix-set/community-set
+  iosxr_config:
+    src: basic/route_policy_change.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Configure same route-policy/prefix-set ... verify change=0
+  iosxr_config:
+    src: basic/route_policy_change.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Cleanup
+  iosxr_config:
+    src: basic/route_policy_clean.j2
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- debug: msg="END cli/route_policy.yaml on connection={{ ansible_connection }}"

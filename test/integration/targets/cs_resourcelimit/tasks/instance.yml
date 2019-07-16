@@ -1,0 +1,108 @@
+---
+- name: setup instance limits account
+  cs_resourcelimit:
+    type: instance
+    limit: 20
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify setup instance limits account
+  assert:
+    that:
+    - rl is successful
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 20
+    - rl.resource_type == "instance"
+
+- name: set instance limits for domain in check mode
+  cs_resourcelimit:
+    type: instance
+    limit: 12
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+  check_mode: true
+- name: verify set instance limits for domain in check mode
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 20
+    - rl.resource_type == "instance"
+
+- name: set instance limits for domain
+  cs_resourcelimit:
+    type: instance
+    limit: 12
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set instance limits for domain
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 12
+    - rl.resource_type == "instance"
+
+- name: set instance limits for domain idempotence
+  cs_resourcelimit:
+    type: instance
+    limit: 12
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set instance limits for domain
+  assert:
+    that:
+    - rl is not changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 12
+    - rl.resource_type == "instance"
+
+- name: set instance limits for account in check mode
+  cs_resourcelimit:
+    type: instance
+    limit: 10
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+  check_mode: true
+- name: verify set instance limits for account in check mode
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit != 10
+    - rl.resource_type == "instance"
+
+- name: set instance limits for account
+  cs_resourcelimit:
+    type: instance
+    limit: 10
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set instance limits for account
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 10
+    - rl.resource_type == "instance"
+
+- name: set instance limits for account idempotence
+  cs_resourcelimit:
+    type: instance
+    limit: 10
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set instance limits for account idempotence
+  assert:
+    that:
+    - rl is not changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 10
+    - rl.resource_type == "instance"

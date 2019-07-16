@@ -18,7 +18,7 @@
 
 # various tests of things that should not cause parsing problems
 
-- set_fact: 
+- set_fact:
     test_input: "a=1 a=2 a=3"
 
 - set_fact:
@@ -26,7 +26,7 @@
       echo old
       echo mcdonald
       echo had
-      echo a 
+      echo a
       echo farm
 
 - shell: echo "dog"
@@ -46,9 +46,9 @@
 - name: a quoted argument is not sent to the shell module as anything but a string parameter
   shell: echo 'dog' 'executable=/usr/bin/python'
   register: result
- 
+
 - debug: var=result.cmd
- 
+
 - assert:
     that:
        result.cmd == "echo 'dog' 'executable=/usr/bin/python'"
@@ -56,7 +56,7 @@
 - name: it is valid to pass multiple key=value arguments because the shell doesn't check key=value arguments
   shell: echo quackquack=here quackquack=everywhere
   register: result
- 
+
 - assert:
     that:
       result.cmd == 'echo quackquack=here quackquack=everywhere'
@@ -64,7 +64,7 @@
 - name: the same is true with quoting
   shell: echo "quackquack=here quackquack=everywhere"
   register: result
-     
+
 - assert:
     that:
       result.cmd == 'echo "quackquack=here quackquack=everywhere"'
@@ -85,9 +85,9 @@
   shell: echo {{ test_input }}
   register: result
 
-- assert: 
+- assert:
      that:
-        result.cmd == "echo a=1 a=2 a=3" 
+        result.cmd == "echo a=1 a=2 a=3"
 
 - name: more shell duplicates
   shell: echo foo=bar foo=bar

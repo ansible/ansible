@@ -20,58 +20,53 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
 from ansible.module_utils._text import to_native
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 
 
 class ActionModule(ActionBase):
+
+    TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
-        src        = self._task.args.get('src', None)
-        remote_src = boolean(self._task.args.get('remote_src', 'no'))
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-
-        if src is None:
-            result['failed'] = True
-            result['msg'] = "src is required"
-            return result
-        elif remote_src:
-            # everything is remote, so we just execute the module
-            # without changing any of the module arguments
-            result.update(self._execute_module(task_vars=task_vars))
-            return result
+        src = self._task.args.get('src', None)
+        remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)
 
         try:
-            src = self._find_needle('files', src)
-        except AnsibleError as e:
-            result['failed'] = True
-            result['msg'] = to_native(e)
-            return result
+            if src is None:
+                raise AnsibleActionFail("src is required")
+            elif remote_src:
+                # everything is remote, so we just execute the module
+                # without changing any of the module arguments
+                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars))
 
-        # create the remote tmp dir if needed, and put the source file there
-        if tmp is None or "-tmp-" not in tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            try:
+                src = self._find_needle('files', src)
+            except AnsibleError as e:
+                raise AnsibleActionFail(to_native(e))
 
-        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
-        self._transfer_file(src, tmp_src)
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
+            self._transfer_file(src, tmp_src)
+            self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
 
-        self._fixup_perms2((tmp, tmp_src), remote_user)
-
-        new_module_args = self._task.args.copy()
-        new_module_args.update(
-            dict(
-                src=tmp_src,
+            new_module_args = self._task.args.copy()
+            new_module_args.update(
+                dict(
+                    src=tmp_src,
+                )
             )
-        )
 
-        result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
-        self._remove_tmp_path(tmp)
+            result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+        except AnsibleAction as e:
+            result.update(e.result)
+        finally:
+            self._remove_tmp_path(self._connection._shell.tmpdir)
         return result

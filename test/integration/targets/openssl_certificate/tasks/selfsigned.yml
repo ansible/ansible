@@ -1,0 +1,293 @@
+---
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey.pem'
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_certificate
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate - idempotency
+  openssl_certificate:
+    path: '{{ output_dir }}/cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_certificate_idempotence
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (check mode)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+
+- name: (Selfsigned, {{select_crypto_backend}}) Check selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/cert.pem'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: assertonly
+    has_expired: False
+    version: 3
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha256WithECDSAEncryption
+    subject:
+      commonName: www.example.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned v2 certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_v2.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_version: 2
+    select_crypto_backend: "{{ select_crypto_backend }}"
+  register: selfsigned_v2_cert
+  ignore_errors: true
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey2
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey2.pem'
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR2
+  openssl_csr:
+    subject:
+      CN: www.example.com
+      C: US
+      ST: California
+      L: Los Angeles
+      O: ACME Inc.
+      OU:
+        - Roadrunner pest control
+        - Pyrotechnics
+    path: '{{ output_dir }}/csr2.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    keyUsage:
+      - digitalSignature
+    extendedKeyUsage:
+      - ipsecUser
+      - biometricInfo
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate2
+  openssl_certificate:
+    path: '{{ output_dir }}/cert2.pem'
+    csr_path: '{{ output_dir }}/csr2.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Selfsigned, {{select_crypto_backend}}) Check selfsigned certificate2
+  openssl_certificate:
+    path: '{{ output_dir }}/cert2.pem'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    provider: assertonly
+    has_expired: False
+    version: 3
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha256WithECDSAEncryption
+    subject:
+      commonName: www.example.com
+      C: US
+      ST: California
+      L: Los Angeles
+      O: ACME Inc.
+      OU:
+        - Roadrunner pest control
+        - Pyrotechnics
+    keyUsage:
+      - digitalSignature
+    extendedKeyUsage:
+      - ipsecUser
+      - biometricInfo
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create private key 3
+  openssl_privatekey:
+    path: "{{ output_dir }}/privatekey3.pem"
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create CSR 3
+  openssl_csr:
+    subject:
+      CN: www.example.com
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    path: "{{ output_dir }}/csr3.pem"
+
+- name: (Selfsigned, {{select_crypto_backend}}) Create certificate3 with notBefore and notAfter
+  openssl_certificate:
+    provider: selfsigned
+    selfsigned_not_before: 20181023133742Z
+    selfsigned_not_after: 20191023133742Z
+    path: "{{ output_dir }}/cert3.pem"
+    csr_path: "{{ output_dir }}/csr3.pem"
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_ecc.pem'
+    type: ECC
+    curve: "{{ (ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6') | ternary('secp521r1', 'secp256k1') }}"
+    # ^ cryptography on CentOS6 doesn't support secp256k1, so we use secp521r1 instead
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    subject:
+      commonName: www.example.com
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_ecc.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_certificate_ecc
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate CSR (privatekey passphrase)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pass.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    subject:
+      commonName: www.example.com
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (privatekey passphrase)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pass.pem'
+    csr_path: '{{ output_dir }}/csr_pass.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_certificate_passphrase
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 1)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pw1.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    privatekey_passphrase: hunter2
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 2)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pw2.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: wrong_password
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate (failed passphrase 3)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pw3.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_3
+
+- name: Create broken certificate
+  copy:
+    dest: "{{ output_dir }}/cert_broken.pem"
+    content: "broken"
+- name: Regenerate broken cert
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_broken.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+  register: selfsigned_broken
+
+- name: (Selfsigned, {{select_crypto_backend}}) Backup test
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_backup_1
+- name: (Selfsigned, {{select_crypto_backend}}) Backup test (idempotent)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_backup_2
+- name: (Selfsigned, {{select_crypto_backend}}) Backup test (change)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_backup_3
+- name: (Selfsigned, {{select_crypto_backend}}) Backup test (remove)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_backup.pem'
+    state: absent
+    provider: selfsigned
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_backup_4
+- name: (Selfsigned, {{select_crypto_backend}}) Backup test (remove, idempotent)
+  openssl_certificate:
+    path: '{{ output_dir }}/selfsigned_cert_backup.pem'
+    state: absent
+    provider: selfsigned
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_backup_5
+
+- import_tasks: ../tests/validate_selfsigned.yml

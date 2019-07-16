@@ -1,0 +1,535 @@
+---
+- name: fail no source or content
+  win_copy:
+    dest: dest
+  register: fail_no_source_content
+  failed_when: fail_no_source_content.msg != 'src (or content) and dest are required'
+
+- name: fail content but dest isn't a file, unix ending
+  win_copy:
+    content: a
+    dest: a/
+  register: fail_dest_not_file_unix
+  failed_when: fail_dest_not_file_unix.msg != 'dest must be a file if content is defined'
+
+- name: fail content but dest isn't a file, windows ending
+  win_copy:
+    content: a
+    dest: a\
+  register: fail_dest_not_file_windows
+  failed_when: fail_dest_not_file_windows.msg != 'dest must be a file if content is defined'
+
+- name: fail to copy a file with parent dir that doesn't exist and filename is set
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\missing-dir\foo.txt'
+  register: fail_missing_parent_dir
+  failed_when: "'does not exist' not in fail_missing_parent_dir.msg"
+
+- name: fail to copy an encrypted file without the password set
+  win_copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{test_win_copy_path}}\file'
+  register: fail_copy_encrypted_file
+  ignore_errors: yes # weird failed_when doesn't work in this case
+
+- name: assert failure message when copying an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_encrypted_file is failed
+    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
+- name: fail to copy a directory with an encrypted file without the password
+  win_copy:
+    src: '{{role_path}}/files-different/vault'
+    dest: '{{test_win_copy_path}}'
+  register: fail_copy_directory_with_enc_file
+  ignore_errors: yes
+
+- name: assert failure message when copying a directory that contains an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_directory_with_enc_file is failed
+    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
+- name: copy with content (check mode)
+  win_copy:
+    content: a
+    dest: '{{test_win_copy_path}}\file'
+  register: copy_content_check
+  check_mode: yes
+
+- name: get result of copy with content (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\file'
+  register: copy_content_actual_check
+
+- name: assert copy with content (check mode)
+  assert:
+    that:
+    - copy_content_check is changed
+    - copy_content_check.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
+    - copy_content_check.operation == 'file_copy'
+    - copy_content_check.size == 1
+    - copy_content_actual_check.stat.exists == False
+
+- name: copy with content
+  win_copy:
+    content: a
+    dest: '{{test_win_copy_path}}\file'
+  register: copy_content
+
+- name: get result of copy with content
+  win_stat:
+    path: '{{test_win_copy_path}}\file'
+  register: copy_content_actual
+
+- name: assert copy with content
+  assert:
+    that:
+    - copy_content is changed
+    - copy_content.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
+    - copy_content.operation == 'file_copy'
+    - copy_content.size == 1
+    - copy_content_actual.stat.exists == True
+    - copy_content_actual.stat.checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
+
+- name: copy with content (idempotent)
+  win_copy:
+    content: a
+    dest: '{{test_win_copy_path}}\file'
+  register: copy_content_again
+
+- name: assert copy with content (idempotent)
+  assert:
+    that:
+    - copy_content_again is not changed
+
+- name: copy with content change when missing
+  win_copy:
+    content: b
+    dest: '{{test_win_copy_path}}\file'
+    force: no
+  register: copy_content_when_missing
+
+- name: assert copy with content change when missing
+  assert:
+    that:
+    - copy_content_when_missing is not changed
+
+- name: copy single file (check mode)
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\foo-target.txt'
+  register: copy_file_check
+  check_mode: yes
+
+- name: get result of copy single file (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\foo-target.txt'
+  register: copy_file_actual_check
+
+- name: assert copy single file (check mode)
+  assert:
+    that:
+    - copy_file_check is changed
+    - copy_file_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_check.dest == test_win_copy_path + '\\foo-target.txt'
+    - copy_file_check.operation == 'file_copy'
+    - copy_file_check.size == 8
+    - copy_file_actual_check.stat.exists == False
+
+- name: copy single file
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\foo-target.txt'
+  register: copy_file
+
+- name: get result of copy single file
+  win_stat:
+    path: '{{test_win_copy_path}}\foo-target.txt'
+  register: copy_file_actual
+
+- name: assert copy single file
+  assert:
+    that:
+    - copy_file is changed
+    - copy_file.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file.dest == test_win_copy_path + '\\foo-target.txt'
+    - copy_file.operation == 'file_copy'
+    - copy_file.size == 8
+    - copy_file_actual.stat.exists == True
+    - copy_file_actual.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+- name: copy single file (idempotent)
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\foo-target.txt'
+  register: copy_file_again
+
+- name: assert copy single file (idempotent)
+  assert:
+    that:
+    - copy_file_again is not changed
+
+- name: copy single file (backup)
+  win_copy:
+    content: "{{ lookup('file', 'foo.txt') }}\nfoo bar"
+    dest: '{{test_win_copy_path}}\foo-target.txt'
+    backup: yes
+  register: copy_file_backup
+
+- name: check backup_file
+  win_stat:
+    path: '{{ copy_file_backup.backup_file }}'
+  register: backup_file
+
+- name: assert copy single file (backup)
+  assert:
+    that:
+    - copy_file_backup is changed
+    - backup_file.stat.exists == true
+
+- name: copy single file to folder (check mode)
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\'
+  register: copy_file_to_folder_check
+  check_mode: yes
+
+- name: get result of copy single file to folder (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\foo.txt'
+  register: copy_file_to_folder_actual_check
+
+- name: assert copy single file to folder (check mode)
+  assert:
+    that:
+    - copy_file_to_folder_check is changed
+    - copy_file_to_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_folder_check.dest == test_win_copy_path + '\\foo.txt'
+    - copy_file_to_folder_check.operation == 'file_copy'
+    - copy_file_to_folder_check.size == 8
+    - copy_file_to_folder_actual_check.stat.exists == False
+
+- name: copy single file to folder
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\'
+  register: copy_file_to_folder
+
+- name: get result of copy single file to folder
+  win_stat:
+    path: '{{test_win_copy_path}}\foo.txt'
+  register: copy_file_to_folder_actual
+
+- name: assert copy single file to folder
+  assert:
+    that:
+    - copy_file_to_folder is changed
+    - copy_file_to_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_folder.dest == test_win_copy_path + '\\foo.txt'
+    - copy_file_to_folder.operation == 'file_copy'
+    - copy_file_to_folder.size == 8
+    - copy_file_to_folder_actual.stat.exists == True
+    - copy_file_to_folder_actual.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+- name: copy single file to folder (idempotent)
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\'
+  register: copy_file_to_folder_again
+
+- name: assert copy single file to folder (idempotent)
+  assert:
+    that:
+    - copy_file_to_folder_again is not changed
+
+- name: copy single file to missing folder (check mode)
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\missing\'
+  register: copy_file_to_missing_folder_check
+  check_mode: yes
+
+- name: get result of copy single file to missing folder (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\missing\foo.txt'
+  register: copy_file_to_missing_folder_actual_check
+
+- name: assert copy single file to missing folder (check mode)
+  assert:
+    that:
+    - copy_file_to_missing_folder_check is changed
+    - copy_file_to_missing_folder_check.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_missing_folder_check.operation == 'file_copy'
+    - copy_file_to_missing_folder_check.size == 8
+    - copy_file_to_missing_folder_actual_check.stat.exists == False
+
+- name: copy single file to missing folder
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\missing\'
+  register: copy_file_to_missing_folder
+
+- name: get result of copy single file to missing folder
+  win_stat:
+    path: '{{test_win_copy_path}}\missing\foo.txt'
+  register: copy_file_to_missing_folder_actual
+
+- name: assert copy single file to missing folder
+  assert:
+    that:
+    - copy_file_to_missing_folder is changed
+    - copy_file_to_missing_folder.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_file_to_missing_folder.operation == 'file_copy'
+    - copy_file_to_missing_folder.size == 8
+    - copy_file_to_missing_folder_actual.stat.exists == True
+    - copy_file_to_missing_folder_actual.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+- name: copy folder (check mode)
+  win_copy:
+    src: files
+    dest: '{{test_win_copy_path}}\recursive\folder'
+  register: copy_folder_check
+  check_mode: yes
+
+- name: get result of copy folder (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\recursive\folder'
+  register: copy_folder_actual_check
+
+- name: assert copy folder (check mode)
+  assert:
+    that:
+    - copy_folder_check is changed
+    - copy_folder_check.operation == 'folder_copy'
+    - copy_folder_actual_check.stat.exists == False
+
+- name: copy folder
+  win_copy:
+    src: files
+    dest: '{{test_win_copy_path}}\recursive\folder'
+  register: copy_folder
+
+- name: get result of copy folder
+  win_find:
+    paths: '{{test_win_copy_path}}\recursive\folder'
+    recurse: yes
+    file_type: directory
+  register: copy_folder_actual
+
+- name: assert copy folder
+  assert:
+    that:
+    - copy_folder is changed
+    - copy_folder.operation == 'folder_copy'
+    - copy_folder_actual.examined == 11 # includes files and folders, the below is the nested order
+    - copy_folder_actual.matched == 6
+    - copy_folder_actual.files[0].filename == 'files'
+    - copy_folder_actual.files[1].filename == 'subdir'
+    - copy_folder_actual.files[2].filename == 'empty'
+    - copy_folder_actual.files[3].filename == 'subdir2'
+    - copy_folder_actual.files[4].filename == 'subdir3'
+    - copy_folder_actual.files[5].filename == 'subdir4'
+
+- name: copy folder (idempotent)
+  win_copy:
+    src: files
+    dest: '{{test_win_copy_path}}\recursive\folder'
+  register: copy_folder_again
+
+- name: assert copy folder (idempotent)
+  assert:
+    that:
+    - copy_folder_again is not changed
+
+- name: change the text of a file in the remote source
+  win_copy:
+    content: bar.txt
+    dest: '{{test_win_copy_path}}\recursive\folder\files\foo.txt'
+
+- name: remove folder for test of recursive copy
+  win_file:
+    path: '{{test_win_copy_path}}\recursive\folder\files\subdir\subdir2\subdir3\subdir4'
+    state: absent
+
+- name: copy folder after changes
+  win_copy:
+    src: files
+    dest: '{{test_win_copy_path}}\recursive\folder'
+  register: copy_folder_after_change
+
+- name: get result of copy folder after changes
+  win_find:
+    paths: '{{test_win_copy_path}}\recursive\folder\files'
+    recurse: yes
+    patterns: ['foo.txt', 'qux.txt']
+  register: copy_folder_after_changes_actual
+
+- name: assert copy folder after changes
+  assert:
+    that:
+    - copy_folder_after_change is changed
+    - copy_folder_after_changes_actual.matched == 2
+    - copy_folder_after_changes_actual.files[0].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+    - copy_folder_after_changes_actual.files[1].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
+
+- name: copy folder's contents (check mode)
+  win_copy:
+    src: files/
+    dest: '{{test_win_copy_path}}\recursive-contents\'
+  register: copy_folder_contents_check
+  check_mode: yes
+
+- name: get result of copy folder'scontents (check mode)
+  win_stat:
+    path: '{{test_win_copy_path}}\recursive-contents'
+  register: copy_folder_contents_actual_check
+
+- name: assert copy folder's contents (check mode)
+  assert:
+    that:
+    - copy_folder_contents_check is changed
+    - copy_folder_contents_check.operation == 'folder_copy'
+    - copy_folder_contents_actual_check.stat.exists == False
+
+- name: copy folder's contents
+  win_copy:
+    src: files/
+    dest: '{{test_win_copy_path}}\recursive-contents\'
+  register: copy_folder_contents
+
+- name: get result of copy folder
+  win_find:
+    paths: '{{test_win_copy_path}}\recursive-contents'
+    recurse: yes
+    file_type: directory
+  register: copy_folder_contents_actual
+
+- name: assert copy folder
+  assert:
+    that:
+    - copy_folder_contents is changed
+    - copy_folder_contents.operation == 'folder_copy'
+    - copy_folder_contents_actual.examined == 10 # includes files and folders, the below is the nested order
+    - copy_folder_contents_actual.matched == 5
+    - copy_folder_contents_actual.files[0].filename == 'subdir'
+    - copy_folder_contents_actual.files[1].filename == 'empty'
+    - copy_folder_contents_actual.files[2].filename == 'subdir2'
+    - copy_folder_contents_actual.files[3].filename == 'subdir3'
+    - copy_folder_contents_actual.files[4].filename == 'subdir4'
+
+- name: fail to copy file to a folder
+  win_copy:
+    src: foo.txt
+    dest: '{{test_win_copy_path}}\recursive-contents'
+  register: fail_file_to_folder
+  failed_when: "'object at path is already a directory' not in fail_file_to_folder.msg"
+
+- name: fail to copy folder to a file
+  win_copy:
+    src: subdir/
+    dest: '{{test_win_copy_path}}\recursive-contents\foo.txt'
+  register: fail_folder_to_file
+  failed_when: "'object at parent directory path is already a file' not in fail_folder_to_file.msg"
+
+# https://github.com/ansible/ansible/issues/31336
+- name: create file with colon in the name
+  copy:
+    dest: '{{role_path}}/files-different/colon:file'
+    content: test
+  delegate_to: localhost
+
+- name: copy a file with colon as a source
+  win_copy:
+    src: '{{role_path}}/files-different/colon:file'
+    dest: '{{test_win_copy_path}}\colon.file'
+  register: copy_file_with_colon
+
+- name: get result of file with colon as a source
+  win_stat:
+    path: '{{test_win_copy_path}}\colon.file'
+  register: copy_file_with_colon_result
+
+- name: assert results of copy a file with colon as a source
+  assert:
+    that:
+    - copy_file_with_colon is changed
+    - copy_file_with_colon_result.stat.exists == True
+    - copy_file_with_colon_result.stat.checksum == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3" 
+
+- name: remove file with colon in the name
+  file:
+    path: '{{role_path}}/files-different/colon:file'
+    state: absent
+  delegate_to: localhost
+
+- name: copy an encrypted file without decrypting
+  win_copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{test_win_copy_path}}\vault-file'
+    decrypt: no
+  register: copy_encrypted_file
+
+- name: get stat of copied encrypted file without decrypting
+  win_stat:
+    path: '{{test_win_copy_path}}\vault-file'
+  register: copy_encrypted_file_result
+
+- name: assert result of copy an encrypted file without decrypting
+  assert:
+    that:
+    - copy_encrypted_file is changed
+    - copy_encrypted_file_result.stat.checksum == "74a89620002d253f38834ee5b06cddd28956a43d"
+
+- name: copy an encrypted file without decrypting (idempotent)
+  win_copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{test_win_copy_path}}\vault-file'
+    decrypt: no
+  register: copy_encrypted_file_again
+
+- name: assert result of copy an encrypted file without decrypting (idempotent)
+  assert:
+    that:
+    - copy_encrypted_file_again is not changed
+
+- name: copy folder with encrypted files without decrypting
+  win_copy:
+    src: '{{role_path}}/files-different/vault/'
+    dest: '{{test_win_copy_path}}\encrypted-test'
+    decrypt: no
+  register: copy_encrypted_file
+
+- name: get result of copy folder with encrypted files without decrypting
+  win_find:
+    paths: '{{test_win_copy_path}}\encrypted-test'
+    recurse: yes
+    patterns: '*vault*'
+  register: copy_encrypted_file_result
+
+- name: assert result of copy folder with encrypted files without decrypting
+  assert:
+    that:
+    - copy_encrypted_file is changed
+    - copy_encrypted_file_result.files|count == 2
+    - copy_encrypted_file_result.files[0].checksum == "834563c94127730ecfa42dfc1e1821bbda2e51da"
+    - copy_encrypted_file_result.files[1].checksum == "74a89620002d253f38834ee5b06cddd28956a43d"
+
+- name: copy folder with encrypted files without decrypting (idempotent)
+  win_copy:
+    src: '{{role_path}}/files-different/vault/'
+    dest: '{{test_win_copy_path}}\encrypted-test'
+    decrypt: no
+  register: copy_encrypted_file_again
+
+- name: assert result of copy folder with encrypted files without decrypting (idempotent)
+  assert:
+    that:
+    - copy_encrypted_file_again is not changed
+
+- name: remove test folder after local to remote tests
+  win_file:
+    path: '{{test_win_copy_path}}'
+    state: absent

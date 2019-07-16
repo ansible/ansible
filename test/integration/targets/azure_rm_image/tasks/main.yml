@@ -1,0 +1,171 @@
+- name: Create storage account name
+  set_fact:
+      vm_name: "vm{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}x"
+      public_ip_name: "pip{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      security_group_name: "sg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+      empty_disk_name: "emptydisk{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      address_prefix: "10.10.0.0/24"
+      virtual_network: "{{ vm_name }}"
+
+- name: Create public ip
+  azure_rm_publicipaddress:
+      resource_group: "{{ resource_group }}"
+      allocation_method: Static
+      name: "{{ public_ip_name }}"
+
+- name: Create security group
+  azure_rm_securitygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ security_group_name }}"
+
+- name: Create NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      virtual_network: "{{ vm_name }}"
+      subnet: "{{ vm_name }}"
+      public_ip_name: "{{ public_ip_name }}"
+      security_group: "{{ security_group_name }}"
+
+- name: Create virtual machine
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      vm_size: Standard_A0
+      managed_disk_type: Standard_LRS
+      admin_username: adminuser
+      admin_password: Password123!
+      os_type: Linux
+      network_interfaces: "{{ vm_name }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+  register: vm
+
+- name: Create new empty managed disk
+  azure_rm_manageddisk:
+      resource_group: "{{ resource_group }}"
+      name: "{{ empty_disk_name }}"
+      storage_account_type: "Standard_LRS"
+      disk_size_gb: 1
+  register: emptydisk
+
+- name: Create an image from VM (check mode)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "{{ vm.ansible_facts.azure_vm.properties.storageProfile.osDisk.managedDisk.id }}"
+      name: testimage001
+      os_type: Linux
+      data_disk_sources:
+          - "{{ empty_disk_name }}"
+  check_mode: yes
+  register: output
+
+- assert:
+      that: output.changed
+
+- name: Create an image from VM
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source:
+        name: "{{ vm_name }}"
+        type: disks
+      name: testimage001
+      os_type: Linux
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - output.id
+
+- name: Create an image from VM (idempotent)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      source: "{{ vm.ansible_facts.azure_vm.properties.storageProfile.osDisk.managedDisk.id }}"
+      name: testimage001
+      os_type: Linux
+  register: output
+
+- assert:
+      that:
+          - not output.changed
+          - output.id
+
+- name: Gather information about image created
+  azure_rm_image_facts:
+    resource_group: "{{ resource_group }}"
+    name: testimage001
+  register: output
+
+- assert:
+      that:
+          - output.images != []
+
+- name: Delete image (check mode)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage001
+      state: absent
+  register: output
+  check_mode: yes
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete image
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage001
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - output.changed
+
+- name: Delete image (idempotent)
+  azure_rm_image:
+      resource_group: "{{ resource_group }}"
+      name: testimage001
+      state: absent
+  register: output
+
+- assert:
+    that:
+      - not output.changed
+
+- name: Delete empty disk
+  azure_rm_manageddisk:
+      resource_group: "{{ resource_group }}"
+      name: "{{ empty_disk_name }}"
+      state: absent
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name }}"
+      state: absent
+      vm_size: Standard_A0
+  register: output
+
+- name: Delete public ip
+  azure_rm_publicipaddress:
+      resource_group: "{{ resource_group }}"
+      allocation_method: Static
+      name: "{{ public_ip_name }}"
+      state: absent

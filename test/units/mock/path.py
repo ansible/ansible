@@ -1,5 +1,5 @@
-#!/usr/bin/env python
+from units.compat.mock import MagicMock
+from ansible.utils.path import unfrackpath
 
-def mock_unfrackpath_noop(path):
-    ''' Do not expand the path '''
-    return path
+
+mock_unfrackpath_noop = MagicMock(spec_set=unfrackpath, side_effect=lambda x, *args, **kwargs: x)

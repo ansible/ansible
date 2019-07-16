@@ -1,0 +1,14 @@
+---
+
+
+- name: Setup cs policy
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_policy:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    policyname: somepolicy
+    url: /example.com/basket

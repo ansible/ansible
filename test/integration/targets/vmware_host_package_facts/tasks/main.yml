@@ -1,0 +1,24 @@
+# Test code for the vmware_host_package_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support Package Manager related to operations
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Gather facts about all hosts in given cluster
+      vmware_host_package_facts:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+      register: host_packages
+    - debug: var=host_packages
+    - assert:
+        that:
+          - host_packages.hosts_package_facts is defined

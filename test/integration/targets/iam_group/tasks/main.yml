@@ -1,0 +1,70 @@
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: ensure ansible user exists
+  iam_user:
+    name: AnsibleTestUser
+    state: present
+    <<: *aws_connection_info
+
+- name: ensure group exists
+  iam_group:
+    name: ansible_test
+    users:
+      - AnsibleTestUser
+    state: present
+    <<: *aws_connection_info
+  register: iam_group
+
+- assert:
+    that:
+      - iam_group.users
+
+- name: add non existent user to group
+  iam_group:
+    name: ansible_test
+    users:
+      - AnsibleTestUser
+      - NonExistentUser
+    state: present
+    <<: *aws_connection_info
+  ignore_errors: yes
+  register: iam_group
+
+- name: assert that adding non existent user to group fails with helpful message
+  assert:
+    that:
+      - iam_group is failed
+      - iam_group.msg.startswith("Couldn't add user NonExistentUser to group ansible_test")
+
+- name: remove a user
+  iam_group:
+    name: ansible_test
+    purge_users: True
+    users: []
+    state: present
+    <<: *aws_connection_info
+  register: iam_group
+
+- assert:
+    that:
+      - iam_group.changed
+      - not iam_group.users
+
+- name: remove group
+  iam_group:
+    name: ansible_test
+    state: absent
+    <<: *aws_connection_info
+
+- name: remove ansible user
+  iam_user:
+    name: AnsibleTestUser
+    state: absent
+    <<: *aws_connection_info

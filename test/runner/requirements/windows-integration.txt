@@ -1,0 +1,9 @@
+cryptography
+jinja2
+junit-xml
+ntlm-auth
+requests-ntlm
+requests-credssp
+pypsrp
+pywinrm[credssp]
+pyyaml

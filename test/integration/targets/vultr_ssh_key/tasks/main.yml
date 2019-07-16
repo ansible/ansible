@@ -1,0 +1,140 @@
+# Copyright (c) 2018, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    state: absent
+  register: result
+- name: verify setup
+  assert:
+    that:
+    - result is success
+
+- name: test fail if missing name
+  vultr_ssh_key:
+  register: result
+  ignore_errors: yes
+- name: verify test fail if missing name
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "missing required arguments: name"'
+
+- name: test fail if missing params for state=present
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+  register: result
+  ignore_errors: yes
+- name: verify fail if missing params for state=present
+  assert:
+    that:
+    - result is failed
+    - 'result.msg == "state is present but all of the following are missing: ssh_key"'
+
+- name: test create ssh key in check mode
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    ssh_key: "{{ vultr_ssh_key }}"
+  register: result
+  check_mode: yes
+- name: verify test create ssh key in check mode
+  assert:
+    that:
+    - result is changed
+
+- name: test create ssh key
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    ssh_key: "{{ vultr_ssh_key }}"
+  register: result
+- name: verify test create ssh key
+  assert:
+    that:
+    - result is changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key }}'
+
+- name: test create ssh key idempotence
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    ssh_key: "{{ vultr_ssh_key }}"
+  register: result
+- name: verify test create ssh key idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key }}'
+
+- name: test update ssh key in check mode
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    ssh_key: "{{ vultr_ssh_key2 }}"
+  register: result
+  check_mode: yes
+- name: verify test update ssh key in check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key }}'
+
+- name: test update ssh key
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    ssh_key: "{{ vultr_ssh_key2 }}"
+  register: result
+- name: verify test update ssh key
+  assert:
+    that:
+    - result is changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key2 }}'
+
+- name: test update ssh key idempotence
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    ssh_key: "{{ vultr_ssh_key2 }}"
+  register: result
+- name: verify test update ssh key idempotence
+  assert:
+    that:
+    - result is not changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key2 }}'
+
+- name: test absent ssh key in check mode
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    state: absent
+  register: result
+  check_mode: yes
+- name: verify test absent ssh key in check mode
+  assert:
+    that:
+    - result is changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key2 }}'
+
+- name: test absent ssh key
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    state: absent
+  register: result
+- name: verify test absent ssh key
+  assert:
+    that:
+    - result is changed
+    - result.vultr_ssh_key.name == '{{ vultr_ssh_key_name }}'
+    - result.vultr_ssh_key.ssh_key == '{{ vultr_ssh_key2 }}'
+
+- name: test absent ssh key idempotence
+  vultr_ssh_key:
+    name: "{{ vultr_ssh_key_name }}"
+    state: absent
+  register: result
+- name: verify test absent ssh key idempotence
+  assert:
+    that:
+    - result is not changed

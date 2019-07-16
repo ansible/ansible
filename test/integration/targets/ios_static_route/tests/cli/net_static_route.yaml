@@ -1,0 +1,33 @@
+---
+- debug: msg="START ios cli/net_static_route.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: delete static route - setup
+  net_static_route: &delete
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    state: absent
+    provider: "{{ cli }}"
+
+- name: create static route using platform agnostic module
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 1
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["ip route 172.16.31.0 255.255.255.0 10.0.0.8 1"]'
+
+- name: delete static route - teardown
+  net_static_route: *delete
+
+- debug: msg="END ios cli/net_static_route.yaml on connection={{ ansible_connection }}"

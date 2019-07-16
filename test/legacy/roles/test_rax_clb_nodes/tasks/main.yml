@@ -1,0 +1,237 @@
+# ============================================================
+- name: Test rax_clb_nodes with no args
+  rax_clb_nodes:
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate results of rax_clb_nodes with no args
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - 'rax_clb_nodes.msg == "missing required arguments: load_balancer_id"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with load_balancer_Id
+  rax_clb_nodes:
+    load_balancer_id: 1234
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate results of rax_clb_nodes with load_balancer_id
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg == 'No credentials supplied!'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with credentials and load_balancer_id
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    load_balancer_id: 1234
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate results of rax_clb_nodes with credentials and load_balancer_id
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg.startswith('None is not a valid region')
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with creds, region and load_balancer_id
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: 1234
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate rax_clb_nodes creds, region and load_balancer_id
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg == 'Load balancer not found'
+# ============================================================
+
+
+
+# ============================================================
+- name: Build a CLB to test rax_clb_nodes with
+  rax_clb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-clb"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_clb
+
+- name: Validate rax_clb creation
+  assert:
+    that:
+      - rax_clb is successful
+
+- name: Set variable for CLB ID
+  set_fact:
+    rax_clb_id: "{{ rax_clb.balancer.id }}"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with creds, region and valid load_balancer_id
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: "{{ rax_clb_id }}"
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate rax_clb_nodes creds, region and valid load_balancer_id
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg == 'You must include an address and a port when creating a node.'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with creds, region, load_balancer_id and address
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: "{{ rax_clb_id }}"
+    address: '10.10.10.10'
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate rax_clb_nodes creds, region, load_balancer_id and address
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg == 'You must include an address and a port when creating a node.'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with creds, region, load_balancer_id, invalid address and port
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: "{{ rax_clb_id }}"
+    address: '10.10.10.10'
+    port: 80
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate rax_clb_nodes creds, region, load_balancer_id, invalid address and port
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg == "Invalid node address. The address '10.10.10.10' is currently not accepted for this request."
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with creds, region, load_balancer_id, address and port
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: "{{ rax_clb_id }}"
+    address: '172.16.0.1'
+    port: 80
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_clb_nodes
+
+- name: Validate rax_clb_nodes creds, region, load_balancer_id, address and port
+  assert:
+    that:
+      - rax_clb_nodes is successful
+      - rax_clb_nodes.node.address == '172.16.0.1'
+      - rax_clb_nodes.node.condition == 'ENABLED'
+      - rax_clb_nodes.node.port == 80
+      - rax_clb_nodes.node.status == 'ONLINE'
+      - rax_clb_nodes.node.type == 'PRIMARY'
+      - rax_clb_nodes.node.weight == 1
+
+- name: Delete integration 1
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: "{{ rax_clb_id }}"
+    node_id: "{{ rax_clb_nodes.node.id }}"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_clb_nodes
+
+- name: Validate delete integration 1
+  assert:
+    that:
+      - rax_clb_nodes is successful
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_clb_nodes with creds, region, load_balancer_id, address, port and type
+  rax_clb_nodes:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    load_balancer_id: "{{ rax_clb_id }}"
+    address: '172.16.0.1'
+    port: 80
+    type: secondary
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  ignore_errors: true
+  register: rax_clb_nodes
+
+- name: Validate rax_clb_nodes creds, region, load_balancer_id, address, port and type
+  assert:
+    that:
+      - rax_clb_nodes is failed
+      - rax_clb_nodes.msg == 'you must enable health monitoring to use secondary nodes'
+# ============================================================
+
+
+
+# ============================================================
+- name: Delete CLB
+  rax_clb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ rax_clb.balancer.name }}"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_clb
+
+- name: "Validate delete integration 3"
+  assert:
+    that:
+      - rax_clb is changed
+      - rax_clb.balancer.id == rax_clb_id|int
+# ============================================================

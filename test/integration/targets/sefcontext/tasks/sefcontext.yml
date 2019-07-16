@@ -1,0 +1,114 @@
+# (c) 2016, Dag Wieers <dag@wieers.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: install requirements for RHEL
+  package:
+    name: policycoreutils-python
+  when:
+    - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version|int < 8
+
+- name: install requirements for rhel8 beta
+  package:
+    name: python3-policycoreutils
+  when:
+    - ansible_distribution == 'RedHat'
+    - ansible_distribution_major_version|int >= 8
+
+- name: Ensure we start with a clean state
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: httpd_sys_content_t
+    state: absent
+
+- name: Set SELinux file context of foo/bar
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: httpd_sys_content_t
+    state: present
+    reload: no
+  register: first
+
+- assert:
+    that:
+    - first is changed
+    - first.setype == 'httpd_sys_content_t'
+
+- name: Set SELinux file context of foo/bar (again)
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: httpd_sys_content_t
+    state: present
+    reload: no
+  register: second
+
+- assert:
+    that:
+    - second is not changed
+    - second.setype == 'httpd_sys_content_t'
+
+- name: Change SELinux file context of foo/bar
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: unlabeled_t
+    state: present
+    reload: no
+  register: third
+
+- assert:
+    that:
+    - third is changed
+    - third.setype == 'unlabeled_t'
+
+- name: Change SELinux file context of foo/bar (again)
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: unlabeled_t
+    state: present
+    reload: no
+  register: fourth
+
+- assert:
+    that:
+    - fourth is not changed
+    - fourth.setype == 'unlabeled_t'
+
+- name: Delete SELinux file context of foo/bar
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: httpd_sys_content_t
+    state: absent
+    reload: no
+  register: fifth
+
+- assert:
+    that:
+    - fifth is changed
+    - fifth.setype == 'httpd_sys_content_t'
+
+- name: Delete SELinux file context of foo/bar (again)
+  sefcontext:
+    path: '/tmp/foo/bar(/.*)?'
+    setype: unlabeled_t
+    state: absent
+    reload: no
+  register: sixth
+
+- assert:
+    that:
+    - sixth is not changed
+    - sixth.setype == 'unlabeled_t'

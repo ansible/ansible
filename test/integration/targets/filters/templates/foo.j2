@@ -14,13 +14,13 @@ Dumping the same structure to YAML, but don't pretty print
 {{ some_structure | to_yaml }}
 
 From a recorded task, the changed, failed, success, and skipped
-filters are shortcuts to ask if those tasks produced changes, failed,
+tests are shortcuts to ask if those tasks produced changes, failed,
 succeeded, or skipped (as one might guess).
 
-Changed = {{ some_registered_var | changed }}
-Failed  = {{ some_registered_var | failed }}
-Success = {{ some_registered_var | success }}
-Skipped = {{ some_registered_var | skipped }}
+Changed = {{ some_registered_var is changed }}
+Failed  = {{ some_registered_var is failed }}
+Success = {{ some_registered_var is successful }}
+Skipped = {{ some_registered_var is skipped }}
 
 The mandatory filter fails if a variable is not defined and returns the value.
 To avoid breaking this test, this variable is already defined.
@@ -50,6 +50,7 @@ TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
 
-TODO: add tests for regex, match, and search
-
-
+regex_replace = {{ 'foo' | regex_replace('^foo', 'bar') }}
+regex_search = {{ 'test_value_0001' | regex_search('([0-9]+)$')}}
+regex_findall = "{{ 'car\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True) }}"
+regex_escape = {{ '^f.*o(.*)$' | regex_escape() }}

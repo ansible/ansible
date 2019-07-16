@@ -1,0 +1,619 @@
+---
+# tasks file for test_ec2_asg
+
+- name: Test incomplete credentials with ec2_asg
+
+  block:
+
+    # ============================================================
+
+    - name: test invalid profile
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        region: "{{ aws_region }}"
+        profile: notavalidprofile
+      ignore_errors: yes
+      register: result
+
+    - name:
+      assert:
+        that:
+          - "'The config profile (notavalidprofile) could not be found' in result.msg"
+
+    - name: test partial credentials
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        region: "{{ aws_region }}"
+        aws_access_key: "{{ aws_access_key }}"
+      ignore_errors: yes
+      register: result
+
+    - name:
+      assert:
+        that:
+          - "'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
+
+    - name: test without specifying region
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+      ignore_errors: yes
+      register: result
+
+    - name:
+      assert:
+        that:
+          - result.msg == 'The ec2_asg module requires a region and none was found in configuration, environment variables or module parameters'
+
+    # ============================================================
+
+- name: Test incomplete arguments with ec2_asg
+
+  block:
+
+    # ============================================================
+
+    - name: test without specifying required module options
+      ec2_asg:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+      ignore_errors: yes
+      register: result
+
+    - name: assert name is a required module option
+      assert:
+        that:
+          - "result.msg == 'missing required arguments: name'"
+
+- name: Run ec2_asg integration tests.
+
+  block:
+
+    # ============================================================
+
+    # Set up the testing dependencies: VPC, subnet, security group, and two launch configurations
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: Create VPC for use in testing
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.55.77.0/24
+        tenancy: default
+        <<: *aws_connection_info
+      register: testing_vpc
+
+    - name: Create internet gateway for use in testing
+      ec2_vpc_igw:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: present
+        <<: *aws_connection_info
+      register: igw
+
+    - name: Create subnet for use in testing
+      ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.55.77.0/24
+        az: "{{ aws_region }}a"
+        resource_tags:
+          Name: "{{ resource_prefix }}-subnet"
+        <<: *aws_connection_info
+      register: testing_subnet
+
+    - name: create routing rules
+      ec2_vpc_route_table:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ testing_subnet.subnet.id }}"
+        <<: *aws_connection_info
+
+    - name: create a security group with the vpc created in the ec2_setup
+      ec2_group:
+        name: "{{ resource_prefix }}-sg"
+        description: a security group for ansible tests
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+        <<: *aws_connection_info
+      register: sg
+
+    - name: ensure launch configs exist
+      ec2_lc:
+        name: "{{ item }}"
+        assign_public_ip: true
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        user_data: |
+          #cloud-config
+          package_upgrade: true
+          package_update: true
+          packages:
+            - httpd
+          runcmd:
+            - "service httpd start"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        <<: *aws_connection_info
+      with_items:
+        - "{{ resource_prefix }}-lc"
+        - "{{ resource_prefix }}-lc-2"
+
+    # ============================================================
+
+    - name: launch asg and wait for instances to be deemed healthy (no ELB)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        desired_capacity: 1
+        min_size: 1
+        max_size: 1
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        state: present
+        wait_for_instances: yes
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - "output.viable_instances == 1"
+
+    # - name: pause for a bit to make sure that the group can't be trivially deleted
+    #   pause: seconds=30
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        wait_timeout: 700
+        <<: *aws_connection_info
+      async: 300
+
+    # ============================================================
+
+    - name: launch asg and do not wait for instances to be deemed healthy (no ELB)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        desired_capacity: 1
+        min_size: 1
+        max_size: 1
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: no
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+        - "output.viable_instances == 0"
+
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        <<: *aws_connection_info
+      async: 300
+    # ============================================================
+
+    - name: create asg with asg metrics enabled
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: true
+        launch_config_name: "{{ resource_prefix }}-lc"
+        desired_capacity: 0
+        min_size: 0
+        max_size: 0
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+        - "'Group' in output.metrics_collection.0.Metric"
+
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        <<: *aws_connection_info
+      async: 300
+
+    # ============================================================
+
+    - name: load balancer name has to be less than 32 characters
+      # the 8 digit identifier at the end of resource_prefix helps determine during which test something
+      # was created
+      set_fact:
+        load_balancer_name: "{{ item }}-lb"
+      with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
+
+    - name: launch load balancer
+      ec2_elb_lb:
+        name: "{{ load_balancer_name }}"
+        state: present
+        security_group_ids:
+          - "{{ sg.group_id }}"
+        subnets: "{{ testing_subnet.subnet.id }}"
+        connection_draining_timeout: 60
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+        health_check:
+            ping_protocol: tcp
+            ping_port: 80
+            ping_path: "/"
+            response_timeout: 5
+            interval: 10
+            unhealthy_threshold: 4
+            healthy_threshold: 2
+        <<: *aws_connection_info
+      register: load_balancer
+
+    - name: launch asg and wait for instances to be deemed healthy (ELB)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        health_check_type: ELB
+        desired_capacity: 1
+        min_size: 1
+        max_size: 1
+        health_check_period: 300
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        load_balancers: "{{ load_balancer_name }}"
+        wait_for_instances: yes
+        wait_timeout: 900
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+        - "output.viable_instances == 1"
+
+    # ============================================================
+
+    # grow scaling group to 3
+
+    - name: add 2 more instances wait for instances to be deemed healthy (ELB)
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        health_check_type: ELB
+        desired_capacity: 3
+        min_size: 3
+        max_size: 5
+        health_check_period: 600
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        load_balancers: "{{ load_balancer_name }}"
+        wait_for_instances: yes
+        wait_timeout: 1200
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+        - "output.viable_instances == 3"
+
+    # ============================================================
+
+    # # perform rolling replace with different launch configuration
+
+    - name: perform rolling update to new AMI
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc-2"
+        health_check_type: ELB
+        desired_capacity: 3
+        min_size: 1
+        max_size: 5
+        health_check_period: 900
+        load_balancers: "{{ load_balancer_name }}"
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: yes
+        replace_all_instances: yes
+        wait_timeout: 1800
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    # ensure that all instances have new launch config
+    - assert:
+        that:
+        - "item.value.launch_config_name == '{{ resource_prefix }}-lc-2'"
+      with_dict: "{{ output.instance_facts }}"
+
+    # assert they are all healthy and that the rolling update resulted in the appropriate number of instances
+    - assert:
+        that:
+          - "output.viable_instances == 3"
+
+    # ============================================================
+
+    # perform rolling replace with the original launch configuration
+
+    - name: perform rolling update to new AMI while removing the load balancer
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        health_check_type: EC2
+        desired_capacity: 3
+        min_size: 1
+        max_size: 5
+        health_check_period: 900
+        load_balancers: []
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: yes
+        replace_all_instances: yes
+        wait_timeout: 1800
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    # ensure that all instances have new launch config
+    - assert:
+        that:
+        - "item.value.launch_config_name == '{{ resource_prefix }}-lc'"
+      with_dict: "{{ output.instance_facts }}"
+
+    # assert they are all healthy and that the rolling update resulted in the appropriate number of instances
+    # there should be the same number of instances as there were before the rolling update was performed
+    - assert:
+        that:
+          - "output.viable_instances == 3"
+
+    # ============================================================
+
+    # perform rolling replace with new launch configuration and lc_check:false
+
+    # Note - this is done async so we can query asg_facts during
+    # the execution. Issues #28087 and #35993 result in correct
+    # end result, but spin up extraneous instances during execution.
+    - name: "perform rolling update to new AMI with lc_check: false"
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc-2"
+        health_check_type: EC2
+        desired_capacity: 3
+        min_size: 1
+        max_size: 5
+        health_check_period: 900
+        load_balancers: []
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: yes
+        replace_all_instances: yes
+        replace_batch_size: 3
+        lc_check: false
+        wait_timeout: 1800
+        state: present
+        <<: *aws_connection_info
+      async: 1800
+      poll: 0
+      register: asg_job
+
+    - name: get ec2_asg facts for 3 minutes
+      ec2_asg_info:
+        name: "{{ resource_prefix }}-asg"
+        <<: *aws_connection_info
+      register: output
+      loop_control:
+          pause: 15
+      with_sequence: count=12
+
+    - set_fact:
+        inst_id_json_query: 'results[*].results[*].instances[*].instance_id'
+
+    # Since we started with 3 servers and replace all of them.
+    # We should see 6 servers total.
+    - assert:
+        that:
+          - "lookup('flattened',output|json_query(inst_id_json_query)).split(',')|unique|length == 6"
+
+    - name: Ensure ec2_asg task completes
+      async_status: jid="{{ asg_job.ansible_job_id }}"
+      register: status
+      until: status is finished
+      retries: 200
+      delay: 15
+
+    # ============================================================
+
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        <<: *aws_connection_info
+      async: 300
+
+    # Create new asg with replace_all_instances and lc_check:false
+
+    # Note - this is done async so we can query asg_facts during
+    # the execution. Issues #28087 results in correct
+    # end result, but spin up extraneous instances during execution.
+    - name: "new asg with lc_check: false"
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        health_check_type: EC2
+        desired_capacity: 3
+        min_size: 1
+        max_size: 5
+        health_check_period: 900
+        load_balancers: []
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: yes
+        replace_all_instances: yes
+        replace_batch_size: 3
+        lc_check: false
+        wait_timeout: 1800
+        state: present
+        <<: *aws_connection_info
+      async: 1800
+      poll: 0
+      register: asg_job
+
+    # Collect ec2_asg_info for 3 minutes
+    - name: get ec2_asg information
+      ec2_asg_info:
+        name: "{{ resource_prefix }}-asg"
+        <<: *aws_connection_info
+      register: output
+      loop_control:
+          pause: 15
+      with_sequence: count=12
+
+    - set_fact:
+        inst_id_json_query: 'results[*].results[*].instances[*].instance_id'
+
+    # Get all instance_ids we saw and assert we saw number expected
+    # Should only see 3 (don't replace instances we just created)
+    - assert:
+        that:
+          - "lookup('flattened',output|json_query(inst_id_json_query)).split(',')|unique|length == 3"
+
+    - name: Ensure ec2_asg task completes
+      async_status: jid="{{ asg_job.ansible_job_id }}"
+      register: status
+      until: status is finished
+      retries: 200
+      delay: 15
+
+# ============================================================
+
+  always:
+
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    # Remove the testing dependencies
+
+    - name: remove the load balancer
+      ec2_elb_lb:
+        name: "{{ load_balancer_name }}"
+        state: absent
+        security_group_ids:
+          - "{{ sg.group_id }}"
+        subnets: "{{ testing_subnet.subnet.id }}"
+        wait: yes
+        connection_draining_timeout: 60
+        listeners:
+          - protocol: http
+            load_balancer_port: 80
+            instance_port: 80
+        health_check:
+            ping_protocol: tcp
+            ping_port: 80
+            ping_path: "/"
+            response_timeout: 5
+            interval: 10
+            unhealthy_threshold: 4
+            healthy_threshold: 2
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove launch configs
+      ec2_lc:
+        name: "{{ resource_prefix }}-lc"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+      with_items:
+        - "{{ resource_prefix }}-lc"
+        - "{{ resource_prefix }}-lc-2"
+
+    - name: remove the security group
+      ec2_group:
+        name: "{{ resource_prefix }}-sg"
+        description: a security group for ansible tests
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove routing rules
+      ec2_vpc_route_table:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        tags:
+          created: "{{ resource_prefix }}-route"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+        subnets:
+          - "{{ testing_subnet.subnet.id }}"
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the subnet
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: 10.55.77.0/24
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: 10.55.77.0/24
+        state: absent
+        <<: *aws_connection_info
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10

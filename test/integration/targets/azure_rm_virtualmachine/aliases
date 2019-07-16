@@ -1,0 +1,4 @@
+cloud/azure
+shippable/azure/group7
+destructive
+azure_rm_virtualmachine_facts

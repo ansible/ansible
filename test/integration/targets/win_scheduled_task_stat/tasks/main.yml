@@ -1,0 +1,176 @@
+---
+- name: Look up built-in Administrator account name (-500 user whose domain == computer name)
+  raw: $machine_sid = (Get-CimInstance Win32_UserAccount -Filter "Domain='$env:COMPUTERNAME'")[0].SID -replace '(S-1-5-21-\d+-\d+-\d+)-\d+', '$1'; (Get-CimInstance Win32_UserAccount -Filter "SID='$machine_sid-500'").Name
+  check_mode: no
+  register: admin_account_result
+
+- set_fact:
+    admin_account_name: "{{ admin_account_result.stdout_lines[0] }}"
+
+- name: ensure task is deleted before test
+  win_scheduled_task:
+    name: '{{test_scheduled_task_stat_name}}'
+    path: '{{test_scheduled_task_stat_path}}'
+    state: absent
+
+# folder stat tests
+- name: get stat of a folder that is missing
+  win_scheduled_task_stat:
+    path: '{{test_scheduled_task_stat_path}}'
+  register: stat_folder_missing
+
+- name: assert get stat of a folder that is missing
+  assert:
+    that:
+    - stat_folder_missing.folder_exists == False
+
+- name: get stat of existing folder
+  win_scheduled_task_stat:
+    path: \
+  register: stat_folder_present
+
+- name: assert get stat of existing folder
+  assert:
+    that:
+    - stat_folder_present.folder_exists == True
+    - stat_folder_present.folder_task_count is defined
+    - stat_folder_present.folder_task_names is defined
+
+- name: create scheduled task in folder
+  win_scheduled_task:
+    path: '{{test_scheduled_task_stat_path}}'
+    name: '{{test_scheduled_task_stat_name}}'
+    state: present
+    logon_type: interactive_token
+    username: '{{ admin_account_name }}'
+    author: Ansible Author
+    description: Fake description
+    execution_time_limit: PT23H
+    disallow_start_if_on_batteries: false
+    restart_count: 3
+    restart_interval: PT15M
+    actions:
+    - path: cmd.exe
+    - path: C:\temp\some.exe
+      arguments: --help
+      working_directory: C:\temp
+    triggers:
+    - type: boot
+      delay: PT15M
+    - type: monthly
+      days_of_month: 5,15,30
+      months_of_year: june,december
+      run_on_last_day_of_month: true
+      start_boundary: '2017-09-20T03:44:38'
+
+- name: get stat of existing folder with task
+  win_scheduled_task_stat:
+    path: '{{test_scheduled_task_stat_path}}'
+  register: stat_folder_with_task
+
+- name: assert get stat of existing folder with task
+  assert:
+    that:
+    - stat_folder_with_task.folder_exists == True
+    - stat_folder_with_task.folder_task_count == 1
+    - stat_folder_with_task.folder_task_names[0] == "Test Task"
+    - stat_folder_with_task.task_exists is not defined
+
+# task stat tests
+- name: get stat of missing task with invalid folder
+  win_scheduled_task_stat:
+    path: fake path
+    name: fake task
+  register: stat_task_missing_folder
+
+- name: assert get stat of missing task with invalid folder
+  assert:
+    that:
+    - stat_task_missing_folder.folder_exists == False
+    - stat_task_missing_folder.task_exists == False
+
+- name: get stat of missing task
+  win_scheduled_task_stat:
+    path: '{{test_scheduled_task_stat_path}}'
+    name: fake task
+  register: stat_task_missing
+
+- name: assert get stat of missing task
+  assert:
+    that:
+    - stat_task_missing.task_exists == False
+
+- name: get stat of existing task
+  win_scheduled_task_stat:
+    path: '{{test_scheduled_task_stat_path}}'
+    name: '{{test_scheduled_task_stat_name}}'
+  register: stat_task_present
+
+- name: assert get stat of existing task
+  assert:
+    that:
+    - stat_task_present.task_exists == True
+    - stat_task_present.actions|count == 2
+    - stat_task_present.actions[0].path == "cmd.exe"
+    - stat_task_present.actions[0].type == "TASK_ACTION_EXEC"
+    - stat_task_present.actions[0].working_directory == None
+    - stat_task_present.actions[1].arguments == "--help"
+    - stat_task_present.actions[1].path == "C:\\temp\some.exe"
+    - stat_task_present.actions[1].type == "TASK_ACTION_EXEC"
+    - stat_task_present.actions[1].working_directory == "C:\\temp"
+    - stat_task_present.principal.display_name == None
+    - stat_task_present.principal.group_id == None
+    - stat_task_present.principal.logon_type == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - stat_task_present.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - stat_task_present.principal.user_id.endswith(admin_account_name)
+    - stat_task_present.registration_info.author == "Ansible Author"
+    - stat_task_present.registration_info.date is defined
+    - stat_task_present.registration_info.description == "Fake description"
+    - stat_task_present.settings.disallow_start_if_on_batteries == False
+    - stat_task_present.settings.execution_time_limit == "PT23H"
+    - stat_task_present.settings.restart_count == 3
+    - stat_task_present.settings.restart_interval == "PT15M"
+    - stat_task_present.state.status == "TASK_STATE_READY"
+    - stat_task_present.triggers|count == 2
+    - stat_task_present.triggers[0].delay == "PT15M"
+    - stat_task_present.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - stat_task_present.triggers[0].repetition.stop_at_duration_end == False
+    - stat_task_present.triggers[0].repetition.duration == None
+    - stat_task_present.triggers[0].repetition.interval == None
+    - stat_task_present.triggers[1].days_of_month == "5,15,30"
+    - stat_task_present.triggers[1].months_of_year == "june,december"
+    - stat_task_present.triggers[1].run_on_last_day_of_month == True
+    - stat_task_present.triggers[1].start_boundary == "2017-09-20T03:44:38"
+    - stat_task_present.triggers[1].type == "TASK_TRIGGER_MONTHLY"
+    - stat_task_present.triggers[1].repetition.stop_at_duration_end == False
+    - stat_task_present.triggers[1].repetition.duration == None
+    - stat_task_present.triggers[1].repetition.interval == None
+
+- name: change principal to system account so it will run in the next step
+  win_scheduled_task:
+    name: '{{test_scheduled_task_stat_name}}'
+    path: '{{test_scheduled_task_stat_path}}'
+    username: SYSTEM
+
+- name: start the scheduled task
+  win_command: schtasks.exe /Run /TN "{{test_scheduled_task_stat_path}}\{{test_scheduled_task_stat_name}}"
+
+- name: get stat of running task
+  win_scheduled_task_stat:
+    path: '{{test_scheduled_task_stat_path}}'
+    name: '{{test_scheduled_task_stat_name}}'
+  register: stat_task_running
+
+- name: assert stat of running task
+  assert:
+    that:
+    - stat_task_running.state.status == "TASK_STATE_RUNNING"
+
+- name: stop the scheduled task
+  win_command: schtasks.exe /End /TN "{{test_scheduled_task_stat_path}}\{{test_scheduled_task_stat_name}}"
+
+- name: ensure task is delete after test
+  win_scheduled_task:
+    name: '{{test_scheduled_task_stat_name}}'
+    path: '{{test_scheduled_task_stat_path}}'
+    state: absent

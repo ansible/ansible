@@ -1,0 +1,324 @@
+---
+- debug: msg="START junos_vrf netconf/basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove vrf
+  junos_vrf:
+    name: test-1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Configure vrf and its parameter
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/6
+          - ge-0/0/5
+    rd: 192.0.2.3:10
+    target: target:65513:111
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\+ *test-1")
+      - result.diff.prepared is search("\+ *description test-vrf-1")
+      - result.diff.prepared is search("\+ *instance-type vrf")
+      - result.diff.prepared is search("\+ *interface ge-0/0/5.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/6.0")
+      - result.diff.prepared is search("\+ *route-distinguisher 192.0.2.3:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65513:111")
+
+- name: Configure vrf and its parameter (idempotent)
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/6
+          - ge-0/0/5
+    rd: 192.0.2.3:10
+    target: target:65513:111
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Change vrf parameter
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/3
+          - ge-0/0/2
+    rd: 192.0.2.1:10
+    target: target:65514:113
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'[edit routing-instances test-1]' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/3.0")
+      - "'[edit routing-instances test-1]' in result.diff.prepared"
+      - result.diff.prepared is search("\+ *route-distinguisher 192.0.2.1:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65514:113")
+
+- name: Deactivate vrf
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/3
+          - ge-0/0/2
+    rd: 192.0.2.1:10
+    target: target:65514:113
+    state: present
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'[edit routing-instances]' in result.diff.prepared"
+      - result.diff.prepared is search("! *inactive[:] test-1")
+      - "'[edit routing-instances test-1]' in result.diff.prepared"
+      - result.diff.prepared is search("! *inactive[:] interface ge-0/0/2.0")
+      - result.diff.prepared is search("! *inactive[:] interface ge-0/0/3.0")
+      - "'[edit routing-instances test-1]' in result.diff.prepared"
+      - result.diff.prepared is search("! *inactive[:] route-distinguisher")
+      - result.diff.prepared is search("! *inactive[:] vrf-target")
+
+- name: Activate vrf
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/3
+          - ge-0/0/2
+    rd: 192.0.2.1:10
+    target: target:65514:113
+    state: present
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'[edit routing-instances]' in result.diff.prepared"
+      - result.diff.prepared is search("! *active[:] test-1")
+      - "'[edit routing-instances test-1]' in result.diff.prepared"
+      - result.diff.prepared is search("! *active[:] interface ge-0/0/2.0")
+      - result.diff.prepared is search("! *active[:] interface ge-0/0/3.0")
+      - "'[edit routing-instances test-1]' in result.diff.prepared"
+      - result.diff.prepared is search("! *active[:] route-distinguisher")
+      - result.diff.prepared is search("! *active[:] vrf-target")
+
+- name: Delete vrf
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/3
+          - ge-0/0/2
+    rd: 192.0.2.1:10
+    target: target:65514:113
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\- *test-1")
+      - result.diff.prepared is search("\- *description test-vrf-1")
+      - result.diff.prepared is search("\- *instance-type vrf")
+      - result.diff.prepared is search("\- *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\- *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\- *route-distinguisher 192.0.2.1:10")
+      - result.diff.prepared is search("\- *vrf-target target:65514:113")
+
+- name: Delete vrf (idempotent)
+  junos_vrf:
+    name: test-1
+    description: test-vrf-1
+    interfaces:
+          - ge-0/0/3
+          - ge-0/0/2
+    rd: 192.0.2.1:10
+    target: target:65514:113
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Setup vrf using aggregate
+  junos_vrf:
+    aggregate:
+    - name: test-1
+    - name: test-2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Create vrf using aggregate
+  junos_vrf:
+    aggregate:
+    - name: test-1
+      description: test-vrf-1
+      interfaces:
+        - ge-0/0/3
+        - ge-0/0/2
+      rd: 192.0.2.1:10
+      target: target:65514:113
+    - name: test-2
+      description: test-vrf-2
+      interfaces:
+        - ge-0/0/4
+        - ge-0/0/5
+      rd: 192.0.2.2:10
+      target: target:65515:114
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\+ *test-1")
+      - result.diff.prepared is search("\+ *description test-vrf-1")
+      - result.diff.prepared is search("\+ *instance-type vrf")
+      - result.diff.prepared is search("\+ *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\+ *route-distinguisher 192.0.2.1:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65514:113")
+      - result.diff.prepared is search("\+ *test-2")
+      - result.diff.prepared is search("\+ *description test-vrf-2")
+      - result.diff.prepared is search("\+ *instance-type vrf")
+      - result.diff.prepared is search("\+ *interface ge-0/0/4.0")
+      - result.diff.prepared is search("\+ *interface ge-0/0/5.0")
+      - result.diff.prepared is search("\+ *route-distinguisher 192.0.2.2:10")
+      - result.diff.prepared is search("\+ *vrf-target target:65515:114")
+
+- name: Deactivate vrf configuration using aggregate
+  junos_vrf:
+    aggregate:
+    - name: test-1
+      description: test-vrf-1
+      interfaces:
+        - ge-0/0/3
+        - ge-0/0/2
+      rd: 192.0.2.1:10
+      target: target:65514:113
+    - name: test-2
+      description: test-vrf-2
+      interfaces:
+        - ge-0/0/4
+        - ge-0/0/5
+      rd: 192.0.2.2:10
+      target: target:65515:114
+    active: False
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'edit routing-instances test-1' in result.diff.prepared"
+      - result.diff.prepared is search("! *inactive[:] interface ge-0/0/2.0")
+      - result.diff.prepared is search("! *inactive[:] interface ge-0/0/3.0")
+      - result.diff.prepared is search("! *inactive[:] route-distinguisher")
+      - result.diff.prepared is search("! *inactive[:] vrf-target")
+      - "'edit routing-instances test-2' in result.diff.prepared"
+      - result.diff.prepared is search("! *inactive[:] interface ge-0/0/4.0")
+      - result.diff.prepared is search("! *inactive[:] interface ge-0/0/5.0")
+      - result.diff.prepared is search("! *inactive[:] route-distinguisher")
+      - result.diff.prepared is search("! *inactive[:] vrf-target")
+
+- name: Deactivate vrf configuration using aggregate
+  junos_vrf:
+    aggregate:
+    - name: test-1
+      description: test-vrf-1
+      interfaces:
+        - ge-0/0/3
+        - ge-0/0/2
+      rd: 192.0.2.1:10
+      target: target:65514:113
+    - name: test-2
+      description: test-vrf-2
+      interfaces:
+        - ge-0/0/4
+        - ge-0/0/5
+      rd: 192.0.2.2:10
+      target: target:65515:114
+    active: True
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'edit routing-instances test-1' in result.diff.prepared"
+      - result.diff.prepared is search("! *active[:] interface ge-0/0/2.0")
+      - result.diff.prepared is search("! *active[:] interface ge-0/0/3.0")
+      - result.diff.prepared is search("! *active[:] route-distinguisher")
+      - result.diff.prepared is search("! *active[:] vrf-target")
+      - "'edit routing-instances test-2' in result.diff.prepared"
+      - result.diff.prepared is search("! *active[:] interface ge-0/0/4.0")
+      - result.diff.prepared is search("! *active[:] interface ge-0/0/5.0")
+      - result.diff.prepared is search("! *active[:] route-distinguisher")
+      - result.diff.prepared is search("! *active[:] vrf-target")
+
+- name: Delete vrf configuration using aggregate
+  junos_vrf:
+    aggregate:
+    - name: test-1
+    - name: test-2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - result.diff.prepared is search("\- *test-1")
+      - result.diff.prepared is search("\- *description test-vrf-1")
+      - result.diff.prepared is search("\- *instance-type vrf")
+      - result.diff.prepared is search("\- *interface ge-0/0/2.0")
+      - result.diff.prepared is search("\- *interface ge-0/0/3.0")
+      - result.diff.prepared is search("\- *route-distinguisher 192.0.2.1:10")
+      - result.diff.prepared is search("\- *vrf-target target:65514:113")
+      - result.diff.prepared is search("\- *test-2")
+      - result.diff.prepared is search("\- *description test-vrf-2")
+      - result.diff.prepared is search("\- *instance-type vrf")
+      - result.diff.prepared is search("\- *interface ge-0/0/4.0")
+      - result.diff.prepared is search("\- *interface ge-0/0/5.0")
+      - result.diff.prepared is search("\- *route-distinguisher 192.0.2.2:10")
+      - result.diff.prepared is search("\- *vrf-target target:65515:114")
+
+- name: Delete vrf configuration using aggregate (idempotent)
+  junos_vrf:
+    aggregate:
+    - name: test-1
+    - name: test-2
+    state: absent
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END junos_vrf netconf/basic.yaml on connection={{ ansible_connection }}"

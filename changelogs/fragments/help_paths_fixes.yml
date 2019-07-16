@@ -1,0 +1,3 @@
+bugfixes:
+    - re-fix CLI help for module path, previous fix which was lost in parser switch
+    - Clarify roles path target behaviour for ansible-galaxy

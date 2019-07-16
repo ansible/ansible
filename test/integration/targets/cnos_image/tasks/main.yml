@@ -1,0 +1,16 @@
+# This contain sample Image download tasks
+---
+
+- name: Test Image transfer
+  cnos_image: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_image_{{ inventory_hostname }}_output.txt protocol='{{item.protocol}}' serverip='{{item.serverip}}' imgpath={{ hostvars[inventory_hostname]['imgpath']}} imgtype='{{item.imgtype}}' serverusername='{{item.serverusername}}' serverpassword='{{item.serverpassword}}'
+  with_items: "{{test_image_data1}}"
+
+#Root folder will be different for SFTP/SCP and TFTP
+#The following task is commented. 
+#Before trying this, please change in /etc/ansible/hosts file 
+#and place an image with reference to your tftp-root folder  
+#- name: Test Image tftp
+#  cnos_image: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} outputfile=./results/cnos_image_{{ inventory_hostname }}_output.txt protocol='{{item.protocol}}' serverip='{{item.serverip}}' imgpath={{ hostvars[inventory_hostname]['imgpath']}} imgtype='{{item.imgtype}}'
+#  with_items: "{{test_image_data2}}"
+  
+# Completed file

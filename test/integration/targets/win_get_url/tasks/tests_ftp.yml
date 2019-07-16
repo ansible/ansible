@@ -1,0 +1,166 @@
+---
+- name: download file from FTP source (check)
+  win_get_url:
+    url: ftp://localhost/anon/file.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+  check_mode: yes
+  register: ftp_anon_check
+
+- name: get results of download file from FTP source (check)
+  win_stat:
+    path: '{{ testing_dir }}\ftp-anon.txt'
+  register: ftp_anon_result_check
+
+- name: assert download file from FTP source (check)
+  assert:
+    that:
+    - ftp_anon_check is changed
+    - not ftp_anon_result_check.stat.exists
+
+- name: download file from FTP source
+  win_get_url:
+    url: ftp://localhost/anon/file.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+  register: ftp_anon
+
+- name: get results of download file from FTP source
+  win_stat:
+    path: '{{ testing_dir }}\ftp-anon.txt'
+  register: ftp_anon_result
+
+- name: assert download file from FTP source
+  assert:
+    that:
+    - ftp_anon is changed
+    - ftp_anon_result.stat.exists
+    - ftp_anon_result.stat.checksum == '67e0de92f29645cc30d8d147b767cceb81756651'
+
+- name: download file from FTP source (idempotent)
+  win_get_url:
+    url: ftp://localhost/anon/file.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+  register: ftp_anon_again
+
+- name: assert download file from FTP source (idempotent)
+  assert:
+    that:
+    - not ftp_anon_again is changed
+
+- name: download file from FTP source with force no (check)
+  win_get_url:
+    url: ftp://localhost/anon/file.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+    force: no
+  check_mode: yes
+  register: ftp_anon_force_no_check
+
+- name: assert download file from FTP source with force no
+  assert:
+    that:
+    - ftp_anon_force_no_check is not changed
+
+- name: download file from FTP source with force no
+  win_get_url:
+    url: ftp://localhost/anon/file.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+    force: no
+  register: ftp_anon_force_no
+
+- name: assert download file from FTP source with force no
+  assert:
+    that:
+    - ftp_anon_force_no is not changed
+
+- name: set last modified time on FTP source to newer datetime
+  win_shell: (Get-Item -LiteralPath '{{ testing_dir }}\ftp\anon\file2.txt').LastWriteTime = (Get-Date).AddHours(24)
+
+- name: download newer file from FTP source to same dest (check)
+  win_get_url:
+    url: ftp://localhost/anon/file2.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+    force: no
+  check_mode: yes
+  register: ftp_anon_force_no_different_check
+
+- name: get result of download newer file from FTP source to same dest (check)
+  win_stat:
+    path: '{{ testing_dir }}\ftp-anon.txt'
+  register: ftp_anon_force_no_different_result_check
+
+- name: assert download newer file from FTP source to same dest (check)
+  assert:
+    that:
+    - ftp_anon_force_no_different_check is changed
+    - ftp_anon_force_no_different_result_check.stat.checksum == '67e0de92f29645cc30d8d147b767cceb81756651'
+
+- name: download newer file from FTP source to same dest
+  win_get_url:
+    url: ftp://localhost/anon/file2.txt
+    dest: '{{ testing_dir }}\ftp-anon.txt'
+    force: no
+  register: ftp_anon_force_no_different
+
+- name: get result of download newer file from FTP source to same dest
+  win_stat:
+    path: '{{ testing_dir }}\ftp-anon.txt'
+  register: ftp_anon_force_no_different_result
+
+- name: assert download newer file from FTP source to same dest (check)
+  assert:
+    that:
+    - ftp_anon_force_no_different is changed
+    - ftp_anon_force_no_different_result.stat.checksum == 'eac3baccd817f7137c00138559e2e62aca64aab0'
+
+- name: fail to download file from ftp protected by username
+  win_get_url:
+    url: ftp://localhost/user/file.txt
+    dest: '{{ testing_dir }}\ftp-user.txt'
+  register: fail_ftp_no_user
+  ignore_errors: yes
+
+- name: assert fail to download file from ftp protected by username
+  assert:
+    that:
+    - fail_ftp_no_user is failed
+    - fail_ftp_no_user is not changed
+    - fail_ftp_no_user.status_code == 550
+    - '"File unavailable (e.g., file not found, no access)." in fail_ftp_no_user.msg'
+
+- name: download FTP file protected by username
+  win_get_url:
+    url: ftp://localhost/user/file.txt
+    dest: '{{ testing_dir }}\ftp-user.txt'
+    url_username: username
+  register: ftp_user_file
+
+- name: get result of download FTP file protected by username
+  win_stat:
+    path: '{{ testing_dir }}\ftp-user.txt'
+  register: ftp_user_file_result
+
+- name: assert download FTP file protected by username
+  assert:
+    that:
+    - ftp_user_file is changed
+    - ftp_user_file_result.stat.exists
+    - ftp_user_file_result.stat.checksum == '0efc2e97611cf74e25ec17a00d4b2cf65d0c28ba'
+
+- name: download FTP file protected by username and password
+  win_get_url:
+    url: ftp://localhost/user-pass/file.txt
+    dest: '{{ testing_dir }}\ftp-user-pass.txt'
+    url_username: userpass
+    url_password: password
+  register: ftp_user_pass_file
+
+- name: get result of download FTP file protected by username and password
+  win_stat:
+    path: '{{ testing_dir }}\ftp-user-pass.txt'
+  register: ftp_user_pass_file_result
+
+- name: assert download FTP file protected by username and password
+  assert:
+    that:
+    - ftp_user_pass_file is changed
+    - ftp_user_pass_file_result.stat.exists
+    - ftp_user_pass_file_result.stat.checksum == '7da5f1124d4a986cba2b4658d38d95eb55afe086'

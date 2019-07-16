@@ -1,0 +1,101 @@
+---
+- debug: msg="START cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Set Up
+  eos_config:
+    lines:
+      - no username ansibletest1
+      - no username ansibletest2
+      - no username ansibletest3
+      - no username ansibletest4
+    provider: "{{ cli }}"
+  become: yes
+
+- name: Create user with role
+  eos_user:
+    name: ansibletest1
+    privilege: 15
+    role: network-operator
+    state: present
+    configured_password: test1
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[0]'
+      - '"role network-operator" in result.commands[1]'
+      - '"privilege 15" in result.commands[2]'
+
+- name: Create user with priv level and update_password
+  eos_user:
+    name: ansibletest4
+    privilege: 15
+    state: present
+    configured_password: test1
+    authorize: yes
+    update_password: on_create
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"secret" in result.commands[0]'
+      - '"privilege 15" in result.commands[1]'
+
+- name: Collection of users
+  eos_user:
+    aggregate:
+      - { name: ansibletest2, configured_password: test2 }
+      - { name: ansibletest3, configured_password: test3 }
+    authorize: yes
+    state: present
+    role: network-operator
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"username" in result.commands[0]'
+      - '"role network-operator" in result.commands[1]'
+      - '"secret" in result.commands[0]'
+      - '"username" in result.commands[2]'
+      - '"role network-operator" in result.commands[3]'
+      - '"secret" in result.commands[2]'
+
+- name: Add user without password or nopassword arg(Should fail)
+  eos_user:
+    name: faileduser1
+    privilege: 15
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.failed == true'
+      - 'result.msg == "configured_password, sshkey or nopassword should be provided"'
+
+- name: tearDown
+  eos_config:
+    lines:
+      - no username ansibletest1
+      - no username ansibletest2
+      - no username ansibletest3
+      - no username ansibletest4
+    provider: "{{ cli }}"
+    authorize: yes
+  become: yes

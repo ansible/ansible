@@ -1,0 +1,281 @@
+# ============================================================
+- name: Test rax_facts with no args
+  rax_facts:
+  ignore_errors: true
+  register: rax_facts
+
+- name: Validate results of rax_facts with no args
+  assert:
+    that:
+      - rax_facts is failed
+      - 'rax_facts.msg == "one of the following is required: address,id,name"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with credentials and address
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    address: '1.2.3.4'
+  ignore_errors: true
+  register: rax_facts
+
+- name: Validate results of rax_facts with only creds
+  assert:
+    that:
+      - rax_facts is failed
+      - rax_facts.msg.startswith('None is not a valid region')
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region and address
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    address: '1.2.3.4'
+  ignore_errors: true
+  register: rax_facts
+
+- name: Validate rax_facts creds, region and address
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts == {}
+      - rax_facts is not changed
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region and id
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    id: '1234'
+  ignore_errors: true
+  register: rax_facts
+
+- name: Validate rax_facts creds, region and id
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts == {}
+      - rax_facts is not changed
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region and name
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: 'bad'
+  ignore_errors: true
+  register: rax_facts
+
+- name: Validate rax_facts creds, region and name
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts == {}
+      - rax_facts is not changed
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region, address, id and name
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    address: '1.2.3.4'
+    id: '1234'
+    name: 'bad'
+  ignore_errors: true
+  register: rax_facts
+
+- name: Validate rax_facts creds, region, address, id and name
+  assert:
+    that:
+      - rax_facts is failed
+      - "rax_facts.msg == 'parameters are mutually exclusive: [\\'address\\', \\'id\\', \\'name\\']'"
+# ============================================================
+
+
+
+# ============================================================
+- name: Build CloudServer for rax_facts tests
+  rax:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    name: "{{ resource_prefix }}-rax_facts"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax
+
+- name: Validate build
+  assert:
+    that:
+      - rax is successful
+      - rax is changed
+      - rax.action == 'create'
+      - rax.instances|length == 1
+      - rax.instances[0].name == "{{ resource_prefix }}-rax_facts"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region, and valid public IPv4 address
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    address: "{{ rax.success.0.rax_accessipv4 }}"
+  register: rax_facts
+
+
+- name: Validate rax_facts creds, region, and valid public IPv4 address
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts.rax_flavor == rax.success.0.rax_flavor
+      - rax_facts.ansible_facts.rax_image == rax.success.0.rax_image
+      - rax_facts.ansible_facts.rax_addresses == rax.success.0.rax_addresses
+      - rax_facts.ansible_facts.rax_id == rax.success.0.rax_id
+      - rax_facts.ansible_facts.rax_name == rax.success.0.rax_name
+      - rax_facts.ansible_facts.rax_hostid == rax.success.0.rax_hostid
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region, and valid public IPv6 address
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    address: "{{ rax.success.0.rax_accessipv6 }}"
+  register: rax_facts
+
+
+- name: Validate rax_facts creds, region, and valid public IPv6 address
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts.rax_flavor == rax.success.0.rax_flavor
+      - rax_facts.ansible_facts.rax_image == rax.success.0.rax_image
+      - rax_facts.ansible_facts.rax_addresses == rax.success.0.rax_addresses
+      - rax_facts.ansible_facts.rax_id == rax.success.0.rax_id
+      - rax_facts.ansible_facts.rax_name == rax.success.0.rax_name
+      - rax_facts.ansible_facts.rax_hostid == rax.success.0.rax_hostid
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region, and valid private IPv4 address
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    address: "{{ rax.success.0.rax_networks.private|first }}"
+  register: rax_facts
+
+
+- name: Validate rax_facts creds, region, and valid private IPv4 address
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts.rax_flavor == rax.success.0.rax_flavor
+      - rax_facts.ansible_facts.rax_image == rax.success.0.rax_image
+      - rax_facts.ansible_facts.rax_addresses == rax.success.0.rax_addresses
+      - rax_facts.ansible_facts.rax_id == rax.success.0.rax_id
+      - rax_facts.ansible_facts.rax_name == rax.success.0.rax_name
+      - rax_facts.ansible_facts.rax_hostid == rax.success.0.rax_hostid
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region, and valid ID
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    id: "{{ rax.success.0.rax_id }}"
+  register: rax_facts
+
+
+- name: Validate rax_facts creds, region, and valid ID
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts.rax_flavor == rax.success.0.rax_flavor
+      - rax_facts.ansible_facts.rax_image == rax.success.0.rax_image
+      - rax_facts.ansible_facts.rax_addresses == rax.success.0.rax_addresses
+      - rax_facts.ansible_facts.rax_id == rax.success.0.rax_id
+      - rax_facts.ansible_facts.rax_name == rax.success.0.rax_name
+      - rax_facts.ansible_facts.rax_hostid == rax.success.0.rax_hostid
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_facts with creds, region, and valid name
+  rax_facts:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ rax.success.0.rax_name }}"
+  register: rax_facts
+
+
+- name: Validate rax_facts creds, region, and valid name
+  assert:
+    that:
+      - rax_facts is successful
+      - rax_facts.ansible_facts.rax_flavor == rax.success.0.rax_flavor
+      - rax_facts.ansible_facts.rax_image == rax.success.0.rax_image
+      - rax_facts.ansible_facts.rax_addresses == rax.success.0.rax_addresses
+      - rax_facts.ansible_facts.rax_id == rax.success.0.rax_id
+      - rax_facts.ansible_facts.rax_name == rax.success.0.rax_name
+      - rax_facts.ansible_facts.rax_hostid == rax.success.0.rax_hostid
+# ============================================================
+
+
+
+# ============================================================
+- name: "Delete CloudServer"
+  rax:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    image: "{{ rackspace_image_id }}"
+    flavor: "{{ rackspace_flavor }}"
+    name: "{{ resource_prefix }}-rax_facts"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax
+
+- name: "Validate delete"
+  assert:
+    that:
+      - rax is changed
+      - rax is successful
+      - rax.action == 'delete'
+      - rax.success[0].name == "{{ resource_prefix }}-rax_facts"
+# ============================================================

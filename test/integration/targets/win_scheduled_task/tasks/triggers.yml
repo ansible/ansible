@@ -1,0 +1,818 @@
+---
+- name: create boot trigger (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: boot
+  register: trigger_boot_check
+  check_mode: yes
+
+- name: get result of create boot trigger (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_boot_result_check
+
+- name: assert results of create boot trigger (check mode)
+  assert:
+    that:
+    - trigger_boot_check is changed
+    - trigger_boot_result_check.task_exists == False
+
+- name: create boot trigger
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: boot
+  register: trigger_boot
+
+- name: get result of create boot trigger
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_boot_result
+
+- name: assert results of create boot trigger
+  assert:
+    that:
+    - trigger_boot is changed
+    - trigger_boot_result.task_exists == True
+    - trigger_boot_result.triggers|count == 1
+    - trigger_boot_result.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - trigger_boot_result.triggers[0].enabled == True
+    - trigger_boot_result.triggers[0].start_boundary == None
+    - trigger_boot_result.triggers[0].end_boundary == None
+
+- name: create boot trigger (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: boot
+  register: trigger_boot_again
+
+- name: assert results of create boot trigger (idempotent)
+  assert:
+    that:
+    - trigger_boot_again is not changed
+
+- name: create daily trigger (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: daily
+      start_boundary: '2000-01-01T00:00:01'
+  register: trigger_daily_check
+  check_mode: yes
+
+- name: get result of create daily trigger (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_daily_result_check
+
+- name: assert results of create daily trigger (check mode)
+  assert:
+    that:
+    - trigger_daily_check is changed
+    - trigger_daily_result_check.task_exists == True
+    - trigger_daily_result_check.triggers|count == 1
+    - trigger_daily_result_check.triggers[0].type == "TASK_TRIGGER_BOOT"
+    - trigger_daily_result_check.triggers[0].enabled == True
+    - trigger_daily_result_check.triggers[0].start_boundary == None
+    - trigger_daily_result_check.triggers[0].end_boundary == None
+
+- name: create daily trigger
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: daily
+      start_boundary: '2000-01-01T00:00:01'
+  register: trigger_daily
+
+- name: get result of create daily trigger
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_daily_result
+
+- name: assert results of create daily trigger
+  assert:
+    that:
+    - trigger_daily is changed
+    - trigger_daily_result.task_exists == True
+    - trigger_daily_result.triggers|count == 1
+    - trigger_daily_result.triggers[0].type == "TASK_TRIGGER_DAILY"
+    - trigger_daily_result.triggers[0].enabled == True
+    - trigger_daily_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - trigger_daily_result.triggers[0].end_boundary == None
+
+- name: create daily trigger (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: daily
+      start_boundary: '2000-01-01T00:00:01'
+  register: trigger_daily_again
+
+- name: assert results of create daily trigger (idempotent)
+  assert:
+    that:
+    - trigger_daily_again is not changed
+
+- name: create logon trigger (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: logon
+  register: trigger_logon_check
+  check_mode: yes
+
+- name: get result of create logon trigger (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_logon_result_check
+
+- name: assert results of create logon trigger
+  assert:
+    that:
+    - trigger_logon_check is changed
+    - trigger_logon_result_check.task_exists == True
+    - trigger_logon_result_check.triggers|count == 1
+    - trigger_logon_result_check.triggers[0].type == "TASK_TRIGGER_DAILY"
+    - trigger_logon_result_check.triggers[0].enabled == True
+    - trigger_logon_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - trigger_logon_result_check.triggers[0].end_boundary == None
+
+- name: create logon trigger
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: logon
+  register: trigger_logon
+
+- name: get result of create logon trigger
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_logon_result
+
+- name: assert results of create logon trigger
+  assert:
+    that:
+    - trigger_logon is changed
+    - trigger_logon_result.task_exists == True
+    - trigger_logon_result.triggers|count == 1
+    - trigger_logon_result.triggers[0].type == "TASK_TRIGGER_LOGON"
+    - trigger_logon_result.triggers[0].enabled == True
+    - trigger_logon_result.triggers[0].start_boundary == None
+    - trigger_logon_result.triggers[0].end_boundary == None
+
+- name: create logon trigger (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: logon
+  register: trigger_logon_again
+
+- name: assert results of create logon trigger (idempotent)
+  assert:
+    that:
+    - trigger_logon_again is not changed
+
+- name: create monthly dow trigger (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: monthlydow
+      start_boundary: '2000-01-01T00:00:01'
+      weeks_of_month: 1,2
+      days_of_week: [ "monday", "wednesday" ]
+  register: trigger_monthlydow_check
+  check_mode: yes
+
+- name: get result of create monthly dow trigger (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_monthlydow_result_check
+
+- name: assert results of create monthly dow trigger (check mode)
+  assert:
+    that:
+    - trigger_monthlydow_check is changed
+    - trigger_monthlydow_result_check.task_exists == True
+    - trigger_monthlydow_result_check.triggers|count == 1
+    - trigger_monthlydow_result_check.triggers[0].type == "TASK_TRIGGER_LOGON"
+    - trigger_monthlydow_result_check.triggers[0].enabled == True
+    - trigger_monthlydow_result_check.triggers[0].start_boundary == None
+    - trigger_monthlydow_result_check.triggers[0].end_boundary == None
+
+- name: create monthly dow trigger
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: monthlydow
+      start_boundary: '2000-01-01T00:00:01+03:00'
+      weeks_of_month: 1,2
+      days_of_week: [ "monday", "wednesday" ]
+  register: trigger_monthlydow
+
+- name: get result of create monthly dow trigger
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: trigger_monthlydow_result
+
+- name: assert results of create monthly dow trigger
+  assert:
+    that:
+    - trigger_monthlydow is changed
+    - trigger_monthlydow_result.task_exists == True
+    - trigger_monthlydow_result.triggers|count == 1
+    - trigger_monthlydow_result.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
+    - trigger_monthlydow_result.triggers[0].enabled == True
+    - trigger_monthlydow_result.triggers[0].start_boundary == "1999-12-31T21:00:01+00:00"
+    - trigger_monthlydow_result.triggers[0].end_boundary == None
+    - trigger_monthlydow_result.triggers[0].weeks_of_month == "1,2"
+    - trigger_monthlydow_result.triggers[0].days_of_week == "monday,wednesday"
+
+- name: create monthly dow trigger (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: monthlydow
+      start_boundary: '2000-01-01T00:00:01+03:00'
+      weeks_of_month: 1,2
+      days_of_week: [ "monday", "wednesday" ]
+  register: trigger_monthlydow_again
+
+- name: assert results of create monthly dow trigger (idempotent)
+  assert:
+    that:
+    - trigger_monthlydow_again is not changed
+
+- name: create trigger repetition (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+      # TODO: change to dict in 2.12 as a list format is deprecated
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
+  register: create_trigger_repetition_check
+  check_mode: yes
+
+- name: get result of create trigger repetition (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: create_trigger_repetition_result_check
+
+- name: assert results of create trigger repetition (check mode)
+  assert:
+    that:
+    - create_trigger_repetition_check is changed
+    - create_trigger_repetition_check.deprecations|count == 1
+    - create_trigger_repetition_check.deprecations[0].version == "2.12"
+    - create_trigger_repetition_check.deprecations[0].msg == "repetition is a list, should be defined as a dict"
+    - create_trigger_repetition_result_check.task_exists == True
+    - create_trigger_repetition_result_check.triggers|count == 1
+    - create_trigger_repetition_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLYDOW"
+    - create_trigger_repetition_result_check.triggers[0].enabled == True
+    - create_trigger_repetition_result_check.triggers[0].start_boundary == "1999-12-31T21:00:01+00:00"
+    - create_trigger_repetition_result_check.triggers[0].end_boundary == None
+    - create_trigger_repetition_result_check.triggers[0].weeks_of_month == "1,2"
+    - create_trigger_repetition_result_check.triggers[0].days_of_week == "monday,wednesday"
+    - create_trigger_repetition_result_check.triggers[0].repetition.interval == None
+    - create_trigger_repetition_result_check.triggers[0].repetition.duration == None
+    - create_trigger_repetition_result_check.triggers[0].repetition.stop_at_duration_end == False
+
+- name: create trigger repetition
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+        interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
+  register: create_trigger_repetition
+
+- name: get result of create trigger repetition
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: create_trigger_repetition_result
+
+- name: assert results of create trigger repetition
+  assert:
+    that:
+    - create_trigger_repetition is changed
+    - create_trigger_repetition_result.task_exists == True
+    - create_trigger_repetition_result.triggers|count == 1
+    - create_trigger_repetition_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - create_trigger_repetition_result.triggers[0].enabled == True
+    - create_trigger_repetition_result.triggers[0].start_boundary == None
+    - create_trigger_repetition_result.triggers[0].end_boundary == None
+    - create_trigger_repetition_result.triggers[0].repetition.interval == "PT1M"
+    - create_trigger_repetition_result.triggers[0].repetition.duration == "PT5M"
+    - create_trigger_repetition_result.triggers[0].repetition.stop_at_duration_end == True
+
+- name: create trigger repetition (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+        interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
+  register: create_trigger_repetition_again
+
+- name: assert results of create trigger repetition (idempotent)
+  assert:
+    that:
+    - create_trigger_repetition_again is not changed
+
+- name: change trigger repetition (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+        interval: PT10M
+        duration: PT20M
+        stop_at_duration_end: no
+  register: change_trigger_repetition_check
+  check_mode: yes
+
+- name: get result of change trigger repetition (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: change_trigger_repetition_result_check
+
+- name: assert results of change trigger repetition (check mode)
+  assert:
+    that:
+    - change_trigger_repetition_check is changed
+    - change_trigger_repetition_result_check.task_exists == True
+    - change_trigger_repetition_result_check.triggers|count == 1
+    - change_trigger_repetition_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - change_trigger_repetition_result_check.triggers[0].enabled == True
+    - change_trigger_repetition_result_check.triggers[0].start_boundary == None
+    - change_trigger_repetition_result_check.triggers[0].end_boundary == None
+    - change_trigger_repetition_result_check.triggers[0].repetition.interval == "PT1M"
+    - change_trigger_repetition_result_check.triggers[0].repetition.duration == "PT5M"
+    - change_trigger_repetition_result_check.triggers[0].repetition.stop_at_duration_end == True
+
+- name: change trigger repetition
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+        interval: PT10M
+        duration: PT20M
+        stop_at_duration_end: no
+  register: change_trigger_repetition
+
+- name: get result of change trigger repetition
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: change_trigger_repetition_result
+
+- name: assert results of change trigger repetition
+  assert:
+    that:
+    - change_trigger_repetition is changed
+    - change_trigger_repetition_result.task_exists == True
+    - change_trigger_repetition_result.triggers|count == 1
+    - change_trigger_repetition_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - change_trigger_repetition_result.triggers[0].enabled == True
+    - change_trigger_repetition_result.triggers[0].start_boundary == None
+    - change_trigger_repetition_result.triggers[0].end_boundary == None
+    - change_trigger_repetition_result.triggers[0].repetition.interval == "PT10M"
+    - change_trigger_repetition_result.triggers[0].repetition.duration == "PT20M"
+    - change_trigger_repetition_result.triggers[0].repetition.stop_at_duration_end == False
+
+- name: change trigger repetition (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      repetition:
+        interval: PT10M
+        duration: PT20M
+        stop_at_duration_end: no
+  register: change_trigger_repetition_again
+
+- name: assert results of change trigger repetition (idempotent)
+  assert:
+    that:
+    - change_trigger_repetition_again is not changed
+
+- name: create task with multiple triggers (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: monthly
+      days_of_month: 1,5,10,15,20,25,30
+      run_on_last_day_of_month: true
+      start_boundary: '2000-01-01T00:00:01'
+      months_of_year:
+      - march
+      - may
+      - july
+    - type: time
+      start_boundary: '2000-01-01T00:00:01'
+      random_delay: PT10M5S
+  register: create_multiple_triggers_check
+  check_mode: yes
+
+- name: get result of create task with multiple triggers (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: create_multiple_triggers_result_check
+
+- name: assert results of create task with multiple triggers (check mode)
+  assert:
+    that:
+    - create_multiple_triggers_check is changed
+    - create_multiple_triggers_result_check.task_exists == True
+    - create_multiple_triggers_result_check.triggers|count == 1
+    - create_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - create_multiple_triggers_result_check.triggers[0].enabled == True
+    - create_multiple_triggers_result_check.triggers[0].start_boundary == None
+    - create_multiple_triggers_result_check.triggers[0].end_boundary == None
+    - create_multiple_triggers_result_check.triggers[0].repetition.interval == "PT10M"
+    - create_multiple_triggers_result_check.triggers[0].repetition.duration == "PT20M"
+    - create_multiple_triggers_result_check.triggers[0].repetition.stop_at_duration_end == False
+
+- name: create task with multiple triggers
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: monthly
+      days_of_month: 1,5,10,15,20,25,30
+      run_on_last_day_of_month: true
+      start_boundary: '2000-01-01T00:00:01'
+      months_of_year:
+      - march
+      - may
+      - july
+    - type: time
+      start_boundary: '2000-01-01T00:00:01'
+      random_delay: PT10M5S
+  register: create_multiple_triggers
+
+- name: get result of create task with multiple triggers
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: create_multiple_triggers_result
+
+- name: assert results of create task with multiple triggers
+  assert:
+    that:
+    - create_multiple_triggers is changed
+    - create_multiple_triggers_result.task_exists == True
+    - create_multiple_triggers_result.triggers|count == 2
+    - create_multiple_triggers_result.triggers[0].type == "TASK_TRIGGER_MONTHLY"
+    - create_multiple_triggers_result.triggers[0].enabled == True
+    - create_multiple_triggers_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - create_multiple_triggers_result.triggers[0].end_boundary == None
+    - create_multiple_triggers_result.triggers[0].days_of_month == "1,5,10,15,20,25,30"
+    - create_multiple_triggers_result.triggers[0].months_of_year == "march,may,july"
+    - create_multiple_triggers_result.triggers[0].run_on_last_day_of_month == True
+    - create_multiple_triggers_result.triggers[1].type == "TASK_TRIGGER_TIME"
+    - create_multiple_triggers_result.triggers[1].enabled == True
+    - create_multiple_triggers_result.triggers[1].start_boundary == "2000-01-01T00:00:01"
+    - create_multiple_triggers_result.triggers[1].end_boundary == None
+    - create_multiple_triggers_result.triggers[1].random_delay == "PT10M5S"
+
+- name: create task with multiple triggers (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: monthly
+      days_of_month: 1,5,10,15,20,25,30
+      run_on_last_day_of_month: true
+      start_boundary: '2000-01-01T00:00:01'
+      months_of_year:
+      - march
+      - may
+      - july
+    - type: time
+      start_boundary: '2000-01-01T00:00:01'
+      random_delay: PT10M5S
+  register: create_multiple_triggers_again
+
+- name: assert results of create task with multiple triggers (idempotent)
+  assert:
+    that:
+    - create_multiple_triggers_again is not changed
+
+- name: change task with multiple triggers (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: weekly
+      days_of_week: tuesday,friday
+      start_boundary: '2000-01-01T00:00:01'
+    - type: registration
+      enabled: no
+  register: change_multiple_triggers_check
+  check_mode: yes
+
+- name: get result of change task with multiple triggers (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: change_multiple_triggers_result_check
+
+- name: assert results of change task with multiple triggers (check mode)
+  assert:
+    that:
+    - change_multiple_triggers_check is changed
+    - change_multiple_triggers_result_check.task_exists == True
+    - change_multiple_triggers_result_check.triggers|count == 2
+    - change_multiple_triggers_result_check.triggers[0].type == "TASK_TRIGGER_MONTHLY"
+    - change_multiple_triggers_result_check.triggers[0].enabled == True
+    - change_multiple_triggers_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - change_multiple_triggers_result_check.triggers[0].end_boundary == None
+    - change_multiple_triggers_result_check.triggers[0].days_of_month == "1,5,10,15,20,25,30"
+    - change_multiple_triggers_result_check.triggers[0].months_of_year == "march,may,july"
+    - change_multiple_triggers_result_check.triggers[0].run_on_last_day_of_month == True
+    - change_multiple_triggers_result_check.triggers[1].type == "TASK_TRIGGER_TIME"
+    - change_multiple_triggers_result_check.triggers[1].enabled == True
+    - change_multiple_triggers_result_check.triggers[1].start_boundary == "2000-01-01T00:00:01"
+    - change_multiple_triggers_result_check.triggers[1].end_boundary == None
+    - change_multiple_triggers_result_check.triggers[1].random_delay == "PT10M5S"
+
+- name: change task with multiple triggers
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: weekly
+      days_of_week: tuesday,friday
+      start_boundary: '2000-01-01T00:00:01'
+    - type: registration
+      enabled: no
+  register: change_multiple_triggers
+
+- name: get result of change task with multiple triggers
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: change_multiple_triggers_result
+
+- name: assert results of change task with multiple triggers
+  assert:
+    that:
+    - change_multiple_triggers is changed
+    - change_multiple_triggers_result.task_exists == True
+    - change_multiple_triggers_result.triggers|count == 2
+    - change_multiple_triggers_result.triggers[0].type == "TASK_TRIGGER_WEEKLY"
+    - change_multiple_triggers_result.triggers[0].enabled == True
+    - change_multiple_triggers_result.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - change_multiple_triggers_result.triggers[0].end_boundary == None
+    - change_multiple_triggers_result.triggers[0].days_of_week == "tuesday,friday"
+    - change_multiple_triggers_result.triggers[1].type == "TASK_TRIGGER_REGISTRATION"
+    - change_multiple_triggers_result.triggers[1].enabled == False
+    - change_multiple_triggers_result.triggers[1].start_boundary == None
+    - change_multiple_triggers_result.triggers[1].end_boundary == None
+
+- name: change task with multiple triggers (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: weekly
+      days_of_week: tuesday,friday
+      start_boundary: '2000-01-01T00:00:01'
+    - type: registration
+      enabled: no
+  register: change_multiple_triggers_again
+
+- name: assert results of change task with multiple triggers (idempotent)
+  assert:
+    that:
+    - change_multiple_triggers_again is not changed
+
+- name: remove trigger from multiple triggers (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      enabled: no
+  register: remove_single_trigger_check
+  check_mode: yes
+
+- name: get result of remove trigger from multiple triggers (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: remove_single_trigger_result_check
+
+- name: assert results of remove trigger from multiple triggers (check mode)
+  assert:
+    that:
+    - remove_single_trigger_check is changed
+    - remove_single_trigger_result_check.task_exists == True
+    - remove_single_trigger_result_check.triggers|count == 2
+    - remove_single_trigger_result_check.triggers[0].type == "TASK_TRIGGER_WEEKLY"
+    - remove_single_trigger_result_check.triggers[0].enabled == True
+    - remove_single_trigger_result_check.triggers[0].start_boundary == "2000-01-01T00:00:01"
+    - remove_single_trigger_result_check.triggers[0].end_boundary == None
+    - remove_single_trigger_result_check.triggers[0].days_of_week == "tuesday,friday"
+    - remove_single_trigger_result_check.triggers[1].type == "TASK_TRIGGER_REGISTRATION"
+    - remove_single_trigger_result_check.triggers[1].enabled == False
+    - remove_single_trigger_result_check.triggers[1].start_boundary == None
+    - remove_single_trigger_result_check.triggers[1].end_boundary == None
+
+- name: remove trigger from multiple triggers
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      enabled: no
+  register: remove_single_trigger
+
+- name: get result of remove trigger from multiple triggers
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: remove_single_trigger_result
+
+- name: assert results of remove trigger from multiple triggers
+  assert:
+    that:
+    - remove_single_trigger is changed
+    - remove_single_trigger_result.task_exists == True
+    - remove_single_trigger_result.triggers|count == 1
+    - remove_single_trigger_result.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - remove_single_trigger_result.triggers[0].enabled == False
+    - remove_single_trigger_result.triggers[0].start_boundary == None
+    - remove_single_trigger_result.triggers[0].end_boundary == None
+
+- name: remove trigger from multiple triggers (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers:
+    - type: registration
+      enabled: no
+  register: remove_single_trigger_again
+
+- name: assert results of remove trigger from multiple triggers (idempotent)
+  assert:
+    that:
+    - remove_single_trigger_again is not changed
+
+- name: remove all triggers (check mode)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers: []
+  register: remove_triggers_check
+  check_mode: yes
+
+- name: get result of remove all triggers (check mode)
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: remove_triggers_result_check
+
+- name: assert results of remove all triggers (check mode)
+  assert:
+    that:
+    - remove_triggers_check is changed
+    - remove_triggers_result_check.task_exists == True
+    - remove_triggers_result_check.triggers|count == 1
+    - remove_triggers_result_check.triggers[0].type == "TASK_TRIGGER_REGISTRATION"
+    - remove_triggers_result_check.triggers[0].enabled == False
+    - remove_triggers_result_check.triggers[0].start_boundary == None
+    - remove_triggers_result_check.triggers[0].end_boundary == None
+
+- name: remove all triggers
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers: []
+  register: remove_triggers
+
+- name: get result of remove all triggers
+  win_scheduled_task_stat:
+    path: \
+    name: '{{test_scheduled_task_name}}'
+  register: remove_triggers_result
+
+- name: assert results of remove all triggers
+  assert:
+    that:
+    - remove_triggers is changed
+    - remove_triggers_result.task_exists == True
+    - remove_triggers_result.triggers|count == 0
+
+- name: remove all triggers (idempotent)
+  win_scheduled_task:
+    name: '{{test_scheduled_task_name}}'
+    state: present
+    actions:
+    - path: cmd.exe
+    triggers: []
+  register: remove_triggers_again
+
+- name: assert results of remove all triggers (idempotent)
+  assert:
+    that:
+    - remove_triggers_again is not changed

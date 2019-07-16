@@ -1,0 +1,65 @@
+# Test playbook for the firewalld module - service operations
+# (c) 2017, Adam Miller <admiller@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: firewalld service test permanent enabled
+  firewalld:
+    service: https
+    permanent: true
+    state: enabled
+  register: result
+
+- name: assert firewalld service test permanent enabled worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld service test permanent enabled rerun (verify not changed)
+  firewalld:
+    service: https
+    permanent: true
+    state: enabled
+  register: result
+
+- name: assert firewalld service test permanent enabled rerun worked (verify not changed)
+  assert:
+    that:
+    - result is not changed
+
+- name: firewalld service test permanent disabled
+  firewalld:
+    service: https
+    permanent: true
+    state: disabled
+  register: result
+
+- name: assert firewalld service test permanent disabled worked
+  assert:
+    that:
+    - result is changed
+
+- name: firewalld service test permanent disabled rerun (verify not changed)
+  firewalld:
+    service: https
+    permanent: true
+    state: disabled
+  register: result
+
+- name: assert firewalld service test permanent disabled rerun worked (verify not changed)
+  assert:
+    that:
+    - result is not changed

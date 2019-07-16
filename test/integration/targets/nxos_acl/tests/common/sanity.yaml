@@ -1,0 +1,242 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_acl sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: time_range="ans-range"
+  when: platform is not search('N35|N5K|N6K')
+
+- name: "Setup: Cleanup possibly existing acl."
+  nxos_acl: &remove
+    name: TEST_ACL
+    seq: 10
+    provider: "{{ connection }}"
+    state: delete_acl
+  ignore_errors: yes
+
+- name: "Configure ACE10"
+  nxos_acl: &conf10
+    name: TEST_ACL
+    seq: 10
+    action: permit
+    proto: tcp
+    src: 192.0.2.1/24
+    src_port_op: range
+    src_port1: 1900
+    src_port2: 1910
+    ack: 'enable'
+    dscp: 'af43'
+    dest: any
+    dest_port_op: neq
+    dest_port1: 1899
+    urg: 'enable'
+    psh: 'enable'
+    established: 'enable'
+    log: 'enable'
+    fin: 'enable'
+    rst: 'enable'
+    syn: 'enable'
+    time_range: "{{time_range|default(omit)}}"
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: &true
+    that:
+      - "result.changed == true"
+
+- name: "Check Idempotence"
+  nxos_acl: *conf10
+  register: result
+
+- assert: &false
+    that:
+      - "result.changed == false"
+
+- name: "Change ACE10"
+  nxos_acl: &chg10
+    name: TEST_ACL
+    seq: 10
+    action: deny
+    proto: tcp
+    src: 192.0.2.1/24
+    src_port_op: range
+    src_port1: 1900
+    src_port2: 1910
+    ack: 'enable'
+    dscp: 'af43'
+    dest: any
+    dest_port_op: neq
+    dest_port1: 1899
+    urg: 'enable'
+    psh: 'enable'
+    established: 'enable'
+    log: 'enable'
+    fin: 'enable'
+    rst: 'enable'
+    syn: 'enable'
+    time_range: "{{time_range|default(omit)}}"
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *chg10
+  register: result
+
+- assert: *false
+
+- name: "ace remark"
+  nxos_acl: &remark
+    name: TEST_ACL
+    seq: 20
+    action: remark
+    remark: test_remark
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *remark
+  register: result
+
+- assert: *false
+
+- name: "change remark"
+  nxos_acl: &chgremark
+    name: TEST_ACL
+    seq: 20
+    action: remark
+    remark: changed_remark
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *chgremark
+  register: result
+
+- assert: *false
+
+- name: "ace 30"
+  nxos_acl: &ace30
+    name: TEST_ACL
+    seq: 30
+    action: deny
+    proto: 24
+    src: any
+    dest: any
+    fragments: enable
+    precedence: network
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *ace30
+  register: result
+
+- assert: *false
+
+- name: "change ace 30 options"
+  nxos_acl: &chgace30opt
+    name: TEST_ACL
+    seq: 30
+    action: deny
+    proto: 24
+    src: any
+    dest: any
+    precedence: network
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *chgace30opt
+  register: result
+
+- assert: *false
+
+- name: "ace 40"
+  nxos_acl: &ace40
+    name: TEST_ACL
+    seq: 40
+    action: permit
+    proto: udp
+    src: any
+    src_port_op: neq
+    src_port1: 1200
+    dest: any
+    precedence: network
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *ace40
+  register: result
+
+- assert: *false
+
+- name: "change ace 40"
+  nxos_acl: &chgace40
+    name: TEST_ACL
+    seq: 40
+    action: permit
+    proto: udp
+    src: any
+    dest: any
+    precedence: network
+    provider: "{{ connection }}"
+    state: present
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *chgace40
+  register: result
+
+- assert: *false
+
+- name: "remove ace 30"
+  nxos_acl: &remace30
+    name: TEST_ACL
+    seq: 30
+    provider: "{{ connection }}"
+    state: absent
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *remace30
+  register: result
+
+- assert: *false
+
+- name: "Remove ACL"
+  nxos_acl: *remove
+  register: result
+
+- assert: *true
+
+- name: "Check Idempotence"
+  nxos_acl: *remove
+  register: result
+
+- assert: *false
+
+- debug: msg="END connection={{ ansible_connection }} nxos_acl sanity test"

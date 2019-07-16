@@ -1,0 +1,3 @@
+shippable/windows/group2
+skip/windows/2008    # The Storage PowerShell module was introduced in W2K12
+skip/windows/2008-R2 # The Storage PowerShell module was introduced in W2K12

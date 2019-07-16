@@ -19,6 +19,7 @@ import unittest
 
 from ansible.utils.helpers import pct_to_int
 
+
 class TestHelpers(unittest.TestCase):
 
     def test_pct_to_int(self):
@@ -28,4 +29,3 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(pct_to_int("1%", 10, 0), 0)
         self.assertEqual(pct_to_int("1", 100), 1)
         self.assertEqual(pct_to_int("10%", 100), 10)
-

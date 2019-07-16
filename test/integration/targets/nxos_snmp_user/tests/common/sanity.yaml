@@ -1,0 +1,115 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_user sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: delete_last_user_allowed='true'
+- set_fact: delete_last_user_allowed='false'
+  when: imagetag and (imagetag is version_compare('9.1', 'ge'))
+- set_fact: delete_last_user_allowed='false'
+  when: platform is search('N5K|N6K|N9K-F')
+
+- name: Remove snmp user
+  nxos_snmp_user: &remove_snmp_user
+    user: ntc
+    provider: "{{ connection }}"
+    state: absent
+  ignore_errors: yes
+  when: platform is not search('N5K|N6K|N9K-F')
+
+- name: Remove user workaround
+  # Some platforms will not allow snmp_user to remove the last role
+  nxos_user: &workaround_remove_user
+    name: ntc
+    provider: "{{ connection }}"
+    state: absent
+  ignore_errors: yes
+  when: platform is search('N5K|N6K|N9K-F')
+
+- pause:
+    seconds: 5
+
+- block:
+  - name: Create snmp user
+    nxos_snmp_user: &create
+      user: ntc
+      group: network-operator
+      authentication: md5
+      pwd: N$tOpe%1
+      privacy: HelloU$er1
+      encrypt: true
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Add another group to user
+    nxos_snmp_user: &chg
+      user: ntc
+      group: network-admin
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_snmp_user: *chg
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove group from user
+    nxos_snmp_user: &remg
+      user: ntc
+      group: network-admin
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 5
+
+  - name: "Check Idempotence"
+    nxos_snmp_user: *remg
+    register: result
+
+  - assert: *false
+
+  - block:
+    # Some platforms will not allow snmp_user to remove the last role
+    - name: delete snmp user
+      nxos_snmp_user: &remove1
+        user: ntc
+        group: network-operator
+        provider: "{{ connection }}"
+        state: absent
+      register: result
+
+    - assert: *true
+
+    - pause:
+        seconds: 5
+
+    - name: "Remove Idempotence"
+      nxos_snmp_user: *remove1
+      register: result
+
+    - assert: *false
+    when: delete_last_user_allowed
+
+  always:
+    - name: delete snmp user
+      nxos_snmp_user: *remove_snmp_user
+      when: platform is not search('N5K|N6K|N9K-F')
+
+    - name: remove user workaround
+      nxos_user: *workaround_remove_user
+      when: platform is search('N5K|N6K|N9K-F')
+
+- debug: msg="END connection={{ ansible_connection }} nxos_snmp_user sanity test"

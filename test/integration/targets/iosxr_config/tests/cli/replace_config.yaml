@@ -1,0 +1,43 @@
+---
+- debug: msg="START cli/replace_config.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    commands:
+      - no interface GigabitEthernet0/0/0/3
+  
+- name: replace config (add preconfigured interface) 
+  iosxr_config: &addreplace
+    src: "{{ role_path }}/fixtures/config_add_interface.txt"
+    replace: config
+  register: result
+
+- assert:
+    that:
+      - '"load harddisk:/ansible_config.txt" in result.commands'
+
+- name: replace config (add preconfigured interface)(idempotence)
+  iosxr_config: *addreplace
+  register: result
+
+- assert: &false
+    that:
+      - 'result.changed == false'
+
+- name: replace config (del preconfigured interface) 
+  iosxr_config: &delreplace
+    src: "{{ role_path }}/fixtures/config_del_interface.txt"
+    replace: config
+  register: result
+
+- assert:
+    that:
+      - '"load harddisk:/ansible_config.txt" in result.commands'
+
+- name: replace config (del preconfigured interface)(idempotence)
+  iosxr_config: *delreplace
+  register: result
+
+- assert: *false
+
+- debug: msg="END cli/replace_config.yaml on connection={{ ansible_connection }}"

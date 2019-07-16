@@ -1,0 +1,50 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/invalid_subset.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+
+- name: test invalid subset (foobar)
+  nxos_facts:
+    gather_subset:
+      - "foobar"
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: true
+
+
+- assert:
+    that:
+      # Failures shouldn't return changes
+      - "result.changed == false"
+      # It's a failure
+      - "result.failed == true"
+      # Sensible Failure message
+      - "result.msg == 'Bad subset'"
+
+###############
+# FIXME Future
+# We may in the future want to add a test for
+
+- name: test subset specified multiple times
+  nxos_facts:
+    gather_subset:
+      - "!hardware"
+      - "hardware"
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      # Failures shouldn't return changes
+      - "result.changed == false"
+      # It's a failure
+      - "result.failed == true"
+      # Sensible Failure message
+      - "result.msg == 'Bad subset'"
+  ignore_errors: true
+
+
+
+- debug: msg="END connection={{ ansible_connection }}/invalid_subset.yaml"

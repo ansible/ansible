@@ -1,0 +1,116 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp_snooping sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- meta: end_host
+  # show ip igmp snooping | json does not work on some platforms
+  when: platform is search('N6K')
+
+- set_fact: gt_run="false"
+- block:
+  - set_fact: gt_run="true"
+  - set_fact: group_timeout="never"
+  - set_fact: def_group_timeout="default"
+  when: platform is not search('N35|N5K|N6K')
+
+- name: Setup
+  nxos_igmp_snooping: &default
+    provider: "{{ connection }}"
+    state: default
+
+- block:
+  - name: Configure igmp snooping with non-default values
+    nxos_igmp_snooping: &non-default
+      snooping: false
+      # group_timeout: n/a when snooping:false
+      link_local_grp_supp: false
+      report_supp: false
+      v3_report_supp: true
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+  - block:
+    - name: "Check Idempotence - Configure igmp snooping with non-default values"
+      nxos_igmp_snooping: *non-default
+      register: result
+
+    - assert: &false
+        that:
+          - "result.changed == false"
+    when: (imagetag and (imagetag is version_compare('D1', 'ne')))
+
+  - block:
+    - name: Negative Test config group-timeout when igmp snooping disabled
+      nxos_igmp_snooping:
+        snooping: false
+        group_timeout: "{{group_timeout|default(omit)}}"
+        provider: "{{ connection }}"
+        state: present
+      ignore_errors: yes
+      register: result
+
+    - assert:
+        that:
+          - "result.failed == true"
+          - "result.msg == 'group-timeout cannot be enabled or changed when ip igmp snooping is disabled'"
+
+    - name: Configure group-timeout non-default
+      nxos_igmp_snooping: &non-defgt
+        snooping: true
+        group_timeout: "{{group_timeout|default(omit)}}"
+        provider: "{{ connection }}"
+        state: present
+      register: result
+
+    - assert: *true
+
+    - name: "Check Idempotence"
+      nxos_igmp_snooping: *non-defgt
+      register: result
+
+    - assert: *false
+    when: gt_run
+
+  - name: Configure igmp snooping with default group timeout
+    nxos_igmp_snooping: &defgt
+      group_timeout: "{{def_group_timeout|default(omit)}}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+    when: gt_run
+
+  - block:
+    - name: "Check Idempotence"
+      nxos_igmp_snooping: *defgt
+      register: result
+
+    - assert: *false
+    when: gt_run or (imagetag and (imagetag is version_compare('D1', 'ne')))
+
+  - name: Configure igmp snooping with default values
+    nxos_igmp_snooping: *default
+    register: result
+
+  - assert: *true
+
+  - block:
+    - name: "Check Idempotence - Configure igmp snooping with default values"
+      nxos_igmp_snooping: *default
+      register: result
+
+    - assert: *false
+    when: (imagetag and (imagetag is version_compare('D1', 'ne')))
+
+  always:
+  - name: Configure igmp snooping with default values
+    nxos_igmp_snooping: *default
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp_snooping sanity test"

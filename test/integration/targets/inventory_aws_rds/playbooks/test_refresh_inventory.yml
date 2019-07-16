@@ -1,0 +1,70 @@
+- name: test updating inventory
+  block:
+    - set_fact:
+        instance_id: "{{ resource_prefix }}update"
+
+    - name: assert group was populated with inventory but is empty
+      assert:
+        that:
+          - "'aws_rds' in groups"
+          - "not groups.aws_rds"
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: create minimal mariadb instance in default VPC and default subnet group
+      rds_instance:
+        state: present
+        engine: mariadb
+        db_instance_class: db.t2.micro
+        allocated_storage: 20
+        instance_id: 'rds-mariadb-{{ resource_prefix }}'
+        master_username: 'ansibletestuser'
+        master_user_password: 'password-{{ resource_prefix | regex_findall(".{8}$") | first }}'
+        tags:
+          workload_type: other
+        <<: *aws_connection_info
+      register: setup_instance
+
+    - meta: refresh_inventory
+
+    - name: assert group was populated with inventory and is no longer empty
+      assert:
+        that:
+          - "'aws_rds' in groups"
+          - "groups.aws_rds | length == 1"
+          - "groups.aws_rds.0 == '{{ resource_prefix }}'"
+
+    - name: remove mariadb instance
+      rds_instance:
+        state: absent
+        engine: mariadb
+        skip_final_snapshot: yes
+        instance_id: ansible-rds-mariadb-example
+        <<: *aws_connection_info
+
+    - meta: refresh_inventory
+
+    - name: assert group was populated with inventory but is empty
+      assert:
+        that:
+          - "'aws_rds' in groups"
+          - "not groups.aws_rds"
+
+  always:
+
+    - name: remove mariadb instance
+      rds_instance:
+        state: absent
+        engine: mariadb
+        skip_final_snapshot: yes
+        instance_id: ansible-rds-mariadb-example
+        <<: *aws_connection_info
+      ignore_errors: yes
+      when: setup_instance is defined

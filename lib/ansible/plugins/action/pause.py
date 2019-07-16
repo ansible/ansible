@@ -19,19 +19,39 @@ __metaclass__ = type
 
 import datetime
 import signal
+import sys
 import termios
 import time
 import tty
 
 from os import isatty
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
+
+display = Display()
 
 try:
-    from __main__ import display
+    import curses
+
+    # Nest the try except since curses.error is not available if curses did not import
+    try:
+        curses.setupterm()
+        HAS_CURSES = True
+    except curses.error:
+        HAS_CURSES = False
 except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+    HAS_CURSES = False
+
+if HAS_CURSES:
+    MOVE_TO_BOL = curses.tigetstr('cr')
+    CLEAR_TO_EOL = curses.tigetstr('el')
+else:
+    MOVE_TO_BOL = b'\r'
+    CLEAR_TO_EOL = b'\x1b[K'
 
 
 class AnsibleTimeoutExceeded(Exception):
@@ -42,11 +62,16 @@ def timeout_handler(signum, frame):
     raise AnsibleTimeoutExceeded
 
 
+def clear_line(stdout):
+    stdout.write(b'\x1b[%s' % MOVE_TO_BOL)
+    stdout.write(b'\x1b[%s' % CLEAR_TO_EOL)
+
+
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
-    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', '']
     BYPASS_HOST_LOOP = True
+    _VALID_ARGS = frozenset(('echo', 'minutes', 'prompt', 'seconds'))
 
     def run(self, tmp=None, task_vars=None):
         ''' run the pause action module '''
@@ -54,26 +79,46 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         duration_unit = 'minutes'
         prompt = None
         seconds = None
+        echo = True
+        echo_prompt = ''
         result.update(dict(
-            changed = False,
-            rc      = 0,
-            stderr  = '',
-            stdout  = '',
-            start   = None,
-            stop    = None,
-            delta   = None,
+            changed=False,
+            rc=0,
+            stderr='',
+            stdout='',
+            start=None,
+            stop=None,
+            delta=None,
+            echo=echo
         ))
 
-        # Is 'args' empty, then this is the default prompted pause
-        if self._task.args is None or len(self._task.args.keys()) == 0:
-            prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
+        # Should keystrokes be echoed to stdout?
+        if 'echo' in self._task.args:
+            try:
+                echo = boolean(self._task.args['echo'])
+            except TypeError as e:
+                result['failed'] = True
+                result['msg'] = to_native(e)
+                return result
+
+            # Add a note saying the output is hidden if echo is disabled
+            if not echo:
+                echo_prompt = ' (output is hidden)'
+
+        # Is 'prompt' a key in 'args'?
+        if 'prompt' in self._task.args:
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
+        else:
+            # If no custom prompt is specified, set a default prompt
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
-        elif 'minutes' in self._task.args or 'seconds' in self._task.args:
+        if 'minutes' in self._task.args or 'seconds' in self._task.args:
             try:
                 if 'minutes' in self._task.args:
                     # The time() command operates in seconds so we need to
@@ -85,83 +130,129 @@ class ActionModule(ActionBase):
 
             except ValueError as e:
                 result['failed'] = True
-                result['msg'] = "non-integer value given for prompt duration:\n%s" % str(e)
+                result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
                 return result
-
-        # Is 'prompt' a key in 'args'?
-        elif 'prompt' in self._task.args:
-            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
-
-        else:
-            # I have no idea what you're trying to do. But it's so wrong.
-            result['failed'] = True
-            result['msg'] = "invalid pause type given. must be one of: %s" % ", ".join(self.PAUSE_TYPES)
-            return result
 
         ########################################################################
         # Begin the hard work!
 
         start = time.time()
-        result['start'] = str(datetime.datetime.now())
-        result['user_input'] = ''
+        result['start'] = to_text(datetime.datetime.now())
+        result['user_input'] = b''
 
-        fd = None
+        stdin_fd = None
         old_settings = None
         try:
             if seconds is not None:
                 if seconds < 1:
                     seconds = 1
+
                 # setup the alarm handler
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(seconds)
-                # show the prompt
-                display.display("Pausing for %d seconds" % seconds)
+
+                # show the timer and control prompts
+                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
                 display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+
+                # show the prompt specified in the task
+                if 'prompt' in self._task.args:
+                    display.display(prompt)
+
             else:
                 display.display(prompt)
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
-            fd = None
+            stdin_fd = None
+            stdout_fd = None
             try:
-                fd = self._connection._new_stdin.fileno()
-            except ValueError:
-                # someone is using a closed file descriptor as stdin
-                pass
-            if fd is not None:
-                if isatty(fd):
-                    old_settings = termios.tcgetattr(fd)
-                    tty.setraw(fd)
+                if PY3:
+                    stdin = self._connection._new_stdin.buffer
+                    stdout = sys.stdout.buffer
+                else:
+                    stdin = self._connection._new_stdin
+                    stdout = sys.stdout
+                stdin_fd = stdin.fileno()
+                stdout_fd = stdout.fileno()
+            except (ValueError, AttributeError):
+                # ValueError: someone is using a closed file descriptor as stdin
+                # AttributeError: someone is using a null file descriptor as stdin on windoez
+                stdin = None
+
+            if stdin_fd is not None:
+                if isatty(stdin_fd):
+                    # grab actual Ctrl+C sequence
+                    try:
+                        intr = termios.tcgetattr(stdin_fd)[6][termios.VINTR]
+                    except Exception:
+                        # unsupported/not present, use default
+                        intr = b'\x03'  # value for Ctrl+C
+
+                    # get backspace sequences
+                    try:
+                        backspace = termios.tcgetattr(stdin_fd)[6][termios.VERASE]
+                    except Exception:
+                        backspace = [b'\x7f', b'\x08']
+
+                    old_settings = termios.tcgetattr(stdin_fd)
+                    tty.setraw(stdin_fd)
+
+                    # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
+                    # stdout to a file since a file cannot be set to raw mode.
+                    if isatty(stdout_fd):
+                        tty.setraw(stdout_fd)
+
+                    # Only echo input if no timeout is specified
+                    if not seconds and echo:
+                        new_settings = termios.tcgetattr(stdin_fd)
+                        new_settings[3] = new_settings[3] | termios.ECHO
+                        termios.tcsetattr(stdin_fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
-                    termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
+                    termios.tcflush(stdin, termios.TCIFLUSH)
+
             while True:
+
                 try:
-                    if fd is not None:
-                        key_pressed = self._connection._new_stdin.read(1)
-                        if key_pressed == '\x03':
+                    if stdin_fd is not None:
+
+                        key_pressed = stdin.read(1)
+
+                        if key_pressed == intr:  # value for Ctrl+C
+                            clear_line(stdout)
                             raise KeyboardInterrupt
 
                     if not seconds:
-                        if fd is None or not isatty(fd):
-                            display.warning("Not waiting from prompt as stdin is not interactive")
+                        if stdin_fd is None or not isatty(stdin_fd):
+                            display.warning("Not waiting for response to prompt as stdin is not interactive")
                             break
+
                         # read key presses and act accordingly
-                        if key_pressed == '\r':
+                        if key_pressed in (b'\r', b'\n'):
+                            clear_line(stdout)
                             break
+                        elif key_pressed in backspace:
+                            # delete a character if backspace is pressed
+                            result['user_input'] = result['user_input'][:-1]
+                            clear_line(stdout)
+                            if echo:
+                                stdout.write(result['user_input'])
+                            stdout.flush()
                         else:
                             result['user_input'] += key_pressed
 
                 except KeyboardInterrupt:
-                    if seconds is not None:
-                        signal.alarm(0)
+                    signal.alarm(0)
                     display.display("Press 'C' to continue the play or 'A' to abort \r"),
-                    if self._c_or_a():
+                    if self._c_or_a(stdin):
+                        clear_line(stdout)
                         break
-                    else:
-                        raise AnsibleError('user requested abort!')
 
+                    clear_line(stdout)
+
+                    raise AnsibleError('user requested abort!')
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal
@@ -169,12 +260,12 @@ class ActionModule(ActionBase):
             pass
         finally:
             # cleanup and save some information
-            # restore the old settings for the duped stdin fd
-            if not(None in (fd, old_settings)) and isatty(fd):
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            # restore the old settings for the duped stdin stdin_fd
+            if not(None in (stdin_fd, old_settings)) and isatty(stdin_fd):
+                termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
-            result['stop'] = str(datetime.datetime.now())
+            result['stop'] = to_text(datetime.datetime.now())
             result['delta'] = int(duration)
 
             if duration_unit == 'minutes':
@@ -183,12 +274,13 @@ class ActionModule(ActionBase):
                 duration = round(duration, 2)
             result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
 
+        result['user_input'] = to_text(result['user_input'], errors='surrogate_or_strict')
         return result
 
-    def _c_or_a(self):
+    def _c_or_a(self, stdin):
         while True:
-            key_pressed = self._connection._new_stdin.read(1)
-            if key_pressed.lower() == 'a':
+            key_pressed = stdin.read(1)
+            if key_pressed.lower() == b'a':
                 return False
-            elif key_pressed.lower() == 'c':
+            elif key_pressed.lower() == b'c':
                 return True

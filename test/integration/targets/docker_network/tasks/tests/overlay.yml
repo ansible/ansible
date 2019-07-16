@@ -1,0 +1,61 @@
+---
+- name: Registering network name
+  set_fact:
+    nname_1: "{{ name_prefix ~ '-network-1' }}"
+- name: Registering network name
+  set_fact:
+    dnetworks: "{{ dnetworks + [nname_1] }}"
+
+####################################################################
+## overlay #########################################################
+####################################################################
+
+- block:
+  # Overlay networks require swarm initialization before they'll work
+  - name: swarm
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+
+  - name: overlay
+    docker_network:
+      name: "{{ nname_1 }}"
+      driver: overlay
+      driver_options:
+        com.docker.network.driver.overlay.vxlanid_list: "257"
+    register: overlay_1
+
+  - name: overlay (idempotency)
+    docker_network:
+      name: "{{ nname_1 }}"
+      driver: overlay
+      driver_options:
+        com.docker.network.driver.overlay.vxlanid_list: "257"
+    register: overlay_2
+
+  - name: overlay (change)
+    docker_network:
+      name: "{{ nname_1 }}"
+      driver: bridge
+    register: overlay_3
+
+  - name: cleanup network
+    docker_network:
+      name: "{{ nname_1 }}"
+      state: absent
+      force: yes
+
+  - assert:
+      that:
+      - overlay_1 is changed
+      - overlay_2 is not changed
+      - overlay_3 is changed
+
+  always:
+  - name: cleanup swarm
+    docker_swarm:
+      state: absent
+      force: yes
+
+  # Requirements for docker_swarm
+  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.25', '>=')

@@ -28,19 +28,16 @@ Configuration is read from `nagios_ndo.ini`.
 
 import os
 import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser
-    configparser = ConfigParser
+import sys
+from ansible.module_utils.six.moves import configparser
 import json
 
 try:
     from sqlalchemy import text
     from sqlalchemy.engine import create_engine
 except ImportError:
-    print("Error: SQLAlchemy is needed. Try something like: pip install sqlalchemy")
-    exit(1)
+    sys.exit("Error: SQLAlchemy is needed. Try something like: pip install sqlalchemy")
+
 
 class NagiosNDOInventory(object):
 
@@ -100,10 +97,9 @@ class NagiosNDOInventory(object):
             elif self.options.list:
                 print(json.dumps(self.result))
             else:
-                print("usage: --list or --host HOSTNAME")
-                exit(1)
+                sys.exit("usage: --list or --host HOSTNAME")
         else:
-            print("Error: Database configuration is missing. See nagios_ndo.ini.")
-            exit(1)
+            sys.exit("Error: Database configuration is missing. See nagios_ndo.ini.")
+
 
 NagiosNDOInventory()

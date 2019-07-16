@@ -1,0 +1,110 @@
+---
+- debug: msg="START netconf/facts.yaml on connection={{ ansible_connection }}"
+
+
+- name: Collect default facts from device
+  junos_facts:
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'ansible_net_hostname' in result['ansible_facts']"
+      - "'ansible_net_interfaces' in result['ansible_facts']"
+      - "'ansible_net_memfree_mb' in result['ansible_facts']"
+
+- name: Collect config facts from device
+  junos_facts:
+    gather_subset: config
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'ansible_net_config' in result['ansible_facts']"
+      - "'ansible_net_interfaces' not in result['ansible_facts']"
+      - "'ansible_net_memfree_mb' not in result['ansible_facts']"
+
+- name: Collect all facts from device except hardware
+  junos_facts:
+    gather_subset: "!hardware"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'ansible_net_config' in result['ansible_facts']"
+      - "'ansible_net_interfaces' in result['ansible_facts']"
+      - "'ansible_net_memfree_mb' not in result['ansible_facts']"
+
+- name: Invalid facts subset value
+  junos_facts:
+    gather_subset: test
+    provider: "{{ netconf }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'Subset must be one of' in result.msg"
+
+- name: Collect config facts from device in set format
+  junos_facts:
+    gather_subset: config
+    config_format: set
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'set system services netconf ssh' in result['ansible_facts']['ansible_net_config']"
+
+- name: Collect config facts from device in xml format
+  junos_facts:
+    gather_subset: config
+    config_format: xml
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'<netconf>' in result['ansible_facts']['ansible_net_config']"
+
+- name: Collect config facts from device in json format
+  junos_facts:
+    gather_subset: config
+    config_format: json
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'{{ result['ansible_facts']['ansible_net_config']['configuration'][0]['system'][0]['service'][0]['netconf'] }}' is defined"
+  when: ansible_net_version == "15.1X49-D15.4"
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'ssh' in result['ansible_facts']['ansible_net_config']['configuration']['system']['services']['netconf']"
+  when: ansible_net_version == "17.3R1.10"
+
+- name: Collect config facts from device in text format
+  junos_facts:
+    gather_subset: config
+    config_format: text
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'netconf {' in result['ansible_facts']['ansible_net_config']"
+
+- debug: msg="END netconf/facts.yaml on connection={{ ansible_connection }}"

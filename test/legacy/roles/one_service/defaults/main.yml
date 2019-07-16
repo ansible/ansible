@@ -1,0 +1,63 @@
+---
+# This is a role for running integration test of the one_service module.
+# For this role to be used you need to meet the following prerequisites:
+#   1. Environment variables ONEFLOW_URL, ONEFLOW_USERNAME and ONEFLOW_PASSWORD
+#      need to be set.
+#   2. Service template needs to exist. Here is an example service template:
+#
+#      {
+#        "name": "test-one_service-module",
+#        "deployment": "straight",
+#        "description": "This template is used for running integration tests of the one_service Ansible module",
+#        "roles": [
+#          {
+#            "name": "router",
+#            "cardinality": 1,
+#            "vm_template": 15,
+#            "vm_template_contents": "NIC=[NETWORK_ID=\"$PRIVATE\"]\n",
+#            "min_vms": 1,
+#            "max_vms": 2,
+#            "cooldown": 0,
+#            "elasticity_policies": [],
+#            "scheduled_policies": []
+#          },
+#          {
+#            "name": "battle",
+#            "cardinality": 1,
+#            "vm_template": 15,
+#            "vm_template_contents": "NIC=[NETWORK_ID=\"$PUBLIC\"]\n",
+#            "elasticity_policies": [],
+#            "scheduled_policies": []
+#          }
+#        ],
+#        "custom_attrs": {
+#          "PUBLIC": "M|vnet_id|Public Network",
+#          "PRIVATE": "M|vnet_id|Private Network"
+#        },
+#        "ready_status_gate": false
+#      }
+#
+#   3. User used to authenticate with the OneFlow server needs to belong to two
+#      groups and it needs to have Use permission on the above template.
+#   4. Play vars need to be set bellow to reflect the user, group, template IDs, etc.
+
+# ID of the service template in One used for testing
+one_template_id: 90
+
+# Name of the template above
+one_template_name: 'test-one_service-module'
+
+# Template custom attributes needed to bring the service up
+one_template_custom_attrs:
+  PUBLIC: 27
+  PRIVATE: 27
+
+# ID of the user used to login into OneFlow
+one_owner_id: 37
+
+# Users primary and secondary groups
+one_group_id_primary: 113
+one_group_id_secondary: 1
+# Role which will be used for changing cardinality
+
+one_role: router

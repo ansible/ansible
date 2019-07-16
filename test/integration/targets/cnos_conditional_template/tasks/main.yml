@@ -1,0 +1,11 @@
+# This contain sample conditional template execution tasks
+---
+- name: Replace Config CLI command template with values
+  template: src=demo_template.j2 dest=./commands/cnos_conditional_template_{{ inventory_hostname }}_command.txt
+  with_items: "{{conditional_template_data1}}"
+
+- name: Applying CLI commands on Switches
+  cnos_conditional_template: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['ansible_ssh_user']}}  password={{ hostvars[inventory_hostname]['ansible_ssh_pass']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} 
+   condition={{ hostvars[inventory_hostname]['condition'] }} flag='{{item.flag}}' commandfile=./commands/cnos_conditional_template_{{ inventory_hostname }}_command.txt outputfile=./results/cnos_conditional_template_{{ inventory_hostname }}_output.txt
+  with_items: "{{conditional_template_data1}}"
+# Completed file

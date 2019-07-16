@@ -1,34 +1,62 @@
 # (c) 2014, Brian Coca, Josh Drake, et al
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
+DOCUMENTATION = '''
+    cache: redis
+    short_description: Use Redis DB for cache
+    description:
+        - This cache uses JSON formatted, per host records saved in Redis.
+    version_added: "1.9"
+    requirements:
+      - redis>=2.4.5 (python lib)
+    options:
+      _uri:
+        description:
+          - A colon separated string of connection information for Redis.
+        required: True
+        env:
+          - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
+        ini:
+          - key: fact_caching_connection
+            section: defaults
+      _prefix:
+        description: User defined prefix to use when creating the DB entries
+        default: ansible_facts
+        env:
+          - name: ANSIBLE_CACHE_PLUGIN_PREFIX
+        ini:
+          - key: fact_caching_prefix
+            section: defaults
+      _timeout:
+        default: 86400
+        description: Expiration timeout for the cache plugin data
+        env:
+          - name: ANSIBLE_CACHE_PLUGIN_TIMEOUT
+        ini:
+          - key: fact_caching_timeout
+            section: defaults
+        type: integer
+'''
+
 import time
 import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.cache.base import BaseCacheModule
+from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
+from ansible.plugins.cache import BaseCacheModule
+from ansible.utils.display import Display
 
 try:
-    from redis import StrictRedis
+    from redis import StrictRedis, VERSION
 except ImportError:
-    raise AnsibleError("The 'redis' python module is required for the redis fact cache, 'pip install redis'")
+    raise AnsibleError("The 'redis' python module (version 2.4.5 or newer) is required for the redis fact cache, 'pip install redis'")
+
+display = Display()
+
 
 class CacheModule(BaseCacheModule):
     """
@@ -40,54 +68,75 @@ class CacheModule(BaseCacheModule):
     performance.
     """
     def __init__(self, *args, **kwargs):
-        if C.CACHE_PLUGIN_CONNECTION:
-            connection = C.CACHE_PLUGIN_CONNECTION.split(':')
-        else:
-            connection = []
+        connection = []
 
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
-        self._prefix = C.CACHE_PLUGIN_PREFIX
-        self._cache = StrictRedis(*connection)
+        try:
+            super(CacheModule, self).__init__(*args, **kwargs)
+            if self.get_option('_uri'):
+                connection = self.get_option('_uri').split(':')
+            self._timeout = float(self.get_option('_timeout'))
+            self._prefix = self.get_option('_prefix')
+        except KeyError:
+            display.deprecated('Rather than importing CacheModules directly, '
+                               'use ansible.plugins.loader.cache_loader', version='2.12')
+            if C.CACHE_PLUGIN_CONNECTION:
+                connection = C.CACHE_PLUGIN_CONNECTION.split(':')
+            self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
+            self._prefix = C.CACHE_PLUGIN_PREFIX
+
+        self._cache = {}
+        self._db = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
 
     def _make_key(self, key):
         return self._prefix + key
 
     def get(self, key):
-        value = self._cache.get(self._make_key(key))
-        # guard against the key not being removed from the zset;
-        # this could happen in cases where the timeout value is changed
-        # between invocations
-        if value is None:
-            self.delete(key)
-            raise KeyError
-        return json.loads(value)
+
+        if key not in self._cache:
+            value = self._db.get(self._make_key(key))
+            # guard against the key not being removed from the zset;
+            # this could happen in cases where the timeout value is changed
+            # between invocations
+            if value is None:
+                self.delete(key)
+                raise KeyError
+            self._cache[key] = json.loads(value, cls=AnsibleJSONDecoder)
+
+        return self._cache.get(key)
 
     def set(self, key, value):
-        value2 = json.dumps(value)
-        if self._timeout > 0: # a timeout of 0 is handled as meaning 'never expire'
-            self._cache.setex(self._make_key(key), int(self._timeout), value2)
-        else:
-            self._cache.set(self._make_key(key), value2)
 
-        self._cache.zadd(self._keys_set, time.time(), key)
+        value2 = json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
+        if self._timeout > 0:  # a timeout of 0 is handled as meaning 'never expire'
+            self._db.setex(self._make_key(key), int(self._timeout), value2)
+        else:
+            self._db.set(self._make_key(key), value2)
+
+        if VERSION[0] == 2:
+            self._db.zadd(self._keys_set, time.time(), key)
+        else:
+            self._db.zadd(self._keys_set, {key: time.time()})
+        self._cache[key] = value
 
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-            self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
+            self._db.zremrangebyscore(self._keys_set, 0, expiry_age)
 
     def keys(self):
         self._expire_keys()
-        return self._cache.zrange(self._keys_set, 0, -1)
+        return self._db.zrange(self._keys_set, 0, -1)
 
     def contains(self, key):
         self._expire_keys()
-        return (self._cache.zrank(self._keys_set, key) >= 0)
+        return (self._db.zrank(self._keys_set, key) is not None)
 
     def delete(self, key):
-        self._cache.delete(self._make_key(key))
-        self._cache.zrem(self._keys_set, key)
+        if key in self._cache:
+            del self._cache[key]
+        self._db.delete(self._make_key(key))
+        self._db.zrem(self._keys_set, key)
 
     def flush(self):
         for key in self.keys():

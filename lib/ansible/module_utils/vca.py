@@ -15,13 +15,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import traceback
+
+PYVCLOUD_IMP_ERR = None
 try:
     from pyvcloud.vcloudair import VCA
     HAS_PYVCLOUD = True
 except ImportError:
+    PYVCLOUD_IMP_ERR = traceback.format_exc()
     HAS_PYVCLOUD = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 SERVICE_MAP = {'vca': 'ondemand', 'vchs': 'subscription', 'vcd': 'vcd'}
 LOGIN_HOST = {'vca': 'vca.vmware.com', 'vchs': 'vchs.vmware.com'}
@@ -29,16 +33,18 @@ LOGIN_HOST = {'vca': 'vca.vmware.com', 'vchs': 'vchs.vmware.com'}
 DEFAULT_SERVICE_TYPE = 'vca'
 DEFAULT_VERSION = '5.7'
 
+
 class VcaError(Exception):
 
     def __init__(self, msg, **kwargs):
         self.kwargs = kwargs
         super(VcaError, self).__init__(msg)
 
+
 def vca_argument_spec():
     return dict(
         username=dict(type='str', aliases=['user'], required=True),
-        password=dict(type='str', aliases=['pass','passwd'], required=True, no_log=True),
+        password=dict(type='str', aliases=['pass', 'passwd'], required=True, no_log=True),
         org=dict(),
         service_id=dict(),
         instance_id=dict(),
@@ -47,8 +53,9 @@ def vca_argument_spec():
         service_type=dict(default=DEFAULT_SERVICE_TYPE, choices=SERVICE_MAP.keys()),
         vdc_name=dict(),
         gateway_name=dict(default='gateway'),
-        verify_certs=dict(type='bool', default=True)
+        validate_certs=dict(type='bool', default=True, aliases=['verify_certs'])
     )
+
 
 class VcaAnsibleModule(AnsibleModule):
 
@@ -60,7 +67,8 @@ class VcaAnsibleModule(AnsibleModule):
         super(VcaAnsibleModule, self).__init__(*args, **kwargs)
 
         if not HAS_PYVCLOUD:
-            self.fail("python module pyvcloud is required for this module")
+            self.fail(missing_required_lib('pyvcloud'),
+                      exception=PYVCLOUD_IMP_ERR)
 
         self._vca = self.create_instance()
         self.login()
@@ -122,7 +130,7 @@ class VcaAnsibleModule(AnsibleModule):
         if service_type == 'vchs':
             version = '5.6'
 
-        verify = self.params.get('verify_certs')
+        verify = self.params.get('validate_certs')
 
         return VCA(host=host, username=username,
                    service_type=SERVICE_MAP[service_type],
@@ -137,7 +145,7 @@ class VcaAnsibleModule(AnsibleModule):
             login_org = self.params['org']
 
         if not self.vca.login(password=password, org=login_org):
-            self.fail('Login to VCA failed', response=self.vca.response)
+            self.fail('Login to VCA failed', response=self.vca.response.content)
 
         try:
             method_name = 'login_%s' % service_type
@@ -146,7 +154,7 @@ class VcaAnsibleModule(AnsibleModule):
         except AttributeError:
             self.fail('no login method exists for service_type %s' % service_type)
         except VcaError as e:
-            self.fail(e.message, response=self.vca.response, **e.kwargs)
+            self.fail(e.message, response=self.vca.response.content, **e.kwargs)
 
     def login_vca(self):
         instance_id = self.params['instance_id']
@@ -193,7 +201,6 @@ class VcaAnsibleModule(AnsibleModule):
         self.exit_json(**kwargs)
 
 
-
 # -------------------------------------------------------------
 # 9/18/2015 @privateip
 # All of the functions below here were migrated from the original
@@ -204,11 +211,13 @@ class VcaAnsibleModule(AnsibleModule):
 
 VCA_REQ_ARGS = ['instance_id', 'vdc_name']
 VCHS_REQ_ARGS = ['service_id']
+VCD_REQ_ARGS = []
 
 
 def _validate_module(module):
     if not HAS_PYVCLOUD:
-        module.fail_json(msg="python module pyvcloud is needed for this module")
+        module.fail_json(msg=missing_required_lib("pyvcloud"),
+                         exception=PYVCLOUD_IMP_ERR)
 
     service_type = module.params.get('service_type', DEFAULT_SERVICE_TYPE)
 
@@ -216,19 +225,19 @@ def _validate_module(module):
         for arg in VCA_REQ_ARGS:
             if module.params.get(arg) is None:
                 module.fail_json(msg="argument %s is mandatory when service type "
-                                 "is vca" % arg)
+                                     "is vca" % arg)
 
     if service_type == 'vchs':
         for arg in VCHS_REQ_ARGS:
             if module.params.get(arg) is None:
                 module.fail_json(msg="argument %s is mandatory when service type "
-                                 "is vchs" % arg)
+                                     "is vchs" % arg)
 
     if service_type == 'vcd':
         for arg in VCD_REQ_ARGS:
             if module.params.get(arg) is None:
                 module.fail_json(msg="argument %s is mandatory when service type "
-                                 "is vcd" % arg)
+                                     "is vcd" % arg)
 
 
 def serialize_instances(instance_list):
@@ -236,6 +245,7 @@ def serialize_instances(instance_list):
     for i in instance_list:
         instances.append(dict(apiUrl=i['apiUrl'], instance_id=i['id']))
     return instances
+
 
 def _vca_login(vca, password, instance):
     if not vca.login(password=password):
@@ -245,9 +255,10 @@ def _vca_login(vca, password, instance):
     if not vca.login_to_instance_sso(instance=instance):
         s_json = serialize_instances(vca.instances)
         raise VcaError("Login to Instance failed: Seems like instance_id provided "
-                        "is wrong .. Please check", valid_instances=s_json)
+                       "is wrong .. Please check", valid_instances=s_json)
 
     return vca
+
 
 def _vchs_login(vca, password, service, org):
     if not vca.login(password=password):
@@ -256,7 +267,7 @@ def _vchs_login(vca, password, service, org):
 
     if not vca.login_to_org(service, org):
         raise VcaError("Failed to login to org, Please check the orgname",
-                        error=vca.response.content)
+                       error=vca.response.content)
 
 
 def _vcd_login(vca, password, org):
@@ -272,6 +283,7 @@ def _vcd_login(vca, password, org):
     if not vca.login(token=vca.token, org=org, org_url=vca.vcloud_session.org_url):
         raise VcaError("Failed to login to org", error=vca.response.content)
 
+
 def vca_login(module):
     service_type = module.params.get('service_type')
     username = module.params.get('username')
@@ -281,7 +293,7 @@ def vca_login(module):
     vdc_name = module.params.get('vdc_name')
     service = module.params.get('service_id')
     version = module.params.get('api_version')
-    verify = module.params.get('verify_certs')
+    verify = module.params.get('validate_certs')
 
     _validate_module(module)
 
@@ -306,7 +318,7 @@ def vca_login(module):
     if service_type == 'vchs':
         version = '5.6'
     elif service_type == 'vcd' and not version:
-        version == '5.6'
+        version = '5.6'
 
     vca = VCA(host=host, username=username,
               service_type=SERVICE_MAP[service_type],
@@ -323,8 +335,3 @@ def vca_login(module):
         module.fail_json(msg=e.message, **e.kwargs)
 
     return vca
-
-
-
-
-

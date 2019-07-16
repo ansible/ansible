@@ -1,0 +1,484 @@
+---
+- name: network setup
+  cs_network:
+    name: "{{ cs_firewall_network }}"
+    network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService
+    network_domain: example.com
+    zone: "{{ cs_common_zone_adv }}"
+  register: net
+- name: verify network setup
+  assert:
+    that:
+    - net is successful
+
+- name: setup instance to get network in implementation state
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-cs-firewall"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    networks:
+      - "{{ net.name }}"
+  register: instance
+  until: instance is success
+  retries: 20
+  delay: 5
+- name: verify instance setup
+  assert:
+    that:
+    - instance is successful
+
+- name: public ip address setup
+  cs_ip_address:
+    network: ansible test
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address
+- name: verify public ip address setup
+  assert:
+    that:
+    - ip_address is successful
+
+- name: set ip address as fact
+  set_fact:
+    cs_firewall_ip_address: "{{ ip_address.ip_address }}"
+
+- name: setup 80
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify setup
+  assert:
+    that:
+    - fw is successful
+
+- name: setup 5300
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify setup
+  assert:
+    that:
+    - fw is successful
+
+- name: setup all
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify setup
+  assert:
+    that:
+    - fw is successful
+
+- name: test fail if missing params
+  action: cs_firewall
+  register: fw
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+    - fw is failed
+    - "fw.msg == 'one of the following is required: ip_address, network'"
+
+- name: test fail if missing params
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+    - fw is failed
+    - "fw.msg == \"missing required argument for protocol 'tcp': start_port or end_port\""
+
+- name: test fail if missing params network egress
+  cs_firewall:
+    type: egress
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+  ignore_errors: true
+- name: verify results of fail if missing params ip_address
+  assert:
+    that:
+    - fw is failed
+    - "fw.msg == 'one of the following is required: ip_address, network'"
+
+- name: test present firewall rule ingress 80 in check mode
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+  check_mode: true
+- name: verify results of present firewall rule ingress 80 in check mode
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+
+- name: test present firewall rule ingress 80
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of present firewall rule ingress 80
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "tcp"
+    - fw.start_port == 80
+    - fw.end_port == 80
+    - fw.type == "ingress"
+
+- name: test present firewall rule ingress 80 idempotence
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of present firewall rule ingress 80 idempotence
+  assert:
+    that:
+    - fw is successful
+    - fw is not changed
+    - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "tcp"
+    - fw.start_port == 80
+    - fw.end_port == 80
+    - fw.type == "ingress"
+
+- name: test present firewall rule ingress 5300 in check mode
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+  check_mode: true
+- name: verify results of present firewall rule ingress 5300 in check mode
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+
+- name: test present firewall rule ingress 5300
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of present firewall rule ingress 5300
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "udp"
+    - fw.start_port == 5300
+    - fw.end_port == 5333
+    - fw.type == "ingress"
+
+- name: test present firewall rule ingress 5300 idempotence
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of present firewall rule ingress 5300 idempotence
+  assert:
+    that:
+    - fw is successful
+    - fw is not changed
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "udp"
+    - fw.start_port == 5300
+    - fw.end_port == 5333
+    - fw.type == "ingress"
+
+- name: test present firewall rule egress all in check mode
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+  check_mode: true
+- name: verify results of present firewall rule egress all in check mode
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+
+- name: test present firewall rule egress all
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of present firewall rule egress all
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
+    - fw.network == "{{ cs_firewall_network }}"
+    - fw.protocol == "all"
+    - fw.type == "egress"
+
+- name: test present firewall rule egress all idempotence
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of present firewall rule egress all idempotence
+  assert:
+    that:
+    - fw is successful
+    - fw is not changed
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
+    - fw.network == "{{ cs_firewall_network }}"
+    - fw.protocol == "all"
+    - fw.type == "egress"
+
+- name: test absent firewall rule ingress 80 in check mode
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+  check_mode: true
+- name: verify results of absent firewall rule ingress 80 in check mode
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "tcp"
+    - fw.start_port == 80
+    - fw.end_port == 80
+    - fw.type == "ingress"
+
+- name: test absent firewall rule ingress 80
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify results of absent firewall rule ingress 80
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "0.0.0.0/0"
+    - fw.cidrs == [ '0.0.0.0/0' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "tcp"
+    - fw.start_port == 80
+    - fw.end_port == 80
+    - fw.type == "ingress"
+
+- name: test absent firewall rule ingress 80 idempotence
+  cs_firewall:
+    port: 80
+    ip_address: "{{ cs_firewall_ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify results of absent firewall rule ingress 80 idempotence
+  assert:
+    that:
+    - fw is successful
+    - fw is not changed
+
+- name: test absent firewall rule ingress 5300 in check mode
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+  check_mode: true
+- name: verify results of absent firewall rule ingress 5300 in check mode
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "udp"
+    - fw.start_port == 5300
+    - fw.end_port == 5333
+    - fw.type == "ingress"
+
+- name: test absent firewall rule ingress 5300
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify results of absent firewall rule ingress 5300
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "1.2.3.0/24,4.5.6.0/24"
+    - fw.cidrs == [ '1.2.3.0/24', '4.5.6.0/24' ]
+    - fw.ip_address == "{{ cs_firewall_ip_address }}"
+    - fw.protocol == "udp"
+    - fw.start_port == 5300
+    - fw.end_port == 5333
+    - fw.type == "ingress"
+
+- name: test absent firewall rule ingress 5300 idempotence
+  cs_firewall:
+    ip_address: "{{ cs_firewall_ip_address }}"
+    protocol: udp
+    start_port: 5300
+    end_port: 5333
+    cidrs:
+    - 1.2.3.0/24
+    - 4.5.6.0/24
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify results of absent firewall rule ingress 5300 idempotence
+  assert:
+    that:
+    - fw is successful
+    - fw is not changed
+
+- name: test absent firewall rule egress all in check mode
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+  check_mode: true
+- name: verify results of absent firewall rule egress all in check mode
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
+    - fw.network == "{{ cs_firewall_network }}"
+    - fw.protocol == "all"
+    - fw.type == "egress"
+
+- name: test absent firewall rule egress all
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: fw
+- name: verify results of absent firewall rule egress all
+  assert:
+    that:
+    - fw is successful
+    - fw is changed
+    - fw.cidr == "0.0.0.0/0" or fw.cidr == "10.1.1.0/24"
+    - fw.cidrs == [ '0.0.0.0/0' ] or fw.cidrs == [ '10.1.1.0/24' ]
+    - fw.network == "{{ cs_firewall_network }}"
+    - fw.protocol == "all"
+    - fw.type == "egress"
+
+- name: test absent firewall rule egress all idempotence
+  cs_firewall:
+    network: "{{ cs_firewall_network }}"
+    protocol: all
+    type: egress
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: fw
+- name: verify results of absent firewall rule egress all idempotence
+  assert:
+    that:
+    - fw is successful
+    - fw is not changed
+
+- name: cleanup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-cs-firewall"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify instance cleanup
+  assert:
+    that:
+    - instance is successful
+
+- name: network cleanup
+  cs_network:
+    name: "{{ cs_firewall_network }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: net
+- name: verify network cleanup
+  assert:
+    that:
+    - net is successful

@@ -1,0 +1,454 @@
+# test code for the win_psmodule module when using winrm connection
+# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup test repos and modules
+  import_tasks: setup.yml
+
+# Remove the below task in Ansible 2.12
+- name: ensure warning is fired when adding a repo
+  win_psmodule:
+    name: ansible-test1
+    repository: some repo
+    url: '{{ remote_tmp_dir }}'
+    state: present
+  register: dep_repo_add
+  ignore_errors: yes  # will fail because this repo doesn't actually have this module
+  check_mode: yes
+
+- name: assert warning is fired when adding a repo
+  assert:
+    that:
+    - dep_repo_add is changed
+    - dep_repo_add.deprecations|length == 1
+    - dep_repo_add.deprecations[0].msg == 'Adding a repo with this module is deprecated, the repository parameter should only be used to select a repo. Use win_psrepository to manage repos'
+    - dep_repo_add.deprecations[0].version == 2.12
+
+- name: install package (check mode)
+  win_psmodule:
+    name: ansible-test1
+    state: present
+  register: install_check
+  check_mode: yes
+
+- name: get result of install package (check mode)
+  win_shell: (Get-Module -ListAvailable -Name ansible-test1 | Measure-Object).Count
+  register: install_actual_check
+
+- name: assert install package (check mode)
+  assert:
+    that:
+    - install_check is changed
+    - install_actual_check.stdout | trim | int == 0
+
+- name: install package
+  win_psmodule:
+    name: ansible-test1
+    state: present
+  register: install
+
+- name: get result of install package
+  win_shell: Import-Module -Name ansible-test1; Get-AnsibleTest1 | ConvertTo-Json
+  register: install_actual
+
+- name: assert install package
+  assert:
+    that:
+    - install is changed
+    - install_actual.stdout | from_json == {"Name":"ansible-test1","Version":"1.1.0","Repo":"PSRepo 1"}
+
+- name: install package (idempotent)
+  win_psmodule:
+    name: ansible-test1
+    state: present
+  register: install_again
+
+- name: assert install package (idempotent)
+  assert:
+    that:
+    - not install_again is changed
+
+- name: remove package (check mode)
+  win_psmodule:
+    name: ansible-test1
+    state: absent
+  register: remove_check
+  check_mode: yes
+
+- name: get result of remove package (check mode)
+  win_shell: (Get-Module -ListAvailable -Name ansible-test1 | Measure-Object).Count
+  register: remove_actual_check
+
+- name: remove package (check mode)
+  assert:
+    that:
+    - remove_check is changed
+    - remove_actual_check.stdout | trim | int == 1
+
+- name: remove package
+  win_psmodule:
+    name: ansible-test1
+    state: absent
+  register: remove
+
+- name: get result of remove package
+  win_shell: (Get-Module -ListAvailable -Name ansible-test1 | Measure-Object).Count
+  register: remove_actual
+
+- name: assert remove package
+  assert:
+    that:
+    - remove is changed
+    - remove_actual.stdout | trim | int == 0
+
+- name: remove package (idempotent)
+  win_psmodule:
+    name: ansible-test1
+    state: absent
+  register: remove_again
+
+- name: assert remove package (idempotent)
+  assert:
+    that:
+    - not remove_again is changed
+
+- name: fail to install module that exists in multiple repos
+  win_psmodule:
+    name: ansible-test2
+    state: present
+  register: fail_multiple_pkg
+  failed_when: 'fail_multiple_pkg.msg != "Problems installing ansible-test2 module: Unable to install, multiple modules matched ''ansible-test2''. Please specify a single -Repository."'
+
+- name: install module with specific repository
+  win_psmodule:
+    name: ansible-test2
+    repository: PSRepo 2
+    state: present
+  register: install_repo
+
+- name: get result of install module with specific repository
+  win_shell: Import-Module -Name ansible-test2; Get-AnsibleTest2 | ConvertTo-Json
+  register: install_repo_actual
+
+- name: assert install module with specific repository
+  assert:
+    that:
+    - install_repo is changed
+    - install_repo_actual.stdout | from_json == {"Name":"ansible-test2","Version":"1.0.0","Repo":"PSRepo 2"}
+
+- name: install module with specific repository (idempotent)
+  win_psmodule:
+    name: ansible-test2
+    repository: PSRepo 2
+    state: present
+  register: install_repo_again
+
+- name: assert install module with specific repository (idempotent)
+  assert:
+    that:
+    - not install_repo_again is changed
+
+- name: remove package that was installed from specific repository
+  win_psmodule:
+    name: ansible-test2
+    state: absent
+  register: remove_repo_without_source
+
+- name: get result of remove package that was installed from specific repository
+  win_shell: (Get-Module -ListAvailable -Name ansible-test2 | Measure-Object).Count
+  register: remove_repo_without_source_actual
+
+- name: assert remove package that was installed from specific repository
+  assert:
+    that:
+    - remove_repo_without_source is changed
+    - remove_repo_without_source_actual.stdout | trim | int == 0
+
+- name: fail to install required version that is missing
+  win_psmodule:
+    name: ansible-test1
+    required_version: 0.9.0
+    state: present
+  register: fail_missing_req
+  failed_when: '"Problems installing ansible-test1 module: No match was found for the specified search criteria" not in fail_missing_req.msg'
+
+- name: install required version
+  win_psmodule:
+    name: ansible-test1
+    required_version: 1.0.0
+    state: present
+  register: install_req_version
+
+- name: get result of install required version
+  win_shell: Import-Module -Name ansible-test1; Get-AnsibleTest1 | ConvertTo-Json
+  register: install_req_version_actual
+
+- name: assert install required version
+  assert:
+    that:
+    - install_req_version is changed
+    - install_req_version_actual.stdout | from_json == {"Name":"ansible-test1","Version":"1.0.0","Repo":"PSRepo 1"}
+
+- name: install required version (idempotent)
+  win_psmodule:
+    name: ansible-test1
+    required_version: 1.0.0
+    state: present
+  register: install_req_version_again
+
+- name: assert install required version (idempotent)
+  assert:
+    that:
+    - not install_req_version_again is changed
+
+- name: remove required version
+  win_psmodule:
+    name: ansible-test1
+    required_version: 1.0.0
+    state: absent
+  register: remove_req_version
+
+- name: get result of remove required version
+  win_shell: (Get-Module -ListAvailable -Name ansible-test1 | Measure-Object).Count
+  register: remove_req_version_actual
+
+- name: assert remove required version
+  assert:
+    that:
+    - remove_req_version is changed
+    - remove_req_version_actual.stdout | trim | int == 0
+
+- name: remove required version (idempotent)
+  win_psmodule:
+    name: ansible-test1
+    required_version: 1.0.0
+    state: absent
+  register: remove_req_version_again
+
+- name: assert remove required version (idempotent)
+  assert:
+    that:
+    - not remove_req_version_again is changed
+
+- name: install min max version
+  win_psmodule:
+    name: ansible-test1
+    minimum_version: 1.0.1
+    maximum_version: 1.0.9
+    state: present
+  register: install_min_max
+
+- name: get result of install min max version
+  win_shell: Import-Module -Name ansible-test1; Get-AnsibleTest1 | ConvertTo-Json
+  register: install_min_max_actual
+
+- name: assert install min max version
+  assert:
+    that:
+    - install_min_max is changed
+    - install_min_max_actual.stdout | from_json == {"Name":"ansible-test1","Version":"1.0.5","Repo":"PSRepo 1"}
+
+- name: install min max version (idempotent)
+  win_psmodule:
+    name: ansible-test1
+    minimum_version: 1.0.1
+    maximum_version: 1.0.9
+    state: present
+  register: install_min_max_again
+
+- name: assert install min max version (idempotent)
+  assert:
+    that:
+    - not install_min_max_again is changed
+
+- name: update package to latest version
+  win_psmodule:
+    name: ansible-test1
+    state: latest
+  register: update_module
+
+- name: get result of update package to latest version
+  win_shell: Import-Module -Name ansible-test1; Get-AnsibleTest1 | ConvertTo-Json
+  register: update_module_actual
+
+- name: assert update package to latest version
+  assert:
+    that:
+    - update_module is changed
+    - update_module_actual.stdout | from_json == {"Name":"ansible-test1","Version":"1.1.0","Repo":"PSRepo 1"}
+
+- name: update package to latest version (idempotent)
+  win_psmodule:
+    name: ansible-test1
+    state: latest
+  register: update_module_again
+
+- name: assert update package to latest version (idempotent)
+  assert:
+    that:
+    - not update_module_again is changed
+
+- name: remove package that does not match min version
+  win_psmodule:
+    name: ansible-test1
+    minimum_version: 2.0.0
+    state: absent
+  register: remove_min_no_change
+
+- name: assert remove package that does not match min version
+  assert:
+    that:
+    - not remove_min_no_change is changed
+
+- name: remove package that does not match max version
+  win_psmodule:
+    name: ansible-test1
+    maximum_version: 0.9.0
+    state: absent
+  register: remove_max_no_change
+
+- name: assert remove package that does not match max version
+  assert:
+    that:
+    - not remove_max_no_change is changed
+
+- name: uninstall package to clear tests
+  win_psmodule:
+    name: ansible-test1
+    state: absent
+
+- name: install package with max version
+  win_psmodule:
+    name: ansible-test2
+    maximum_version: 1.0.0
+    repository: PSRepo 1
+    state: present
+  register: install_max
+
+- name: get result of install package with max version
+  win_shell: Import-Module -Name ansible-test2; Get-AnsibleTest2 | ConvertTo-Json
+  register: install_max_actual
+
+- name: assert install package with max version
+  assert:
+    that:
+    - install_max is changed
+    - install_max_actual.stdout | from_json == {"Name":"ansible-test2","Version":"1.0.0","Repo":"PSRepo 1"}
+
+- name: fail to install updated package without skip publisher
+  win_psmodule:
+    name: ansible-test2
+    required_version: 1.0.1  # This version has been pureposefully not been signed for testing
+    repository: PSRepo 1
+    state: present
+  register: fail_skip_pub
+  failed_when: '"The version ''1.0.1'' of the module ''ansible-test2'' being installed is not catalog signed" not in fail_skip_pub.msg'
+
+- name: install updated package provider with skip publisher
+  win_psmodule:
+    name: ansible-test2
+    required_version: 1.0.1
+    repository: PSRepo 1
+    state: present
+    skip_publisher_check: yes
+  register: install_skip_pub
+
+- name: get result of install updated package provider with skip publisher
+  win_shell: Import-Module -Name ansible-test2; Get-AnsibleTest2 | ConvertTo-Json
+  register: install_skip_pub_actual
+
+- name: assert install updated package provider with skip publisher
+  assert:
+    that:
+    - install_skip_pub is changed
+    - install_skip_pub_actual.stdout | from_json == {"Name":"ansible-test2","Version":"1.0.1","Repo":"PSRepo 1"}
+
+- name: remove test package 2 for clean test
+  win_psmodule:
+    name: ansible-test2
+    state: absent
+
+- name: fail to install clobbered module
+  win_psmodule:
+    name: ansible-clobber
+    state: present
+  register: fail_clobbering_time
+  failed_when: '"If you still want to install this module ''ansible-clobber'', use -AllowClobber parameter." not in fail_clobbering_time.msg'
+
+- name: install clobbered module
+  win_psmodule:
+    name: ansible-clobber
+    allow_clobber: yes
+    state: present
+  register: install_clobber
+
+- name: get result of install clobbered module
+  win_shell: Import-Module -Name ansible-clobber; Enable-PSTrace | ConvertTo-Json
+  register: install_clobber_actual
+
+- name: assert install clobbered module
+  assert:
+    that:
+    - install_clobber is changed
+    - install_clobber_actual.stdout | from_json == {"Name":"ansible-clobber","Version":"0.1.0","Repo":"PSRepo 1"}
+
+- name: remove clobbered module
+  win_psmodule:
+    name: ansible-clobber
+    state: absent
+  register: remove_clobber
+
+- name: get result of remove clobbered module
+  win_shell: (Get-Module -ListAvailable -Name ansible-clobber | Measure-Object).Count
+  register: remove_clobber_actual
+
+- name: assert remove clobbered module
+  assert:
+    that:
+    - remove_clobber is changed
+    - remove_clobber_actual.stdout | trim | int == 0
+
+- name: fail to install prerelese module
+  win_psmodule:
+    name: ansible-test2
+    repository: PSRepo 1
+    required_version: 1.1.0-beta1
+    state: present
+  register: fail_install_prerelease
+  failed_when: '"The ''-AllowPrerelease'' parameter must be specified when using the Prerelease string" not in fail_install_prerelease.msg'
+
+- name: install prerelease module
+  win_psmodule:
+    name: ansible-test2
+    repository: PSRepo 1
+    required_version: 1.1.0-beta1
+    allow_prerelease: yes
+    state: present
+  register: install_prerelease
+
+- name: get result of install prerelease module
+  win_shell: Import-Module -Name ansible-test2; Get-AnsibleTest2 | ConvertTo-Json
+  register: install_prerelease_actual
+
+- name: assert install prerelease module
+  assert:
+    that:
+    - install_prerelease is changed
+    - install_prerelease_actual.stdout | from_json == {"Name":"ansible-test2","Version":"1.1.0","Repo":"PSRepo 1"}
+
+- name: remove prerelease module
+  win_psmodule:
+    name: ansible-test2
+    state: absent
+  register: remove_prerelease
+
+- name: get result of remove prerelease module
+  win_shell: (Get-Module -ListAvailable -Name ansible-test2 | Measure-Object).Count
+  register: remove_prerelease_actual
+
+- name: assert remove prerelease module
+  assert:
+    that:
+    - remove_prerelease is changed
+    - remove_prerelease_actual.stdout | trim | int == 0

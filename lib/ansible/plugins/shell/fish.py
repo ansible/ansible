@@ -1,25 +1,24 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pipes
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.shell.sh import ShellModule as ShModule
-from ansible.compat.six import text_type
+
+DOCUMENTATION = '''
+    name: fish
+    plugin_type: shell
+    version_added: ""
+    short_description: fish shell (/bin/fish)
+    description:
+      - This is here because some people are restricted to fish.
+    extends_documentation_fragment:
+      - shell_common
+'''
+
 
 class ShellModule(ShModule):
 
@@ -40,18 +39,16 @@ class ShellModule(ShModule):
     def env_prefix(self, **kwargs):
         env = self.env.copy()
         env.update(kwargs)
-        return ' '.join(['set -lx %s %s;' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['set -lx %s %s;' % (k, shlex_quote(text_type(v))) for k, v in env.items()])
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
-            cmd = pipes.quote(cmd)
+            cmd = shlex_quote(cmd)
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
         if arg_path is not None:
             cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
-        if rm_tmp:
-            new_cmd = 'begin ; %s; rm -rf "%s" %s ; end' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
         return new_cmd
 
     def checksum(self, path, python_interp):
@@ -82,11 +79,11 @@ class ShellModule(ShModule):
         # Quoting gets complex here.  We're writing a python string that's
         # used by a variety of shells on the remote host to invoke a python
         # "one-liner".
-        shell_escaped_path = pipes.quote(path)
-        test = "set rc flag; [ -r %(p)s ] %(shell_or)s set rc 2; [ -f %(p)s ] %(shell_or)s set rc 1; [ -d %(p)s ] %(shell_and)s set rc 3; %(i)s -V 2>/dev/null %(shell_or)s set rc 4; [ x\"$rc\" != \"xflag\" ] %(shell_and)s echo \"$rc  \"%(p)s %(shell_and)s exit 0" % dict(p=shell_escaped_path, i=python_interp, shell_and=self._SHELL_AND, shell_or=self._SHELL_OR)
+        shell_escaped_path = shlex_quote(path)
+        test = "set rc flag; [ -r %(p)s ] %(shell_or)s set rc 2; [ -f %(p)s ] %(shell_or)s set rc 1; [ -d %(p)s ] %(shell_and)s set rc 3; %(i)s -V 2>/dev/null %(shell_or)s set rc 4; [ x\"$rc\" != \"xflag\" ] %(shell_and)s echo \"$rc  \"%(p)s %(shell_and)s exit 0" % dict(p=shell_escaped_path, i=python_interp, shell_and=self._SHELL_AND, shell_or=self._SHELL_OR)  # NOQA
         csums = [
-            u"({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python > 2.4 (including python3)
-            u"({0} -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python == 2.4
+            u"({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),  # NOQA  Python > 2.4 (including python3)
+            u"({0} -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),  # NOQA  Python == 2.4
         ]
 
         cmd = (" %s " % self._SHELL_OR).join(csums)

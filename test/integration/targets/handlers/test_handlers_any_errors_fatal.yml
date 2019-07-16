@@ -1,0 +1,24 @@
+- hosts:
+    - A
+    - B
+  gather_facts: no
+  any_errors_fatal: yes
+  vars:
+    output_dir: /tmp
+  tasks:
+    - name: Task one
+      debug:
+        msg: 'task 1'
+      changed_when: yes
+      notify: EXPECTED FAILURE failed_handler
+
+    - meta: flush_handlers
+
+    - name: This task should never happen
+      file:
+        path: "{{ output_dir }}/should_not_exist_{{ inventory_hostname }}"
+        state: touch
+  handlers:
+    - name: EXPECTED FAILURE failed_handler
+      fail:
+      when: 'inventory_hostname == "A"'

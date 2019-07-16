@@ -1,0 +1,181 @@
+- name: Prepare random number
+  set_fact:
+    vnetname: "vnet{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+
+- name: Delete virtual network, if it exists
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    resource_group: "{{ resource_group }}"
+    state: absent
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    dns_servers:
+      - 127.0.0.1
+      - 127.0.0.3
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - "output.state.address_prefixes | length == 2"
+      - "output.state.dns_servers | length == 2"
+      - "output.state.tags.delete == 'on-exit'"
+      - "output.state.tags | length == 2"
+
+- name: Attach a subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnetname }}"
+    virtual_network_name: "{{ vnetname }}"
+    address_prefix_cidr: "10.1.0.0/24"
+
+- name: Gather facts by name, tags
+  azure_rm_virtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnetname }}"
+    tags:
+      - testing
+  register: facts
+
+- assert:
+    that:
+      - "azure_virtualnetworks | length == 1"
+      - "facts.virtualnetworks | length == 1"
+      - "facts.virtualnetworks[0].dns_servers | length == 2"
+      - "facts.virtualnetworks[0].address_prefixes | length == 2"
+      - "facts.virtualnetworks[0].subnets | length == 1"
+
+- name: Gather facts by resource group, tags
+  azure_rm_virtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+    tags:
+      - testing
+
+- assert:
+    that: "azure_virtualnetworks | length >= 1"
+
+- name: Gather facts by tags
+  azure_rm_virtualnetwork_facts:
+    tags:
+      - testing
+
+- assert:
+    that: "azure_virtualnetworks | length >= 1"
+
+- name: Should be idempotent
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
+    dns_servers:
+      - 127.0.0.1
+      - 127.0.0.3
+    tags:
+      testing: testing
+      delete: on-exit
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: not output.changed
+
+- name: Update tags
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    tags:
+      testing: 'no'
+      delete: never
+      foo: bar
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+     that: output.state.tags | length == 3
+
+- name: Purge tags
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    append_tags: no
+    tags:
+      testing: 'always'
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+     that:
+       - output.state.tags | length == 1
+       - output.state.tags.testing == 'always'
+
+- name: Should require address_prefixes_cidr when purge_address_prefixes
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    purge_address_prefixes: true
+    resource_group: "{{ resource_group }}"
+  register: output
+  ignore_errors: yes
+
+- assert:
+      that: output.failed
+
+- name: Purge address prefixes
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    address_prefixes_cidr: 10.1.0.0/16
+    purge_address_prefixes: true
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+        - output.state.address_prefixes | length == 1
+        - output.state.address_prefixes[0] == '10.1.0.0/16'
+        - output.state.dns_servers | length == 2
+        - output.state.dns_servers[0] == '127.0.0.1'
+
+- name: Purge DNS servers
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    purge_dns_servers: true
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- assert:
+    that: output.state['dns_servers'] is undefined
+
+- name: Gather facts
+  azure_rm_virtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnetname }}"
+  register: facts
+
+- assert:
+    that:
+      - azure_virtualnetworks | length == 1
+      - facts.virtualnetworks | length == 1
+      - "facts.virtualnetworks[0].subnets | length == 1"
+
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    name: "{{ vnetname }}"
+    resource_group: "{{ resource_group }}"
+    state: absent

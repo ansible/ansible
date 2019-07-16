@@ -22,17 +22,19 @@
 - shell: echo "[general]" > {{ fact_dir }}/preferences.fact
 - shell: echo "bar=loaded" >> {{ fact_dir }}/preferences.fact
 
-- setup: 
-    fact_path: "{{ fact_dir | expanduser }}"  
+- setup:
+    fact_path: "{{ fact_dir | expanduser }}"
     filter: "*local*"
   register: setup_result
 
-- debug: var=setup_result  
+- debug: var=setup_result
 
 - assert:
     that:
         - "'ansible_facts' in setup_result"
         - "'ansible_local' in setup_result.ansible_facts"
+        - "'ansible_env' not in setup_result.ansible_facts"
+        - "'ansible_user_id' not in setup_result.ansible_facts"
         - "'preferences' in setup_result.ansible_facts['ansible_local']"
         - "'general' in setup_result.ansible_facts['ansible_local']['preferences']"
         - "'bar' in setup_result.ansible_facts['ansible_local']['preferences']['general']"

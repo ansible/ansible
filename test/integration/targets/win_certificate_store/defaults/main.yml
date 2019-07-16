@@ -1,0 +1,4 @@
+win_cert_dir: '{{win_output_dir}}\win_certificate .ÅÑŚÌβŁÈ [$!@^&test(;)]'
+key_password: password
+subj_thumbprint: 'BD7AF104CF1872BDB518D95C9534EA941665FD27'
+root_thumbprint: 'BC05633694E675449136679A658281F17A191087'

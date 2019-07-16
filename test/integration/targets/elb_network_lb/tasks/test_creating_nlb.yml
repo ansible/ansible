@@ -1,0 +1,62 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create NLB with listeners
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      listeners:
+        - Protocol: TCP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+        - Protocol: TLS
+          Port: 443
+          Certificates:
+            - CertificateArn: "{{ cert.arn }}"
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - nlb.changed
+        - nlb.listeners|length == 2
+
+  - name: test idempotence creating NLB with listeners
+    elb_network_lb:
+      name: "{{ nlb_name }}"
+      subnets: "{{ nlb_subnets }}"
+      state: present
+      listeners:
+        - Protocol: TCP
+          Port: 80
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+        - Protocol: TLS
+          Port: 443
+          Certificates:
+            - CertificateArn: "{{ cert.arn }}"
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+      <<: *aws_connection_info
+    register: nlb
+
+  - assert:
+      that:
+        - not nlb.changed
+        - nlb.listeners|length == 2

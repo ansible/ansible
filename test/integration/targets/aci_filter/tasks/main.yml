@@ -1,0 +1,223 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+# CLEAN ENVIRONMENT
+- name: Add tenant
+  aci_tenant:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: ansible_test
+    state: present
+
+- name: Remove filter
+  aci_filter: &filter_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: ansible_test
+    filter: filter_test
+    state: absent
+
+# ADD FILTER
+- name: Add filter (check_mode)
+  aci_filter: &filter_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: ansible_test
+    filter: filter_test
+    state: present
+  check_mode: yes
+  register: cm_add_filter
+
+- name: Add filter again (check_mode)
+  aci_filter: *filter_present
+  check_mode: yes
+  register: cm_add_filter_again
+
+- name: Add filter (normal mode)
+  aci_filter: *filter_present
+  register: nm_add_filter
+
+- name: Add filter again (normal mode)
+  aci_filter: *filter_present
+  register: nm_add_filter_again
+
+- name: Verify add_filter
+  assert:
+    that:
+    - cm_add_filter is changed
+    - cm_add_filter_again is changed
+    - nm_add_filter is changed
+    - nm_add_filter_again is not changed
+
+# CHANGE FILTER
+- name: Change description of filter (check_mode)
+  aci_filter:
+    <<: *filter_present
+    description: Ansible test filter
+  check_mode: yes
+  register: cm_add_filter_descr
+
+- name: Change description of filter again (check_mode)
+  aci_filter:
+    <<: *filter_present
+    description: Ansible test filter
+  check_mode: yes
+  register: cm_add_filter_descr_again
+
+- name: Change description of filter (normal mode)
+  aci_filter:
+    <<: *filter_present
+    description: Ansible test filter
+  register: nm_add_filter_descr
+
+- name: Change description of filter again (normal mode)
+  aci_filter:
+    <<: *filter_present
+    description: Ansible test filter
+  register: nm_add_filter_descr_again
+
+- name: Verify add_filter_descr
+  assert:
+    that:
+    - cm_add_filter_descr is changed
+    - cm_add_filter_descr_again is changed
+    - nm_add_filter_descr is changed
+    - nm_add_filter_descr_again is not changed
+
+# ADD FILTER AGAIN
+- name: Add filter again with no description (check_mode)
+  aci_filter: *filter_present
+  check_mode: yes
+  register: cm_add_filter_again_no_descr
+
+- name: Add filter again with no description (normal mode)
+  aci_filter: *filter_present
+  register: nm_add_filter_again_no_descr
+
+- name: Verify add_filter_again_no_descr
+  assert:
+    that:
+    - cm_add_filter_again_no_descr is not changed
+    - nm_add_filter_again_no_descr is not changed
+
+# QUERY ALL FILTERS
+- name: Query all filters (check_mode)
+  aci_filter: &filter_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_filters
+
+- name: Query all filters (normal mode)
+  aci_filter: *filter_query
+  register: nm_query_all_filters
+
+- name: Verify query_all_filters
+  assert:
+    that:
+    - cm_query_all_filters is not changed
+    - nm_query_all_filters is not changed
+    # NOTE: Order of filters is not stable between calls
+    #- cm_query_all_filters == nm_query_all_filters
+
+# QUERY A FILTER
+- name: Query our filter
+  aci_filter:
+    <<: *filter_query
+    tenant: ansible_test
+    filter: filter_test
+  check_mode: yes
+  register: cm_query_filter
+
+- name: Query our filter
+  aci_filter:
+    <<: *filter_query
+    tenant: ansible_test
+    filter: filter_test
+  register: nm_query_filter
+
+- name: Verify query_filter
+  assert:
+    that:
+    - cm_query_filter is not changed
+    - nm_query_filter is not changed
+    - cm_query_filter == nm_query_filter
+
+# REMOVE FILTER
+- name: Remove filter (check_mode)
+  aci_filter: *filter_absent
+  check_mode: yes
+  register: cm_remove_filter
+
+- name: Remove filter again (check_mode)
+  aci_filter: *filter_absent
+  check_mode: yes
+  register: cm_remove_filter_again
+
+- name: Remove filter (normal mode)
+  aci_filter: *filter_absent
+  register: nm_remove_filter
+
+- name: Remove filter again (normal mode)
+  aci_filter: *filter_absent
+  register: nm_remove_filter_again
+
+- name: Verify remove_filter
+  assert:
+    that:
+    - cm_remove_filter is changed
+    - cm_remove_filter_again is changed
+    - nm_remove_filter is changed
+    - nm_remove_filter_again is not changed
+
+# QUERY NON-EXISTING FILTER
+# FIXME: Should this fail or return empty values ?
+- name: Query non-existing filter (check_mode)
+  aci_filter:
+    <<: *filter_query
+    tenant: ansible_test
+    filter: filter_test
+  check_mode: yes
+  register: cm_query_non_filter
+
+- name: Query non-existing filter (normal mode)
+  aci_filter:
+    <<: *filter_query
+    tenant: ansible_test
+    filter: filter_test
+  register: nm_query_non_filter
+
+- name: Verify query_non_filter
+  assert:
+    that:
+    - cm_query_non_filter is not changed
+    - nm_query_non_filter is not changed
+    - cm_query_non_filter == nm_query_non_filter

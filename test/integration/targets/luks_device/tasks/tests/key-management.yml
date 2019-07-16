@@ -1,0 +1,162 @@
+---
+- name: Create with keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+
+# Access: keyfile1
+
+- name: Try to open with keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+
+- name: Try to open with keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed
+
+- name: Give access to keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    keyfile: "{{ role_path }}/files/keyfile1"
+    new_keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+
+# Access: keyfile1 and keyfile2
+
+- name: Try to open with keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+
+- name: Dump LUKS header
+  command: "cryptsetup luksDump {{ cryptfile_device }}"
+
+- name: Remove access from keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    keyfile: "{{ role_path }}/files/keyfile1"
+    remove_keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+
+# Access: keyfile2
+
+- name: Try to open with keyfile1
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed
+
+- name: Try to open with keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+
+- name: Dump LUKS header
+  command: "cryptsetup luksDump {{ cryptfile_device }}"
+
+- name: Remove access from keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    keyfile: "{{ role_path }}/files/keyfile2"
+    remove_keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+  ignore_errors: yes
+  register: remove_last_key
+- assert:
+    that:
+    - remove_last_key is failed
+    - "'force_remove_last_key' in remove_last_key.msg"
+
+# Access: keyfile2
+
+- name: Try to open with keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is not failed
+- name: Close
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+
+- name: Remove access from keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+    keyfile: "{{ role_path }}/files/keyfile2"
+    remove_keyfile: "{{ role_path }}/files/keyfile2"
+    force_remove_last_key: yes
+  become: yes
+
+# Access: none
+
+- name: Try to open with keyfile2
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile2"
+  become: yes
+  ignore_errors: yes
+  register: open_try
+- assert:
+    that:
+    - open_try is failed

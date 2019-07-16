@@ -1,0 +1,40 @@
+# Test code for the vmware_host_vmnic_facts module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support networkConfig related to operations
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Gather vmnic facts about a host
+      vmware_host_vmnic_facts:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+      register: host_vmnics
+    - debug: var=host_vmnics
+    - assert:
+        that:
+          - host_vmnics.hosts_vmnics_facts is defined
+
+    - name: Gather extended vmnic facts about a host
+      vmware_host_vmnic_facts:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+        capabilities: true
+        directpath_io: true
+        sriov: true
+      register: host_vmnics_extended
+    - debug: var=host_vmnics_extended
+    - assert:
+        that:
+          - host_vmnics_extended.hosts_vmnics_facts is defined

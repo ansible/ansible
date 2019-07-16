@@ -1,29 +1,40 @@
 # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: log_plays
+    type: notification
+    short_description: write playbook output to log file
+    version_added: historical
+    description:
+      - This callback writes playbook output to a file per host in the `/var/log/ansible/hosts` directory
+    requirements:
+     - Whitelist in configuration
+     - A writeable /var/log/ansible/hosts directory by the user executing Ansible on the controller
+    options:
+      log_folder:
+        version_added: '2.9'
+        default: /var/log/ansible/hosts
+        description: The folder where log files will be created.
+        env:
+          - name: ANSIBLE_LOG_FOLDER
+        ini:
+          - section: callback_log_plays
+            key: log_folder
+'''
 
 import os
 import time
 import json
 
+from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
@@ -43,29 +54,34 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'log_plays'
     CALLBACK_NEEDS_WHITELIST = True
 
-    TIME_FORMAT="%b %d %Y %H:%M:%S"
-    MSG_FORMAT="%(now)s - %(category)s - %(data)s\n\n"
+    TIME_FORMAT = "%b %d %Y %H:%M:%S"
+    MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
 
     def __init__(self):
 
         super(CallbackModule, self).__init__()
 
-        if not os.path.exists("/var/log/ansible/hosts"):
-            os.makedirs("/var/log/ansible/hosts")
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.log_folder = self.get_option("log_folder")
+
+        if not os.path.exists(self.log_folder):
+            makedirs_safe(self.log_folder)
 
     def log(self, host, category, data):
-        if type(data) == dict:
+        if isinstance(data, MutableMapping):
             if '_ansible_verbose_override' in data:
                 # avoid logging extraneous data
                 data = 'omitted'
             else:
                 data = data.copy()
                 invocation = data.pop('invocation', None)
-                data = json.dumps(data)
+                data = json.dumps(data, cls=AnsibleJSONEncoder)
                 if invocation is not None:
                     data = json.dumps(invocation) + " => %s " % data
 
-        path = os.path.join("/var/log/ansible/hosts", host)
+        path = os.path.join(self.log_folder, host)
         now = time.strftime(self.TIME_FORMAT, time.localtime())
 
         msg = to_bytes(self.MSG_FORMAT % dict(now=now, category=category, data=data))

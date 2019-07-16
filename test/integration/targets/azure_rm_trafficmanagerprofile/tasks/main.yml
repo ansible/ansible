@@ -1,0 +1,289 @@
+- name: Prepare random number
+  set_fact:
+    tmname: "tm{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    endpointname1: "ep1{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    endpointname2: "ep2{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+
+- name: Create a Traffic Manager profile(check mode)
+  azure_rm_trafficmanagerprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: enabled
+      routing_method: performance
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+  check_mode: yes
+
+- name: Check there is no Traffic Manager profile created
+  azure_rm_trafficmanagerprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Check there is no Traffic Manager profile created
+  assert: { that: "{{ fact.tms | length }} == 0" }
+
+- name: Create a Traffic Manager profile
+  azure_rm_trafficmanagerprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: enabled
+      routing_method: performance
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+  register: tm
+
+- name: Assert the Traffic Manager profile is well created
+  assert:
+    that:
+      - tm.changed
+
+- name: Gather Traffic Manager profile facts
+  azure_rm_trafficmanagerprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Assert fact returns the created one
+  assert:
+      that:
+        - "fact.tms | length == 1"
+        - fact.tms[0].id == tm.id
+        - fact.tms[0].endpoints | length == 0
+
+- name: Create a Traffic Manager profile (idempotent)
+  azure_rm_trafficmanagerprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: enabled
+      routing_method: performance
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+  register: output
+
+- name: Assert idempotent
+  assert:
+    that:
+      - not output.changed
+
+- name: Update the Traffic Manager profile
+  azure_rm_trafficmanagerprofile:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+      tags:
+          testing: testing
+          delete: on-exit
+          foo: bar
+      location: global
+      profile_status: disabled
+      routing_method: priority
+      dns_config: 
+        relative_name: "{{ tmname }}"
+        ttl: 60
+      monitor_config:
+        protocol: HTTPS
+        port: 80
+        path: '/'
+  register: output
+
+- name: Assert the Traffic Manager profile is updated
+  assert:
+    that:
+      - output.changed 
+
+- name: Create Traffic Manager endpoint(check mode)
+  azure_rm_trafficmanagerendpoint:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+    name: "{{ endpointname1 }}"
+    type: external_endpoints
+    location: westus
+    priority: 2
+    weight: 1
+    target: 1.2.3.4
+  check_mode: yes
+  register: output
+
+- name: Assert check mode changed
+  assert:
+    that:
+      - output.changed
+
+- name: Get endpoint
+  azure_rm_trafficmanagerendpoint_facts:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+  register: facts
+
+- name: Check no endpoint created in check mode
+  assert:
+    that:
+      - facts.endpoints | length == 0
+
+- name: Create Traffic Manager endpoint
+  azure_rm_trafficmanagerendpoint:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+    name: "{{ endpointname1 }}"
+    type: external_endpoints
+    location: westus
+    priority: 2
+    weight: 1
+    target: 1.2.3.4
+  register: output
+
+- name: Assert endpoint create changed
+  assert:
+    that:
+      - output.changed
+
+- name: Get endpoint
+  azure_rm_trafficmanagerendpoint_facts:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+  register: facts
+
+- name: Check endpoint created
+  assert:
+    that:
+      - facts.endpoints | length == 1
+      - facts.endpoints[0].name == "{{ endpointname1 }}"
+
+- name: Create second Traffic Manager endpoint
+  azure_rm_trafficmanagerendpoint:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+    name: "{{ endpointname2 }}"
+    type: external_endpoints
+    location: westus
+    priority: 1
+    weight: 3
+    target: 4.3.2.1
+
+- name: Get endpoint
+  azure_rm_trafficmanagerendpoint_facts:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+  register: facts
+
+- name: Check 2 endpoint in profile
+  assert:
+    that:
+      - facts.endpoints | length == 2
+
+- name: Create endpoint (idempotent)
+  azure_rm_trafficmanagerendpoint:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+    name: "{{ endpointname2 }}"
+    type: external_endpoints
+    location: westus
+    priority: 1
+    weight: 3
+    target: 4.3.2.1
+  register: output
+
+- name: Assert endpoint creation idempotent
+  assert:
+    that:
+      - output.changed == False
+
+- name: Delete second endpoint
+  azure_rm_trafficmanagerendpoint:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+    name: "{{ endpointname2 }}"
+    type: external_endpoints
+    state: absent
+  register: output
+
+- name: Assert endpoint deletion changed
+  assert:
+    that:
+      - output.changed
+
+- name: Get endpoint
+  azure_rm_trafficmanagerendpoint_facts:
+    resource_group: "{{ resource_group }}"
+    profile_name: "{{ tmname }}"
+  register: facts
+
+- name: Check 1 endpoint left in profile
+  assert:
+    that:
+      - facts.endpoints | length == 1
+
+- name: Delete the Traffic Manager profile(check mode)
+  azure_rm_trafficmanagerprofile:
+    resource_group: "{{ resource_group }}"
+    name: "{{ tmname }}"
+    state: absent
+  check_mode: yes
+
+- name: Gather Traffic Manager profile facts
+  azure_rm_trafficmanagerprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Assert the traffic manager profile is still there
+  assert:
+      that:
+        - "fact.tms | length == 1"
+        - fact.tms[0].id == tm.id
+        - fact.tms[0].endpoints | length == 1
+
+- name: Delete the Traffic Manager profile
+  azure_rm_trafficmanagerprofile:
+    resource_group: "{{ resource_group }}"
+    name: "{{ tmname }}"
+    state: absent
+  register: output
+
+- name: Assert the Traffic Manager profile is well deleted
+  assert:
+    that:
+      - output.changed
+
+- name: Get Traffic Manager profile fact
+  azure_rm_trafficmanagerprofile_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ tmname }}"
+  register: fact
+
+- name: Assert fact returns empty
+  assert:
+    that:
+      - "fact.tms | length == 0"

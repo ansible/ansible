@@ -1,0 +1,56 @@
+---
+- debug: msg="START vyos cli/net_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: Run vyos lsmod command
+  vyos_command:
+    commands:
+      - lsmod
+  register: lsmod_out
+
+- name: Set up - delete interface
+  net_interface:
+    name: eth1
+    state: absent
+
+- name: Create interface using platform agnostic module
+  net_interface:
+    name: eth1
+    state: present
+    description: test-interface
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface''" in result.commands'
+
+- name: Configure interface params using platform agnostic module
+  net_interface:
+    name: eth1
+    state: present
+    description: test-interface-1
+    speed: 100
+    duplex: half
+    mtu: 256
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth1 description ''test-interface-1''" in result.commands'
+      - '"set interfaces ethernet eth1 speed 100" in result.commands'
+      - '"set interfaces ethernet eth1 duplex half" in result.commands'
+      - '"set interfaces ethernet eth1 mtu 256" in result.commands'
+  when: "'virtio_net' not in lsmod_out.stdout[0]"
+
+- name: teardown - delete interface
+  net_interface:
+    name: eth1
+    state: absent
+
+- debug: msg="END vyos cli/net_interface.yaml on connection={{ ansible_connection }}"

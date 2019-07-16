@@ -1,0 +1,39 @@
+{# avoids rST "isn't included in any toctree" errors for module docs #}
+:orphan:
+
+.. _@{ title.lower() + '_' + plugin_type + 's' }@:
+
+@{ title }@ @{ plugin_type + 's' }@
+@{ '`' * title | length }@````````
+
+{% if blurb %}
+@{ blurb }@
+
+{% endif %}
+
+{% if category['_modules'] %}
+
+{% for module in category['_modules'] | sort %}
+  * :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} 
+{% endfor %}
+{% endif %}
+
+{% for name, info in subcategories.items() | sort %}
+
+.. _@{ name.lower() + '_' + title.lower() + '_' + plugin_type + 's' }@:
+
+@{ name.title() }@
+@{ '-' * name | length }@
+
+
+
+{% for module in info['_modules'] | sort %}
+  * :ref:`@{ module }@_@{ plugin_type }@`{% if module_info[module]['deprecated'] %} **(D)**{% endif%} 
+{% endfor %}
+
+{% endfor %}
+
+.. note::
+    - **(D)**: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.
+      The module documentation details page may explain more about this rationale.
+

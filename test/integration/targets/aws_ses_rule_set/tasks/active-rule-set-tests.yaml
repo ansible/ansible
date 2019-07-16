@@ -1,0 +1,349 @@
+---
+# ============================================================
+# These tests all rely on making rule sets active. There can only be
+# a single active rule set so multiple builds must not run these tests
+# in parallel or they will fail intermittently.
+# See the locking block in main.yaml for how this restriction is enforced
+# ============================================================
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+# ============================================================
+- name: mark rule set active
+  block:
+    - name: create rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        <<: *aws_connection_info
+    - name: mark rule set active
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed to active
+      assert:
+        that:
+          - result.changed == True
+          - result.active == True
+    - name: remark rule set active
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is False
+      assert:
+        that:
+          - result.changed == False
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: create rule set active
+  block:
+    - name: create rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed to existing and active
+      assert:
+        that:
+          - result.changed == True
+          - result.active == True
+          - "default_rule_set in result.rule_sets|map(attribute='name')"
+    - name: remark rule set active
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is False
+      assert:
+        that:
+          - result.changed == False
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: mark rule set inactive
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: mark rule set inactive
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: False
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed to inactive
+      assert:
+        that:
+          - result.changed == True
+          - result.active == False
+    - name: remark rule set inactive
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: False
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is False
+      assert:
+        that:
+          - result.changed == False
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: Absent active flag does not change active status
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: recreate rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        <<: *aws_connection_info
+      register: result
+    - name: assert not changed and still active
+      assert:
+        that:
+          - result.changed == False
+          - result.active == True
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: Cannot Remove Active Rule Set
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: remove rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      failed_when: "result.error.code != 'CannotDelete'"
+    - name: assert error code is CannotDelete
+      assert:
+        that:
+          - "result.error.code == 'CannotDelete'"
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: Remove Active Rule Set with Force
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: force remove rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed and absent
+      assert:
+        that:
+          - result.changed == True
+          - "default_rule_set not in result.rule_sets|map(attribute='name')"
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: Force Remove of Inactive Rule Set does Not Affect Active Rule Set
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: create inactive rule set
+      aws_ses_rule_set:
+        name: "{{ second_rule_set }}"
+        active: False
+        <<: *aws_connection_info
+    - name: force remove inactiave rule set
+      aws_ses_rule_set:
+        name: "{{ second_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed and absent
+      assert:
+        that:
+          - result.changed == True
+          - "second_rule_set not in result.rule_sets|map(attribute='name')"
+    - name: remark active rule set active
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert no change
+      assert:
+        that:
+          - result.changed == False
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ item }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+      loop:
+        - "{{ default_rule_set }}"
+        - "{{ second_rule_set }}"
+
+# ============================================================
+- name: mark rule set inactive in check mode
+  block:
+    - name: create rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: mark rule set inactive in check mode
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: False
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+    - name: assert changed to inactive
+      assert:
+        that:
+          - result.changed == True
+          - result.active == False
+    - name: remark rule set inactive
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: False
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is True since previous inactive was in check mode
+      assert:
+        that:
+          - result.changed == True
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: Cannot Remove Active Rule Set in check mode
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: remove rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      failed_when: "result.error.code != 'CannotDelete'"
+      check_mode: True
+    - name: assert error code is CannotDelete
+      assert:
+        that:
+          - "result.error.code == 'CannotDelete'"
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+
+# ============================================================
+- name: Remove Active Rule Set with Force in check mode
+  block:
+    - name: create active rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        active: True
+        <<: *aws_connection_info
+    - name: force remove rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+    - name: assert changed and absent
+      assert:
+        that:
+          - result.changed == True
+          - "default_rule_set not in result.rule_sets|map(attribute='name')"
+  always:
+    - name: cleanup rule set
+      aws_ses_rule_set:
+        name: "{{ default_rule_set }}"
+        state: absent
+        force: True
+        <<: *aws_connection_info
+      register: result
+    - name: assert changed is True since previous removal was in check mode
+      assert:
+        that:
+          - result.changed == True

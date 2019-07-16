@@ -1,0 +1,64 @@
+# I dislike this but 2008 doesn't support the Win32_PowerPlan WMI provider
+- name: get current plan details
+  win_shell: |
+      $plan_info = powercfg.exe /list
+      ($plan_info | Select-String -Pattern '\(([\w\s]*)\) \*$').Matches.Groups[1].Value
+      ($plan_info | Select-String -Pattern '\(([\w\s]*)\)$').Matches.Groups[1].Value
+  register: plan_info
+
+- set_fact:
+    original_plan: '{{ plan_info.stdout_lines[0] }}'
+    name: '{{ plan_info.stdout_lines[1] }}'
+
+- block:
+  #Test that plan detects change is needed, but doesn't actually apply change
+  - name: set power plan (check mode)
+    win_power_plan:
+      name: "{{ name }}"
+    register: set_plan_check
+    check_mode: yes
+
+  - name: get result of set power plan (check mode)
+    win_shell: (powercfg.exe /list | Select-String -Pattern '\({{ name }}\)').Line
+    register: set_plan_check_result
+    changed_when: False
+
+  # verify that the powershell check is showing the plan as still inactive on the system
+  - name: assert setting plan (check mode)
+    assert:
+      that:
+      - set_plan_check is changed
+      - not set_plan_check_result.stdout_lines[0].endswith('*')
+
+  #Test that setting plan and that change is applied
+  - name: set power plan
+    win_power_plan:
+      name: "{{ name }}"
+    register: set_plan
+
+  - name: get result of set power plan
+    win_shell: (powercfg.exe /list | Select-String -Pattern '\({{ name }}\)').Line
+    register: set_plan_result
+    changed_when: False
+
+  - name: assert setting plan
+    assert:
+      that:
+      - set_plan is changed
+      - set_plan_result.stdout_lines[0].endswith('*')
+
+  #Test that plan doesn't apply change if it is already set
+  - name: set power plan (idempotent)
+    win_power_plan:
+      name: "{{ name }}"
+    register: set_plan_idempotent
+
+  - name: assert setting plan (idempotent)
+    assert:
+      that:
+      - set_plan_idempotent is not changed
+
+  always:
+  - name: always change back plan to the original when done testing
+    win_power_plan:
+      name: '{{ original_plan }}'

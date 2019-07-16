@@ -1,27 +1,87 @@
 # (c) 2016 Matt Clay <matt@mystile.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: junit
+    type: aggregate
+    short_description: write playbook output to a JUnit file.
+    version_added: historical
+    description:
+      - This callback writes playbook output to a JUnit formatted XML file.
+      - "Tasks show up in the report as follows:
+        'ok': pass
+        'failed' with 'EXPECTED FAILURE' in the task name: pass
+        'failed' with 'TOGGLE RESULT' in the task name: pass
+        'ok' with 'TOGGLE RESULT' in the task name: failure
+        'failed' due to an exception: error
+        'failed' for other reasons: failure
+        'skipped': skipped"
+    options:
+      output_dir:
+        name: JUnit output dir
+        default: ~/.ansible.log
+        description: Directory to write XML files to.
+        env:
+          - name: JUNIT_OUTPUT_DIR
+      task_class:
+        name: JUnit Task class
+        default: False
+        description: Configure the output to be one class per yaml file
+        env:
+          - name: JUNIT_TASK_CLASS
+      task_relative_path:
+        name: JUnit Task relative path
+        default: none
+        description: Configure the output to use relative paths to given directory
+        version_added: "2.8"
+        env:
+          - name: JUNIT_TASK_RELATIVE_PATH
+      fail_on_change:
+        name: JUnit fail on change
+        default: False
+        description: Consider any tasks reporting "changed" as a junit test failure
+        env:
+          - name: JUNIT_FAIL_ON_CHANGE
+      fail_on_ignore:
+        name: JUnit fail on ignore
+        default: False
+        description: Consider failed tasks as a junit test failure even if ignore_on_error is set
+        env:
+          - name: JUNIT_FAIL_ON_IGNORE
+      include_setup_tasks_in_report:
+        name: JUnit include setup tasks in report
+        default: True
+        description: Should the setup tasks be included in the final report
+        env:
+          - name: JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT
+      hide_task_arguments:
+        name: Hide the arguments for a task
+        default: False
+        description: Hide the arguments for a task
+        version_added: "2.8"
+        env:
+          - name: JUNIT_HIDE_TASK_ARGUMENTS
+      test_case_prefix:
+        name: Prefix to find actual test cases
+        default: <empty>
+        description: Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed test cases.
+        version_added: "2.8"
+        env:
+          - name: JUNIT_TEST_CASE_PREFIX
+    requirements:
+      - whitelist in configuration
+      - junit_xml (python lib)
+'''
+
 import os
 import time
+import re
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 
 try:
@@ -48,6 +108,8 @@ class CallbackModule(CallbackBase):
     Tasks show up in the report as follows:
         'ok': pass
         'failed' with 'EXPECTED FAILURE' in the task name: pass
+        'failed' with 'TOGGLE RESULT' in the task name: pass
+        'ok' with 'TOGGLE RESULT' in the task name: failure
         'failed' due to an exception: error
         'failed' for other reasons: failure
         'skipped': skipped
@@ -55,6 +117,21 @@ class CallbackModule(CallbackBase):
     This plugin makes use of the following environment variables:
         JUNIT_OUTPUT_DIR (optional): Directory to write XML files to.
                                      Default: ~/.ansible.log
+        JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
+                                     Default: False
+        JUNIT_TASK_RELATIVE_PATH (optional): Configure the output to use relative paths to given directory
+                                     Default: none
+        JUNIT_FAIL_ON_CHANGE (optional): Consider any tasks reporting "changed" as a junit test failure
+                                     Default: False
+        JUNIT_FAIL_ON_IGNORE (optional): Consider failed tasks as a junit test failure even if ignore_on_error is set
+                                     Default: False
+        JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT (optional): Should the setup tasks be included in the final report
+                                     Default: True
+        JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
+                                     Default: False
+        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
+                                     test cases.
+                                     Default: <empty>
 
     Requires:
         junit_xml
@@ -70,6 +147,13 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
+        self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
+        self._task_relative_path = os.getenv('JUNIT_TASK_RELATIVE_PATH', '')
+        self._fail_on_change = os.getenv('JUNIT_FAIL_ON_CHANGE', 'False').lower()
+        self._fail_on_ignore = os.getenv('JUNIT_FAIL_ON_IGNORE', 'False').lower()
+        self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
+        self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
+        self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -90,7 +174,7 @@ class CallbackModule(CallbackBase):
                                   'Disabling the `junit` callback plugin.')
 
         if not os.path.exists(self._output_dir):
-            os.mkdir(self._output_dir)
+            os.makedirs(self._output_dir)
 
     def _start_task(self, task):
         """ record the start of a task for one or more hosts """
@@ -103,13 +187,14 @@ class CallbackModule(CallbackBase):
         play = self._play_name
         name = task.get_name().strip()
         path = task.get_path()
+        action = task.action
 
-        if not task.no_log:
+        if not task.no_log and self._hide_task_arguments == 'false':
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
             if args:
                 name += ' ' + args
 
-        self._task_data[uuid] = TaskData(uuid, name, path, play)
+        self._task_data[uuid] = TaskData(uuid, name, path, play, action)
 
     def _finish_task(self, status, result):
         """ record the results of a task for a single host """
@@ -125,10 +210,20 @@ class CallbackModule(CallbackBase):
 
         task_data = self._task_data[task_uuid]
 
+        if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
+            status = 'failed'
+
+        # ignore failure if expected and toggle result if asked for
         if status == 'failed' and 'EXPECTED FAILURE' in task_data.name:
             status = 'ok'
+        elif 'TOGGLE RESULT' in task_data.name:
+            if status == 'failed':
+                status = 'ok'
+            elif status == 'ok':
+                status = 'failed'
 
-        task_data.add_host(HostData(host_uuid, host_name, status, result))
+        if task_data.name.startswith(self._test_case_prefix) or status == 'failed':
+            task_data.add_host(HostData(host_uuid, host_name, status, result))
 
     def _build_test_case(self, task_data, host_data):
         """ build a TestCase from the given TaskData and HostData """
@@ -136,17 +231,26 @@ class CallbackModule(CallbackBase):
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
+        if self._task_relative_path:
+            junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
+        else:
+            junit_classname = task_data.path
+
+        if self._task_class == 'true':
+            junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
+
         if host_data.status == 'included':
-            return TestCase(name, task_data.path, duration, host_data.result)
+            return TestCase(name, junit_classname, duration, host_data.result)
 
         res = host_data.result._result
         rc = res.get('rc', 0)
         dump = self._dump_results(res, indent=0)
+        dump = self._cleanse_string(dump)
 
         if host_data.status == 'ok':
-            return TestCase(name, task_data.path, duration, dump)
+            return TestCase(name, junit_classname, duration, dump)
 
-        test_case = TestCase(name, task_data.path, duration)
+        test_case = TestCase(name, junit_classname, duration)
 
         if host_data.status == 'failed':
             if 'exception' in res:
@@ -167,12 +271,19 @@ class CallbackModule(CallbackBase):
 
         return test_case
 
+    def _cleanse_string(self, value):
+        """ convert surrogate escapes to the unicode replacement character to avoid XML encoding errors """
+        return to_text(to_bytes(value, errors='surrogateescape'), errors='replace')
+
     def _generate_report(self):
         """ generate a TestSuite report from the collected TaskData and HostData """
 
         test_cases = []
 
         for task_uuid, task_data in self._task_data.items():
+            if task_data.action == 'setup' and self._include_setup_tasks_in_report == 'false':
+                continue
+
             for host_uuid, host_data in task_data.host_data.items():
                 test_cases.append(self._build_test_case(task_data, host_data))
 
@@ -204,7 +315,7 @@ class CallbackModule(CallbackBase):
         self._start_task(task)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if ignore_errors:
+        if ignore_errors and self._fail_on_ignore != 'true':
             self._finish_task('ok', result)
         else:
             self._finish_task('failed', result)
@@ -227,7 +338,7 @@ class TaskData:
     Data about an individual task.
     """
 
-    def __init__(self, uuid, name, path, play):
+    def __init__(self, uuid, name, path, play, action):
         self.uuid = uuid
         self.name = name
         self.path = path
@@ -235,6 +346,7 @@ class TaskData:
         self.start = None
         self.host_data = OrderedDict()
         self.start = time.time()
+        self.action = action
 
     def add_host(self, host):
         if host.uuid in self.host_data:

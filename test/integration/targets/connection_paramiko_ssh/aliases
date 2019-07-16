@@ -1,0 +1,4 @@
+needs/ssh
+shippable/posix/group3
+needs/target/setup_paramiko
+destructive  # potentially installs/uninstalls OS packages via setup_paramiko

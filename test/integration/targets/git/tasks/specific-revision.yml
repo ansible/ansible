@@ -1,0 +1,238 @@
+# Test that a specific revision can be checked out
+
+- name: SPECIFIC-REVISION | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: SPECIFIC-REVISION | clone to specific revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: df4612ba925fbc1b3c51cbb006f51a0443bd2ce9
+
+- name: SPECIFIC-REVISION | check HEAD after clone to revision
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "df4612ba925fbc1b3c51cbb006f51a0443bd2ce9"'
+
+- name: SPECIFIC-REVISION | update to specific revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: 4e739a34719654db7b04896966e2354e1256ea5d
+  register: git_result
+
+- assert:
+    that:
+      - git_result is changed
+
+- name: SPECIFIC-REVISION | check HEAD after update to revision
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "4e739a34719654db7b04896966e2354e1256ea5d"'
+
+- name: SPECIFIC-REVISION | update to HEAD from detached HEAD state
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: HEAD
+  register: git_result
+
+- assert:
+    that:
+      - git_result is changed
+
+# Test a revision not available under refs/heads/ or refs/tags/
+
+- name: SPECIFIC-REVISION | attempt to get unavailable revision
+  git:
+    repo: "{{ repo_dir }}/format1"
+    dest: "{{ checkout_dir }}"
+    version: 5473e343e33255f2da0b160f53135c56921d875c
+  ignore_errors: true
+  register: git_result
+
+- assert:
+    that:
+      - git_result is failed
+
+# Same as the previous test, but this time we specify which ref
+# contains the SHA1
+- name: SPECIFIC-REVISION | update to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 5473e343e33255f2da0b160f53135c56921d875c
+    refspec: refs/pull/7/merge
+
+- name: SPECIFIC-REVISION | check HEAD after update with refspec
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
+
+# try out combination of refspec and depth
+- name: SPECIFIC-REVISION | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | update to revision by specifying the refspec with depth=1
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: '{{ checkout_dir }}'
+    version: 5473e343e33255f2da0b160f53135c56921d875c
+    refspec: refs/pull/7/merge
+    depth: 1
+
+- name: SPECIFIC-REVISION | check HEAD after update with refspec
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
+
+- name: SPECIFIC-REVISION | try to access other commit
+  shell: git checkout 0ce1096
+  register: checkout_shallow
+  failed_when: False
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | "make sure the old commit was not fetched, task is 'forced success'"
+  assert:
+    that:
+      - checkout_shallow.rc != 0
+      - checkout_shallow is successful
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: SPECIFIC-REVISION | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | clone to revision by specifying the refspec
+  git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: "{{ checkout_dir }}"
+    version: 5473e343e33255f2da0b160f53135c56921d875c
+    refspec: refs/pull/7/merge
+
+- name: SPECIFIC-REVISION | check HEAD after update with refspec
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: git_result
+
+- assert:
+    that:
+      - 'git_result.stdout == "5473e343e33255f2da0b160f53135c56921d875c"'
+
+# Test that a forced shallow checkout referincing branch only always fetches latest head
+
+- name: SPECIFIC-REVISION | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - "{{ checkout_dir }}"
+    - "{{ checkout_dir }}.copy"
+
+- name: SPECIFIC-REVISION | create original repo dir
+  file:
+    state: directory
+    path: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | prepare origina repo
+  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | clone example repo locally
+  git:
+    repo: "{{ checkout_dir }}"
+    dest: "{{ checkout_dir }}.copy"
+
+- name: SPECIFIC-REVISION | create branch in original
+  command: git checkout -b test/branch
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | get commit for HEAD on new branch
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}.copy"
+  register: originaltip0
+
+- name: SPECIFIC-REVISION | shallow force checkout new branch in copy
+  git:
+    repo: "{{ checkout_dir }}"
+    dest: "{{ checkout_dir }}.copy"
+    version: test/branch
+    depth: 1
+    force: yes
+
+- name: SPECIFIC-REVISION | create new commit in original
+  shell: git init; echo "2" > b; git add b; git commit -m "2"
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: SPECIFIC-REVISION | get commit for new HEAD on original branch
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}"
+  register: originaltip1
+
+- name: SPECIFIC-REVISION | get commit for HEAD on new branch
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}.copy"
+  register: newtip
+
+- name: SPECIFIC-REVISION | assert that copy is still pointing at previous tip
+  assert:
+    that:
+      - newtip.stdout == originaltip0.stdout
+
+- name: SPECIFIC-REVISION | create a local modification in the copy
+  shell: echo "3" > c
+  args:
+    chdir: "{{ checkout_dir }}.copy"
+
+- name: SPECIFIC-REVISION | shallow force checkout new branch in copy (again)
+  git:
+    repo: "{{ checkout_dir }}"
+    dest: "{{ checkout_dir }}.copy"
+    version: test/branch
+    depth: 1
+    force: yes
+
+- name: SPECIFIC-REVISION | get commit for HEAD on new branch
+  command: git rev-parse HEAD
+  args:
+    chdir: "{{ checkout_dir }}.copy"
+  register: newtip
+
+- name: SPECIFIC-REVISION | make sure copy tip is not pointing at previous sha and that new tips match
+  assert:
+    that:
+      - newtip.stdout != originaltip0.stdout
+      - newtip.stdout == originaltip1.stdout

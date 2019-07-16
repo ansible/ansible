@@ -1,0 +1,240 @@
+---
+- name: Registering network name
+  set_fact:
+    nname_1: "{{ name_prefix ~ '-network-1' }}"
+- name: Registering network name
+  set_fact:
+    dnetworks: "{{ dnetworks + [nname_1] }}"
+
+####################################################################
+## internal ########################################################
+####################################################################
+
+- name: internal
+  docker_network:
+    name: "{{ nname_1 }}"
+    internal: yes
+  register: internal_1
+
+- name: internal (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    internal: yes
+  register: internal_2
+
+- name: internal (change)
+  docker_network:
+    name: "{{ nname_1 }}"
+    internal: no
+  register: internal_3
+
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - internal_1 is changed
+    - internal_2 is not changed
+    - internal_3 is changed
+
+####################################################################
+## driver_options ##################################################
+####################################################################
+
+- name: driver_options
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: 'false'
+  register: driver_options_1
+
+- name: driver_options (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: 'false'
+  register: driver_options_2
+
+- name: driver_options (idempotency with string translation)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: False
+  register: driver_options_3
+
+- name: driver_options (change)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: 'true'
+  register: driver_options_4
+
+- name: driver_options (idempotency with string translation)
+  docker_network:
+    name: "{{ nname_1 }}"
+    driver_options:
+      com.docker.network.bridge.enable_icc: True
+  register: driver_options_5
+
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - driver_options_1 is changed
+    - driver_options_2 is not changed
+    - driver_options_3 is not changed
+    - driver_options_4 is changed
+    - driver_options_5 is not changed
+
+####################################################################
+## scope ###########################################################
+####################################################################
+
+- block:
+  - name: scope
+    docker_network:
+      name: "{{ nname_1 }}"
+      driver: bridge
+      scope: local
+    register: scope_1
+
+  - name: scope (idempotency)
+    docker_network:
+      name: "{{ nname_1 }}"
+      driver: bridge
+      scope: local
+    register: scope_2
+
+  - name: swarm
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+
+  # Driver change alongside scope is intentional - bridge doesn't appear to support anything but local, and overlay can't downgrade to local. Additionally, overlay reports as swarm for swarm OR global, so no change is reported in that case.
+  # Test output indicates that the scope is altered, at least, so manual inspection will be required to verify this going forward, unless we come up with a test driver that supports multiple scopes.
+  - name: scope (change)
+    docker_network:
+      name: "{{ nname_1 }}"
+      driver: overlay
+      scope: swarm
+    register: scope_3
+
+  - name: cleanup network
+    docker_network:
+      name: "{{ nname_1 }}"
+      state: absent
+      force: yes
+
+  - assert:
+      that:
+      - scope_1 is changed
+      - scope_2 is not changed
+      - scope_3 is changed
+
+  always:
+  - name: cleanup swarm
+    docker_swarm:
+      state: absent
+      force: yes
+
+  # Requirements for docker_swarm
+  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.25', '>=')
+
+####################################################################
+## attachable ######################################################
+####################################################################
+
+- name: attachable
+  docker_network:
+    name: "{{ nname_1 }}"
+    attachable: true
+  register: attachable_1
+  ignore_errors: yes
+  
+- name: attachable (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    attachable: true
+  register: attachable_2
+  ignore_errors: yes
+  
+- name: attachable (change)
+  docker_network:
+    name: "{{ nname_1 }}"
+    attachable: false
+  register: attachable_3
+  ignore_errors: yes
+  
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - attachable_1 is changed
+    - attachable_2 is not changed
+    - attachable_3 is changed
+  when: docker_py_version is version('2.0.0', '>=')
+- assert:
+    that:
+    - attachable_1 is failed
+    - "('version is ' ~ docker_py_version ~ ' ') in attachable_1.msg"
+    - "'Minimum version required is 2.0.0 ' in attachable_1.msg"
+  when: docker_py_version is version('2.0.0', '<')
+
+####################################################################
+## labels ##########################################################
+####################################################################
+
+- name: labels
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.2: world
+  register: labels_1
+
+- name: labels (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.2: world
+      ansible.test.1: hello
+  register: labels_2
+
+- name: labels (less labels)
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.1: hello
+  register: labels_3
+
+- name: labels (more labels)
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.3: ansible
+  register: labels_4
+
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - labels_1 is changed
+    - labels_2 is not changed
+    - labels_3 is not changed
+    - labels_4 is changed

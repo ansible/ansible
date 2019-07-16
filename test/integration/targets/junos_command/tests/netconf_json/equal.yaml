@@ -1,0 +1,38 @@
+---
+- debug: msg="START netconf_json/equal.yaml on connection={{ ansible_connection }}"
+
+- name: test == operator with xml encoding
+  junos_command:
+    commands:
+      - show version
+      - show interfaces lo0
+    wait_for:
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] == lo0"
+    format: json
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- name: test eq operator with json encoding
+  junos_command:
+    commands:
+      - show version
+      - show interfaces lo0
+    wait_for:
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] eq lo0"
+    format: json
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- debug: msg="END netconf_json/equal.yaml on connection={{ ansible_connection }}"

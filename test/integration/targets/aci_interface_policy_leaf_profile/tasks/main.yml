@@ -1,0 +1,213 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Remove leaf profile
+  aci_interface_policy_leaf_profile: &interface_policy_leaf_profile_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    leaf_interface_profile: ansible_test
+    state: absent
+
+
+# ADD LEAF INTERFACE PROFILE
+- name: Add leaf interface profile (check_mode)
+  aci_interface_policy_leaf_profile: &interface_policy_leaf_profile_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    leaf_interface_profile: ansible_test
+    state: present
+  check_mode: yes
+  register: cm_add_leaf_interface_profile
+
+- name: Add leaf interface profile (normal mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_present
+  register: nm_add_leaf_interface_profile
+
+- name: Add leaf interface profile again (check_mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_present
+  check_mode: yes
+  register: cm_add_leaf_interface_profile_again
+
+- name: Add leaf interface profile again (normal mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_present
+  register: nm_add_leaf_interface_profile_again
+
+- name: Verify add_leaf_interface_profile
+  assert:
+    that:
+    - cm_add_leaf_interface_profile is changed
+    - nm_add_leaf_interface_profile is changed
+    - cm_add_leaf_interface_profile_again is not changed
+    - nm_add_leaf_interface_profile_again is not changed
+
+
+# CHANGE LEAF INTERFACE PROFILE
+- name: Change description of leaf interface profile (check_mode)
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_present
+    description: Ansible test leaf interface profile
+  check_mode: yes
+  register: cm_add_leaf_interface_profile_descr
+
+- name: Change description of leaf interface profile (normal mode)
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_present
+    description: Ansible test leaf interface profile
+  register: nm_add_leaf_interface_profile_descr
+
+- name: Change description of leaf interface profile again (check_mode)
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_present
+    description: Ansible test leaf interface profile
+  check_mode: yes
+  register: cm_add_leaf_interface_profile_descr_again
+
+- name: Change description of leaf interface profile again (normal mode)
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_present
+    description: Ansible test leaf interface profile
+  register: nm_add_leaf_interface_profile_descr_again
+
+- name: Verify add_leaf_interface_profile_descr
+  assert:
+    that:
+    - cm_add_leaf_interface_profile_descr is changed
+    - nm_add_leaf_interface_profile_descr is changed
+    - cm_add_leaf_interface_profile_descr_again is not changed
+    - nm_add_leaf_interface_profile_descr_again is not changed
+
+
+# ADD LEAF INTERFACE PROFILE AGAIN
+- name: Add leaf interface profile again with no description (check_mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_present
+  check_mode: yes
+  register: cm_add_leaf_interface_profile_again_no_descr
+
+- name: Add leaf interface profile again with no description (normal mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_present
+  register: nm_add_leaf_interface_profile_again_no_descr
+
+- name: Verify add_leaf_interface_profile_again_no_descr
+  assert:
+    that:
+    - cm_add_leaf_interface_profile_again_no_descr is not changed
+    - nm_add_leaf_interface_profile_again_no_descr is not changed
+
+
+# QUERY ALL LEAF INTERFACE PROFILES
+- name: Query all interface profiles (check_mode)
+  aci_interface_policy_leaf_profile: &interface_policy_leaf_profile_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_leaf_interface_profiles
+
+- name: Query all leaf_interface_profiles (normal mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_query
+  register: nm_query_all_leaf_interface_profiles
+
+- name: Verify query_all_leaf_interface_profiles
+  assert:
+    that:
+    - cm_query_all_leaf_interface_profiles is not changed
+    - nm_query_all_leaf_interface_profiles is not changed
+    # NOTE: Order of leaf_interface_profiles is not stable between calls
+    #- cm_query_all_leaf_interface_profiles == nm_query_all_leaf_interface_profiles
+
+
+# QUERY A LEAF INTERFACE PROFILE
+- name: Query our leaf_interface_profile
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_query
+    leaf_interface_profile: ansible_test
+  check_mode: yes
+  register: cm_query_leaf_interface_profile
+
+- name: Query our leaf_interface_profile
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_query
+    leaf_interface_profile: ansible_test
+  register: nm_query_leaf_interface_profile
+
+- name: Verify query_leaf_interface_profile
+  assert:
+    that:
+    - cm_query_leaf_interface_profile is not changed
+    - nm_query_leaf_interface_profile is not changed
+    - cm_query_leaf_interface_profile == nm_query_leaf_interface_profile
+
+
+# REMOVE LEAF INTERFACE PROFILE
+- name: Remove leaf_interface_profile (check_mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_absent
+  check_mode: yes
+  register: cm_remove_leaf_interface_profile
+
+- name: Remove leaf_interface_profile (normal mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_absent
+  register: nm_remove_leaf_interface_profile
+
+- name: Remove leaf_interface_profile again (check_mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_absent
+  check_mode: yes
+  register: cm_remove_leaf_interface_profile_again
+
+- name: Remove leaf_interface_profile again (normal mode)
+  aci_interface_policy_leaf_profile: *interface_policy_leaf_profile_absent
+  register: nm_remove_leaf_interface_profile_again
+
+- name: Verify remove_leaf_interface_profile
+  assert:
+    that:
+    - cm_remove_leaf_interface_profile is changed
+    - nm_remove_leaf_interface_profile is changed
+    - cm_remove_leaf_interface_profile_again is not changed
+    - nm_remove_leaf_interface_profile_again is not changed
+
+
+# QUERY NON-EXISTING LEAF INTERFACE PROFILE
+- name: Query non-existing leaf_interface_profile (check_mode)
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_query
+    leaf_interface_profile: ansible_test
+  check_mode: yes
+  register: cm_query_non_leaf_interface_profile
+
+- name: Query non-existing leaf_interface_profile (normal mode)
+  aci_interface_policy_leaf_profile:
+    <<: *interface_policy_leaf_profile_query
+    leaf_interface_profile: ansible_test
+  register: nm_query_non_leaf_interface_profile
+
+# TODO: Implement more tests
+- name: Verify query_non_leaf_interface_profile
+  assert:
+    that:
+    - cm_query_non_leaf_interface_profile is not changed
+    - nm_query_non_leaf_interface_profile is not changed
+    - cm_query_non_leaf_interface_profile == nm_query_non_leaf_interface_profile

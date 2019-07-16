@@ -1,0 +1,17 @@
+a: 999
+b: 998
+c: 997
+d: 996
+uno: 1
+dos: 2
+tres: 3
+etest: 'from group_vars'
+inventory_beats_default: 'narf'
+# variables used for hash merging behavior testing
+test_hash:
+  group_vars_all: "this is in group_vars/all"
+# variables used for conditional testing
+test_bare: true
+test_bare_var: 123
+test_bare_nested_good: "test_bare_var == 123"
+test_bare_nested_bad: "{{test_bare_var}} == 321"

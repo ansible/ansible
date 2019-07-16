@@ -1,0 +1,164 @@
+- name: disable the ansible test service
+  service: name=ansible_test enabled=no
+
+- name: (check mode run) enable the ansible test service
+  service: name=ansible_test enabled=yes
+  register: enable_in_check_mode_result
+  check_mode: yes
+
+- name: assert that changes reported for check mode run
+  assert:
+    that:
+      - "enable_in_check_mode_result is changed"
+
+- name: enable the ansible test service
+  service: name=ansible_test enabled=yes
+  register: enable_result
+
+- name: assert that the service was enabled and changes reported
+  assert:
+    that:
+      - "enable_result.enabled == true"
+      - "enable_result is changed"
+
+- name: start the ansible test service
+  service: name=ansible_test state=started
+  register: start_result
+
+- name: assert that the service was started
+  assert:
+    that:
+      - "start_result.state == 'started'"
+      - "start_result is changed"
+
+- name: check that the service was started
+  shell: 'cat /proc/$(cat /var/run/ansible_test_service.pid)/cmdline'
+  register: cmdline
+  failed_when: cmdline is failed or '\0/usr/sbin/ansible_test_service\0' not in cmdline.stdout
+
+- name: find the service with a pattern
+  service: name=ansible_test pattern="ansible_test_ser" state=started
+  register: start2_result
+
+- name: assert that the service was started via the pattern
+  assert:
+    that:
+      - "start2_result.name == 'ansible_test'"
+      - "start2_result.state == 'started'"
+      - "start2_result is not changed"
+
+- name: fetch PID for ansible_test service (before restart)
+  command: 'cat /var/run/ansible_test_service.pid'
+  register: pid_before_restart
+
+- name: restart the ansible test service
+  service: name=ansible_test state=restarted
+  register: restart_result
+
+- name: assert that the service was restarted
+  assert:
+    that:
+      - "restart_result.state == 'started'"
+      - "restart_result is changed"
+
+- name: fetch PID for ansible_test service (after restart)
+  command: 'cat /var/run/ansible_test_service.pid'
+  register: pid_after_restart
+
+- name: "check that PIDs aren't the same"
+  fail:
+  when: pid_before_restart.stdout == pid_after_restart.stdout
+
+- name: check that service is started
+  command: 'cat /proc/{{ pid_after_restart.stdout }}/cmdline'
+  register: cmdline
+  failed_when: cmdline is failed or '\0/usr/sbin/ansible_test_service\0' not in cmdline.stdout
+
+- name: restart the ansible test service with a sleep
+  service: name=ansible_test state=restarted sleep=2
+  register: restart_sleep_result
+
+- name: assert that the service was restarted with a sleep
+  assert:
+    that:
+      - "restart_sleep_result.state == 'started'"
+      - "restart_sleep_result is changed"
+
+- name: reload the ansible test service
+  service: name=ansible_test state=reloaded
+  register: reload_result
+  # don't do this on systems with systemd because it triggers error:
+  #   Unable to reload service ansible_test: ansible_test.service is not active, cannot reload.
+  when: service_type != "systemd"
+
+- name: assert that the service was reloaded
+  assert:
+    that:
+      - "reload_result.state == 'started'"
+      - "reload_result is changed"
+  when: service_type != "systemd"
+
+- name: "test for #42786 (sysvinit)"
+  when: service_type == "sysv"
+  block:
+    - name: "sysvinit (#42786): check state, 'enable' parameter isn't set"
+      service: use=sysvinit name=ansible_test state=started
+
+    - name: "sysvinit (#42786): check that service is still enabled"
+      service: use=sysvinit name=ansible_test enabled=yes
+      register: result_enabled
+      failed_when: result_enabled is changed
+
+- name: fetch PID for ansible_test service
+  command: 'cat /var/run/ansible_test_service.pid'
+  register: ansible_test_pid
+
+- name: check that service is started
+  command: 'cat /proc/{{ ansible_test_pid.stdout }}/cmdline'
+  register: cmdline
+  failed_when: cmdline is failed or '\0/usr/sbin/ansible_test_service\0' not in cmdline.stdout
+
+- name: stop the ansible test service
+  service: name=ansible_test state=stopped
+  register: stop_result
+
+- name: check that the service is stopped
+  command: 'cat /proc/{{ ansible_test_pid.stdout }}/cmdline'
+  register: cmdline
+  failed_when: cmdline is not failed or '\0/usr/sbin/ansible_test_service\0' in cmdline.stdout
+
+- name: assert that the service was stopped
+  assert:
+    that:
+      - "stop_result.state == 'stopped'"
+      - "stop_result is changed"
+
+- name: disable the ansible test service
+  service: name=ansible_test enabled=no
+  register: disable_result
+
+- name: assert that the service was disabled
+  assert:
+    that:
+      - "disable_result.enabled == false"
+      - "disable_result is changed"
+
+- name: try to enable a broken service
+  service: name=ansible_broken_test enabled=yes
+  register: broken_enable_result
+  ignore_errors: True
+
+- name: assert that the broken test failed
+  assert:
+    that:
+      - "broken_enable_result is failed"
+
+- name: remove the test daemon script
+  file: path=/usr/sbin/ansible_test_service state=absent
+  register: remove_result
+
+- name: assert that the test daemon script was removed
+  assert:
+    that:
+      - "remove_result.path == '/usr/sbin/ansible_test_service'"
+      - "remove_result.state == 'absent'"

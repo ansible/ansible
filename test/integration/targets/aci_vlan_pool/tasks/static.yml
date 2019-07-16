@@ -1,0 +1,296 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# CLEAN ENVIRONMENT
+- name: Remove static vlan pool
+  aci_vlan_pool: &static_vlan_pool_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    pool: anstest
+    pool_allocation_mode: static
+    state: absent
+
+
+# ADD VLAN POOL
+- name: Add static vlan pool (check_mode)
+  aci_vlan_pool: &static_vlan_pool_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    pool: anstest
+    pool_allocation_mode: static
+    state: present
+  check_mode: yes
+  register: cm_add_static_vlan_pool
+
+- name: Add static vlan pool (normal mode)
+  aci_vlan_pool: *static_vlan_pool_present
+  register: nm_add_static_vlan_pool
+
+- name: Verify add_static_vlan_pool
+  assert:
+    that:
+    - cm_add_static_vlan_pool is changed
+    - nm_add_static_vlan_pool is changed
+    - 'cm_add_static_vlan_pool.sent == nm_add_static_vlan_pool.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "name": "anstest"}}}'
+    - 'cm_add_static_vlan_pool.proposed == nm_add_static_vlan_pool.proposed == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "name": "anstest"}}}'
+    - cm_add_static_vlan_pool.previous == nm_add_static_vlan_pool.previous == []
+    # NOTE: We cannot fix this easily
+    - cm_add_static_vlan_pool.current == []
+    - nm_add_static_vlan_pool.current.0.fvnsVlanInstP.attributes.allocMode == 'static'
+    - nm_add_static_vlan_pool.current.0.fvnsVlanInstP.attributes.descr == ''
+    - nm_add_static_vlan_pool.current.0.fvnsVlanInstP.attributes.dn == 'uni/infra/vlanns-[anstest]-static'
+    - nm_add_static_vlan_pool.current.0.fvnsVlanInstP.attributes.name == 'anstest'
+
+- name: Add static_vlan_pool again (check_mode)
+  aci_vlan_pool: *static_vlan_pool_present
+  check_mode: yes
+  register: cm_add_static_vlan_pool_again
+
+- name: Add static vlan pool again (normal mode)
+  aci_vlan_pool: *static_vlan_pool_present
+  register: nm_add_static_vlan_pool_again
+
+- name: Verify add_static_vlan_pool_again
+  assert:
+    that:
+    - cm_add_static_vlan_pool_again is not changed
+    - nm_add_static_vlan_pool_again is not changed
+    - cm_add_static_vlan_pool_again.current == nm_add_static_vlan_pool_again.current == nm_add_static_vlan_pool.current
+
+
+# CHANGE VLAN POOL
+- name: Change description of static vlan pool (check_mode)
+  aci_vlan_pool:
+    <<: *static_vlan_pool_present
+    description: Ansible test static vlan pool
+  check_mode: yes
+  register: cm_add_static_vlan_pool_descr
+
+- name: Change description of static vlan pool (normal mode)
+  aci_vlan_pool:
+    <<: *static_vlan_pool_present
+    description: Ansible test static vlan pool
+  register: nm_add_static_vlan_pool_descr
+
+- name: Verify add_static_vlan_pool_descr
+  assert:
+    that:
+    - cm_add_static_vlan_pool_descr is changed
+    - nm_add_static_vlan_pool_descr is changed
+    - 'cm_add_static_vlan_pool_descr.sent == nm_add_static_vlan_pool_descr.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible test static vlan pool"}}}'
+    - 'cm_add_static_vlan_pool_descr.proposed == nm_add_static_vlan_pool_descr.proposed == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible test static vlan pool", "name": "anstest"}}}'
+    - cm_add_static_vlan_pool_descr.previous == nm_add_static_vlan_pool_descr.previous == cm_add_static_vlan_pool_descr.current == nm_add_static_vlan_pool.current
+    - nm_add_static_vlan_pool_descr.current.0.fvnsVlanInstP.attributes.allocMode == 'static'
+    - nm_add_static_vlan_pool_descr.current.0.fvnsVlanInstP.attributes.descr == 'Ansible test static vlan pool'
+    - nm_add_static_vlan_pool_descr.current.0.fvnsVlanInstP.attributes.dn == 'uni/infra/vlanns-[anstest]-static'
+    - nm_add_static_vlan_pool_descr.current.0.fvnsVlanInstP.attributes.name == 'anstest'
+
+- name: Change description of static vlan pool again (check_mode)
+  aci_vlan_pool:
+    <<: *static_vlan_pool_present
+    description: Ansible test static vlan pool
+  check_mode: yes
+  register: cm_add_static_vlan_pool_descr_again
+
+- name: Change description of static vlan pool again (normal mode)
+  aci_vlan_pool:
+    <<: *static_vlan_pool_present
+    description: Ansible test static vlan pool
+  register: nm_add_static_vlan_pool_descr_again
+
+- name: Verify add_static_vlan_pool_descr_again
+  assert:
+    that:
+    - cm_add_static_vlan_pool_descr_again is not changed
+    - nm_add_static_vlan_pool_descr_again is not changed
+    - cm_add_static_vlan_pool_descr_again.current == nm_add_static_vlan_pool_descr_again.current == nm_add_static_vlan_pool_descr.current
+
+
+# ADD VLAN POOL AGAIN
+- name: Add static vlan pool again with no description (check_mode)
+  aci_vlan_pool: *static_vlan_pool_present
+  check_mode: yes
+  register: cm_add_static_vlan_pool_again_no_descr
+
+- name: Add static vlan pool again with no description (normal mode)
+  aci_vlan_pool: *static_vlan_pool_present
+  register: nm_add_static_vlan_pool_again_no_descr
+
+- name: Verify add_static_vlan_pool_again_no_descr
+  assert:
+    that:
+    - cm_add_static_vlan_pool_again_no_descr is not changed
+    - nm_add_static_vlan_pool_again_no_descr is not changed
+    - cm_add_static_vlan_pool_again_no_descr.current == nm_add_static_vlan_pool_again_no_descr.current == nm_add_static_vlan_pool_descr.current
+
+
+# QUERY ALL VLAN POOLS
+- name: Query all static vlan pools (check_mode)
+  aci_vlan_pool: &static_vlan_pool_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_static_vlan_pools
+
+- name: Query all static vlan pools (normal mode)
+  aci_vlan_pool: *static_vlan_pool_query
+  register: nm_query_all_static_vlan_pools
+
+- name: Verify query_all_static_vlan_pools
+  assert:
+    that:
+    - cm_query_all_static_vlan_pools is not changed
+    - nm_query_all_static_vlan_pools is not changed
+    - cm_query_all_static_vlan_pools == nm_query_all_static_vlan_pools
+    - cm_query_all_static_vlan_pools.current|length >= 1
+
+
+# QUERY A VLAN POOL
+- name: Query our static vlan pool
+  aci_vlan_pool:
+    <<: *static_vlan_pool_query
+    pool: anstest
+    pool_allocation_mode: static
+  check_mode: yes
+  register: cm_query_static_vlan_pool
+
+- name: Query our static vlan pool
+  aci_vlan_pool:
+    <<: *static_vlan_pool_query
+    pool: anstest
+    pool_allocation_mode: static
+  register: nm_query_static_vlan_pool
+
+- name: Verify query_static_vlan_pool
+  assert:
+    that:
+    - cm_query_static_vlan_pool is not changed
+    - nm_query_static_vlan_pool is not changed
+    - cm_query_static_vlan_pool == nm_query_static_vlan_pool
+    - nm_query_static_vlan_pool.current.0.fvnsVlanInstP.attributes.allocMode == 'static'
+    - nm_query_static_vlan_pool.current.0.fvnsVlanInstP.attributes.descr == 'Ansible test static vlan pool'
+    - nm_query_static_vlan_pool.current.0.fvnsVlanInstP.attributes.dn == 'uni/infra/vlanns-[anstest]-static'
+    - nm_query_static_vlan_pool.current.0.fvnsVlanInstP.attributes.name == 'anstest'
+
+
+# REMOVE VLAN POOL
+- name: Remove static vlan pool (check_mode)
+  aci_vlan_pool: *static_vlan_pool_absent
+  check_mode: yes
+  register: cm_remove_static_vlan_pool
+
+- name: Remove static vlan pool (normal mode)
+  aci_vlan_pool: *static_vlan_pool_absent
+  register: nm_remove_static_vlan_pool
+
+- name: Verify remove_static_vlan_pool
+  assert:
+    that:
+    - cm_remove_static_vlan_pool is changed
+    - nm_remove_static_vlan_pool is changed
+    - 'cm_remove_static_vlan_pool.current == cm_remove_static_vlan_pool.previous == nm_remove_static_vlan_pool.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible test static vlan pool", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+    - nm_remove_static_vlan_pool.current == []
+
+- name: Remove static vlan pool again (check_mode)
+  aci_vlan_pool: *static_vlan_pool_absent
+  check_mode: yes
+  register: cm_remove_static_vlan_pool_again
+
+- name: Remove static vlan pool again (normal mode)
+  aci_vlan_pool: *static_vlan_pool_absent
+  register: nm_remove_static_vlan_pool_again
+
+- name: Verify remove_static_vlan_pool_again
+  assert:
+    that:
+    - cm_remove_static_vlan_pool_again is not changed
+    - nm_remove_static_vlan_pool_again is not changed
+    - cm_remove_static_vlan_pool_again.proposed == nm_remove_static_vlan_pool_again.proposed == {}
+    - cm_remove_static_vlan_pool_again.sent == nm_remove_static_vlan_pool_again.sent == {}
+    - cm_remove_static_vlan_pool_again.previous == nm_remove_static_vlan_pool_again.previous == []
+    - cm_remove_static_vlan_pool_again.current == nm_remove_static_vlan_pool_again.current == []
+
+
+# QUERY NON-EXISTING VLAN POOL
+- name: Query non-existing static vlan pool (check_mode)
+  aci_vlan_pool:
+    <<: *static_vlan_pool_query
+    pool: anstest
+    pool_allocation_mode: static
+  check_mode: yes
+  register: cm_query_non_static_vlan_pool
+
+- name: Query non-existing static vlan pool (normal mode)
+  aci_vlan_pool:
+    <<: *static_vlan_pool_query
+    pool: anstest
+    pool_allocation_mode: static
+  register: nm_query_non_static_vlan_pool
+
+# TODO: Implement more tests
+- name: Verify query_non_static_vlan_pool
+  assert:
+    that:
+    - cm_query_non_static_vlan_pool is not changed
+    - nm_query_non_static_vlan_pool is not changed
+    - cm_remove_static_vlan_pool_again.previous == nm_remove_static_vlan_pool_again.previous == []
+    - cm_remove_static_vlan_pool_again.current == nm_remove_static_vlan_pool_again.current == []
+
+
+# PROVOKE ERRORS
+- name: Error when required parameter is missing
+  aci_vlan_pool:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: present
+  ignore_errors: yes
+  register: error_on_missing_required_param
+
+- name: Verify error_on_missing_required_param
+  assert:
+    that:
+    - error_on_missing_required_param is failed
+    - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: pool"'
+
+- name: Error when together parameter is missing
+  aci_vlan_pool:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    pool: anstest
+    state: present
+  ignore_errors: yes
+  register: error_on_missing_together_param
+
+- name: Verify error_on_missing_together_param
+  assert:
+    that:
+    - error_on_missing_together_param is failed
+    - error_on_missing_together_param.msg == "ACI requires the 'pool_allocation_mode' when 'pool' is provided"

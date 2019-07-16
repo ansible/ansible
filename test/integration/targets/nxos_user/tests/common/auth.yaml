@@ -1,0 +1,36 @@
+---
+- block:
+  - name: Create user with password
+    nxos_user:
+      name: auth_user
+      role: network-operator
+      provider: "{{ connection }}"
+      state: present
+      configured_password: pasS!123
+
+  - name: test login
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=no show version"
+      responses:
+        (?i)password: "pasS!123"
+
+  - name: test login with invalid password (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=no show version"
+      responses:
+        (?i)password: "badpass"
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  always:
+  - name: delete user
+    nxos_user:
+      name: auth_user
+      provider: "{{ connection }}"
+      state: absent
+    register: result

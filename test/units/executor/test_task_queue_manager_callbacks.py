@@ -18,11 +18,14 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
+from units.compat import unittest
+from units.compat.mock import MagicMock
+
+from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.plugins.callback import CallbackBase
+from ansible.utils import context_objects as co
 
 __metaclass__ = type
 
@@ -32,10 +35,11 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
         inventory = MagicMock()
         variable_manager = MagicMock()
         loader = MagicMock()
-        options = MagicMock()
         passwords = []
 
-        self._tqm = TaskQueueManager(inventory, variable_manager, loader, options, passwords)
+        # Reset the stored command line args
+        co.GlobalCLIArgs._Singleton__instance = None
+        self._tqm = TaskQueueManager(inventory, variable_manager, loader, passwords)
         self._playbook = Playbook(loader)
 
         # we use a MagicMock to register the result of the call we
@@ -46,31 +50,8 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
         self._register = MagicMock()
 
     def tearDown(self):
-        pass
-
-    def test_task_queue_manager_callbacks_v2_playbook_on_start_legacy(self):
-        """
-        Assert that no exceptions are raised when sending a Playbook
-        start callback to a legacy callback module plugin.
-        """
-        register = self._register
-
-        class LegacyCallbackModule(CallbackBase):
-            """
-            This is a callback module with the legacy
-            method signature for `v2_playbook_on_start`.
-            """
-            CALLBACK_VERSION = 2.0
-            CALLBACK_TYPE = 'notification'
-            CALLBACK_NAME = 'legacy_module'
-
-            def v2_playbook_on_start(self):
-                register(self)
-
-        callback_module = LegacyCallbackModule()
-        self._tqm._callback_plugins.append(callback_module)
-        self._tqm.send_callback('v2_playbook_on_start', self._playbook)
-        register.assert_called_once_with(callback_module)
+        # Reset the stored command line args
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start(self):
         """

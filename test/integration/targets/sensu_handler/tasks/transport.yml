@@ -1,0 +1,51 @@
+- name: Configuring a handler with missing transport parameters should fail
+  sensu_handler:
+    name: "transport"
+    type: "transport"
+  register: failure
+  ignore_errors: true
+
+- name: Assert that configuring a handler with missing transport parameters fails
+  assert:
+    that:
+      - failure is failed
+      - "'the following are missing: pipe' in failure['msg']"
+
+- name: Configure a transport handler
+  sensu_handler:
+    name: "transport"
+    type: "transport"
+    pipe:
+      type: "topic"
+      name: "transport_handler"
+  register: handler
+
+- name: Retrieve configuration file
+  slurp:
+    src: "{{ handler['file'] }}"
+  register: handler_config
+
+- name: Validate transport handler return data
+  assert:
+    that:
+      - "handler is successful"
+      - "handler is changed"
+      - "handler['name'] == 'transport'"
+      - "handler['file'] == '/etc/sensu/conf.d/handlers/transport.json'"
+      - "handler['config']['type'] == 'transport'"
+      - "handler['config']['pipe']['type'] == 'topic'"
+      - "handler['config']['pipe']['name'] == 'transport_handler'"
+      - "handler['config']['handle_flapping'] == false"
+      - "handler['config']['handle_silenced'] == false"
+
+- name: Assert that the handler configuration file is actually configured properly
+  vars:
+    config: "{{ handler_config.content | b64decode | from_json }}"
+  assert:
+    that:
+      - "'transport' in config['handlers']"
+      - "config['handlers']['transport']['type'] == 'transport'"
+      - "config['handlers']['transport']['pipe']['type'] == 'topic'"
+      - "config['handlers']['transport']['pipe']['name'] == 'transport_handler'"
+      - "config['handlers']['transport']['handle_flapping'] == false"
+      - "config['handlers']['transport']['handle_silenced'] == false"

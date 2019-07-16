@@ -1,27 +1,26 @@
 # (c) 2012-2014, Ansible, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    callback: tree
+    callback_type: notification
+    requirements:
+      - invoked in the command line
+    short_description: Save host events to files
+    version_added: "2.0"
+    description:
+        - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
+        - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
+'''
+
 import os
 
 from ansible.constants import TREE_DIR
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe
 
@@ -54,7 +53,7 @@ class CallbackModule(CallbackBase):
             with open(path, 'wb+') as fd:
                 fd.write(buf)
         except (OSError, IOError) as e:
-            self._display.warning("Unable to write to %s's file: %s" % (hostname, str(e)))
+            self._display.warning(u"Unable to write to %s's file: %s" % (hostname, to_text(e)))
 
     def result_to_tree(self, result):
         if self.tree:

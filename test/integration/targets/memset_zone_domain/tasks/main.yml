@@ -1,0 +1,143 @@
+---
+- name: create domain with invalid API key
+  memset_zone_domain:
+    api_key: "wa9aerahhie0eekee9iaphoorovooyia"
+    state: present
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  ignore_errors: true
+  register: result
+
+- name: check API response with invalid API key
+  assert:
+    that:
+      - "'Memset API returned a 403 response (ApiErrorForbidden, Bad api_key)' in result.msg"
+      - result is not successful
+
+- name: create domain over 250 chars
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: present
+    domain: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com'
+    zone: "{{ target_zone }}"
+  ignore_errors: true
+  register: result
+
+- name: test domain length is validated
+  assert:
+    that:
+      - result is failed
+      - "'Zone domain must be less than 250 characters in length' in result.stderr"
+
+- name: create domain in non-existent zone
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: present
+    domain: "{{ test_domain }}"
+    zone: "non-existent-zone"
+  ignore_errors: true
+  register: result
+
+- name: fail if zone does not exist
+  assert:
+    that:
+      - result is failed
+      - "'does not exist, cannot create domain.' in result.stderr"
+
+- name: create domain in non-unique zone
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: present
+    domain: "{{ test_domain }}"
+    zone: "{{ duplicate_zone }}"
+  ignore_errors: true
+  register: result
+
+- name: fail if the zone is not unique
+  assert:
+    that:
+      - result is failed
+      - "'matches multiple zones, cannot create domain' in result.stderr"
+
+- name: test creating domain
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: present
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  check_mode: true
+  register: result
+
+- name: create domain with check mode
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: create domain
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: present
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  register: result
+
+- name: create domain
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: create existing domain
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: present
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  register: result
+
+- name: create existing domain
+  assert:
+    that:
+      - result is not changed
+
+- name: test deleting domain
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: absent
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  check_mode: true
+  register: result
+
+- name: delete domain with check mode
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: delete domain
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: absent
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  register: result
+
+- name: delete domain
+  assert:
+    that:
+      - result is changed
+
+- name: delete non-existent domain
+  memset_zone_domain:
+    api_key: "{{ api_key }}"
+    state: absent
+    domain: "{{ test_domain }}"
+    zone: "{{ target_zone }}"
+  register: result
+
+- name: delete absent domain
+  assert:
+    that:
+      - result is not changed

@@ -1,0 +1,277 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Check Mode - Create a mariadb instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: mariadb
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: result
+        check_mode: yes
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Create a mariadb instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: mariadb
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.db_instance_identifier == '{{ instance_id }}'"
+
+      - name: Idempotence
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: present
+          engine: mariadb
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+            - result.db_instance_identifier
+
+      - name: Idempotence with minimal options
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: present
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+            - result.db_instance_identifier
+
+      - name: Check Mode - stop the instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: stopped
+          <<: *aws_connection_info
+        register: result
+        check_mode: yes
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Stop the instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: stopped
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Check Mode - idempotence
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: stopped
+          <<: *aws_connection_info
+        register: result
+        check_mode: yes
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: Idempotence
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: stopped
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: Check mode - reboot a stopped instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: rebooted
+          <<: *aws_connection_info
+        register: result
+        check_mode: yes
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Reboot a stopped instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: rebooted
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: Check Mode - start the instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: started
+          <<: *aws_connection_info
+        register: result
+        check_mode: yes
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: Stop the instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: stopped
+          <<: *aws_connection_info
+
+      - name: Start the instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: started
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: take a snapshot
+        rds_snapshot:
+          db_instance_identifier: '{{ instance_id }}'
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: present
+          wait: yes
+          <<: *aws_connection_info
+
+      - name: take a snapshot - idempotence
+        rds_snapshot:
+          db_instance_identifier: '{{ instance_id }}'
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: present
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: check snapshot is ok
+        rds_snapshot_info:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - (result.snapshots | length) == 1
+
+      - name: remove a snapshot without wait
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+
+      - name: remove a snapshot without wait - idempotence
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          wait: yes
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: remove a snapshot with wait - idempotence
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          wait: yes
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: check snapshot is removed
+        rds_snapshot_info:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.snapshots
+
+    always:
+
+      - name: remove snapshot
+        rds_snapshot:
+          db_snapshot_identifier: '{{ resource_prefix }}-test-snapshot'
+          state: absent
+          wait: yes
+          <<: *aws_connection_info
+        ignore_errors: yes
+
+      - name: Remove DB instance
+        rds_instance:
+          id: '{{ instance_id }}'
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        ignore_errors: yes

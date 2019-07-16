@@ -1,0 +1,116 @@
+---
+- name: create random string
+  set_fact:
+    zone_name: "{{ 65535 | random | string }}.ansible.example.com"
+
+- name: create zone with incorrect API key
+  memset_zone:
+    api_key: "wa9aerahhie0eekee9iaphoorovooyia"
+    state: present
+    name: "{{ zone_name }}"
+    ttl: 300
+  ignore_errors: true
+  register: result
+
+- name: check API response with invalid API key
+  assert:
+    that:
+      - "'Memset API returned a 403 response (ApiErrorForbidden, Bad api_key)' in result.msg"
+      - result is not successful
+
+- name: test creating zone
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: present
+    name: "{{ zone_name }}"
+    ttl: 300
+  check_mode: true
+  register: result
+
+- name: check if the zone would be created
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: create zone
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: present
+    name: "{{ zone_name }}"
+    ttl: 300
+  register: result
+
+- name: create the zone
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: create duplicate zone
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: present
+    name: "{{ zone_name }}"
+    ttl: 300
+  register: result
+
+- name: ensure we can't create duplicate zones
+  assert:
+    that:
+      - result is not changed
+
+- name: test deleting zone
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: absent
+    name: "{{ zone_name }}"
+  check_mode: true
+  register: result
+
+- name: check if the zone would be deleted
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: delete empty zone
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: absent
+    name: "{{ zone_name }}"
+    force: false
+  register: result
+
+- name: delete the zone
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: create zone for deletion test
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: present
+    name: "{{ zone_name }}"
+  register: result
+
+- name: ensure we can't create duplicate zones
+  assert:
+    that:
+      - result is changed
+      - result is successful
+
+- name: delete zone with force
+  memset_zone:
+    api_key: "{{ api_key }}"
+    state: absent
+    name: "{{ zone_name }}"
+    force: true
+  register: result
+
+- name: ensure force is respected
+  assert:
+    that:
+      - result is changed
+      - result is successful

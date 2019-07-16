@@ -1,0 +1,28 @@
+---
+- debug:
+    msg: "START cli/cli_command.yaml on connection={{ ansible_connection }}"
+
+- block:
+  - name: get output for single command
+    cli_command:
+      command: show version
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.stdout is defined"
+
+  - name: send invalid command
+    cli_command:
+      command: 'show foo'
+    register: result
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - "result.failed == true"
+        - "result.msg is defined"
+  when: "ansible_connection == 'network_cli'"
+
+- debug: msg="END cli/cli_command.yaml on connection={{ ansible_connection }}"

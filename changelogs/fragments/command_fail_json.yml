@@ -1,0 +1,2 @@
+minor_changes:
+- Corrected API call for module.fail_json in command module.

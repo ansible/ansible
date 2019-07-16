@@ -1,0 +1,350 @@
+# ============================================================
+- name: Test rax_cbs with no args
+  rax_cbs:
+  ignore_errors: true
+  register: rax_cbs
+
+- name: Validate results of rax_cbs with no args
+  assert:
+    that:
+      - rax_cbs is failed
+      - 'rax_cbs.msg == "missing required arguments: name"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with name
+  rax_cbs:
+    name: fail
+  ignore_errors: true
+  register: rax_cbs
+
+- name: Validate results of rax_cbs with no args
+  assert:
+    that:
+      - rax_cbs is failed
+      - rax_cbs.msg == 'No credentials supplied!'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with name and credentials
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    name: fail
+  ignore_errors: true
+  register: rax_cbs
+
+- name: Validate results of rax_cbs with name and credentials
+  assert:
+    that:
+      - rax_cbs is failed
+      - rax_cbs.msg.startswith('None is not a valid region')
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and public_key string
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-1"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region and name
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-1"
+      - rax_cbs.volume.attachments == []
+      - rax_cbs.volume.size == 100
+      - rax_cbs.volume.volume_type == 'SATA'
+      - rax_cbs.volume.status == 'available'
+
+- name: Delete integration 1
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-1"
+    state: absent
+  register: rax_cbs
+
+- name: Validate delete integration 1
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-1"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and invalid size
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: fail
+    size: 1
+  ignore_errors: true
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region, name and invalid size
+  assert:
+    that:
+      - rax_cbs is failed
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and valid size
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    size: 150
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region and valid size
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-2"
+      - rax_cbs.volume.attachments == []
+      - rax_cbs.volume.size == 150
+      - rax_cbs.volume.volume_type == 'SATA'
+      - rax_cbs.volume.status == 'available'
+
+- name: Delete integration 2
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    state: absent
+  register: rax_cbs
+
+- name: Validate delete integration 2
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-2"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and invalid volume_type
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: fail
+    volume_type: fail
+  ignore_errors: true
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region, name and invalid volume_type
+  assert:
+    that:
+      - rax_cbs is failed
+      - 'rax_cbs.msg == "value of volume_type must be one of: SSD,SATA, got: fail"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and valid volume_size
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    volume_type: SSD
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region and valid volume_size
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-3"
+      - rax_cbs.volume.attachments == []
+      - rax_cbs.volume.size == 100
+      - rax_cbs.volume.volume_type == 'SSD'
+      - rax_cbs.volume.status == 'available'
+
+- name: Delete integration 3
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    state: absent
+  register: rax_cbs
+
+- name: Validate delete integration 3
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-3"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and description
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+    description: "{{ resource_prefix }}-4 description"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region and description
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-4"
+      - rax_cbs.volume.description == '{{ resource_prefix }}-4 description'
+      - rax_cbs.volume.attachments == []
+      - rax_cbs.volume.size == 100
+      - rax_cbs.volume.volume_type == 'SATA'
+      - rax_cbs.volume.status == 'available'
+
+- name: Delete integration 4
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+    state: absent
+  register: rax_cbs
+
+- name: Validate delete integration 4
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-4"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with creds, region, name and meta
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-5"
+    meta:
+      foo: bar
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cbs
+
+- name: Validate rax_cbs creds, region and meta
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-5"
+      - rax_cbs.volume.attachments == []
+      - rax_cbs.volume.size == 100
+      - rax_cbs.volume.volume_type == 'SATA'
+      - rax_cbs.volume.status == 'available'
+      - rax_cbs.volume.metadata.foo == 'bar'
+
+- name: Delete integration 5
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-5"
+    state: absent
+  register: rax_cbs
+
+- name: Validate delete integration 5
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.display_name == "{{ resource_prefix }}-5"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cbs with idempotency 1
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-6"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cbs_1
+
+- name: Validate rax_cbs with idempotency 1
+  assert:
+    that:
+      - rax_cbs_1 is successful
+      - rax_cbs_1 is changed
+      - rax_cbs_1.volume.display_name == "{{ resource_prefix }}-6"
+
+- name: Test rax_cbs with idempotency 2
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-6"
+  register: rax_cbs_2
+
+- name: Validate rax_cbs with idempotency 2
+  assert:
+    that:
+      - rax_cbs_2 is successful
+      - rax_cbs_2 is not changed
+      - rax_cbs_2.volume.display_name == "{{ resource_prefix }}-6"
+      - rax_cbs_2.volume.id == rax_cbs_1.volume.id
+
+- name: Delete integration 6
+  rax_cbs:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-6"
+    state: absent
+  register: rax_cbs
+
+- name: Validate delete integration 6
+  assert:
+    that:
+      - rax_cbs is successful
+      - rax_cbs is changed
+      - rax_cbs.volume.name == "{{ resource_prefix }}-6"
+# ============================================================

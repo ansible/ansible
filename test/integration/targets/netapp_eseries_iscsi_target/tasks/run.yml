@@ -1,0 +1,68 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: NetApp Test iSCSI Target module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars: &vars
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+    secrets: &secrets
+      # 12 characters
+      - 012345678912
+      # 16 characters
+      - 0123456789123456
+
+- name: set credentials
+  set_fact:
+    credentials: *creds
+
+- name: Show some debug information
+  debug:
+    msg: "Using user={{ credentials.api_username }} on server={{ credentials.api_url }}."
+
+- name: Ensure we can set the chap secret
+  netapp_e_iscsi_target:
+    <<: *creds
+    name: myTarget
+    chap_secret: "{{ item }}"
+  loop: *secrets
+
+- name: Turn off all of the options
+  netapp_e_iscsi_target:
+    <<: *creds
+    name: abc
+    ping: no
+    unnamed_discovery: no
+
+- name: Ensure we can set the ping option
+  netapp_e_iscsi_target:
+    <<: *creds
+    name: myTarget
+    ping: yes
+    unnamed_discovery: yes
+  register: result
+
+- name: Ensure we received a change
+  assert:
+    that: result.changed
+
+- name: Run the ping change in check-mode
+  netapp_e_iscsi_target:
+    <<: *creds
+    name: myTarget
+    ping: yes
+    unnamed_discovery: yes
+  check_mode: yes
+  register: result
+
+- name: Ensure no change resulted
+  assert:
+    that: not result.changed

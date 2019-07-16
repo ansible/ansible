@@ -1,0 +1,13 @@
+# NOTE: The win_disk_facts module only works on Win2012R2+
+
+- name: check whether storage module is available (windows 2008 r2 or later)
+  win_shell: '(Get-Module -Name Storage -ListAvailable | Measure-Object).Count -eq 1'
+  register: win_feature_has_storage_module
+  changed_when: false
+
+- name: Only run tests when Windows is capable
+  when: win_feature_has_storage_module.stdout | trim | bool == True
+  block:
+
+  - name: Test in normal mode
+    include: tests.yml

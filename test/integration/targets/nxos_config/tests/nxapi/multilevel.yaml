@@ -4,7 +4,8 @@
 - name: setup
   nxos_config:
     lines: feature bgp
-    provider: "{{ nxapi }}"
+    match: none
+    provider: "{{ connection }}"
 
 - name: configure multi level command
   nxos_config:
@@ -12,7 +13,7 @@
     parents:
       - router bgp 1
       - address-family ipv4 unicast
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -28,7 +29,7 @@
     parents:
       - router bgp 1
       - address-family ipv4 unicast
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -39,6 +40,6 @@
   nxos_config:
     lines: no feature bgp
     match: none
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
 
 - debug: msg="END nxapi/mulitlevel.yaml"

@@ -1,0 +1,162 @@
+---
+- name: Validate privatekey1 (test - RSA key with size 4096 bits)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  register: privatekey1
+
+- name: Validate privatekey1 (assert - RSA key with size 4096 bits)
+  assert:
+    that:
+      - privatekey1.stdout == '4096'
+
+
+- name: Validate privatekey2 (test - RSA key with size 2048 bits)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey2.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  register: privatekey2
+
+- name: Validate privatekey2 (assert - RSA key with size 2048 bits)
+  assert:
+    that:
+      - privatekey2.stdout == '2048'
+
+
+- name: Validate privatekey3 (test - DSA key with size 3072 bits)
+  shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  register: privatekey3
+
+- name: Validate privatekey3 (assert - DSA key with size 3072 bits)
+  assert:
+    that:
+      - privatekey3.stdout == '3072'
+
+
+- name: Validate privatekey4 (test - Ensure key has been removed)
+  stat:
+    path: '{{ output_dir }}/privatekey4.pem'
+  register: privatekey4
+
+- name: Validate privatekey4 (assert - Ensure key has been removed)
+  assert:
+    that:
+      - privatekey4.stat.exists == False
+
+
+- name: Validate privatekey5 (test - Passphrase protected key + idempotence)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey5.pem -passin pass:ansible  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  register: privatekey5
+  # Current version of OS/X that runs in the CI (10.11) does not have an up to date version of the OpenSSL library
+  # leading to this test to fail when run in the CI. However, this test has been run for 10.12 and has returned succesfully.
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate privatekey5 (assert - Passphrase protected key + idempotence)
+  assert:
+    that:
+      - privatekey5.stdout == '4096'
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate privatekey5 idempotence (assert - Passphrase protected key + idempotence)
+  assert:
+    that:
+      - privatekey5_idempotence is not changed
+
+
+- name: Validate privatekey6 (test - Passphrase protected key with non ascii character)
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey6.pem -passin pass:ànsïblé | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  register: privatekey6
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate privatekey6 (assert - Passphrase protected key with non ascii character)
+  assert:
+    that:
+      - privatekey6.stdout == '4096'
+  when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate ECC generation (dump with OpenSSL)
+  shell: "openssl ec -in {{ output_dir }}/privatekey-{{ item.item.curve }}.pem -noout -text | grep 'ASN1 OID: ' | sed 's/ASN1 OID: \\([^ ]*\\)/\\1/'"
+  loop: "{{ privatekey_ecc_generate.results }}"
+  register: privatekey_ecc_dump
+  when: openssl_version.stdout is version('0.9.8zh', '>=') and 'skip_reason' not in item
+  loop_control:
+    label: "{{ item.item.curve }}"
+
+- name: Validate ECC generation
+  assert:
+    that:
+    - item is changed
+  loop: "{{ privatekey_ecc_generate.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.curve }}"
+
+- name: Validate ECC generation (curve type)
+  assert:
+    that:
+    - "'skip_reason' in item or item.item.item.openssl_name == item.stdout"
+  loop: "{{ privatekey_ecc_dump.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.item }} - {{ item.stdout if 'stdout' in item else '<unsupported>' }}"
+
+- name: Validate ECC generation idempotency
+  assert:
+    that:
+    - item is not changed
+  loop: "{{ privatekey_ecc_idempotency.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.curve }}"
+
+- name: Validate other type generation (just check changed)
+  assert:
+    that:
+    - item is changed
+  loop: "{{ privatekey_t1_generate.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
+
+- name: Validate other type generation idempotency
+  assert:
+    that:
+    - item is not changed
+  loop: "{{ privatekey_t1_idempotency.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.type }}"
+
+- name: Validate passphrase changing
+  assert:
+    that:
+      - passphrase_1 is changed
+      - passphrase_2 is not changed
+      - passphrase_3 is changed
+      - passphrase_4 is not changed
+      - passphrase_5 is changed
+      - passphrase_1.backup_file is undefined
+      - passphrase_2.backup_file is undefined
+      - passphrase_3.backup_file is string
+      - passphrase_4.backup_file is undefined
+      - passphrase_5.backup_file is string
+
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
+- name: Validate remove
+  assert:
+    that:
+      - remove_1 is changed
+      - remove_2 is not changed
+      - remove_1.backup_file is string
+      - remove_2.backup_file is undefined
+
+- name: Validate mode
+  assert:
+    that:
+      - privatekey_mode_1 is changed
+      - privatekey_mode_1_stat.stat.mode == '0400'
+      - privatekey_mode_2 is not changed
+      - privatekey_mode_3 is changed
+      - privatekey_mode_3_stat.stat.mode == '0400'
+      - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime

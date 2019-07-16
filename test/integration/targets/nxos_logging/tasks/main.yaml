@@ -1,0 +1,13 @@
+---
+# Use block to ensure that the baude rate gets set
+# back to 9600 even if there are failures or errors.
+- block:
+  - { include: cli.yaml, tags: ['cli'] }
+  - { include: nxapi.yaml, tags: ['nxapi'] }
+  always:
+  - name: Set Baud Rate Back to 9600 so our tests don't break
+    nxos_config:
+      lines:
+        - speed 9600
+      parents: line console
+    connection: network_cli

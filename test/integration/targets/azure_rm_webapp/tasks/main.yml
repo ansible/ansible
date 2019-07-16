@@ -1,0 +1,434 @@
+- name: Fix resource prefix
+  set_fact:
+    linux_app_plan_resource_group: "{{ resource_group_secondary }}"
+    win_app_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}{{ 1000 | random}}winapp"
+    win_plan_name: "{{ (resource_prefix | replace('-','x'))[-8:] }}winplan"
+    linux_plan_name: "{{ (resource_group_secondary | replace('-','x'))[-8:] }}linplan"
+    slot1_name: "stage1"
+
+- name: Create a windows web app with non-exist app service plan
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}1"
+    plan:
+      resource_group: "{{ resource_group }}"
+      name: "{{ win_plan_name }}"
+      is_linux: false
+      sku: S1
+
+- name: Create a windows web app with existing app service plan
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}2"
+    plan: "{{ win_plan_name }}"
+  register: output
+
+- name: stop the web app
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}2"
+    plan: "{{ win_plan_name }}"
+    app_state: stopped
+  register: output
+
+- name: assert output changed
+  assert:
+    that:
+      output.changed
+
+# enable after webapp_facts merged
+# - name: get the web app
+#   azure_rm_webapp_facts:
+#     resource_group: "{{ resource_group }}"
+#     name: "{{ win_app_name }}2"
+#   register: stopped
+
+# - name: assert web app is stopped
+#   assert:
+#     that:
+#       - stopped.properties.state == "Stopped"
+
+- name: Create a windows web app with existing app service plan, try to update some root level params
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    plan: "{{ win_plan_name }}"
+    dns_registration: true
+    https_only: true
+    tags:
+      testwebapptag: test
+  register: output
+
+- name: get web app with resource group and tag
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}3"
+    tags:
+      - testwebapptag
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
+
+- name: Create a win web app with java run time specific
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    plan: "{{ win_plan_name }}"
+    frameworks:
+      - name: "java"
+        version: "1.8"
+        settings:
+          java_container: "Tomcat"
+          java_container_version: "8.0"
+    app_settings:
+      testkey: "testvalue"
+  register: output
+
+- name: assert the web app was created
+  assert:
+    that: output.changed
+
+- name: get web app with name
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
+      - output.webapps[0].app_settings | length == 1
+      - output.webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
+
+- name: Update app settings and framework
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    plan: "{{ win_plan_name }}"
+    frameworks:
+      - name: "java"
+        version: "1.7"
+        settings:
+          java_container: "Tomcat"
+          java_container_version: "8.5"
+    app_settings:
+      testkey2: "testvalue2"
+  register: output
+
+- name: Assert the web app was updated
+  assert:
+    that:
+    - output.changed
+
+- name: get web app with name
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+  register: output
+
+- name: Assert updating
+  assert:
+    that:
+    - output.webapps[0].app_settings | length == 2
+    - output.webapps[0].app_settings['testkey'] == 'testvalue'
+    - output.webapps[0].app_settings['testkey2'] == 'testvalue2'
+
+- name: get web app with return publishing profile
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    return_publish_profile: true
+  register: output
+
+- assert:
+    that:
+      - output.webapps | length == 1
+      - output.webapps[0].publishing_username != ""
+      - output.webapps[0].publishing_password != ""
+
+- name: Purge all existing app settings
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+    plan: "{{ win_plan_name }}"
+    purge_app_settings: true
+  register: output
+
+- name: Assert the web app was updated
+  assert:
+    that: output.changed
+
+- name: Create a win web app with python run time and php run time
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}5"
+    plan: "{{ win_plan_name }}"
+    frameworks:
+      - name: "python"
+        version: "2.7"
+      - name: node
+        version: "6.6"
+      - name: "php"
+        version: "7.0"
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
+
+- name: Create a docker web app with some app settings
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}6"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+      is_linux: true
+      sku: S1
+      number_of_workers: 1
+    container_settings:
+      name: "ansible/ansible:ubuntu1404"
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
+
+- name: Create a docker web app with private acr registry
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}7"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    container_settings:
+      name: "ansible/ansible:ubuntu1404"
+      registry_server_url: test.io
+      registry_server_user: user
+      registry_server_password: password
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
+
+- name: Create a linux web app with nodejs framework
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    frameworks:
+      - name: node
+        version: "6.6"
+  register: output
+
+- name: Should be idempotent with linux web app created
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    frameworks:
+      - name: node
+        version: "6.6"
+  register: output
+
+- assert:
+    that: not output.changed
+    
+- name: Update nodejs framework
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    frameworks:
+      - name: node
+        version: "6.9"
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
+
+- name: Create a linux web app with deployment source github
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}10"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    deployment_source:
+      url: "https://github.com/test/test"
+      branch: master
+    scm_type: GitHub
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
+
+- name: Delete web app
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}8"
+    state: absent
+  register: output
+
+- name: Assert the web app was deleted
+  assert:
+    that: output.changed
+
+- name: assert error that java is mutually exclusive with frameworks
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}11"
+    plan: "{{ win_plan_name }}"
+    frameworks:
+      - name: "python"
+        version: "2.7"
+      - name: "java"
+        version: "1.8"
+  register: fail_win_java_version_mutual_exclusive
+  failed_when: 'fail_win_java_version_mutual_exclusive.msg != "Java is mutually exclusive with other frameworks."'
+
+- name: assert error when linux web app, only can specify one framework
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ linux_plan_name }}12"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    frameworks:
+      - name: "python"
+        version: "2.7"
+      - name: "node"
+        version: "6.6"
+  register: fail_linux_one_framework_only
+  failed_when: fail_linux_one_framework_only.msg != "Can specify one framework only for Linux web app."
+
+- name: Create a linux web app with java tomcat container
+  azure_rm_webapp:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}13"
+    plan:
+      resource_group: "{{ linux_app_plan_resource_group }}"
+      name: "{{ linux_plan_name }}"
+    frameworks:
+      - name: java
+        version: "8"
+        settings:
+          java_container: "tomcat"
+          java_container_version: "8.5"
+  register: output
+
+- name: Assert the web app was created
+  assert:
+    that: output.changed
+
+- name: Get facts with publish profile
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}13"
+  no_log: true
+  register: facts
+
+- name: Assert publish profile returned
+  assert:
+    that:
+      - facts.webapps[0].ftp_publish_url != ''
+
+- name: Create a webapp slot (Check mode)
+  azure_rm_webappslot:
+    resource_group: "{{ resource_group }}"
+    webapp_name: "{{ win_app_name }}13"
+    name: "{{ slot1_name }}"
+    configuration_source: "{{ win_app_name }}13"
+    app_settings:
+        testkey: testvalue
+  check_mode: yes
+  register: output
+
+- name: Assert slot check mode creation
+  assert:
+    that:
+      - output.changed
+
+- name: Create a webapp slot
+  azure_rm_webappslot:
+    resource_group: "{{ resource_group }}"
+    webapp_name: "{{ win_app_name }}13"
+    name: "{{ slot1_name }}"
+    configuration_source: "{{ win_app_name }}13"
+    app_settings:
+        testkey: testvalueslot
+  register: output
+
+- name: Assert slot creation
+  assert:
+    that:
+      - output.changed
+
+- name: Update webapp slot (idempotence)
+  azure_rm_webappslot:
+    resource_group: "{{ resource_group }}"
+    webapp_name: "{{ win_app_name }}13"
+    name: "{{ slot1_name }}"
+    app_settings:
+        testkey: testvalueslot
+  register: output
+
+- name: Assert idempotence
+  assert:
+    that:
+      - not output.changed
+
+- name: Update webapp slot
+  azure_rm_webappslot:
+    resource_group: "{{ resource_group }}"
+    webapp_name: "{{ win_app_name }}13"
+    name: "{{ slot1_name }}"
+    frameworks:
+      - name: "node"
+        version: "10.1"
+    app_settings:
+        testkey: testvalue2
+  register: output
+
+- name: Assert updating
+  assert:
+    that:
+      - output.changed
+
+- name: Swap webapp slot
+  azure_rm_webappslot:
+    resource_group: "{{ resource_group }}"
+    webapp_name: "{{ win_app_name }}13"
+    name: "{{ slot1_name }}"
+    swap:
+      action: swap
+  register: output
+
+- name: Assert swap
+  assert:
+    that:
+      - output.changed
+
+- name: Stop webapp slot
+  azure_rm_webappslot:
+    resource_group: "{{ resource_group }}"
+    webapp_name: "{{ win_app_name }}13"
+    name: "{{ slot1_name }}"
+    app_state: stopped
+  register: output
+
+- name: Assert stopped
+  assert:
+    that:
+      - output.changed

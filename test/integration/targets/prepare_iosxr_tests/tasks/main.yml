@@ -1,0 +1,19 @@
+---
+- name: Ensure we have loopback 888 for testing
+  iosxr_config:
+    src: config.j2
+  connection: network_cli
+
+- name: Enable Netconf service
+  iosxr_netconf:
+    netconf_port: 830
+    netconf_vrf: 'default'
+    state: present
+  connection: network_cli
+  tags: netconf
+
+# Some AWS hostnames can be longer than those allowed by the system we are testing
+# Truncate the hostname
+# http://jinja.pocoo.org/docs/2.9/templates/#truncate
+- set_fact:
+    shorter_hostname: '{{ inventory_hostname_short| truncate(10, True, "") }}'

@@ -1,0 +1,51 @@
+---
+- name: create test folder
+  win_file:
+    path: '{{test_win_pester_path}}\Modules'
+    state: directory
+
+- name: download Pester module from S3 bucket
+  win_get_url:
+    # this was downloaded straight off the Pester GitHub release page and uploaded to the S3 bucket
+    # https://github.com/pester/Pester/releases 
+    url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_pester/Pester-4.3.1.zip'
+    dest: '{{test_win_pester_path}}\Pester-4.3.1.zip'
+
+- name: unzip Pester module
+  win_unzip:
+    src: '{{test_win_pester_path}}\Pester-4.3.1.zip'
+    dest: '{{test_win_pester_path}}\Modules'
+
+- name: rename extracted zip to match module name
+  win_shell: Rename-Item -Path '{{test_win_pester_path}}\Modules\Pester-4.3.1' -NewName Pester
+
+- name: add custom Pester location to the PSModulePath
+  win_path:
+    name: PSModulePath
+    scope: machine
+    state: present
+    elements:
+    - '{{test_win_pester_path}}\Modules'
+
+- name: copy test files
+  win_copy:
+    src: files/
+    dest: '{{test_win_pester_path}}\'
+
+- block:
+  - name: run Pester tests
+    include_tasks: test.yml
+
+  always:
+  - name: remove custom pester location on the PSModulePath
+    win_path:
+      name: PSModulePath
+      scope: machine
+      state: absent
+      elements:
+      - '{{test_win_pester_path}}\Modules'
+    
+  - name: delete test folder
+    win_file:
+      path: '{{test_win_pester_path}}'
+      state: absent

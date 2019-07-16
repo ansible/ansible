@@ -1,0 +1,311 @@
+---
+- name: (OwnCA, {{select_crypto_backend}}) Generate CA privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/ca_privatekey.pem'
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate CA privatekey with passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/ca_privatekey_pw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate CA CSR
+  openssl_csr:
+    path: '{{ output_dir }}/ca_csr.csr'
+    privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    subject:
+      commonName: Example CA
+    useCommonNameForSAN: no
+    basic_constraints:
+    - 'CA:TRUE'
+    basic_constraints_critical: yes
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate CA CSR (privatekey passphrase)
+  openssl_csr:
+    path: '{{ output_dir }}/ca_csr_pw.csr'
+    privatekey_path: '{{ output_dir }}/ca_privatekey_pw.pem'
+    privatekey_passphrase: hunter2
+    subject:
+      commonName: Example CA
+    useCommonNameForSAN: no
+    basic_constraints:
+    - 'CA:TRUE'
+    basic_constraints_critical: yes
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate selfsigned CA certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ca_cert.pem'
+    csr_path: '{{ output_dir }}/ca_csr.csr'
+    privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate selfsigned CA certificate (privatekey passphrase)
+  openssl_certificate:
+    path: '{{ output_dir }}/ca_cert_pw.pem'
+    csr_path: '{{ output_dir }}/ca_csr_pw.csr'
+    privatekey_path: '{{ output_dir }}/ca_privatekey_pw.pem'
+    privatekey_passphrase: hunter2
+    provider: selfsigned
+    selfsigned_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_certificate
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_certificate_idempotence
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (check mode)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  check_mode: yes
+
+- name: (OwnCA, {{select_crypto_backend}}) Check ownca certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert.pem'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: assertonly
+    has_expired: False
+    version: 3
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha256WithECDSAEncryption
+    subject:
+      commonName: www.example.com
+    issuer:
+      commonName: Example CA
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca v2 certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_v2.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    ownca_version: 2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_v2_certificate
+  ignore_errors: true
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate2
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert2.pem'
+    csr_path: '{{ output_dir }}/csr2.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Check ownca certificate2
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert2.pem'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    provider: assertonly
+    has_expired: False
+    version: 3
+    signature_algorithms:
+      - sha256WithRSAEncryption
+      - sha256WithECDSAEncryption
+    subject:
+      commonName: www.example.com
+      C: US
+      ST: California
+      L: Los Angeles
+      O: ACME Inc.
+      OU:
+        - Roadrunner pest control
+        - Pyrotechnics
+    keyUsage:
+      - digitalSignature
+    extendedKeyUsage:
+      - ipsecUser
+      - biometricInfo
+    issuer:
+      commonName: Example CA
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Create ownca certificate with notBefore and notAfter
+  openssl_certificate:
+    provider: ownca
+    ownca_not_before: 20181023133742Z
+    ownca_not_after: 20191023133742Z
+    path: "{{ output_dir }}/ownca_cert3.pem"
+    csr_path: "{{ output_dir }}/csr.csr"
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Create ownca certificate with relative notBefore and notAfter
+  openssl_certificate:
+    provider: ownca
+    ownca_not_before: +1s
+    ownca_not_after: +52w
+    path: "{{ output_dir }}/ownca_cert4.pem"
+    csr_path: "{{ output_dir }}/csr.csr"
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca ECC certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ecc.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_certificate_ecc
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate selfsigned certificate (privatekey passphrase)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ecc_2.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert_pw.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey_pw.pem'
+    ownca_privatekey_passphrase: hunter2
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: selfsigned_certificate_passphrase
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 1)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_pw1.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    ownca_privatekey_passphrase: hunter2
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 2)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_pw2.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    ownca_privatekey_passphrase: wrong_password
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: (OwnCA, {{select_crypto_backend}}) Generate ownca certificate (failed passphrase 3)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_pw3.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    provider: ownca
+    ownca_digest: sha256
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_3
+
+- name: Create broken certificate
+  copy:
+    dest: "{{ output_dir }}/ownca_broken.pem"
+    content: "broken"
+- name: Regenerate broken cert
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_broken.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  register: ownca_broken
+
+- name: (OwnCA, {{select_crypto_backend}}) Backup test
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_1
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (idempotent)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_2
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (change)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    csr_path: '{{ output_dir }}/csr.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_3
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (remove)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    state: absent
+    provider: ownca
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_4
+- name: (OwnCA, {{select_crypto_backend}}) Backup test (remove, idempotent)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_backup.pem'
+    state: absent
+    provider: ownca
+    backup: yes
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: ownca_backup_5
+
+- import_tasks: ../tests/validate_ownca.yml

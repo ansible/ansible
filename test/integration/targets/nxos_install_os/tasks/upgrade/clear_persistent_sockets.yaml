@@ -1,0 +1,19 @@
+---
+# This playbook is only provided for reference as a brute force way to
+# clear persistent connections on an Ansible server.  This was a workaround
+# for a problem with meta: reset_connection but should not be used in
+# ansible release 2.6 or later.
+- name: Clean up sockets with file module
+  file:
+    state: absent
+    path: "{{ home }}/.ansible/pc/"
+  delegate_to: 127.0.0.1
+
+- name: "Display socket info after delete"
+  shell: "/bin/ls {{ home }}/.ansible"
+  args:
+    executable: /bin/bash
+  delegate_to: 127.0.0.1
+  register: output
+
+- debug: msg="Local Socket Info {{ output['stdout_lines'] }}"

@@ -1,0 +1,6 @@
+destructive
+shippable/posix/group4
+postgresql_db
+postgresql_privs
+postgresql_user
+skip/osx

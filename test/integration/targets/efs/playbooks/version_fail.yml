@@ -1,0 +1,32 @@
+- hosts: localhost
+  connection: local
+  environment: "{{ ansible_test.environment }}"
+  vars:
+     resource_prefix: 'ansible-testing'
+
+  tasks:
+    - block:
+        - name: set up aws connection info
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: "{{ aws_access_key }}"
+              aws_secret_key: "{{ aws_secret_key }}"
+              security_token: "{{ security_token }}"
+              region: "{{ aws_region }}"
+          no_log: True
+
+        - name: create efs with provisioned_throughput options (fails gracefully)
+          efs:
+            state: present
+            name: "{{ resource_prefix }}-efs"
+            throughput_mode: 'provisioned'
+            provisioned_throughput_in_mibps: 8.0
+            <<: *aws_connection_info
+          register: efs_provisioned_throughput_creation
+          ignore_errors: yes
+
+        - name: check that graceful error message is returned when creation with throughput_mode and old botocore
+          assert:
+            that:
+              - efs_provisioned_throughput_creation.failed
+              - 'efs_provisioned_throughput_creation.msg == "throughput_mode parameter requires botocore >= 1.10.57"'

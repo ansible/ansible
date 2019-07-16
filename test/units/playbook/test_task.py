@@ -19,17 +19,26 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.playbook.task import Task
-from ansible.compat.tests import unittest
+from ansible.parsing.yaml import objects
+from ansible import errors
 
-basic_shell_task = dict(
-   name  = 'Test Task',
-   shell = 'echo hi'
+
+basic_command_task = dict(
+    name='Test Task',
+    command='echo hi'
 )
 
-kv_shell_task = dict(
-   action = 'shell echo hi'
+kv_command_task = dict(
+    action='command echo hi'
 )
+
+# See #36848
+kv_bad_args_str = '- apk: sdfs sf sdf 37'
+kv_bad_args_ds = {'apk': 'sdfs sf sdf 37'}
+
 
 class TestTask(unittest.TestCase):
 
@@ -40,7 +49,7 @@ class TestTask(unittest.TestCase):
         pass
 
     def test_construct_empty_task(self):
-        t = Task()
+        Task()
 
     def test_construct_task_with_role(self):
         pass
@@ -52,21 +61,39 @@ class TestTask(unittest.TestCase):
         pass
 
     def test_load_task_simple(self):
-        t = Task.load(basic_shell_task)
+        t = Task.load(basic_command_task)
         assert t is not None
-        self.assertEqual(t.name, basic_shell_task['name'])
+        self.assertEqual(t.name, basic_command_task['name'])
         self.assertEqual(t.action, 'command')
-        self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
+        self.assertEqual(t.args, dict(_raw_params='echo hi'))
 
     def test_load_task_kv_form(self):
-        t = Task.load(kv_shell_task)
+        t = Task.load(kv_command_task)
         self.assertEqual(t.action, 'command')
-        self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
+        self.assertEqual(t.args, dict(_raw_params='echo hi'))
+
+    @patch.object(errors.AnsibleError, '_get_error_lines_from_file')
+    def test_load_task_kv_form_error_36848(self, mock_get_err_lines):
+        ds = objects.AnsibleMapping(kv_bad_args_ds)
+        ds.ansible_pos = ('test_task_faux_playbook.yml', 1, 1)
+        mock_get_err_lines.return_value = (kv_bad_args_str, '')
+
+        with self.assertRaises(errors.AnsibleParserError) as cm:
+            Task.load(ds)
+
+        self.assertIsInstance(cm.exception, errors.AnsibleParserError)
+        self.assertEqual(cm.exception._obj, ds)
+        self.assertEqual(cm.exception._obj, kv_bad_args_ds)
+        self.assertIn("The error appears to be in 'test_task_faux_playbook.yml", cm.exception.message)
+        self.assertIn(kv_bad_args_str, cm.exception.message)
+        self.assertIn('apk', cm.exception.message)
+        self.assertEquals(cm.exception.message.count('The offending line'), 1)
+        self.assertEquals(cm.exception.message.count('The error appears to be in'), 1)
 
     def test_task_auto_name(self):
-        assert 'name' not in kv_shell_task
-        t = Task.load(kv_shell_task)
-        #self.assertEqual(t.name, 'shell echo hi')
+        assert 'name' not in kv_command_task
+        Task.load(kv_command_task)
+        # self.assertEqual(t.name, 'shell echo hi')
 
     def test_task_auto_name_with_role(self):
         pass

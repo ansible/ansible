@@ -24,7 +24,7 @@
 
 - name: notify the handler for host A only
   shell: echo
-  notify: 
+  notify:
     - set handler fact
   when: inventory_hostname == 'A'
   tags: scenario1

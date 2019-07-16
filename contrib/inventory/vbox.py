@@ -16,20 +16,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
+
 
 class SetEncoder(json.JSONEncoder):
-   def default(self, obj):
-      if isinstance(obj, set):
-         return list(obj)
-      return json.JSONEncoder.default(self, obj)
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)
 
-VBOX="VBoxManage"
+
+VBOX = "VBoxManage"
 
 
 def get_hosts(host=None):
@@ -39,9 +38,9 @@ def get_hosts(host=None):
         if host:
             p = Popen([VBOX, 'showvminfo', host], stdout=PIPE)
         else:
-            returned = { 'all': set(), '_metadata': {}  }
+            returned = {'all': set(), '_metadata': {}}
             p = Popen([VBOX, 'list', '-l', 'vms'], stdout=PIPE)
-    except:
+    except Exception:
         sys.exit(1)
 
     hostvars = {}
@@ -50,8 +49,8 @@ def get_hosts(host=None):
     for line in p.stdout.readlines():
 
         try:
-            k,v = line.split(':',1)
-        except:
+            k, v = line.split(':', 1)
+        except Exception:
             continue
 
         if k == '':
@@ -62,13 +61,13 @@ def get_hosts(host=None):
             if v not in hostvars:
                 curname = v
                 hostvars[curname] = {}
-                try: # try to get network info
-                    x = Popen([VBOX, 'guestproperty', 'get', curname,"/VirtualBox/GuestInfo/Net/0/V4/IP"],stdout=PIPE)
+                try:  # try to get network info
+                    x = Popen([VBOX, 'guestproperty', 'get', curname, "/VirtualBox/GuestInfo/Net/0/V4/IP"], stdout=PIPE)
                     ipinfo = x.stdout.read()
                     if 'Value' in ipinfo:
-                        a,ip = ipinfo.split(':',1)
+                        a, ip = ipinfo.split(':', 1)
                         hostvars[curname]['ansible_ssh_host'] = ip.strip()
-                except:
+                except Exception:
                     pass
 
             continue
@@ -83,11 +82,11 @@ def get_hosts(host=None):
                     returned['all'].add(curname)
                 continue
 
-        pref_k = 'vbox_' + k.strip().replace(' ','_')
+        pref_k = 'vbox_' + k.strip().replace(' ', '_')
         if k.startswith(' '):
             if prevkey not in hostvars[curname]:
                 hostvars[curname][prevkey] = {}
-            hostvars[curname][prevkey][pref_k]= v
+            hostvars[curname][prevkey][pref_k] = v
         else:
             if v != '':
                 hostvars[curname][pref_k] = v

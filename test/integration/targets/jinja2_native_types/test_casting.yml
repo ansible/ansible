@@ -1,0 +1,24 @@
+- name: cast things to other things
+  set_fact:
+      int_to_str: "{{ i_two|to_text }}"
+      str_to_int: "{{ s_two|int }}"
+      dict_to_str: "{{ dict_one|to_text }}"
+      list_to_str: "{{ list_one|to_text }}"
+      int_to_bool: "{{ i_one|bool }}"
+      str_true_to_bool: "{{ s_true|bool }}"
+      str_false_to_bool: "{{ s_false|bool }}"
+
+- assert:
+    that:
+        - 'int_to_str == "2"'
+        - 'int_to_str|type_debug in ["str", "unicode"]'
+        - 'str_to_int == 2'
+        - 'str_to_int|type_debug == "int"'
+        - 'dict_to_str|type_debug in ["str", "unicode"]'
+        - 'list_to_str|type_debug in ["str", "unicode"]'
+        - 'int_to_bool is sameas true'
+        - 'int_to_bool|type_debug == "bool"'
+        - 'str_true_to_bool is sameas true'
+        - 'str_true_to_bool|type_debug == "bool"'
+        - 'str_false_to_bool is sameas false'
+        - 'str_false_to_bool|type_debug == "bool"'

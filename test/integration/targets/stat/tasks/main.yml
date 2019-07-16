@@ -44,7 +44,6 @@
         - "'isreg' in stat_result.stat"
         - "'issock' in stat_result.stat"
         - "'isuid' in stat_result.stat"
-        - "'md5' in stat_result.stat"
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat"
@@ -62,11 +61,6 @@
         - "'xgrp' in stat_result.stat"
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
-
-- assert:
-    that:
-      - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  when: ansible_fips|bool != True
 
 - name: make a symlink
   file:
@@ -144,7 +138,6 @@
         - "'isreg' in stat_result.stat"
         - "'issock' in stat_result.stat"
         - "'isuid' in stat_result.stat"
-        - "'md5' in stat_result.stat"
         - "'checksum' in stat_result.stat"
         - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
         - "'mode' in stat_result.stat"
@@ -162,9 +155,3 @@
         - "'xgrp' in stat_result.stat"
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
-
-- assert:
-    that:
-      - "stat_result.stat.md5 == '5eb63bbbe01eeed093cb22bb8f5acdc3'"
-  when: ansible_fips|bool != True
-

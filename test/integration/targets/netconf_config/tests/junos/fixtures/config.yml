@@ -1,0 +1,38 @@
+---
+syslog_config: |
+            <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+              <configuration>
+                <system>
+                  <syslog>
+                    <file>
+                      <name>test_netconf_config</name>
+                      <contents>
+                        <name>any</name>
+                        <any/>
+                      </contents>
+                      <contents>
+                        <name>kernel</name>
+                        <critical/>
+                      </contents>
+                    </file>
+                  </syslog>
+                </system>
+              </configuration>
+            </config>
+
+syslog_config_replace: |
+            <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+              <configuration>
+                <system>
+                  <syslog operation="replace">
+                    <file>
+                      <name>test_netconf_config</name>
+                      <contents>
+                        <name>any</name>
+                        <any/>
+                      </contents>
+                    </file>
+                  </syslog>
+                </system>
+              </configuration>
+            </config>

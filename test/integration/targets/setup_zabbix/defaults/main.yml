@@ -1,0 +1,10 @@
+---
+db_name: 'zabbix'
+db_user: 'zabbix'
+db_password: 'fLhijUs3PgekNhwJ'
+
+zabbix_release_deb: 'http://repo.zabbix.com/zabbix/3.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_3.4-1+trusty_all.deb'
+
+zabbix_packages:
+    - zabbix-server-mysql
+    - zabbix-frontend-php

@@ -1,29 +1,20 @@
-#!/usr/bin/env python
-
 import json
 import os
-import pickle
-import unittest
+import pytest
 import sys
 
+BASIC_INVENTORY = {
+    'all': {
+        'hosts': ['foo', 'bar']
+    },
+    '_meta': {
+        'hostvars': {
+            'foo': {'hostname': 'foo'},
+            'bar': {'hostname': 'bar'}
+        }
+    }
+}
 
-# contrib's dirstruct doesn't contain __init__.py files
-checkout_path = os.path.dirname(__file__)
-checkout_path = checkout_path.replace('/test/units/contrib/inventory', '')
-inventory_dir = os.path.join(checkout_path, 'contrib', 'inventory')
-sys.path.append(os.path.abspath(inventory_dir))
-from vmware_inventory import VMWareInventory 
-# cleanup so that nose's path is not polluted with other inv scripts
-sys.path.remove(os.path.abspath(inventory_dir))
-
-
-
-
-BASICINVENTORY = {'all': {'hosts': ['foo', 'bar']},
-                  '_meta': { 'hostvars': { 'foo': {'hostname': 'foo'},
-                                           'bar': {'hostname': 'bar'}}
-                           }
-                 }
 
 class FakeArgs(object):
     debug = False
@@ -32,91 +23,80 @@ class FakeArgs(object):
     host = False
     list = True
 
-class TestVMWareInventory(unittest.TestCase):
 
-    def test_host_info_returns_single_host(self):
-        vmw = VMWareInventory(load=False)
-        vmw.inventory = BASICINVENTORY
-        foo = vmw.get_host_info('foo')
-        bar = vmw.get_host_info('bar')
-        assert foo == {'hostname': 'foo'}
-        assert bar == {'hostname': 'bar'}
+@pytest.fixture
+def vmware_inventory():
+    inventory_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'contrib', 'inventory'))
 
-    def test_show_returns_serializable_data(self):
-        fakeargs = FakeArgs()
-        vmw = VMWareInventory(load=False)
-        vmw.args = fakeargs
-        vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
-        serializable = False
+    sys.path.append(inventory_dir)
 
-        try:
-            json.loads(showdata)
-            serializable = True
-        except:
-            pass
-        assert serializable
-        #import epdb; epdb.st()
+    try:
+        import vmware_inventory
+    except BaseException as ex:
+        pytest.skip(ex)
+    finally:
+        sys.path.remove(inventory_dir)
 
-    def test_show_list_returns_serializable_data(self):
-        fakeargs = FakeArgs()
-        vmw = VMWareInventory(load=False)
-        vmw.args = fakeargs
-        vmw.args.list = True
-        vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
-        serializable = False
-
-        try:
-            json.loads(showdata)
-            serializable = True
-        except:
-            pass
-        assert serializable
-        #import epdb; epdb.st()
-
-    def test_show_list_returns_all_data(self):
-        fakeargs = FakeArgs()
-        vmw = VMWareInventory(load=False)
-        vmw.args = fakeargs
-        vmw.args.list = True
-        vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
-        expected = json.dumps(BASICINVENTORY, indent=2)
-        assert showdata == expected
-
-    def test_show_host_returns_serializable_data(self):
-        fakeargs = FakeArgs()
-        vmw = VMWareInventory(load=False)
-        vmw.args = fakeargs
-        vmw.args.host = 'foo'
-        vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
-        serializable = False
-
-        try:
-            json.loads(showdata)
-            serializable = True
-        except:
-            pass
-        assert serializable
-        #import epdb; epdb.st()
-
-    def test_show_host_returns_just_host(self):
-        fakeargs = FakeArgs()
-        vmw = VMWareInventory(load=False)
-        vmw.args = fakeargs
-        vmw.args.list = False
-        vmw.args.host = 'foo'
-        vmw.inventory = BASICINVENTORY
-        showdata = vmw.show()        
-        expected = BASICINVENTORY['_meta']['hostvars']['foo']
-        expected = json.dumps(expected, indent=2)
-        #import epdb; epdb.st()
-        assert showdata == expected
+    return vmware_inventory
 
 
+def test_host_info_returns_single_host(vmware_inventory):
+    vmw = vmware_inventory.VMWareInventory(load=False)
+    vmw.inventory = BASIC_INVENTORY
+    foo = vmw.get_host_info('foo')
+    bar = vmw.get_host_info('bar')
+    assert foo == {'hostname': 'foo'}
+    assert bar == {'hostname': 'bar'}
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_show_returns_serializable_data(vmware_inventory):
+    fakeargs = FakeArgs()
+    vmw = vmware_inventory.VMWareInventory(load=False)
+    vmw.args = fakeargs
+    vmw.inventory = BASIC_INVENTORY
+    showdata = vmw.show()
+    json.loads(showdata)
+
+
+def test_show_list_returns_serializable_data(vmware_inventory):
+    fakeargs = FakeArgs()
+    vmw = vmware_inventory.VMWareInventory(load=False)
+    vmw.args = fakeargs
+    vmw.args.list = True
+    vmw.inventory = BASIC_INVENTORY
+    showdata = vmw.show()
+    json.loads(showdata)
+
+
+def test_show_list_returns_all_data(vmware_inventory):
+    fakeargs = FakeArgs()
+    vmw = vmware_inventory.VMWareInventory(load=False)
+    vmw.args = fakeargs
+    vmw.args.list = True
+    vmw.inventory = BASIC_INVENTORY
+    showdata = vmw.show()
+    expected = json.dumps(BASIC_INVENTORY, indent=2)
+    assert showdata == expected
+
+
+def test_show_host_returns_serializable_data(vmware_inventory):
+    fakeargs = FakeArgs()
+    vmw = vmware_inventory.VMWareInventory(load=False)
+    vmw.args = fakeargs
+    vmw.args.host = 'foo'
+    vmw.inventory = BASIC_INVENTORY
+    showdata = vmw.show()
+    json.loads(showdata)
+
+
+def test_show_host_returns_just_host(vmware_inventory):
+    fakeargs = FakeArgs()
+    vmw = vmware_inventory.VMWareInventory(load=False)
+    vmw.args = fakeargs
+    vmw.args.list = False
+    vmw.args.host = 'foo'
+    vmw.inventory = BASIC_INVENTORY
+    showdata = vmw.show()
+    expected = BASIC_INVENTORY['_meta']['hostvars']['foo']
+    expected = json.dumps(expected, indent=2)
+    assert showdata == expected

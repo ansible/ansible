@@ -1,0 +1,419 @@
+---
+- name: test fail missing params
+  cs_host:
+  register: host
+  ignore_errors: true
+- name: verify test fail missing url if host is not existent
+  assert:
+    that:
+      - host is failed
+      - 'host.msg == "missing required arguments: name"'
+
+- name: test fail missing params if host is not existent
+  cs_host:
+    name: sim
+  register: host
+  ignore_errors: true
+- name: verify test fail missing params if host is not existent
+  assert:
+    that:
+      - host is failed
+      - 'host.msg == "missing required arguments: password, username, hypervisor, pod"'
+
+- name: test create a host in check mode
+  cs_host:
+    name: sim
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: root
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags:
+    - perf
+    - gpu
+  register: host
+  check_mode: true
+- name: verify test create a host in check mode
+  assert:
+    that:
+      - host is changed
+
+- name: test create a host
+  cs_host:
+    name: sim
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: root
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags:
+    - perf
+    - gpu
+  register: host
+- name: verify test create a host
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - "host.name.startswith('SimulatedAgent.')"
+      - host.host_tags == ['perf', 'gpu']
+
+# This is special in simulator mode, we can not predict the full hostname.
+# That is why we gather the infos from the returns and use a fact.
+- name: assume the sim would resolve to the IP address
+  set_fact:
+    host_hostname: "{{ host.name }}"
+    host_ip_address: "{{ host.ip_address }}"
+
+- name: test create a host idempotence
+  cs_host:
+    name: "{{ host_hostname }}"
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: admin
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags:
+    - perf
+    - gpu
+  register: host
+- name: verify test create a host idempotence
+  assert:
+    that:
+      - host is not changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu']
+
+- name: test update host in check mode
+  cs_host:
+    name: "{{ host_hostname }}"
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: admin
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags:
+    - perf
+    - gpu
+    - x2
+  register: host
+  check_mode: true
+- name: verify test update a host in check mode
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu']
+
+- name: test update host
+  cs_host:
+    name: "{{ host_hostname }}"
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: admin
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags:
+    - perf
+    - gpu
+    - x2
+  register: host
+- name: verify test update a host in check mode
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test update host idempotence
+  cs_host:
+    name: "{{ host_hostname }}"
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: admin
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags:
+    - perf
+    - gpu
+    - x2
+  register: host
+- name: verify test update a host idempotence
+  assert:
+    that:
+      - host is not changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+# FIXME: Removing by empty list seems to be an issue in the used lib cs underneath, disabled
+- name: test update host remove host_tags
+  cs_host:
+    name: "{{ host_hostname }}"
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: admin
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags: []
+  register: host
+  when: false
+- name: verify test update host remove host_tags
+  assert:
+    that:
+      - host is changed
+      - host.host_tags|length == 0
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+  when: false
+
+# FIXME: Removing by empty list seems to be an issue in the used lib cs underneath, disabled
+- name: test update host remove host_tags idempotence
+  cs_host:
+    name: "{{ host_hostname }}"
+    url: "http://sim/c0-basic/h2"
+    cluster: C0-basic
+    pod: POD0-basic
+    username: admin
+    password: password
+    hypervisor: Simulator
+    allocation_state: enabled
+    host_tags: []
+  register: host
+  when: false
+- name: verify test update host remove host_tags idempotence
+  assert:
+    that:
+      - host is not changed
+      - len(host.host_tags) == 0
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+  when: false
+
+
+- name: test put host in maintenance in check mode
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    allocation_state: maintenance
+  check_mode: true
+  register: host
+- name: verify test put host in maintenance in check mode
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test put host in maintenance
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    allocation_state: maintenance
+  register: host
+- name: verify test put host in maintenance
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'maintenance'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test put host in maintenance idempotence
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    allocation_state: maintenance
+  register: host
+- name: verify test put host in maintenance idempotence
+  assert:
+    that:
+      - host is not changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'maintenance'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test put host out of maintenance in check mode
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    allocation_state: enabled
+  check_mode: true
+  register: host
+- name: verify test put host out of maintenance in check mode
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'maintenance'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test put host out of maintenance
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    allocation_state: enabled
+  register: host
+- name: verify test put host out of maintenance
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test put host out of maintenance idempotence
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    allocation_state: enabled
+  register: host
+- name: verify test put host out of maintenance idempotence
+  assert:
+    that:
+      - host is not changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test remove host in check mode
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    state: absent
+  check_mode: true
+  register: host
+- name: verify test remove a host in check mode
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test remove host
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    state: absent
+  register: host
+- name: verify test remove a host
+  assert:
+    that:
+      - host is changed
+      - host.cluster == 'C0-basic'
+      - host.pod == 'POD0-basic'
+      - host.hypervisor == 'Simulator'
+      - host.allocation_state == 'enabled'
+      - host.zone == 'Sandbox-simulator-basic'
+      - host.state == 'Up'
+      - host.name == '{{ host_hostname }}'
+      - host.host_tags == ['perf', 'gpu', 'x2']
+
+- name: test remove host idempotence
+  cs_host:
+    name: "{{ host_hostname }}"
+    cluster: C0-basic
+    pod: POD0-basic
+    state: absent
+  register: host
+- name: verify test remove a host idempotenc
+  assert:
+    that:
+      - host is not changed

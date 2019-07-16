@@ -1,0 +1,414 @@
+---
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-hi' }}"
+- name: Registering container name
+  set_fact:
+    cnames: "{{ cnames + [cname] }}"
+
+####################################################################
+## Creation ########################################################
+####################################################################
+
+- name: Create container (check)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+  check_mode: yes
+  register: create_1
+
+- name: Create container
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+  register: create_2
+
+- name: Create container (idempotent)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+  register: create_3
+
+- name: Create container (idempotent check)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+  check_mode: yes
+  register: create_4
+
+- assert:
+    that:
+    - create_1 is changed
+    - create_2 is changed
+    - create_3 is not changed
+    - create_4 is not changed
+
+####################################################################
+## Starting (after creation) #######################################
+####################################################################
+
+- name: Start container (check)
+  docker_container:
+    name: "{{ cname }}"
+    state: started
+  check_mode: yes
+  register: start_1
+
+- name: Start container
+  docker_container:
+    name: "{{ cname }}"
+    state: started
+  register: start_2
+
+- name: Start container (idempotent)
+  docker_container:
+    name: "{{ cname }}"
+    state: started
+  register: start_3
+
+- name: Start container (idempotent check)
+  docker_container:
+    name: "{{ cname }}"
+    state: started
+  check_mode: yes
+  register: start_4
+
+- assert:
+    that:
+    - start_1 is changed
+    - start_2 is changed
+    - start_3 is not changed
+    - start_4 is not changed
+
+####################################################################
+## Present check for running container #############################
+####################################################################
+
+- name: Present check for running container (check)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+  check_mode: yes
+  register: present_check_1
+
+- name: Present check for running container
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+  register: present_check_2
+
+- assert:
+    that:
+    - present_check_1 is not changed
+    - present_check_2 is not changed
+
+####################################################################
+## Starting (from scratch) #########################################
+####################################################################
+
+- name: Remove container (setup for starting from scratch)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+
+- name: Start container from scratch (check)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
+    name: "{{ cname }}"
+    state: started
+  check_mode: yes
+  register: start_scratch_1
+
+- name: Start container from scratch
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
+    name: "{{ cname }}"
+    state: started
+  register: start_scratch_2
+
+- name: Start container from scratch (idempotent)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
+    name: "{{ cname }}"
+    state: started
+  register: start_scratch_3
+
+- name: Start container from scratch (idempotent check)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    stop_timeout: 1
+    name: "{{ cname }}"
+    state: started
+  check_mode: yes
+  register: start_scratch_4
+
+- assert:
+    that:
+    - start_scratch_1 is changed
+    - start_scratch_2 is changed
+    - start_scratch_3 is not changed
+    - start_scratch_4 is not changed
+
+####################################################################
+## Recreating ######################################################
+####################################################################
+
+- name: Recreating container (created)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: present
+    force_kill: yes
+  register: recreate_1
+
+- name: Recreating container (created, recreate)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    recreate: yes
+    state: present
+    force_kill: yes
+  register: recreate_2
+
+- name: Recreating container (started)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    force_kill: yes
+  register: recreate_3
+
+- name: Recreating container (started, recreate)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    recreate: yes
+    state: started
+    force_kill: yes
+  register: recreate_4
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- debug: var=recreate_1
+- debug: var=recreate_2
+- debug: var=recreate_3
+- debug: var=recreate_4
+
+- assert:
+    that:
+    - recreate_2 is changed
+    - recreate_3 is changed
+    - recreate_4 is changed
+    - recreate_1.container.Id != recreate_2.container.Id
+    - recreate_2.container.Id == recreate_3.container.Id
+    - recreate_3.container.Id != recreate_4.container.Id
+
+####################################################################
+## Restarting ######################################################
+####################################################################
+
+- name: Restarting
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    stop_timeout: 1
+    volumes:
+    - /tmp/tmp
+  register: restart_1
+
+- name: Restarting (restart)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    restart: yes
+    state: started
+    stop_timeout: 1
+    force_kill: yes
+  register: restart_2
+
+- name: Restarting (verify volumes)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    stop_timeout: 1
+    volumes:
+    - /tmp/tmp
+  register: restart_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - restart_1 is changed
+    - restart_2 is changed
+    - restart_1.container.Id == restart_2.container.Id
+    - restart_3 is not changed
+
+####################################################################
+## Stopping ########################################################
+####################################################################
+
+- name: Stop container (check)
+  docker_container:
+    image: alpine:3.8
+    name: "{{ cname }}"
+    state: stopped
+    stop_timeout: 1
+  check_mode: yes
+  register: stop_1
+
+- name: Stop container
+  docker_container:
+    image: alpine:3.8
+    name: "{{ cname }}"
+    state: stopped
+    stop_timeout: 1
+  register: stop_2
+
+- name: Stop container (idempotent)
+  docker_container:
+    image: alpine:3.8
+    name: "{{ cname }}"
+    state: stopped
+    stop_timeout: 1
+  register: stop_3
+
+- name: Stop container (idempotent check)
+  docker_container:
+    image: alpine:3.8
+    name: "{{ cname }}"
+    state: stopped
+    stop_timeout: 1
+  check_mode: yes
+  register: stop_4
+
+- assert:
+    that:
+    - stop_1 is changed
+    - stop_2 is changed
+    - stop_3 is not changed
+    - stop_4 is not changed
+
+####################################################################
+## Removing ########################################################
+####################################################################
+
+- name: Remove container (check)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  check_mode: yes
+  register: remove_1
+
+- name: Remove container
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: remove_2
+
+- name: Remove container (idempotent)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  register: remove_3
+
+- name: Remove container (idempotent check)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+  check_mode: yes
+  register: remove_4
+
+- assert:
+    that:
+    - remove_1 is changed
+    - remove_2 is changed
+    - remove_3 is not changed
+    - remove_4 is not changed
+
+####################################################################
+## Removing (from running) #########################################
+####################################################################
+
+- name: Start container (setup for removing from running)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+
+- name: Remove container from running (check)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  check_mode: yes
+  register: remove_from_running_1
+
+- name: Remove container from running
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  register: remove_from_running_2
+
+- name: Remove container from running (idempotent)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  register: remove_from_running_3
+
+- name: Remove container from running (idempotent check)
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  check_mode: yes
+  register: remove_from_running_4
+
+- assert:
+    that:
+    - remove_from_running_1 is changed
+    - remove_from_running_2 is changed
+    - remove_from_running_3 is not changed
+    - remove_from_running_4 is not changed

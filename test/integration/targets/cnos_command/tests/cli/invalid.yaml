@@ -1,0 +1,27 @@
+---
+- debug: msg="START cli/invalid.yaml"
+
+- name: run invalid command
+  cnos_command:
+    commands: ['display foo']
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed"
+
+- name: run commands that include invalid command
+  cnos_command:
+    commands:
+      - display version
+      - display foo
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed"
+  ignore_errors: true
+
+- debug: msg="END cli/invalid.yaml"

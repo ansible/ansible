@@ -1,0 +1,99 @@
+# Test code for the vmware_vm_facts module
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright, (c) 2018, Fedor Vompe <f.vompe@comptek.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_datastore: true
+    setup_virtualmachines: true
+
+- when: vcsim is not defined
+  block:
+    - name: Get facts from a given ESXi
+      vmware_vm_facts:
+        validate_certs: false
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
+- &vm_data
+  name: Get facts about available vms
+  vmware_vm_facts:
+    validate_certs: false
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+  register: vm_facts_0001
+
+- debug: var=vm_facts_0001
+
+- &vm_fact_check
+  name: Verify if VM facts exist
+  assert:
+    that:
+      - "item.esxi_hostname is defined"
+      - "item.guest_fullname is defined"
+      - "item.ip_address is defined"
+      - "item.mac_address is defined"
+      - "item.power_state is defined"
+      - "item.uuid is defined"
+      - "item.vm_network is defined"
+  with_items:
+    - "{{ vm_facts_0001.virtual_machines | json_query(query) }}"
+  vars:
+    query: "[?guest_name=='DC0_H0_VM0']"
+
+- <<: *vm_data
+  name: Get facts about available vms in check mode
+  check_mode: yes
+
+- <<: *vm_fact_check
+  name: Verify if VM facts exist in check mode
+
+- name: Get folder name from VM
+  vmware_guest_find:
+    validate_certs: false
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ virtual_machines[0].name }}"
+  register: folder_path_info
+
+- set_fact:
+    folder_path: "{{ folder_path_info.folders[0] }}"
+  when: folder_path_info.folders is defined
+
+- name: Gather facts about VM using folder
+  vmware_vm_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    folder: "{{ folder_path }}"
+  register: vm_facts
+  when: folder_path_info.folders is defined
+- debug: var=vm_facts
+
+- name: Check if facts are returned for VM with folder specified
+  assert:
+    that:
+      - "item.esxi_hostname is defined"
+      - "item.guest_fullname is defined"
+      - "item.ip_address is defined"
+      - "item.mac_address is defined"
+      - "item.power_state is defined"
+      - "item.uuid is defined"
+      - "item.vm_network is defined"
+  with_items:
+    - "{{ vm_facts.virtual_machines | json_query(query) }}"
+  vars:
+    query: "[?guest_name=='DC0_H0_VM0']"

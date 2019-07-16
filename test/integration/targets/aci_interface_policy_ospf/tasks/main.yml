@@ -1,0 +1,231 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Dag Wieers (dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+
+# CLEAN ENVIRONMENT
+- name: Ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    tenant: anstest
+    state: present
+  register: tenant_present
+
+- name: Remove OSPF interface policy
+  aci_interface_policy_ospf: &interface_policy_ospf_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: anstest
+    ospf: ansible_ospf
+    state: absent
+
+
+# ADD OSPF INTERFACE POLICY
+- name: Add ospf interface policy (check_mode)
+  aci_interface_policy_ospf: &interface_policy_ospf_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: anstest
+    ospf: ansible_ospf
+    state: present
+  check_mode: yes
+  register: cm_add_ospf_interface_policy
+
+- name: Add ospf interface policy (normal mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_present
+  register: nm_add_ospf_interface_policy
+
+- name: Add ospf interface policy again (check_mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_present
+  check_mode: yes
+  register: cm_add_ospf_interface_policy_again
+
+- name: Add ospf interface policy again (normal mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_present
+  register: nm_add_ospf_interface_policy_again
+
+- name: Verify add_ospf_interface_policy
+  assert:
+    that:
+    - cm_add_ospf_interface_policy is changed
+    - nm_add_ospf_interface_policy is changed
+    - cm_add_ospf_interface_policy_again is not changed
+    - nm_add_ospf_interface_policy_again is not changed
+
+
+# CHANGE OSPF INTERFACE POLICY
+- name: Change description of ospf interface policy (check_mode)
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_present
+    description: Ansible test ospf interface policy
+  check_mode: yes
+  register: cm_add_ospf_descr
+
+- name: Change description of ospf interface policy (normal mode)
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_present
+    description: Ansible test ospf interface policy
+  register: nm_add_ospf_descr
+
+- name: Change description of ospf interface policy again (check_mode)
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_present
+    description: Ansible test ospf interface policy
+  check_mode: yes
+  register: cm_add_ospf_descr_again
+
+- name: Change description of ospf interface policy again (normal mode)
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_present
+    description: Ansible test ospf interface policy
+  register: nm_add_ospf_descr_again
+
+- name: Verify add_ospf_descr
+  assert:
+    that:
+    - cm_add_ospf_descr is changed
+    - nm_add_ospf_descr is changed
+    - cm_add_ospf_descr_again is not changed
+    - nm_add_ospf_descr_again is not changed
+
+
+# ADD OSPF INTERFACE POLICY AGAIN
+- name: Add ospf interface policy again with no description (check_mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_present
+  check_mode: yes
+  register: cm_add_ospf_again_no_descr
+
+- name: Add ospf interface policy again with no description (normal mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_present
+  register: nm_add_ospf_again_no_descr
+
+- name: Verify add_ospf_again_no_descr
+  assert:
+    that:
+    - cm_add_ospf_again_no_descr is not changed
+    - nm_add_ospf_again_no_descr is not changed
+
+
+# QUERY ALL OSPF INTERFACE POLICIES
+- name: Query all ospf interface policies (check_mode)
+  aci_interface_policy_ospf: &interface_policy_ospf_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: anstest
+    state: query
+  check_mode: yes
+  register: cm_query_all_ospfs
+
+- name: Query all ospfs (normal mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_query
+  register: nm_query_all_ospfs
+
+- name: Verify query_all_ospfs
+  assert:
+    that:
+    - cm_query_all_ospfs is not changed
+    - nm_query_all_ospfs is not changed
+    # NOTE: Order of ospfs is not stable between calls
+    #- cm_query_all_ospfs == nm_query_all_ospfs
+
+
+# QUERY A OSPF INTERFACE POLICY
+- name: Query our ospf
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_query
+    tenant: anstest
+    ospf: ansible_ospf
+  check_mode: yes
+  register: cm_query_ospf
+
+- name: Query our ospf
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_query
+    tenant: anstest
+    ospf: ansible_ospf
+  register: nm_query_ospf
+
+- name: Verify query_ospf
+  assert:
+    that:
+    - cm_query_ospf is not changed
+    - nm_query_ospf is not changed
+    - cm_query_ospf == nm_query_ospf
+
+
+# REMOVE OSPF INTERFACE POLICY
+- name: Remove ospf (check_mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_absent
+  check_mode: yes
+  register: cm_remove_ospf
+
+- name: Remove ospf (normal mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_absent
+  register: nm_remove_ospf
+
+- name: Remove ospf again (check_mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_absent
+  check_mode: yes
+  register: cm_remove_ospf_again
+
+- name: Remove ospf again (normal mode)
+  aci_interface_policy_ospf: *interface_policy_ospf_absent
+  register: nm_remove_ospf_again
+
+- name: Verify remove_ospf
+  assert:
+    that:
+    - cm_remove_ospf is changed
+    - nm_remove_ospf is changed
+    - cm_remove_ospf_again is not changed
+    - nm_remove_ospf_again is not changed
+
+
+# QUERY NON-EXISTING OSPF INTERFACE POLICY
+- name: Query non-existing ospf (check_mode)
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_query
+    ospf: ansible_ospf
+  check_mode: yes
+  register: cm_query_non_ospf
+
+- name: Query non-existing ospf (normal mode)
+  aci_interface_policy_ospf:
+    <<: *interface_policy_ospf_query
+    ospf: ansible_ospf
+  register: nm_query_non_ospf
+
+# TODO: Implement more tests
+- name: Verify query_non_ospf
+  assert:
+    that:
+    - cm_query_non_ospf is not changed
+    - nm_query_non_ospf is not changed
+    - cm_query_non_ospf == nm_query_non_ospf

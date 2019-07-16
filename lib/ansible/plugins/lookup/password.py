@@ -1,35 +1,109 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2013, Javier Candeira <javier@candeira.com>
 # (c) 2013, Maykel Moya <mmoya@speedyrails.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: password
+    version_added: "1.1"
+    author:
+      - Daniel Hokka Zakrisson <daniel@hozac.com>
+      - Javier Candeira <javier@candeira.com>
+      - Maykel Moya <mmoya@speedyrails.com>
+    short_description: retrieve or generate a random password, stored in a file
+    description:
+      - Generates a random plaintext password and stores it in a file at a given filepath.
+      - If the file exists previously, it will retrieve its contents, behaving just like with_file.
+      - 'Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host,
+        which simplifies password management in C("host_vars") variables.'
+      - A special case is using /dev/null as a path. The password lookup will generate a new random password each time,
+        but will not write it to /dev/null. This can be used when you need a password without storing it on the controller.
+    options:
+      _terms:
+         description:
+           - path to the file that stores/will store the passwords
+         required: True
+      encrypt:
+        description:
+           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash).
+           - If not provided, the password will be returned in plain text.
+           - Note that the password is always stored as plain text, only the returning password is encrypted.
+           - Encrypt also forces saving the salt value for idempotence.
+           - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
+        default: None
+      chars:
+        version_added: "1.4"
+        description:
+          - Define comma separated list of names that compose a custom character set in the generated passwords.
+          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
+          - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
+          - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
+        type: string
+      length:
+        description: The length of the generated password.
+        default: 20
+        type: integer
+    notes:
+      - A great alternative to the password lookup plugin,
+        if you don't need to generate random passwords on a per-host basis,
+        would be to use Vault in playbooks.
+        Read the documentation there and consider using it first,
+        it will be more desirable for most applications.
+      - If the file already exists, no data will be written to it.
+        If the file has contents, those contents will be read in as the password.
+        Empty files cause the password to return as an empty string.
+      - 'As all lookups, this runs on the Ansible host as the user running the playbook, and "become" does not apply,
+        the target file must be readable by the playbook user, or, if it does not exist,
+        the playbook user must have sufficient privileges to create it.
+        (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).'
+"""
+
+EXAMPLES = """
+- name: create a mysql user with a random password
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
+    priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+
+- name: create a mysql user with a random password using only ascii letters
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
+    priv: '{{ client }}_{{ tier }}_{{ role }}.*:ALL'
+
+- name: create a mysql user with a random password using only digits
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+    priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+
+- name: create a mysql user with a random password using many different char sets
+  mysql_user:
+    name: "{{ client }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+    priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+"""
+
+RETURN = """
+_raw:
+  description:
+    - a password
+"""
+
 import os
 import string
-import random
+import time
+import shutil
+import hashlib
 
-from ansible import constants as C
-from ansible.compat.six import text_type
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.encrypt import do_encrypt
+from ansible.utils.encrypt import do_encrypt, random_password, random_salt
 from ansible.utils.path import makedirs_safe
 
 
@@ -131,40 +205,9 @@ def _gen_candidate_chars(characters):
         # getattr from string expands things like "ascii_letters" and "digits"
         # into a set of characters.
         chars.append(to_text(getattr(string, to_native(chars_spec), chars_spec),
-                            errors='strict'))
+                     errors='strict'))
     chars = u''.join(chars).replace(u'"', u'').replace(u"'", u'')
     return chars
-
-
-def _random_password(length=DEFAULT_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
-    '''Return a random password string of length containing only chars
-
-    :kwarg length: The number of characters in the new password.  Defaults to 20.
-    :kwarg chars: The characters to choose from.  The default is all ascii
-        letters, ascii digits, and these symbols ``.,:-_``
-
-    .. note: this was moved from the old ansible utils code, as nothing
-        else appeared to use it.
-    '''
-    assert isinstance(chars, text_type), '%s (%s) is not a text_type' % (chars, type(chars))
-
-    random_generator = random.SystemRandom()
-
-    password = []
-    while len(password) < length:
-        new_char = random_generator.choice(chars)
-        password.append(new_char)
-
-    return u''.join(password)
-
-
-def _random_salt():
-    """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
-    """
-    # Note passlib salt values must be pure ascii so we can't let the user
-    # configure this
-    salt_chars = _gen_candidate_chars(['ascii_letters', 'digits', './'])
-    return _random_password(length=8, chars=salt_chars)
 
 
 def _parse_content(content):
@@ -189,13 +232,13 @@ def _parse_content(content):
     return password, salt
 
 
-def _format_content(password, salt, encrypt=True):
+def _format_content(password, salt, encrypt=None):
     """Format the password and salt for saving
     :arg password: the plaintext password to save
     :arg salt: the salt to use when encrypting a password
-    :arg encrypt: Whether the user requests that this password is encrypted.
+    :arg encrypt: Which method the user requests that this password is encrypted.
         Note that the password is saved in clear.  Encrypt just tells us if we
-        must save the salt value for idempotence.  Defaults to True.
+        must save the salt value for idempotence.  Defaults to None.
     :returns: a text string containing the formatted information
 
     .. warning:: Passwords are saved in clear.  This is because the playbooks
@@ -205,7 +248,8 @@ def _format_content(password, salt, encrypt=True):
         return password
 
     # At this point, the calling code should have assured us that there is a salt value.
-    assert salt, '_format_content was called with encryption requested but no salt value'
+    if not salt:
+        raise AnsibleAssertionError('_format_content was called with encryption requested but no salt value')
 
     return u'%s salt=%s' % (password, salt)
 
@@ -220,6 +264,40 @@ def _write_password_file(b_path, content):
         f.write(b_content)
 
 
+def _get_lock(b_path):
+    """Get the lock for writing password file."""
+    first_process = False
+    b_pathdir = os.path.dirname(b_path)
+    lockfile_name = to_bytes("%s.ansible_lockfile" % hashlib.sha1(b_path).hexdigest())
+    lockfile = os.path.join(b_pathdir, lockfile_name)
+    if not os.path.exists(lockfile) and b_path != to_bytes('/dev/null'):
+        try:
+            makedirs_safe(b_pathdir, mode=0o700)
+            fd = os.open(lockfile, os.O_CREAT | os.O_EXCL)
+            os.close(fd)
+            first_process = True
+        except OSError as e:
+            if e.strerror != 'File exists':
+                raise
+
+    counter = 0
+    # if the lock is got by other process, wait until it's released
+    while os.path.exists(lockfile) and not first_process:
+        time.sleep(2 ** counter)
+        if counter >= 2:
+            raise AnsibleError("Password lookup cannot get the lock in 7 seconds, abort..."
+                               "This may caused by un-removed lockfile"
+                               "you can manually remove it from controller machine at %s and try again" % lockfile)
+        counter += 1
+    return first_process, lockfile
+
+
+def _release_lock(lockfile):
+    """Release the lock so other processes can read the password file."""
+    if os.path.exists(lockfile):
+        os.remove(lockfile)
+
+
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         ret = []
@@ -230,10 +308,14 @@ class LookupModule(LookupBase):
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
 
-            changed = False
+            changed = None
+            # make sure only one process finishes all the job first
+            first_process, lockfile = _get_lock(b_path)
+
             content = _read_password_file(b_path)
-            if content is None:
-                plaintext_password = _random_password(params['length'], chars)
+
+            if content is None or b_path == to_bytes('/dev/null'):
+                plaintext_password = random_password(params['length'], chars)
                 salt = None
                 changed = True
             else:
@@ -241,11 +323,15 @@ class LookupModule(LookupBase):
 
             if params['encrypt'] and not salt:
                 changed = True
-                salt = _random_salt()
+                salt = random_salt()
 
-            if changed:
+            if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
                 _write_password_file(b_path, content)
+
+            if first_process:
+                # let other processes continue
+                _release_lock(lockfile)
 
             if params['encrypt']:
                 password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)

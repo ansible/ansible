@@ -1,0 +1,276 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Disable feature BGP"
+  nxos_feature:
+    feature: bgp
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
+- name: "Enable feature BGP"
+  nxos_feature:
+    feature: bgp
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- block:
+  - name: "set multi vrf params"
+    nxos_bgp: &set_multi_vrf
+      asn: 65535
+      vrf: "{{ item }}"
+      router_id: 192.0.2.1
+      bestpath_always_compare_med: true
+      bestpath_aspath_multipath_relax: true
+      bestpath_compare_routerid: true
+      bestpath_cost_community_ignore: true
+      bestpath_med_confed: true
+      bestpath_med_missing_as_worst: true
+      bestpath_med_non_deterministic: true
+# grace_restart is failing with error code -32603 only on CLI transport, nxapi ok 
+#      graceful_restart: false
+      graceful_restart_helper: true
+      log_neighbor_changes: true
+      maxas_limit: 50
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set_multi_vrf
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "reset multi vrf params"
+    nxos_bgp: &reset_multi_vrf
+      asn: 65535
+      vrf: "{{ item }}"
+      bestpath_always_compare_med: false
+      bestpath_aspath_multipath_relax: false
+      bestpath_compare_routerid: false
+      bestpath_cost_community_ignore: false
+      bestpath_med_confed: false
+      bestpath_med_missing_as_worst: false
+      bestpath_med_non_deterministic: false
+      graceful_restart_helper: false
+      log_neighbor_changes: false
+      maxas_limit: default
+      router_id: default
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset_multi_vrf
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "set clusterid"
+    nxos_bgp: &set_cluster_id
+      asn: 65535
+      vrf: "{{ item }}"
+      cluster_id: 10.0.0.1
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set_cluster_id
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "reset cluster_id"
+    nxos_bgp: &reset_cluster_id
+      asn: 65535
+      vrf: "{{ item }}"
+      cluster_id: default
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset_cluster_id
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "set confederation"
+    nxos_bgp: &set_confederation
+      asn: 65535
+      confederation_id: 99
+      confederation_peers:
+        - 16
+        - 22
+        - 18
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set_confederation
+    register: result
+
+  - assert: *false
+
+  - name: "reset confederation"
+    nxos_bgp: &reset_confederation
+      asn: 65535
+      confederation_id: default
+      confederation_peers: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset_confederation
+    register: result
+
+  - assert: *false
+
+  - name: "set confederation_local_as"
+    nxos_bgp: &set_confederation_la
+      asn: 65535
+      vrf: myvrf
+      local_as: 33
+      confederation_id: 99
+      confederation_peers:
+        - 16
+        - 22
+        - 18
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set_confederation_la
+    register: result
+
+  - assert: *false
+
+  - name: "reset confederation local_as"
+    nxos_bgp: &reset_confederation_la
+      asn: 65535
+      vrf: myvrf
+      local_as: default
+      confederation_id: default
+      confederation_peers: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset_confederation_la
+    register: result
+
+  - assert: *false
+
+  - name: "set local_as"
+    nxos_bgp: &set_local_as
+      asn: 65535
+      vrf: myvrf
+      local_as: 33
+      confederation_id: 99
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set_local_as
+    register: result
+
+  - assert: *false
+
+  - name: "reset local_as"
+    nxos_bgp: &reset_local_as
+      asn: 65535
+      vrf: myvrf
+      confederation_id: default
+      local_as: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset_local_as
+    register: result
+
+  - assert: *false
+
+  - name: "set default vrf params"
+    nxos_bgp: &set_def_vrf
+      asn: 65535
+      event_history_cli: size_medium
+      event_history_detail: size_large
+      event_history_events: size_medium
+      event_history_periodic: size_small
+      enforce_first_as: false
+      fast_external_fallover: false
+      flush_routes: true
+      shutdown: true
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *set_def_vrf
+    register: result
+
+  - assert: *false
+
+  - name: "reset default vrf params"
+    nxos_bgp: &reset_def_vrf
+      asn: 65535
+      event_history_detail: default
+      enforce_first_as: true
+      fast_external_fallover: true
+      flush_routes: false
+      shutdown: false
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp: *reset_def_vrf
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Disable feature bgp"
+    nxos_feature:
+      feature: bgp
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_bgp parameter test"

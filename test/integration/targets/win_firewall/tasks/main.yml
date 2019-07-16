@@ -1,0 +1,52 @@
+# NOTE: The win_firewall module only works on WMF 5+
+
+- setup:
+
+- name: Test Windows capabilities
+  raw: Get-Command Get-NetFirewallProfile -ErrorAction SilentlyContinue; return $?
+  failed_when: no
+  register: get_netfirewallprofile
+
+- name: Only run tests when Windows is capable
+  when: get_netfirewallprofile.rc == 0 and ansible_powershell_version >= 5
+  block:
+  - name: Turn off Windows Firewall (begin)
+    win_firewall:
+      profiles: [ Domain, Private, Public ]
+      state: disabled
+    register: firewall_off
+
+  - name: Test firewall_off
+    assert:
+      that:
+      - not firewall_off.Domain.enabled
+      - not firewall_off.Private.enabled
+      - not firewall_off.Public.enabled
+
+
+  - name: Test in normal mode
+    import_tasks: tests.yml
+    vars:
+      in_check_mode: no
+
+
+  - name: Test in check-mode
+    import_tasks: tests.yml
+    vars:
+      in_check_mode: yes
+    check_mode: yes
+
+
+  - name: Turn on Windows Firewall (end)
+    win_firewall:
+      profiles: [ Domain, Private, Public ]
+      state: enabled
+    register: firewall_on
+
+  - name: Test firewall_on
+    assert:
+      that:
+      - firewall_on is changed
+      - firewall_on.Domain.enabled
+      - firewall_on.Private.enabled
+      - firewall_on.Public.enabled

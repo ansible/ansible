@@ -67,23 +67,21 @@ Tested against Ansible 1.8.2 and Collins 1.3.0.
 
 
 import argparse
-import ConfigParser
 import logging
 import os
 import re
 import sys
 from time import time
 import traceback
-import urllib
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
-from six import iteritems
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import configparser as ConfigParser
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 from ansible.module_utils.urls import open_url
+
 
 class CollinsDefaults(object):
     ASSETS_API_ENDPOINT = '%s/api/assets'
@@ -117,7 +115,7 @@ class CollinsInventory(object):
         self.parse_cli_args()
 
         logging.basicConfig(format=CollinsDefaults.LOG_FORMAT,
-            filename=self.log_location)
+                            filename=self.log_location)
         self.log = logging.getLogger('CollinsInventory')
 
     def _asset_get_attribute(self, asset, attrib):
@@ -168,14 +166,14 @@ class CollinsInventory(object):
         print(data_to_print)
         return successful
 
-    def find_assets(self, attributes = {}, operation = 'AND'):
+    def find_assets(self, attributes=None, operation='AND'):
         """ Obtains Collins assets matching the provided attributes. """
+        attributes = {} if attributes is None else attributes
 
         # Formats asset search query to locate assets matching attributes, using
         # the CQL search feature as described here:
         # http://tumblr.github.io/collins/recipes.html
-        attributes_query = [ '='.join(attr_pair)
-            for attr_pair in iteritems(attributes) ]
+        attributes_query = ['='.join(attr_pair) for attr_pair in iteritems(attributes)]
         query_parameters = {
             'details': ['True'],
             'operation': [operation],
@@ -190,18 +188,18 @@ class CollinsInventory(object):
         # Locates all assets matching the provided query, exhausting pagination.
         while True:
             if num_retries == self.collins_max_retries:
-                raise MaxRetriesError("Maximum of %s retries reached; giving up" % \
-                    self.collins_max_retries)
+                raise MaxRetriesError("Maximum of %s retries reached; giving up" % self.collins_max_retries)
             query_parameters['page'] = cur_page
             query_url = "%s?%s" % (
                 (CollinsDefaults.ASSETS_API_ENDPOINT % self.collins_host),
-                urllib.urlencode(query_parameters, doseq=True)
+                urlencode(query_parameters, doseq=True)
             )
             try:
                 response = open_url(query_url,
-                        timeout=self.collins_timeout_secs,
-                        url_username=self.collins_username,
-                        url_password=self.collins_password)
+                                    timeout=self.collins_timeout_secs,
+                                    url_username=self.collins_username,
+                                    url_password=self.collins_password,
+                                    force_basic_auth=True)
                 json_response = json.loads(response.read())
                 # Adds any assets found to the array of assets.
                 assets += json_response['data']['Data']
@@ -210,9 +208,8 @@ class CollinsInventory(object):
                     break
                 cur_page += 1
                 num_retries = 0
-            except:
-                self.log.error("Error while communicating with Collins, retrying:\n%s",
-                    traceback.format_exc())
+            except Exception:
+                self.log.error("Error while communicating with Collins, retrying:\n%s", traceback.format_exc())
                 num_retries += 1
         return assets
 
@@ -231,19 +228,15 @@ class CollinsInventory(object):
     def read_settings(self):
         """ Reads the settings from the collins.ini file """
 
-        config_loc = os.getenv('COLLINS_CONFIG',
-            os.path.dirname(os.path.realpath(__file__)) + '/collins.ini')
+        config_loc = os.getenv('COLLINS_CONFIG', os.path.dirname(os.path.realpath(__file__)) + '/collins.ini')
 
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/collins.ini')
 
         self.collins_host = config.get('collins', 'host')
-        self.collins_username = os.getenv('COLLINS_USERNAME',
-            config.get('collins', 'username'))
-        self.collins_password = os.getenv('COLLINS_PASSWORD',
-            config.get('collins', 'password'))
-        self.collins_asset_type = os.getenv('COLLINS_ASSET_TYPE',
-            config.get('collins', 'asset_type'))
+        self.collins_username = os.getenv('COLLINS_USERNAME', config.get('collins', 'username'))
+        self.collins_password = os.getenv('COLLINS_PASSWORD', config.get('collins', 'password'))
+        self.collins_asset_type = os.getenv('COLLINS_ASSET_TYPE', config.get('collins', 'asset_type'))
         self.collins_timeout_secs = config.getint('collins', 'timeout_secs')
         self.collins_max_retries = config.getint('collins', 'max_retries')
 
@@ -267,16 +260,12 @@ class CollinsInventory(object):
 
         parser = argparse.ArgumentParser(
             description='Produces an Ansible Inventory file based on Collins')
-        parser.add_argument('--list',
-            action='store_true', default=True, help='List instances (default: True)')
-        parser.add_argument('--host',
-            action='store', help='Get all the variables about a specific instance')
-        parser.add_argument('--refresh-cache',
-            action='store_true', default=False,
-            help='Force refresh of cache by making API requests to Collins ' \
-                 '(default: False - use cache files)')
-        parser.add_argument('--pretty',
-            action='store_true', default=False, help='Pretty print all JSON output')
+        parser.add_argument('--list', action='store_true', default=True, help='List instances (default: True)')
+        parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
+        parser.add_argument('--refresh-cache', action='store_true', default=False,
+                            help='Force refresh of cache by making API requests to Collins '
+                                 '(default: False - use cache files)')
+        parser.add_argument('--pretty', action='store_true', default=False, help='Pretty print all JSON output')
         self.args = parser.parse_args()
 
     def update_cache(self):
@@ -288,9 +277,8 @@ class CollinsInventory(object):
         # Locates all server assets from Collins.
         try:
             server_assets = self.find_assets()
-        except:
-            self.log.error("Error while locating assets from Collins:\n%s",
-                traceback.format_exc())
+        except Exception:
+            self.log.error("Error while locating assets from Collins:\n%s", traceback.format_exc())
             return False
 
         for asset in server_assets:
@@ -300,7 +288,7 @@ class CollinsInventory(object):
                 ip_index = self._asset_get_attribute(asset, 'ANSIBLE_IP_INDEX')
                 try:
                     ip_index = int(ip_index)
-                except:
+                except Exception:
                     self.log.error(
                         "ANSIBLE_IP_INDEX attribute on asset %s not an integer: %s", asset,
                         ip_index)
@@ -314,8 +302,7 @@ class CollinsInventory(object):
             if self.prefer_hostnames and self._asset_has_attribute(asset, 'HOSTNAME'):
                 asset_identifier = self._asset_get_attribute(asset, 'HOSTNAME')
             elif 'ADDRESSES' not in asset:
-                self.log.warning("No IP addresses found for asset '%s', skipping",
-                    asset)
+                self.log.warning("No IP addresses found for asset '%s', skipping", asset)
                 continue
             elif len(asset['ADDRESSES']) < ip_index + 1:
                 self.log.warning(
@@ -363,7 +350,7 @@ class CollinsInventory(object):
         try:
             self.write_to_cache(self.cache, self.cache_path_cache)
             self.write_to_cache(self.inventory, self.cache_path_inventory)
-        except:
+        except Exception:
             self.log.error("Error while writing to cache:\n%s", traceback.format_exc())
             return False
         return True
@@ -383,11 +370,11 @@ class CollinsInventory(object):
             # Need to load index from cache
             self.load_cache_from_cache()
 
-        if not self.args.host in self.cache:
+        if self.args.host not in self.cache:
             # try updating the cache
             self.update_cache()
 
-            if not self.args.host in self.cache:
+            if self.args.host not in self.cache:
                 # host might not exist anymore
                 return self.json_format_dict({}, self.args.pretty)
 
@@ -401,9 +388,9 @@ class CollinsInventory(object):
             json_inventory = cache.read()
             self.inventory = json.loads(json_inventory)
             return True
-        except:
+        except Exception:
             self.log.error("Error while loading inventory:\n%s",
-                traceback.format_exc())
+                           traceback.format_exc())
             self.inventory = {}
             return False
 
@@ -415,9 +402,9 @@ class CollinsInventory(object):
             json_cache = cache.read()
             self.cache = json.loads(json_cache)
             return True
-        except:
+        except Exception:
             self.log.error("Error while loading host cache:\n%s",
-                traceback.format_exc())
+                           traceback.format_exc())
             self.cache = {}
             return False
 
@@ -433,7 +420,7 @@ class CollinsInventory(object):
         """ Converts 'bad' characters in a string to underscores so they
             can be used as Ansible groups """
 
-        return re.sub("[^A-Za-z0-9\-]", "_", word)
+        return re.sub(r"[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         """ Converts a dict to a JSON object and dumps it as a formatted string """

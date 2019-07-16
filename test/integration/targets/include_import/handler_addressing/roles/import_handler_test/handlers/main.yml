@@ -1,0 +1,2 @@
+- name: do_import
+  import_tasks: tasks/handlers.yml

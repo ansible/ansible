@@ -1,0 +1,41 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [Changed task] ************************************************************
+changed: [testhost]
+
+TASK [Failed task] *************************************************************
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}
+...ignoring
+
+TASK [Task with var in name (foo bar)] *****************************************
+changed: [testhost]
+
+TASK [Loop task] ***************************************************************
+changed: [testhost] => (item=foo-1)
+changed: [testhost] => (item=foo-2)
+changed: [testhost] => (item=foo-3)
+
+TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested from task"}
+
+TASK [Rescue task] *************************************************************
+changed: [testhost]
+
+RUNNING HANDLER [Test handler 1] ***********************************************
+changed: [testhost]
+
+RUNNING HANDLER [Test handler 3] ***********************************************
+changed: [testhost]
+
+PLAY [testhost] ****************************************************************
+
+TASK [First free task] *********************************************************
+changed: [testhost]
+
+TASK [Second free task] ********************************************************
+changed: [testhost]
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=11   changed=8    unreachable=0    failed=0    skipped=1    rescued=1    ignored=1   
+

@@ -1,0 +1,2 @@
+ - include: 'rpm_key.yaml'
+   when: ansible_os_family == "RedHat"

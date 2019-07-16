@@ -1,0 +1,408 @@
+---
+# test code for ini_file plugins
+# (c) 2017 Red Hat Inc.
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: record the output directory
+  set_fact: output_file={{ remote_tmp_dir }}/foo.ini
+
+- name: add "fav=lemonade" is in section "[drinks]" in specified file
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: fav
+    value: lemonade
+  register: result1
+
+- name: verify ini_file 'changed' is true
+  assert:
+    that:
+      - result1.changed == True
+      - result1.msg == 'section and option added'
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected1: |
+
+      [drinks]
+      fav = lemonade
+    content1: "{{ output_content.content | b64decode }}"
+
+- name: Verify content of ini file is as expected
+  assert:
+    that:
+      - content1 == expected1
+
+- name: add "fav=lemonade" is in section "[drinks]" again
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: fav
+    value: lemonade
+  register: result2
+
+- name: Ensure unchanged
+  assert:
+    that:
+      - result2.changed == False
+      - result2.msg == 'OK'
+
+- name: Ensure "beverage=coke" is in section "[drinks]"
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: beverage
+    value: coke
+  register: result3
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected3: |
+
+      [drinks]
+      fav = lemonade
+      beverage = coke
+    content3: "{{ output_content.content | b64decode }}"
+
+- name: assert 'changed' is true and content is OK
+  assert:
+    that:
+      - result3.changed == True
+      - result3.msg == 'option added'
+      - content3 == expected3
+
+- name: Remove option "beverage=coke"
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: beverage
+    state: absent
+  register: result4
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: get ini file content
+  set_fact:
+    content4: "{{ output_content.content | b64decode }}"
+
+- name: assert changed and content is as expected
+  assert:
+    that:
+      - result4.changed == True
+      - result4.msg == 'option changed'
+      - content4 == expected1
+
+- name: remove section 'drinks'
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    state: absent
+  register: result5
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: get current ini file content
+  set_fact:
+    content5: "{{ output_content.content | b64decode }}"
+
+- name: assert changed and content is empty
+  assert:
+    that:
+      - result5.changed == True
+      - result5.msg == 'section removed'
+      - content5 == "\n"
+
+# allow_no_value
+
+- name: test allow_no_value
+  ini_file:
+    path: "{{ output_file }}"
+    section: mysqld
+    option: skip-name
+    allow_no_value: yes
+  register: result6
+
+- name: assert section and option added
+  assert:
+    that:
+      - result6.changed == True
+      - result6.msg == 'section and option added'
+
+- name: test allow_no_value idempotency
+  ini_file:
+    path: "{{ output_file }}"
+    section: mysqld
+    option: skip-name
+    allow_no_value: yes
+  register: result6
+
+- name: assert 'changed' false
+  assert:
+    that:
+      - result6.changed == False
+      - result6.msg == 'OK'
+
+- name: test allow_no_value with loop
+  ini_file:
+    path: "{{ output_file }}"
+    section: mysqld
+    option: "{{ item.o }}"
+    value: "{{ item.v }}"
+    allow_no_value: yes
+  with_items:
+    - { o: "skip-name-resolve", v: null }
+    - { o: "max_connections", v: "500" }
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    content7: "{{ output_content.content | b64decode }}"
+    expected7: |
+
+      [mysqld]
+      skip-name
+      skip-name-resolve
+      max_connections = 500
+
+- name: Verify content of ini file is as expected
+  assert:
+    that:
+      - content7 == expected7
+
+- name: change option with no value to option with value
+  ini_file:
+    path: "{{ output_file }}"
+    section: mysqld
+    option: skip-name
+    value: myvalue
+  register: result8
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    content8: "{{ output_content.content | b64decode }}"
+    expected8: |
+
+      [mysqld]
+      skip-name = myvalue
+      skip-name-resolve
+      max_connections = 500
+
+- name: assert 'changed' and msg 'option changed' and content is as expected
+  assert:
+    that:
+      - result8.changed == True
+      - result8.msg == 'option changed'
+      - content8 == expected8
+
+- name: change option with value to option with no value
+  ini_file:
+    path: "{{ output_file }}"
+    section: mysqld
+    option: skip-name
+    allow_no_value: yes
+  register: result9
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    content9: "{{ output_content.content | b64decode }}"
+    expected9: |
+
+      [mysqld]
+      skip-name
+      skip-name-resolve
+      max_connections = 500
+
+- name: assert 'changed' and msg 'option changed' and content is as expected
+  assert:
+    that:
+      - result9.changed == True
+      - result9.msg == 'option changed'
+      - content9 == expected9
+
+- name: Remove option with no value
+  ini_file:
+    path: "{{ output_file }}"
+    section: mysqld
+    option: skip-name-resolve
+    state: absent
+  register: result10
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    content10: "{{ output_content.content | b64decode }}"
+    expected10: |
+
+      [mysqld]
+      skip-name
+      max_connections = 500
+
+- name: assert 'changed' and msg 'option changed' and content is as expected
+  assert:
+    that:
+      - result10.changed == True
+      - result10.msg == 'option changed'
+      - content10 == expected10
+
+- name: Clean test file
+  copy:
+    content: ""
+    dest: "{{ output_file }}"
+    force: yes
+
+- name: Ensure "beverage=coke" is created within no section
+  ini_file:
+    section:
+    path: "{{ output_file }}"
+    option: beverage
+    value: coke
+  register: result11
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected11: "beverage = coke\n\n"
+    content11: "{{ output_content.content | b64decode }}"
+
+- name: assert 'changed' is true and content is OK (no section)
+  assert:
+    that:
+      - result11 is changed
+      - result11.msg == 'option added'
+      - content11 == expected11
+
+- name: Ensure "beverage=coke" is modified as "beverage=water" within no section
+  ini_file:
+    path: "{{ output_file }}"
+    option: beverage
+    value: water
+    section:
+  register: result12
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected12: "beverage = water\n\n"
+
+    content12: "{{ output_content.content | b64decode }}"
+
+- name: assert 'changed' is true and content is OK (no section)
+  assert:
+    that:
+      - result12 is changed
+      - result12.msg == 'option changed'
+      - content12 == expected12
+
+- name: remove option 'beverage' within no section
+  ini_file:
+    section:
+    path: "{{ output_file }}"
+    option: beverage
+    state: absent
+  register: result13
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: get current ini file content
+  set_fact:
+    content13: "{{ output_content.content | b64decode }}"
+
+- name: assert changed (no section)
+  assert:
+    that:
+      - result13 is changed
+      - result13.msg == 'option changed'
+      - content13 == "\n"
+
+- name: Check add option without section before existing section
+  block:
+    - name: Add option with section
+      ini_file:
+        path: "{{ output_file }}"
+        section: drinks
+        option: beverage
+        value: water
+    - name: Add option without section
+      ini_file:
+        path: "{{ output_file }}"
+        section:
+        option: like
+        value: tea
+
+- name: read content from output file
+  slurp:
+    src: "{{ output_file }}"
+  register: output_content
+
+- name: set expected content and get current ini file content
+  set_fact:
+    expected14: |
+      like = tea
+
+      [drinks]
+      beverage = water
+    content14: "{{ output_content.content | b64decode }}"
+
+- name: Verify content of ini file is as expected
+  assert:
+    that:
+      - content14 == expected14

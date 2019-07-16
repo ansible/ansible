@@ -1,0 +1,36 @@
+---
+- debug: msg="START cli/set_hostname.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  eos_config:
+    lines: hostname switch
+    match: none
+  become: yes
+
+- name: configure hostname
+  eos_system:
+    hostname: foo
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify hostname
+  eos_system:
+    hostname: foo
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines: "hostname {{ inventory_hostname }}"
+    match: none
+  become: yes
+
+- debug: msg="END cli/set_hostname.yaml on connection={{ ansible_connection }}"

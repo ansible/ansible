@@ -1,0 +1,33 @@
+.. _playbook_keywords:
+
+Playbook Keywords
+=================
+
+These are the keywords available on common playbook objects. Keywords are one of several sources for configuring Ansible behavior. See :ref:`general_precedence_rules` for details on the relative precedence of each source.
+
+
+.. note:: Please note:
+
+    * Aliases for the directives are not reflected here, nor are mutable one. For example,
+      :term:`action` in task can be substituted by the name of any Ansible module.
+    * The keywords do not have ``version_added`` information at this time
+    * Some keywords set defaults for the objects inside of them rather than for the objects
+      themselves
+
+
+.. contents::
+   :local:
+   :depth: 1
+
+{% for name in playbook_class_names %}
+
+{{ name }}
+{{ '-' * name|length }}
+.. glossary::
+
+{% for attribute in pb_keywords[name]|sort %}
+    {{ attribute }}
+        {{ pb_keywords[name][attribute] |indent(8) }}
+
+{% endfor %}
+{% endfor %}

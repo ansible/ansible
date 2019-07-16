@@ -1,0 +1,193 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vpc sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  - set_fact: delay_restore_orphan_port=25
+  - set_fact: def_delay_restore_orphan_port=default
+  when: platform is not search("N35|N5K|N6K")
+
+- block:
+  - name: disable vpc for initial vpc config cleanup
+    nxos_feature:
+      feature: vpc
+      provider: "{{ connection }}"
+      state: disabled
+
+  - name: enable feature vpc
+    nxos_feature:
+      feature: vpc
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: Ensure ntc VRF exists on switch
+    nxos_vrf:
+      vrf: ntc
+      provider: "{{ connection }}"
+
+  - name: Configure vpc
+    nxos_vpc: &conf_vpc
+      provider: "{{ connection }}"
+      state: present
+      domain: 100
+      pkl_dest: 192.168.100.4
+      pkl_src: 10.1.100.20
+      pkl_vrf: ntc
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vpc: *conf_vpc
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure vpc1
+    nxos_vpc: &conf_vpc1
+      provider: "{{ connection }}"
+      state: present
+      domain: 100
+      role_priority: 500
+      system_priority: 2000
+      peer_gw: True
+      delay_restore: 5
+      delay_restore_interface_vlan: 15
+      delay_restore_orphan_port: "{{ delay_restore_orphan_port|default(omit) }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vpc: *conf_vpc1
+    register: result
+
+  - assert: *false
+
+  - block:
+    # This block is only useful on platforms that nvgen 'no auto-recovery'.
+    # Note: auto_recovery is mutually_exclusive with auto_recovery_reload_delay.
+    - set_fact: def_auto_recovery=False
+    - set_fact: def_auto_recovery=True
+      when: platform is search("N7K")
+
+    - name: auto-recovery from default to non-default
+      nxos_vpc: &auto_recovery_1
+        provider: "{{ connection }}"
+        domain: 100
+        auto_recovery: "{{ not def_auto_recovery }}"
+      register: result
+
+    - assert: *true
+
+    - name: "Conf Idempotence auto-recovery def-to-non-def"
+      nxos_vpc: *auto_recovery_1
+      register: result
+
+    - assert: *false
+
+    - name: auto-recovery from non-default to default
+      nxos_vpc: &auto_recovery_2
+        provider: "{{ connection }}"
+        domain: 100
+        auto_recovery: "{{ def_auto_recovery }}"
+      register: result
+
+    - assert: *true
+
+    - name: "Conf Idempotence auto-recovery non-def-to-def"
+      nxos_vpc: *auto_recovery_2
+      register: result
+
+    - assert: *false
+
+    when: platform is search("N35|N7K|N3K-F|N9K-F")
+
+  - name: Configure auto-recovery reload-delay
+    nxos_vpc: &auto_reload
+      provider: "{{ connection }}"
+      domain: 100
+      auto_recovery_reload_delay: 242
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence auto-recovery reload-delay"
+    nxos_vpc: *auto_reload
+    register: result
+
+  - assert: *false
+
+  - name: Configure vpc2
+    nxos_vpc: &conf_vpc2
+      provider: "{{ connection }}"
+      state: present
+      domain: 100
+      role_priority: default
+      system_priority: default
+      peer_gw: True
+      delay_restore: default
+      delay_restore_interface_vlan: default
+      delay_restore_orphan_port: "{{ def_delay_restore_orphan_port|default(omit) }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vpc: *conf_vpc2
+    register: result
+
+  - assert: *false
+
+  - name: Configure vpc3
+    nxos_vpc: &conf_vpc3
+      provider: "{{ connection }}"
+      state: present
+      domain: 100
+      peer_gw: False
+    register: result
+
+  - assert: *true
+
+  - name: "Conf Idempotence"
+    nxos_vpc: *conf_vpc3
+    register: result
+
+  - assert: *false
+
+  - name: remove vpc
+    nxos_vpc: &rem_vpc
+      provider: "{{ connection }}"
+      state: absent
+      domain: 100
+    register: result
+
+  - assert: *true
+
+  - name: "Remove Idempotence"
+    nxos_vpc: *rem_vpc
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: remove vrf
+    nxos_vrf:
+      vrf: ntc
+      provider: "{{ connection }}"
+      state: absent
+    ignore_errors: yes
+
+  - name: disable feature vpc
+    nxos_feature:
+      feature: vpc
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vpc sanity test"

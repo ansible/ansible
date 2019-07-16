@@ -1,0 +1,231 @@
+---
+- name: get the current %TEMP% value
+  win_shell: '[System.IO.Path]::GetFullPath($env:TEMP)'
+  register: temp_value
+
+- name: register temp path value
+  set_fact:
+    temp_value: '{{ temp_value.stdout | trim }}'
+
+
+- name: get raw %TEMP% value
+  win_shell: '$env:TEMP'
+  register: raw_temp_value
+
+- name: create temp file defaults check
+  win_tempfile:
+  register: create_tmp_file_defaults_check
+  check_mode: True
+
+- name: get stat of temp file defaults check
+  win_stat:
+    path: "{{create_tmp_file_defaults_check.path}}"
+  register: actual_create_tmp_file_defaults_check
+
+- name: assert create temp file defaults check
+  assert:
+    that:
+    - create_tmp_file_defaults_check is changed
+    - create_tmp_file_defaults_check.state == 'file'
+    - create_tmp_file_defaults_check.path.startswith(temp_value + '\\ansible.')
+    - actual_create_tmp_file_defaults_check.stat.exists == False
+
+- name: create temp file defaults
+  win_tempfile:
+  register: create_tmp_file_defaults
+
+- name: get stat of temp file defaults
+  win_stat:
+    path: "{{create_tmp_file_defaults.path}}"
+  register: actual_create_tmp_file_defaults
+
+- name: assert create temp file defaults
+  assert:
+    that:
+    - create_tmp_file_defaults is changed
+    - create_tmp_file_defaults.state == 'file'
+    - create_tmp_file_defaults.path.startswith(temp_value + '\\ansible.')
+    - actual_create_tmp_file_defaults.stat.exists == True
+    - actual_create_tmp_file_defaults.stat.isdir == False
+
+- name: create temp file defaults again
+  win_tempfile:
+  register: create_tmp_file_defaults_again
+
+- name: get stat of temp file defaults again
+  win_stat:
+    path: "{{create_tmp_file_defaults_again.path}}"
+  register: actual_create_tmp_file_defaults_again
+
+- name: assert create temp file defaults
+  assert:
+    that:
+    - create_tmp_file_defaults_again is changed
+    - create_tmp_file_defaults_again.state == 'file'
+    - create_tmp_file_defaults_again.path.startswith(temp_value + '\\ansible.')
+    - create_tmp_file_defaults_again.path != create_tmp_file_defaults.path
+    - actual_create_tmp_file_defaults_again.stat.exists == True
+    - actual_create_tmp_file_defaults_again.stat.isdir == False
+
+- name: create temp folder check
+  win_tempfile:
+    state: directory
+  register: create_tmp_folder_check
+  check_mode: True
+
+- name: get stat of temp folder check
+  win_stat:
+    path: "{{create_tmp_folder_check.path}}"
+  register: actual_create_tmp_folder_check
+
+- name: assert create temp folder check
+  assert:
+    that:
+    - create_tmp_folder_check is changed
+    - create_tmp_folder_check.state == 'directory'
+    - create_tmp_folder_check.path.startswith(temp_value  + '\\ansible.')
+    - actual_create_tmp_folder_check.stat.exists == False
+
+- name: create temp folder
+  win_tempfile:
+    state: directory
+  register: create_tmp_folder
+
+- name: get stat of temp folder
+  win_stat:
+    path: "{{create_tmp_folder.path}}"
+  register: actual_create_tmp_folder
+
+- name: assert create temp folder
+  assert:
+    that:
+    - create_tmp_folder is changed
+    - create_tmp_folder.state == 'directory'
+    - create_tmp_folder.path.startswith(temp_value + '\\ansible.')
+    - actual_create_tmp_folder.stat.exists == True
+    - actual_create_tmp_folder.stat.isdir == True
+
+- name: create temp file with suffix
+  win_tempfile:
+    suffix: test-suffix
+  register: create_tmp_file_suffix
+
+- name: get stat of temp file with suffix
+  win_stat:
+    path: "{{create_tmp_file_suffix.path}}"
+  register: actual_creat_tmp_file_suffix
+
+- name: assert create temp file with suffix
+  assert:
+    that:
+    - create_tmp_file_suffix is changed
+    - create_tmp_file_suffix.state == 'file'
+    - create_tmp_file_suffix.path.startswith(temp_value + '\\ansible.')
+    - create_tmp_file_suffix.path.endswith('test-suffix')
+    - actual_creat_tmp_file_suffix.stat.exists == True
+    - actual_creat_tmp_file_suffix.stat.isdir == False
+
+- name: create temp file with different prefix
+  win_tempfile:
+    prefix: test-prefix
+  register: create_tmp_file_prefix
+
+- name: get stat of temp file with prefix
+  win_stat:
+    path: "{{create_tmp_file_prefix.path}}"
+  register: actual_creat_tmp_file_prefix
+
+- name: assert create temp file with prefix
+  assert:
+    that:
+    - create_tmp_file_prefix is changed
+    - create_tmp_file_prefix.state == 'file'
+    - create_tmp_file_prefix.path.startswith(temp_value + '\\test-prefix')
+    - actual_creat_tmp_file_prefix.stat.exists == True
+    - actual_creat_tmp_file_prefix.stat.isdir == False
+
+- name: create new temp file folder
+  win_file:
+    path: '{{test_tempfile_path}}\testing folder'
+    state: directory
+
+- block:
+  - name: create temp file with different path
+    win_tempfile:
+      path: '{{test_tempfile_path}}\testing folder'
+    register: create_tmp_file_difference_path
+
+  - name: get stat of temp file with different path
+    win_stat:
+      path: "{{create_tmp_file_difference_path.path}}"
+    register: actual_creat_tmp_file_different_path
+
+  - name: assert create temp file with different path
+    assert:
+      that:
+      - create_tmp_file_difference_path is changed
+      - create_tmp_file_difference_path.state == 'file'
+      - create_tmp_file_difference_path.path.startswith(test_tempfile_path + '\\testing folder\\ansible.')
+      - actual_creat_tmp_file_different_path.stat.exists == True
+      - actual_creat_tmp_file_different_path.stat.isdir == False
+
+  - name: create temp file with DOS 8.3 short name
+    win_tempfile:
+      path: '{{ test_tempfile_path }}\TESTIN~1'
+    register: create_tmp_file_dos_path
+
+  - name: get stat of temp file with different path
+    win_stat:
+      path: '{{ create_tmp_file_dos_path.path }}'
+    register: actual_create_tmp_file_dos_path
+
+  - name: assert create temp file with different path
+    assert:
+      that:
+      - create_tmp_file_dos_path is changed
+      - create_tmp_file_dos_path.state == 'file'
+      - create_tmp_file_dos_path.path.startswith(test_tempfile_path + '\\testing folder\\ansible.')
+      - actual_create_tmp_file_dos_path.stat.exists == True
+      - actual_create_tmp_file_dos_path.stat.isdir == False
+
+  always:
+  - name: delete temp file folder
+    win_file:
+      path: "{{test_tempfile_path}}"
+      state: absent
+
+- name: get current working directory
+  win_shell: $pwd.Path
+  register: current_dir
+
+- name: create directory for relative dir tests
+  win_file:
+    path: '{{ current_dir.stdout | trim }}\win_tempfile'
+    state: directory
+
+- block:
+  - name: create temp folder with relative path
+    win_tempfile:
+      path: win_tempfile
+      state: directory
+    register: create_relative
+
+  - name: get stat of temp folder with relative path
+    win_stat:
+      path: '{{ create_relative.path }}'
+    register: actual_create_relative
+
+  - name: assert create temp folder with relative path
+    assert:
+      that:
+      - create_relative is changed
+      - create_relative.state == 'directory'
+      - create_relative.path.startswith((current_dir.stdout | trim) + '\\win_tempfile\\ansible.')
+      - actual_create_relative.stat.exists == True
+      - actual_create_relative.stat.isdir == True
+
+  always:
+  - name: remove relative directory tests
+    win_file:
+      path: '{{ current_dir.stdout | trim }}\win_tempfile'
+      state: absent

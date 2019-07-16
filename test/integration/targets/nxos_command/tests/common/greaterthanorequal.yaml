@@ -1,0 +1,32 @@
+---
+- debug: msg="START common/greaterthanorequal.yaml on connection={{ ansible_connection }}"
+
+- name: test ge operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.eth_ip_mask ge 0"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: test >= operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.eth_ip_mask >= 0"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END common/greaterthanorequal.yaml on connection={{ ansible_connection }}"

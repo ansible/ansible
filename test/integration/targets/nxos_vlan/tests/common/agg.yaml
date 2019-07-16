@@ -1,0 +1,122 @@
+---
+- debug: msg="START connection={{ ansible_connection }}/agg.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: setup - remove vlan used in test
+  nxos_config: &rm
+    lines:
+      - no vlan 102
+      - no vlan 103
+      - no vlan 104
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+
+- name: configure vlan with aggregate
+  nxos_vlan: &conf1
+    aggregate:
+      - { name: app02, vlan_id: 102 }
+      - { name: app03, vlan_id: 103 }
+    vlan_state: active
+    admin_state: up
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"vlan 102" in result.commands'
+      - '"vlan 103" in result.commands'
+      - '"no shutdown" in result.commands'
+      - '"state active" in result.commands'
+
+- name: conf1 - Idempotence
+  nxos_vlan: *conf1
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: change property of existing vlan - admin_state down
+  nxos_vlan: &conf2
+    aggregate:
+      - { name: app02, vlan_id: 102 }
+      - { name: app03, vlan_id: 103 }
+    vlan_state: active
+    admin_state: down
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"vlan 102" in result.commands'
+      - '"vlan 103" in result.commands'
+      - '"shutdown" in result.commands'
+
+- name: conf2 - Idempotence
+  nxos_vlan: *conf2
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: purge
+  nxos_vlan: &purge
+    vlan_id: 1
+    purge: yes
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no vlan 102" in result.commands'
+      - '"no vlan 103" in result.commands'
+
+- name: purge - Idempotence
+  nxos_vlan: *purge
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: "setup for purge test with aggregate add"
+  nxos_vlan:
+    vlan_id: 104
+    purge: true
+    provider: "{{ connection }}"
+
+- name: purge 104 with aggregate add 102-103
+  nxos_vlan: &purge_add
+    aggregate:
+      - { vlan_id: 102 }
+      - { vlan_id: 103 }
+    purge: true
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"vlan 102" in result.commands'
+      - '"vlan 103" in result.commands'
+      - '"no vlan 104" in result.commands'
+
+- name: purge_add - Idempotence
+  nxos_vlan: *purge_add
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: teardown
+  nxos_config: *rm
+  ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }}/agg.yaml"

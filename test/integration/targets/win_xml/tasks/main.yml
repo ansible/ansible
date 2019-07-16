@@ -1,0 +1,307 @@
+# test code for the Windows xml module
+# (c) 2017, Richard Levenberg <richard.levenberg@cosocloud.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: copy a test .xml file
+  win_copy:
+    src: config.xml
+    dest: "{{ win_output_dir }}\\config.xml"
+
+- name: add an element that only has a text child node
+  win_xml:
+    path: "{{ win_output_dir }}\\config.xml"
+    fragment: '<string key="answer">42</string>'
+    xpath: '/config'
+  register: element_add_result
+
+- name: check element add result
+  assert:
+    that:
+    - element_add_result is changed
+
+- name: try to add the  element that only has a text child node again
+  win_xml:
+    path: "{{ win_output_dir }}\\config.xml"
+    fragment: '<string key="answer">42</string>'
+    xpath: '/config'
+  register: element_add_result_second
+
+- name: check element add result
+  assert:
+    that:
+    - not element_add_result_second is changed
+
+- name: copy a test log4j.xml
+  win_copy:
+    src: log4j.xml
+    dest: "{{ win_output_dir }}\\log4j.xml"
+
+- name: change an attribute to fatal logging
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: 'value'
+    fragment: 'FATAL'
+
+- name: try to change the attribute again
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: 'value'
+    fragment: 'FATAL'
+  register: attribute_changed_result
+
+- name: check attribute change result
+  assert:
+    that:
+    - attribute_changed_result is not changed
+
+# This testing is for https://github.com/ansible/ansible/issues/48471
+# The issue was that an .xml with no encoding declaration, but a UTF8 BOM
+# with some UTF-8 characters was being written out with garbage characters.
+# The characters added by win_xml were not UTF-8 characters.
+
+- name: copy test files (https://github.com/ansible/ansible/issues/48471)
+  win_copy:
+    src: plane.zip
+    dest: "{{ win_output_dir }}\\plane.zip"
+
+- name: unarchive the test files
+  win_unzip:
+    src: "{{ win_output_dir }}\\plane.zip"
+    dest: "{{ win_output_dir }}\\"
+
+- name: change a text value in a file with UTF8 BOM and armenian characters in the description
+  win_xml:
+    path: "{{ win_output_dir }}\\plane-utf8-bom-armenian-characters.xml"
+    xpath: '/plane/year'
+    type: text
+    fragment: '1988'
+
+- name: register the sha1 of the new file
+  win_stat:
+    path: "{{ win_output_dir }}\\plane-utf8-bom-armenian-characters.xml"
+    get_checksum: yes
+  register: sha1_checksum
+
+- name: verify the checksum
+  assert:
+    that:
+      - sha1_checksum.stat.checksum == 'e3e18c3066e1bfce9a5cf87c81353fa174440944'
+
+- name: change a text value in a file with UTF8 BOM and armenian characters in the description
+  win_xml:
+    path: "{{ win_output_dir }}\\plane-utf8-bom-armenian-characters.xml"
+    xpath: '/plane/year'
+    type: text
+    fragment: '1989'
+    backup: yes
+  register: test_backup
+
+- name: check backup_file
+  win_stat:
+    path: '{{ test_backup.backup_file }}'
+  register: backup_file
+
+- name: Check backup_file
+  assert:
+    that:
+    - test_backup is changed
+    - backup_file.stat.exists == true
+
+- name: change a text value in a file with UTF-16 BE BOM and Chinese characters in the description
+  win_xml:
+    path: "{{ win_output_dir }}\\plane-utf16be-bom-chinese-characters.xml"
+    xpath: '/plane/year'
+    type: text
+    fragment: '1988'
+
+- name: register the sha1 of the new file
+  win_stat:
+    path: "{{ win_output_dir}}\\plane-utf16be-bom-chinese-characters.xml"
+    get_checksum: yes
+  register: sha1_checksum
+
+- name: verify the checksum
+  assert:
+    that:
+      - sha1_checksum.stat.checksum == 'de86f79b409383447cf4cf112b20af8ffffcfdbf'
+
+# features added ansible 2.8
+# count
+
+- name: count logger nodes in log4j.xml
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: //logger
+    count: yes
+  register: logger_node_count
+
+- name: verify node count
+  assert:
+    that:
+      - logger_node_count.count == 5
+
+# multiple attribute change
+- name: ensure //logger/level value attributes are set to debug
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '//logger/level[@value="error"]'
+    type: attribute
+    attribute: value
+    fragment: debug
+    count: yes
+  register: logger_level_value_attrs
+ 
+- name: verify //logger/level value attributes
+  assert:
+    that:
+      - logger_level_value_attrs.count == 4
+      - logger_level_value_attrs.changed == true
+      - logger_level_value_attrs.msg == 'attribute changed'
+
+- name: ensure //logger/level value attributes are set to debug (idempotency)
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '//logger/level[@value="error"]'
+    type: attribute
+    attribute: value
+    fragment: debug
+    count: yes
+  register: logger_level_value_attrs_again
+ 
+- name: verify //logger/level value attributes again (idempotency)
+  assert:
+    that:
+      - logger_level_value_attrs_again.count == 0
+      - logger_level_value_attrs_again.changed == false
+      - logger_level_value_attrs_again.msg == 'The supplied xpath did not match any nodes.  If this is unexpected, check your xpath is valid for the xml file at supplied path.'
+
+# multiple text nodes
+- name: ensure test books.xml is present
+  win_copy:
+    src: books.xml
+    dest: '{{ win_output_dir }}\books.xml'
+
+- name: demonstrate multi text replace by replacing all title text elements
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: text
+    fragment: _TITLE_TEXT_REMOVED_BY_WIN_XML_MODULE_
+    count: yes
+  register: multi_text
+
+- name: verify multi text change
+  assert:
+    that:
+      - multi_text.changed == true
+      - multi_text.count == 5
+      - multi_text.msg == 'text changed'
+
+- name: demonstrate multi text replace by replacing all title text elements again (idempotency)
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: text
+    fragment: _TITLE_TEXT_REMOVED_BY_WIN_XML_MODULE_
+    count: yes
+  register: multi_text_again
+
+- name: verify multi text again change (idempotency)
+  assert:
+    that:
+      - multi_text_again.changed == false
+      - multi_text_again.count == 5
+      - multi_text_again.msg == 'not changed'
+
+# multiple element 
+
+#- name: ensure a fresh test books.xml is present
+#  win_copy:
+#    src: books.xml
+#    dest: '{{ win_output_dir }}\books.xml'
+
+- name: demonstrate multi element should append new information element from fragment
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: element
+    fragment: <information>This element added by ansible</information>
+    count: yes
+  register: multi_element
+
+- name: verify multi element
+  assert:
+    that:
+      - multi_element.changed == true
+      - multi_element.count == 5
+      - multi_element.msg == 'element changed'
+
+- name: demonstrate multi element unchanged (idempotency)
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //works/title
+    type: element
+    fragment: <information>This element added by ansible</information>
+    count: yes
+  register: multi_element_again
+
+- name: verify multi element again (idempotency)
+  assert:
+    that:
+      - multi_element_again.changed == false
+      - multi_element_again.count == 5
+      - multi_element_again.msg == 'not changed'
+
+# multiple attributes on differing parent nodes
+
+- name: ensure all attribute lang=nl
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //@lang
+    type: attribute
+    attribute: lang
+    fragment: nl
+    count: yes
+  register: multi_attr
+
+- name: verify multi attribute
+  assert:
+    that:
+      - multi_attr.changed == true
+      - multi_attr.count == 6
+      - multi_attr.msg == 'attribute changed'
+
+- name: ensure all attribute lang=nl (idempotency)
+  win_xml:
+    path: '{{ win_output_dir }}\books.xml'
+    xpath: //@lang
+    type: attribute
+    attribute: lang
+    fragment: nl
+    count: yes
+  register: multi_attr_again
+
+- name: verify multi attribute (idempotency)
+  assert:
+    that:
+      - multi_attr_again.changed == false
+      - multi_attr_again.count == 6
+      - multi_attr_again.msg == 'not changed'

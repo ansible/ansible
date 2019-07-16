@@ -1,0 +1,76 @@
+---
+- name: test configuration account
+  cs_configuration:
+    name: allow.public.user.templates
+    account: "{{ test_cs_configuration_account }}"
+    value: true
+  register: config
+- name: verify test configuration storage
+  assert:
+    that:
+    - config is successful
+
+- name: test update configuration account in check mode
+  cs_configuration:
+    name: allow.public.user.templates
+    account: "{{ test_cs_configuration_account }}"
+    value: false
+  register: config
+  check_mode: true
+- name: verify update configuration account in check mode
+  assert:
+    that:
+    - config is successful
+    - config is changed
+    - config.value == "true"
+    - config.name == "allow.public.user.templates"
+    - config.scope == "account"
+    - config.account == "{{ test_cs_configuration_account }}"
+
+- name: test update configuration account
+  cs_configuration:
+    name: allow.public.user.templates
+    account: "{{ test_cs_configuration_account }}"
+    value: false
+  register: config
+- name: verify update configuration account
+  assert:
+    that:
+    - config is successful
+    - config is changed
+    - config.value == "false"
+    - config.name == "allow.public.user.templates"
+    - config.scope == "account"
+    - config.account == "{{ test_cs_configuration_account }}"
+
+- name: test update configuration account idempotence
+  cs_configuration:
+    name: allow.public.user.templates
+    account: "{{ test_cs_configuration_account }}"
+    value: false
+  register: config
+- name: verify update configuration account idempotence
+  assert:
+    that:
+    - config is successful
+    - config is not changed
+    - config.value == "false"
+    - config.name == "allow.public.user.templates"
+    - config.scope == "account"
+    - config.account == "{{ test_cs_configuration_account }}"
+
+- name: test reset configuration account
+  cs_configuration:
+    name: allow.public.user.templates
+    account: "{{ test_cs_configuration_account }}"
+    value: true
+  register: config
+- name: verify update configuration account
+  assert:
+    that:
+    - config is successful
+    - config is changed
+    - config.value == "true"
+    - config.name == "allow.public.user.templates"
+    - config.scope == "account"
+    - config.account == "{{ test_cs_configuration_account }}"

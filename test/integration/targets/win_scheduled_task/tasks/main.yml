@@ -1,0 +1,24 @@
+---
+- name: remove test tasks before test
+  include_tasks: clean.yml
+
+- block:
+  - name: Test failure scenarios
+    include_tasks: failures.yml
+
+  - name: Test normal scenarios
+    include_tasks: tests.yml
+
+  - include_tasks: clean.yml
+  
+  - name: Test principals
+    include_tasks: principals.yml
+
+  - include_tasks: clean.yml
+
+  - name: Test triggers
+    include_tasks: triggers.yml
+  
+  always:
+  - name: remove test tasks after test
+    include_tasks: clean.yml

@@ -1,0 +1,18 @@
+---
+- debug: msg="START cli/timeout.yaml"
+
+- name: test bad condition
+  cnos_command:
+    commands:
+      - display version
+    wait_for:
+      - "result[0] contains bad_value_string"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END cli/timeout.yaml"

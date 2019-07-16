@@ -1,0 +1,162 @@
+# Test code for the vmware_local_role_manager module
+# Copyright: (c) 2017-2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: Create a role without privileges in check mode
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation
+  check_mode: yes
+
+- name: Verify if role was created
+  assert:
+    that:
+      - role_creation.changed
+
+- &create_role_data
+  name: Create a role without privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role was created
+  assert:
+    that:
+      - role_creation_0001.changed
+
+- <<: *create_role_data
+  name: Again create a role without privileges
+
+- name: verify if role is not created again
+  assert:
+    that:
+      - not role_creation_0001.changed
+
+- &delete_role_data
+  name: Delete a role
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: absent
+  register: role_creation_0001
+
+- name: Verify if role is not present
+  assert:
+    that:
+      - role_creation_0001.changed
+
+- <<: *delete_role_data
+  name: Delete role again
+
+- name: Verify if role is absent again
+  assert:
+    that:
+      - not role_creation_0001.changed
+
+- name: Create a role with privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['VirtualMachine.State.RenameSnapshot']
+    state: present
+  register: role_creation_0001
+
+- name: Verify if role is created with privileges
+  assert:
+    that:
+      - role_creation_0001.changed
+
+- &exist_role_data
+  name: Add a privilege to existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: add
+    state: present
+  register: role_add
+
+- name: Verify if role is updated with updated privileges
+  assert:
+    that:
+      - role_add.changed
+
+- <<: *exist_role_data
+  name: Again add a privilege to existing privileges
+
+- name: Verify if role is not updated
+  assert:
+    that:
+      - not role_add.changed
+
+- &remove_role_data
+  name: Remove a privilege from existing privileges
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: remove
+  register: role_remove
+
+- name: verify if role is updated with privileges
+  assert:
+    that:
+      - role_remove.changed
+
+- <<: *remove_role_data
+  name: Again remove a privilege from existing privileges
+
+- name: Verify if role is not updated
+  assert:
+    that:
+      - not role_remove.changed
+
+- &set_priv_role_data
+  name: Set a privilege to an existing role
+  vmware_local_role_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    local_privilege_ids: ['Folder.Create']
+    action: set
+  register: role_set
+
+- name: Verify if role is updated with privileges
+  assert:
+    that:
+      - role_set.changed
+
+- <<: *set_priv_role_data
+  name: Again set a privilege to an existing role
+
+- name: verify if role is not updated
+  assert:
+    that:
+      - not role_set.changed

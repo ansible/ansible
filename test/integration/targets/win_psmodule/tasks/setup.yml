@@ -1,0 +1,115 @@
+# Sets up 2 local repos that contains mock packages for testing.
+#
+# PSRepo 1 contains
+#     ansible-test1 - 1.0.0
+#     ansible-test1 - 1.0.5
+#     ansible-test1 - 1.1.0
+#     ansible-test2 - 1.0.0
+#     ansible-test2 - 1.0.1 (Not signed for skip_publisher tests)
+#     ansible-test2 - 1.1.0-beta1
+#     ansible-clobber - 0.1.0
+#
+# PSRepo 2 contains
+#     ansible-test2 - 1.0.0
+#
+# These modules will have the following cmdlets
+#     ansible-test1
+#         Get-AnsibleTest1
+#
+#     ansible-test2
+#         Get-AnsibleTest2
+#
+#     ansible-clobber
+#         Enable-PSTrace (clobbers the Enable-PSTrace cmdlet)
+#
+# All cmdlets return
+#     [PSCustomObject]@{
+#         Name = "the name of the module"
+#         Version = "the version of the module"
+#         Repo = "the repo where the module was sourced from"
+#     }
+---
+- name: create test repo folders
+  win_file:
+    path: '{{ remote_tmp_dir }}\{{ item }}'
+    state: directory
+  loop:
+  - PSRepo 1
+  - PSRepo 2
+
+- name: register test repos
+  win_psrepository:
+    name: '{{ item.name }}'
+    source: '{{ remote_tmp_dir }}\{{ item.name }}'
+    installation_policy: '{{ item.policy }}'
+  notify: remove registered repos
+  loop:
+  - name: PSRepo 1
+    policy: trusted
+  - name: PSRepo 2
+    policy: untrusted
+
+- name: remove PSGallery repository
+  win_psrepository:
+    name: PSGallery
+    state: absent
+  notify: re-add PSGallery repository
+
+- name: create custom openssl conf
+  copy:
+    src: openssl.conf
+    dest: '{{ output_dir }}/openssl.conf'
+  delegate_to: localhost
+
+- name: get absolute path of output_dir for script
+  shell: echo {{ output_dir }}
+  delegate_to: localhost
+  register: output_dir_abs
+
+- name: create certificates for code signing
+  script: setup_certs.sh
+  args:
+    chdir: '{{ output_dir_abs.stdout }}'
+  delegate_to: localhost
+
+- name: copy the CA and sign certificates
+  win_copy:
+    src: '{{ output_dir }}/{{ item }}'
+    dest: '{{ remote_tmp_dir }}\'
+  loop:
+  - ca.pem
+  - sign.pem
+  - sign.pfx
+
+- name: import the CA key to the trusted root store
+  win_certificate_store:
+    path: '{{ remote_tmp_dir }}\ca.pem'
+    state: present
+    store_location: LocalMachine
+    store_name: Root
+  register: ca_cert_import
+  notify: remove CA cert from trusted root store
+
+- name: import the sign key to the trusted publisher store
+  win_certificate_store:
+    path: '{{ remote_tmp_dir }}\sign.pem'
+    state: present
+    store_location: LocalMachine
+    store_name: TrustedPublisher
+  register: sign_cert_import
+  notify: remove signing key from trusted publisher store
+
+- name: copy across module template files
+  win_copy:
+    src: module/
+    dest: '{{ remote_tmp_dir }}'
+
+# Used in the script below to create the .nupkg for each test module
+- name: download NuGet binary for module publishing
+  win_get_url:
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_psmodule/nuget.exe
+    dest: '{{ remote_tmp_dir }}'
+
+- name: create test PowerShell modules
+  script: setup_modules.ps1 "{{ remote_tmp_dir }}"
+  notify: remove test packages

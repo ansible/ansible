@@ -1,0 +1,32 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block: 
+    - name: create new virtual machine with invalid guest id
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: invalid_vm
+        guest_id: "invalid_guest_id"
+        datacenter: "{{ dc1 }}"
+        hardware:
+            num_cpus: 1
+            memory_mb: 512
+        disk:
+            - size: 10gb
+              type: thin
+              autoselect_datastore: True
+        state: present
+        folder: "{{ f0 }}"
+      register: invalid_guest_0001_d1_c1_f0
+      ignore_errors: yes
+    - debug: var=invalid_guest_0001_d1_c1_f0
+    - name: assert that changes were made
+      assert:
+        that:
+            - "not (invalid_guest_0001_d1_c1_f0 is changed)"
+            - "'configSpec.guestId' in invalid_guest_0001_d1_c1_f0['msg']"

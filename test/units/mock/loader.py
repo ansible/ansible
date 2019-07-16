@@ -23,39 +23,56 @@ import os
 
 from ansible.errors import AnsibleParserError
 from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils._text import to_bytes, to_text
+
 
 class DictDataLoader(DataLoader):
 
-    def __init__(self, file_mapping=dict()):
+    def __init__(self, file_mapping=None):
+        file_mapping = {} if file_mapping is None else file_mapping
         assert type(file_mapping) == dict
 
         super(DictDataLoader, self).__init__()
 
         self._file_mapping = file_mapping
         self._build_known_directories()
+        self._vault_secrets = None
 
-    def load_from_file(self, path):
+    def load_from_file(self, path, cache=True, unsafe=False):
+        path = to_text(path)
         if path in self._file_mapping:
             return self.load(self._file_mapping[path], path)
         return None
 
+    # TODO: the real _get_file_contents returns a bytestring, so we actually convert the
+    #       unicode/text it's created with to utf-8
     def _get_file_contents(self, path):
+        path = to_text(path)
         if path in self._file_mapping:
-            return (self._file_mapping[path], False)
+            return (to_bytes(self._file_mapping[path]), False)
         else:
             raise AnsibleParserError("file not found: %s" % path)
 
     def path_exists(self, path):
+        path = to_text(path)
         return path in self._file_mapping or path in self._known_directories
 
     def is_file(self, path):
+        path = to_text(path)
         return path in self._file_mapping
 
     def is_directory(self, path):
+        path = to_text(path)
         return path in self._known_directories
 
     def list_directory(self, path):
-        return [x for x in self._known_directories]
+        ret = []
+        path = to_text(path)
+        for x in (list(self._file_mapping.keys()) + self._known_directories):
+            if x.startswith(path):
+                if os.path.dirname(x) == path:
+                    ret.append(os.path.basename(x))
+        return ret
 
     def is_executable(self, path):
         # FIXME: figure out a way to make paths return true for this
@@ -66,7 +83,7 @@ class DictDataLoader(DataLoader):
             self._known_directories.append(directory)
 
     def _build_known_directories(self):
-        self._known_directories  = []
+        self._known_directories = []
         for path in self._file_mapping:
             dirname = os.path.dirname(path)
             while dirname not in ('/', ''):
@@ -92,3 +109,8 @@ class DictDataLoader(DataLoader):
         self._file_mapping = dict()
         self._known_directories = []
 
+    def get_basedir(self):
+        return os.getcwd()
+
+    def set_vault_secrets(self, vault_secrets):
+        self._vault_secrets = vault_secrets

@@ -1,0 +1,70 @@
+- name: Generate privatekey1 - standard
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey1'
+  register: privatekey1_result
+
+- name: Generate privatekey2 - size 2048
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey2'
+    size: 2048
+
+- name: Generate privatekey3 - type dsa
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey3'
+    type: dsa
+
+- name: Generate privatekey4 - standard
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey4'
+
+- name: Delete privatekey4 - standard
+  openssh_keypair:
+    state: absent
+    path: '{{ output_dir }}/privatekey4'
+
+- name: Generate privatekey5 - standard
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey5'
+  register: publickey_gen
+
+- name: Generate privatekey6
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey6'
+    type: rsa
+
+- name: Regenerate privatekey6 via force
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey6'
+    type: rsa
+    force: yes
+  register: output_regenerated_via_force
+
+- name: Create broken key
+  copy:
+    dest: '{{ item }}'
+    content: ''
+    mode: '0700'
+  loop:
+    - '{{ output_dir }}/privatekeybroken'
+    - '{{ output_dir }}/privatekeybroken.pub'
+
+- name: Regenerate broken key
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekeybroken'
+    type: rsa
+  register: output_broken
+
+- name: Generate read-only private key
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekeyreadonly'
+    type: rsa
+    mode: '0200'
+
+- name: Regenerate read-only private key via force
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekeyreadonly'
+    type: rsa
+    force: yes
+  register: output_read_only
+
+- import_tasks: ../tests/validate.yml

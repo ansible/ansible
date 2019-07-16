@@ -1,0 +1,12 @@
+[
+      {
+      "kind": "tm:net:vlan:interfaces:interfacesstate",
+      "name": "1.2",
+      "fullPath": "1.2",
+      "generation": 2,
+      "selfLink": "https://localhost/mgmt/tm/net/vlan/~Common~internal/interfaces/1.2?ver=12.1.0",
+      "tagMode": "none",
+      "tagged": true
+    }
+
+  ]

@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.play_iterator import HostState, PlayIterator
@@ -57,10 +57,9 @@ class TestPlayIterator(unittest.TestCase):
 
         new_hs = hs.copy()
 
-
     @patch('ansible.playbook.role.definition.unfrackpath', mock_unfrackpath_noop)
     def test_play_iterator(self):
-        #import epdb; epdb.st()
+        # import epdb; epdb.st()
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
@@ -87,8 +86,45 @@ class TestPlayIterator(unittest.TestCase):
               - debug: msg="this is a post_task"
             """,
             '/etc/ansible/roles/test_role/tasks/main.yml': """
-            - debug: msg="this is a role task"
+            - name: role task
+              debug: msg="this is a role task"
+            - block:
+              - name: role block task
+                debug: msg="inside block in role"
+              always:
+              - name: role always task
+                debug: msg="always task in block in role"
+            - include: foo.yml
+            - name: role task after include
+              debug: msg="after include in role"
+            - block:
+              - name: starting role nested block 1
+                debug:
+              - block:
+                - name: role nested block 1 task 1
+                  debug:
+                - name: role nested block 1 task 2
+                  debug:
+                - name: role nested block 1 task 3
+                  debug:
+              - name: end of role nested block 1
+                debug:
+              - name: starting role nested block 2
+                debug:
+              - block:
+                - name: role nested block 2 task 1
+                  debug:
+                - name: role nested block 2 task 2
+                  debug:
+                - name: role nested block 2 task 3
+                  debug:
+              - name: end of role nested block 2
+                debug:
             """,
+            '/etc/ansible/roles/test_role/tasks/foo.yml': """
+            - name: role included task
+              debug: msg="this is task in an include from a role"
+            """
         })
 
         mock_var_manager = MagicMock()
@@ -119,16 +155,6 @@ class TestPlayIterator(unittest.TestCase):
             all_vars=dict(),
         )
 
-        # lookup up an original task
-        target_task = p._entries[0].tasks[0].block[0]
-        task_copy = target_task.copy(exclude_parent=True)
-        found_task = itr.get_original_task(hosts[0], task_copy)
-        self.assertEqual(target_task, found_task)
-
-        bad_task = Task()
-        found_task = itr.get_original_task(hosts[0], bad_task)
-        self.assertIsNone(found_task)
-
         # pre task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
@@ -141,6 +167,69 @@ class TestPlayIterator(unittest.TestCase):
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
         self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.name, "role task")
+        self.assertIsNotNone(task._role)
+        # role block task
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role block task")
+        self.assertIsNotNone(task._role)
+        # role block always task
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role always task")
+        self.assertIsNotNone(task._role)
+        # role include task
+        # (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        # self.assertIsNotNone(task)
+        # self.assertEqual(task.action, 'debug')
+        # self.assertEqual(task.name, "role included task")
+        # self.assertIsNotNone(task._role)
+        # role task after include
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role task after include")
+        self.assertIsNotNone(task._role)
+        # role nested block tasks
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "starting role nested block 1")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role nested block 1 task 1")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role nested block 1 task 2")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role nested block 1 task 3")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "end of role nested block 1")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "starting role nested block 2")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role nested block 2 task 1")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role nested block 2 task 2")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "role nested block 2 task 3")
+        self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.name, "end of role nested block 2")
         self.assertIsNotNone(task._role)
         # regular play task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
@@ -327,7 +416,7 @@ class TestPlayIterator(unittest.TestCase):
         )
 
         # test the high-level add_tasks() method
-        s = HostState(blocks=[0,1,2])
+        s = HostState(blocks=[0, 1, 2])
         itr._insert_tasks_into_state = MagicMock(return_value=s)
         itr.add_tasks(hosts[0], [MagicMock(), MagicMock(), MagicMock()])
         self.assertEqual(itr._host_states[hosts[0].name], s)

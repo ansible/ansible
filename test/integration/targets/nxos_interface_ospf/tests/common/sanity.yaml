@@ -1,0 +1,306 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_interface_ospf sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: testint="{{ nxos_int1 }}"
+
+- name: Setup - Disable features
+  nxos_feature:
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: disabled
+  loop: ['ospf', 'bfd']
+  ignore_errors: yes
+
+- name: Setup - Enable features
+  nxos_feature:
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: enabled
+  loop: ['ospf', 'bfd']
+
+- name: "Put interface into default state"
+  nxos_config: &intdefault
+    lines:
+      - "default interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Remove switchport config"
+  nxos_config: &removeswitchport
+    commands:
+      - no switchport
+    parents:
+      - "interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Remove possibly existing port-channel and loopback ints"
+  nxos_config: &removepcandlb
+    commands:
+      - no interface port-channel10
+      - no interface port-channel11
+      - no interface loopback55
+      - no interface loopback77
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: configure ospf interface
+    nxos_interface_ospf: &configure
+      interface: "{{ nxos_int1|upper }}"
+      ospf: 1
+      area: 12345678
+      bfd: enable
+      cost: 55
+      passive_interface: true
+      hello_interval: 15
+      dead_interval: 75
+      network: point-to-point
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Modify properties
+    nxos_interface_ospf: &modify
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 12345678
+      cost: 66
+      passive_interface: false
+      hello_interval: 17
+      dead_interval: 70
+      network: broadcast
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *modify
+    register: result
+
+  - assert: *false
+
+  - name: default properties
+    nxos_interface_ospf: &def
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 12345678
+      bfd: default
+      cost: default
+      hello_interval: 10
+      dead_interval: default
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *def
+    register: result
+
+  - assert: *false
+
+  - name: Message_digest properties
+    nxos_interface_ospf: &md
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 12345678
+      message_digest: True
+      message_digest_key_id: 10
+      message_digest_algorithm_type: md5
+      message_digest_encryption_type: 3des
+      message_digest_password: b69f7bc54725b1bfd1ea93afa7b09400
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *md
+    register: result
+
+  - assert: *false
+
+  - name: Message_digest defaults
+    nxos_interface_ospf: &mdd
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 12345678
+      message_digest: False
+      message_digest_key_id: default
+      message_digest_algorithm_type: default
+      message_digest_encryption_type: default
+      message_digest_password: default
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *mdd
+    register: result
+
+  - assert: *false
+
+  - name: create port-channel and loopback interfaces
+    nxos_config:
+      commands:
+        - interface port-channel10
+        - interface port-channel11
+        - interface loopback55
+        - interface loopback77
+      match: none
+      provider: "{{ connection }}"
+
+  - name: "Ensure port-channels are layer3"
+    nxos_config:
+      commands:
+        - no switchport
+      parents:
+        - "interface {{ item }}"
+      provider: "{{ connection }}"
+    with_items:
+      - port-channel10
+      - port-channel11
+
+  - name: configure ospf interface port-channel10
+    nxos_interface_ospf: &configurepc
+      interface: Port-channel10
+      ospf: 1
+      area: 429496729
+      cost: 55
+      passive_interface: true
+      hello_interval: 15
+      dead_interval: 75
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence for port-channel10"
+    nxos_interface_ospf: *configurepc
+    register: result
+
+  - assert: *false
+
+  - name: configure ospf interface port-channel11 using lower case name
+    nxos_interface_ospf: &configurepclower
+      interface: port-channel11
+      ospf: 1
+      area: 42949672
+      cost: 55
+      passive_interface: true
+      hello_interval: 15
+      dead_interval: 75
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence for port-channel11"
+    nxos_interface_ospf: *configurepclower
+    register: result
+
+  - assert: *false
+
+  - name: configure ospf interface loopback55
+    nxos_interface_ospf: &configurelb
+      interface: LOOPBACK55
+      ospf: 1
+      area: 192.0.2.4
+      cost: 55
+      hello_interval: 15
+      dead_interval: 75
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence for loopback55"
+    nxos_interface_ospf: *configurelb
+    register: result
+
+  - assert: *false
+
+  - name: configure ospf interface loopback77 using lower case name
+    nxos_interface_ospf: &configurelblower
+      interface: loopback77
+      ospf: 1
+      area: 429496
+      cost: 77
+      hello_interval: 45
+      dead_interval: 75
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence for loopback77"
+    nxos_interface_ospf: *configurelblower
+    register: result
+
+  - assert: *false
+
+  - name: remove ospf interface config
+    nxos_interface_ospf: &removeconfig
+      interface: "{{ testint }}"
+      ospf: 1
+      area: 12345678
+      bfd: disable
+      cost: 55
+      passive_interface: true
+      hello_interval: 15
+      dead_interval: 75
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface_ospf: *removeconfig
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Disable features
+    nxos_feature:
+      feature: "{{ item }}"
+      provider: "{{ connection }}"
+      state: disabled
+    loop: ['ospf', 'bfd']
+    ignore_errors: yes
+
+  - name: "Interface cleanup"
+    nxos_config: *intdefault
+    ignore_errors: yes
+
+  - name: "Remove port-channel and loopback ints"
+    nxos_config: *removepcandlb
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_interface_ospf sanity test"

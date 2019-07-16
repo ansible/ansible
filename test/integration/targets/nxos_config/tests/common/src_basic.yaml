@@ -1,0 +1,41 @@
+---
+- debug: msg="START common/src_basic.yaml on connection={{ ansible_connection }}"
+
+- set_fact: intname="loopback1"
+
+- name: setup
+  nxos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+
+- name: configure device with config
+  nxos_config:
+    src: basic/config.j2
+    provider: "{{ connection }}"
+    defaults: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is defined"
+
+- name: check device with config
+  nxos_config:
+    src: basic/config.j2
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is not defined"
+
+- debug: msg="END common/src_basic.yaml on connection={{ ansible_connection }}"

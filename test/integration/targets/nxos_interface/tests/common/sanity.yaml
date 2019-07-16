@@ -1,0 +1,128 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: testint="{{ nxos_int1 }}"
+
+- name: "Setup: Enable feature interface-vlan"
+  nxos_feature:
+    feature: interface-vlan
+    provider: "{{ connection }}"
+    state: enabled
+  ignore_errors: yes
+
+- name: "Setup: Put interface {{ testint }} into a default state"
+  nxos_config: &intcleanup
+    lines:
+      - "default interface {{ testint }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- name: "Setup: Remove possibly existing vlan interfaces"
+  nxos_config: &vlanintcleanup
+    lines:
+      - "no interface vlan 2"
+      - "no interface vlan 710"
+      - "no interface vlan 711"
+      - "no interface vlan 712"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+  - name: "Configure layer3 params"
+    nxos_interface: &l3config
+      interface: "{{ testint }}"
+      mode: layer3
+      description: 'Configured by Ansible - Layer3'
+      admin_state: up
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_interface: *l3config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Configure layer2 params"
+    nxos_interface: &l2config
+      interface: "{{ testint }}"
+      mode: layer2
+      description: 'Configured by Ansible - Layer2'
+      admin_state: down
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_interface: *l2config
+    register: result
+
+  - assert: *false
+
+  - name: Create VLAN Interfaces
+    nxos_interface: &createvlans
+      interface: "{{ item.os_svi_int }}"
+      description: "{{ item.os_svi_desc }}"
+      provider: "{{ connection }}"
+    with_items: &vlanitems
+      - {os_svi_int: vlan2, os_svi_desc: SVI_VLAN2}
+      - {os_svi_int: vlan710, os_svi_desc: SVI_VLAN710}
+      - {os_svi_int: vlan711, os_svi_desc: SVI_VLAN711}
+      - {os_svi_int: vlan712, os_svi_desc: SVI_VLAN712}
+    register: result
+
+  - assert: *true
+
+  - name: Configure Required SVI
+    nxos_l3_interface: &addips
+      aggregate:
+        - {name: vlan2, ipv4: 192.168.2.1/24}
+        - {name: vlan710, ipv4: 192.168.3.1/24}
+        - {name: vlan711, ipv4: 192.168.4.1/24}
+        - {name: vlan712, ipv4: 192.168.5.1/24}
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Create VLAN Interfaces Idempotence Check
+    nxos_interface: *createvlans
+    with_items: *vlanitems
+    register: result
+
+  - assert: *false
+
+  - name: Configure Required SVI Idempotence Check
+    nxos_l3_interface: *addips
+    register: result
+
+  - assert: *false
+
+  rescue:
+  - name: "Set interface back to default"
+    nxos_config: *intcleanup
+    ignore_errors: yes
+
+  - name: "Remove vlan interfaces"
+    nxos_config: *vlanintcleanup
+
+  - name: "Setup: Disable feature interface-vlan"
+    nxos_feature:
+      feature: interface-vlan
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+  always:
+  - debug: msg="END connection={{ ansible_connection }} nxos_interface sanity test"

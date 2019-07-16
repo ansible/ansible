@@ -19,16 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.task_executor import TaskExecutor
+from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import action_loader, lookup_loader
+from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
 from units.mock.loader import DictDataLoader
+
 
 class TestTaskExecutor(unittest.TestCase):
 
@@ -48,14 +48,14 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict()
         mock_queue = MagicMock()
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = mock_shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=mock_shared_loader,
+            final_q=mock_queue,
         )
 
     def test_task_executor_run(self):
@@ -75,14 +75,14 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict()
 
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = mock_shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=mock_shared_loader,
+            final_q=mock_queue,
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -92,7 +92,7 @@ class TestTaskExecutor(unittest.TestCase):
         te._get_loop_items = MagicMock(return_value=[])
         res = te.run()
 
-        te._get_loop_items = MagicMock(return_value=['a','b','c'])
+        te._get_loop_items = MagicMock(return_value=['a', 'b', 'c'])
         te._run_loop = MagicMock(return_value=[dict(item='a', changed=True), dict(item='b', failed=True), dict(item='c')])
         res = te.run()
 
@@ -106,8 +106,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
-        mock_task.loop = 'items'
-        mock_task.loop_args = ['a', 'b', 'c']
+        mock_task.loop_with = 'items'
+        mock_task.loop = ['a', 'b', 'c']
 
         mock_play_context = MagicMock()
 
@@ -119,14 +119,14 @@ class TestTaskExecutor(unittest.TestCase):
         mock_queue = MagicMock()
 
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = mock_shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=mock_shared_loader,
+            final_q=mock_queue,
         )
 
         items = te._get_loop_items()
@@ -155,14 +155,14 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict()
 
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = mock_shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=mock_shared_loader,
+            final_q=mock_queue,
         )
 
         def _execute(variables):
@@ -201,51 +201,49 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict(pkg_mgr='yum')
 
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = mock_shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=mock_shared_loader,
+            final_q=mock_queue,
         )
 
-        #
         # No replacement
-        #
         mock_task.action = 'yum'
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
         self.assertIsInstance(mock_task.args, MagicMock)
 
         mock_task.action = 'foo'
-        mock_task.args={'name': '{{item}}'}
+        mock_task.args = {'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
         self.assertEqual(mock_task.args, {'name': '{{item}}'})
 
         mock_task.action = 'yum'
-        mock_task.args={'name': 'static'}
+        mock_task.args = {'name': 'static'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
         self.assertEqual(mock_task.args, {'name': 'static'})
 
         mock_task.action = 'yum'
-        mock_task.args={'name': '{{pkg_mgr}}'}
+        mock_task.args = {'name': '{{pkg_mgr}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
         self.assertEqual(mock_task.args, {'name': '{{pkg_mgr}}'})
 
         mock_task.action = '{{unknown}}'
-        mock_task.args={'name': '{{item}}'}
+        mock_task.args = {'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
         self.assertEqual(mock_task.args, {'name': '{{item}}'})
 
         # Could do something like this to recover from bad deps in a package
         job_vars = dict(pkg_mgr='yum', packages=['a', 'b'])
-        items = [ 'absent', 'latest' ]
+        items = ['absent', 'latest']
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ packages }}', 'state': '{{ item }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
@@ -260,8 +258,8 @@ class TestTaskExecutor(unittest.TestCase):
         # you can't use a list as a dict key so that would probably throw
         # an error later.  If so, we can throw it now instead.
         # Squashing in this case would not be intuitive as the user is being
-        # explicit in using each list entry as a key.  
-        job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "foo": "baz", "bar": "quux" })
+        # explicit in using each list entry as a key.
+        job_vars = dict(pkg_mgr='yum', packages={"a": "foo", "b": "bar", "foo": "baz", "bar": "quux"})
         items = [['a', 'b'], ['foo', 'bar']]
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ packages[item] }}'}
@@ -269,21 +267,19 @@ class TestTaskExecutor(unittest.TestCase):
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{ packages[item] }}'})
 
-        #
         # Replaces
-        #
         items = ['a', 'b', 'c']
         mock_task.action = 'yum'
-        mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        self.assertEqual(new_items, [['a','c']])
-        self.assertEqual(mock_task.args, {'name': ['a','c']})
-
-        mock_task.action = '{{pkg_mgr}}'
-        mock_task.args={'name': '{{item}}'}
+        mock_task.args = {'name': '{{item}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
-        self.assertEqual(mock_task.args, {'name': ['a','c']})
+        self.assertEqual(mock_task.args, {'name': ['a', 'c']})
+
+        mock_task.action = '{{pkg_mgr}}'
+        mock_task.args = {'name': '{{item}}'}
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
+        self.assertEqual(new_items, [['a', 'c']])
+        self.assertEqual(mock_task.args, {'name': ['a', 'c']})
 
         # New loop_var
         mock_task.action = 'yum'
@@ -292,7 +288,7 @@ class TestTaskExecutor(unittest.TestCase):
         loop_var = 'a_loop_var_item'
         new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
-        self.assertEqual(mock_task.args, {'name': ['a','c']})
+        self.assertEqual(mock_task.args, {'name': ['a', 'c']})
         loop_var = 'item'
 
         #
@@ -307,8 +303,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ item }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        #self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
-        #self.assertEqual(mock_task.args, {'name': ['a', 'b', 'foo', 'bar']})
+        # self.assertEqual(new_items, [['a', 'b', 'foo', 'bar']])
+        # self.assertEqual(mock_task.args, {'name': ['a', 'b', 'foo', 'bar']})
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{ item }}'})
 
@@ -317,8 +313,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ packages[item] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        #self.assertEqual(new_items, [['foo', 'baz']])
-        #self.assertEqual(mock_task.args, {'name': ['foo', 'baz']})
+        # self.assertEqual(new_items, [['foo', 'baz']])
+        # self.assertEqual(mock_task.args, {'name': ['foo', 'baz']})
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{ packages[item] }}'})
 
@@ -328,34 +324,37 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{ item["package"] }}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        #self.assertEqual(new_items, [['foo', 'bar']])
-        #self.assertEqual(mock_task.args, {'name': ['foo', 'bar']})
+        # self.assertEqual(new_items, [['foo', 'bar']])
+        # self.assertEqual(mock_task.args, {'name': ['foo', 'bar']})
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{ item["package"] }}'})
 
-        items = [dict(name='a', state='present'),
-                dict(name='b', state='present'),
-                dict(name='c', state='present')]
+        items = [
+            dict(name='a', state='present'),
+            dict(name='b', state='present'),
+            dict(name='c', state='present'),
+        ]
         mock_task.action = 'yum'
-        mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
+        mock_task.args = {'name': '{{item.name}}', 'state': '{{item.state}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        #self.assertEqual(new_items, [dict(name=['a', 'b', 'c'], state='present')])
-        #self.assertEqual(mock_task.args, {'name': ['a', 'b', 'c'], 'state': 'present'})
+        # self.assertEqual(new_items, [dict(name=['a', 'b', 'c'], state='present')])
+        # self.assertEqual(mock_task.args, {'name': ['a', 'b', 'c'], 'state': 'present'})
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
 
-        items = [dict(name='a', state='present'),
-                dict(name='b', state='present'),
-                dict(name='c', state='absent')]
+        items = [
+            dict(name='a', state='present'),
+            dict(name='b', state='present'),
+            dict(name='c', state='absent'),
+        ]
         mock_task.action = 'yum'
-        mock_task.args={'name': '{{item.name}}', 'state': '{{item.state}}'}
+        mock_task.args = {'name': '{{item.name}}', 'state': '{{item.state}}'}
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
-        #self.assertEqual(new_items, [dict(name=['a', 'b'], state='present'),
-        #        dict(name='c', state='absent')])
-        #self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
+        # self.assertEqual(new_items, [dict(name=['a', 'b'], state='present'),
+        #         dict(name='c', state='absent')])
+        # self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
         self.assertEqual(new_items, items)
         self.assertEqual(mock_task.args, {'name': '{{item.name}}', 'state': '{{item.state}}'})
-
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})
@@ -371,11 +370,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.changed_when = None
         mock_task.failed_when = None
         mock_task.post_validate.return_value = None
-        # mock_task.async cannot be left unset, because on Python 3 MagicMock()
+        # mock_task.async_val cannot be left unset, because on Python 3 MagicMock()
         # > 0 raises a TypeError   There are two reasons for using the value 1
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
         # other reason is that if I specify 0 here, the test fails. ;)
-        mock_task.async = 1
+        mock_task.async_val = 1
         mock_task.poll = 0
 
         mock_play_context = MagicMock()
@@ -394,14 +393,14 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=shared_loader,
+            final_q=mock_queue,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -432,8 +431,8 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
-        mock_task.async = 0.1
-        mock_task.poll  = 0.05
+        mock_task.async_val = 0.1
+        mock_task.poll = 0.05
 
         mock_play_context = MagicMock()
 
@@ -449,14 +448,14 @@ class TestTaskExecutor(unittest.TestCase):
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
         te = TaskExecutor(
-            host = mock_host,
-            task = mock_task,
-            job_vars = job_vars,
-            play_context = mock_play_context,
-            new_stdin = new_stdin,
-            loader = fake_loader,
-            shared_loader_obj = shared_loader,
-            rslt_q = mock_queue,
+            host=mock_host,
+            task=mock_task,
+            job_vars=job_vars,
+            play_context=mock_play_context,
+            new_stdin=new_stdin,
+            loader=fake_loader,
+            shared_loader_obj=shared_loader,
+            final_q=mock_queue,
         )
 
         te._connection = MagicMock()
@@ -486,3 +485,49 @@ class TestTaskExecutor(unittest.TestCase):
             res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
             self.assertEqual(res, dict(finished=1))
 
+    def test_recursive_remove_omit(self):
+        omit_token = 'POPCORN'
+
+        data = {
+            'foo': 'bar',
+            'baz': 1,
+            'qux': ['one', 'two', 'three'],
+            'subdict': {
+                'remove': 'POPCORN',
+                'keep': 'not_popcorn',
+                'subsubdict': {
+                    'remove': 'POPCORN',
+                    'keep': 'not_popcorn',
+                },
+                'a_list': ['POPCORN'],
+            },
+            'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [
+                {
+                    'remove': 'POPCORN',
+                }
+            ],
+        }
+
+        expected = {
+            'foo': 'bar',
+            'baz': 1,
+            'qux': ['one', 'two', 'three'],
+            'subdict': {
+                'keep': 'not_popcorn',
+                'subsubdict': {
+                    'keep': 'not_popcorn',
+                },
+                'a_list': ['POPCORN'],
+            },
+            'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [{}],
+        }
+
+        self.assertEqual(remove_omit(data, omit_token), expected)

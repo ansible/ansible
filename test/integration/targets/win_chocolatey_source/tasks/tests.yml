@@ -1,0 +1,373 @@
+---
+- name: create source (check mode)
+  win_chocolatey_source:
+    name: chocolatey
+    source: https://chocolatey.org/api/v2/
+    state: present
+  register: create_check
+  check_mode: yes
+
+- name: check if source exists (check mode)
+  choco_source:
+  register: create_actual_check
+
+- name: assert create source (check mode)
+  assert:
+    that:
+    - create_check is changed
+    - create_actual_check.sources == []
+
+- name: create source
+  win_chocolatey_source:
+    name: chocolatey
+    source: https://chocolatey.org/api/v2/
+    state: present
+  register: create
+
+- name: check if source exists
+  choco_source:
+  register: create_actual
+
+- name: assert create source
+  assert:
+    that:
+    - create is changed
+    - create_actual.sources|length == 1
+    - create_actual.sources[0].name == 'chocolatey'
+    - create_actual.sources[0].source == 'https://chocolatey.org/api/v2/'
+    - create_actual.sources[0].disabled == False
+    - create_actual.sources[0].source_username == None
+    - create_actual.sources[0].priority == 0
+    - create_actual.sources[0].certificate == None
+    - create_actual.sources[0].bypass_proxy == False
+    - create_actual.sources[0].allow_self_service == False
+    - create_actual.sources[0].admin_only == False
+
+- name: create source (idempotent)
+  win_chocolatey_source:
+    name: chocolatey
+    source: https://chocolatey.org/api/v2/
+    state: present
+  register: create_again
+
+- name: assert create source (idempotent)
+  assert:
+    that:
+    - not create_again is changed
+
+- name: remove source (check mode)
+  win_chocolatey_source:
+    name: chocolatey
+    state: absent
+  register: remove_check
+  check_mode: yes
+
+- name: check if source is removed (check mode)
+  choco_source:
+  register: remove_actual_check
+
+- name: assert remove source (check mode)
+  assert:
+    that:
+    - remove_check is changed
+    - remove_actual_check.sources == create_actual.sources
+
+- name: remove source
+  win_chocolatey_source:
+    name: chocolatey
+    state: absent
+  register: remove
+
+- name: check if source is removed
+  choco_source:
+  register: remove_actual
+
+- name: assert remove source
+  assert:
+    that:
+    - remove is changed
+    - remove_actual.sources == []
+
+- name: remove source (idempotent)
+  win_chocolatey_source:
+    name: chocolatey
+    state: absent
+  register: remove_again
+
+- name: assert remove source (idempotent)
+  assert:
+    that:
+    - not remove_again is changed
+
+- name: create a disabled service (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+  register: create_special_check
+  check_mode: yes
+
+- name: check if source is created (check mode)
+  choco_source:
+  register: create_special_actual_check
+
+- name: assert create a disabled service (check mode)
+  assert:
+    that:
+    - create_special_check is changed
+    - create_special_actual_check.sources == []
+
+- name: create a disabled service
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+  register: create_special
+
+- name: check if source is created
+  choco_source:
+  register: create_special_actual
+
+- name: assert create a disabled service
+  assert:
+    that:
+    - create_special is changed
+    - create_special_actual.sources|length == 1
+    - create_special_actual.sources[0].name == test_chocolatey_name
+    - create_special_actual.sources[0].source == 'C:\\chocolatey repos'
+    - create_special_actual.sources[0].disabled == True
+    - create_special_actual.sources[0].source_username == 'username'
+    - create_special_actual.sources[0].priority == 1
+    - create_special_actual.sources[0].certificate == 'C:\\cert.pfx'
+    - create_special_actual.sources[0].bypass_proxy == True
+    - create_special_actual.sources[0].allow_self_service == False
+    - create_special_actual.sources[0].admin_only == False
+
+- name: create a disabled service pass always update
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+  register: create_special_pass_always
+
+- name: assert create a disabled service pass always update
+  assert:
+    that:
+    - create_special_pass_always is changed
+
+- name: create a disabled service (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos
+    source_username: username
+    source_password: password
+    certificate: C:\cert.pfx
+    certificate_password: password
+    bypass_proxy: yes
+    priority: 1
+    state: disabled
+    update_password: on_create
+  register: create_special_again
+
+- name: assert create a disabled service (idempotent)
+  assert:
+    that:
+    - not create_special_again is changed
+
+- name: edit an existing source (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos2
+    source_username: username2
+    source_password: password2
+    certificate: C:\cert2.pfx
+    priority: '5'
+    state: present
+    update_password: on_create
+    admin_only: yes
+    allow_self_service: yes
+  register: modify_source_check
+  check_mode: yes
+
+- name: check if source is changed (check mode)
+  choco_source:
+  register: modify_source_check_actual
+
+- name: assert edit an existing source (check mode)
+  assert:
+    that:
+    - modify_source_check is changed
+    - modify_source_check_actual.sources == create_special_actual.sources
+
+- name: edit an existing source
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos2
+    source_username: username2
+    source_password: password2
+    certificate: C:\cert2.pfx
+    priority: '5'
+    state: present
+    update_password: on_create
+    admin_only: yes
+    allow_self_service: yes
+  register: modify_source
+
+- name: check if source is changed
+  choco_source:
+  register: modify_source_actual
+
+- name: assert edit an existing source
+  assert:
+    that:
+    - modify_source is changed
+    - modify_source_actual.sources[0].name == test_chocolatey_name
+    - modify_source_actual.sources[0].source == 'C:\\chocolatey repos2'
+    - modify_source_actual.sources[0].disabled == False
+    - modify_source_actual.sources[0].source_username == 'username2'
+    - modify_source_actual.sources[0].priority == 5
+    - modify_source_actual.sources[0].certificate == 'C:\\cert2.pfx'
+    - modify_source_actual.sources[0].bypass_proxy == False
+    - modify_source_actual.sources[0].allow_self_service == True
+    - modify_source_actual.sources[0].admin_only == True
+
+- name: edit an existing source (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    source: C:\chocolatey repos2
+    source_username: username2
+    source_password: password2
+    certificate: C:\cert2.pfx
+    priority: '5'
+    state: present
+    update_password: on_create
+    admin_only: yes
+    allow_self_service: yes
+  register: modify_source_again
+
+- name: assert edit an existing source (idempotent)
+  assert:
+    that:
+    - not modify_source_again is changed
+
+- name: disable source (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: disabled
+  register: disable_source_check
+  check_mode: True
+
+- name: get result of disable source (check mode)
+  choco_source:
+  register: disable_source_actual_check
+
+- name: assert disable source (check mode)
+  assert:
+    that:
+    - disable_source_check is changed
+    - disable_source_actual_check.sources == modify_source_actual.sources
+
+- name: disable source
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: disabled
+  register: disable_source
+
+- name: get result of disable source
+  choco_source:
+  register: disable_source_actual
+
+- name: assert disable source
+  assert:
+    that:
+    - disable_source is changed
+    - disable_source_actual.sources[0].name == test_chocolatey_name
+    - disable_source_actual.sources[0].source == 'C:\\chocolatey repos2'
+    - disable_source_actual.sources[0].disabled == True
+    - disable_source_actual.sources[0].source_username == 'username2'
+    - disable_source_actual.sources[0].priority == 5
+    - disable_source_actual.sources[0].certificate == 'C:\\cert2.pfx'
+    - disable_source_actual.sources[0].bypass_proxy == False
+    - disable_source_actual.sources[0].allow_self_service == True
+    - disable_source_actual.sources[0].admin_only == True
+
+- name: disable source (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: disabled
+  register: disable_source_again
+
+- name: assert disable source (idempotent)
+  assert:
+    that:
+    - not disable_source_again is changed
+
+- name: enable source (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: present
+  register: enable_source_check
+  check_mode: True
+
+- name: get result of enable source (check mode)
+  choco_source:
+  register: enable_source_actual_check
+
+- name: assert enable source (check mode)
+  assert:
+    that:
+    - enable_source_check is changed
+    - enable_source_actual_check.sources == disable_source_actual.sources
+
+- name: enable source
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: present
+  register: enable_source
+
+- name: get result of enable source
+  choco_source:
+  register: enable_source_actual
+
+- name: assert enable source
+  assert:
+    that:
+    - enable_source is changed
+    - enable_source_actual.sources[0].name == test_chocolatey_name
+    - enable_source_actual.sources[0].source == 'C:\\chocolatey repos2'
+    - enable_source_actual.sources[0].disabled == False
+    - enable_source_actual.sources[0].source_username == 'username2'
+    - enable_source_actual.sources[0].priority == 5
+    - enable_source_actual.sources[0].certificate == 'C:\\cert2.pfx'
+    - enable_source_actual.sources[0].bypass_proxy == False
+    - enable_source_actual.sources[0].allow_self_service == True
+    - enable_source_actual.sources[0].admin_only == True
+
+- name: enable source (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: present
+  register: enable_source_again
+
+- name: assert enable source (idempotent)
+  assert:
+    that:
+    - not enable_source_again is changed

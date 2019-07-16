@@ -1,0 +1,130 @@
+---
+- name: setup
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    state: absent
+  register: role
+- name: verify setup
+  assert:
+    that:
+    - role is successful
+
+- name: test fail if missing params
+  cs_role:
+  register: role
+  ignore_errors: true
+- name: verifytest fail if missing params
+  assert:
+    that:
+    - role is failed
+    - "role.msg.startswith('missing required arguments: ')"
+
+- name: test create role in check mode
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    role_type: DomainAdmin
+  register: role
+  check_mode: true
+- name: verify test create role in check mode
+  assert:
+    that:
+    - role is changed
+
+- name: test create role
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    role_type: DomainAdmin
+  register: role
+- name: verify test create role
+  assert:
+    that:
+    - role is changed
+    - role.name == '{{ cs_resource_prefix }}-role'
+    - role.role_type == 'DomainAdmin'
+
+- name: test create role idempotence
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    role_type: DomainAdmin
+  register: role
+- name: verify test create role idempotence
+  assert:
+    that:
+    - role is not changed
+    - role.name == '{{ cs_resource_prefix }}-role'
+    - role.role_type == 'DomainAdmin'
+
+- name: test update role in check mode
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    description: "{{ cs_resource_prefix }}-role-description"
+    role_type: DomainAdmin
+  register: role
+  check_mode: true
+- name: verify test update role in check mode
+  assert:
+    that:
+    - role is changed
+    - role.name == '{{ cs_resource_prefix }}-role'
+    - "role.description is not defined"
+    - role.role_type == 'DomainAdmin'
+
+- name: test update role
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    description: "{{ cs_resource_prefix }}-role-description"
+    role_type: DomainAdmin
+  register: role
+- name: verify test update role
+  assert:
+    that:
+    - role is changed
+    - role.name == '{{ cs_resource_prefix }}-role'
+    - role.description == '{{ cs_resource_prefix }}-role-description'
+    - role.role_type == 'DomainAdmin'
+
+- name: test update role idempotence
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    description: "{{ cs_resource_prefix }}-role-description"
+  register: role
+- name: verify test update role idempotence
+  assert:
+    that:
+    - role is not changed
+    - role.name == '{{ cs_resource_prefix }}-role'
+    - role.description == '{{ cs_resource_prefix }}-role-description'
+    - role.role_type == 'DomainAdmin'
+
+- name: test remove role in check mdoe
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    state: absent
+  register: role
+  check_mode: true
+- name: verify test remove role in check mode
+  assert:
+    that:
+    - role is changed
+    - role.name == '{{ cs_resource_prefix }}-role'
+    - role.role_type == 'DomainAdmin'
+
+- name: test remove role
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    state: absent
+  register: role
+- name: verify test remove role
+  assert:
+    that:
+    - role is changed
+
+- name: test remove role idempotence
+  cs_role:
+    name: "{{ cs_resource_prefix }}-role"
+    state: absent
+  register: role
+- name: verify test remove role idempotence
+  assert:
+    that:
+    - role is not changed

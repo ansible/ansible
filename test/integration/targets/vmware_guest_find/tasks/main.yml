@@ -1,0 +1,61 @@
+# Test code for the vmware_guest_find module.
+# Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+- name: find folders for each vm
+  vmware_guest_find:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ item.name }}"
+    datacenter: "{{ dc1 }}"
+  with_items: "{{ virtual_machines }}"
+  register: folders
+
+- debug: var=item
+  with_items: "{{ folders.results }}"
+
+# We only care that each VM was found, not that the folder path
+# is completely accurate. Eventually the test should be extended
+# to validate the full path for each VM.
+- assert:
+    that:
+        - "{{ 'folders' in item }}"
+        - "{{ item['folders']|length == 1 }}"
+  with_items: "{{ folders.results }}"
+
+- name: get fact of the first VM
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: "{{ virtual_machines[0].folder }}"
+  register: guest_facts_0001
+
+- debug: var=guest_facts_0001
+
+- name: find folders for each vm using UUID
+  vmware_guest_find:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    uuid: "{{ guest_facts_0001['instance']['hw_product_uuid'] }}"
+  register: folder_uuid
+
+- debug: var=folder_uuid
+
+- assert:
+    that:
+        - "{{ 'folders' in folder_uuid }}"
+        - "{{ folder_uuid['folders']|length == 1 }}"

@@ -1,0 +1,425 @@
+---
+# this test just makes sure the task doesn't fail when we set out expected rc
+- name: install broken msi override expected rc
+  win_package:
+    path: '{{test_win_package_path}}\bad.msi'
+    state: present
+    expected_return_code: 0,1603
+
+- name: install local msi (check mode)
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: present
+  register: install_local_msi_check
+  check_mode: yes
+
+- name: get result of install local msi (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: install_local_msi_actual_check
+
+- name: assert install local msi (check mode)
+  assert:
+    that:
+    - install_local_msi_check is changed
+    - install_local_msi_check.reboot_required == False
+    - install_local_msi_actual_check.exists == False
+
+- name: install local msi with log
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: present
+    log_path: "{{test_win_package_log_path_install}}"
+  register: install_local_msi
+
+- name: get result of install local msi
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: install_local_msi_actual
+
+- name: assert install local msi
+  assert:
+    that:
+    - install_local_msi is changed
+    - install_local_msi.reboot_required == False
+    - install_local_msi.rc == 0
+    - install_local_msi_actual.exists == True
+
+- name: get result of install local msi log_path
+  win_stat:
+    path: "{{test_win_package_log_path_install}}"
+  register: install_local_msi_actual_log_path
+
+- name: assert install local msi log path
+  assert:
+    that:
+    - install_local_msi_actual_log_path.stat.exists == True
+
+- name: install local msi (idempotent)
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: present
+  register: install_local_msi_idempotent
+
+- name: assert install local msi (idempotent)
+  assert:
+    that:
+    - install_local_msi_idempotent is not changed
+
+- name: uninstall local msi with path (check mode)
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: absent
+  register: uninstall_path_local_msi_check
+  check_mode: yes
+
+- name: get result of uninstall local msi with path (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: uninstall_path_local_msi_actual_check
+
+- name: assert uninstall local msi with path (check mode)
+  assert:
+    that:
+    - uninstall_path_local_msi_check is changed
+    - uninstall_path_local_msi_check.reboot_required == False
+    - uninstall_path_local_msi_actual_check.exists == True
+
+- name: uninstall local msi with path
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: absent
+    log_path: "{{test_win_package_log_path_uninstall}}"
+  register: uninstall_path_local_msi
+
+- name: get result of uninstall local msi with path
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: uninstall_path_local_msi_actual
+
+- name: assert uninstall local msi with path
+  assert:
+    that:
+    - uninstall_path_local_msi is changed
+    - uninstall_path_local_msi.reboot_required == False
+    - uninstall_path_local_msi.rc == 0
+    - uninstall_path_local_msi_actual.exists == False
+
+- name: get result of uninstall local msi with path
+  win_stat:
+    path: "{{test_win_package_log_path_uninstall}}"
+  register: uninstall_path_local_msi_actual_log_path
+
+- name: assert uninstall local msi with path
+  assert:
+    that:
+    - uninstall_path_local_msi_actual_log_path.stat.exists == True  # we expect log to remain
+
+- name: uninstall local msi with path (idempotent)
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: absent
+  register: uninstall_path_local_msi_idempotent
+
+- name: assert uninstall local msi with path (idempotent)
+  assert:
+    that:
+    - uninstall_path_local_msi_idempotent is not changed
+
+- name: install url msi (check mode)
+  win_package:
+    path: '{{test_win_package_good_url}}'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+  register: install_url_msi_check
+  check_mode: yes
+
+- name: get result of install url msi (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: install_url_msi_actual_check
+
+- name: assert install url msi (check mode)
+  assert:
+    that:
+    - install_url_msi_check is changed
+    - install_url_msi_check.reboot_required == False
+    - install_url_msi_actual_check.exists == False
+
+- name: install url msi
+  win_package:
+    path: '{{test_win_package_good_url}}'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+  register: install_url_msi
+
+- name: get result of install url msi
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: install_url_msi_actual
+
+- name: assert install url msi
+  assert:
+    that:
+    - install_url_msi is changed
+    - install_url_msi.reboot_required == False
+    - install_url_msi.rc == 0
+    - install_url_msi_actual.exists == True
+
+- name: install url msi (idempotent)
+  win_package:
+    path: '{{test_win_package_good_url}}'
+    product_id: '{{test_win_package_good_id}}'
+    state: present
+  register: install_url_msi_again
+
+- name: assert install url msi (idempotent)
+  assert:
+    that:
+    - install_url_msi_again is not changed
+
+- name: uninstall local msi with product_id (check mode)
+  win_package:
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+  register: uninstall_id_local_msi_check
+  check_mode: yes
+
+- name: get result of uninstall local msi with product_id (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: uninstall_id_local_msi_actual_check
+
+- name: assert uninstall local msi with product_id (check mode)
+  assert:
+    that:
+    - uninstall_id_local_msi_check is changed
+    - uninstall_id_local_msi_check.reboot_required == False
+    - uninstall_id_local_msi_actual_check.exists == True
+
+- name: uninstall local msi with product_id
+  win_package:
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+  register: uninstall_id_local_msi
+
+- name: get result of uninstall local msi with product_id
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_good_id}}
+  register: uninstall_id_local_msi_actual
+
+- name: assert uninstall local msi with product_id
+  assert:
+    that:
+    - uninstall_id_local_msi is changed
+    - uninstall_id_local_msi.reboot_required == False
+    - uninstall_id_local_msi.rc == 0
+    - uninstall_id_local_msi_actual.exists == False
+
+- name: uninstall local msi with product_id (idempotent)
+  win_package:
+    product_id: '{{test_win_package_good_id}}'
+    state: absent
+  register: uninstall_id_local_msi_idempotent
+
+- name: assert uninstall local msi with product_id (idempotent)
+  assert:
+    that:
+    - uninstall_id_local_msi_idempotent is not changed
+
+- name: install local reboot msi (check mode)
+  win_package:
+    path: '{{test_win_package_path}}\reboot.msi'
+    state: present
+  register: install_local_reboot_msi_check
+  check_mode: yes
+
+- name: get result of install local reboot msi (check mode)
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_reboot_id}}
+  register: install_local_reboot_msi_actual_check
+
+- name: assert install local reboot msi (check mode)
+  assert:
+    that:
+    - install_local_reboot_msi_check is changed
+    - install_local_reboot_msi_check.reboot_required == False
+    - install_local_reboot_msi_actual_check.exists == False
+
+- name: install local reboot msi
+  win_package:
+    path: '{{test_win_package_path}}\reboot.msi'
+    state: present
+  register: install_local_reboot_msi
+
+- name: get result of install local reboot msi
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{{test_win_package_reboot_id}}
+  register: install_local_reboot_msi_actual
+
+- name: assert install local reboot msi
+  assert:
+    that:
+    - install_local_reboot_msi is changed
+    - install_local_reboot_msi.reboot_required == True
+    - install_local_reboot_msi.rc == 3010
+    - install_local_reboot_msi_actual.exists == True
+
+- name: install local reboot msi (idempotent)
+  win_package:
+    path: '{{test_win_package_path}}\reboot.msi'
+    state: present
+  register: install_local_reboot_msi_idempotent
+
+- name: assert install local reboot msi (idempotent)
+  assert:
+    that:
+    - install_local_reboot_msi_idempotent is not changed
+
+- name: uninstall reboot msi after test
+  win_package:
+    path: '{{test_win_package_path}}\reboot.msi'
+    state: absent
+
+- name: ensure the install folder is cleaned in case uninstall didn't work
+  win_file:
+    path: '%ProgramFiles(x86)%\Bovine University'
+    state: absent
+
+- name: install local msi with arguments (check mode)
+  win_package:
+    path: '{{test_win_package_path}}\good.MSI'
+    state: present
+    arguments: ADDLOCAL=Cow
+  register: install_msi_argument_check
+  check_mode: yes
+
+- name: get result of moo file after install local msi with arguments (check mode)
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\moo.exe'
+  register: install_msi_argument_moo_check
+
+- name: get result of cow file after install local msi with arguments (check mode)
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\cow.exe'
+  register: install_msi_argument_cow_check
+
+- name: assert install local msi with arguments (check mode)
+  assert:
+    that:
+    - install_msi_argument_check is changed
+    - install_msi_argument_check.reboot_required == False
+    - install_msi_argument_moo_check.stat.exists == False
+    - install_msi_argument_cow_check.stat.exists == False
+
+- name: install local msi with arguments
+  win_package:
+    path: '{{test_win_package_path}}\good.MSI'
+    state: present
+    arguments: ADDLOCAL=Cow
+  register: install_msi_argument
+
+- name: get result of moo file after install local msi with arguments
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\moo.exe'
+  register: install_msi_argument_moo
+
+- name: get result of cow file after install local msi with arguments
+  win_stat:
+    path: '%ProgramFiles(x86)%\Bovine University\cow.exe'
+  register: install_msi_argument_cow
+
+- name: assert install local msi with arguments
+  assert:
+    that:
+    - install_msi_argument is changed
+    - install_msi_argument.reboot_required == False
+    - install_msi_argument.rc == 0
+    - install_msi_argument_moo.stat.exists == False
+    - install_msi_argument_cow.stat.exists == True
+
+- name: install local msi with arguments (idempotent)
+  win_package:
+    path: '{{test_win_package_path}}\good.MSI'
+    state: present
+    arguments: ADDLOCAL=Cow
+  register: install_msi_argument_again
+
+- name: assert install local msi with arguments (idempotent)
+  assert:
+    that:
+    - install_msi_argument_again is not changed
+
+- name: uninstall good msi after test
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: absent
+
+- name: create custom install directory for msi install
+  win_file:
+    path: '{{test_win_package_path_safe}}\good'
+    state: directory
+
+- name: install msi to custom path using string arguments
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: present
+    arguments: ADDLOCAL=Cow INSTALLDIR={{test_win_package_path_safe}}\install
+  register: install_msi_string_arguments
+
+- name: get result of moo file after install local msi with string arguments
+  win_stat:
+    path: '{{test_win_package_path_safe}}\install\moo.exe'
+  register: install_msi_string_arguments_moo
+
+- name: get result of cow file after install local msi with string arguments
+  win_stat:
+    path: '{{test_win_package_path_safe}}\install\cow.exe'
+  register: install_msi_string_arguments_cow
+
+- name: assert results of install msi to custom path using string arguments
+  assert:
+    that:
+    - install_msi_string_arguments is changed
+    - install_msi_string_arguments.reboot_required == False
+    - install_msi_string_arguments.rc == 0
+    - install_msi_string_arguments_moo.stat.exists == False
+    - install_msi_string_arguments_cow.stat.exists == True
+
+- name: uninstall good msi after string argument test
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: absent
+
+- name: install msi to custom path using list arguments
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: present
+    arguments:
+    - ADDLOCAL=Moo
+    - INSTALLDIR={{test_win_package_path_safe}}\install
+  register: install_msi_list_arguments
+
+- name: get result of moo file after install local msi with list arguments
+  win_stat:
+    path: '{{test_win_package_path_safe}}\install\moo.exe'
+  register: install_msi_list_arguments_moo
+
+- name: get result of cow file after install local msi with list arguments
+  win_stat:
+    path: '{{test_win_package_path_safe}}\install\cow.exe'
+  register: install_msi_list_arguments_cow
+
+- name: assert results of install msi to custom path using list arguments
+  assert:
+    that:
+    - install_msi_list_arguments is changed
+    - install_msi_list_arguments.reboot_required == False
+    - install_msi_list_arguments.rc == 0
+    - install_msi_list_arguments_moo.stat.exists == True
+    - install_msi_list_arguments_cow.stat.exists == False
+
+- name: uninstall good msi after list argument test
+  win_package:
+    path: '{{test_win_package_path}}\good.msi'
+    state: absent

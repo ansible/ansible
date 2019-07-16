@@ -1,26 +1,43 @@
 # (c) 2013, Bradley Young <young.bradley@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2012-17 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import zip_longest
+DOCUMENTATION = """
+    lookup: together
+    author:  Bradley Young <young.bradley@gmail.com>
+    version_added: '1.3'
+    short_description: merges lists into synchronized list
+    description:
+      - Creates a list with the iterated elements of the supplied lists
+      - "To clarify with an example, [ 'a', 'b' ] and [ 1, 2 ] turn into [ ('a',1), ('b', 2) ]"
+      - This is basically the same as the 'zip_longest' filter and Python function
+      - Any 'unbalanced' elements will be substituted with 'None'
+    options:
+      _terms:
+        description: list of lists to merge
+        required: True
+"""
+
+EXAMPLES = """
+- name: item.0 returns from the 'a' list, item.1 returns from the '1' list
+  debug:
+    msg: "{{ item.0 }} and {{ item.1 }}"
+  with_together:
+    - ['a', 'b', 'c', 'd']
+    - [1, 2, 3, 4]
+"""
+
+RETURN = """
+  _list:
+    description: synchronized list
+"""
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import zip_longest
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
+
 
 class LookupModule(LookupBase):
     """
@@ -46,4 +63,3 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_together requires at least one element in each list")
 
         return [self._flatten(x) for x in zip_longest(*my_list, fillvalue=None)]
-

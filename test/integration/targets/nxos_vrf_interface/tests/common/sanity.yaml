@@ -1,0 +1,63 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- block:
+  - name: put interface in L3
+    nxos_config:
+      commands:
+        - no switchport
+      parents:
+        - "interface {{ intname }}"
+      match: none
+      provider: "{{ connection }}"
+
+  - name: Ensure vrf ntc exists on interface
+    nxos_vrf_interface: &configure
+      vrf: ntc
+      interface: "{{ intname }}"
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrf_interface: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Ensure ntc VRF does not exist on interface
+    nxos_vrf_interface: &remove
+      vrf: ntc
+      interface: "{{ intname }}"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Remove Idempotence"
+    nxos_vrf_interface: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: put interface in default mode
+    nxos_config:
+      lines: "default interface {{ intname }}"
+      match: none
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf_interface sanity test"

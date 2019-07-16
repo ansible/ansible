@@ -1,0 +1,95 @@
+# Test code for the vmware_dvswitch module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_datacenter: true
+
+- &dvs_data
+  name: Add distributed vSwitch
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    state: present
+    switch_name: dvswitch_0001
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0001
+
+- name: Ensure distributed vswitch is present
+  assert:
+    that:
+      - dvs_result_0001.changed
+
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: network_folder
+    folder_type: network
+    state: present
+    validate_certs: no
+  register:
+    network_folder_result
+
+- name: Add distributed vSwitch using folder
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "{{ network_folder_result.result.path }}"
+    state: present
+    switch_name: dvswitch_0002
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0002
+
+- name: Ensure distributed vswitch is present
+  assert:
+    that:
+      - dvs_result_0002.changed
+
+# vcsim doesn't support ldp check (self.dvs.config.linkDiscoveryProtocolConfig.protocol)
+- when: vcsim is not defined
+  block:
+  - <<: *dvs_data
+    name: add distributed vSwitch again
+    register: dvs_result_0002
+
+  - name: ensure distributed vswitch is present
+    assert:
+      that:
+        - not dvs_result_0002.changed
+
+# FIXME: Remove this testcase from block once vcsim supports distributed vswitch delete method
+# Currently, vcsim does not support distributed vswitch delete option,
+# Once this feature is available we can move this out of this block
+
+# Testcase 0003: Add Distributed vSwitch
+  - name: delete the distributed vSwitch
+    vmware_dvswitch:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: "{{ dc1 }}"
+      state: absent
+      switch_name: dvswitch_0001
+    register: dvs_result_0003
+
+  - name: ensure distributed vswitch is present
+    assert:
+      that:
+        - dvs_result_0003.changed

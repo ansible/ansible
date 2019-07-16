@@ -1,0 +1,176 @@
+# Test code for the vcenter_folder module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Create all types of folder in check mode
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "{{ item }}_folder"
+    folder_type: "{{ item }}"
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+  check_mode: yes
+
+- debug:
+    msg: "{{ all_folder_results }}"
+
+- name: ensure everything for {{ dc1 }}
+  assert:
+    that:
+        - all_folder_results.changed
+
+- name: Create all types of folder
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "{{ item }}_folder"
+    folder_type: "{{ item }}"
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug:
+    msg: "{{ all_folder_results }}"
+
+- name: ensure everything for {{ dc1 }}
+  assert:
+    that:
+        - all_folder_results.changed
+
+- name: Create all types of sub folder in check mode
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: 'vm_folder'
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+  check_mode: yes
+
+- debug:
+    msg: "{{ all_folder_results }}"
+
+- name: ensure everything for {{ dc1 }}
+  assert:
+    that:
+        - all_folder_results.changed
+
+- name: Create all types of sub folder
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: 'vm_folder'
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- name: Recreate all types of sub folder
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: 'vm_folder'
+    state: present
+  register: recreate_folders
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug:
+    msg: "{{ all_folder_results }}"
+
+- name: ensure everything for {{ dc1 }}
+  assert:
+    that:
+        - all_folder_results.changed
+        - not recreate_folders.changed
+
+## Testcase: Delete all types of folder
+#
+# Doesn't work with vcsim. Looks like UnregisterAndDestroy isn't supported.
+- when: vcsim is not defined
+  block:
+  - name: Delete all types of folder
+    vcenter_folder:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ dc1 }}"
+      folder_name: "{{ item }}_folder"
+      folder_type: "{{ item }}"
+      state: absent
+    register: all_folder_results
+    with_items:
+      - vm
+      - host
+      - datastore
+      - network
+
+  - debug: msg="{{ all_folder_results }}"
+
+  - name: ensure everything for {{ dc1 }}
+    assert:
+      that:
+          - all_folder_results.changed
+
+  - name: Delete all types of folder again
+    vcenter_folder:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ dc1 }}"
+      folder_name: "{{ item }}_folder"
+      folder_type: "{{ item }}"
+      state: absent
+    register: all_folder_results
+    with_items:
+      - vm
+      - host
+      - datastore
+      - network
+
+  - debug: msg="{{ all_folder_results }}"
+
+  - name: ensure everything for {{ dc1 }}
+    assert:
+      that:
+          - not all_folder_results.changed

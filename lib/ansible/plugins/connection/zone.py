@@ -3,42 +3,43 @@
 # and jail.py       (c) 2013, Michael Scherer <misc@zarb.org>
 # (c) 2015, Dagobert Michelsen <dam@baltic-online.de>
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Ansible Core Team
+    connection: zone
+    short_description: Run tasks in a zone instance
+    description:
+        - Run commands or put/fetch files to an existing zone
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Zone identifier
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_zone_host
+"""
 
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
+from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -46,7 +47,7 @@ class Connection(ConnectionBase):
 
     transport = 'zone'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    has_tty = False
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -66,13 +67,13 @@ class Connection(ConnectionBase):
     def _search_executable(executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise AnsibleError("%s command not found in PATH") % executable
+            raise AnsibleError("%s command not found in PATH" % executable)
         return cmd
 
     def list_zones(self):
         process = subprocess.Popen([self.zoneadm_cmd, 'list', '-ip'],
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         zones = []
         for l in process.stdout.readlines():
@@ -84,13 +85,13 @@ class Connection(ConnectionBase):
         return zones
 
     def get_zone_path(self):
-        #solaris10vm# zoneadm -z cswbuild list -p
-        #-:cswbuild:installed:/zones/cswbuild:479f3c4b-d0c6-e97b-cd04-fd58f2c0238e:native:shared
+        # solaris10vm# zoneadm -z cswbuild list -p
+        # -:cswbuild:installed:/zones/cswbuild:479f3c4b-d0c6-e97b-cd04-fd58f2c0238e:native:shared
         process = subprocess.Popen([self.zoneadm_cmd, '-z', to_bytes(self.zone), 'list', '-p'],
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        #stdout, stderr = p.communicate()
+        # stdout, stderr = p.communicate()
         path = process.stdout.readlines()[0].split(':')[3]
         return path + '/root'
 
@@ -109,7 +110,7 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        # Note: zlogin invokes a shell (just like ssh does) so we do not pass
+        # NOTE: zlogin invokes a shell (just like ssh does) so we do not pass
         # this through /bin/sh -c here.  Instead it goes through the shell
         # that zlogin selects.
         local_cmd = [self.zlogin_cmd, self.zone, cmd]
@@ -117,7 +118,7 @@ class Connection(ConnectionBase):
 
         display.vvv("EXEC %s" % (local_cmd), host=self.zone)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 
@@ -149,16 +150,20 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
 
-        out_path = pipes.quote(self._prefix_login_path(out_path))
+        out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(in_path, 'rb') as in_file:
+                if not os.fstat(in_file.fileno()).st_size:
+                    count = ' count=0'
+                else:
+                    count = ''
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:
                     raise AnsibleError("jail connection requires dd command in the jail")
                 try:
                     stdout, stderr = p.communicate()
-                except:
+                except Exception:
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
@@ -171,7 +176,7 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
 
-        in_path = pipes.quote(self._prefix_login_path(in_path))
+        in_path = shlex_quote(self._prefix_login_path(in_path))
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:
@@ -183,7 +188,7 @@ class Connection(ConnectionBase):
                 while chunk:
                     out_file.write(chunk)
                     chunk = p.stdout.read(BUFSIZE)
-            except:
+            except Exception:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()

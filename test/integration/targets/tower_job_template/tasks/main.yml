@@ -1,0 +1,54 @@
+- name: Create an SCM Credential
+  tower_credential:
+    name: SCM Credential for JT
+    organization: Default
+    kind: scm
+
+- name: Create a Demo Project
+  tower_project:
+    name: Job Template Test Project
+    organization: Default
+    state: present
+    scm_type: git
+    scm_url: https://github.com/ansible/ansible-tower-samples.git
+    scm_credential: SCM Credential for JT
+  register: result
+
+- name: Update the project (to clone the git repo)
+  uri:
+    url: "https://{{ tower_host }}/api/v2/projects/{{ result.id }}/update/"
+    method: POST
+    user: "{{ tower_username }}"
+    password: "{{ tower_password }}"
+    validate_certs: false
+    status_code: 202
+    force_basic_auth: true
+
+- name: Wait for the project to be status=successful
+  uri:
+    url: "https://{{ tower_host }}/api/v2/projects/{{ result.id }}/"
+    method: GET
+    user: "{{ tower_username }}"
+    password: "{{ tower_password }}"
+    validate_certs: false
+    force_basic_auth: true
+    return_content: true
+  register: result
+  until: result.json.status == "successful"
+  retries: 60
+  delay: 1
+
+- name: Create a Job Template
+  tower_job_template:
+    name: hello-world
+    project: Job Template Test Project
+    inventory: Demo Inventory
+    playbook: hello_world.yml
+    credential: Demo Credential
+    job_type: run
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

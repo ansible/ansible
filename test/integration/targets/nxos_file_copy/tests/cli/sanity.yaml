@@ -1,0 +1,97 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_file_copy sanity test"
+
+- name: "Setup - Remove existing file"
+  nxos_command: &remove_file
+    commands:
+      - terminal dont-ask
+      - delete network-integration.cfg
+      - delete bootflash:/dir1/dir2/dir3/network-integration_copy.cfg
+      - rmdir dir1/dir2/dir3
+      - rmdir dir1/dir2
+      - rmdir dir1
+  ignore_errors: yes
+
+- name: "Setup - Turn on feature scp-server"
+  nxos_feature: 
+    feature: scp-server
+    state: enabled
+
+- block:
+  - name: "Copy network-integration.cfg to bootflash"
+    nxos_file_copy: &copy_file_same_name
+      local_file: "./network-integration.cfg"
+      file_system: "bootflash:"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Copy network-integration.cfg to bootflash"
+    nxos_file_copy: *copy_file_same_name
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Setup - Remove existing file"
+    nxos_command: *remove_file
+    register: result
+
+  - name: "Copy inventory.networking.template to bootflash as another name"
+    nxos_file_copy: &copy_file_different_name
+      local_file: "./inventory.networking.template"
+      remote_file: "network-integration.cfg"
+      file_system: "bootflash:"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Copy inventory.networking.template to bootflash as another name"
+    nxos_file_copy: *copy_file_different_name
+    register: result
+
+  - assert: *false
+
+  - block:
+    - name: "Copy file using file_pull"
+      nxos_file_copy: &copy_pull
+        file_pull: True
+        file_pull_timeout: 1200
+        remote_file: "/network-integration.cfg"
+        local_file: "network-integration_copy.cfg"
+        local_file_directory: "dir1/dir2/dir3"
+        remote_scp_server: "{{ inventory_hostname_short }}"
+        remote_scp_server_user: "{{ ansible_ssh_user }}"
+        remote_scp_server_password: "{{ ansible_ssh_pass }}"
+      register: result
+
+    - assert: *true
+
+    - name: "Overwrite the file"
+      nxos_file_copy: *copy_pull
+      register: result
+
+    - assert: *true
+  ignore_errors: yes
+
+  rescue:
+
+  - debug: msg="TRANSPORT:CLI nxos_file_copy failure detected"
+
+  always:
+
+  - name: "Remove file"
+    nxos_command: *remove_file
+    ignore_errors: yes
+
+  - name: "Turn off feature scp-server"
+    nxos_feature:
+      feature: scp-server
+      state: disabled
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_file_copy sanity test"

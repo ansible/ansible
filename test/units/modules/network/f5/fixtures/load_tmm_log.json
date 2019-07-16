@@ -1,0 +1,14 @@
+{
+  "kind": "tm:sys:daemon-log-settings:tmm:tmmstate",
+  "selfLink": "https://localhost/mgmt/tm/sys/daemon-log-settings/tmm?ver=12.1.3.6",
+  "arpLogLevel": "warning",
+  "httpCompressionLogLevel": "error",
+  "httpLogLevel": "error",
+  "ipLogLevel": "warning",
+  "iruleLogLevel": "informational",
+  "layer4LogLevel": "notice",
+  "netLogLevel": "warning",
+  "osLogLevel": "notice",
+  "pvaLogLevel": "informational",
+  "sslLogLevel": "warning"
+}

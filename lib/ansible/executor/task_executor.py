@@ -1,51 +1,64 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
+import os
+import re
+import pty
+import time
+import json
 import subprocess
 import sys
-import time
+import termios
 import traceback
 
-from ansible.compat.six import iteritems, string_types, binary_type
-
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.module_utils.six import iteritems, string_types, binary_type
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
-from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.ssh_functions import check_for_controlpersist
-from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars, isidentifier
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
+
 
 __all__ = ['TaskExecutor']
+
+
+def remove_omit(task_args, omit_token):
+    '''
+    Remove args with a value equal to the ``omit_token`` recursively
+    to align with now having suboptions in the argument_spec
+    '''
+
+    if not isinstance(task_args, dict):
+        return task_args
+
+    new_args = {}
+    for i in iteritems(task_args):
+        if i[1] == omit_token:
+            continue
+        elif isinstance(i[1], dict):
+            new_args[i[0]] = remove_omit(i[1], omit_token)
+        elif isinstance(i[1], list):
+            new_args[i[0]] = [remove_omit(v, omit_token) for v in i[1]]
+        else:
+            new_args[i[0]] = i[1]
+
+    return new_args
 
 
 class TaskExecutor:
@@ -61,16 +74,17 @@ class TaskExecutor:
     # the module
     SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, rslt_q):
-        self._host              = host
-        self._task              = task
-        self._job_vars          = job_vars
-        self._play_context      = play_context
-        self._new_stdin         = new_stdin
-        self._loader            = loader
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
+        self._host = host
+        self._task = task
+        self._job_vars = job_vars
+        self._play_context = play_context
+        self._new_stdin = new_stdin
+        self._loader = loader
         self._shared_loader_obj = shared_loader_obj
-        self._connection        = None
-        self._rslt_q            = rslt_q
+        self._connection = None
+        self._final_q = final_q
+        self._loop_eval_error = None
 
         self._task.squash()
 
@@ -82,35 +96,47 @@ class TaskExecutor:
         returned as a dict.
         '''
 
-        display.debug("in run()")
+        display.debug("in run() - task %s" % self._task._uuid)
 
         try:
-            items = self._get_loop_items()
+            try:
+                items = self._get_loop_items()
+            except AnsibleUndefinedVariable as e:
+                # save the error raised here for use later
+                items = None
+                self._loop_eval_error = e
+
             if items is not None:
                 if len(items) > 0:
                     item_results = self._run_loop(items)
 
-                    # loop through the item results, and remember the changed/failed
-                    # result flags based on any item there.
-                    changed = False
-                    failed  = False
-                    for item in item_results:
-                        if 'changed' in item and item['changed']:
-                            changed = True
-                        if 'failed' in item and item['failed']:
-                            failed = True
-
-                    # create the overall result item, and set the changed/failed
-                    # flags there to reflect the overall result of the loop
+                    # create the overall result item
                     res = dict(results=item_results)
 
-                    if changed:
-                        res['changed'] = True
+                    # loop through the item results, and set the global changed/failed result flags based on any item.
+                    for item in item_results:
+                        if 'changed' in item and item['changed'] and not res.get('changed'):
+                            res['changed'] = True
+                        if 'failed' in item and item['failed']:
+                            item_ignore = item.pop('_ansible_ignore_errors')
+                            if not res.get('failed'):
+                                res['failed'] = True
+                                res['msg'] = 'One or more items failed'
+                                self._task.ignore_errors = item_ignore
+                            elif self._task.ignore_errors and not item_ignore:
+                                self._task.ignore_errors = item_ignore
 
-                    if failed:
-                        res['failed'] = True
-                        res['msg'] = 'One or more items failed'
-                    else:
+                        # ensure to accumulate these
+                        for array in ['warnings', 'deprecations']:
+                            if array in item and item[array]:
+                                if array not in res:
+                                    res[array] = []
+                                if not isinstance(item[array], list):
+                                    item[array] = [item[array]]
+                                res[array] = res[array] + item[array]
+                                del item[array]
+
+                    if not res.get('Failed', False):
                         res['msg'] = 'All items completed'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
@@ -123,17 +149,27 @@ class TaskExecutor:
             if 'changed' not in res:
                 res['changed'] = False
 
-            def _clean_res(res):
+            def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, UnsafeProxy):
                     return res._obj
                 elif isinstance(res, binary_type):
-                    return to_text(res, errors='surrogate_or_strict')
+                    return to_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
-                        res[k] = _clean_res(res[k])
+                        try:
+                            res[k] = _clean_res(res[k], errors=errors)
+                        except UnicodeError:
+                            if k == 'diff':
+                                # If this is a diff, substitute a replacement character if the value
+                                # is undecodable as utf8.  (Fix #21804)
+                                display.warning("We were unable to decode all characters in the module return data."
+                                                " Replaced some in an effort to return as much as possible")
+                                res[k] = _clean_res(res[k], errors='surrogate_then_replace')
+                            else:
+                                raise
                 elif isinstance(res, list):
-                    for idx,item in enumerate(res):
-                        res[idx] = _clean_res(item)
+                    for idx, item in enumerate(res):
+                        res[idx] = _clean_res(item, errors=errors)
                 return res
 
             display.debug("dumping result to json")
@@ -141,9 +177,10 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=to_text(e, nonstring='simplerepr'))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
         except Exception as e:
-            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
+            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
+                        stdout='', _ansible_no_log=self._play_context.no_log)
         finally:
             try:
                 self._connection.close()
@@ -173,31 +210,51 @@ class TaskExecutor:
         # get search path for this task to pass to lookup plugins
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
 
+        # ensure basedir is always in (dwim already searches here but we need to display it)
+        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
+            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
-        if self._task.loop:
-            if self._task.loop in self._shared_loader_obj.lookup_loader:
-                if self._task.loop == 'first_found':
+        loop_cache = self._job_vars.get('_ansible_loop_cache')
+        if loop_cache is not None:
+            # _ansible_loop_cache may be set in `get_vars` when calculating `delegate_to`
+            # to avoid reprocessing the loop
+            items = loop_cache
+        elif self._task.loop_with:
+            if self._task.loop_with in self._shared_loader_obj.lookup_loader:
+                fail = True
+                if self._task.loop_with == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=False)
-                    loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
-                else:
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=False)
+                    fail = False
+
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, loader=self._loader, fail_on_undefined=fail,
+                                                         convert_bare=False)
+                if not fail:
+                    loop_terms = [t for t in loop_terms if not templar.is_template(t)]
 
                 # get lookup
-                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
+                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
                 for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
                     if subdir in self._task.action:
                         break
-                setattr(mylookup,'_subdir', subdir + 's')
+                setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
                 items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
             else:
-                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
+                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
+
+        elif self._task.loop is not None:
+            items = templar.template(self._task.loop)
+            if not isinstance(items, list):
+                raise AnsibleError(
+                    "Invalid data passed to 'loop', it requires a list, got this instead: %s."
+                    " Hint: If you passed a list/dict of just one element,"
+                    " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
+                )
 
         # now we restore any old job variables that may have been modified,
         # and delete them if they were in the play context vars but not in
@@ -209,14 +266,9 @@ class TaskExecutor:
                 del self._job_vars[k]
 
         if items:
-            from ansible.vars.unsafe_proxy import UnsafeProxy
             for idx, item in enumerate(items):
                 if item is not None and not isinstance(item, UnsafeProxy):
                     items[idx] = UnsafeProxy(item)
-
-        # ensure basedir is always in (dwim already searches here but we need to display it)
-        if self._loader.get_basedir() not in self._job_vars['ansible_search_path']:
-            self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         return items
 
@@ -231,31 +283,77 @@ class TaskExecutor:
 
         # make copies of the job vars and task so we can add the item to
         # the variables and re-validate the task with the item variable
-        #task_vars = self._job_vars.copy()
+        # task_vars = self._job_vars.copy()
         task_vars = self._job_vars
 
         loop_var = 'item'
+        index_var = None
         label = None
         loop_pause = 0
+        extended = False
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
+
+        # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
         if self._task.loop_control:
-            # the value may be 'None', so we still need to default it back to 'item'
-            loop_var = self._task.loop_control.loop_var or 'item'
-            label = self._task.loop_control.label or ('{{' + loop_var + '}}')
-            loop_pause = self._task.loop_control.pause or 0
+            loop_var = templar.template(self._task.loop_control.loop_var)
+            index_var = templar.template(self._task.loop_control.index_var)
+            loop_pause = templar.template(self._task.loop_control.pause)
+            extended = templar.template(self._task.loop_control.extended)
+
+            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
+            label = self._task.loop_control.label
+
+        # ensure we always have a label
+        if label is None:
+            label = '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
-                    u"You should set the `loop_var` value in the `loop_control` option for the task"
-                    u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
+                            u"You should set the `loop_var` value in the `loop_control` option for the task"
+                            u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
         ran_once = False
-        items = self._squash_items(items, loop_var, task_vars)
-        for item in items:
+        if self._task.loop_with:
+            # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
+            items = self._squash_items(items, loop_var, task_vars)
+
+        no_log = False
+        items_len = len(items)
+        for item_index, item in enumerate(items):
+            task_vars['ansible_loop_var'] = loop_var
+
             task_vars[loop_var] = item
+            if index_var:
+                task_vars['ansible_index_var'] = index_var
+                task_vars[index_var] = item_index
+
+            if extended:
+                task_vars['ansible_loop'] = {
+                    'allitems': items,
+                    'index': item_index + 1,
+                    'index0': item_index,
+                    'first': item_index == 0,
+                    'last': item_index + 1 == items_len,
+                    'length': items_len,
+                    'revindex': items_len - item_index,
+                    'revindex0': items_len - item_index - 1,
+                }
+                try:
+                    task_vars['ansible_loop']['nextitem'] = items[item_index + 1]
+                except IndexError:
+                    pass
+                if item_index - 1 >= 0:
+                    task_vars['ansible_loop']['previtem'] = items[item_index - 1]
+
+            # Update template vars to reflect current loop iteration
+            templar.available_variables = task_vars
 
             # pause between loop iterations
             if loop_pause and ran_once:
-                time.sleep(loop_pause)
+                try:
+                    time.sleep(float(loop_pause))
+                except ValueError as e:
+                    raise AnsibleError('Invalid pause value: %s, produced error: %s' % (loop_pause, to_native(e)))
             else:
                 ran_once = True
 
@@ -272,21 +370,48 @@ class TaskExecutor:
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
             res = self._execute(variables=task_vars)
+            task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
+
+            # update 'general no_log' based on specific no_log
+            no_log = no_log or tmp_task.no_log
 
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
+            res['ansible_loop_var'] = loop_var
+            if index_var:
+                res[index_var] = item_index
+                res['ansible_index_var'] = index_var
+            if extended:
+                res['ansible_loop'] = task_vars['ansible_loop']
+
             res['_ansible_item_result'] = True
+            res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
-            if label is not None:
-                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
-                res['_ansible_item_label'] = templar.template(label)
+            # gets templated here unlike rest of loop_control fields, depends on loop_var above
+            try:
+                res['_ansible_item_label'] = templar.template(label, cache=False)
+            except AnsibleUndefinedVariable as e:
+                res.update({
+                    'failed': True,
+                    'msg': 'Failed to template loop_control.label: %s' % to_text(e)
+                })
 
-            self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, res), block=False)
+            self._final_q.put(
+                TaskResult(
+                    self._host.name,
+                    self._task._uuid,
+                    res,
+                    task_fields=task_fields,
+                ),
+                block=False,
+            )
             results.append(res)
             del task_vars[loop_var]
+
+        self._task.no_log = no_log
 
         return results
 
@@ -304,23 +429,25 @@ class TaskExecutor:
             # with_items loop) so don't make the templated string permanent yet.
             templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
             task_action = self._task.action
-            if templar._contains_vars(task_action):
+            if templar.is_template(task_action):
                 task_action = templar.template(task_action, fail_on_undefined=False)
 
             if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
                 if all(isinstance(o, string_types) for o in items):
                     final_items = []
 
+                    found = None
                     for allowed in ['name', 'pkg', 'package']:
                         name = self._task.args.pop(allowed, None)
                         if name is not None:
+                            found = allowed
                             break
 
                     # This gets the information to check whether the name field
                     # contains a template that we can squash for
                     template_no_item = template_with_item = None
                     if name:
-                        if templar._contains_vars(name):
+                        if templar.is_template(name):
                             variables[loop_var] = '\0$'
                             template_no_item = templar.template(name, variables, cache=False)
                             variables[loop_var] = '\0@'
@@ -331,6 +458,20 @@ class TaskExecutor:
                         # name/pkg or the name/pkg field doesn't have any variables
                         # and thus the items can't be squashed
                         if template_no_item != template_with_item:
+                            if self._task.loop_with and self._task.loop_with not in ('items', 'list'):
+                                value_text = "\"{{ query('%s', %r) }}\"" % (self._task.loop_with, self._task.loop)
+                            else:
+                                value_text = '%r' % self._task.loop
+                            # Without knowing the data structure well, it's easiest to strip python2 unicode
+                            # literals after stringifying
+                            value_text = re.sub(r"\bu'", "'", value_text)
+
+                            display.deprecated(
+                                'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
+                                'Instead of using a loop to supply multiple items and specifying `%s: "%s"`, '
+                                'please use `%s: %s` and remove the loop' % (self._task.action, found, name, found, value_text),
+                                version='2.11'
+                            )
                             for item in items:
                                 variables[loop_var] = item
                                 if self._task.evaluate_conditional(templar, variables):
@@ -343,13 +484,13 @@ class TaskExecutor:
                         else:
                             # Restore the name parameter
                             self._task.args['name'] = name
-                #elif:
+                # elif:
                     # Right now we only optimize single entries.  In the future we
                     # could optimize more types:
                     # * lists can be squashed together
                     # * dicts could squash entries that match in all cases except the
                     #   name or pkg field.
-        except:
+        except Exception:
             # Squashing is an optimization.  If it fails for any reason,
             # simply use the unoptimized list of items.
 
@@ -389,6 +530,8 @@ class TaskExecutor:
             # We also add "magic" variables back into the variables dict to make sure
             # a certain subset of variables exist.
             self._play_context.update_vars(variables)
+
+            # FIXME: update connection/shell plugin options
         except AnsibleError as e:
             # save the error, which we'll raise later if we don't end up
             # skipping this task during the conditional evaluation step
@@ -400,67 +543,71 @@ class TaskExecutor:
         # variable not being present which would otherwise cause validation to fail
         try:
             if not self._task.evaluate_conditional(templar, variables):
-                display.debug("when evaluation failed, skipping this task")
-                return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
+                display.debug("when evaluation is False, skipping this task")
+                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
-            # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
-            if self._task.action not in ['include', 'include_role']:
-                raise
+            # loop error takes precedence
+            if self._loop_eval_error is not None:
+                raise self._loop_eval_error  # pylint: disable=raising-bad-type
+            raise
+
+        # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
+        if self._loop_eval_error is not None:
+            raise self._loop_eval_error  # pylint: disable=raising-bad-type
 
         # if we ran into an error while setting up the PlayContext, raise it now
         if context_validation_error is not None:
-            raise context_validation_error
+            raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action == 'include':
-            include_variables = self._task.args.copy()
-            include_file = include_variables.pop('_raw_params', None)
+        if self._task.action in ('include', 'include_tasks'):
+            include_args = self._task.args.copy()
+            include_file = include_args.pop('_raw_params', None)
             if not include_file:
                 return dict(failed=True, msg="No include file was specified to the include")
 
             include_file = templar.template(include_file)
-            return dict(include=include_file, include_variables=include_variables)
+            return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
-            include_variables = self._task.args.copy()
-            return dict(include_role=self._task, include_variables=include_variables)
+            include_args = self._task.args.copy()
+            return dict(include_args=include_args)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
+                if C.INJECT_FACTS_AS_VARS:
+                    display.warning("Using a variable for a task's 'args' is unsafe in some situations "
+                                    "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
+        if (not self._connection or
+                not getattr(self._connection, 'connected', False) or
+                self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
-            hostvars = variables.get('hostvars', None)
-            if hostvars:
-                try:
-                    target_hostvars = hostvars.raw_get(self._host.name)
-                except:
-                    # FIXME: this should catch the j2undefined error here
-                    #        specifically instead of all exceptions
-                    target_hostvars = dict()
-            else:
-                target_hostvars = dict()
-            self._connection.set_host_overrides(host=self._host, hostvars=target_hostvars)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
+        self._set_connection_options(variables, templar)
+
+        # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
+
+        # Apply default params for action/module, if present
+        self._task.args = get_action_args_with_defaults(self._task.action, self._task.args, self._task.module_defaults, templar)
 
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
-            self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
+            self._task.args = remove_omit(self._task.args, omit_token)
 
         # Read some values from the task, so that we can modify them if need be
         if self._task.until:
@@ -484,10 +631,14 @@ class TaskExecutor:
 
         display.debug("starting attempt loop")
         result = None
-        for attempt in range(1, retries + 1):
+        for attempt in xrange(1, retries + 1):
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
+            except AnsibleActionSkip as e:
+                return dict(skipped=True, msg=to_text(e))
+            except AnsibleActionFail as e:
+                return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
             display.debug("handler run complete")
@@ -498,11 +649,15 @@ class TaskExecutor:
             # update the local copy of vars with the registered value, if specified,
             # or any facts which may have been generated by the module execution
             if self._task.register:
-                vars_copy[self._task.register] = wrap_var(result.copy())
+                if not isidentifier(self._task.register):
+                    raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % self._task.register)
 
-            if self._task.async > 0:
-                if self._task.poll > 0 and not result.get('skipped'):
+                vars_copy[self._task.register] = wrap_var(result)
+
+            if self._task.async_val > 0:
+                if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    # FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
@@ -525,12 +680,37 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                vars_copy.update(result['ansible_facts'])
+                if self._task.action in ('set_fact', 'include_vars'):
+                    vars_copy.update(result['ansible_facts'])
+                else:
+                    # TODO: cleaning of facts should eventually become part of taskresults instead of vars
+                    af = wrap_var(result['ansible_facts'])
+                    vars_copy.update(namespace_facts(af))
+                    if C.INJECT_FACTS_AS_VARS:
+                        vars_copy.update(clean_facts(af))
 
-            # set the failed property if the result has a non-zero rc. This will be
-            # overridden below if the failed_when property is set
-            if result.get('rc', 0) != 0:
-                result['failed'] = True
+            # set the failed property if it was missing.
+            if 'failed' not in result:
+                # rc is here for backwards compatibility and modules that use it instead of 'failed'
+                if 'rc' in result and result['rc'] not in [0, "0"]:
+                    result['failed'] = True
+                else:
+                    result['failed'] = False
+
+            # Make attempts and retries available early to allow their use in changed/failed_when
+            if self._task.until:
+                result['attempts'] = attempt
+
+            # set the changed property if it was missing.
+            if 'changed' not in result:
+                result['changed'] = False
+
+            # re-update the local copy of vars with the registered value, if specified,
+            # or any facts which may have been generated by the module execution
+            # This gives changed/failed_when access to additional recently modified
+            # attributes of result
+            if self._task.register:
+                vars_copy[self._task.register] = wrap_var(result)
 
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
@@ -541,7 +721,6 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
-                result['attempts'] = attempt
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
@@ -550,8 +729,9 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result), block=False)
+                        self._final_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
                         time.sleep(delay)
+                        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
         else:
             if retries > 1:
                 # we ran out of attempts, so mark the result as failed
@@ -564,7 +744,14 @@ class TaskExecutor:
             variables[self._task.register] = wrap_var(result)
 
         if 'ansible_facts' in result:
-            variables.update(result['ansible_facts'])
+            if self._task.action in ('set_fact', 'include_vars'):
+                variables.update(result['ansible_facts'])
+            else:
+                # TODO: cleaning of facts should eventually become part of taskresults instead of vars
+                af = wrap_var(result['ansible_facts'])
+                variables.update(namespace_facts(af))
+                if C.INJECT_FACTS_AS_VARS:
+                    variables.update(clean_facts(af))
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
@@ -579,7 +766,7 @@ class TaskExecutor:
         #        there is another source of truth we can use
         delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()).copy()
         if len(delegated_vars) > 0:
-            result["_ansible_delegated_vars"] = dict()
+            result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
             for k in ('ansible_host', ):
                 result["_ansible_delegated_vars"][k] = delegated_vars.get(k)
 
@@ -599,17 +786,18 @@ class TaskExecutor:
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
-        # Create a new psuedo-task to run the async_status module, and run
+        # Create a new pseudo-task to run the async_status module, and run
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
-        async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
+        async_task = Task().load(dict(action='async_status jid=%s' % async_jid, environment=self._task.environment))
 
+        # FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        normal_handler = self._shared_loader_obj.action_loader.get(
-            'normal',
+        async_handler = self._shared_loader_obj.action_loader.get(
+            'async_status',
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
@@ -618,38 +806,53 @@ class TaskExecutor:
             shared_loader_obj=self._shared_loader_obj,
         )
 
-        time_left = self._task.async
+        time_left = self._task.async_val
         while time_left > 0:
             time.sleep(self._task.poll)
 
             try:
-                async_result = normal_handler.run(task_vars=task_vars)
+                async_result = async_handler.run(task_vars=task_vars)
                 # We do not bail out of the loop in cases where the failure
                 # is associated with a parsing error. The async_runner can
                 # have issues which result in a half-written/unparseable result
                 # file on disk, which manifests to the user as a timeout happening
                 # before it's time to timeout.
-                if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
+                if (int(async_result.get('finished', 0)) == 1 or
+                        ('failed' in async_result and async_result.get('_ansible_parsed', False)) or
+                        'skipped' in async_result):
                     break
             except Exception as e:
                 # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
-                # On an exception, call the connection's reset method if it has one (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
+                # On an exception, call the connection's reset method if it has one
+                # (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
-                    normal_handler._connection._reset()
+                    async_handler._connection.reset()
                 except AttributeError:
                     pass
 
-            time_left -= self._task.poll
+                # Little hack to raise the exception if we've exhausted the timeout period
+                time_left -= self._task.poll
+                if time_left <= 0:
+                    raise
+            else:
+                time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
-                return dict(failed=True, msg="async task did not complete within the requested time")
+                return dict(failed=True, msg="async task did not complete within the requested time - %ss" % self._task.async_val)
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
             return async_result
+
+    def _get_become(self, name):
+        become = become_loader.get(name)
+        if not become:
+            raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
+                               "Use `ansible-doc -t become -l` to list available plugins." % name)
+        return become
 
     def _get_connection(self, variables, templar):
         '''
@@ -671,74 +874,152 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
+        # load connection
         conn_type = self._play_context.connection
-        if conn_type == 'smart':
-            conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self._play_context.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
-                conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self._play_context.ssh_executable):
-                    conn_type = "paramiko"
+        connection = self._shared_loader_obj.connection_loader.get(
+            conn_type,
+            self._play_context,
+            self._new_stdin,
+            task_uuid=self._task._uuid,
+            ansible_playbook_pid=to_text(os.getppid())
+        )
 
-        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
-        if self._play_context.accelerate:
-            # accelerate is deprecated as of 2.1...
-            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead')
-            # launch the accelerated daemon here
-            ssh_connection = connection
-            handler = self._shared_loader_obj.action_loader.get(
-                'normal',
-                task=self._task,
-                connection=ssh_connection,
-                play_context=self._play_context,
-                loader=self._loader,
-                templar=templar,
-                shared_loader_obj=self._shared_loader_obj,
+        # load become plugin if needed
+        become_plugin = None
+        if self._play_context.become:
+            become_plugin = self._get_become(self._play_context.become_method)
+
+        if getattr(become_plugin, 'require_tty', False) and not getattr(connection, 'has_tty', False):
+            raise AnsibleError(
+                "The '%s' connection does not provide a tty which is required for the selected "
+                "become plugin: %s." % (conn_type, become_plugin.name)
             )
 
-            key = key_for_hostname(self._play_context.remote_addr)
-            accelerate_args = dict(
-                password=base64.b64encode(key.__str__()),
-                port=self._play_context.accelerate_port,
-                minutes=C.ACCELERATE_DAEMON_TIMEOUT,
-                ipv6=self._play_context.accelerate_ipv6,
-                debug=self._play_context.verbosity,
-            )
+        try:
+            connection.set_become_plugin(become_plugin)
+        except AttributeError:
+            # Connection plugin does not support set_become_plugin
+            pass
 
-            connection = self._shared_loader_obj.connection_loader.get('accelerate', self._play_context, self._new_stdin)
-            if not connection:
-                raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+        # Backwards compat for connection plugins that don't support become plugins
+        # Just do this unconditionally for now, we could move it inside of the
+        # AttributeError above later
+        self._play_context.set_become_plugin(become_plugin)
 
-            try:
-                connection._connect()
-            except AnsibleConnectionFailure:
-                display.debug('connection failed, fallback to accelerate')
-                res = handler._execute_module(module_name='accelerate', module_args=accelerate_args, task_vars=variables, delete_remote_tmp=False)
-                display.debug(res)
-                connection._connect()
+        # FIXME: remove once all plugins pull all data from self._options
+        self._play_context.set_attributes_from_plugin(connection)
+
+        if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
+            self._play_context.timeout = connection.get_option('persistent_command_timeout')
+            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
+            display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
+
+            options = self._get_persistent_connection_options(connection, variables, templar)
+            socket_path = start_connection(self._play_context, options)
+            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
+            setattr(connection, '_socket_path', socket_path)
 
         return connection
+
+    def _get_persistent_connection_options(self, connection, variables, templar):
+        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+
+        option_vars = C.config.get_plugin_vars('connection', connection._load_name)
+        plugin = connection._sub_plugin
+        if plugin['type'] != 'external':
+            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
+
+        options = {}
+        for k in option_vars:
+            if k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        return options
+
+    def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
+        try:
+            plugin = getattr(self._connection, '_%s' % plugin_type)
+        except AttributeError:
+            # Some plugins are assigned to private attrs, ``become`` is not
+            plugin = getattr(self._connection, plugin_type)
+        option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
+        options = {}
+        for k in option_vars:
+            if k in variables:
+                options[k] = templar.template(variables[k])
+        # TODO move to task method?
+        plugin.set_options(task_keys=task_keys, var_options=options)
+
+    def _set_connection_options(self, variables, templar):
+
+        # Keep the pre-delegate values for these keys
+        PRESERVE_ORIG = ('inventory_hostname',)
+
+        # create copy with delegation built in
+        final_vars = combine_vars(
+            variables,
+            variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+        )
+
+        # grab list of usable vars for this plugin
+        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
+
+        # create dict of 'templated vars'
+        options = {'_extras': {}}
+        for k in option_vars:
+            if k in PRESERVE_ORIG:
+                options[k] = templar.template(variables[k])
+            elif k in final_vars:
+                options[k] = templar.template(final_vars[k])
+
+        # add extras if plugin supports them
+        if getattr(self._connection, 'allow_extras', False):
+            for k in final_vars:
+                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
+                    options['_extras'][k] = templar.template(final_vars[k])
+
+        task_keys = self._task.dump_attrs()
+
+        # set options with 'templated vars' specific to this plugin and dependant ones
+        self._connection.set_options(task_keys=task_keys, var_options=options)
+        self._set_plugin_options('shell', final_vars, templar, task_keys)
+
+        if self._connection.become is not None:
+            # FIXME: find alternate route to provide passwords,
+            # keep out of play objects to avoid accidental disclosure
+            task_keys['become_pass'] = self._play_context.become_pass
+            self._set_plugin_options('become', final_vars, templar, task_keys)
+
+            # FOR BACKWARDS COMPAT:
+            for option in ('become_user', 'become_flags', 'become_exe'):
+                try:
+                    setattr(self._play_context, option, self._connection.become.get_option(option))
+                except KeyError:
+                    pass  # some plugins don't support all base flags
+            self._play_context.prompt = self._connection.become.prompt
 
     def _get_action_handler(self, connection, templar):
         '''
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        if self._task.action in self._shared_loader_obj.action_loader:
-            if self._task.async != 0:
-                raise AnsibleError("async mode is not supported with the %s module" % self._task.action)
+        module_prefix = self._task.action.split('_')[0]
+
+        collections = self._task.collections
+
+        # let action plugin override module, fallback to 'normal' action plugin otherwise
+        if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        elif self._task.async == 0:
-            handler_name = 'normal'
+        # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
+            handler_name = module_prefix
         else:
-            handler_name = 'async'
+            # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
+            handler_name = 'normal'
+            collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
@@ -748,9 +1029,89 @@ class TaskExecutor:
             loader=self._loader,
             templar=templar,
             shared_loader_obj=self._shared_loader_obj,
+            collection_list=collections
         )
 
         if not handler:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
+
+
+def start_connection(play_context, variables):
+    '''
+    Starts the persistent connection
+    '''
+    candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
+    candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
+    for dirname in candidate_paths:
+        ansible_connection = os.path.join(dirname, 'ansible-connection')
+        if os.path.isfile(ansible_connection):
+            break
+    else:
+        raise AnsibleError("Unable to find location of 'ansible-connection'. "
+                           "Please set or check the value of ANSIBLE_CONNECTION_PATH")
+
+    env = os.environ.copy()
+    env.update({
+        'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
+        'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
+        'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
+        'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
+        'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
+        'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
+    })
+    python = sys.executable
+    master, slave = pty.openpty()
+    p = subprocess.Popen(
+        [python, ansible_connection, to_text(os.getppid())],
+        stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
+    )
+    os.close(slave)
+
+    # We need to set the pty into noncanonical mode. This ensures that we
+    # can receive lines longer than 4095 characters (plus newline) without
+    # truncating.
+    old = termios.tcgetattr(master)
+    new = termios.tcgetattr(master)
+    new[3] = new[3] & ~termios.ICANON
+
+    try:
+        termios.tcsetattr(master, termios.TCSANOW, new)
+        write_to_file_descriptor(master, variables)
+        write_to_file_descriptor(master, play_context.serialize())
+
+        (stdout, stderr) = p.communicate()
+    finally:
+        termios.tcsetattr(master, termios.TCSANOW, old)
+    os.close(master)
+
+    if p.returncode == 0:
+        result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
+    else:
+        try:
+            result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+        except getattr(json.decoder, 'JSONDecodeError', ValueError):
+            # JSONDecodeError only available on Python 3.5+
+            result = {'error': to_text(stderr, errors='surrogate_then_replace')}
+
+    if 'messages' in result:
+        for level, message in result['messages']:
+            if level == 'log':
+                display.display(message, log_only=True)
+            elif level in ('debug', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'vvvvvv'):
+                getattr(display, level)(message, host=play_context.remote_addr)
+            else:
+                if hasattr(display, level):
+                    getattr(display, level)(message)
+                else:
+                    display.vvvv(message, host=play_context.remote_addr)
+
+    if 'error' in result:
+        if play_context.verbosity > 2:
+            if result.get('exception'):
+                msg = "The full traceback is:\n" + result['exception']
+                display.display(msg, color=C.COLOR_ERROR)
+        raise AnsibleError(result['error'])
+
+    return result['socket_path']

@@ -19,15 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
-#from ansible.inventory.host import Host
-from ansible.playbook.task_include import TaskInclude
+# from ansible.inventory.host import Host
 from ansible.playbook.handler import Handler
+from ansible.playbook.task_include import TaskInclude
+
 
 class HandlerTaskInclude(Handler, TaskInclude):
+
+    VALID_INCLUDE_KEYWORDS = TaskInclude.VALID_INCLUDE_KEYWORDS.union(('listen',))
 
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = HandlerTaskInclude(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
-

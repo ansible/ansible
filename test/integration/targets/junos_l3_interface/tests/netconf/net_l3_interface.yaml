@@ -1,0 +1,46 @@
+---
+- debug: msg="START junos netconf/net_l3_interface.yaml on connection={{ ansible_connection }}"
+
+# Add minimal testcase to check args are passed correctly to
+# implementation module and module run is successful.
+
+- name: setup - remove interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Configure interface address using platform agnostic module
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Get running configuration
+  junos_rpc:
+    rpc: get-configuration
+    provider: "{{ netconf }}"
+  register: config
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>192.0.2.1/32</name>' in config.xml"
+      - "'<name>fd5d:12c9:2201:1::1/128</name>' in config.xml"
+      - result.diff.prepared is search("\+ *address 192.0.2.1/32")
+      - result.diff.prepared is search("\+ *address fd5d:12c9:2201:1::1/128")
+
+- name: teardown - remove interface address
+  net_l3_interface:
+    name: ge-0/0/1
+    ipv4: 192.0.2.1
+    ipv6: fd5d:12c9:2201:1::1
+    state: absent
+    provider: "{{ netconf }}"
+
+- debug: msg="END junos netconf/net_l3_interface.yaml on connection={{ ansible_connection }}"

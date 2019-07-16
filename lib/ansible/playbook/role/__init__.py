@@ -19,19 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
-
 import os
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils.six import iteritems, binary_type, text_type
+from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
+from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins import get_all_plugin_loaders
+from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.vars import combine_vars
 
 
@@ -41,51 +41,86 @@ __all__ = ['Role', 'hash_params']
 #       the role due to the fact that it would require the use of self
 #       in a static method. This is also used in the base class for
 #       strategies (ansible/plugins/strategy/__init__.py)
-def hash_params(params):
-    if not isinstance(params, dict):
-        if isinstance(params, list):
-            return frozenset(params)
-        else:
-            return params
-    else:
-        s = set()
-        for k,v in iteritems(params):
-            if isinstance(v, dict):
-                s.update((k, hash_params(v)))
-            elif isinstance(v, list):
-                things = []
-                for item in v:
-                    things.append(hash_params(item))
-                s.update((k, tuple(things)))
-            else:
-                s.update((k, v))
-        return frozenset(s)
 
-class Role(Base, Become, Conditional, Taggable):
+
+def hash_params(params):
+    """
+    Construct a data structure of parameters that is hashable.
+
+    This requires changing any mutable data structures into immutable ones.
+    We chose a frozenset because role parameters have to be unique.
+
+    .. warning::  this does not handle unhashable scalars.  Two things
+        mitigate that limitation:
+
+        1) There shouldn't be any unhashable scalars specified in the yaml
+        2) Our only choice would be to return an error anyway.
+    """
+    # Any container is unhashable if it contains unhashable items (for
+    # instance, tuple() is a Hashable subclass but if it contains a dict, it
+    # cannot be hashed)
+    if isinstance(params, Container) and not isinstance(params, (text_type, binary_type)):
+        if isinstance(params, Mapping):
+            try:
+                # Optimistically hope the contents are all hashable
+                new_params = frozenset(params.items())
+            except TypeError:
+                new_params = set()
+                for k, v in params.items():
+                    # Hash each entry individually
+                    new_params.add((k, hash_params(v)))
+                new_params = frozenset(new_params)
+
+        elif isinstance(params, (Set, Sequence)):
+            try:
+                # Optimistically hope the contents are all hashable
+                new_params = frozenset(params)
+            except TypeError:
+                new_params = set()
+                for v in params:
+                    # Hash each entry individually
+                    new_params.add(hash_params(v))
+                new_params = frozenset(new_params)
+        else:
+            # This is just a guess.
+            new_params = frozenset(params)
+        return new_params
+
+    # Note: We do not handle unhashable scalars but our only choice would be
+    # to raise an error there anyway.
+    return frozenset((params,))
+
+
+class Role(Base, Conditional, Taggable, CollectionSearch):
 
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _delegate_facts = FieldAttribute(isa='bool')
 
-    def __init__(self, play=None, from_files=None):
-        self._role_name        = None
-        self._role_path        = None
-        self._role_params      = dict()
-        self._loader           = None
+    def __init__(self, play=None, from_files=None, from_include=False):
+        self._role_name = None
+        self._role_path = None
+        self._role_collection = None
+        self._role_params = dict()
+        self._loader = None
 
-        self._metadata         = None
-        self._play             = play
-        self._parents          = []
-        self._dependencies     = []
-        self._task_blocks      = []
-        self._handler_blocks   = []
-        self._default_vars     = dict()
-        self._role_vars        = dict()
-        self._had_task_run     = dict()
-        self._completed        = dict()
+        self._metadata = None
+        self._play = play
+        self._parents = []
+        self._dependencies = []
+        self._task_blocks = []
+        self._handler_blocks = []
+        self._compiled_handler_blocks = None
+        self._default_vars = dict()
+        self._role_vars = dict()
+        self._had_task_run = dict()
+        self._completed = dict()
 
         if from_files is None:
             from_files = {}
         self._from_files = from_files
+
+        # Indicates whether this role was included via include/import_role
+        self.from_include = from_include
 
         super(Role, self).__init__()
 
@@ -96,7 +131,7 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, play, parent_role=None, from_files=None):
+    def load(role_include, play, parent_role=None, from_files=None, from_include=False):
 
         if from_files is None:
             from_files = {}
@@ -115,6 +150,9 @@ class Role(Base, Become, Conditional, Taggable):
                 params['from_files'] = from_files
             if role_include.vars:
                 params['vars'] = role_include.vars
+
+            params['from_include'] = from_include
+
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
@@ -123,48 +161,54 @@ class Role(Base, Become, Conditional, Taggable):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role(play=play, from_files=from_files)
+            r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in play.ROLE_CACHE:
                 play.ROLE_CACHE[role_include.role] = dict()
 
+            # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
             play.ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
         except RuntimeError:
-            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles", obj=role_include._ds)
+            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
+                               obj=role_include._ds)
 
     def _load_role_data(self, role_include, parent_role=None):
-        self._role_name        = role_include.role
-        self._role_path        = role_include.get_role_path()
-        self._role_params      = role_include.get_role_params()
+        self._role_name = role_include.role
+        self._role_path = role_include.get_role_path()
+        self._role_collection = role_include._role_collection
+        self._role_params = role_include.get_role_params()
         self._variable_manager = role_include.get_variable_manager()
-        self._loader           = role_include.get_loader()
+        self._loader = role_include.get_loader()
 
         if parent_role:
             self.add_parent(parent_role)
 
-        # copy over all field attributes, except for when and tags, which
-        # are special cases and need to preserve pre-existing values
+        # copy over all field attributes from the RoleInclude
+        # update self._attributes directly, to avoid squashing
         for (attr_name, _) in iteritems(self._valid_attrs):
-            if attr_name not in ('when', 'tags'):
-                setattr(self, attr_name, getattr(role_include, attr_name))
+            if attr_name in ('when', 'tags'):
+                self._attributes[attr_name] = self._extend_value(
+                    self._attributes[attr_name],
+                    role_include._attributes[attr_name],
+                )
+            else:
+                self._attributes[attr_name] = role_include._attributes[attr_name]
 
-        current_when = getattr(self, 'when')[:]
-        current_when.extend(role_include.when)
-        setattr(self, 'when', current_when)
+        # vars and default vars are regular dictionaries
+        self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
+        if self._role_vars is None:
+            self._role_vars = dict()
+        elif not isinstance(self._role_vars, dict):
+            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        current_tags = getattr(self, 'tags')[:]
-        current_tags.extend(role_include.tags)
-        setattr(self, 'tags', current_tags)
-
-        # dynamically load any plugins from the role directory
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join(self._role_path, obj.subdir)
-                if os.path.isdir(plugin_path):
-                    obj.add_directory(plugin_path)
+        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
+        if self._default_vars is None:
+            self._default_vars = dict()
+        elif not isinstance(self._default_vars, dict):
+            raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
@@ -174,72 +218,73 @@ class Role(Base, Become, Conditional, Taggable):
         else:
             self._metadata = RoleMetadata()
 
+        # reset collections list; roles do not inherit collections from parents, just use the defaults
+        # FUTURE: use a private config default for this so we can allow it to be overridden later
+        self.collections = []
+
+        # configure plugin/collection loading; either prepend the current role's collection or configure legacy plugin loading
+        # FIXME: need exception for explicit ansible.legacy?
+        if self._role_collection:
+            self.collections.insert(0, self._role_collection)
+        else:
+            # legacy role, ensure all plugin dirs under the role are added to plugin search path
+            add_all_plugin_dirs(self._role_path)
+
+        # collections can be specified in metadata for legacy or collection-hosted roles
+        if self._metadata.collections:
+            self.collections.extend(self._metadata.collections)
+
+        # if any collections were specified, ensure that core or legacy synthetic collections are always included
+        if self.collections:
+            # default append collection is core for collection-hosted roles, legacy for others
+            default_append_collection = 'ansible.builtin' if self.collections else 'ansible.legacy'
+            if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
+                self.collections.append(default_append_collection)
+
         task_data = self._load_role_yaml('tasks', main=self._from_files.get('tasks'))
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader, variable_manager=self._variable_manager)
-            except AssertionError:
-                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=task_data)
+            except AssertionError as e:
+                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
+                                         obj=task_data, orig_exc=e)
 
-        handler_data = self._load_role_yaml('handlers')
+        handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
-                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader, variable_manager=self._variable_manager)
-            except AssertionError:
-                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=handler_data)
+                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
+                                                           variable_manager=self._variable_manager)
+            except AssertionError as e:
+                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
+                                         obj=handler_data, orig_exc=e)
 
-        # vars and default vars are regular dictionaries
-        self._role_vars  = self._load_role_yaml('vars', main=self._from_files.get('vars'))
-        if self._role_vars is None:
-            self._role_vars = dict()
-        elif not isinstance(self._role_vars, dict):
-            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
-
-        self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'))
-        if self._default_vars is None:
-            self._default_vars = dict()
-        elif not isinstance(self._default_vars, dict):
-            raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
-
-    def _load_role_yaml(self, subdir, main=None):
+    def _load_role_yaml(self, subdir, main=None, allow_dir=False):
         file_path = os.path.join(self._role_path, subdir)
         if self._loader.path_exists(file_path) and self._loader.is_directory(file_path):
-            main_file = self._resolve_main(file_path, main)
-            if self._loader.path_exists(main_file):
-                return self._loader.load_from_file(main_file)
+            # Valid extensions and ordering for roles is hard-coded to maintain
+            # role portability
+            extensions = ['.yml', '.yaml', '.json']
+            # If no <main> is specified by the user, look for files with
+            # extensions before bare name. Otherwise, look for bare name first.
+            if main is None:
+                _main = 'main'
+                extensions.append('')
+            else:
+                _main = main
+                extensions.insert(0, '')
+            found_files = self._loader.find_vars_files(file_path, _main, extensions, allow_dir)
+            if found_files:
+                data = {}
+                for found in found_files:
+                    new_data = self._loader.load_from_file(found)
+                    if new_data and allow_dir:
+                        data = combine_vars(data, new_data)
+                    else:
+                        data = new_data
+                return data
             elif main is not None:
-                raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir,main))
+                raise AnsibleParserError("Could not find specified file in role: %s/%s" % (subdir, main))
         return None
-
-    def _resolve_main(self, basepath, main=None):
-        ''' flexibly handle variations in main filenames '''
-
-        post = False
-        # allow override if set, otherwise use default
-        if main is None:
-            main = 'main'
-            post = True
-
-        bare_main = os.path.join(basepath, main)
-
-        possible_mains = (
-            os.path.join(basepath, '%s.yml' % main),
-            os.path.join(basepath, '%s.yaml' % main),
-            os.path.join(basepath, '%s.json' % main),
-        )
-
-        if post:
-            possible_mains = possible_mains + (bare_main,)
-        else:
-            possible_mains = (bare_main,) + possible_mains
-
-        if sum([self._loader.is_file(x) for x in possible_mains]) > 1:
-            raise AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
-        else:
-            for m in possible_mains:
-                if self._loader.is_file(m):
-                    return m # exactly one main file
-            return possible_mains[0] # zero mains (we still need to return something)
 
     def _load_dependencies(self):
         '''
@@ -255,12 +300,12 @@ class Role(Base, Become, Conditional, Taggable):
 
         return deps
 
-    #------------------------------------------------------------------------------
     # other functions
 
     def add_parent(self, parent_role):
         ''' adds a role to the list of this roles parents '''
-        assert isinstance(parent_role, Role)
+        if not isinstance(parent_role, Role):
+            raise AnsibleAssertionError()
 
         if parent_role not in self._parents:
             self._parents.append(parent_role)
@@ -268,7 +313,9 @@ class Role(Base, Become, Conditional, Taggable):
     def get_parents(self):
         return self._parents
 
-    def get_default_vars(self, dep_chain=[]):
+    def get_default_vars(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         default_vars = dict()
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())
@@ -278,7 +325,9 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[]):
+    def get_inherited_vars(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         inherited_vars = dict()
 
         if dep_chain:
@@ -286,7 +335,9 @@ class Role(Base, Become, Conditional, Taggable):
                 inherited_vars = combine_vars(inherited_vars, parent._role_vars)
         return inherited_vars
 
-    def get_role_params(self, dep_chain=[]):
+    def get_role_params(self, dep_chain=None):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         params = {}
         if dep_chain:
             for parent in dep_chain:
@@ -294,7 +345,9 @@ class Role(Base, Become, Conditional, Taggable):
         params = combine_vars(params, self._role_params)
         return params
 
-    def get_vars(self, dep_chain=[], include_params=True):
+    def get_vars(self, dep_chain=None, include_params=True):
+        dep_chain = [] if dep_chain is None else dep_chain
+
         all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
@@ -316,7 +369,7 @@ class Role(Base, Become, Conditional, Taggable):
         in the proper order in which they should be executed or evaluated.
         '''
 
-        child_deps  = []
+        child_deps = []
 
         for dep in self.get_direct_dependencies():
             for child_dep in dep.get_all_dependencies():
@@ -329,7 +382,15 @@ class Role(Base, Become, Conditional, Taggable):
         return self._task_blocks[:]
 
     def get_handler_blocks(self, play, dep_chain=None):
-        block_list = []
+        # Do not recreate this list each time ``get_handler_blocks`` is called.
+        # Cache the results so that we don't potentially overwrite with copied duplicates
+        #
+        # ``get_handler_blocks`` may be called when handling ``import_role`` during parsing
+        # as well as with ``Play.compile_roles_handlers`` from ``TaskExecutor``
+        if self._compiled_handler_blocks:
+            return self._compiled_handler_blocks
+
+        self._compiled_handler_blocks = block_list = []
 
         # update the dependency chain here
         if dep_chain is None:
@@ -379,12 +440,12 @@ class Role(Base, Become, Conditional, Taggable):
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
-        for task_block in self._task_blocks:
-            new_task_block = task_block.copy(exclude_parent=True)
-            if task_block._parent:
-                new_task_block._parent = task_block._parent.copy()
+        for idx, task_block in enumerate(self._task_blocks):
+            new_task_block = task_block.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
+            if idx == len(self._task_blocks) - 1:
+                new_task_block._eor = True
             block_list.append(new_task_block)
 
         return block_list
@@ -392,13 +453,13 @@ class Role(Base, Become, Conditional, Taggable):
     def serialize(self, include_deps=True):
         res = super(Role, self).serialize()
 
-        res['_role_name']    = self._role_name
-        res['_role_path']    = self._role_path
-        res['_role_vars']    = self._role_vars
-        res['_role_params']  = self._role_params
+        res['_role_name'] = self._role_name
+        res['_role_path'] = self._role_path
+        res['_role_vars'] = self._role_vars
+        res['_role_params'] = self._role_params
         res['_default_vars'] = self._default_vars
         res['_had_task_run'] = self._had_task_run.copy()
-        res['_completed']    = self._completed.copy()
+        res['_completed'] = self._completed.copy()
 
         if self._metadata:
             res['_metadata'] = self._metadata.serialize()
@@ -417,13 +478,13 @@ class Role(Base, Become, Conditional, Taggable):
         return res
 
     def deserialize(self, data, include_deps=True):
-        self._role_name    = data.get('_role_name', '')
-        self._role_path    = data.get('_role_path', '')
-        self._role_vars    = data.get('_role_vars', dict())
-        self._role_params  = data.get('_role_params', dict())
+        self._role_name = data.get('_role_name', '')
+        self._role_path = data.get('_role_path', '')
+        self._role_vars = data.get('_role_vars', dict())
+        self._role_params = data.get('_role_params', dict())
         self._default_vars = data.get('_default_vars', dict())
         self._had_task_run = data.get('_had_task_run', dict())
-        self._completed    = data.get('_completed', dict())
+        self._completed = data.get('_completed', dict())
 
         if include_deps:
             deps = []
@@ -455,4 +516,3 @@ class Role(Base, Become, Conditional, Taggable):
             parent.set_loader(loader)
         for dep in self.get_direct_dependencies():
             dep.set_loader(loader)
-

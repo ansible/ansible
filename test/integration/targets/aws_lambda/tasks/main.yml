@@ -1,0 +1,450 @@
+---
+#
+#  Author: Michael De La Rue
+#  based on ec2_key.yml + lambda.py
+
+- block:
+
+    # ============================================================
+    - name: test with no parameters
+      lambda:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test with no parameters except state absent
+      lambda:
+        state=absent
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test with no role or handler
+      lambda:
+        name=ansible-testing-fake-should-not-be-created
+        runtime="python2.7"
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("state is present but all of the following are missing: handler")'
+
+    # ============================================================
+    - name: test with all module required variables but no region
+      lambda:
+        name=ansible-testing-fake-should-not-be-created
+        runtime="python2.7"
+        handler="no-handler"
+        role=arn:fake-role-doesnt-exist
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with only 'name'
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "region must be specified"'
+
+    # ============================================================
+    - name: test with all module required variables, no region and all possible variables set to blank
+      lambda:
+        name: ansible-testing-fake-should-not-be-created
+        state: present
+        runtime: "python2.7"
+        role: arn:fake-role-doesnt-exist
+        handler:
+        s3_bucket:
+        s3_key:
+        s3_object_version:
+        description:
+        vpc_subnet_ids:
+        vpc_security_group_ids:
+        environment_variables:
+        dead_letter_arn:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with only 'name'
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "region must be specified"'
+
+    # ============================================================
+    # direct zip file upload
+    - name: move lambda into place for archive module
+      copy:
+        src: "mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.py"
+
+    - name: bundle lambda into a zip
+      archive:
+        format: zip
+        path: "{{output_dir}}/mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.zip"
+      register: zip_res
+
+    - name: test state=present - upload the lambda
+      lambda:
+        name="{{lambda_function_name}}"
+        runtime="python2.7"
+        handler="mini_lambda.handler"
+        role="ansible_lambda_role"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        zip_file="{{zip_res.dest}}"
+      register: result
+
+    - name: assert lambda upload succeeded
+      assert:
+        that:
+           - 'result is not failed'
+
+    - name: test lambda works
+      execute_lambda:
+        name: "{{lambda_function_name}}"
+        payload:
+          name: "Mr Ansible Tests"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.result.output.message == "hello Mr Ansible Tests"'
+
+    # ============================================================
+    - name: test state=present with security group but no vpc
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+        handler:
+        description:
+        vpc_subnet_ids:
+        vpc_security_group_ids: sg-FA6E
+        environment_variables:
+        dead_letter_arn:
+      register: result
+      ignore_errors: true
+
+    - name: assert lambda fails with proper message
+      assert:
+        that:
+           - 'result is failed'
+           - 'result.msg != "MODULE FAILURE"'
+           - 'result.changed == False'
+           - '"requires at least one security group and one subnet" in result.msg'
+
+    # ============================================================
+    - name: test state=present with all nullable variables explicitly set to null
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+        handler: "mini_lambda.handler"
+# These are not allowed because of mutually exclusive.
+#        s3_bucket:
+#        s3_key:
+#        s3_object_version:
+        description:
+        vpc_subnet_ids:
+        vpc_security_group_ids:
+        environment_variables:
+        dead_letter_arn:
+      register: result
+
+    - name: assert lambda remains as before
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == False'
+
+
+
+    # ============================================================
+    - name: test putting an environment variable changes lambda
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+        environment_variables:
+            EXTRA_MESSAGE: "I think you are great!!"
+      register: result
+
+    - name: assert lambda upload succeeded
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == True'
+
+    - name: test lambda works
+      execute_lambda:
+        name: "{{lambda_function_name}}"
+        payload:
+          name: "Mr Ansible Tests"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.result.output.message == "hello Mr Ansible Tests. I think you are great!!"'
+
+    # ============================================================
+    - name: test state=present triggering a network exception due to bad url
+      lambda:
+        name: "{{lambda_function_name}}"
+        runtime: "python2.7"
+        role: "ansible_lambda_role"
+        ec2_url: https://noexist.example.com
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: 'iamnotreallyanaccesskey'
+        ec2_secret_key: 'thisisabadsecretkey'
+        security_token: 'andthisisabadsecuritytoken'
+        zip_file: "{{zip_res.dest}}"
+      register: result
+      ignore_errors: true
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - 'result is failed'
+           - 'result.changed == False'
+
+    # ============================================================
+    - name: test state=absent (expect changed=False)
+      lambda:
+        name="{{lambda_function_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == True'
+
+    # ============================================================
+    # parallel lambda creation
+
+    - name: parallel lambda creation 1/4
+      lambda:
+        name: "{{lambda_function_name}}_1"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_1
+
+    - name: parallel lambda creation 2/4
+      lambda:
+        name: "{{lambda_function_name}}_2"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_2
+
+    - name: parallel lambda creation 3/4
+      lambda:
+        name: "{{lambda_function_name}}_3"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_3
+
+    - name: parallel lambda creation 4/4
+      lambda:
+        name: "{{lambda_function_name}}_4"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      register: result
+
+    - name: assert lambda manages to respond as expected
+      assert:
+        that:
+           - 'result is not failed'
+
+    - name: wait for async job 1
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result is finished
+      retries: 30
+
+    - name: wait for async job 2
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result is finished
+      retries: 30
+
+    - name: wait for async job 3
+      async_status: jid={{ async_3.ansible_job_id }}
+      register: job_result
+      until: job_result is finished
+      retries: 30
+
+
+    - name: parallel lambda deletion 1/4
+      lambda:
+        name: "{{lambda_function_name}}_1"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_1
+
+    - name: parallel lambda deletion 2/4
+      lambda:
+        name: "{{lambda_function_name}}_2"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_2
+
+    - name: parallel lambda deletion 3/4
+      lambda:
+        name: "{{lambda_function_name}}_3"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      async: 1000
+      register: async_3
+
+    - name: parallel lambda deletion 4/4
+      lambda:
+        name: "{{lambda_function_name}}_4"
+        state: absent
+        ec2_region: '{{ec2_region}}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        zip_file: "{{zip_res.dest}}"
+      register: result
+
+    - name: assert lambda creation has succeeded
+      assert:
+        that:
+           - 'result is not failed'
+
+    - name: wait for async job 1
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result is finished
+      retries: 30
+
+    - name: wait for async job 2
+      async_status: jid={{ async_1.ansible_job_id }}
+      register: job_result
+      until: job_result is finished
+      retries: 30
+
+    - name: wait for async job 3
+      async_status: jid={{ async_3.ansible_job_id }}
+      register: job_result
+      until: job_result is finished
+      retries: 30
+
+
+    # ============================================================
+    # upload via s3 bucket - multi function
+
+    # ============================================================
+    # update already existing function
+
+
+  always:
+
+    # ============================================================
+    - name: test state=absent (expect changed=False)
+      lambda:
+        name="{{lambda_function_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == False'

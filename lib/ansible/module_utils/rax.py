@@ -32,7 +32,6 @@ import os
 import re
 from uuid import UUID
 
-from ansible.module_utils.basic import BOOLEANS
 from ansible.module_utils.six import text_type, binary_type
 
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
@@ -52,7 +51,7 @@ SERVICE_NET_ID = "11111111-1111-1111-1111-111111111111"
 
 def rax_slugify(value):
     """Prepend a key with rax_ and normalize the key name"""
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+    return 'rax_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
 
 def rax_clb_node_to_dict(obj):
@@ -218,7 +217,7 @@ def rax_find_loadbalancer(module, rax_module, loadbalancer):
     clb = rax_module.cloud_loadbalancers
     try:
         found = clb.get(loadbalancer)
-    except:
+    except Exception:
         found = []
         for lb in clb.list():
             if loadbalancer == lb.name:
@@ -245,14 +244,14 @@ def rax_argument_spec():
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),
         auth_endpoint=dict(type='str'),
-        credentials=dict(type='str', aliases=['creds_file']),
+        credentials=dict(type='path', aliases=['creds_file']),
         env=dict(type='str'),
         identity_type=dict(type='str', default='rackspace'),
         region=dict(type='str'),
         tenant_id=dict(type='str'),
         tenant_name=dict(type='str'),
         username=dict(type='str'),
-        verify_ssl=dict(choices=BOOLEANS, type='bool'),
+        validate_certs=dict(type='bool', aliases=['verify_ssl']),
     )
 
 
@@ -276,7 +275,7 @@ def setup_rax_module(module, rax_module, region_required=True):
     tenant_id = module.params.get('tenant_id')
     tenant_name = module.params.get('tenant_name')
     username = module.params.get('username')
-    verify_ssl = module.params.get('verify_ssl')
+    verify_ssl = module.params.get('validate_certs')
 
     if env is not None:
         rax_module.set_environment(env)

@@ -1,0 +1,229 @@
+# Test the depth option and fetching revisions that were ignored first
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: DEPTH | Clone example git repo with depth 1
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+
+- name: DEPTH | try to access earlier commit
+  command: "git checkout {{git_shallow_head_1.stdout}}"
+  register: checkout_early
+  failed_when: False
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: DEPTH | make sure the old commit was not fetched
+  assert:
+    that: 'checkout_early.rc != 0'
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+# tests https://github.com/ansible/ansible/issues/14954
+- name: DEPTH | fetch repo again with depth=1
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+  register: checkout2
+
+- assert:
+    that: "checkout2 is not changed"
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | again try to access earlier commit
+  shell: "git checkout {{git_shallow_head_1.stdout}}"
+  register: checkout_early
+  failed_when: False
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: DEPTH | again make sure the old commit was not fetched
+  assert:
+    that: 'checkout_early.rc != 0'
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+# make sure we are still able to fetch other versions
+- name: DEPTH | Clone same repo with older version
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: cloneold
+
+- assert:
+    that: cloneold is successful
+
+- name: DEPTH | try to access earlier commit
+  shell: "git checkout {{git_shallow_head_1.stdout}}"
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+# Test for https://github.com/ansible/ansible/issues/21316
+- name: DEPTH | Shallow clone with tag
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: cloneold
+
+- assert:
+    that: cloneold is successful
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+
+  # Test for https://github.com/ansible/ansible-modules-core/issues/3456
+  # clone a repo with depth and version specified
+
+- name: DEPTH | clone repo with both version and depth specified
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+
+- name: DEPTH | run a second time (now fetch, not clone)
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+  register: git_fetch
+
+- name: DEPTH | ensure the fetch succeeded
+  assert:
+    that: git_fetch is successful
+
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: DEPTH | clone repo with both version and depth specified
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: master
+
+- name: DEPTH | switch to older branch with depth=1 (uses fetch)
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlybranch
+  register: git_fetch
+
+- name: DEPTH | ensure the fetch succeeded
+  assert:
+    that: git_fetch is successful
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+# test for https://github.com/ansible/ansible-modules-core/issues/3782
+# make sure shallow fetch works when no version is specified
+
+- name: DEPTH | checkout old repo
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+
+- name: DEPTH | "update repo"
+  shell: echo "3" > a; git commit -a -m "3"
+  args:
+    chdir: "{{ repo_dir }}/shallow"
+
+- name: DEPTH | fetch updated repo
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+  register: git_fetch
+  ignore_errors: yes
+
+- name: DEPTH | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
+- name: DEPTH | check update arrived
+  assert:
+    that:
+      - "{{ a_file.content | b64decode | trim }} == 3"
+      - git_fetch is changed
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+#
+# Make sure shallow fetch works when switching to (fetching) a new a branch
+#
+
+- name: DEPTH | clone from branch with depth specified
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: test_branch
+
+- name: DEPTH | check if clone is shallow
+  stat: path={{ checkout_dir }}/.git/shallow
+  register: is_shallow
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | assert that clone is shallow
+  assert:
+    that:
+      - is_shallow.stat.exists
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | switch to new branch (fetch) with the shallow clone
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: new_branch
+  register: git_fetch
+
+- name: DEPTH | assert if switching a shallow clone to a new branch worked
+  assert:
+    that:
+      - git_fetch is changed
+
+- name: DEPTH | check if clone is still shallow
+  stat: path={{ checkout_dir }}/.git/shallow
+  register: is_shallow
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | assert that clone still is shallow
+  assert:
+    that:
+      - is_shallow.stat.exists
+  when: git_version.stdout is version(git_version_supporting_depth, '>=')
+
+- name: DEPTH | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"

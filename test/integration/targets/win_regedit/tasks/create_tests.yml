@@ -1,0 +1,228 @@
+# repeatable tests for each key type
+# takes in the following variables
+#   test_win_regedit_key_type: the type of key
+#   test_win_regedit_key_expected_type: the expected key type
+#   test_win_regedit_key_data1: the data to create first
+#   test_win_regedit_key_data2: the data to change tp
+#   test_win_regedit_key_expected_value_null: the expected value for a null key
+#   test_win_regedit_key_expected_value1: the expected value for the data1
+#   test_win_regedit_key_expected_value2: the expected value for the data2
+---
+- name: create a null {{test_win_regedit_key_type}} check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: empty_{{test_win_regedit_key_type}}
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: null_check
+  check_mode: yes
+
+- name: get actual on null {{test_win_regedit_key_type}} check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: empty_{{test_win_regedit_key_type}}
+  register: null_actual_check
+
+- name: assert create a null {{test_win_regedit_key_type}} check
+  assert:
+    that:
+    - null_check is changed
+    - null_check.data_changed == False
+    - null_check.data_type_changed == False
+    - null_actual_check.exists == False
+
+- name: create a null {{test_win_regedit_key_type}}
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: empty_{{test_win_regedit_key_type}}
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: null_create
+
+- name: get actual on null {{test_win_regedit_key_type}}
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: empty_{{test_win_regedit_key_type}}
+  register: null_create_actual
+
+- name: assert create a null {{test_win_regedit_key_type}}
+  assert:
+    that:
+    - null_create is changed
+    - null_create.data_changed == False
+    - null_create.data_type_changed == False
+    - null_create_actual.exists == True
+    - null_create_actual.raw_value == test_win_regedit_key_expected_value_null
+    - null_create_actual.type == test_win_regedit_key_expected_type
+  when: test_win_regedit_key_type not in ['dword', 'qword']
+
+# dword and qword are different, need to convert the expected value null to an int
+- name: assert create a null {{test_win_regedit_key_type}} for dword and qword
+  assert:
+    that:
+    - null_create is changed
+    - null_create.data_changed == False
+    - null_create.data_type_changed == False
+    - null_create_actual.exists == True
+    - null_create_actual.raw_value == test_win_regedit_key_expected_value_null|int
+    - null_create_actual.type == test_win_regedit_key_expected_type
+  when: test_win_regedit_key_type in ['dword', 'qword']
+
+- name: create a null {{test_win_regedit_key_type}} again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: empty_{{test_win_regedit_key_type}}
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: null_create_again
+
+- name: assert create a null {{test_win_regedit_key_type}} again
+  assert:
+    that:
+    - null_create_again is not changed
+
+- name: create a {{test_win_regedit_key_type}} check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+    data: '{{test_win_regedit_key_data1}}'
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: data_create_check
+  check_mode: yes
+
+- name: get actual on {{test_win_regedit_key_type}} check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+  register: data_create_actual_check
+
+- name: assert create a {{test_win_regedit_key_type}} check
+  assert:
+    that:
+    - data_create_check is changed
+    - data_create_check.data_changed == False
+    - data_create_check.data_type_changed == False
+    - data_create_actual_check.exists == False
+
+- name: create a {{test_win_regedit_key_type}}
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+    data: '{{test_win_regedit_key_data1}}'
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: data_create
+
+- name: get actual on {{test_win_regedit_key_type}}
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+  register: data_create_actual
+
+- name: assert create a {{test_win_regedit_key_type}}
+  assert:
+    that:
+    - data_create is changed
+    - data_create.data_changed == False
+    - data_create.data_type_changed == False
+    - data_create_actual.exists == True
+    - data_create_actual.raw_value == test_win_regedit_key_expected_value1
+    - data_create_actual.type == test_win_regedit_key_expected_type
+  when: test_win_regedit_key_type not in ['dword', 'qword']
+
+- name: assert create a {{test_win_regedit_key_type}} for dword or qword
+  assert:
+    that:
+    - data_create is changed
+    - data_create.data_changed == False
+    - data_create.data_type_changed == False
+    - data_create_actual.exists == True
+    - data_create_actual.raw_value == test_win_regedit_key_expected_value1|int
+    - data_create_actual.type == test_win_regedit_key_expected_type
+  when: test_win_regedit_key_type in ['dword', 'qword']
+
+- name: create a {{test_win_regedit_key_type}} again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+    data: '{{test_win_regedit_key_data1}}'
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: data_create_again
+
+- name: assert create a {{test_win_regedit_key_type}} again
+  assert:
+    that:
+    - data_create_again is not changed
+
+- name: change existing {{test_win_regedit_key_type}} data check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+    data: '{{test_win_regedit_key_data2}}'
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: change_data_check
+  check_mode: yes
+
+- name: get actual of change existing {{test_win_regedit_key_type}} data check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+  register: change_data_actual_check
+
+- name: assert change existing {{test_win_regedit_key_type}} data check
+  assert:
+    that:
+    - change_data_check is changed
+    - change_data_check.data_changed == True
+    - change_data_check.data_type_changed == False
+    - change_data_actual_check == data_create_actual
+
+- name: change existing {{test_win_regedit_key_type}} data
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+    data: '{{test_win_regedit_key_data2}}'
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: change_data
+
+- name: get actual of change existing {{test_win_regedit_key_type}} data
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+  register: change_data_actual
+
+- name: assert change existing {{test_win_regedit_key_type}} data
+  assert:
+    that:
+    - change_data is changed
+    - change_data.data_changed == True
+    - change_data.data_type_changed == False
+    - change_data_actual.raw_value == test_win_regedit_key_expected_value2
+  when: test_win_regedit_key_type not in ['dword', 'qword']
+
+- name: assert change existing {{test_win_regedit_key_type}} data for dword or qword
+  assert:
+    that:
+    - change_data is changed
+    - change_data.data_changed == True
+    - change_data.data_type_changed == False
+    - change_data_actual.raw_value == test_win_regedit_key_expected_value2|int
+  when: test_win_regedit_key_type in ['dword', 'qword']
+
+- name: change existing {{test_win_regedit_key_type}} data again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_{{test_win_regedit_key_type}}
+    data: '{{test_win_regedit_key_data2}}'
+    type: '{{test_win_regedit_key_type}}'
+    state: present
+  register: change_data_again
+
+- name: assert change existing {{test_win_regedit_key_type}} data again
+  assert:
+    that:
+    - change_data_again is not changed

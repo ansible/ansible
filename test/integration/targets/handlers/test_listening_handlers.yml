@@ -1,0 +1,24 @@
+---
+- name: verify listening handlers
+  hosts: A
+  gather_facts: False
+  tasks:
+    - name: notify some handlers
+      command: echo foo
+      notify:
+        - notify_listen
+  post_tasks:
+    - name: assert all defined handlers ran without error
+      assert:
+        that:
+        - "notify_listen_ran_1 is defined"
+        - "notify_listen_ran_2 is defined"
+  handlers:
+    - name: first listening handler has a name
+      set_fact:
+        notify_listen_ran_1: True
+      listen: notify_listen
+    # second listening handler does not
+    - set_fact:
+        notify_listen_ran_2: True
+      listen: notify_listen

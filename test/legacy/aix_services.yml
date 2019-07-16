@@ -1,0 +1,24 @@
+---
+- name: Services/Subsystems tests for AIX
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: spooler shutdown
+      service:
+        name: spooler
+        state: started
+
+    - name: stopping sendmail
+      service:
+        name: sendmail
+        state: stopped
+
+    - name: starting sendmail
+      service:
+        name: sendmail
+        state: started
+
+    - name: starting an inexistent subsystem and group subsystem
+      service:
+        name: fakeservice
+        state: stopped

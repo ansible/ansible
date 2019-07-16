@@ -1,0 +1,122 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_evpn_vni sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: nvoe_supported="{{ platform is not search('N3K|N3L|N35')}}"
+
+- name: "Setup"
+  nxos_config: &remove_evpn
+    lines: no nv overlay evpn
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  when: nvoe_supported
+
+- block:
+  - name: "Enable feature BGP"
+    nxos_feature:
+      feature: bgp
+      provider: "{{ connection }}"
+      state: enabled
+
+  - name: "Enable nv overlay evpn"
+    nxos_config:
+      lines: nv overlay evpn
+      match: none
+      provider: "{{ connection }}"
+
+  - name: "Configure nxos_evpn_vni"
+    nxos_evpn_vni: &evpn_vni
+      vni: 6000
+      route_distinguisher: "60:10"
+      route_target_import:
+          - auto
+          - "5000:10"
+          - "4100:100"
+      route_target_export:
+          - auto
+          - "5000:10"
+          - "192.0.2.1:43"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *evpn_vni
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Configure nxos_evpn_vni"
+    nxos_evpn_vni: &evpn_vni1
+      vni: 6000
+      route_distinguisher: "50:20"
+      route_target_import: auto
+      route_target_export: auto
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *evpn_vni1
+    register: result
+
+  - assert: *false
+
+  - name: "Configure nxos_evpn_vni"
+    nxos_evpn_vni: &evpn_vni_def
+      vni: 6000
+      route_distinguisher: default
+      route_target_import: default
+      route_target_export: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *evpn_vni_def
+    register: result
+
+  - assert: *false
+
+  - name: "remove nxos_evpn_vni"
+    nxos_evpn_vni: &rvni
+      vni: 6000
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *rvni
+    register: result
+
+  - assert: *false
+
+  when: nvoe_supported
+
+
+  always:
+  - block:
+    - name: "Remove nv overlay evpn"
+      nxos_config: *remove_evpn
+      ignore_errors: yes
+
+    - name: "Disable feature bgp"
+      nxos_feature:
+        feature: bgp
+        provider: "{{ connection }}"
+        state: disabled
+      ignore_errors: yes
+    when: nvoe_supported
+
+- debug: msg="END connection={{ ansible_connection }} nxos_evpn_vni sanity test"

@@ -1,0 +1,435 @@
+# Test code for the Meraki SSID module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+    
+  - name: Use an invalid domain
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      host: marrrraki.com
+      state: present
+      org_name: IntTestOrg
+      output_level: debug
+    delegate_to: localhost
+    register: invalid_domain
+    ignore_errors: yes
+    
+  - name: Disable HTTP
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      use_https: false
+      state: query
+      output_level: debug
+    delegate_to: localhost
+    register: http
+    ignore_errors: yes
+
+  - name: Connection assertions
+    assert:
+      that:
+        # - '"Failed to connect to" in invalid_domain.msg'
+        - '"http" in http.url'
+
+  - name: Create test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      type: wireless
+    register: test_net
+
+  - debug: 
+      msg: '{{test_net}}'
+
+  - name: Query all SSIDs
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+    delegate_to: localhost
+    register: query_all
+
+  - name: Enable and name SSID
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      enabled: true
+    delegate_to: localhost
+    register: enable_name_ssid
+
+  - debug:
+      msg: '{{ enable_name_ssid }}'
+
+  - assert:
+      that:
+        - query_all.data | length == 15
+        - query_all.data.0.name == 'TestNetSSID WiFi'
+        - enable_name_ssid.data.name == 'AnsibleSSID'
+
+  - name: Check for idempotency
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      enabled: true
+    delegate_to: localhost
+    register: enable_name_ssid_idempotent
+
+  - debug:
+      msg: '{{ enable_name_ssid_idempotent }}'
+
+  - assert:
+      that:
+        - enable_name_ssid_idempotent.changed == False
+        - enable_name_ssid_idempotent.data is defined
+
+  - name: Query one SSIDs
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+    delegate_to: localhost
+    register: query_one
+
+  - debug:
+      msg: '{{query_one}}'
+
+  - assert:
+      that:
+        - query_one.data.name == 'AnsibleSSID'
+
+  - name: Query one SSID with number
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      number: 1
+    delegate_to: localhost
+    register: query_one_number
+
+  - debug:
+      msg: '{{query_one_number}}'
+
+  - assert:
+      that:
+        - query_one_number.data.name == 'AnsibleSSID'
+
+  - name: Disable SSID without specifying number
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      enabled: false
+    delegate_to: localhost
+    register: disable_ssid
+
+  - debug:
+      msg: '{{ disable_ssid.data.enabled }}'
+
+  - assert:
+      that:
+        - disable_ssid.data.enabled == False
+
+  - name: Enable SSID with number
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      number: 1
+      enabled: true
+    delegate_to: localhost
+    register: enable_ssid_number
+
+  - debug:  
+      msg: '{{ enable_ssid_number.data.enabled }}'
+
+  - assert:
+      that:
+        - enable_ssid_number.data.enabled == True
+
+  - name: Set VLAN arg spec
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      number: 1
+      use_vlan_tagging: yes
+      ip_assignment_mode: Bridge mode
+      default_vlan_id: 1
+      ap_tags_vlan_ids:
+        - tags: wifi
+          vlan_id: 2
+    delegate_to: localhost
+    register: set_vlan_arg
+
+  - debug:  
+      var: set_vlan_arg
+
+  - assert:
+      that: set_vlan_arg is changed
+
+  - name: Set VLAN arg spec
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      number: 1
+      use_vlan_tagging: yes
+      ip_assignment_mode: Bridge mode
+      default_vlan_id: 1
+      ap_tags_vlan_ids:
+        - tags: wifi
+          vlan_id: 2
+    delegate_to: localhost
+    register: set_vlan_arg_idempotent
+
+  - debug:  
+      var: set_vlan_arg_idempotent
+
+  - assert:
+      that: set_vlan_arg_idempotent is not changed
+
+
+  - name: Set PSK
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: psk
+      psk: abc1234567890
+      encryption_mode: wpa
+    delegate_to: localhost
+    register: psk
+
+  - debug:
+      msg: '{{ psk }}'
+
+  - assert:
+      that:
+        - psk.data.auth_mode == 'psk'
+        - psk.data.encryption_mode == 'wpa'
+        - psk.data.wpa_encryption_mode == 'WPA2 only'
+
+  - name: Set PSK with idempotency
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: psk
+      psk: abc1234567890
+      encryption_mode: wpa
+    delegate_to: localhost
+    register: psk_idempotent
+
+  - debug:
+      msg: '{{ psk_idempotent }}'
+
+  - assert:
+      that:
+        - psk_idempotent is not changed
+
+  - name: Enable click-through splash page
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      splash_page: Click-through splash page
+    delegate_to: localhost
+    register: splash_click
+
+  - debug:
+      msg: '{{ splash_click }}'
+
+  - assert:
+      that:
+        - splash_click.data.splash_page == 'Click-through splash page'
+
+  - name: Configure RADIUS servers
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: open-with-radius
+      radius_servers:
+        - host: 192.0.1.200
+          port: 1234
+          secret: abc98765
+    delegate_to: localhost
+    register: set_radius_server
+
+  - debug:
+      msg: '{{ set_radius_server }}'
+
+  - assert:
+      that:
+        - set_radius_server.data.radius_servers.0.host == '192.0.1.200'
+
+  - name: Configure RADIUS servers with idempotency
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: open-with-radius
+      radius_servers:
+        - host: 192.0.1.200
+          port: 1234
+          secret: abc98765
+    delegate_to: localhost
+    register: set_radius_server_idempotent
+
+  - debug:
+      var: set_radius_server_idempotent
+
+  - assert:
+      that:
+        - set_radius_server_idempotent is not changed
+
+  #################
+  # Error testing #
+  #################
+  - name: Set PSK with wrong mode
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: open
+      psk: abc1234
+    delegate_to: localhost
+    register: psk_invalid
+    ignore_errors: yes
+
+  - debug:
+      msg: '{{ psk_invalid }}'
+
+  - assert:
+      that:
+        - psk_invalid.msg == 'PSK is only allowed when auth_mode is set to psk'
+
+  - name: Set PSK with invalid encryption mode
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: psk
+      psk: abc1234
+      encryption_mode: eap
+    delegate_to: localhost
+    register: psk_invalid_mode
+    ignore_errors: yes
+
+  - debug:
+      msg: '{{ psk_invalid_mode }}'
+
+  - assert:
+      that:
+        - psk_invalid_mode.msg == 'PSK requires encryption_mode be set to wpa'
+
+  - name: Error for PSK and RADIUS servers
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+      auth_mode: psk
+      radius_servers:
+        - host: 192.0.1.200
+          port: 1234
+          secret: abc98765
+    delegate_to: localhost
+    register: err_radius_server_psk
+    ignore_errors: yes
+
+  - debug:
+      var: err_radius_server_psk
+
+  - assert:
+      that:
+        - 'err_radius_server_psk.msg == "radius_servers requires auth_mode to be open-with-radius or 8021x-radius"'
+
+  - name: Set VLAN arg without default VLAN error
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      number: 1
+      use_vlan_tagging: yes
+      ip_assignment_mode: Bridge mode
+      ap_tags_vlan_ids:
+        - tags: wifi
+          vlan_id: 2
+    delegate_to: localhost
+    register: set_vlan_arg_err
+    ignore_errors: yes
+
+  - debug:  
+      var: set_vlan_arg_err
+
+  - assert:
+      that: 
+        - 'set_vlan_arg_err.msg == "default_vlan_id is required when use_vlan_tagging is True"'
+
+  always:
+  - name: Delete SSID
+    meraki_ssid:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+      name: AnsibleSSID
+    delegate_to: localhost
+    register: delete_ssid
+
+  - debug:
+      msg: '{{ delete_ssid }}'
+
+  - assert:
+      that:
+        - delete_ssid.data.name == 'Unconfigured SSID 2'
+
+  - name: Delete test network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: TestNetSSID
+    register: delete_net
+
+  - debug: 
+      msg: '{{delete_net}}'

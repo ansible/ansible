@@ -1,0 +1,255 @@
+---
+- name: network setup
+  cs_network:
+    name: ansible test
+    network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService
+    network_domain: example.com
+    zone: "{{ cs_common_zone_adv }}"
+  register: net
+- name: verify network setup
+  assert:
+    that:
+    - net is successful
+
+- name: instance setup
+  cs_instance:
+    name: "{{ cs_portforward_vm }}"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network: "ansible test"
+  register: instance
+- name: verify instance setup
+  assert:
+    that:
+    - instance is successful
+
+- name: public ip address setup
+  cs_ip_address:
+    network: ansible test
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address
+- name: verify public ip address setup
+  assert:
+    that:
+    - ip_address is successful
+
+- name: set ip address as fact
+  set_fact:
+    cs_portforward_public_ip: "{{ ip_address.ip_address }}"
+
+- name: clear existing port forwarding
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    private_port: 8080
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify  clear existing port forwarding
+  assert:
+    that:
+    - pf is successful
+
+- name: test fail if missing params
+  action: cs_portforward
+  register: pf
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+    - pf is failed
+    - 'pf.msg.startswith("missing required arguments: ")'
+
+- name: test present port forwarding in check mode
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    vm: "{{ cs_portforward_vm }}"
+    private_port: 8080
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+  check_mode: true
+- name: verify results of present port forwarding in check mode
+  assert:
+    that:
+    - pf is successful
+    - pf is changed
+
+- name: test present port forwarding
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    vm: "{{ cs_portforward_vm }}"
+    private_port: 8080
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify results of present port forwarding
+  assert:
+    that:
+    - pf is successful
+    - pf is changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8080
+    - pf.private_end_port == 8080
+
+- name: test present port forwarding idempotence
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    vm: "{{ cs_portforward_vm }}"
+    private_port: 8080
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify results of present port forwarding idempotence
+  assert:
+    that:
+    - pf is successful
+    - pf is not changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8080
+    - pf.private_end_port == 8080
+
+- name: test change port forwarding in check mode
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    vm: "{{ cs_portforward_vm }}"
+    private_port: 8888
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+  check_mode: true
+- name: verify results of change port forwarding in check mode
+  assert:
+    that:
+    - pf is successful
+    - pf is changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8080
+    - pf.private_end_port == 8080
+
+- name: test change port forwarding
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    vm: "{{ cs_portforward_vm }}"
+    private_port: 8888
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify results of change port forwarding
+  assert:
+    that:
+    - pf is successful
+    - pf is changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8888
+    - pf.private_end_port == 8888
+
+- name: test change port forwarding idempotence
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    vm: "{{ cs_portforward_vm }}"
+    private_port: 8888
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify results of change port forwarding idempotence
+  assert:
+    that:
+    - pf is successful
+    - pf is not changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8888
+    - pf.private_end_port == 8888
+
+- name: test absent port forwarding in check mode
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    private_port: 8888
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+  check_mode: true
+- name: verify results of absent port forwarding in check mode
+  assert:
+    that:
+    - pf is successful
+    - pf is changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8888
+    - pf.private_end_port == 8888
+
+- name: test absent port forwarding
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    private_port: 8888
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify results of absent port forwarding
+  assert:
+    that:
+    - pf is successful
+    - pf is changed
+    - pf.vm_name == "{{ cs_portforward_vm }}"
+    - pf.ip_address == "{{ cs_portforward_public_ip }}"
+    - pf.public_port == 80
+    - pf.public_end_port == 80
+    - pf.private_port == 8888
+    - pf.private_end_port == 8888
+
+- name: test absent port forwarding idempotence
+  cs_portforward:
+    ip_address: "{{ cs_portforward_public_ip }}"
+    public_port: 80
+    private_port: 8888
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: pf
+- name: verify results of absent port forwarding idempotence
+  assert:
+    that:
+    - pf is successful
+    - pf is not changed
+
+- name: instance cleanup
+  cs_instance:
+    name: "{{ cs_portforward_vm }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify instance cleanup
+  assert:
+    that:
+    - instance is successful
+
+- name: network cleanup
+  cs_network:
+    name: ansible test
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: net
+- name: verify network cleanup
+  assert:
+    that:
+    - net is successful

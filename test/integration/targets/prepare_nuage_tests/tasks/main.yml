@@ -1,0 +1,19 @@
+- block:
+    - name: Install Nuage VSD API Simulator
+      pip:
+        name: nuage-vsd-sim
+
+    - name: Start Nuage VSD API Simulator
+      shell: "(cd /; nuage-vsd-sim >/dev/null 2>&1)"
+      async: 1800
+      poll: 0
+
+    - name: Wait for API to be ready
+      uri:
+        url: http://localhost:5000
+      register: api
+      delay: 3
+      retries: 10
+      until: api.status == 200
+
+  when: "ansible_python_version is version('2.7', '>=')"

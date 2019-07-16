@@ -1,0 +1,32 @@
+# Test code for the github_issue module.
+#
+# Copyright: (c) 2017-2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Check if GitHub issue is closed or not
+  github_issue:
+    organization: "{{ organization }}"
+    repo: "{{ repo }}"
+    issue: "{{ issue }}"
+    action: get_status
+  register: get_status_0002
+
+- assert:
+    that:
+      - "{{ get_status_0002.changed == True }}"
+      - "{{ get_status_0002.issue_status == 'closed' }}"
+
+- name: Check if GitHub issue is closed or not
+  github_issue:
+    organization: "{{ organization }}"
+    repo: "{{ repo }}"
+    issue: "{{ non_existent_issue }}"
+    action: get_status
+  register: get_status_0003
+  ignore_errors: True
+
+- assert:
+    that:
+      - "{{ get_status_0003.changed == False }}"
+      - "{{ get_status_0003.failed == True }}"
+      - "{{ 'Failed' in get_status_0003.msg }}"

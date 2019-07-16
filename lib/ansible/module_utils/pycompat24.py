@@ -25,9 +25,9 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 import sys
+
 
 def get_exception():
     """Get the current exception.
@@ -43,6 +43,7 @@ def get_exception():
     """
     return sys.exc_info()[1]
 
+
 try:
     # Python 2.6+
     from ast import literal_eval
@@ -52,7 +53,7 @@ except ImportError:
     # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
     from compiler import ast, parse
-    from ansible.module_utils.six import binary_type, string_types, text_type
+    from ansible.module_utils.six import binary_type, integer_types, string_types, text_type
 
     def literal_eval(node_or_string):
         """
@@ -68,8 +69,7 @@ except ImportError:
             node_or_string = node_or_string.node
 
         def _convert(node):
-            # Okay to use long here because this is only for python 2.4 and 2.5
-            if isinstance(node, ast.Const) and isinstance(node.value, (text_type, binary_type, int, float, long, complex)):
+            if isinstance(node, ast.Const) and isinstance(node.value, (text_type, binary_type, float, complex) + integer_types):
                 return node.value
             elif isinstance(node, ast.Tuple):
                 return tuple(map(_convert, node.nodes))
@@ -81,7 +81,7 @@ except ImportError:
                 if node.name in _safe_names:
                     return _safe_names[node.name]
             elif isinstance(node, ast.UnarySub):
-                return -_convert(node.expr)
+                return -_convert(node.expr)  # pylint: disable=invalid-unary-operand-type
             raise ValueError('malformed string')
         return _convert(node_or_string)
 

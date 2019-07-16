@@ -1,6 +1,8 @@
-import sys
 import json
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     if "--interactive" in sys.argv:
@@ -11,8 +13,9 @@ def main():
             )
         ))
 
-    module = AnsibleModule(argument_spec = dict(
-        fail_mode = dict(type='list', default=['success'])
+    module = AnsibleModule(
+        argument_spec=dict(
+            fail_mode=dict(type='list', default=['success'])
         )
     )
 
@@ -35,5 +38,6 @@ def main():
     finally:
         if 'trailing_junk' in fail_mode:
             print("trailing junk after module output")
+
 
 main()

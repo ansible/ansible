@@ -1,0 +1,45 @@
+.. _@{ slug }@:
+
+{# avoids rST "isn't included in any toctree" errors for module index docs #}
+:orphan:
+
+**************************@{ '*' * maintainers | length }@
+Modules Maintained by the @{ maintainers }@
+**************************@{ '*' * maintainers | length }@
+
+.. contents::
+   :local:
+
+{% for category, data in subcategories.items() | sort %}
+
+{% if category.lower() %}
+.. _@{ category.lower() + '_' + slug.lower() + '_categories' }@:
+{% else %}
+.. _@{ slug.lower() + '_categories' }@:
+{% endif %}
+
+@{ category.title() }@
+@{ '=' * category | length }@
+
+{% for name, info in data.items() | sort %}
+
+{% if name.lower() %}
+.. _@{ name.lower() + '_' + category + '_' + slug.lower() + '_' + plugin_type + 's' }@:
+{% else %}
+.. _@{ slug.lower() + '_' + category }@:
+{% endif %}
+
+@{ name.title() }@
+@{ '-' * name | length }@
+
+{% for module in info['_modules'] | sort %}
+  * :ref:`@{ module }@_@{plugin_type}@`{% if module_info[module]['deprecated'] %} **(D)** {% endif%} 
+{% endfor %}
+
+{% endfor %}
+
+{% endfor %}
+
+.. note::
+    - **(D)**: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.
+      The module documentation details page may explain more about this rationale.

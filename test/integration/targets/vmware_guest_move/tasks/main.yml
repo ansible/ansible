@@ -1,0 +1,70 @@
+# Test code for the vmware_guest_move module
+# Copyright: (c) 2018, Jose Angel Munoz <josea.munoz@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: 'f1'
+    folder_type: vm
+    state: present
+    validate_certs: no
+  register: dest_folder
+
+# Testcase 0001: Move vm and get changed status
+- name: Move VM (Changed)
+  vmware_guest_move:
+    validate_certs: false
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    name: '{{ virtual_machines[0].name }}'
+    # Depends-On: https://github.com/ansible/ansible/pull/55237
+    dest_folder: '{{ dest_folder.result.path }}'
+  register: vm_facts_0001
+
+
+# Testcase 0002: Move vm and get OK status (Already Moved)
+- &vm_move
+  name: Move VM (OK)
+  vmware_guest_move:
+    validate_certs: false
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    name: '{{ virtual_machines[0].name }}'
+    dest_folder: '{{ dest_folder.result.path }}'
+  register: vm_facts_0002
+
+- debug:
+    msg: "{{ vm_facts_0001 }}"
+
+- debug:
+    msg: "{{ vm_facts_0002 }}"
+
+- name: Make sure changes are done
+  assert:
+    that:
+      - vm_facts_0001.changed
+      - not vm_facts_0002.changed
+
+- <<: *vm_move
+  name: Move VM in check mode
+  check_mode: yes
+  register: vm_move_0003
+
+- name: Make sure changes are not made in check mode
+  assert:
+    that:
+    - vm_move_0003.changed

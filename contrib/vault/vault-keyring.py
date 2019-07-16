@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2014, Matt Martz <matt@sivel.net>
+# (c) 2016, Justin Mayer <https://justinmayer.com/>
 #
-# This file is part of Ansible
+# This file is part of Ansible.
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,59 +18,81 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+# =============================================================================
 #
-# Script to be used with vault_password_file or --vault-password-file
-# to retrieve the vault password via your OSes native keyring application
+# This script is to be used with vault_password_file or --vault-password-file
+# to retrieve the vault password via your OS's native keyring application.
 #
-# This script requires the ``keyring`` python module
+# This file *MUST* be saved with executable permissions. Otherwise, Ansible
+# will try to parse as a password file and display: "ERROR! Decryption failed"
 #
-# Add a [vault] section to your ansible.cfg file,
-# the only option is 'username'. Example:
+# The `keyring` Python module is required: https://pypi.org/project/keyring/
+#
+# By default, this script will store the specified password in the keyring of
+# the user that invokes the script. To specify a user keyring, add a [vault]
+# section to your ansible.cfg file with a 'username' option. Example:
 #
 # [vault]
-# username = 'ansible_vault'
+# username = 'ansible-vault'
 #
-# Additionally, it would be a good idea to configure vault_password_file in
-# ansible.cfg
+# Another optional setting is for the key name, which allows you to use this
+# script to handle multiple project vaults with different passwords:
+#
+# [vault]
+# keyname = 'ansible-vault-yourproject'
+#
+# You can configure the `vault_password_file` option in ansible.cfg:
 #
 # [defaults]
 # ...
 # vault_password_file = /path/to/vault-keyring.py
 # ...
 #
-# To set your password: python /path/to/vault-keyring.py set
+# To set your password, `cd` to your project directory and run:
 #
-# If you choose to not configure the path to vault_password_file in ansible.cfg
-# your ansible-playbook command may look like:
+# python /path/to/vault-keyring.py set
+#
+# If you choose not to configure the path to `vault_password_file` in
+# ansible.cfg, your `ansible-playbook` command might look like:
 #
 # ansible-playbook --vault-password-file=/path/to/vault-keyring.py site.yml
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 import sys
 import getpass
 import keyring
-import ConfigParser
 
+from ansible.config.manager import ConfigManager, get_ini_config_value
 
-import ansible.constants as C
 
 def main():
-    (parser,config_path)  = C.load_config_file()
-    try:
-        username = parser.get('vault', 'username')
-    except ConfigParser.NoSectionError:
-        sys.stderr.write('No [vault] section configured in config file: %s\n' % config_path)
-        sys.exit(1)
+    config = ConfigManager()
+    username = get_ini_config_value(
+        config._parsers[config._config_file],
+        dict(section='vault', key='username')
+    ) or getpass.getuser()
+
+    keyname = get_ini_config_value(
+        config._parsers[config._config_file],
+        dict(section='vault', key='keyname')
+    ) or 'ansible'
 
     if len(sys.argv) == 2 and sys.argv[1] == 'set':
+        intro = 'Storing password in "{}" user keyring using key name: {}\n'
+        sys.stdout.write(intro.format(username, keyname))
         password = getpass.getpass()
         confirm = getpass.getpass('Confirm password: ')
         if password == confirm:
-            keyring.set_password('ansible', username, password)
+            keyring.set_password(keyname, username, password)
         else:
             sys.stderr.write('Passwords do not match\n')
             sys.exit(1)
     else:
-        sys.stdout.write('%s\n' % keyring.get_password('ansible', username))
+        sys.stdout.write('{0}\n'.format(keyring.get_password(keyname,
+                                                             username)))
 
     sys.exit(0)
 

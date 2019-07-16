@@ -1,0 +1,112 @@
+# test for https://github.com/ansible/ansible-modules-core/pull/5505
+- name: LOCALMODS | prepare old git repo
+  shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
+  args:
+    chdir: "{{repo_dir}}"
+
+- name: LOCALMODS | checkout old repo
+  git:
+    repo: '{{ repo_dir }}/localmods'
+    dest: '{{ checkout_dir }}'
+
+- name: LOCALMODS | "update repo"
+  shell: echo "2" > a; git commit -a -m "2"
+  args:
+    chdir: "{{repo_dir}}/localmods"
+
+- name: LOCALMODS | "add local mods"
+  shell: echo "3" > a
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: LOCALMODS | fetch with local mods without force (should fail)
+  git:
+    repo: '{{ repo_dir }}/localmods'
+    dest: '{{ checkout_dir }}'
+  register: git_fetch
+  ignore_errors: yes
+
+- name: LOCALMODS | check fetch with localmods failed
+  assert:
+    that:
+      - git_fetch is failed
+
+- name: LOCALMODS | fetch with local mods with force
+  git:
+    repo: '{{ repo_dir }}/localmods'
+    dest: '{{ checkout_dir }}'
+    force: True
+  register: git_fetch_force
+  ignore_errors: yes
+
+- name: LOCALMODS | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
+- name: LOCALMODS | check update arrived
+  assert:
+    that:
+      - "{{ a_file.content | b64decode | trim }} == 2"
+      - git_fetch_force is changed
+
+- name: LOCALMODS | clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+# localmods and shallow clone
+- name: LOCALMODS | prepare old git repo
+  shell: rm -rf localmods; mkdir localmods; cd localmods; git init; echo "1" > a; git add a; git commit -m "1"
+  args:
+    chdir: "{{repo_dir}}"
+
+- name: LOCALMODS | checkout old repo
+  git:
+    repo: '{{ repo_dir }}/localmods'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+
+- name: LOCALMODS | "update repo"
+  shell: echo "2" > a; git commit -a -m "2"
+  args:
+    chdir: "{{repo_dir}}/localmods"
+
+- name: LOCALMODS | "add local mods"
+  shell: echo "3" > a
+  args:
+    chdir: "{{ checkout_dir }}"
+
+- name: LOCALMODS | fetch with local mods without force (should fail)
+  git:
+    repo: '{{ repo_dir }}/localmods'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+  register: git_fetch
+  ignore_errors: yes
+
+- name: LOCALMODS | check fetch with localmods failed
+  assert:
+    that:
+      - git_fetch is failed
+
+- name: LOCALMODS | fetch with local mods with force
+  git:
+    repo: '{{ repo_dir }}/localmods'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    force: True
+  register: git_fetch_force
+  ignore_errors: yes
+
+- name: LOCALMODS | get "a" file
+  slurp:
+    src: '{{ checkout_dir }}/a'
+  register: a_file
+
+- name: LOCALMODS | check update arrived
+  assert:
+    that:
+      - "{{ a_file.content | b64decode | trim }} == 2"
+      - git_fetch_force is changed
+
+- name: LOCALMODS | clear checkout_dir
+  file: state=absent path={{ checkout_dir }}

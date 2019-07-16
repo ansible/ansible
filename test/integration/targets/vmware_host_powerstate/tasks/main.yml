@@ -1,0 +1,34 @@
+# Test code for the vmware_host_powerstate module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support Powerstate related to operations
+- when: False
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+
+
+  # https://kb.vmware.com/s/article/2001651?lang=en_US
+  # It seems like we need a Power managment interface to be able to run the
+  # module.
+  # I currently get:
+  # "Failed to power down '192.168.123.7' to standby as host system due to : ('The operation is not supported on the object.', None)"
+  - name: Restart Host
+    vmware_host_powerstate:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      state: power-down-to-standby
+      esxi_hostname: '{{ esxi1 }}'
+      force: True
+    register: host_powerstate
+
+  - debug: var=host_powerstate
+
+  - assert:
+      that:
+        - host_powerstate.results is changed

@@ -1,0 +1,41 @@
+---
+- name: Setup
+  iosxr_banner:
+    banner: login
+    text: |
+      Junk login banner
+      over multiple lines
+    provider: "{{ cli }}"
+    state: present
+
+- name: remove login
+  iosxr_banner:
+    banner: login
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner login' in result.commands[0]"
+
+- name: remove login (idempotent)
+  iosxr_banner:
+    banner: login
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

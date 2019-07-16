@@ -1,0 +1,24 @@
+---
+
+- name: setup lb monitor
+  register: result
+  check_mode: "{{ check_mode }}"
+  delegate_to: localhost
+  netscaler_lb_monitor:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+    state: present
+
+    monitorname: lb-monitor-radius-accounting
+    type: RADIUS_ACCOUNTING
+
+    username: someuser
+    password: somepass
+    radkey: somekey
+
+    radaccounttype: 10
+    radframedip: 192.168.1.1
+    radapn: someapn
+    radmsisdn: someisdn
+    radaccountsession: sessionid

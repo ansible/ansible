@@ -1,0 +1,325 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Test an API key is provided
+  fail:
+    msg: Please define an API key
+  when: auth_key is not defined
+  
+- name: Use an invalid domain
+  meraki_switchport:
+    auth_key: '{{ auth_key }}'
+    host: marrrraki.com
+    state: query
+    serial: Q2HP-2C6E-GTLD
+    org_name: IntTestOrg
+  delegate_to: localhost
+  register: invaliddomain
+  ignore_errors: yes
+  
+- name: Disable HTTP
+  meraki_switchport:
+    auth_key: '{{ auth_key }}'
+    use_https: false
+    state: query
+    serial: Q2HP-2C6E-GTLD
+    output_level: debug
+  delegate_to: localhost
+  register: http
+  ignore_errors: yes
+
+- name: Connection assertions
+  assert:
+    that:
+      - '"Failed to connect to" in invaliddomain.msg'
+      - '"http" in http.url'
+
+- name: Query all switchports
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: query
+    serial: Q2HP-2C6E-GTLD
+  delegate_to: localhost
+  register: query_all
+
+- debug:
+    msg: '{{query_all}}'
+
+- name: Query one switchport
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: query
+    serial: Q2HP-2C6E-GTLD
+    number: 1
+  delegate_to: localhost
+  register: query_one
+
+- debug:
+    msg: '{{query_one}}'
+
+- name: Enable switchport
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+  delegate_to: localhost
+  register: update_port_true
+
+- debug:
+    msg: '{{update_port_true}}'
+
+- assert:
+    that:
+      - update_port_true.data.enabled == True
+
+- name: Disable switchport
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: false
+  delegate_to: localhost
+  register: update_port_false
+
+- debug:
+    msg: '{{update_port_false}}'
+
+- assert:
+    that:
+      - update_port_false.data.enabled == False
+
+
+- name: Name switchport
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    name: Test Port
+  delegate_to: localhost
+  register: update_port_name
+
+- debug:
+    msg: '{{update_port_name}}'
+
+- assert:
+    that:
+      - update_port_name.data.name == 'Test Port'
+
+- name: Configure access port
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Test Port
+    tags: desktop
+    type: access
+    vlan: 10
+  delegate_to: localhost
+  register: update_access_port
+
+- debug:
+    msg: '{{update_access_port}}'
+
+- assert:
+    that:
+      - update_access_port.data.vlan == 10
+
+- name: Configure port as trunk
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 8
+    enabled: true
+    name: Test Port
+    type: trunk
+    vlan: 10
+    allowed_vlans: 10, 100, 200
+  delegate_to: localhost
+
+- name: Convert trunk port to access
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 8
+    enabled: true
+    name: Test Port
+    type: access
+    vlan: 10
+  delegate_to: localhost
+
+- name: Test converted port for idempotency
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 8
+    enabled: true
+    name: Test Port
+    type: access
+    vlan: 10
+  delegate_to: localhost
+  register: convert_idempotent
+
+- assert:
+    that:
+      - convert_idempotent.changed == False
+
+- name: Configure access port with voice VLAN
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Test Port
+    tags: desktop
+    type: access
+    vlan: 10
+    voice_vlan: 11
+  delegate_to: localhost
+  register: update_port_vvlan
+
+- debug:
+    msg: '{{update_port_vvlan}}'
+
+- assert:
+    that:
+      - update_port_vvlan.data.voice_vlan == 11
+      - update_port_vvlan.changed == True
+
+- name: Check access port for idempotenty
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Test Port
+    tags: desktop
+    type: access
+    vlan: 10
+    voice_vlan: 11
+  delegate_to: localhost
+  register: update_port_access_idempotent
+
+- debug:
+    msg: '{{update_port_access_idempotent}}'
+
+- assert:
+    that:
+      - update_port_access_idempotent.changed == False
+      - update_port_access_idempotent.data is defined
+
+- name: Configure trunk port
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Server port
+    tags: server
+    type: trunk
+    allowed_vlans: all
+    vlan: 8
+  delegate_to: localhost
+  register: update_trunk
+
+- debug:
+    msg: '{{update_trunk}}'
+
+- assert:
+    that:
+      - update_trunk.data.tags == 'server'
+      - update_trunk.data.type == 'trunk'
+      - update_trunk.data.allowed_vlans == 'all'
+
+- name: Configure trunk port with specific VLANs
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Server port
+    tags: server
+    type: trunk
+    vlan: 8
+    allowed_vlans:
+      - 10
+      - 15
+      - 20
+  delegate_to: localhost
+  register: update_trunk
+
+- debug:
+    msg: '{{update_trunk}}'
+
+- assert:
+    that:
+      - update_trunk.data.tags == 'server'
+      - update_trunk.data.type == 'trunk'
+      - update_trunk.data.allowed_vlans == '8,10,15,20'
+
+- name: Configure trunk port with specific VLANs and native VLAN
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Server port
+    tags: server
+    type: trunk
+    vlan: 2
+    allowed_vlans:
+      - 10
+      - 15
+      - 20
+  delegate_to: localhost
+  register: update_trunk
+
+- debug:
+    msg: '{{update_trunk}}'
+
+- assert:
+    that:
+      - update_trunk.data.tags == 'server'
+      - update_trunk.data.type == 'trunk'
+      - update_trunk.data.allowed_vlans == '2,10,15,20'
+
+- name: Check for idempotency on trunk port
+  meraki_switchport:
+    auth_key: '{{auth_key}}'
+    state: present
+    serial: Q2HP-2C6E-GTLD
+    number: 7
+    enabled: true
+    name: Server port
+    tags: server
+    type: trunk
+    vlan: 2
+    allowed_vlans:
+      - 10
+      - 15
+      - 20
+  delegate_to: localhost
+  register: update_trunk_idempotent
+
+- debug:
+    msg: '{{update_trunk_idempotent}}'
+
+- assert:
+    that:
+      - update_trunk_idempotent.changed == False
+      - update_trunk_idempotent.data is defined

@@ -1,0 +1,10 @@
+{
+    "tailf-ncs:devices": {
+        "device": [
+            {
+                "name": "ce0",
+                "description": "Example Device"
+            }
+        ]
+    }
+}

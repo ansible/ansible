@@ -1,5 +1,5 @@
 - name: simple block test
-  hosts: localhost
+  hosts: testhost
   gather_facts: yes
   strategy: "{{test_strategy|default('linear')}}"
   vars:
@@ -10,6 +10,7 @@
     tasks_run_after_failure: false
     rescue_run_after_failure: false
     always_run_after_failure: false
+    nested_block_fail_always: false
   tasks:
   - block:
     - name: set block tasks run flag
@@ -46,6 +47,29 @@
     #      always_run_after_failure: true
     - meta: clear_host_errors
 
+  # https://github.com/ansible/ansible/issues/35148
+  - block:
+    - block:
+      - name: EXPECTED FAILURE test triggering always by failing in nested block with run_once set
+        fail:
+      run_once: true
+    always:
+      - name: set block fail always run flag
+        set_fact:
+          nested_block_fail_always: true
+      - meta: clear_host_errors
+
+  - block:
+    - block:
+      - name: EXPECTED FAILURE test triggering always by failing in nested block with any_errors_fatal set
+        fail:
+      any_errors_fatal: true
+    always:
+      - name: set block fail always run flag
+        set_fact:
+          nested_block_fail_always: true
+      - meta: clear_host_errors
+
   post_tasks:
   - assert:
       that:
@@ -56,10 +80,11 @@
       - not tasks_run_after_failure
       - not rescue_run_after_failure
       - not always_run_after_failure
+      - nested_block_fail_always
   - debug: msg="TEST COMPLETE"
 
 - name: block with includes
-  hosts: localhost
+  hosts: testhost
   gather_facts: yes
   strategy: "{{test_strategy|default('linear')}}"
   vars:

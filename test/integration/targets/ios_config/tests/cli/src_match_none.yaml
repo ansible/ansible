@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/src_match_none.yaml"
+- debug: msg="START cli/src_match_none.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -9,12 +9,10 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - name: configure device with config
   ios_config:
     src: basic/config.j2
-    provider: "{{ cli }}"
     match: none
   register: result
 
@@ -22,12 +20,12 @@
     that:
       - "result.changed == true"
 # https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#     - "result.updates is not defined"
 
 - name: check device with config
   ios_config:
     src: basic/config.j2
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -37,4 +35,4 @@
       - "result.changed == false"
       - "result.updates is not defined"
 
-- debug: msg="END cli/src_match_none.yaml"
+- debug: msg="END cli/src_match_none.yaml on connection={{ ansible_connection }}"

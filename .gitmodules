@@ -1,6 +1,0 @@
-[submodule "lib/ansible/modules/core"]
-	path = lib/ansible/modules/core
-	url = https://github.com/ansible/ansible-modules-core
-[submodule "lib/ansible/modules/extras"]
-	path = lib/ansible/modules/extras
-	url = https://github.com/ansible/ansible-modules-extras

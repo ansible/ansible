@@ -1,0 +1,737 @@
+---
+- name: check warning is fired if path with / as separators is used
+  win_regedit:
+    path: HKLM:\SOFTWARE/Microsoft
+    state: present
+  register: forward_separator_warn
+
+- name: assert warning is fired if / is used as a separator
+  assert:
+    that:
+    - forward_separator_warn.deprecations|length == 1
+    - forward_separator_warn.deprecations[0].msg == "path is not using '\\' as a separator, support for '/' as a separator will be removed in a future Ansible version"
+    - forward_separator_warn.deprecations[0].version == 2.12
+
+- name: fail run win_regedit with larger dword
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: test
+    data: 0xffffffff1
+    type: dword
+    state: present
+  register: large_dword
+  failed_when: large_dword.msg != 'data cannot be larger than 0xffffffff when type is dword'
+
+- name: fail run win_regedit with larger qword
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: test
+    data: 0xffffffffffffffff1
+    type: qword
+    state: present
+  register: large_qword
+  failed_when: large_qword.msg != 'data cannot be larger than 0xffffffffffffffff when type is qword'
+
+- name: run win_regedit with invalid path
+  win_regedit:
+    path: ABCD:\efg
+  register: invalid_path
+  failed_when: "invalid_path.msg != 'path: ABCD:\\efg is not a valid powershell path, see module documentation for examples.'"
+
+- name: change string to binary check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+    data: hex:00,01
+    type: binary
+    state: present
+  register: change_string_binary_check
+  check_mode: yes
+
+- name: get actual change string to binary check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+  register: change_string_binary_actual_check
+
+- name: assert change string to binary check
+  assert:
+    that:
+    - change_string_binary_check is changed
+    - change_string_binary_check.data_changed == True
+    - change_string_binary_check.data_type_changed == True
+    - change_string_binary_actual_check.type == 'REG_SZ'
+    - change_string_binary_actual_check.raw_value == "new hello world"
+
+- name: change string to binary
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+    data: hex:00,01
+    type: binary
+    state: present
+  register: change_string_binary
+
+- name: get actual change string to binary
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_string
+  register: change_string_binary_actual
+
+- name: assert change string to binary check
+  assert:
+    that:
+    - change_string_binary is changed
+    - change_string_binary.data_changed == True
+    - change_string_binary.data_type_changed == True
+    - change_string_binary_actual.type == 'REG_BINARY'
+    - change_string_binary_actual.raw_value == ["0x00", "0x01"]
+
+- name: modify the (Default) key property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    data: default value
+    state: present
+  register: modify_default_check
+  check_mode: yes
+
+- name: get actual modify the (Default) key property check
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+    name: ''
+  register: modify_default_actual_check
+
+- name: assert modify the (Default) key property check
+  assert:
+    that:
+    - modify_default_check is changed
+    - not modify_default_actual_check.exists
+
+- name: modify the (Default) key property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    data: default value
+    state: present
+  register: modify_default
+
+- name: get actual modify the (Default) key property
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+    name: ''
+  register: modify_default_actual
+
+- name: assert modify the (Default) key property
+  assert:
+    that:
+    - modify_default is changed
+    - modify_default_actual.value == "default value"
+
+- name: create an actual property called (Default)
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    data: custom default value
+    type: expandstring
+    state: present
+  register: create_specific_default_check
+  check_mode: yes
+
+- name: get actual value for (Default) property
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+  register: create_specific_default_actual_check
+
+- name: assert create specific property called (Default) check
+  assert:
+    that:
+    - create_specific_default_check is changed
+    - create_specific_default_actual_check.properties[""].value == "default value"
+    - not "(Default)" in create_specific_default_actual_check.properties
+
+- name: create an actual property called (Default)
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    data: custom default value
+    type: expandstring
+    state: present
+  register: create_specific_default
+
+- name: get actual value for (Default) property
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+  register: create_specific_default_actual
+
+- name: assert create specific property called (Default)
+  assert:
+    that:
+    - create_specific_default is changed
+    - create_specific_default_actual.properties[""].value == "default value"
+    - create_specific_default_actual.properties["(Default)"].value == "custom default value"
+
+- name: delete property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+    state: absent
+  register: delete_property_check
+  check_mode: yes
+
+- name: get actual of delete property check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+  register: delete_property_actual_check
+
+- name: assert delete property check
+  assert:
+    that:
+    - delete_property_check is changed
+    - delete_property_actual_check.exists == True
+
+- name: delete property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+    state: absent
+  register: delete_property
+
+- name: get actual of delete property
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+  register: delete_property_actual
+
+- name: assert delete property
+  assert:
+    that:
+    - delete_property is changed
+    - delete_property_actual.exists == False
+
+- name: delete property again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: data_binary
+    state: absent
+  register: delete_property_again
+
+- name: assert delete property again
+  assert:
+    that:
+    - delete_property_again is not changed
+
+- name: delete the key's (Default) property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: no
+  register: delete_default_check
+  check_mode: yes
+
+- name: get actual of key's (Default) property check
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+  register: delete_default_actual_check
+
+- name: assert delete the key's (Default) property check
+  assert:
+    that:
+    - delete_default_check is changed
+    - delete_default_actual_check.properties[""].value == "default value"
+    - delete_default_actual_check.properties["(Default)"].value == "custom default value"
+
+- name: delete the key's (Default) property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: no
+  register: delete_default
+
+- name: get actual of key's (Default) property
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+  register: delete_default_actual
+
+- name: assert delete the key's (Default) property
+  assert:
+    that:
+    - delete_default is changed
+    - not "" in delete_default_actual.properties
+    - delete_default_actual.properties["(Default)"].value == "custom default value"
+
+- name: recreate the key's (Default) property for next test
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    data: default value
+
+- name: delete the custom (Default) property check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    state: absent
+    delete_key: no
+  register: delete_custom_default_check
+  check_mode: yes
+
+- name: get actual of key's (Default) property check
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+  register: delete_custom_default_actual_check
+
+- name: assert delete the custom (Default) property check
+  assert:
+    that:
+    - delete_custom_default_check is changed
+    - delete_custom_default_actual_check.properties[""].value == "default value"
+    - delete_custom_default_actual_check.properties["(Default)"].value == "custom default value"
+
+- name: delete the custom (Default) property
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    name: (Default)
+    state: absent
+    delete_key: no
+  register: delete_custom_default
+
+- name: get actual of key's (Default) property
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}'
+  register: delete_custom_default_actual
+
+- name: assert delete the custom (Default) property
+  assert:
+    that:
+    - delete_custom_default is changed
+    - delete_custom_default_actual.properties[""].value == "default value"
+    - not "(Default)" in delete_custom_default_actual.properties
+
+- name: add some nested keys for later deletion
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}\{{item}}'
+    state: present
+  loop:
+  - nest1
+  - nest2
+  - nest1\nested
+
+- name: delete key and it's sub keys check
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: yes
+  register: delete_key_check
+  check_mode: yes
+
+- name: get actual of delete key and it's sub keys check
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+  register: delete_key_actual_check
+
+- name: assert delete key and it's sub keys check
+  assert:
+    that:
+    - delete_key_check is changed
+    - delete_key_actual_check.exists
+    - delete_key_actual_check.sub_keys == ["nest1", "nest2"]
+
+- name: delete key and it's sub keys
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: yes
+  register: delete_key
+
+- name: get actual of delete key and it's sub keys
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}'
+  register: delete_key_actual
+
+- name: assert delete key and it's sub keys
+  assert:
+    that:
+    - delete_key is changed
+    - delete_key_actual.exists == False
+
+- name: delete key and it's sub keys again
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}'
+    state: absent
+    delete_key: yes
+  register: delete_key_again
+
+- name: assert delete key and it's sub keys again
+  assert:
+    that:
+    - delete_key_again is not changed
+
+- name: create a new key without specifying the property
+  win_regedit:
+    path: '{{ test_win_regedit_local_key }}\new'
+    state: present
+  register: create_key_no_prop
+
+- name: get result of create a new key without specifying the property
+  win_reg_stat:
+    path: '{{ test_win_regedit_local_key }}\new'
+  register: create_key_no_prop_actual
+
+- name: assert create a new key without specifying the property
+  assert:
+    that:
+    - create_key_no_prop is changed
+    - not create_key_no_prop.data_changed
+    - not create_key_no_prop.data_type_changed
+    - create_key_no_prop_actual.exists
+    - create_key_no_prop_actual.properties == {}
+
+- name: create key in HKEY_CLASSES_ROOT check
+  win_regedit:
+    path: '{{test_win_regedit_classes_key}}'
+    name: test
+    data: test
+    type: string
+    state: present
+  register: create_hkcr_key_check
+  check_mode: yes
+
+- name: get actual of create key in HKEY_CLASSES_ROOT check
+  win_reg_stat:
+    path: '{{test_win_regedit_classes_key}}'
+  register: create_hkcr_key_actual_check
+
+- name: assert create key in HKEY_CLASSES_ROOT check
+  assert:
+    that:
+    - create_hkcr_key_check is changed
+    - create_hkcr_key_actual_check.exists == False
+
+- name: create key in HKEY_CLASSES_ROOT
+  win_regedit:
+    path: '{{test_win_regedit_classes_key}}'
+    name: test
+    data: test
+    type: string
+    state: present
+  register: create_hkcr_key
+
+- name: get actual of create key in HKEY_CLASSES_ROOT
+  win_reg_stat:
+    path: '{{test_win_regedit_classes_key}}'
+  register: create_hkcr_key_actual
+
+- name: assert create key in HKEY_CLASSES_ROOT
+  assert:
+    that:
+    - create_hkcr_key is changed
+    - create_hkcr_key_actual.exists == True
+    - create_hkcr_key_actual.properties.test is defined
+
+- name: create key in HKEY_CLASSES_ROOT again
+  win_regedit:
+    path: '{{test_win_regedit_classes_key}}'
+    name: test
+    data: test
+    type: string
+    state: present
+  register: create_hkcr_key_again
+
+- name: assert create key in HKEY_CLASSES_ROOT again
+  assert:
+    that:
+    - create_hkcr_key_again is not changed
+
+# https://github.com/ansible/ansible/issues/31782
+- name: create property like a json string
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}\NewKey'
+    name: '{7f51bda7-bcea-465a-9eb6-5a2bcd9cb52f}'
+    data: test data
+    type: string
+    state: present
+  register: create_prop_with_json
+
+- name: get result of create property like a json string
+  win_reg_stat:
+    path: '{{test_win_regedit_local_key}}\NewKey'
+    name: '{7f51bda7-bcea-465a-9eb6-5a2bcd9cb52f}'
+  register: create_prop_with_json_result
+
+- name: assert results of create property like a json string
+  assert:
+    that:
+    - create_prop_with_json is changed
+    - create_prop_with_json_result.exists == True
+    - create_prop_with_json_result.value == 'test data'
+
+- name: create property like a json string (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_local_key}}\NewKey'
+    name: '{7f51bda7-bcea-465a-9eb6-5a2bcd9cb52f}'
+    data: test data
+    type: string
+    state: present
+  register: create_prop_with_json_again
+
+- name: assert results of create property like a json string (idempotent)
+  assert:
+    that:
+    - create_prop_with_json_again is not changed
+
+- name: create new key in loaded hive (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_key_in_hive_check
+  check_mode: yes
+
+- name: get result of create new key in loaded hive (check mode)
+  win_shell: |
+    $ErrorActionPreference = "Stop"
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: new_key_in_hive_result_check
+
+- name: assert result of create new key in loaded hive (check mode)
+  assert:
+    that:
+    - new_key_in_hive_check is changed
+    - new_key_in_hive_result_check.stdout == "False\r\n"
+
+- name: create new key in loaded hive
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_key_in_hive
+
+- name: get result of create new key in loaded hive
+  win_shell: |
+    $ErrorActionPreference = "Stop"
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: new_key_in_hive_result
+
+- name: assert result of create new key in loaded hive
+  assert:
+    that:
+    - new_key_in_hive is changed
+    - new_key_in_hive_result.stdout == "True\r\n"
+
+- name: create new key in loaded hive (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_key_in_hive_again
+
+- name: assert result of create new key in loaded hive (idempotent)
+  assert:
+    that:
+    - new_key_in_hive_again is not changed
+
+- name: set hive key property (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    data: string
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_prop_in_hive_check
+  check_mode: yes
+
+- name: get result of set hive key property (check mode)
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: new_prop_in_hive_result_check
+
+- name: assert result of set hive key property (check mode)
+  assert:
+    that:
+    - new_prop_in_hive_check is changed
+    - new_prop_in_hive_result_check.stdout == ""
+
+- name: set hive key property
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    data: string
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_prop_in_hive
+
+- name: get result of set hive key property
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: new_prop_in_hive_result
+
+- name: assert result of set hive key property
+  assert:
+    that:
+    - new_prop_in_hive is changed
+    - new_prop_in_hive_result.stdout == "string\r\n"
+
+- name: set hive key property (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    data: string
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
+  register: new_prop_in_hive_again
+
+- name: assert result of set hive key property (idempotent)
+  assert:
+    that:
+    - new_prop_in_hive_again is not changed
+
+- name: remove hive key property (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    state: absent
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_prop_in_hive_check
+  check_mode: yes
+
+- name: get result of remove hive key property (check mode)
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: remove_prop_in_hive_result_check
+
+- name: assert result of remove hive key property (check mode)
+  assert:
+    that:
+    - remove_prop_in_hive_check is changed
+    - remove_prop_in_hive_result_check.stdout == "string\r\n"
+
+- name: remove hive key property
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    state: absent
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_prop_in_hive
+
+- name: get result of remove hive key property
+  win_shell: |
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
+    if ($prop) {
+      $prop.TestProp
+    }
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: remove_prop_in_hive_result
+
+- name: assert result of remove hive key property
+  assert:
+    that:
+    - remove_prop_in_hive is changed
+    - remove_prop_in_hive_result.stdout == ""
+
+- name: remove hive key property (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    name: TestProp
+    state: absent
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_prop_in_hive_again
+
+- name: assert result of set hive key property (idempotent)
+  assert:
+    that:
+    - remove_prop_in_hive_again is not changed
+
+- name: remove key in loaded hive (check mode)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: absent
+    delete_key: yes
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_key_in_hive_check
+  check_mode: yes
+
+- name: get result of remove key in loaded hive (check mode)
+  win_shell: |
+    $ErrorActionPreference = "Stop"
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: remove_key_in_hive_result_check
+
+- name: assert result of removekey in loaded hive (check mode)
+  assert:
+    that:
+    - remove_key_in_hive_check is changed
+    - remove_key_in_hive_result_check.stdout == "True\r\n"
+
+- name: remove key in loaded hive
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: absent
+    delete_key: yes
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_key_in_hive
+
+- name: get result of remove key in loaded hive
+  win_shell: |
+    $ErrorActionPreference = "Stop"
+    &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
+    Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
+    exit 0
+  register: remove_key_in_hive_result
+
+- name: assert result of remove key in loaded hive
+  assert:
+    that:
+    - remove_key_in_hive is changed
+    - remove_key_in_hive_result.stdout == "False\r\n"
+
+- name: remove key in loaded hive (idempotent)
+  win_regedit:
+    path: '{{test_win_regedit_hive_key}}'
+    state: absent
+    delete_key: yes
+    hive: C:\Users\Default\NTUSER.dat
+  register: remove_key_in_hive_again
+
+- name: assert result of remove key in loaded hive (idempotent)
+  assert:
+    that:
+    - remove_key_in_hive_again is not changed

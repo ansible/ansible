@@ -1,0 +1,152 @@
+---
+# Test code for the Cisco Intersight modules
+# Copyright 2019, David Soper (@dsoper2)
+
+- name: Setup API access variables
+  debug: msg="Setup API keys"
+  vars:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key | default('~/Downloads/SSOSecretKey.txt') }}"
+      api_key_id: "{{ api_key_id | default('596cc79e5d91b400010d15ad/596cc7945d91b400010d154e/5b6275df3437357030a7795f') }}"
+
+# Setup (clean environment)
+- name: Boot policy Absent
+  intersight_rest_api: &boot_policy_absent
+    <<: *api_info
+    resource_path: /boot/PrecisionPolicies
+    query_params:
+      $filter: "Name eq 'vmedia-localdisk'"
+    state: absent
+
+# Test present (check_mode)
+- name: Boot policy present (check_mode)
+  intersight_rest_api: &boot_policy_present
+    <<: *api_info
+    resource_path: /boot/PrecisionPolicies
+    query_params:
+      $filter: "Name eq 'vmedia-localdisk'"
+    api_body: {
+      "Name": "vmedia-localdisk",
+      "ConfiguredBootMode": "Legacy",
+      "BootDevices": [
+        {
+          "ObjectType": "boot.VirtualMedia",
+          "Enabled": true,
+          "Name": "remote-vmedia",
+          "Subtype": "cimc-mapped-dvd"
+        },
+        {
+          "ObjectType": "boot.LocalDisk",
+          "Enabled": true,
+          "Name": "localdisk",
+          "Slot": "MRAID",
+          "Bootloader": null
+        }
+      ],
+    }
+  check_mode: true
+  register: cm_boot_policy_present
+
+# Present (normal mode)
+- name: Boot policy present (normal mode)
+  intersight_rest_api: *boot_policy_present
+  register: nm_boot_policy_present
+
+# Test present again (idempotent)
+- name: Boot policy present again (check_mode)
+  intersight_rest_api: *boot_policy_present
+  check_mode: true
+  register: cm_boot_policy_present_again
+
+# Present again (normal mode)
+- name: Boot policy present again (normal mode)
+  intersight_rest_api: *boot_policy_present
+  register: nm_boot_policy_present_again
+
+# Verfiy present
+- name: Verify Boot policy present results
+  assert:
+    that:
+      - cm_boot_policy_present.changed == nm_boot_policy_present.changed == true
+      - cm_boot_policy_present_again.changed == nm_boot_policy_present_again.changed == false
+
+# Test change (check_mode)
+- name: Boot policy change (check_mode)
+  intersight_rest_api: &boot_policy_change
+    <<: *api_info
+    resource_path: /boot/PrecisionPolicies
+    query_params:
+      $filter: "Name eq 'vmedia-localdisk'"
+    api_body: {
+      "Name": "vmedia-localdisk",
+      "ConfiguredBootMode": "Legacy",
+      "BootDevices": [
+        {
+          "ObjectType": "boot.VirtualMedia",
+          "Enabled": true,
+          "Name": "remote-vmedia",
+          "Subtype": "cimc-mapped-dvd"
+        },
+        {
+          "ObjectType": "boot.LocalDisk",
+          "Enabled": true,
+          "Name": "localdisk",
+          "Slot": "HBA",
+          "Bootloader": null
+        }
+      ],
+    }
+  check_mode: true
+  register: cm_boot_policy_change
+
+# Change (normal mode)
+- name: Boot policy change (normal mode)
+  intersight_rest_api: *boot_policy_change
+  register: nm_boot_policy_change
+
+# Test change again (idempotent)
+- name: Boot policy again (check_mode)
+  intersight_rest_api: *boot_policy_change
+  check_mode: true
+  register: cm_boot_policy_change_again
+
+# Change again (normal mode)
+- name: Boot policy change again (normal mode)
+  intersight_rest_api: *boot_policy_change
+  register: nm_boot_policy_change_again
+
+# Verfiy change
+- name: Verify Boot policy change results
+  assert:
+    that:
+      - cm_boot_policy_change.changed == nm_boot_policy_change.changed == true
+      - cm_boot_policy_change_again.changed == nm_boot_policy_change_again.changed == false
+
+# Teardown (clean environment)
+- name: Boot policy absent (check_mode)
+  intersight_rest_api: *boot_policy_absent
+  check_mode: true
+  register: cm_boot_policy_absent
+
+# Absent (normal mode)
+- name: Boot policy absent (normal mode)
+  intersight_rest_api: *boot_policy_absent
+  register: nm_boot_policy_absent
+
+# Test absent again (idempotent)
+- name: Boot policy absent again (check_mode)
+  intersight_rest_api: *boot_policy_absent
+  check_mode: true
+  register: cm_boot_policy_absent_again
+
+# Absent again (normal mode)
+- name: Boot policy absent again (normal mode)
+  intersight_rest_api: *boot_policy_absent
+  register: nm_boot_policy_absent_again
+
+# Verfiy absent
+- name: Verify Boot policy absent results
+  assert:
+    that:
+      - cm_boot_policy_absent.changed == nm_boot_policy_absent.changed == true
+      - cm_boot_policy_absent_again.changed == nm_boot_policy_absent_again.changed == false

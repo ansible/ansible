@@ -1,0 +1,27 @@
+# Test code for the vcenter license module.
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - name: Add a vCenter evaluation license
+    vcenter_license: &vcenter_lic_data
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      license: 00000-00000-00000-00000-00000
+      state: present
+
+  - name: Remove an (unused) vCenter evaluation license
+    vcenter_license:
+      <<: *vcenter_lic_data
+      state: absent
+
+  - name: Add an invalid vCenter license
+    vcenter_license:
+      <<: *vcenter_lic_data
+      license: 00000-00000-00000-00000-00001
+      state: present
+    register: vcenter_license_output
+    failed_when: '"is not existing or can not be added" not in vcenter_license_output.msg'

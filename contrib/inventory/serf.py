@@ -21,7 +21,7 @@
 # (https://serfdom.io/).
 #
 # Requires the `serfclient` Python module from
-# https://pypi.python.org/pypi/serfclient
+# https://pypi.org/project/serfclient/
 #
 # Environment variables
 # ---------------------
@@ -35,13 +35,10 @@ import collections
 import os
 import sys
 
-# https://pypi.python.org/pypi/serfclient
+# https://pypi.org/project/serfclient/
 from serfclient import SerfClient, EnvironmentConfig
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 _key = 'serf'
 

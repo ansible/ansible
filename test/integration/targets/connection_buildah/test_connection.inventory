@@ -1,0 +1,12 @@
+[buildah]
+buildah-container    ansible_ssh_pipelining=true
+[buildah:vars]
+# 1. install buildah
+# 2. create container:
+# $ sudo buildah from --name=buildah-container python:2
+# 3. run test:
+# $ ansible-test integration connection_buildah
+# 6. remove container
+# $ sudo buildah rm buildah-container
+ansible_host=buildah-container
+ansible_connection=buildah

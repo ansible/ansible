@@ -1,0 +1,187 @@
+---
+# tasks file for test_ec2_elb
+
+# ============================================================
+# create an ELB for testing
+
+- name: create the test load balancer
+  ec2_elb_lb:
+    name: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: present
+    zones:
+      - "{{ ec2_region }}b"
+      - "{{ ec2_region }}c"
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+    health_check:
+        ping_protocol: http
+        ping_port: 80
+        ping_path: "/index.html"
+        response_timeout: 5
+        interval: 10
+        unhealthy_threshold: 3
+        healthy_threshold: 2
+  register: result
+
+- name: assert the test load balancer was created correctly
+  assert:
+    that:
+      - 'result.changed'
+      - '"failed" not in result'
+      - 'result.elb.status == "created"'
+      - '"{{ ec2_region }}b" in result.elb.zones'
+      - '"{{ ec2_region }}c" in result.elb.zones'
+      - 'result.elb.health_check.healthy_threshold == 2'
+      - 'result.elb.health_check.interval == 10'
+      - 'result.elb.health_check.target == "HTTP:80/index.html"'
+      - 'result.elb.health_check.timeout == 5'
+      - 'result.elb.health_check.unhealthy_threshold == 3'
+      - '[80, 80, "HTTP", "HTTP"] in result.elb.listeners'
+
+
+# ============================================================
+# add one of the instances to the LB
+
+- name: add first instance to the load balancer
+  ec2_elb:
+    ec2_elbs: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    instance_id: "{{ ec2_provision_result.instance_ids[0] }}"
+    state: present
+    wait_timeout: 300
+  register: result
+
+- name: assert the first instance was added ok
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"{{resource_prefix}}" in result.ansible_facts.ec2_elbs'
+
+# ============================================================
+# add all other instances to the LB
+
+- name: add other instances to the load balancer
+  ec2_elb:
+    ec2_elbs: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    instance_id: "{{ item }}"
+    state: present
+    wait_timeout: 300
+  with_items: "ec2_provision_result.instance_ids[1:]"
+  register: result
+
+- name: assert the other instances were added ok
+  assert:
+    that:
+      - 'item.changed == True'
+      - '"{{resource_prefix}}" in item.ansible_facts.ec2_elbs'
+  with_items: result.results
+
+# ============================================================
+# shutdown http first instance so it goes out of service
+
+- name: "shutdown the apache service on the first instance ({{ec2_provision_result.instances[0].public_ip}})"
+  service: name=httpd state=stopped
+  remote_user: "ec2-user"
+  become: yes
+  become_user: root
+  delegate_to: "{{ec2_provision_result.instances[0].public_ip}}"
+
+- name: assert that the httpd service was stopped
+  assert:
+    that:
+      - 'result.changed == True'
+
+- name: pause long enough for the instance to go out of service
+  pause: seconds=60
+
+# ============================================================
+# remove the out of service instance
+
+- name: remove the out of service instance
+  ec2_elb:
+    ec2_elbs: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    instance_id: "{{ ec2_provision_result.instance_ids[0] }}"
+    state: absent
+    wait_timeout: 300
+  register: result
+
+- name: assert that the out of service instance was removed
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"{{resource_prefix}}" in result.ansible_facts.ec2_elbs'
+
+# ============================================================
+# remove another instance that is still in service
+
+- name: remove the second instance
+  ec2_elb:
+    ec2_elbs: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    instance_id: "{{ ec2_provision_result.instance_ids[1] }}"
+    state: absent
+    wait_timeout: 300
+  register: result
+
+- name: assert that the second instance was removed
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"{{resource_prefix}}" in result.ansible_facts.ec2_elbs'
+
+# ============================================================
+# re-register the second instance (issue #4902)
+
+- name: re-register the second instance (issue #4902)
+  ec2_elb:
+    ec2_elbs: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    instance_id: "{{ ec2_provision_result.instance_ids[1] }}"
+    state: present
+    wait_timeout: 300
+  register: result
+
+- name: assert the instance was re-registered ok
+  assert:
+    that:
+      - 'result.changed == True'
+      - '"{{resource_prefix}}" in result.ansible_facts.ec2_elbs'
+
+# ============================================================
+# remove all other instances
+
+- name: remove the rest of the instances
+  ec2_elb:
+    ec2_elbs: "{{ resource_prefix }}"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    instance_id: "{{ item }}"
+    state: absent
+    wait_timeout: 300
+  with_items: "ec2_provision_result.instance_ids[1:]"
+  register: result
+
+- name: assert the other instances were removed
+  assert:
+    that:
+      - 'item.changed == True'
+      - '"{{resource_prefix}}" in item.ansible_facts.ec2_elbs'
+  with_items: result.results

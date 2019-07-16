@@ -1,0 +1,4 @@
+---
+dependencies:
+  - { role: prepare_junos_tests, when: ansible_network_os == 'junos' }
+  - { role: prepare_iosxr_tests, when: ansible_network_os == 'iosxr' }

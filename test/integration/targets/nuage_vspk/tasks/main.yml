@@ -1,0 +1,19 @@
+- block:
+    - name: run test case
+      include: "{{ test_case_to_run }}"
+      with_fileglob: tests/{{ testcase }}.yaml
+      loop_control:
+        loop_var: test_case_to_run
+
+  always:
+    - name: Get nuage-vsd-sim pid
+      shell: ps -A | grep '[n]'uage-vsd-sim | cut -d ' ' -f 1
+      register: vsim_pid
+      changed_when: no
+      ignore_errors: yes
+
+    - name: Stop-nuage-vsd-sim
+      command: kill {{ vsim_pid.stdout }}
+      changed_when: no
+      ignore_errors: yes
+  when: "ansible_python_version is version('2.7', '>=')"

@@ -1,0 +1,279 @@
+# ============================================================
+- name: Test rax_cdb with no args
+  rax_cdb:
+  ignore_errors: true
+  register: rax_cdb
+
+- name: Validate results of rax_cdb with no args
+  assert:
+    that:
+      - rax_cdb is failed
+      - 'rax_cdb.msg == "missing required arguments: name"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb with name
+  rax_cdb:
+    name: fail
+  ignore_errors: true
+  register: rax_cdb
+
+- name: Validate results of rax_cdb with only creds
+  assert:
+    that:
+      - rax_cdb is failed
+      - rax_cdb.msg == 'No credentials supplied!'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb with name and credentials
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    name: fail
+  ignore_errors: true
+  register: rax_cdb
+
+- name: Validate results of rax_cdb with only creds
+  assert:
+    that:
+      - rax_cdb is failed
+      - rax_cdb.msg.startswith('None is not a valid region')
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb with creds and region
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+  ignore_errors: true
+  register: rax_cdb
+
+- name: Validate rax_cdb creds and region
+  assert:
+    that:
+      - rax_cdb is failed
+      - 'rax_cdb.msg == "missing required arguments: name"'
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb with creds, region and name
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-1"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb with creds, region and name
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == '{{ resource_prefix }}-1'
+      - rax_cdb.cdb.hostname
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: "Delete integration 1"
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-1"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: "Validate delete integration 1"
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-1"
+
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb idempotent test 1
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb idempotent test 1
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-2"
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: Test rax_cdb idempotent test 2
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb idempotent test 2
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is not changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-2"
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: "Delete integration 2"
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-2"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: "Validate delete integration 2"
+  assert:
+    that:
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-2"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb resize volume 1
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb resize volume 1
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-3"
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: Test rax_cdb resize volume 2
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    volume: 3
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb resize volume 2
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-3"
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: "Delete integration 3"
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-3"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: "Validate delete integration 3"
+  assert:
+    that:
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-3"
+# ============================================================
+
+
+
+# ============================================================
+- name: Test rax_cdb resize flavor 1
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb resize flavor 1
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-4"
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: Test rax_cdb resize flavor 2
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+    flavor: 2
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: Validate rax_cdb resize flavor 2
+  assert:
+    that:
+      - rax_cdb is successful
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-4"
+      - rax_cdb.cdb.status == 'ACTIVE'
+
+- name: "Delete integration 4"
+  rax_cdb:
+    username: "{{ rackspace_username }}"
+    api_key: "{{ rackspace_api_key }}"
+    region: "{{ rackspace_region }}"
+    name: "{{ resource_prefix }}-4"
+    state: absent
+    wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
+  register: rax_cdb
+
+- name: "Validate delete integration 4"
+  assert:
+    that:
+      - rax_cdb is changed
+      - rax_cdb.cdb.name == "{{ resource_prefix }}-4"
+# ============================================================

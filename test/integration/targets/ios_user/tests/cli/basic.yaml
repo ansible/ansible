@@ -1,0 +1,142 @@
+---
+- name: tear down old users if they exist (Setup)
+  become: true
+  ios_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+      - name: ansibletest4
+      - name: ansibletest5
+      - name: ansibletest6
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Create user (SetUp)
+  become: true
+  ios_user:
+    name: ansibletest1
+    privilege: 15
+    role: network-operator
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest1 view network-operator", "username ansibletest1 privilege 15"]'
+
+- name: Collection of users (SetUp)
+  become: true
+  ios_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    provider: "{{ cli }}"
+    state: present
+    view: network-admin
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - 'result.commands == ["username ansibletest2 view network-admin", "username ansibletest3 view network-admin"]'
+
+- name: Add user again (Idempotent)
+  become: true
+  ios_user:
+    name: ansibletest1
+    privilege: 15
+    role: network-operator
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Add collection of users again (Idempotent)
+  become: true
+  ios_user:
+    aggregate:
+      - name: ansibletest2
+      - name: ansibletest3
+    provider: "{{ cli }}"
+    state: present
+    view: network-admin
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+      - 'result.commands | length == 0'
+
+- name: Create user with password_type (password)
+  become: true
+  ios_user:
+    name: ansibleuser4
+    password_type: password
+    configured_password: testpass
+    provider: "{{ cli }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'username ansibleuser4 password' in result.commands[0]"
+
+- name: Create user with password_type (secret)
+  become: true
+  ios_user:
+    name: ansibleuser5
+    password_type: secret
+    configured_password: testpass
+    provider: "{{ cli }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'username ansibleuser5 secret' in result.commands[0]"
+
+- name: Create user with hashed_password
+  become: true
+  ios_user:
+    name: ansibleuser6
+    hashed_password:
+      type: 5
+      value: $3$8JcDilcYgFZi.yz4ApaqkHG2.8/
+    provider: "{{ cli }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - "'username ansibleuser6 secret' in result.commands[0]"
+
+- name: tearDown
+  become: true
+  ios_user:
+    aggregate:
+      - name: ansibletest1
+      - name: ansibletest2
+      - name: ansibletest3
+      - name: ansibletest4
+      - name: ansibletest5
+      - name: ansibletest6
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"no username ansibletest1" in result.commands[0]["command"]'
+      - '"no username ansibletest2" in result.commands[1]["command"]'
+      - '"no username ansibletest3" in result.commands[2]["command"]'

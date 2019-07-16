@@ -1,0 +1,540 @@
+- name: create a tempdir for an SSH key
+  shell: mktemp -d
+  delegate_to: localhost
+  register: tempdir
+
+- name: Generate a local SSH key
+  shell: "ssh-keygen -b 2048 -t rsa -f {{ tempdir.stdout }}/id_rsa -q -N 'passphrase'"
+  delegate_to: localhost
+
+- name: Read the generated key
+  set_fact:
+    ssh_key_data: "{{ lookup('file', tempdir.stdout + '/id_rsa') }}"
+
+- name: Create a User-specific credential
+  tower_credential:
+    name: SSH Credential
+    organization: Default
+    user: admin
+    state: present
+    kind: ssh
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a User-specific credential
+  tower_credential:
+    name: SSH Credential
+    organization: Default
+    user: admin
+    state: absent
+    kind: ssh
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid SSH credential
+  tower_credential:
+    name: SSH Credential
+    organization: Default
+    state: present
+    kind: ssh
+    description: An example SSH credential
+    username: joe
+    password: secret
+    become_method: sudo
+    become_username: superuser
+    become_password: supersecret
+    ssh_key_data: "{{ ssh_key_data }}"
+    ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid SSH credential from lookup source
+  tower_credential:
+    name: SSH Credential from lookup source
+    organization: Default
+    state: present
+    kind: ssh
+    description: An example SSH credential from lookup source
+    username: joe
+    password: secret
+    become_method: sudo
+    become_username: superuser
+    become_password: supersecret
+    ssh_key_data: "{{ lookup('file', tempdir.stdout + '/id_rsa') }}"
+    ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid SSH credential from file source
+  tower_credential:
+    name: SSH Credential from file source
+    organization: Default
+    state: present
+    kind: ssh
+    description: An example SSH credential from file source
+    username: joe
+    password: secret
+    become_method: sudo
+    become_username: superuser
+    become_password: supersecret
+    ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
+    ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+      - "result is not failed"
+      - "'ssh_key_data should be a string, not a path to a file.' in result.deprecations[0].msg"
+
+- name: Create an invalid SSH credential (passphrase required)
+  tower_credential:
+    name: SSH Credential
+    organization: Default
+    state: present
+    kind: ssh
+    username: joe
+    ssh_key_data: "{{ ssh_key_data }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result is failed"
+      - "'must be set when SSH key is encrypted' in result.msg"
+
+- name: Create an invalid SSH credential (Organization not found)
+  tower_credential:
+    name: SSH Credential
+    organization: Missing Organization
+    state: present
+    kind: ssh
+    username: joe
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result is failed"
+      - "'The requested object could not be found' in result.msg"
+
+- name: Delete an SSH credential
+  tower_credential:
+    name: SSH Credential
+    organization: Default
+    state: absent
+    kind: ssh
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid Vault credential
+  tower_credential:
+    name: Vault Credential
+    organization: Default
+    state: present
+    kind: vault
+    description: An example Vault credential
+    vault_password: secret-vault
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid Vault credential w/ kind=ssh (deprecated)
+  tower_credential:
+    name: Vault Credential
+    organization: Default
+    state: present
+    kind: ssh
+    description: An example Vault credential
+    vault_password: secret-vault
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Vault credential
+  tower_credential:
+    name: Vault Credential
+    organization: Default
+    state: absent
+    kind: vault
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid Network credential
+  tower_credential:
+    name: Network Credential
+    organization: Default
+    state: present
+    kind: net
+    username: joe
+    password: secret
+    authorize: true
+    authorize_password: authorize-me
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Network credential
+  tower_credential:
+    name: Network Credential
+    organization: Default
+    state: absent
+    kind: net
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid SCM credential
+  tower_credential:
+    name: SCM Credential
+    organization: Default
+    state: present
+    kind: scm
+    username: joe
+    password: secret
+    ssh_key_data: "{{ ssh_key_data }}"
+    ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an SCM credential
+  tower_credential:
+    name: SCM Credential
+    organization: Default
+    state: absent
+    kind: scm
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid AWS credential
+  tower_credential:
+    name: AWS Credential
+    organization: Default
+    state: present
+    kind: aws
+    username: joe
+    password: secret
+    security_token: aws-token
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an AWS credential
+  tower_credential:
+    name: AWS Credential
+    organization: Default
+    state: absent
+    kind: aws
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid VMware credential
+  tower_credential:
+    name: VMware Credential
+    organization: Default
+    state: present
+    kind: vmware
+    host: https://example.org
+    username: joe
+    password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an VMware credential
+  tower_credential:
+    name: VMware Credential
+    organization: Default
+    state: absent
+    kind: vmware
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid Satellite6 credential
+  tower_credential:
+    name: Satellite6 Credential
+    organization: Default
+    state: present
+    kind: satellite6
+    host: https://example.org
+    username: joe
+    password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Satellite6 credential
+  tower_credential:
+    name: Satellite6 Credential
+    organization: Default
+    state: absent
+    kind: satellite6
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid CloudForms credential
+  tower_credential:
+    name: CloudForms Credential
+    organization: Default
+    state: present
+    kind: cloudforms
+    host: https://example.org
+    username: joe
+    password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a CloudForms credential
+  tower_credential:
+    name: CloudForms Credential
+    organization: Default
+    state: absent
+    kind: cloudforms
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid GCE credential
+  tower_credential:
+    name: GCE Credential
+    organization: Default
+    state: present
+    kind: gce
+    username: joe
+    project: ABC123
+    ssh_key_data: "{{ ssh_key_data }}"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a GCE credential
+  tower_credential:
+    name: GCE Credential
+    organization: Default
+    state: absent
+    kind: gce
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid AzureRM credential
+  tower_credential:
+    name: AzureRM Credential
+    organization: Default
+    state: present
+    kind: azure_rm
+    username: joe
+    password: secret
+    subscription: some-subscription
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid AzureRM credential with a tenant
+  tower_credential:
+    name: AzureRM Credential
+    organization: Default
+    state: present
+    kind: azure_rm
+    client: some-client
+    secret: some-secret
+    tenant: some-tenant
+    subscription: some-subscription
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an AzureRM credential
+  tower_credential:
+    name: AzureRM Credential
+    organization: Default
+    state: absent
+    kind: azure_rm
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid OpenStack credential
+  tower_credential:
+    name: OpenStack Credential
+    organization: Default
+    state: present
+    kind: openstack
+    host: https://keystone.example.org
+    username: joe
+    password: secret
+    project: tenant123
+    domain: some-domain
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a OpenStack credential
+  tower_credential:
+    name: OpenStack Credential
+    organization: Default
+    state: absent
+    kind: openstack
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid RHV credential
+  tower_credential:
+    name: RHV Credential
+    organization: Default
+    state: present
+    kind: rhv
+    host: https://example.org
+    username: joe
+    password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an RHV credential
+  tower_credential:
+    name: RHV Credential
+    organization: Default
+    state: absent
+    kind: rhv
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid Insights credential
+  tower_credential:
+    name: Insights Credential
+    organization: Default
+    state: present
+    kind: insights
+    username: joe
+    password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an Insights credential
+  tower_credential:
+    name: Insights Credential
+    organization: Default
+    state: absent
+    kind: insights
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid Tower-to-Tower credential
+  tower_credential:
+    name: Tower Credential
+    organization: Default
+    state: present
+    kind: tower
+    host: https://tower.example.org
+    username: joe
+    password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Tower-to-Tower credential
+  tower_credential:
+    name: Tower Credential
+    organization: Default
+    state: absent
+    kind: tower
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_credential:
+    name: test-credential
+    description: Credential Description
+    kind: ssh
+    organization: test-non-existing-org
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update credential, organization not found: The requested object could not be found.'"

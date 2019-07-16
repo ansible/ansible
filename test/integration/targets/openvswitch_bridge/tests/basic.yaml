@@ -1,0 +1,48 @@
+---
+
+- name: Make sure test bridge does not exist before tests
+  command: ovs-vsctl del-br br-test
+  ignore_errors: yes
+
+- name: Create bridge
+  openvswitch_bridge:
+    bridge: br-test
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Create bridge again (idempotent)
+  openvswitch_bridge:
+    bridge: br-test
+  register: result
+
+- assert:
+    that:
+      - result is not changed
+
+- name: Add fake bridge
+  openvswitch_bridge:
+    bridge: fake-br-test
+    parent: br-test
+    vlan: 100
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Change fake bridge vlan
+  openvswitch_bridge:
+    bridge: fake-br-test
+    parent: br-test
+    vlan: 300
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Tear down test bridges
+  command: ovs-vsctl del-br br-test

@@ -1,0 +1,75 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create a mariadb instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          engine: mariadb
+          username: "{{ username }}"
+          password: "{{ password }}"
+          db_instance_class: "{{ db_instance_class }}"
+          allocated_storage: "{{ allocated_storage }}"
+          <<: *aws_connection_info
+        register: result
+
+      - name: Delete the DB instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          final_snapshot_identifier: "{{ instance_id }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.final_snapshot.db_instance_identifier == '{{ instance_id }}'"
+
+      - name: Check that snapshot exists
+        rds_snapshot_info:
+          db_snapshot_identifier: "{{ instance_id }}"
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - "result.snapshots | length == 1"
+            - "result.snapshots.0.engine == 'mariadb'"
+
+    always:
+      - name: Remove the snapshot
+        rds_snapshot:
+          db_snapshot_identifier: "{{ instance_id }}"
+          state: absent
+          <<: *aws_connection_info
+        ignore_errors: yes
+
+      - name: Remove the DB instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        ignore_errors: yes         

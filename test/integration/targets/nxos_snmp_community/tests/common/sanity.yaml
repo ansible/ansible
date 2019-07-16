@@ -1,0 +1,147 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_community sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Setup - Remove snmp_community if configured
+  nxos_snmp_community: &remove
+    community: TESTING7
+    group: network-operator
+    provider: "{{ connection }}"
+    state: absent 
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure snmp_community group
+    nxos_snmp_community: &config
+      community: TESTING7
+      group: network-operator
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence Check
+    nxos_snmp_community: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Change snmp_community group
+    nxos_snmp_community: &chg
+      community: TESTING7
+      group: network-admin
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *chg
+    register: result
+
+  - assert: *false
+
+  - name: Remove snmp_community
+    nxos_snmp_community: *remove
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *remove
+    register: result
+
+  - assert: *false
+
+  - name: Configure snmp_community access read-only
+    nxos_snmp_community: &configaccess
+      community: TESTING7
+      access: ro
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *configaccess
+    register: result
+
+  - assert: *false
+
+  - name: Remove snmp_community
+    nxos_snmp_community: *remove
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *remove
+    register: result
+
+  - assert: *false
+
+  - name: Configure snmp_community access read-write
+    nxos_snmp_community: &configaccessrw
+      community: TESTING7
+      access: rw
+      acl: ansible_acl
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *configaccessrw
+    register: result
+
+  - assert: *false
+
+  - name: Change acl
+    nxos_snmp_community: &chgacl
+      community: TESTING7
+      access: rw
+      acl: new_acl
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *chgacl
+    register: result
+
+  - assert: *false
+
+  - name: Remove acl
+    nxos_snmp_community: &removeacl
+      community: TESTING7
+      access: rw
+      acl: default
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_community: *removeacl
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Cleanup
+    nxos_snmp_community: *remove
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_community sanity test"

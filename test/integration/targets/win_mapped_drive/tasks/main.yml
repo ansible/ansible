@@ -1,0 +1,99 @@
+---
+# test setup
+- name: gather facts required by the tests
+  setup:
+    gather_subset: platform
+
+- name: ensure mapped drive is deleted before test
+  win_mapped_drive:
+    letter: '{{test_win_mapped_drive_letter}}'
+    state: absent
+
+- name: ensure temp mapped drive user exist
+  win_user:
+    name: '{{test_win_mapped_drive_temp_user}}'
+    password: '{{test_win_mapped_drive_temp_password}}'
+    state: present
+    groups:
+    - Administrators
+
+- name: ensure temp folders exist
+  win_file:
+    path: '{{item}}'
+    state: directory
+  with_items:
+  - '{{test_win_mapped_drive_local_path}}'
+  - '{{test_win_mapped_drive_local_path2}}'
+
+# can't use win_share as it doesnt't support Server 2008 and 2008 R2
+- name: ensure shares exist
+  win_shell: $share = Get-WmiObject -Class Win32_Share | Where-Object { $_.Name -eq '{{item.name}}' }; if (-not $share) { $share = [wmiClass]'Win32_Share'; $share.Create('{{item.path}}', '{{item.name}}', 0) }
+  with_items:
+  - { name: '{{test_win_mapped_drive_path}}', path: '{{test_win_mapped_drive_local_path}}' }
+  - { name: '{{test_win_mapped_drive_path2}}', path: '{{test_win_mapped_drive_local_path2}}' }
+
+# This ensures we test out the split token/become behaviour
+- name: ensure builtin Administrator has a split token
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+    name: FilterAdministratorToken
+    data: 1
+    type: dword
+  register: admin_uac
+
+- name: reboot to apply Admin approval mode setting
+  win_reboot:
+  when: admin_uac is changed
+
+- block:
+  # tests
+  - include_tasks: tests.yml
+
+  # test cleanup
+  always:
+  - name: remove stored credential
+    win_credential:
+      name: '{{ ansible_hostname }}'
+      type: domain_password
+      state: absent
+    vars:
+      ansible_become: yes
+      ansible_become_method: runas
+      ansible_become_user: '{{ ansible_user }}'
+      ansible_become_pass: '{{ ansible_password }}'
+
+  - name: ensure mapped drive is deleted at the end of the test
+    win_mapped_drive:
+      letter: '{{test_win_mapped_drive_letter}}'
+      state: absent
+
+  - name: ensure shares are removed
+    win_shell: $share = Get-WmiObject -Class Win32_Share | Where-Object { $_.Name -eq '{{item}}' }; if ($share) { $share.Delete() }
+    with_items:
+    - '{{test_win_mapped_drive_path}}'
+    - '{{test_win_mapped_drive_path2}}'
+
+  - name: ensure temp folders are deleted
+    win_file:
+      path: '{{item}}'
+      state: absent
+    with_items:
+    - '{{test_win_mapped_drive_local_path}}'
+    - '{{test_win_mapped_drive_local_path2}}'
+
+  - name: ensure temp mapped driver user is deleted
+    win_user:
+      name: '{{test_win_mapped_drive_temp_user}}'
+      state: absent
+
+  - name: disable Admin approval mode if changed in test
+    win_regedit:
+      path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+      name: FilterAdministratorToken
+      data: 0
+      type: dword
+    when: admin_uac is changed
+
+  - name: reboot to apply Admin approval mode setting
+    win_reboot:
+    when: admin_uac is changed

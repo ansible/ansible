@@ -1,0 +1,53 @@
+---
+- debug: msg="START common/src_match_none.yaml on connection={{ ansible_connection }}"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: setup
+  nxos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+
+- name: configure device with config
+  nxos_config:
+    commands:
+      - description this is a test
+      - shutdown
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    defaults: yes
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+# Defend https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is defined"
+
+- name: check device with config
+  nxos_config:
+    commands:
+      - description this is a test
+      - shutdown
+    parents:
+      - "interface {{ intname }}"
+    defaults: yes
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      # Idempotent test
+# Defend https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- debug: msg="END common/src_match_none.yaml on connection={{ ansible_connection }}"

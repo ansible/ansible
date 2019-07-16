@@ -1,0 +1,16 @@
+---
+# setup stuff not testing zabbix_host
+- include: zabbix_host_setup.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'
+
+# zabbix_host module tests
+- include: zabbix_host_tests.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'
+
+# documentation example tests
+- include: zabbix_host_doc.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'
+
+# tear down stuff set up earlier
+- include: zabbix_host_teardown.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release == 'trusty'

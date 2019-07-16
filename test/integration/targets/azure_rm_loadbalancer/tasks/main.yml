@@ -1,0 +1,298 @@
+- name: Prepare random number
+  set_fact:
+    pipaname: "pipa{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    pipbname: "pipb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbvnname: "lbvn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_a: "lba{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_b: "lbb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_c1: "lbc1-{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_c2: "lbc2-{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    lbname_d: "lbd{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: "{{ pipbname }}"
+    sku: Standard
+    allocation_method: Static
+    resource_group: '{{ resource_group }}'
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: "{{ pipaname }}"
+    resource_group: '{{ resource_group }}'
+
+- name: clear load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_a }}"
+    state: absent
+
+- name: create load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_a }}"
+    public_ip: "{{ pipaname }}"
+  register: output
+
+- name: assert load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_a }}"
+    state: absent
+  register: output
+
+- name: assert load balancer deleted
+  assert:
+    that: output.changed
+
+- name: delete load balancer (idempotent)
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_a }}"
+    state: absent
+  register: output
+
+- name: assert load balancer deleted (idempotent)
+  assert:
+    that: not output.changed
+
+- name: create another load balancer with more options
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_b }}"
+    sku: Standard
+    public_ip_address: "{{ pipbname }}"
+    probe_protocol: Tcp
+    probe_port: 80
+    probe_interval: 10
+    probe_fail_count: 3
+    protocol: Tcp
+    load_distribution: Default
+    frontend_port: 80
+    backend_port: 8080
+    idle_timeout: 4
+    natpool_frontend_port_start: 30
+    natpool_frontend_port_end: 40
+    natpool_backend_port: 80
+    natpool_protocol: Tcp
+  register: output
+
+- name: assert complex load balancer created
+  assert:
+    that:
+    - output.changed
+    - output.state.sku.name == 'Standard'
+
+- name: create load balancer again to check idempotency
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_b }}"
+    sku: Standard
+    public_ip_address: "{{ pipbname }}"
+    probe_protocol: Tcp
+    probe_port: 80
+    probe_interval: 10
+    probe_fail_count: 3
+    protocol: Tcp
+    load_distribution: Default
+    frontend_port: 80
+    backend_port: 8080
+    idle_timeout: 4
+    natpool_frontend_port_start: 30
+    natpool_frontend_port_end: 40
+    natpool_backend_port: 80
+    natpool_protocol: Tcp
+  register: output
+
+- name: assert that output has not changed
+  assert:
+    that:
+    - not output.changed
+
+- name: create load balancer again to check idempotency - change something
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_b }}"
+    sku: Standard
+    public_ip_address: "{{ pipbname }}"
+    probe_protocol: Tcp
+    probe_port: 80
+    probe_interval: 10
+    probe_fail_count: 3
+    protocol: Tcp
+    load_distribution: Default
+    frontend_port: 81
+    backend_port: 8080
+    idle_timeout: 4
+    natpool_frontend_port_start: 30
+    natpool_frontend_port_end: 40
+    natpool_backend_port: 80
+    natpool_protocol: Tcp
+  register: output
+
+- name: assert that output has changed
+  assert:
+    that:
+    - output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_b }}"
+    state: absent
+
+- name: create load balancer with multiple parameters
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c1 }}"
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: "{{ pipaname }}"
+    backend_address_pools:
+      - name: backendaddrpool0
+    probes:
+      - name: prob0
+        port: 80
+    inbound_nat_pools:
+      - name: inboundnatpool0
+        frontend_ip_configuration_name: frontendipconf0
+        protocol: Tcp
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
+        backend_port: 8080
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+  register: output
+
+- name: assert complex load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c1 }}"
+    state: absent
+
+- name: create load balancer with multiple parameters
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c2 }}"
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: "{{ pipaname }}"
+    backend_address_pools:
+      - name: backendaddrpool0
+    probes:
+      - name: prob0
+        port: 80
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+    inbound_nat_rules:
+      - name: inboundnatrule0
+        backend_port: 8080
+        protocol: Tcp
+        frontend_port: 8080
+        frontend_ip_configuration: frontendipconf0
+  register: output
+
+- name: assert complex load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c2 }}"
+    state: absent
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: "{{ lbvnname }}"
+      address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}sb"
+      address_prefix: "10.10.0.0/24"
+      virtual_network: "{{ lbvnname }}"
+  register: subnet
+
+- name: create internal loadbalancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_d }}"
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        private_ip_address: 10.10.0.10
+        private_ip_allocation_method: Static
+        subnet: "{{ subnet.state.id }}"
+    backend_address_pools:
+      - name: backendaddrpool0
+    probes:
+      - name: prob0
+        port: 80
+    inbound_nat_pools:
+      - name: inboundnatpool0
+        frontend_ip_configuration_name: frontendipconf0
+        protocol: Tcp
+        frontend_port_range_start: 80
+        frontend_port_range_end: 81
+        backend_port: 8080
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+  register: output
+
+- name: assert complex load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_d }}"
+    state: absent
+
+- name: cleanup public ip
+  azure_rm_publicipaddress:
+    name: "{{ item }}"
+    resource_group: '{{ resource_group }}'
+    state: absent
+  with_items:
+  - "{{ pipaname }}"
+  - "{{ pipbname }}"
+
+- name: cleanup subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      name: "lb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}sb"
+      virtual_network: "{{ lbvnname }}"
+      state: absent
+
+- name: cleanup virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: "{{ lbvnname }}"
+      state: absent

@@ -1,29 +1,31 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+name: powershell
+plugin_type: shell
+version_added: historical
+short_description: Windows PowerShell
+description:
+- The only option when using 'winrm' or 'psrp' as a connection plugin.
+- Can also be used when using 'ssh' as a connection plugin and the C(DefaultShell) has been configured to PowerShell.
+extends_documentation_fragment:
+- shell_windows
+'''
 
 import base64
 import os
 import re
 import shlex
+import pkgutil
+import xml.etree.ElementTree as ET
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.plugins.shell import ShellBase
 
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
@@ -35,7 +37,22 @@ if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
 
 
-class ShellModule(object):
+def _parse_clixml(data, stream="Error"):
+    """
+    Takes a byte string like '#< CLIXML\r\n<Objs...' and extracts the stream
+    message encoded in the XML data. CLIXML is used by PowerShell to encode
+    multiple objects in stderr.
+    """
+    clixml = ET.fromstring(data.split(b"\r\n", 1)[-1])
+    namespace_match = re.match(r'{(.*)}', clixml.tag)
+    namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
+
+    strings = clixml.findall("./%sS" % namespace)
+    lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream]
+    return to_bytes('\r\n'.join(lines))
+
+
+class ShellModule(ShellBase):
 
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
@@ -44,12 +61,20 @@ class ShellModule(object):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
+    _SHELL_REDIRECT_ALLNULL = '> $null'
+    _SHELL_AND = ';'
+
+    # Used by various parts of Ansible to do Windows specific changes
+    _IS_WINDOWS = True
+
     env = dict()
 
     # We're being overly cautious about which keys to accept (more so than
     # the Windows environment is capable of doing), since the powershell
     # env provider's limitations don't appear to be documented.
     safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
+
+    # TODO: add binary module support
 
     def assert_safe_env_key(self, key):
         if not self.safe_envkey.match(key):
@@ -64,9 +89,8 @@ class ShellModule(object):
         return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
-        env = self.env.copy()
-        env.update(kwargs)
-        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
+        # powershell/winrm env handling is handled in the exec wrapper
+        return ""
 
     def join_path(self, *args):
         parts = []
@@ -76,7 +100,7 @@ class ShellModule(object):
         path = '\\'.join(parts)
         if path.startswith('~'):
             return path
-        return '\'%s\'' % path
+        return path
 
     def get_remote_filename(self, pathname):
         # powershell requires that script files end with .ps1
@@ -108,22 +132,30 @@ class ShellModule(object):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+        # Windows does not have an equivalent for the system temp files, so
+        # the param is ignored
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path!
-        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 
-    def expand_user(self, user_home_path):
+        script = '''
+        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
+        $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
+        Write-Output -InputObject $tmp.FullName
+        ''' % (basetmpdir, basefile)
+        return self._encode_script(script.strip())
+
+    def expand_user(self, user_home_path, username=''):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
         # not seem to work remotely, though by default we are always starting
         # in the user's home directory.
         user_home_path = self._unquote(user_home_path)
         if user_home_path == '~':
-            script = 'Write-Host (Get-Location).Path'
+            script = 'Write-Output (Get-Location).Path'
         elif user_home_path.startswith('~\\'):
-            script = 'Write-Host ((Get-Location).Path + "%s")' % self._escape(user_home_path[1:])
+            script = 'Write-Output ((Get-Location).Path + "%s")' % self._escape(user_home_path[1:])
         else:
-            script = 'Write-Host "%s"' % self._escape(user_home_path)
+            script = 'Write-Output "%s"' % self._escape(user_home_path)
         return self._encode_script(script)
 
     def exists(self, path):
@@ -137,7 +169,7 @@ class ShellModule(object):
             {
                 $res = 1;
             }
-            Write-Host "$res";
+            Write-Output "$res";
             Exit $res;
          ''' % path
         return self._encode_script(script)
@@ -154,22 +186,32 @@ class ShellModule(object):
             }
             ElseIf (Test-Path -PathType Container "%(path)s")
             {
-                Write-Host "3";
+                Write-Output "3";
             }
             Else
             {
-                Write-Host "1";
+                Write-Output "1";
             }
         ''' % dict(path=path)
         return self._encode_script(script)
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
-        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
-        cmd_parts = map(to_text, cmd_parts)
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None):
+        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
+
+        # pipelining bypass
+        if cmd == '':
+            return self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
+
+        # non-pipelining
+
+        cmd_parts = shlex.split(cmd, posix=False)
+        cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
+                # we're running a module via the bootstrap wrapper
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            cmd_parts.insert(0, '&')
+            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
+            return wrapper_cmd
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:
@@ -212,11 +254,10 @@ class ShellModule(object):
                 Exit 1
             }
         ''' % (env_string, ' '.join(cmd_parts))
-        if rm_tmp:
-            rm_tmp = self._escape(self._unquote(rm_tmp))
-            rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
-            script = '%s\nFinally { %s }' % (script, rm_cmd)
-        return self._encode_script(script)
+        return self._encode_script(script, preserve_rc=False)
+
+    def wrap_for_exec(self, cmd):
+        return '& %s; exit $LASTEXITCODE' % cmd
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''
@@ -240,17 +281,31 @@ class ShellModule(object):
             subs.append(('$', '`$'))
         pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
         substs = [s for p, s in subs]
-        replace = lambda m: substs[m.lastindex - 1]
+
+        def replace(m):
+            return substs[m.lastindex - 1]
+
         return re.sub(pattern, replace, value)
 
-    def _encode_script(self, script, as_list=False, strict_mode=True):
+    def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
         script = to_text(script)
-        if strict_mode:
-            script = u'Set-StrictMode -Version Latest\r\n%s' % script
-        script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
-        encoded_script = base64.b64encode(script.encode('utf-16-le'))
-        cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+
+        if script == u'-':
+            cmd_parts = _common_args + ['-Command', '-']
+
+        else:
+            if strict_mode:
+                script = u'Set-StrictMode -Version Latest\r\n%s' % script
+            # try to propagate exit code if present- won't work with begin/process/end-style scripts (ala put_file)
+            # NB: the exit code returned may be incorrect in the case of a successful command followed by an invalid command
+            if preserve_rc:
+                script = u'%s\r\nIf (-not $?) { If (Get-Variable LASTEXITCODE -ErrorAction SilentlyContinue) { exit $LASTEXITCODE } Else { exit 1 } }\r\n'\
+                    % script
+            script = '\n'.join([x.strip() for x in script.splitlines() if x.strip()])
+            encoded_script = to_text(base64.b64encode(script.encode('utf-16-le')), 'utf-8')
+            cmd_parts = _common_args + ['-EncodedCommand', encoded_script]
+
         if as_list:
             return cmd_parts
         return ' '.join(cmd_parts)

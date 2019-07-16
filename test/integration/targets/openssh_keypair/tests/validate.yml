@@ -1,0 +1,93 @@
+---
+- name: Log privatekey1 return values
+  debug:
+    var: privatekey1_result
+
+- name: Validate privatekey1 return fingerprint
+  assert:
+    that:
+      - privatekey1_result["fingerprint"] is string
+      - privatekey1_result["fingerprint"].startswith("SHA256:")
+  # only distro old enough that it still gives md5 with no prefix
+  when: ansible_distribution != 'CentOS' and ansible_distribution_major_version != '6'
+
+- name: Validate privatekey1 return public_key
+  assert:
+    that:
+      - privatekey1_result["public_key"] is string
+      - privatekey1_result["public_key"].startswith("ssh-rsa ")
+
+- name: Validate privatekey1 return size value
+  assert:
+    that:
+      - privatekey1_result["size"]|type_debug == 'int'
+      - privatekey1_result["size"] == 4096
+
+- name: Validate privatekey1 return key type
+  assert:
+    that:
+      - privatekey1_result["type"] is string
+      - privatekey1_result["type"] == "rsa"
+
+- name: Validate privatekey1 (test - RSA key with size 4096 bits)
+  shell: "ssh-keygen -lf {{ output_dir }}/privatekey1 | grep -o -E '^[0-9]+'"
+  register: privatekey1
+
+- name: Validate privatekey1 (assert - RSA key with size 4096 bits)
+  assert:
+    that:
+      - privatekey1.stdout == '4096'
+
+
+- name: Validate privatekey2 (test - RSA key with size 2048 bits)
+  shell: "ssh-keygen -lf {{ output_dir }}/privatekey2 | grep -o -E '^[0-9]+'"
+  register: privatekey2
+
+- name: Validate privatekey2 (assert - RSA key with size 2048 bits)
+  assert:
+    that:
+      - privatekey2.stdout == '2048'
+
+
+- name: Validate privatekey3 (test - DSA key with size 1024 bits)
+  shell: "ssh-keygen -lf {{ output_dir }}/privatekey3 | grep -o -E '^[0-9]+'"
+  register: privatekey3
+
+- name: Validate privatekey3 (assert - DSA key with size 4096 bits)
+  assert:
+    that:
+      - privatekey3.stdout == '1024'
+
+
+- name: Validate privatekey4 (test - Ensure key has been removed)
+  stat:
+    path: '{{ output_dir }}/privatekey4'
+  register: privatekey4
+
+- name: Validate privatekey4 (assert - Ensure key has been removed)
+  assert:
+    that:
+      - privatekey4.stat.exists == False
+
+
+- name: Validate privatekey5 (assert - Public key module output equal to the public key on host)
+  assert:
+    that:
+      - "publickey_gen.public_key == lookup('file', output_dir ~ '/privatekey5.pub').strip('\n')"
+
+- name: Verify that privatekey6 will be regenerated via force
+  assert:
+    that:
+      - output_regenerated_via_force is changed
+
+
+- name: Verify that broken key will be regenerated
+  assert:
+    that:
+      - output_broken is changed
+
+
+- name: Verify that read-only key will be regenerated
+  assert:
+    that:
+      - output_read_only is changed

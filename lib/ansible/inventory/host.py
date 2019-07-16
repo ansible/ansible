@@ -19,17 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import uuid
-
 from ansible.inventory.group import Group
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
+
 
 class Host:
     ''' a single ansible host '''
 
-    #__slots__ = [ 'name', 'vars', 'groups' ]
+    # __slots__ = [ 'name', 'vars', 'groups' ]
 
     def __getstate__(self):
         return self.serialize()
@@ -48,6 +47,12 @@ class Host:
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return self.get_name()
+
+    def __repr__(self):
+        return self.get_name()
+
     def serialize(self):
         groups = []
         for group in self.groups:
@@ -58,7 +63,6 @@ class Host:
             vars=self.vars.copy(),
             address=self.address,
             uuid=self._uuid,
-            gathered_facts=self._gathered_facts,
             groups=groups,
             implicit=self.implicit,
         )
@@ -66,11 +70,11 @@ class Host:
     def deserialize(self, data):
         self.__init__(gen_uuid=False)
 
-        self.name    = data.get('name')
-        self.vars    = data.get('vars', dict())
+        self.name = data.get('name')
+        self.vars = data.get('vars', dict())
         self.address = data.get('address', '')
-        self._uuid   = data.get('uuid', None)
-        self.implicit= data.get('implicit', False)
+        self._uuid = data.get('uuid', None)
+        self.implicit = data.get('implicit', False)
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -80,64 +84,71 @@ class Host:
 
     def __init__(self, name=None, port=None, gen_uuid=True):
 
-        self.name = name
         self.vars = {}
         self.groups = []
+        self._uuid = None
 
+        self.name = name
         self.address = name
 
         if port:
             self.set_variable('ansible_port', int(port))
 
-        self._gathered_facts = False
-        self._uuid = None
         if gen_uuid:
-            self._uuid = uuid.uuid4()
+            self._uuid = get_unique_id()
         self.implicit = False
-
-    def __repr__(self):
-        return self.get_name()
 
     def get_name(self):
         return self.name
 
-    @property
-    def gathered_facts(self):
-        return self._gathered_facts
-
-    def set_gathered_facts(self, gathered):
-        self._gathered_facts = gathered
+    def populate_ancestors(self, additions=None):
+        # populate ancestors
+        if additions is None:
+            for group in self.groups:
+                self.add_group(group)
+        else:
+            for group in additions:
+                if group not in self.groups:
+                    self.groups.append(group)
 
     def add_group(self, group):
 
-        self.groups.append(group)
+        # populate ancestors first
+        for oldg in group.get_ancestors():
+            if oldg not in self.groups:
+                self.groups.append(oldg)
+
+        # actually add group
+        if group not in self.groups:
+            self.groups.append(group)
+
+    def remove_group(self, group):
+
+        if group in self.groups:
+            self.groups.remove(group)
+
+            # remove exclusive ancestors, xcept all!
+            for oldg in group.get_ancestors():
+                if oldg.name != 'all':
+                    for childg in self.groups:
+                        if oldg in childg.get_ancestors():
+                            break
+                    else:
+                        self.remove_group(oldg)
 
     def set_variable(self, key, value):
-
-        self.vars[key]=value
+        self.vars[key] = value
 
     def get_groups(self):
+        return self.groups
 
-        groups = {}
-        for g in self.groups:
-            groups[g.name] = g
-            ancestors = g.get_ancestors()
-            for a in ancestors:
-                groups[a.name] = a
-        return groups.values()
-
-    def get_vars(self):
-
+    def get_magic_vars(self):
         results = {}
-        results = combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
+        results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
+
         return results
 
-    def get_group_vars(self):
-        results = {}
-        groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: g.depth):
-            results = combine_vars(results, group.get_vars())
-        return results
+    def get_vars(self):
+        return combine_vars(self.vars, self.get_magic_vars())

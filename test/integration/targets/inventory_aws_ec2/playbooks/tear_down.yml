@@ -1,0 +1,39 @@
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+      security_token: '{{ security_token }}'
+      region: '{{ aws_region }}'
+  no_log: yes
+
+- name: remove setup security group
+  ec2_group:
+    name: '{{ resource_prefix }}_setup'
+    description: 'created by Ansible integration tests'
+    state: absent
+    vpc_id: '{{ vpc_id }}'
+    <<: *aws_connection_info
+  ignore_errors: yes
+
+- name: remove setup subnet
+  ec2_vpc_subnet:
+    az: '{{ aws_region }}a'
+    tags: '{{ resource_prefix }}_setup'
+    vpc_id: '{{ vpc_id }}'
+    cidr: 10.10.0.0/24
+    state: absent
+    resource_tags:
+      Name: '{{ resource_prefix }}_setup'
+    <<: *aws_connection_info
+  ignore_errors: yes
+
+- name: remove setup VPC
+  ec2_vpc_net:
+    cidr_block: 10.10.0.0/24
+    state: absent
+    name: '{{ resource_prefix }}_setup'
+    resource_tags:
+      Name: '{{ resource_prefix }}_setup'
+    <<: *aws_connection_info
+  ignore_errors: yes

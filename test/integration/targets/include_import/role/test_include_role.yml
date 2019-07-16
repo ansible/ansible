@@ -1,0 +1,166 @@
+- name: Test include_role
+  hosts: testhost
+
+  vars:
+    run_role: yes
+    do_not_run_role: no
+    role_name: role1
+    test_var: templating test in playbook
+    role_vars:
+      where_am_i_defined: in the playbook
+    entire_task:
+      include_role:
+        name: role1
+
+  tasks:
+    - name: Test basic role include
+      include_role:
+        name: role1
+
+    - name: Assert that basic include works
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+
+    - name: Test conditional role include
+      include_role:
+        name: role1
+        tasks_from: canary1.yml
+      when: run_role
+
+    - name: Assert that role ran
+      assert:
+        that:
+          - role1_canary1 == 'r1c1'
+
+    - name: Test conditional role include that should be skipped
+      include_role:
+        name: role1
+        tasks_from: canary2.yml
+      when: do_not_run_role
+
+    - name: Assert that role did not run
+      assert:
+        that:
+          - role1_canary2 is not defined
+
+    - name: Test role include with a loop
+      include_role:
+        name: "{{ item }}"
+      with_items:
+        - role1
+        - role3
+        - role2
+
+    - name: Assert that roles run with_items
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+          - _role2_result.msg == 'In role2'
+          - _role3_result.msg == 'In role3'
+
+    - name: Test including a task file from a role
+      include_role:
+        name: role1
+        tasks_from: tasks.yml
+
+    - name: Test including vars file and tasks file from a role
+      include_role:
+        name: role3
+        tasks_from: vartest.yml
+        vars_from: role3vars.yml
+
+    - name: Assert that variables defined in previous task are available to play
+      assert:
+        that:
+          - role3_default == 'defined in role3/defaults/main.yml'
+          - role3_main == 'defined in role3/vars/main.yml'
+          - role3_var == 'defined in role3/vars/role3vars.yml'
+      ignore_errors: yes
+
+    - name: Test using a play variable for role name
+      include_role:
+        name: "{{ role_name }}"
+
+    - name: Test using a host variable for role name
+      include_role:
+        name: "{{ host_var_role_name }}"
+
+    - name: Pass variable to role
+      include_role:
+        name: role1
+        tasks_from: vartest.yml
+      vars:
+        where_am_i_defined: in the task
+
+    ## FIXME Currently failing with
+    ## ERROR! Vars in a IncludeRole must be specified as a dictionary, or a list of dictionaries
+    # - name: Pass all variables in a variable to role
+    #   include_role:
+    #     name: role1
+    #     tasks_from: vartest.yml
+    #   vars: "{{ role_vars }}"
+
+    - name: Pass templated variable to a role
+      include_role:
+        name: role1
+        tasks_from: vartest.yml
+      vars:
+        where_am_i_defined: "{{ test_var }}"
+
+    - name: Use a variable in tasks_from field
+      include_role:
+        name: role1
+        tasks_from: "{{ tasks_file_name }}.yml"
+      vars:
+        tasks_file_name: canary3
+
+    - name: Assert that tasks file was included
+      assert:
+        that:
+          - role1_canary3 == 'r1c3'
+
+    ## FIXME This fails with the following error:
+    ## The module {u'include_role': {u'name': u'role1'}} was not found in configured module paths.
+    # - name: Include an entire task
+    #   action:
+    #     module: "{{ entire_task }}"
+
+    - block:
+        - name: Include a role that will fail
+          include_role:
+            name: role1
+            tasks_from: fail.yml
+
+      rescue:
+        - name: Include a role inside rescue
+          include_role:
+            name: role2
+
+      always:
+        - name: Include role inside always
+          include_role:
+            name: role3
+
+- hosts: testhost,testhost2
+  tasks:
+    - name: wipe role results
+      set_fact:
+        _role2_result: ~
+        _role3_result: ~
+
+    - name: Test using a host variable for role name
+      include_role:
+        name: "{{ host_var_role_name }}"
+
+    - name: assert that host varible for role name calls 2 diff roles
+      assert:
+        that:
+          - _role2_result is not none
+      when: inventory_hostname == 'testhost2'
+
+    - name: assert that host varible for role name calls 2 diff roles
+      assert:
+        that:
+          - _role3_result is not none
+      when: inventory_hostname == 'testhost'

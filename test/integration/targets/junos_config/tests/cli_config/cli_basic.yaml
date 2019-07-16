@@ -1,0 +1,61 @@
+---
+- debug: msg="START cli_config/cli_basic.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  cli_config: &rm1
+    config: delete interfaces ge-0/0/1
+
+- name: setup
+  cli_config: &rm2
+    config: delete interfaces ge-0/0/2
+
+- name: configure device with config
+  cli_config: &conf1
+    config: set interfaces ge-0/0/1 description 'test-interface'
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Idempotence
+  cli_config: *conf1
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: configure device with config
+  cli_config: &conf2
+    config: set interfaces ge-0/0/2 description 'test-interface'
+  register: result
+
+- name: test rollabck
+  cli_config:
+    rollback: 1
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'ge-0/0/2' in result.diff.prepared"
+
+- name: remove root-authethication (test error scenario)
+  cli_config:
+    config: "delete system root-authentication"
+  ignore_errors: True
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'Missing mandatory statement' in result.msg"
+
+- name: teardown
+  cli_config: *rm1
+
+- name: teardown
+  cli_config: *rm2
+
+- debug: msg="END cli_config/cli_basic.yaml on connection={{ ansible_connection }}"

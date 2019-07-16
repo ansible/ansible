@@ -1,0 +1,106 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_ntp_options sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: "Apply default ntp config" 
+  nxos_ntp_options: &default
+    provider: "{{ connection }}"
+    state: absent
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure ntp with master and default stratum
+    nxos_ntp_options: &configure_master_default_stratum
+      master: true
+      logging: true
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure ntp with master and default stratum"
+    nxos_ntp_options: *configure_master_default_stratum
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure ntp with master and non-default stratum
+    nxos_ntp_options: &configure_master_non_default_stratum
+      master: true
+      stratum: 10
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure ntp with master and non-default stratum"
+    nxos_ntp_options: *configure_master_non_default_stratum
+    register: result
+
+  - assert: *false
+
+  - name: Configure ntp with master and no logging
+    nxos_ntp_options: &configure_no_log
+      master: true
+      stratum: 10
+      logging: false
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure ntp with master and no logging"
+    nxos_ntp_options: *configure_no_log
+    register: result
+
+  - assert: *false
+
+  - name: Configure ntp with logging and no master
+    nxos_ntp_options: &configure_no_master
+      master: false
+      logging: true
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure ntp with logging and no master"
+    nxos_ntp_options: *configure_no_master
+    register: result
+
+  - assert: *false
+
+  - name: "Configure ntp with master and non-default stratum again"
+    nxos_ntp_options: *configure_master_non_default_stratum
+    register: result
+
+  - assert: *true
+
+  - name: Remove ntp options
+    nxos_ntp_options: *default
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Remove"
+    nxos_ntp_options: *default
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Cleanup ntp config
+    nxos_ntp_options: *default
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_ntp_options sanity test"

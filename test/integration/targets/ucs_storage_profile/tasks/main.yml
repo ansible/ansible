@@ -1,0 +1,138 @@
+# Test code for the UCS modules
+# Copyright 2018, David Soper (@dsoper2)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      hostname: "{{ ucs_hostname }}"
+      username: "{{ ucs_username }}"
+      password: "{{ ucs_password }}"
+
+# Setup (clean environment)
+- name: Storage Profile absent
+  ucs_storage_profile: &storage_profile_absent
+    <<: *login_info
+    name: DEE-StgProf
+    state: absent
+
+
+# Test present (check_mode)
+- name: Storage Profile present (check_mode)
+  ucs_storage_profile: &storage_profile_present
+    <<: *login_info
+    name: DEE-StgProf
+    local_luns:
+    - name: Boot-LUN
+      size: '60'
+      disk_policy_name: DEE-DG
+    - name: Data-LUN
+      size: '200'
+      disk_policy_name: DEE-DG
+  check_mode: yes
+  register: cm_storage_profile_present
+
+
+# Present (normal mode)
+- name: Storage Profile present (normal mode)
+  ucs_storage_profile: *storage_profile_present
+  register: nm_storage_profile_present
+
+
+# Test present again (idempotent)
+- name: Storage Profile present again (check_mode)
+  ucs_storage_profile: *storage_profile_present
+  check_mode: yes
+  register: cm_storage_profile_present_again
+
+
+# Present again (normal mode)
+- name: Storage Profile present again (normal mode)
+  ucs_storage_profile: *storage_profile_present
+  register: nm_storage_profile_present_again
+
+
+# Verfiy present
+- name: Verify Storage Profile present results
+  assert:
+    that:
+    - cm_storage_profile_present.changed == nm_storage_profile_present.changed == true
+    - cm_storage_profile_present_again.changed == nm_storage_profile_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: Storage Profile change (check_mode)
+  ucs_storage_profile: &storage_profile_change
+    <<: *login_info
+    name: DEE-StgProf
+    local_luns:
+    - name: Boot-LUN
+      size: '60'
+      disk_policy_name: DEE-DG
+    - name: Data-LUN
+      state: absent
+  check_mode: yes
+  register: cm_storage_profile_change
+
+
+# Change (normal mode)
+- name: Storage Profile change (normal mode)
+  ucs_storage_profile: *storage_profile_change
+  register: nm_storage_profile_change
+
+
+# Test change again (idempotent)
+- name: Storage Profile again (check_mode)
+  ucs_storage_profile: *storage_profile_change
+  check_mode: yes
+  register: cm_storage_profile_change_again
+
+
+# Change again (normal mode)
+- name: Storage Profile change again (normal mode)
+  ucs_storage_profile: *storage_profile_change
+  register: nm_storage_profile_change_again
+
+
+# Verfiy change
+- name: Verify Storage Profile change results
+  assert:
+    that:
+    - cm_storage_profile_change.changed == nm_storage_profile_change.changed == true
+    - cm_storage_profile_change_again.changed == nm_storage_profile_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: Storage Profile absent (check_mode)
+  ucs_storage_profile: *storage_profile_absent
+  check_mode: yes
+  register: cm_storage_profile_absent
+
+
+# Absent (normal mode)
+- name: Storage Profile absent (normal mode)
+  ucs_storage_profile: *storage_profile_absent
+  register: nm_storage_profile_absent
+
+
+# Test absent again (idempotent)
+- name: Storage Profile absent again (check_mode)
+  ucs_storage_profile: *storage_profile_absent
+  check_mode: yes
+  register: cm_storage_profile_absent_again
+
+
+# Absent again (normal mode)
+- name: Storage Profile absent again (normal mode)
+  ucs_storage_profile: *storage_profile_absent
+  register: nm_storage_profile_absent_again
+
+
+# Verfiy absent
+- name: Verify Storage Profile absent results
+  assert:
+    that:
+    - cm_storage_profile_absent.changed == nm_storage_profile_absent.changed == true
+    - cm_storage_profile_absent_again.changed == nm_storage_profile_absent_again.changed == false

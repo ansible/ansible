@@ -1,0 +1,90 @@
+# Test code for the vmware_host_config_manager module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+
+- name: Change an invalid key
+  vmware_host_config_manager:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ ccr1 }}"
+    options:
+      'This.Is.No.Where': 'verbose'
+  failed_when: False
+  register: invalid_key
+- debug: var=invalid_key
+- name: ensure we raise the correct error
+  assert:
+    that:
+      - '"Unsupported option This.Is.No.Where" in invalid_key.msg'
+
+# TODO: vcsim does not support update host configuartion
+- when: vcsim is not defined
+  block:
+  - name: Change facts about all hosts in given cluster
+    vmware_host_config_manager:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      cluster_name: "{{ ccr1 }}"
+      options:
+        'Config.HostAgent.log.level': 'verbose'
+      validate_certs: no
+
+  - name: Change facts about a given host
+    vmware_host_config_manager:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: '{{ esxi1 }}'
+      options:
+        'Config.HostAgent.log.level': 'info'
+      validate_certs: no
+    register: host_result
+
+  - debug: var=host_result
+
+  - name: ensure change was applied
+    assert:
+      that:
+          - host_result is changed
+
+  - name: Change facts about all hosts in given cluster in check mode
+    vmware_host_config_manager:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      cluster_name: "{{ ccr1 }}"
+      options:
+        'Config.HostAgent.log.level': 'verbose'
+      validate_certs: no
+    register: all_hosts_result_check_mode
+    check_mode: yes
+
+  - name: ensure changes are done to all hosts
+    assert:
+      that:
+          - all_hosts_result_check_mode.changed
+
+  - name: Change facts about a given host in check mode
+    vmware_host_config_manager:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: '{{ esxi1 }}'
+      options:
+        'Config.HostAgent.log.level': 'info'
+      validate_certs: no
+    register: host_result_check_mode
+    check_mode: yes
+
+  - name: ensure changes are done to given hosts
+    assert:
+      that:
+          - all_hosts_result_check_mode.changed

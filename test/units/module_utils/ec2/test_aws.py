@@ -20,16 +20,16 @@ try:
     import boto3
     import botocore
     HAS_BOTO3 = True
-except:
+except Exception:
     HAS_BOTO3 = False
 
-from nose.plugins.skip import SkipTest
+import pytest
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.ec2 import AWSRetry
 
 if not HAS_BOTO3:
-    raise SkipTest("test_aws.py requires the python modules 'boto3' and 'botocore'")
+    pytestmark = pytest.mark.skip("test_aws.py requires the python modules 'boto3' and 'botocore'")
 
 
 class RetryTestCase(unittest.TestCase):
@@ -43,6 +43,22 @@ class RetryTestCase(unittest.TestCase):
 
         r = no_failures()
         self.assertEqual(self.counter, 1)
+
+    def test_extend_boto3_failures(self):
+        self.counter = 0
+        err_msg = {'Error': {'Code': 'MalformedPolicyDocument'}}
+
+        @AWSRetry.backoff(tries=2, delay=0.1, catch_extra_error_codes=['MalformedPolicyDocument'])
+        def extend_failures():
+            self.counter += 1
+            if self.counter < 2:
+                raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
+            else:
+                return 'success'
+
+        r = extend_failures()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 2)
 
     def test_retry_once(self):
         self.counter = 0
@@ -69,7 +85,7 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'toooo fast!!')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
+        # with self.assertRaises(botocore.exceptions.ClientError):
         try:
             fail()
         except Exception as e:
@@ -85,13 +101,10 @@ class RetryTestCase(unittest.TestCase):
             self.counter += 1
             raise botocore.exceptions.ClientError(err_msg, 'unexpected error')
 
-        #with self.assertRaises(botocore.exceptions.ClientError):
+        # with self.assertRaises(botocore.exceptions.ClientError):
         try:
             raise_unexpected_error()
         except Exception as e:
             self.assertEqual(e.response['Error']['Code'], 'AuthFailure')
 
         self.assertEqual(self.counter, 1)
-
-if __name__ == '__main__':
-    unittest.main()

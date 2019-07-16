@@ -1,0 +1,38 @@
+{
+  "kind": "tm:sys:syslog:syslogstate",
+  "selfLink": "https://localhost/mgmt/tm/sys/syslog?ver=13.0.0",
+  "authPrivFrom": "notice",
+  "authPrivTo": "emerg",
+  "clusteredHostSlot": "enabled",
+  "clusteredMessageSlot": "disabled",
+  "consoleLog": "enabled",
+  "cronFrom": "warning",
+  "cronTo": "emerg",
+  "daemonFrom": "notice",
+  "daemonTo": "emerg",
+  "isoDate": "disabled",
+  "kernFrom": "debug",
+  "kernTo": "emerg",
+  "local6From": "notice",
+  "local6To": "emerg",
+  "mailFrom": "notice",
+  "mailTo": "emerg",
+  "messagesFrom": "notice",
+  "messagesTo": "warning",
+  "userLogFrom": "notice",
+  "userLogTo": "emerg",
+  "remoteServers": [
+    {
+      "name": "/Common/remotesyslog1",
+      "host": "10.10.10.10",
+      "localIp": "none",
+      "remotePort": 514
+    },
+    {
+      "name": "/Common/remotesyslog2",
+      "host": "10.10.10.10",
+      "localIp": "1.1.1.1",
+      "remotePort": 8000
+    }
+  ]
+}

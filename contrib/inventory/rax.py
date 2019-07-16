@@ -151,14 +151,11 @@ import sys
 import argparse
 import warnings
 import collections
-import ConfigParser
 
-from six import iteritems
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import pyrax
@@ -168,10 +165,11 @@ except ImportError:
 
 from time import time
 
-from ansible.constants import get_config, mk_boolean
+from ansible.constants import get_config
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import text_type
 
-
-NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
+NON_CALLABLES = (text_type, str, bool, dict, int, list, type(None))
 
 
 def load_config_file():
@@ -184,11 +182,10 @@ def load_config_file():
         return None
     else:
         return p
-p = load_config_file()
 
 
 def rax_slugify(value):
-    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+    return 'rax_%s' % (re.sub(r'[^\w-]', '_', value).lower().lstrip('_'))
 
 
 def to_dict(obj):
@@ -229,19 +226,23 @@ def _list_into_cache(regions):
     try:
         # Ansible 2.3+
         networks = get_config(p, 'rax', 'access_network',
-                'RAX_ACCESS_NETWORK', 'public', value_type='list')
+                              'RAX_ACCESS_NETWORK', 'public', value_type='list')
     except TypeError:
         # Ansible 2.2.x and below
+        # pylint: disable=unexpected-keyword-arg
         networks = get_config(p, 'rax', 'access_network',
-                'RAX_ACCESS_NETWORK', 'public', islist=True)
+                              'RAX_ACCESS_NETWORK', 'public', islist=True)
     try:
         try:
+            # Ansible 2.3+
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
+                                              'RAX_ACCESS_IP_VERSION', 4, value_type='list'))
         except TypeError:
+            # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
-                'RAX_ACCESS_IP_VERSION', 4, islist=True))
-    except:
+                                              'RAX_ACCESS_IP_VERSION', 4, islist=True))
+    except Exception:
         ip_versions = [4]
     else:
         ip_versions = [v for v in ip_versions if v in [4, 6]]
@@ -288,7 +289,7 @@ def _list_into_cache(regions):
                 if not cbs_attachments[region]:
                     cbs = pyrax.connect_to_cloud_blockstorage(region)
                     for vol in cbs.list():
-                        if mk_boolean(vol.bootable):
+                        if boolean(vol.bootable, strict=False):
                             for attachment in vol.attachments:
                                 metadata = vol.volume_image_metadata
                                 server_id = attachment['server_id']
@@ -367,8 +368,8 @@ def _list(regions, refresh_cache=True):
                                    'RAX_CACHE_MAX_AGE', 600))
 
     if (not os.path.exists(get_cache_file_path(regions)) or
-        refresh_cache or
-        (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
+            refresh_cache or
+            (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
         # Cache file doesn't exist or older than 10m or refresh cache requested
         _list_into_cache(regions)
 
@@ -434,11 +435,12 @@ def setup():
         try:
             # Ansible 2.3+
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                    value_type='list')
+                                     value_type='list')
         except TypeError:
             # Ansible 2.2.x and below
+            # pylint: disable=unexpected-keyword-arg
             region_list = get_config(p, 'rax', 'regions', 'RAX_REGION', 'all',
-                    islist=True)
+                                     islist=True)
 
         for region in region_list:
             region = region.strip().upper()
@@ -463,5 +465,6 @@ def main():
     sys.exit(0)
 
 
+p = load_config_file()
 if __name__ == '__main__':
     main()

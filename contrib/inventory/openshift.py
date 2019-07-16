@@ -28,17 +28,14 @@ version_added: None
 author: Michael Scherer
 '''
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 import os
 import os.path
 import sys
-import ConfigParser
 import StringIO
 
 from ansible.module_utils.urls import open_url
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
 configparser = None
 

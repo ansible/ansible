@@ -1,0 +1,184 @@
+---
+- debug: msg="cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Remove linkagg
+  vyos_linkagg:
+    name: bond0
+    state: absent
+
+- name: Remove linkagg
+  vyos_linkagg:
+    name: bond1
+    state: absent
+
+- name: Create linkagg
+  vyos_linkagg:
+    name: bond0
+    members:
+      - eth1
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
+
+- name: Create linkagg again (idempotent)
+  vyos_linkagg:
+    name: bond0
+    members:
+      - eth1
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Add linkagg member
+  vyos_linkagg:
+    name: bond0
+    members:
+      - eth2
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces ethernet eth2 bond-group bond0" in result.commands'
+
+- name: Add linkagg member again (idempotent)
+  vyos_linkagg:
+    name: bond0
+    members:
+      - eth2
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Disable linkagg
+  vyos_linkagg:
+    name: bond0
+    state: down
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 disable" in result.commands'
+
+- name: Disable linkagg again (idempotent)
+  vyos_linkagg:
+    name: bond0
+    state: down
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Enable linkagg
+  vyos_linkagg:
+    name: bond0
+    state: up
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces bonding bond0 disable" in result.commands[0]'
+
+- name: Enable linkagg again (idempotent)
+  vyos_linkagg:
+    name: bond0
+    state: up
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove linkagg
+  vyos_linkagg:
+    name: bond0
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 bond-group" in result.commands'
+      - '"delete interfaces ethernet eth2 bond-group" in result.commands'
+      - '"delete interfaces bonding bond0" in result.commands'
+
+- name: Remove linkagg again (idempotent)
+  vyos_linkagg:
+    name: bond0
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Create collection of linkagg definitions
+  vyos_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"set interfaces bonding bond0 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth1 bond-group bond0" in result.commands'
+      - '"set interfaces bonding bond1 mode 802.3ad" in result.commands'
+      - '"set interfaces ethernet eth2 bond-group bond1" in result.commands'
+
+- name: Create collection of linkagg definitions again (idempotent)
+  vyos_linkagg:
+    aggregate:
+        - { name: bond0, members: [eth1] }
+        - { name: bond1, members: [eth2] }
+    state: present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Remove collection of linkagg definitions
+  vyos_linkagg:
+    aggregate:
+      - name: bond0
+      - name: bond1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"delete interfaces ethernet eth1 bond-group" in result.commands'
+      - '"delete interfaces bonding bond0" in result.commands'
+      - '"delete interfaces ethernet eth2 bond-group" in result.commands'
+      - '"delete interfaces bonding bond1" in result.commands'
+
+- name: Remove collection of linkagg definitions again (idempotent)
+  vyos_linkagg:
+    aggregate:
+      - name: bond0
+      - name: bond1
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'

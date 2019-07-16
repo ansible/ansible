@@ -1,0 +1,75 @@
+---
+- debug: msg="START netconf_config junos/basic.yaml on connection={{ ansible_connection }}"
+
+- include_vars: "{{playbook_dir }}/targets/netconf_config/tests/junos/fixtures/config.yml"
+
+- name: syslog file config- setup
+  junos_config:
+    lines:
+    - delete system syslog file test_netconf_config
+
+- name: configure syslog file
+  netconf_config:
+    content: "{{ syslog_config }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'<name>test_netconf_config</name>' in result.diff.after"
+
+- name: configure syslog file (idempotent)
+  netconf_config:
+    content: "{{ syslog_config }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: replace default operation fail
+  netconf_config:
+    content: "{{ syslog_config_replace }}"
+    default_operation: 'replace'
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'Missing mandatory statement' in result.msg"
+
+- name: replace syslog config with operation key in content
+  netconf_config:
+    content: "{{ syslog_config_replace }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: test backup
+  netconf_config:
+    content: "{{ syslog_config }}"
+    backup: True
+  register: result
+
+- assert:
+    that:
+      - "'backup_path' in result"
+
+- name: syslog file config- teardown
+  junos_config:
+    lines:
+    - delete system syslog file test_netconf_config
+
+- name: save config
+  netconf_config:
+    backup: yes
+  register: result
+
+- assert:
+    that:
+      - "'backup_path' in result"
+
+- debug: msg="END netconf_config junos/basic.yaml on connection={{ ansible_connection }}"

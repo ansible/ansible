@@ -1,0 +1,200 @@
+---
+- debug: msg="START cli/basic.yaml"
+
+- name: setup - remove config used in test(part1)
+  eos_config:
+    lines:
+      - no interface port-channel 20
+      - no interface port-channel 100
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- name: setup - remove config used in test(part2)
+  eos_config:
+    lines:
+      - no channel-group 20
+    authorize: yes
+    provider: "{{ cli }}"
+    parents: "{{ item }}"
+  loop:
+    - interface Ethernet1
+    - interface Ethernet2
+  become: yes
+
+- name: create linkagg
+  eos_linkagg: &create
+    group: 20
+    state: present
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface port-channel 20' in result.commands"
+
+- name: create linkagg(Idempotence)
+  eos_linkagg: *create
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: set link aggregation group to members
+  eos_linkagg: &configure_member
+    group: 20
+    mode: active
+    members:
+      - Ethernet1
+      - Ethernet2
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface Ethernet1' in result.commands"
+      - "'channel-group 20 mode active' in result.commands"
+      - "'interface Ethernet2' in result.commands"
+      - "'channel-group 20 mode active' in result.commands"
+
+- name: set link aggregation group to members(Idempotence)
+  eos_linkagg: *configure_member
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: remove link aggregation group from member
+  eos_linkagg: &remove_member
+    group: 20
+    mode: active
+    members:
+      - Ethernet2
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface Ethernet1' in result.commands"
+      - "'no channel-group 20' in result.commands"
+
+- name: remove link aggregation group from member(Idempotence)
+  eos_linkagg: *remove_member
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: remove linkagg
+  eos_linkagg: &remove
+    group: 20
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no interface port-channel 20' in result.commands"
+
+- name: remove linkagg(Idempotence)
+  eos_linkagg: *remove
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: create aggregate of linkagg definitions
+  eos_linkagg: &create_agg
+    aggregate:
+      - { group: 20, min_links: 3 }
+      - { group: 100, min_links: 4 }
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'interface port-channel 20' in result.commands"
+      - "'port-channel min-links 3' in result.commands"
+      - "'interface port-channel 100' in result.commands"
+      - "'port-channel min-links 4' in result.commands"
+
+- name: create aggregate of linkagg definitions(Idempotence)
+  eos_linkagg: *create_agg
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: remove aggregate of linkagg definitions
+  eos_linkagg: &remove_agg
+    aggregate:
+      - { group: 20, min_links: 3 }
+      - { group: 100, min_links: 4 }
+    authorize: yes
+    provider: "{{ cli }}"
+    state: absent
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no interface port-channel 20' in result.commands"
+      - "'no interface port-channel 100' in result.commands"
+
+- name: remove aggregate of linkagg definitions(Idempotence)
+  eos_linkagg: *remove_agg
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown(part1)
+  eos_config:
+    lines:
+      - no interface port-channel 20
+      - no interface port-channel 100
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- name: teardown(part2)
+  eos_config:
+    lines:
+      - no channel-group 20
+    authorize: yes
+    provider: "{{ cli }}"
+    parents: "{{ item }}"
+  become: yes
+  loop:
+    - interface Ethernet1
+    - interface Ethernet2
+
+- debug: msg="END cli/basic.yaml"

@@ -1,0 +1,15 @@
+- hosts: testhost
+  gather_facts: no
+  any_errors_fatal: true
+  tasks:
+    - name: EXPECTED FAILURE shell exe of /bin/false for testhost
+      shell: '{{ "/bin/false" if inventory_hostname == "testhost" else "/bin/true" }}'
+
+    - debug:
+        msg: "any_errors_fatal_play_level_post_fail"
+
+- hosts: testhost
+  any_errors_fatal: true
+  tasks:
+    - debug:
+        msg: "and in another play"

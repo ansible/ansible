@@ -1,0 +1,30 @@
+{
+  "kind": "tm:gtm:wideip:a:astate",
+  "name": "foo.bar.com",
+  "partition": "Common",
+  "fullPath": "/Common/foo.bar.com",
+  "generation": 135,
+  "selfLink": "https://localhost/mgmt/tm/gtm/wideip/a/~Common~foo.bar.com?ver=13.0.0",
+  "enabled": true,
+  "failureRcode": "noerror",
+  "failureRcodeResponse": "disabled",
+  "failureRcodeTtl": 0,
+  "lastResortPool": "",
+  "minimalResponse": "enabled",
+  "persistCidrIpv4": 32,
+  "persistCidrIpv6": 128,
+  "persistence": "disabled",
+  "poolLbMode": "round-robin",
+  "ttlPersistence": 3600,
+  "pools": [
+      {
+          "name": "baz",
+          "partition": "Common",
+          "order": 0,
+          "ratio": 10,
+          "nameReference": {
+              "link": "https://localhost/mgmt/tm/gtm/pool/a/~Common~baz?ver=13.0.0"
+          }
+      }
+  ]
+}

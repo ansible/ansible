@@ -33,5 +33,11 @@ class AnsibleJ2Template(jinja2.environment.Template):
     '''
 
     def new_context(self, vars=None, shared=False, locals=None):
-        return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
-
+        if vars is not None:
+            if isinstance(vars, dict):
+                vars = vars.copy()
+                if locals is not None:
+                    vars.update(locals)
+            else:
+                vars = vars.add_locals(locals)
+        return self.environment.context_class(self.environment, vars, self.name, self.blocks)

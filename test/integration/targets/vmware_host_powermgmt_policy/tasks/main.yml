@@ -1,0 +1,77 @@
+# Test code for the vmware_host_powermgmt_policy module.
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    # The following test cases aren't supported by vcsim
+    - name: Set the Power Management Policy for esxi1
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        policy: high-performance
+        validate_certs: no
+      register: host_result
+    - debug: var=host_result
+    - name: Ensure Power Management Policy for esxi1
+      assert:
+        that:
+            - host_result.result['{{ esxi1 }}'].current_state == "high-performance"
+
+    - name: Set the Power Management Policy on all hosts of {{ ccr1 }}
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        policy: balanced
+        validate_certs: no
+      register: all_hosts_result
+    - debug: var=all_hosts_result
+    - name: Ensure Power Management Policy is changed for all hosts of {{ ccr1 }}
+      assert:
+        that:
+            - all_hosts_result is changed
+            - all_hosts_result.result is defined
+
+    - name: Set the Power Management Policy for esxi1 in check mode
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        policy: high-performance
+        validate_certs: no
+      register: host_result
+      check_mode: yes
+    - debug: var=host_result
+    - name: Ensure Power Management Policy for esxi1 in check mode
+      assert:
+        that:
+            - host_result is changed
+            - host_result.result is defined
+
+    - name: Set the Power Management Policy on all hosts of {{ ccr1 }}
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        policy: balanced
+        validate_certs: no
+      register: all_hosts_result
+      check_mode: yes
+    - debug: var=all_hosts_result
+    - name: Ensure we are still using the 'balanced' mode
+      assert:
+        that:
+            - not (all_hosts_result is changed)
+            - "all_hosts_result.result['{{ esxi1 }}'].current_state == 'balanced'"
+            - "all_hosts_result.result['{{ esxi2 }}'].current_state == 'balanced'"

@@ -1,0 +1,727 @@
+- block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  - name: create VPC
+    ec2_vpc_net:
+      cidr_block: 10.228.228.0/22
+      name: "{{ resource_prefix }}_vpc"
+      state: present
+      <<: *aws_connection_info
+    register: vpc
+
+  - name: create public subnet
+    ec2_vpc_subnet:
+      cidr: "{{ item.cidr }}"
+      az: "{{ aws_region}}{{ item.az }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      tags:
+        Public: "{{ item.public|string }}"
+        Name: "{{ (item.public|bool)|ternary('public', 'private') }}-{{ item.az }}"
+      <<: *aws_connection_info
+    with_items:
+      - cidr: 10.228.228.0/24
+        az: "a"
+        public: "True"
+      - cidr: 10.228.229.0/24
+        az: "b"
+        public: "True"
+      - cidr: 10.228.230.0/24
+        az: "a"
+        public: "False"
+      - cidr: 10.228.231.0/24
+        az: "b"
+        public: "False"
+    register: subnets
+
+  - ec2_vpc_subnet_info:
+      filters:
+        vpc-id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_subnets
+
+  - name: create IGW
+    ec2_vpc_igw:
+      vpc_id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+
+  - name: create NAT GW
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: yes
+      wait: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
+  - name: CHECK MODE - route table should be created
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    check_mode: true
+    register: check_mode_results
+
+  - name: assert that the public route table would be created
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: create public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    register: create_public_table
+
+  - name: assert that public route table has an id
+    assert:
+      that:
+        # - create_public_table.changed
+        - "create_public_table.route_table.id.startswith('rtb-')"
+        - "'Public' in create_public_table.route_table.tags and create_public_table.route_table.tags['Public'] == 'true'"
+        - create_public_table.route_table.routes|length == 1
+        - create_public_table.route_table.associations|length == 0
+
+  - name: CHECK MODE - route table should already exist
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert the table already exists
+    assert:
+      that:
+        - not check_mode_results.changed
+
+  - name: recreate public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    register: recreate_public_route_table
+
+  - name: assert that public route table did not change
+    assert:
+      that:
+        - not recreate_public_route_table.changed
+
+  - name: CHECK MODE - add route to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert a route would be added
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: add a route to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      <<: *aws_connection_info
+    register: add_routes
+
+  - name: assert route table contains new route
+    assert:
+      that:
+        - add_routes.changed
+        - add_routes.route_table.routes|length == 2
+
+  - name: CHECK MODE - add subnets to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert the subnets would be added to the route table
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: add subnets to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      <<: *aws_connection_info
+    register: add_subnets
+
+  - name: assert route table contains subnets
+    assert:
+      that:
+        - add_subnets.changed
+        - add_subnets.route_table.associations|length == 2
+
+  - name: add a route to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      <<: *aws_connection_info
+    register: add_routes
+
+  - name: CHECK MODE - no routes but purge_routes set to false
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      purge_routes: no
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert no routes would be removed
+    assert:
+      that:
+        - not check_mode_results.changed
+
+  - name: rerun with purge_routes set to false
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      purge_routes: no
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      <<: *aws_connection_info
+    register: no_purge_routes
+
+  - name: assert route table still has routes
+    assert:
+      that:
+        - not no_purge_routes.changed
+        - no_purge_routes.route_table.routes|length == 2
+        - no_purge_routes.route_table.associations|length == 2
+
+  - name: rerun with purge_subnets set to false
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      purge_subnets: no
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      <<: *aws_connection_info
+    register: no_purge_subnets
+
+  - name: assert route table still has subnets
+    assert:
+      that:
+        - not no_purge_subnets.changed
+        - no_purge_subnets.route_table.routes|length == 2
+        - no_purge_subnets.route_table.associations|length == 2
+
+  - name: rerun with purge_tags not set (implicitly false)
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].id') }}"
+      <<: *aws_connection_info
+    register: no_purge_tags
+
+  - name: assert route table still has tags
+    assert:
+      that:
+        - not no_purge_tags.changed
+        - "'Public' in no_purge_tags.route_table.tags and no_purge_tags.route_table.tags['Public'] == 'true'"
+
+  - name: CHECK MODE - purge subnets
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert subnets would be removed
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: purge subnets
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+    register: purge_subnets
+
+  - name: assert purge subnets worked
+    assert:
+      that:
+        - purge_subnets.changed
+        - purge_subnets.route_table.associations|length == 0
+        - purge_subnets.route_table.id == create_public_table.route_table.id
+
+  - name: CHECK MODE - purge routes
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+      routes: []
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert routes would be removed
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: add subnets by cidr to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].cidr_block') }}"
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: add_subnets_cidr
+
+  - name: assert route table contains subnets added by cidr
+    assert:
+      that:
+        - add_subnets_cidr.changed
+        - add_subnets_cidr.route_table.associations|length == 2
+
+  - name: purge subnets added by cidr
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: purge_subnets_cidr
+
+  - name: assert purge subnets added by cidr worked
+    assert:
+      that:
+        - purge_subnets_cidr.changed
+        - purge_subnets_cidr.route_table.associations|length == 0
+
+  - name: add subnets by name to public route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `True`].tags.Name') }}"
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: add_subnets_name
+
+  - name: assert route table contains subnets added by name
+    assert:
+      that:
+        - add_subnets_name.changed
+        - add_subnets_name.route_table.associations|length == 2
+
+  - name: purge subnets added by name
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+      subnets: []
+      lookup: id
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      <<: *aws_connection_info
+    register: purge_subnets_name
+
+  - name: assert purge subnets added by name worked
+    assert:
+      that:
+        - purge_subnets_name.changed
+        - purge_subnets_name.route_table.associations|length == 0
+
+  - name: purge routes
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "true"
+        Name: "Public route table"
+      <<: *aws_connection_info
+      routes: []
+    register: purge_routes
+
+  - name: assert purge routes worked
+    assert:
+      that:
+        - purge_routes.changed
+        - purge_routes.route_table.routes|length == 1
+        - purge_routes.route_table.id == create_public_table.route_table.id
+
+  - name: CHECK MODE - update tags
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      lookup: id
+      purge_tags: yes
+      tags:
+        Name: Public route table
+        Updated: new_tag
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert tags would be changed
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: update tags
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      lookup: id
+      purge_tags: yes
+      tags:
+        Name: Public route table
+        Updated: new_tag
+      <<: *aws_connection_info
+    register: update_tags
+
+  - name: assert purge tags worked
+    assert:
+      that:
+        - update_tags.changed
+        - "'Updated' in update_tags.route_table.tags and update_tags.route_table.tags['Updated'] == 'new_tag'"
+        - "'Public' not in update_tags.route_table.tags"
+
+  - name: create NAT GW
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: yes
+      wait: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
+  - name: CHECK MODE - create private route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert the route table would be created
+    assert:
+      that:
+        - check_mode_results.changed
+
+  - name: create private route table
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      <<: *aws_connection_info
+    register: create_private_table
+
+  - name: assert creating private route table worked
+    assert:
+      that:
+        - create_private_table.changed
+        - create_private_table.route_table.id != create_public_table.route_table.id
+        - "'Public' in create_private_table.route_table.tags"
+
+  - name: CHECK MODE - destroy public route table by tags
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      tags:
+        Updated: new_tag
+        Name: Public route table
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert the route table would be deleted
+    assert:
+      that:
+        check_mode_results.changed
+
+  - name: destroy public route table by tags
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      tags:
+        Updated: new_tag
+        Name: Public route table
+      <<: *aws_connection_info
+    register: destroy_table
+
+  - name: assert destroy table worked
+    assert:
+      that:
+        - destroy_table.changed
+
+  - name: CHECK MODE - redestroy public route table
+    ec2_vpc_route_table:
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      lookup: id
+      state: absent
+      <<: *aws_connection_info
+    check_mode: True
+    register: check_mode_results
+
+  - name: assert the public route table does not exist
+    assert:
+      that:
+        - not check_mode_results.changed
+
+  - name: redestroy public route table
+    ec2_vpc_route_table:
+      route_table_id: "{{ create_public_table.route_table.id }}"
+      lookup: id
+      state: absent
+      <<: *aws_connection_info
+    register: redestroy_table
+
+  - name: assert redestroy table worked
+    assert:
+      that:
+        - not redestroy_table.changed
+
+  - name: destroy NAT GW
+    ec2_vpc_nat_gateway:
+      state: absent
+      wait: yes
+      release_eip: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
+  - name: show route table facts
+    ec2_vpc_route_table_info:
+      filters:
+        route-table-id: "{{ create_private_table.route_table.id }}"
+      <<: *aws_connection_info
+
+  - name: create NAT GW
+    ec2_vpc_nat_gateway:
+      if_exist_do_not_create: yes
+      wait: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      <<: *aws_connection_info
+    register: nat_gateway
+
+  - name: show route table facts
+    ec2_vpc_route_table_info:
+      filters:
+        route-table-id: "{{ create_private_table.route_table.id }}"
+      <<: *aws_connection_info
+
+  - name: recreate private route table with new NAT GW
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      <<: *aws_connection_info
+    register: recreate_private_table
+
+  - name: assert creating private route table worked
+    assert:
+      that:
+        - recreate_private_table.changed
+        - recreate_private_table.route_table.id != create_public_table.route_table.id
+
+  - name: create a VPC endpoint to test ec2_vpc_route_table ignores it
+    ec2_vpc_endpoint:
+      state: present
+      vpc_id: "{{ vpc.vpc.id }}"
+      service: "com.amazonaws.{{ aws_region }}.s3"
+      route_table_ids:
+        - "{{ recreate_private_table.route_table.route_table_id }}"
+      <<: *aws_connection_info
+    register: vpc_endpoint
+
+  - name: purge routes
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc.vpc.id }}"
+      tags:
+        Public: "false"
+        Name: "Private route table"
+      routes:
+      - nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+        dest: 0.0.0.0/0
+      subnets: "{{ vpc_subnets|json_query('subnets[?tags.Public == `False`].id') }}"
+      purge_routes: true
+      <<: *aws_connection_info
+    register: result
+
+  - name: Get endpoint infos to verify that it wasn't purged from the route table
+    ec2_vpc_endpoint_info:
+      query: endpoints
+      vpc_endpoint_ids:
+        - "{{ vpc_endpoint.result.vpc_endpoint_id }}"
+      <<: *aws_connection_info
+    register: endpoint_details
+
+  - name: assert the route table is associated with the VPC endpoint
+    assert:
+      that:
+        - endpoint_details.vpc_endpoints[0].route_table_ids[0] == recreate_private_table.route_table.route_table_id
+
+  always:
+  #############################################################################
+  # TEAR DOWN STARTS HERE
+  #############################################################################
+  - name: remove the VPC endpoint
+    ec2_vpc_endpoint:
+      state: absent
+      vpc_endpoint_id: "{{ vpc_endpoint.result.vpc_endpoint_id }}"
+      <<: *aws_connection_info
+    when: vpc_endpoint is defined
+    ignore_errors: yes
+
+  - name: destroy route tables
+    ec2_vpc_route_table:
+      route_table_id: "{{ item.route_table.id }}"
+      lookup: id
+      state: absent
+      <<: *aws_connection_info
+    with_items:
+      - "{{ create_public_table|default() }}"
+      - "{{ create_private_table|default() }}"
+    when: item and not item.failed
+    ignore_errors: yes
+
+  - name: destroy NAT GW
+    ec2_vpc_nat_gateway:
+      state: absent
+      wait: yes
+      release_eip: yes
+      subnet_id: "{{ subnets.results[0].subnet.id }}"
+      nat_gateway_id: "{{ nat_gateway.nat_gateway_id }}"
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: destroy IGW
+    ec2_vpc_igw:
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: destroy subnets
+    ec2_vpc_subnet:
+      cidr: "{{ item.cidr }}"
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: absent
+      <<: *aws_connection_info
+    with_items:
+      - cidr: 10.228.228.0/24
+      - cidr: 10.228.229.0/24
+      - cidr: 10.228.230.0/24
+      - cidr: 10.228.231.0/24
+    ignore_errors: yes
+
+    # FIXME: ec2_vpc_nat_gateway should take care of this, but clearly doesn't always
+  - name: ensure EIP is actually released
+    ec2_eip:
+      state: absent
+      device_id: "{{ item.network_interface_id }}"
+      in_vpc: yes
+      <<: *aws_connection_info
+    with_items: "{{ nat_gateway.nat_gateway_addresses }}"
+    ignore_errors: yes
+
+  - name: destroy VPC
+    ec2_vpc_net:
+      cidr_block: 10.228.228.0/22
+      name: "{{ resource_prefix }}_vpc"
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes

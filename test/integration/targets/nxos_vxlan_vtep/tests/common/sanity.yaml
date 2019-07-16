@@ -1,0 +1,232 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  # N9K(v9.2+) specific attrs
+  - set_fact: global_mcast_group_L2="225.1.1.2"
+  - set_fact: def_global_mcast_group_L2="default"
+
+  # Layer 3 Tenant Routed Multicast (TRM) dependency.
+  # global_mcast_group_l3 / global_ingress_replication_bgp have a dependency on TRM.
+  # TRM requires specific 92/93/95 chassis and -EX/-FX line cards.
+  - block:
+    - set_fact: global_mcast_group_L3="225.1.1.1"
+    - set_fact: def_global_mcast_group_L3="default"
+    - set_fact: global_ingress_replication_bgp="true"
+    - set_fact: def_global_ingress_replication_bgp="false"
+    when: false # Manually change this to true when correct h/w is present
+
+  - name: "TCAM resource check for global_suppress_arp"
+    # GSA requires tcam resources. Skip these attrs when arp-ether size is 0.
+    # Note: TCAM changes require a switch reload.
+    # Sample Input: "Ingress ARP-Ether ACL [arp-ether] size =  256"
+    nxos_command:
+      commands:
+        - command: show hardware access-list tcam region | incl arp-ether | sed 's/.*size = *//'
+          output: text
+    connection: network_cli
+    register: tcam_state
+  - block:
+    - set_fact: global_suppress_arp="true"
+    - set_fact: def_global_suppress_arp="false"
+    when: "tcam_state.stdout[0]|int > 0"
+
+  when:  platform is search('N9K') and (major_version is version('9.2', 'ge'))
+
+- block:
+  - name: "Apply N7K specific setup config"
+    include: targets/nxos_vxlan_vtep/tasks/platform/n7k/setup.yaml
+    when: platform is match('N7K')
+
+  - name: "Enable feature nv overlay"
+    nxos_config:
+      commands:
+        - feature nv overlay
+        - nv overlay evpn
+      match: none
+      provider: "{{ connection }}"
+
+  - block:
+    - name: "Enable feature ngmvpn"
+      nxos_config:
+        commands:
+          - feature ngmvpn
+        match: none
+        provider: "{{ connection }}"
+    when: global_mcast_group_L3 is defined
+
+  - block:
+    - name: configure vxlan_vtep
+      nxos_vxlan_vtep: &configure9
+        interface: nve1
+        description: "abcd"
+        host_reachability: true
+        source_interface: Loopback0
+        source_interface_hold_down_time: 30
+        global_ingress_replication_bgp: "{{ global_ingress_replication_bgp|default(omit) }}"
+        global_suppress_arp: "{{ global_suppress_arp|default(omit) }}"
+        global_mcast_group_L3: "{{ global_mcast_group_L3|default(omit) }}"
+        shutdown: false
+        provider: "{{ connection }}"
+      register: result
+
+    - assert: &true
+        that:
+          - "result.changed == true"
+
+    - name: "Conf Idempotence"
+      nxos_vxlan_vtep: *configure9
+      register: result
+
+    - assert: &false
+        that:
+          - "result.changed == false"
+
+    - name: reset vxlan_vtep
+      nxos_vxlan_vtep: &def9
+        interface: nve1
+        description: default
+        host_reachability: false
+        source_interface_hold_down_time: default
+        source_interface: default
+        global_ingress_replication_bgp: "{{ def_global_ingress_replication_bgp|default(omit) }}"
+        global_suppress_arp: "{{ def_global_suppress_arp|default(omit) }}"
+        global_mcast_group_L3: "{{ def_global_mcast_group_L3|default(omit) }}"
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+
+    - assert: *true
+
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *def9
+      register: result
+
+    - assert: *false
+
+    - name: configure global mcast L2
+      nxos_vxlan_vtep: &gml2
+        interface: nve1
+        host_reachability: true
+        global_mcast_group_L2: "{{ global_mcast_group_L2|default(omit) }}"
+        provider: "{{ connection }}"
+      register: result
+
+    - assert: *true
+
+    - name: "Conf Idempotence"
+      nxos_vxlan_vtep: *gml2
+      register: result
+
+    - assert: *false
+
+    - name: reset global mcast L2
+      nxos_vxlan_vtep: &rgml2
+        interface: nve1
+        host_reachability: false
+        global_mcast_group_L2: "{{ def_global_mcast_group_L2|default(omit) }}"
+        provider: "{{ connection }}"
+      register: result
+
+    - assert: *true
+
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *rgml2
+      register: result
+
+    - assert: *false
+
+    when: (platform is search('N9K'))
+
+  - block:
+    - name: configure vxlan_vtep
+      nxos_vxlan_vtep: &configure7
+        interface: nve1
+        description: default
+        host_reachability: true
+        source_interface: Loopback0
+        shutdown: false
+        provider: "{{ connection }}"
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+
+    - name: "Conf Idempotence"
+      nxos_vxlan_vtep: *configure7
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+    - name: reset vxlan_vtep
+      nxos_vxlan_vtep: &def7
+        interface: nve1
+        description: default
+        host_reachability: false
+        source_interface: default
+        shutdown: true
+        provider: "{{ connection }}"
+      register: result
+
+    - assert: *true
+
+    - name: "reset Idempotence"
+      nxos_vxlan_vtep: *def7
+      register: result
+
+    - assert: *false
+
+    when: (platform is search('N7K'))
+
+  - name: remove vxlan_vtep
+    nxos_vxlan_vtep: &remove
+      interface: nve1
+      description: default
+      host_reachability: true
+      source_interface: Loopback0
+      source_interface_hold_down_time: 30
+      shutdown: true
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: "Remove Idempotence"
+    nxos_vxlan_vtep: *remove
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  when: (platform is search("N7K|N9K"))
+
+  always:
+  - name: "Apply N7K specific cleanup config"
+    include: targets/nxos_vxlan_vtep/tasks/platform/n7k/cleanup.yaml
+    when: platform is match('N7K')
+
+  - name: "Disable nv overlay evpn"
+    nxos_config:
+      commands:
+        - no nv overlay evpn
+      match: none
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: "Disable feature nv overlay"
+    nxos_feature:
+      feature: nve
+      provider: "{{ connection }}"
+      state: disabled
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"

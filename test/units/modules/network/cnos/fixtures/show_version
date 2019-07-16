@@ -1,0 +1,19 @@
+Lenovo Networking Operating System (NOS) Software
+Technical Assistance Center: http://www.lenovo.com
+Copyright (C) Lenovo, 2016.  All rights reserved.
+
+Software:
+  Bootloader version: 10.7.0.6
+  System version: 10.8.0.42
+  System compile time: May 03 11:06:25 PDT 2018
+Hardware:
+  G8272 ("48x10GE + 6x40GE")
+  NXP P2020 CPU with 4096 MB of memory
+
+  Device name: ip10-241-107-39
+  Boot Flash: 16 MB
+
+Kernel uptime is 2 day(s), 21 hour(s), 26 minute(s), 14 second(s)
+
+Last Reset Reason: Reset by CLI reload command
+

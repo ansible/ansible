@@ -1,0 +1,29 @@
+---
+- name: get value of expand string %windir%
+  win_command: powershell.exe $env:windir
+  register: win_dir_value
+
+- name: template out test registry structure
+  win_template:
+    src: test_reg.reg.j2
+    dest: '{{ win_output_dir }}\test_reg.reg'
+
+- name: import test registry structure
+  win_regmerge:
+    path: '{{ win_output_dir }}\test_reg.reg'
+
+- block:
+  - name: run tests
+    import_tasks: tests.yml
+
+  always:
+  - name: remove test registry key
+    win_regedit:
+      path: HKCU:\{{ test_reg_path }}
+      state: absent
+      delete_key: True
+
+  - name: remove template registry file
+    win_file:
+      path: '{{ win_output_dir }}\test_reg.reg'
+      state: absent

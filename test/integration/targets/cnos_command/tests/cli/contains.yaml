@@ -1,0 +1,19 @@
+---
+- debug: msg="START cli/contains.yaml"
+
+- name: test contains operator
+  cnos_command:
+    commands:
+      - display version
+      - display process memory 
+    wait_for:
+      - "result[0] contains 'Lenovo'"
+      - "result[1] contains 'Mem:'"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END cli/contains.yaml"

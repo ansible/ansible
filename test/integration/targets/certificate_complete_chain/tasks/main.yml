@@ -1,0 +1,97 @@
+---
+- name: register cryptography version
+  command: "{{ ansible_python.executable }} -c 'import cryptography; print(cryptography.__version__)'"
+  register: cryptography_version
+
+- block:
+  - name: Archive test files
+    archive:
+      path: "{{ role_path }}/files/"
+      dest: "{{ output_dir }}/files.tgz"
+
+  - name: Create temporary directory to store files
+    file:
+      state: directory
+      path: "{{ remote_tmp_dir }}/files/"
+
+  - name: Unarchive test files on testhost
+    unarchive:
+      src: "{{ output_dir }}/files.tgz"
+      dest: "{{ remote_tmp_dir }}/files/"
+
+  # Cert 1: certificate for www.ansible.com, retrieved on 2018-08-15
+  - name: Find root for cert 1
+    certificate_complete_chain:
+      input_chain: "{{ lookup('file', 'cert1-fullchain.pem', rstrip=False) }}"
+      root_certificates:
+      - "{{ remote_tmp_dir }}/files/roots/"
+    register: cert1_root
+  - name: Verify root for cert 1
+    assert:
+      that:
+        - "cert1_root.complete_chain | join('') == (lookup('file', 'cert1.pem', rstrip=False) ~ lookup('file', 'cert1-chain.pem', rstrip=False) ~ lookup('file', 'cert1-root.pem', rstrip=False))"
+        - "cert1_root.root == lookup('file', 'cert1-root.pem', rstrip=False)"
+
+  - name: Find rootchain for cert 1
+    certificate_complete_chain:
+      input_chain: "{{ lookup('file', 'cert1.pem', rstrip=False) }}"
+      intermediate_certificates:
+      - "{{ remote_tmp_dir }}/files/cert1-chain.pem"
+      root_certificates:
+      - "{{ remote_tmp_dir }}/files/roots.pem"
+    register: cert1_rootchain
+  - name: Verify rootchain for cert 1
+    assert:
+      that:
+        - "cert1_rootchain.complete_chain | join('') == (lookup('file', 'cert1.pem', rstrip=False) ~ lookup('file', 'cert1-chain.pem', rstrip=False) ~ lookup('file', 'cert1-root.pem', rstrip=False))"
+        - "cert1_rootchain.chain[:-1] | join('') == lookup('file', 'cert1-chain.pem', rstrip=False)"
+        - "cert1_rootchain.root == lookup('file', 'cert1-root.pem', rstrip=False)"
+
+  # Cert 2: certificate for letsencrypt.org, retrieved on 2018-08-15
+  # Intermediate: cross-signed by IdenTrust
+  - name: Find root for cert 2
+    certificate_complete_chain:
+      input_chain: "{{ lookup('file', 'cert2-fullchain.pem', rstrip=False) }}"
+      root_certificates:
+      - "{{ remote_tmp_dir }}/files/roots/"
+    register: cert2_root
+  - name: Verify root for cert 2
+    assert:
+      that:
+        - "cert2_root.complete_chain | join('') == (lookup('file', 'cert2.pem', rstrip=False) ~ lookup('file', 'cert2-chain.pem', rstrip=False) ~ lookup('file', 'cert2-root.pem', rstrip=False))"
+        - "cert2_root.root == lookup('file', 'cert2-root.pem', rstrip=False)"
+
+  - name: Find rootchain for cert 2
+    certificate_complete_chain:
+      input_chain: "{{ lookup('file', 'cert2.pem', rstrip=False) }}"
+      intermediate_certificates:
+      - "{{ remote_tmp_dir }}/files/cert2-chain.pem"
+      root_certificates:
+      - "{{ remote_tmp_dir }}/files/roots.pem"
+    register: cert2_rootchain
+  - name: Verify rootchain for cert 2
+    assert:
+      that:
+        - "cert2_rootchain.complete_chain | join('') == (lookup('file', 'cert2.pem', rstrip=False) ~ lookup('file', 'cert2-chain.pem', rstrip=False) ~ lookup('file', 'cert2-root.pem', rstrip=False))"
+        - "cert2_rootchain.chain[:-1] | join('') == lookup('file', 'cert2-chain.pem', rstrip=False)"
+        - "cert2_rootchain.root == lookup('file', 'cert2-root.pem', rstrip=False)"
+
+  # Cert 2: certificate for letsencrypt.org, retrieved on 2018-08-15
+  # Intermediate: signed by ISRG root
+  - name: Find alternate rootchain for cert 2
+    certificate_complete_chain:
+      # Remove line ending, make sure it is re-added by code
+      input_chain: "{{ lookup('file', 'cert2.pem', rstrip=True) }}"
+      intermediate_certificates:
+      - "{{ remote_tmp_dir }}/files/cert2-altchain.pem"
+      root_certificates:
+      - "{{ remote_tmp_dir }}/files/roots.pem"
+    register: cert2_rootchain_alt
+  - name: Verify rootchain for cert 2
+    assert:
+      that:
+        - "cert2_rootchain_alt.complete_chain | join('') == (lookup('file', 'cert2.pem', rstrip=False) ~ lookup('file', 'cert2-altchain.pem', rstrip=False) ~ lookup('file', 'cert2-altroot.pem', rstrip=False))"
+        - "cert2_rootchain_alt.chain[:-1] | join('') == lookup('file', 'cert2-altchain.pem', rstrip=False)"
+        - "cert2_rootchain_alt.root == lookup('file', 'cert2-altroot.pem', rstrip=False)"
+
+  when: cryptography_version.stdout is version('1.5', '>=')

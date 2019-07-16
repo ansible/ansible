@@ -1,15 +1,14 @@
 ---
-- debug: msg="START netconf_xml/contains.yaml"
+- debug: msg="START netconf_xml/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator with xml encoding
   junos_command:
     commands:
       - show version
-      - show interfaces fxp0
+      - show interfaces lo0
     format: xml
     wait_for:
-      - "result[0].software-information.host-name contains vsrx01"
-      - "result[1].interface-information.physical-interface.name contains fxp0"
+      - "result[1].rpc-reply.interface-information.physical-interface.name contains lo0"
     provider: "{{ netconf }}"
   register: result
 
@@ -19,4 +18,4 @@
       - "result.stdout is defined"
       - "result.stdout_lines is defined"
 
-- debug: msg="END netconf_xml/contains.yaml"
+- debug: msg="END netconf_xml/contains.yaml on connection={{ ansible_connection }}"

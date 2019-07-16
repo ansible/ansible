@@ -22,47 +22,47 @@ __metaclass__ = type
 
 from collections import defaultdict
 
-from ansible.compat.tests import mock, unittest
+from units.compat import mock, unittest
 from ansible.errors import AnsibleError
-
 from ansible.utils.vars import combine_vars, merge_hash
+
 
 class TestVariableUtils(unittest.TestCase):
 
     test_merge_data = (
-            dict(
-                a=dict(a=1),
-                b=dict(b=2),
-                result=dict(a=1, b=2)
-            ),
-            dict(
-                a=dict(a=1, c=dict(foo='bar')),
-                b=dict(b=2, c=dict(baz='bam')),
-                result=dict(a=1, b=2, c=dict(foo='bar', baz='bam'))
-            ),
-            dict(
-                a=defaultdict(a=1, c=defaultdict(foo='bar')),
-                b=dict(b=2, c=dict(baz='bam')),
-                result=defaultdict(a=1, b=2, c=defaultdict(foo='bar', baz='bam'))
-            ),
-        )
+        dict(
+            a=dict(a=1),
+            b=dict(b=2),
+            result=dict(a=1, b=2)
+        ),
+        dict(
+            a=dict(a=1, c=dict(foo='bar')),
+            b=dict(b=2, c=dict(baz='bam')),
+            result=dict(a=1, b=2, c=dict(foo='bar', baz='bam'))
+        ),
+        dict(
+            a=defaultdict(a=1, c=defaultdict(foo='bar')),
+            b=dict(b=2, c=dict(baz='bam')),
+            result=defaultdict(a=1, b=2, c=defaultdict(foo='bar', baz='bam'))
+        ),
+    )
     test_replace_data = (
-            dict(
-                a=dict(a=1),
-                b=dict(b=2),
-                result=dict(a=1, b=2)
-            ),
-            dict(
-                a=dict(a=1, c=dict(foo='bar')),
-                b=dict(b=2, c=dict(baz='bam')),
-                result=dict(a=1, b=2, c=dict(baz='bam'))
-            ),
-            dict(
-                a=defaultdict(a=1, c=dict(foo='bar')),
-                b=dict(b=2, c=defaultdict(baz='bam')),
-                result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
-            ),
-        )
+        dict(
+            a=dict(a=1),
+            b=dict(b=2),
+            result=dict(a=1, b=2)
+        ),
+        dict(
+            a=dict(a=1, c=dict(foo='bar')),
+            b=dict(b=2, c=dict(baz='bam')),
+            result=dict(a=1, b=2, c=dict(baz='bam'))
+        ),
+        dict(
+            a=defaultdict(a=1, c=dict(foo='bar')),
+            b=dict(b=2, c=defaultdict(baz='bam')),
+            result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
+        ),
+    )
 
     def setUp(self):
         pass

@@ -1,0 +1,169 @@
+- name: Creating a client if the directory doesn't exist should work
+  sensu_client:
+    subscriptions:
+      - default
+
+- name: Set variable for client file
+  set_fact:
+    client_file: "/etc/sensu/conf.d/client.json"
+
+- name: Insert invalid JSON in the client file
+  lineinfile:
+    state: "present"
+    create: "yes"
+    path: "{{ client_file }}"
+    line: "{'foo' = bar}"
+
+- name: Configure Sensu client with an existing invalid file
+  sensu_client:
+    name: "client"
+    state: "present"
+    subscriptions:
+      - default
+  register: client
+
+- name: Retrieve configuration file
+  slurp:
+    src: "{{ client_file }}"
+  register: client_config
+
+- name: Assert that client data was set successfully and properly
+  assert:
+    that:
+      - "client is successful"
+      - "client is changed"
+      - "client['config']['name'] == 'client'"
+      - "'default' in client['config']['subscriptions']"
+      - "client['file'] == client_file"
+
+- name: Assert that the client configuration file is actually configured properly
+  vars:
+    config: "{{ client_config.content | b64decode | from_json }}"
+  assert:
+    that:
+      - "config['client']['keepalives'] == true"
+      - "config['client']['name'] == 'client'"
+      - "config['client']['safe_mode'] == false"
+      - "'default' in config['client']['subscriptions']"
+
+- name: Delete Sensu client configuration
+  sensu_client:
+    state: "absent"
+  register: client_delete
+
+- name: Delete Sensu client configuration (again)
+  sensu_client:
+    state: "absent"
+  register: client_delete_twice
+
+- name: Retrieve configuration file stat
+  stat:
+    path: "{{ client_file }}"
+  register: client_stat
+
+- name: Assert that client deletion was successful
+  assert:
+    that:
+      - "client_delete is successful"
+      - "client_delete is changed"
+      - "client_delete_twice is successful"
+      - "client_delete_twice is not changed"
+      - "client_stat.stat.exists == false"
+
+- name: Configuring a client without subscriptions should fail
+  sensu_client:
+    name: "failure"
+  register: failure
+  ignore_errors: true
+
+- name: Assert failure to create client
+  assert:
+    that:
+      - failure is failed
+      - "'the following are missing: subscriptions' in failure['msg']"
+
+- name: Configure a new client from scratch with custom parameters
+  sensu_client:
+    name: "custom"
+    address: "host.fqdn"
+    subscriptions:
+      - "default"
+      - "webserver"
+    redact:
+      - "password"
+    socket:
+      bind: "127.0.0.1"
+      port: "3030"
+    keepalive:
+      thresholds:
+        warning: "180"
+        critical: "300"
+      handlers:
+        - "email"
+      custom:
+        - broadcast: "irc"
+      occurrences: "3"
+  register: client
+
+- name: Configure a new client from scratch with custom parameters (twice)
+  sensu_client:
+    name: "custom"
+    address: "host.fqdn"
+    subscriptions:
+      - "default"
+      - "webserver"
+    redact:
+      - "password"
+    socket:
+      bind: "127.0.0.1"
+      port: "3030"
+    keepalive:
+      thresholds:
+        warning: "180"
+        critical: "300"
+      handlers:
+        - "email"
+      custom:
+        - broadcast: "irc"
+      occurrences: "3"
+  register: client_twice
+
+- name: Retrieve configuration file
+  slurp:
+    src: "{{ client_file }}"
+  register: client_config
+
+- name: Assert that client data was set successfully and properly
+  assert:
+    that:
+      - "client is successful"
+      - "client is changed"
+      - "client_twice is successful"
+      - "client_twice is not changed"
+      - "client['config']['name'] == 'custom'"
+      - "client['config']['address'] == 'host.fqdn'"
+      - "'default' in client['config']['subscriptions']"
+      - "'webserver' in client['config']['subscriptions']"
+      - "'password' in client['config']['redact']"
+      - "client['config']['keepalive']['thresholds']['warning'] == '180'"
+      - "client['config']['keepalive']['thresholds']['critical'] == '300'"
+      - "'email' in client['config']['keepalive']['handlers']"
+      - "client['config']['keepalive']['occurrences'] == '3'"
+      - "client['file'] == client_file"
+
+- name: Assert that the client configuration file is actually configured properly
+  vars:
+    config: "{{ client_config.content | b64decode | from_json }}"
+  assert:
+    that:
+      - "config['client']['name'] == 'custom'"
+      - "config['client']['address'] == 'host.fqdn'"
+      - "config['client']['keepalives'] == true"
+      - "config['client']['safe_mode'] == false"
+      - "'default' in config['client']['subscriptions']"
+      - "'webserver' in config['client']['subscriptions']"
+      - "'password' in config['client']['redact']"
+      - "config['client']['keepalive']['thresholds']['warning'] == '180'"
+      - "config['client']['keepalive']['thresholds']['critical'] == '300'"
+      - "'email' in config['client']['keepalive']['handlers']"
+      - "config['client']['keepalive']['occurrences'] == '3'"

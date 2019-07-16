@@ -1,0 +1,124 @@
+#
+# Submodule tests
+#
+
+# Repository A with submodules defined  (repo_submodules)
+#   .gitmodules file points to Repository I
+# Repository B forked from A that has newer commits (repo_submodules_newer)
+#   .gitmodules file points to Repository II instead of I
+#   .gitmodules file also points to Repository III
+# Repository I for submodule1 (repo_submodule1)
+#   Has 1 file checked in
+# Repository II forked from I that has newer commits (repo_submodule1_newer)
+#   Has 2 files checked in
+# Repository III for a second submodule (repo_submodule2)
+#   Has 1 file checked in
+
+- name: SUBMODULES | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SUBMODULES | Test that clone without recursive does not retrieve submodules
+  git:
+    repo: "{{ repo_submodules }}"
+    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
+    dest: "{{ checkout_dir }}"
+    recursive: no
+
+- name: SUBMODULES | List submodule1
+  command: 'ls -1a {{ checkout_dir }}/submodule1'
+  register: submodule1
+
+- name: SUBMODULES | Ensure submodu1 is at the appropriate commit
+  assert:
+    that: '{{ submodule1.stdout_lines | length }} == 2'
+
+- name: SUBMODULES | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+
+- name: SUBMODULES | Test that clone with recursive retrieves submodules
+  git:
+    repo: "{{ repo_submodules }}"
+    dest: "{{ checkout_dir }}"
+    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
+    recursive: yes
+
+- name: SUBMODULES | List submodule1
+  command: 'ls -1a {{ checkout_dir }}/submodule1'
+  register: submodule1
+
+- name: SUBMODULES | Ensure submodule1 is at the appropriate commit
+  assert:
+    that: '{{ submodule1.stdout_lines | length }} == 4'
+
+- name: SUBMODULES | Copy the checkout so we can run several different tests on it
+  command: 'cp -pr {{ checkout_dir }} {{ checkout_dir }}.bak'
+
+
+- name: SUBMODULES | Test that update without recursive does not change submodules
+  git:
+    repo: "{{ repo_submodules }}"
+    version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
+    dest: "{{ checkout_dir }}"
+    recursive: no
+    update: yes
+    track_submodules: yes
+
+- name: SUBMODULES | List submodule1
+  command: 'ls -1a {{ checkout_dir }}/submodule1'
+  register: submodule1
+
+- name: SUBMODULES | Stat submodule2
+  stat:
+    path: "{{ checkout_dir }}/submodule2"
+  register: submodule2
+
+- name: SUBMODULES | List submodule2
+  command: ls -1a {{ checkout_dir }}/submodule2
+  register: submodule2
+
+- name: SUBMODULES | Ensure both submodules are at the appropriate commit
+  assert:
+    that:
+      - '{{ submodule1.stdout_lines|length }} == 4'
+      - '{{ submodule2.stdout_lines|length }} == 2'
+
+
+- name: SUBMODULES | Remove checkout dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: SUBMODULES | Restore checkout to prior state
+  command: 'cp -pr {{ checkout_dir }}.bak {{ checkout_dir }}'
+
+
+- name: SUBMODULES | Test that update with recursive updated existing submodules
+  git:
+    repo: "{{ repo_submodules }}"
+    version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
+    dest: "{{ checkout_dir }}"
+    update: yes
+    recursive: yes
+    track_submodules: yes
+
+- name: SUBMODULES | List submodule 1
+  command: 'ls -1a {{ checkout_dir }}/submodule1'
+  register: submodule1
+
+- name: SUBMODULES | Ensure submodule1 is at the appropriate commit
+  assert:
+    that: '{{ submodule1.stdout_lines | length }} == 5'
+
+
+- name: SUBMODULES | Test that update with recursive found new submodules
+  command: 'ls -1a {{ checkout_dir }}/submodule2'
+  register: submodule2
+
+- name: SUBMODULES | Enusre submodule2 is at the appropriate commit
+  assert:
+    that: '{{ submodule2.stdout_lines | length }} == 4'

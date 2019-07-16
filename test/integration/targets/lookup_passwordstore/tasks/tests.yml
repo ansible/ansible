@@ -1,0 +1,49 @@
+- name: Check name of gpg2 binary
+  command: which gpg2
+  register: gpg2_check
+  ignore_errors: true
+
+- name: Set gpg2 binary name
+  set_fact:
+    gpg2_bin: '{{ "gpg2" if gpg2_check is successful else "gpg" }}'
+
+- name: Stop gpg-agent so we can remove any locks on the GnuPG dir
+  command: gpgconf --kill gpg-agent
+  ignore_errors: yes
+
+- name: Remove previous password files and directory
+  file:
+    dest: "{{ item }}"
+    state: absent
+  loop:
+    - "~/.gnupg"
+    - "~/.password-store"
+
+# How to generate a new GPG key:
+#   gpg2 --batch --gen-key input  # See templates/input
+#   gpg2 --list-secret-keys --keyid-format LONG
+#   gpg2 --armor --export-secret-keys [key id]
+#   # Get the fingerprint
+#   gpg2 --fingerprint --keyid-format LONG | grep [key id] -A 1 | tail -1 | tr -d '[:space:]' | awk -F '=' '{print $2":6:"}'
+
+- name: Import GPG private key
+  shell: echo "{{ passwordstore_privkey }}" | {{ gpg2_bin }} --import --allow-secret-key-import -
+
+- name: Trust  key
+  shell: echo "D3E1CC8934E97270CEB066023AF1BD3619AB496A:6:" | {{ gpg2_bin }} --import-ownertrust
+
+- name: Initialise passwordstore
+  command: pass init ansible-test
+
+- name: Create a password
+  set_fact:
+    newpass: "{{ lookup('passwordstore', 'test-pass length=8 create=yes') }}"
+
+- name: Fetch password from an existing file
+  set_fact:
+    readpass: "{{ lookup('passwordstore', 'test-pass') }}"
+
+- name: Verify password
+  assert:
+    that:
+      - readpass == newpass

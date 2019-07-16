@@ -1,0 +1,13 @@
+pip_test_package: sampleproject
+pip_test_packages:
+  - sampleproject
+  - jiphy
+pip_test_pkg_ver:
+  - sampleproject<=100, !=9.0.0,>=0.0.1 
+  - jiphy<100 ,!=9,>=0.0.1
+pip_test_pkg_ver_unsatisfied:
+  - sampleproject>= 999.0.0
+  - jiphy >999.0
+pip_test_modules:
+  - sample
+  - jiphy

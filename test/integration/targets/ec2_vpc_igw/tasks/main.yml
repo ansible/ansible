@@ -1,0 +1,84 @@
+---
+- block:
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+  - name: create a VPC
+    ec2_vpc_net:
+      name: "{{ resource_prefix }}-vpc"
+      state: present
+      cidr_block: "10.232.232.128/26"
+      <<: *aws_connection_info
+      tags:
+        Name: "{{ resource_prefix }}-vpc"
+        Description: "Created by ansible-test"
+    register: vpc_result
+
+  # ============================================================
+  - name: create internet gateway (expected changed=true)
+    ec2_vpc_igw:
+      state: present
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_igw_create
+
+  - name: assert creation happened (expected changed=true)
+    assert:
+      that:
+          - 'vpc_igw_create'
+          - 'vpc_igw_create.gateway_id.startswith("igw-")'
+          - 'vpc_igw_create.vpc_id == vpc_result.vpc.id'
+          - '"tags" in vpc_igw_create'
+          - '"gateway_id" in vpc_igw_create'
+
+  # ============================================================
+  - name: attempt to recreate internet gateway on VPC (expected changed=false)
+    ec2_vpc_igw:
+      state: present
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_igw_recreate
+
+  - name: assert recreation did nothing (expected changed=false)
+    assert:
+      that:
+          - 'vpc_igw_recreate.changed == False'
+          - 'vpc_igw_recreate.gateway_id == vpc_igw_create.gateway_id'
+          - 'vpc_igw_recreate.vpc_id == vpc_igw_create.vpc_id'
+
+  # ============================================================
+  - name: test state=absent (expected changed=true)
+    ec2_vpc_igw:
+      state: absent
+      vpc_id: "{{ vpc_result.vpc.id }}"
+      <<: *aws_connection_info
+    register: vpc_igw_delete
+
+  - name: assert state=absent (expected changed=true)
+    assert:
+      that:
+          - 'vpc_igw_delete.changed'
+
+  always:
+    # ============================================================
+    - name: tidy up IGW
+      ec2_vpc_igw:
+        state: absent
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+      ignore_errors: true
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
+      ignore_errors: true

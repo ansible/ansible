@@ -1,0 +1,16 @@
+- hosts: testhost
+  gather_facts: no
+  vars:
+    expected_location: "role: bar"
+  roles:
+    - bar
+    - foo
+  tasks:
+  - name: Use ping from role
+    ping:
+    register: result
+
+  - assert:
+      that:
+        - '"location" in result'
+        - 'result["location"] == "{{ expected_location}}"'

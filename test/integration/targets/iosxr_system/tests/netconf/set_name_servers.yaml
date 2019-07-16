@@ -1,0 +1,137 @@
+---
+- debug: 
+    msg: "START netconf/set_name_servers.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no domain name-server 192.0.2.1
+      - no domain name-server 192.0.2.2
+      - no domain name-server 192.0.2.3
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- name: setup
+  iosxr_system:
+    vrf: ansible
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ netconf }}"
+    state: absent
+  connection: netconf
+  ignore_errors: True
+  register: result
+
+- name: configure name_servers
+  iosxr_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.xml|length == 1
+      - "'192.0.2.1' in result.xml[0]"
+      - "'192.0.2.2' in result.xml[0]"
+      - "'192.0.2.3' in result.xml[0]"
+
+- name: verify name_servers
+  iosxr_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add name servers with vrf
+  iosxr_system: &addvrf
+    vrf: ansible
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+      - 192.0.2.3
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.xml|length == 1
+      - "'ansible' in result.xml[0]"
+      - "'192.0.2.1' in result.xml[0]"
+      - "'192.0.2.2' in result.xml[0]"
+      - "'192.0.2.3' in result.xml[0]"
+
+- name: verify change to vrf
+  iosxr_system: *addvrf
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one
+  iosxr_system:
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+    provider: "{{ netconf }}"
+  connection: netconf
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - result.xml|length == 1
+      - "'192.0.2.3' in result.xml[0]"
+
+- name: remove one with vrf
+  iosxr_system:
+    vrf: ansible
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+    provider: "{{ netconf }}"
+  connection: netconf
+  ignore_errors: True
+  register: result
+
+- name: teardown
+  iosxr_config:
+    lines:
+      - no domain name-server 192.0.2.1
+      - no domain name-server 192.0.2.2
+    match: none
+    provider: "{{ cli }}"
+  connection: network_cli
+
+- name: teardown
+  iosxr_system:
+    vrf: ansible
+    name_servers:
+      - 192.0.2.1
+      - 192.0.2.2
+    provider: "{{ netconf }}"
+    state: absent
+  connection: netconf
+  ignore_errors: True
+  register: result
+
+- debug:
+    msg: "END netconf/set_name_servers.yaml on connection={{ ansible_connection }}"

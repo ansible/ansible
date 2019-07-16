@@ -1,0 +1,348 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: intname="{{ nxos_int1 }}"
+
+- set_fact: log_neighbor_changese="enable"
+  when: (imagetag and (imagetag is version_compare('D1', 'ne')) and (imagetag is version_compare('N1', 'ne')))
+- set_fact: log_neighbor_changesd="disable"
+  when: (imagetag and (imagetag is version_compare('D1', 'ne')) and (imagetag is version_compare('N1', 'ne')))
+
+- set_fact: remove_private_asa="all"
+  when: not titanium
+- set_fact: remove_private_asr="replace-as"
+  when: not titanium
+
+- name: "Setup: Disable features"
+  nxos_feature:
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: disabled
+  loop: ['bgp', 'bfd']
+  ignore_errors: yes
+
+- name: "Setup: Enable features"
+  nxos_feature:
+    feature: "{{ item }}"
+    provider: "{{ connection }}"
+    state: enabled
+  loop: ['bgp', 'bfd']
+
+- block:
+  - name: "Configure BGP neighbor1"
+    nxos_bgp_neighbor: &configure1
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      connected_check: true
+      capability_negotiation: true
+      dynamic_capability: true
+      ebgp_multihop: 2
+      low_memory_exempt: true
+      maximum_peers: 10
+      suppress_4_byte_as: true
+      timers_keepalive: 90
+      timers_holdtime: 270
+      log_neighbor_changes: "{{log_neighbor_changese|default(omit)}}"
+      local_as: 22.33
+      remote_as: 33.22
+      description: "just a description"
+      update_source: "{{ intname.capitalize() }}"
+      shutdown: true
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure1
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "Configure BGP neighbor2"
+    nxos_bgp_neighbor: &configure2
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      connected_check: False
+      capability_negotiation: False
+      dynamic_capability: False
+      ebgp_multihop: default
+      low_memory_exempt: False
+      maximum_peers: default
+      suppress_4_byte_as: False
+      timers_keepalive: default
+      timers_holdtime: default
+      log_neighbor_changes: "{{log_neighbor_changesd|default(omit)}}"
+      local_as: default
+      remote_as: default
+      description: default
+      update_source: default
+      shutdown: False
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure2
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_neighbor: &remove
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+      state: absent
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *remove
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP neighbor3"
+    nxos_bgp_neighbor: &configure3
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      description: "tested by ansible"
+      remove_private_as: "{{remove_private_asa|default(omit)}}"
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure3
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP neighbor4"
+    nxos_bgp_neighbor: &configure4
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      description: "tested by ansible"
+      remove_private_as: "{{remove_private_asr|default(omit)}}"
+      provider: "{{ connection }}"
+      state: present
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure4
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_neighbor: *remove
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor 3des password"
+    nxos_bgp_neighbor: &configure_3des_password
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      remote_as: 30
+      pwd: '386c0565965f89de'
+      pwd_type: 3des
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_3des_password
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_neighbor: *remove
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor type 7 password"
+    nxos_bgp_neighbor: &configure_type7_password
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      remote_as: 30
+      pwd: '386c0565965f89de'
+      pwd_type: cisco_type_7
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_type7_password
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP neighbor password"
+    nxos_bgp_neighbor: &remove_password
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      remote_as: 30
+      pwd: default
+      pwd_type: default
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *remove_password
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_neighbor: *remove
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Configure BGP neighbor transport type passive"
+    nxos_bgp_neighbor: &configure_transport_passive
+      asn: 65535
+      neighbor: 192.0.2.3
+      vrf: "{{ item }}"
+      remote_as: 30
+      transport_passive_only: true
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_transport_passive
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BGP neighbor transport type default"
+    nxos_bgp_neighbor: &configure_transport_default
+      asn: 65535
+      neighbor: 192.0.2.3
+      vrf: "{{ item }}"
+      remote_as: 30
+      transport_passive_only: false
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *configure_transport_default
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Remove BGP"
+    nxos_bgp_neighbor: &removenp
+      asn: 65535
+      neighbor: 192.0.2.3
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+      state: absent
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_bgp_neighbor: *removenp
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
+
+  - name: "Configure BFD enable"
+    nxos_bgp_neighbor: &bfd_enable
+      asn: 65535
+      neighbor: 192.168.1.1
+      bfd: enable
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check BFD enable Idempotence
+    nxos_bgp_neighbor: *bfd_enable
+    register: result
+
+  - assert: *false
+
+  - name: Configure BFD disable Idempotence
+    nxos_bgp_neighbor: &bfd_disable
+      asn: 65535
+      neighbor: 192.168.1.1
+      bfd: disable
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check BFD disable Idempotence
+    nxos_bgp_neighbor: *bfd_disable
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "Teardown: Disable features"
+    nxos_feature:
+      feature: "{{ item }}"
+      provider: "{{ connection }}"
+      state: disabled
+    loop: ['bgp', 'bfd']
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"

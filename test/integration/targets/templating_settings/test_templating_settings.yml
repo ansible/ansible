@@ -1,7 +1,6 @@
 ---
 - name: 'Test templating in name'
-  hosts: localhost
-  connection: local
+  hosts: testhost
   vars:
     a_list:
       - 'part'
@@ -13,4 +12,3 @@
   # name goes through templating correctly
     - name: 'Task: {{ a_list | to_json }}'
       debug: msg='{{ a_list | to_json }}'
-

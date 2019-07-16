@@ -1,0 +1,35 @@
+hostname iosxr01
+line default
+ transport input ssh
+!
+interface Loopback888
+ description test for ansible
+ shutdown
+!
+interface MgmtEth0/0/CPU0/0
+ ipv4 address dhcp
+!
+interface preconfigure GigabitEthernet0/0/0/3
+ description test-interface-3
+ mtu 256
+ speed 100
+ duplex full
+!
+interface GigabitEthernet0/0/0/0
+ shutdown
+!
+interface GigabitEthernet0/0/0/1
+ shutdown
+!
+router static
+ address-family ipv4 unicast
+  0.0.0.0/0 10.0.2.2
+ !
+!
+netconf-yang agent
+ ssh
+!
+ssh server v2
+ssh server netconf vrf default
+!
+end

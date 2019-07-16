@@ -1,37 +1,28 @@
-#!/bin/bash -eux
+#!/usr/bin/env bash
 
-source_root=$(python -c "from os import path; print(path.abspath(path.join(path.dirname('$0'), '../../..')))")
+set -o pipefail -eux
 
-install_deps="${INSTALL_DEPS:-}"
+declare -a args
+IFS='/:' read -ra args <<< "$1"
 
-cd "${source_root}"
+group="${args[1]}"
 
-if [ "${TOXENV}" = 'py24' ]; then
-    if [ "${install_deps}" != "" ]; then
-        add-apt-repository ppa:fkrull/deadsnakes && apt-get update -qq && apt-get install python2.4 -qq
-    fi
+shippable.py
 
-    python2.4 -V
-    python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|cloud|ec2|gce|lxd|docker_common|azure_rm_common|vca|vmware|gcp|gcdns).py' lib/ansible/module_utils
+if [ "${BASE_BRANCH:-}" ]; then
+    base_branch="origin/${BASE_BRANCH}"
 else
-    if [ "${install_deps}" != "" ]; then
-        pip install -r "${source_root}/test/utils/shippable/sanity-requirements.txt" --upgrade
-        pip list
-    fi
-
-    xunit_dir="${source_root}/shippable/testresults"
-    coverage_dir="${source_root}/shippable/codecoverage"
-
-    mkdir -p "${xunit_dir}"
-    mkdir -p "${coverage_dir}"
-
-    xunit_file="${xunit_dir}/nosetests-xunit.xml"
-    coverage_file="${coverage_dir}/nosetests-coverage.xml"
-
-    TOX_TESTENV_PASSENV=NOSETESTS NOSETESTS="nosetests --with-xunit --xunit-file='${xunit_file}' --cover-xml --cover-xml-file='${coverage_file}'" tox
-
-    source hacking/env-setup
-    python --version
-    ansible --version
-    ansible -m ping localhost
+    base_branch=""
 fi
+
+case "${group}" in
+    1) options=(--skip-test pylint --skip-test ansible-doc --skip-test docs-build) ;;
+    2) options=(--test ansible-doc --test docs-build) ;;
+    3) options=(--test pylint --exclude test/units/ --exclude lib/ansible/module_utils/ --exclude lib/ansible/modules/network/) ;;
+    4) options=(--test pylint           test/units/           lib/ansible/module_utils/           lib/ansible/modules/network/) ;;
+esac
+
+# shellcheck disable=SC2086
+ansible-test sanity --color -v --junit ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
+    --docker --docker-keep-git --base-branch "${base_branch}" \
+    "${options[@]}" --allow-disabled

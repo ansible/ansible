@@ -1,0 +1,5 @@
+- vars:
+    _undefined: 'yes'
+  block:
+    - set_fact:
+        _include_defined_result: 'good'

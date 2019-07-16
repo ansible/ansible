@@ -1,0 +1,62 @@
+# make a installroot
+- name: Create installroot
+  command: mktemp -d "{{ remote_tmp_dir }}/ansible.test.XXXXXX"
+  register: yumroot
+
+#- name: Populate directory
+#  file:
+#    path: "/{{ yumroot.stdout }}/etc/"
+#    state: directory
+#    mode: 0755
+#
+#- name: Populate directory2
+#  copy:
+#    content: "[main]\ndistropkgver={{ ansible_distribution_version }}\n"
+#    dest: "/{{ yumroot.stdout }}/etc/yum.conf"
+
+- name: Make a necessary directory
+  file:
+    path: "{{ yumroot.stdout }}/etc/yum/vars/"
+    state: directory
+    mode: 0755
+
+- name: get yum releasever
+  command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
+  register: releasever
+  ignore_errors: yes
+
+- name: Populate directory
+  copy:
+    content: "{{ releasever.stdout_lines[-1] }}\n"
+    dest: "/{{ yumroot.stdout }}/etc/yum/vars/releasever"
+  when: releasever is successful
+
+# This will drag in > 200 MB.
+- name: attempt installroot
+  yum: name=zlib installroot="{{ yumroot.stdout }}/" disable_gpg_check=yes
+  register: yum_result
+
+- name: check sos with rpm in installroot
+  shell: rpm -q zlib --root="{{ yumroot.stdout }}/"
+  failed_when: False
+  register: rpm_result
+
+- name: verify installation of sos
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "yum_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: cleanup installroot
+  file:
+    path: "{{ yumroot.stdout }}/"
+    state: absent

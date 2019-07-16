@@ -1,0 +1,212 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+    
+  - name: Use an invalid domain
+    meraki_config_template:
+      auth_key: '{{ auth_key }}'
+      host: marrrraki.com
+      state: query
+      org_name: '{{test_org_name}}'
+      output_level: debug
+    delegate_to: localhost
+    register: invalid_domain
+    ignore_errors: yes
+
+  - name: Connection assertions
+    assert:
+      that:
+        - '"Failed to connect to" in invalid_domain.msg'
+
+  - name: Query all configuration templates
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+    register: get_all
+
+  - name: Delete non-existant configuration template
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      config_template: FakeConfigTemplate
+    register: deleted
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - '"No configuration template named" in deleted.msg'
+
+  - name: Create a network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      type: appliance
+    delegate_to: localhost
+    register: net_info
+
+  - set_fact:
+      net_id: '{{net_info.data.id}}'
+
+  - name: Bind a template to a network with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    check_mode: yes
+    register: bind_check
+
+  - name: Bind a template to a network
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    register: bind
+
+  - assert:
+      that:
+        bind.changed == True
+
+  - assert:
+      that:
+        bind_check is changed
+
+  - name: Bind a template to a network when it's already bound
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    register: bind_invalid
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - bind_invalid.changed == False
+
+  - name: Unbind a template from a network
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    register: unbind
+
+  - assert:
+      that:
+        unbind.changed == True
+
+  - name: Unbind a template from a network when it's not bound
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+      config_template: '{{test_template_name}}'
+    register: unbind_invalid
+
+  - assert:
+      that:
+        unbind_invalid.changed == False
+
+  - name: Bind a template to a network via id
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      config_template: '{{test_template_name}}'
+    register: bind_id
+
+  - assert:
+      that:
+        bind_id.changed == True
+
+  - name: Bind a template to a network via id for idempotency
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      config_template: '{{test_template_name}}'
+    register: bind_id_idempotent
+
+  - assert:
+      that:
+        - bind_id_idempotent.changed == False
+        - bind_id_idempotent.data is defined
+
+  - name: Unbind a template from a network via id with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      config_template: '{{test_template_name}}'
+    check_mode: yes
+    register: unbind_id_check
+
+  - assert:
+      that:
+        unbind_id_check is changed
+
+  - name: Unbind a template from a network via id
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_id: '{{net_id}}'
+      config_template: '{{test_template_name}}'
+    register: unbind_id
+
+  - assert:
+      that:
+        unbind_id.changed == True
+
+  # This is disabled by default since they can't be created via API
+  - name: Delete sacrificial template with check mode
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      config_template: sacrificial_template
+    check_mode: yes
+    register: delete_template_check
+
+  # This is disabled by default since they can't be created via API
+  - name: Delete sacrificial template
+    meraki_config_template:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      config_template: sacrificial_template
+      output_level: debug
+    register: delete_template
+
+  - debug:
+      var: delete_template
+
+  always:
+  - name: Delete network
+    meraki_network:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{ test_org_name }}'
+      net_name: '{{ test_net_name }}'
+    delegate_to: localhost

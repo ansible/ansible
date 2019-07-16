@@ -1,0 +1,98 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure tenant does not exist for tests to kick off
+  aci_tenant: &aci_tenant_absent
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: absent
+    tenant: anstest
+
+- name: create a snapshot
+  aci_config_snapshot: &create_snapshot
+    <<: *aci_tenant_absent
+    state: present
+    tenant: "{{ fakevar | default(omit) }}"
+    export_policy: anstest
+
+- name: create a tenant - use for rollback
+  aci_tenant: &aci_tenant
+    <<: *create_snapshot
+    export_policy: "{{ fakevar | default(omit) }}"
+    tenant: anstest
+  register: tenant_present
+
+- name: create a new snapshot
+  aci_config_snapshot:
+    <<: *create_snapshot
+
+- name: get snapshots
+  aci_config_snapshot:
+    <<: *create_snapshot
+    state: query
+  register: snapshots
+
+- name: compare snapshots
+  aci_config_rollback: &preview_rollback
+    <<: *create_snapshot
+    state: preview
+    compare_export_policy: anstest
+    compare_snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-2].configSnapshot.attributes.name }}"
+  register: rollback_preview
+
+- name: rollback to snapshot
+  aci_config_rollback: &aci_rollback
+    <<: *create_snapshot
+    state: rollback
+    snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+  ignore_errors: yes
+  register: rollback_missing_param
+
+- name: rollback to snapshot
+  aci_config_rollback:
+    <<: *aci_rollback
+    import_policy: anstest
+    import_type: replace
+    import_mode: atomic
+  register: rollback_rollback
+
+- name: pause execution to let rollback take effect
+  pause:
+    seconds: 15
+
+- name: ensure tenant doesn't exist after rollback
+  aci_tenant:
+    <<: *aci_tenant_absent
+  register: tenant_removed
+
+- name: rollback assertions
+  assert:
+    that:
+      - rollback_preview is not changed
+#     FIXME: diff output not longer works ?
+#      - '"<fvTenant name=\"anstest\" rn=\"tn-anstest\" status=\"deleted\">" in rollback_preview.diff'
+      - '"snapshots.diff.xml" in rollback_preview.url'
+      - rollback_missing_param is failed
+      - 'rollback_missing_param.msg == "state is rollback but all of the following are missing: import_policy"'
+      - rollback_rollback is changed
+#     FIXME: fileName key is missing from 'sent' dictionary, but exists in 'proposed' dictionary
+#      - '"ce2_" in rollback_rollback.sent.configImportP.attributes.fileName'
+#      - '".tar.gz" in rollback_rollback.sent.configImportP.attributes.fileName'
+      - '"ce2_" in rollback_rollback.proposed.configImportP.attributes.fileName'
+      - '".tar.gz" in rollback_rollback.proposed.configImportP.attributes.fileName'
+      - '"fabric/configimp-anstest.json" in rollback_rollback.url'
+      - tenant_removed is not changed
+      - tenant_removed.previous == []

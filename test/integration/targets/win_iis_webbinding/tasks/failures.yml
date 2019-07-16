@@ -1,0 +1,70 @@
+- name: failure check define * for host header
+  win_iis_webbinding:
+    name: "{{ test_iis_site_name }}"
+    state: present
+    host_header: '*'
+    protocol: http
+    ip: '*'
+  register: failure
+  failed_when: failure.msg != "To make or remove a catch-all binding, please omit the host_header parameter entirely rather than specify host_header *"
+
+- debug:
+    var: failure
+    verbosity: 1
+
+- block:
+  - name: get all websites from server
+    raw: powershell.exe "(get-website).name"
+    register: existing_sites
+
+  - name: ensure all sites are removed for clean testing
+    win_iis_website:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ existing_sites.stdout_lines }}"
+
+  - name: add testremove site
+    win_iis_website:
+      name: testremove
+      state: started
+      physical_path: c:\inetpub\wwwroot
+
+  - name: add bindings to testremove
+    win_iis_webbinding:
+      name: testremove
+      ip: "{{ item.ip }}"
+      port: "{{ item.port }}"
+    with_items:
+      - {ip: 127.0.0.1, port: 80}
+      - {ip: '*', port: 80}
+
+  - name: remove ip  * binding from testremove
+    win_iis_webbinding:
+      name: testremove
+      state: absent
+      port: 80
+      ip: '*'
+
+  - name: get the remaining binding from testremove
+    test_get_webbindings:
+      name: testremove
+      port: 80
+      ip: 127.0.0.1
+    register: test_result
+
+  - debug:
+      var: test_result
+      verbosity: 1
+
+  - name: assert that remove *:80 doesn't also remove 127.0.0.1:80
+    assert:
+      that:
+      - test_result.binding.ip == '127.0.0.1'
+      - test_result.binding.port == 80
+
+  always:
+  - name: remove websites
+    win_iis_website:
+      name: testremove
+      state: absent

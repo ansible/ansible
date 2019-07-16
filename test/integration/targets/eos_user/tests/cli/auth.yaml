@@ -1,0 +1,41 @@
+---
+- block:
+  - name: Create user with password
+    eos_user:
+      name: auth_user
+      privilege: 15
+      role: network-operator
+      state: present
+      authorize: yes
+      provider: "{{ cli }}"
+      configured_password: pass123
+    become: yes
+
+  - name: test login
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
+      responses:
+        (?i)password: "pass123"
+
+  - name: test login with invalid password (should fail)
+    expect:
+      command: "ssh auth_user@{{ ansible_ssh_host }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no show version"
+      responses:
+        (?i)password: "badpass"
+    ignore_errors: yes
+    register: results
+
+  - name: check that attempt failed
+    assert:
+      that:
+        - results.failed
+
+  always:
+  - name: delete user
+    eos_user:
+      name: auth_user
+      state: absent
+      provider: "{{ cli }}"
+      authorize: yes
+    become: yes
+    register: result

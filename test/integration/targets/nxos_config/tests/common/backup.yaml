@@ -1,0 +1,131 @@
+---
+- debug: msg="START common/backup.yaml on connection={{ ansible_connection }}"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- name: setup
+  nxos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+
+- name: collect any backup files
+  find: &backups
+    paths: "{{ role_path }}/backup"
+    pattern: "{{ inventory_hostname_short }}_config*"
+  connection: local
+  register: backup_files
+
+- name: delete backup files
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{backup_files.files|default([])}}"
+
+- name: configure device with config
+  nxos_config:
+    commands:
+      - description this is a test
+      - shutdown
+    parents:
+      - "interface {{ intname }}"
+    backup: yes
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.updates is defined"
+
+- name: collect any backup files
+  find: *backups
+  connection: local
+  register: backup_files
+
+- assert:
+    that:
+      - "backup_files.files is defined"
+
+- name: delete configurable backup file path
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ role_path }}/backup_test_dir/"
+    - "{{ role_path }}/backup/backup.cfg"
+
+- name: take configuration backup in custom filename and directory path
+  nxos_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check if the backup file-1 exist
+  find:
+    paths: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}/backup.cfg"
+  register: backup_file
+  connection: local
+
+- assert:
+    that:
+      - "backup_file.files is defined"
+
+- name: take configuration backup in custom filename
+  nxos_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check if the backup file-2 exist
+  find:
+    paths: "{{ role_path }}/backup/backup.cfg"
+  register: backup_file
+  connection: local
+
+- assert:
+    that:
+      - "backup_file.files is defined"
+
+- name: take configuration backup in custom path and default filename
+  nxos_config:
+    backup: yes
+    backup_options:
+      dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check if the backup file-3 exist
+  find:
+    paths: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
+    pattern: "{{ inventory_hostname_short }}_config*"
+  register: backup_file
+  connection: local
+
+- assert:
+    that:
+      - "backup_file.files is defined"
+
+- debug: msg="END common/backup.yaml on connection={{ ansible_connection }}"

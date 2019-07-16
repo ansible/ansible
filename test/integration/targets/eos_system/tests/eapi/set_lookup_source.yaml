@@ -1,0 +1,68 @@
+---
+- debug: msg="START eapi/set_lookup_source.yaml"
+
+- name: setup
+  eos_config:
+    lines:
+      - no ip domain lookup source-interface
+      - vrf definition ansible
+    match: none
+  become: yes
+
+- name: configure lookup_source
+  eos_system:
+    lookup_source: Management1
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'ip domain lookup source-interface Management1' in result.commands"
+
+- name: verify lookup_source
+  eos_system:
+    lookup_source: Management1
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: change to vrf
+  eos_system:
+    lookup_source:
+      - interface: Management1
+        vrf: ansible
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no ip domain lookup source-interface Management1' in result.commands"
+      - "'ip domain lookup vrf ansible source-interface Management1' in result.commands"
+      - result.commands|length == 2
+
+- name: verify change to vrf
+  eos_system:
+    lookup_source:
+      - interface: Management1
+        vrf: ansible
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  eos_config:
+    lines:
+      - no ip domain lookup source-interface
+      - no vrf definition ansible
+    match: none
+  become: yes
+
+- debug: msg="END eapi/set_lookup_source.yaml"
