@@ -200,7 +200,6 @@ def discover_device(module, device):
     else:
         cmd = ["%s" % cfgmgr_cmd, "%s" % device]
 
-    changed = True
     msg = ''
     if not module.check_mode:
         rc, cfgmgr_out, err = module.run_command(cmd)
