@@ -288,9 +288,9 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_input_validation_1(self):
         # Mandatory parameter 'id' missing.
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'}}
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
@@ -301,11 +301,11 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_input_validation_2(self):
         # Parameter 'destination' is not a dict.
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '88',
              'destination': '192.168.1.1',
              }
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
@@ -316,12 +316,12 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_input_validation_3(self):
         # Parameter 'destination' is not a dict.
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '88',
              'ip': '192.168.1.1',
              'port': '5001'
              }
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
@@ -333,7 +333,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS destgroup config is not present.
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '88',
              'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
              },
@@ -346,7 +346,7 @@ class TestNxosTelemetryModule(TestNxosModule):
             {'id': '99',
              'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
              },
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -363,11 +363,11 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS destgroup config is not present.
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '88',
              'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
              }
-        ], state='merged', check_mode=True)
+        ], 'destination_groups', state='merged', check_mode=True)
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -381,9 +381,9 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS destgroup config is not present.
         # Configure only identifier
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '88'}
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -396,11 +396,11 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS destgroup config is not present.
         # Configure only identifier
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.2', 'port': '60001', 'protocol': 'grpc', 'encoding': 'gpb'},
              }
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
@@ -409,9 +409,9 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS destgroup config is not present.
         # Configure only identifier
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '2'}
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
@@ -419,28 +419,28 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS destgroup config is not present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
              },
             {'id': '10',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
              }
-        ])
+        ], 'destination_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
     def test_tms_destgroup_deleted_n9k(self):
         # Delete destination groups
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
              },
             {'id': '10',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
              }
-        ], state='deleted')
+        ], 'destination_groups', state='deleted')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
@@ -451,24 +451,24 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_deleted_idempotent_n9k(self):
         # Delete destination groups
         self.execute_show_command.return_value = None
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
              },
             {'id': '10',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
              }
-        ], state='deleted')
+        ], 'destination_groups', state='deleted')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
     def test_tms_destgroup_deleted2_n9k(self):
         # Delete destination groups only provide id in playbook
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_destgroup_args([
+        args = build_args([
             {'id': '2'},
             {'id': '10'},
-        ], state='deleted')
+        ], 'destination_groups', state='deleted')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
@@ -486,7 +486,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         self.execute_show_command.return_value = None
         td55_name = 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]'
         td55_fc = 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '2',
              'data_source': 'NX-API',
              'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'foo', 'filter_condition': 'foo'},
@@ -503,7 +503,7 @@ class TestNxosTelemetryModule(TestNxosModule):
              'data_source': 'DME',
              'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'foo', 'filter_condition': td55_fc},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -521,11 +521,11 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_input_validation_1(self):
         # Mandatory parameter 'id' missing.
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'data_source': 'DME',
              'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
@@ -536,12 +536,12 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_input_validation_2(self):
         # Path present but mandatory 'name' key is not
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'DME',
              'path': {'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         with pytest.raises(AnsibleFailJson) as errinfo:
             self.execute_module()
@@ -552,9 +552,9 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_resource_key_n9k(self):
         # TMS sensorgroup config is not present.
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77'}
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -562,29 +562,16 @@ class TestNxosTelemetryModule(TestNxosModule):
             'sensor-group 77',
         ])
 
-    # def test_tms_sensorgroup_resource_key2_n9k(self):
-    #     # Feature telemetry is enabled
-    #     # TMS sensorgroup config is not present.
-    #     self.execute_show_command.side_effect = ['feature telemetry', []]
-    #     args = build_sensorgroup_args([
-    #         {'id': '77'}
-    #     ])
-    #     set_module_args(args)
-    #     self.execute_module(changed=True, commands=[
-    #         'telemetry',
-    #         'sensor-group 77',
-    #     ])
-
     def test_tms_sensorgroup_merged_variable_args1_n9k(self):
         # TMS sensorgroup config is not present.
         # Only path key name provided
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'DME',
              'path': {'name': 'sys/bgp'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -598,12 +585,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path keys name and depth provided
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'DME',
              'path': {'name': 'sys/bgp', 'depth': 0},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -617,12 +604,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path keys name, depth and query_condition provided
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'DME',
              'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -636,12 +623,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path keys name, depth and filter_condition provided
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'DME',
              'path': {'name': 'sys/bgp', 'depth': 0, 'filter_condition': 'filter_condition_xyz'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -655,57 +642,57 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS sensorgroup config is not present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '2',
              'data_source': 'DME',
              'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'qc', 'filter_condition': 'fc'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
     def test_tms_sensorgroup_vxlan_idempotent_n9k(self):
         # TMS sensorgroup config present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '56',
              'data_source': 'DME',
              'path': {'name': 'vxlan'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
     def test_tms_sensorgroup_idempotent_variable1_n9k(self):
         # TMS sensorgroup config is present with path key name.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '2',
              'data_source': 'DME',
              'path': {'name': 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
     def test_tms_sensorgroup_idempotent_variable2_n9k(self):
         # TMS sensorgroup config is present with path key name and depth.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '2',
              'data_source': 'DME',
              'path': {'name': 'boo', 'depth': 0},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
     def test_tms_sensorgroup_idempotent_resource_key_n9k(self):
         # TMS sensorgroup config is present resource key only.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '55'}
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
@@ -713,12 +700,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is present.
         # Make absent with all playbook keys provided
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '2',
              'data_source': 'DME',
              'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'qc', 'filter_condition': 'fc'},
              },
-        ], state='deleted')
+        ], 'sensor_groups', state='deleted')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
@@ -729,9 +716,9 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is present.
         # Make absent with only identifier playbook keys provided
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '2'}
-        ], state='deleted')
+        ], 'sensor_groups', state='deleted')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'telemetry',
@@ -742,12 +729,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Path name 'environment' test
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'YANG',
              'path': {'name': 'environment'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -761,12 +748,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Path name 'interface' test
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'NATIVE',
              'path': {'name': 'interface'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -780,12 +767,12 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Path name 'resources' test
         self.execute_show_command.return_value = None
-        args = build_sensorgroup_args([
+        args = build_args([
             {'id': '77',
              'data_source': 'NX-API',
              'path': {'name': 'resources'},
              },
-        ])
+        ], 'sensor_groups')
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
             'feature telemetry',
@@ -855,7 +842,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         ])
 
 
-def build_destgroup_args(data, state=None, check_mode=None):
+def build_args(data, type, state=None, check_mode=None):
     if state is None:
         state = 'merged'
     if check_mode is None:
@@ -864,22 +851,7 @@ def build_destgroup_args(data, state=None, check_mode=None):
         'state': state,
         '_ansible_check_mode': check_mode,
         'config': {
-            'destination_groups': data
-        }
-    }
-    return args
-
-
-def build_sensorgroup_args(data, state=None, check_mode=None):
-    if state is None:
-        state = 'merged'
-    if check_mode is None:
-        check_mode = False
-    args = {
-        'state': state,
-        '_ansible_check_mode': check_mode,
-        'config': {
-            'sensor_groups': data
+            type: data
         }
     }
     return args
