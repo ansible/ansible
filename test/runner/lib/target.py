@@ -14,6 +14,7 @@ from lib.util import (
     ApplicationError,
     display,
     read_lines_without_comments,
+    is_subdir,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -144,9 +145,7 @@ def walk_module_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
-    path = 'lib/ansible/modules'
-
-    for target in walk_test_targets(path, path + '/', extensions=MODULE_EXTENSIONS):
+    for target in walk_test_targets(path='lib/ansible/modules', module_path='lib/ansible/modules/', extensions=MODULE_EXTENSIONS):
         if not target.module:
             continue
 
@@ -209,7 +208,7 @@ def walk_integration_targets():
     :rtype: collections.Iterable[IntegrationTarget]
     """
     path = 'test/integration/targets'
-    modules = frozenset(t.module for t in walk_module_targets())
+    modules = frozenset(target.module for target in walk_module_targets())
     paths = sorted(os.path.join(path, p) for p in os.listdir(path))
     prefixes = load_integration_prefixes()
 
@@ -295,8 +294,8 @@ def analyze_integration_target_dependencies(integration_targets):
     """
     real_target_root = os.path.realpath('test/integration/targets') + '/'
 
-    role_targets = [t for t in integration_targets if t.type == 'role']
-    hidden_role_target_names = set(t.name for t in role_targets if 'hidden/' in t.aliases)
+    role_targets = [target for target in integration_targets if target.type == 'role']
+    hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
 
     dependencies = collections.defaultdict(set)
 
@@ -459,7 +458,7 @@ class TestTarget(CompletionTarget):
 
         name, ext = os.path.splitext(os.path.basename(self.path))
 
-        if module_path and path.startswith(module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
+        if module_path and is_subdir(path, module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
             self.module = name[len(module_prefix or ''):].lstrip('_')
             self.modules = (self.module,)
         else:
