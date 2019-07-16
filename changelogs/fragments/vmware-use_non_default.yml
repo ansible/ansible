@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware_deploy_ovf use user specified resource pool or resource pool pod rather than cluster default (https://github.com/ansible/ansible/issues/61645).
