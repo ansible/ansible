@@ -10,11 +10,12 @@ import pytest
 import ansible.module_utils.common.warnings as warnings
 
 from ansible.module_utils.common.warnings import deprecate
+from ansible.module_utils.six import PY3
 
 
 def test_deprecate_message_only():
     deprecate('Deprecation message')
-    warnings._global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
+    assert warnings._global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
 
 
 def test_deprecate_with_version():
@@ -43,6 +44,8 @@ def test_multiple_deprecations():
         {'k1': 'v1'},
         (1, 2),
         6.62607004,
+        b'bytestr' if PY3 else None,
+        None,
     )
 )
 def test_deprecate_failure(test_case):

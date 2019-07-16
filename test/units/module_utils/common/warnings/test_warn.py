@@ -10,11 +10,12 @@ import pytest
 import ansible.module_utils.common.warnings as warnings
 
 from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.six import PY3
 
 
 def test_warn():
     warn('Warning message')
-    warnings._global_warnings == ['Warning message']
+    assert warnings._global_warnings == ['Warning message']
 
 
 def test_multiple_warningss():
@@ -38,6 +39,8 @@ def test_multiple_warningss():
         {'k1': 'v1'},
         (1, 2),
         6.62607004,
+        b'bytestr' if PY3 else None,
+        None,
     )
 )
 def test_warn_failure(test_case):
