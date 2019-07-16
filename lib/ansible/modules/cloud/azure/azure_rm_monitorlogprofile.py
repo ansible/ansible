@@ -26,9 +26,11 @@ options:
         description:
             - Unique name of the log profile to create or update.
         required: True
+        type: str
     location:
         description:
             - Resource location.
+        type: str
     locations:
         description: List of regions for which Activity Log events should be stored.
         type: list
@@ -39,6 +41,7 @@ options:
     retention_policy:
         description:
             - Retention policy for events in the log.
+        type: dict
         suboptions:
             enabled:
                 description: Whether the retention policy is enabled.
@@ -62,6 +65,7 @@ options:
         - Assert the state of the log profile.
         - Use C(present) to create or update a log profile and C(absent) to delete it.
       default: present
+      type: str
       choices:
         - absent
         - present
