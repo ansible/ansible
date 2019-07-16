@@ -6,6 +6,8 @@
 """
 The nxos telemetry utility library
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 import re
 
@@ -87,17 +89,17 @@ def get_instance_data(key, cr_key, cr, existing_key):
         instance = cr._ref[cr_key]['existing'][existing_key]
 
     if key == 'destination_groups':
-        m = re.search("destination-group (\d+)", cr._ref['_resource_key'])
+        m = re.search(r"destination-group (\d+)", cr._ref['_resource_key'])
         instance_key = m.group(1)
         data = {'id': instance_key, cr_key: instance}
 
     if key == 'sensor_groups':
-        m = re.search("sensor-group (\d+)", cr._ref['_resource_key'])
+        m = re.search(r"sensor-group (\d+)", cr._ref['_resource_key'])
         instance_key = m.group(1)
         data = {'id': instance_key, cr_key: instance}
 
     if key == 'subscriptions':
-        m = re.search("subscription (\d+)", cr._ref['_resource_key'])
+        m = re.search(r"subscription (\d+)", cr._ref['_resource_key'])
         instance_key = m.group(1)
         data = {'id': instance_key, cr_key: instance}
 

@@ -1,3 +1,14 @@
+#
+# -*- coding: utf-8 -*-
+# Copyright 2019 Cisco and/or its affiliates.
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Telemetry Command Reference File
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 TMS_GLOBAL = '''
 # The cmd_ref is a yaml formatted list of module commands.
 # A leading underscore denotes a non-command variable; e.g. _template.

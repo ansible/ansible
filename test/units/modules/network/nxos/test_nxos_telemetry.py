@@ -484,6 +484,8 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS sensorgroup config is not present.
         self.execute_show_command.return_value = None
+        td55_name = 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]'
+        td55_fc = 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'
         args = build_sensorgroup_args([
             {'id': '2',
              'data_source': 'NX-API',
@@ -495,11 +497,11 @@ class TestNxosTelemetryModule(TestNxosModule):
              },
             {'id': '55',
              'data_source': 'DME',
-             'path': {'name': 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', 'depth': 0, 'query_condition': 'foo', 'filter_condition': 'foo'},
+             'path': {'name': td55_name, 'depth': 0, 'query_condition': 'foo', 'filter_condition': 'foo'},
              },
             {'id': '55',
              'data_source': 'DME',
-             'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'foo', 'filter_condition': 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'},
+             'path': {'name': 'sys/ospf', 'depth': 0, 'query_condition': 'foo', 'filter_condition': td55_fc},
              },
         ])
         set_module_args(args, ignore_provider_arg)

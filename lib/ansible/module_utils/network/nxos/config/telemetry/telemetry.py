@@ -10,6 +10,9 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 
@@ -75,7 +78,7 @@ class Telemetry(ConfigBase):
         if commands:
             if not self._module.check_mode:
                 self.edit_config(commands)
-                #self._connection.load_config(commands)
+                # self._connection.load_config(commands)
             result['changed'] = True
         result['commands'] = commands
 
@@ -221,11 +224,7 @@ class Telemetry(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        # remove_keys = set(have) - set(want)
-        # add_keys = set(want) - set(have)
-        # remove_keys_list = list(remove_keys)
-        # add_keys_list = list(add_keys)
-        # commands = []
+        commands = []
         return commands
 
     @staticmethod
