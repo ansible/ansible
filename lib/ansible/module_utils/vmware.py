@@ -880,7 +880,7 @@ class PyVmomi(object):
     # Virtual Machine related functions
     def get_vm(self):
         """
-        Find unique virtual machine either by UUID or Name.
+        Find unique virtual machine either by UUID, MoID or Name.
         Returns: virtual machine object if found, else None.
 
         """
@@ -959,6 +959,8 @@ class PyVmomi(object):
             elif vms:
                 # Unique virtual machine found.
                 vm_obj = vms[0]
+        elif self.params['moid']:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
         if vm_obj:
             self.current_vm_obj = vm_obj

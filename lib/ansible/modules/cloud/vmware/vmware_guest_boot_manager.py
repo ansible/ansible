@@ -33,11 +33,17 @@ options:
    name:
      description:
      - Name of the VM to work with.
-     - This is required if C(uuid) parameter is not supplied.
+     - This is required if C(uuid) or C(moid) parameter is not supplied.
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
-     - This is required if C(name) parameter is not supplied.
+     - This is required if C(name) or C(moid) parameter is not supplied.
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -107,6 +113,26 @@ EXAMPLES = r'''
       - disk
   delegate_to: localhost
   register: vm_boot_order
+
+- name: Change virtual machine's boot order using Virtual Machine MoID
+  vmware_guest_boot_manager:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    moid: vm-42
+    boot_delay: 2000
+    enter_bios_setup: True
+    boot_retry_enabled: True
+    boot_retry_delay: 22300
+    boot_firmware: bios
+    secure_boot_enabled: False
+    boot_order:
+      - floppy
+      - cdrom
+      - ethernet
+      - disk
+  delegate_to: localhost
+  register: vm_boot_order
 '''
 
 RETURN = r"""
@@ -148,7 +174,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_vm_by_id, wait_for_task, TaskError
 
 try:
-    from pyVmomi import vim
+    from pyVmomi import vim, VmomiSupport
 except ImportError:
     pass
 
@@ -158,6 +184,7 @@ class VmBootManager(PyVmomi):
         super(VmBootManager, self).__init__(module)
         self.name = self.params['name']
         self.uuid = self.params['uuid']
+        self.moid = self.params['moid']
         self.use_instance_uuid = self.params['use_instance_uuid']
         self.vm = None
 
@@ -178,6 +205,11 @@ class VmBootManager(PyVmomi):
             for temp_vm_object in objects:
                 if temp_vm_object.obj.name == self.name:
                     vms.append(temp_vm_object.obj)
+
+        elif self.moid:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.module.params['moid'], self.si._stub)
+            if vm_obj:
+                vms.append(vm_obj)
 
         if vms:
             if self.params.get('name_match') == 'first':
@@ -324,6 +356,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         boot_order=dict(
             type='list',
@@ -362,10 +395,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
         mutually_exclusive=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
     )
 
