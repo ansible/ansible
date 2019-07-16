@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 # Copyright: (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
 # Copyright: (c) 2017, Ansible Project
@@ -45,7 +44,10 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
-from ansible.utils._build_helpers import update_file_if_different
+
+# Pylint doesn't understand Python3 namespace modules.
+from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
+from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
 #####################################################################################
@@ -361,29 +363,6 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         del categories['test']
 
     return module_info, categories
-
-
-def generate_parser():
-    ''' generate an optparse parser '''
-
-    p = optparse.OptionParser(
-        version='%prog 1.0',
-        usage='usage: %prog [options] arg1 arg2',
-        description='Generate module documentation from metadata',
-    )
-
-    p.add_option("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
-    p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
-    p.add_option("-P", "--plugin-type", action="store", dest="plugin_type", default='module', help="The type of plugin (module, lookup, etc)")
-    p.add_option("-T", "--template-dir", action="append", dest="template_dir", help="directory containing Jinja2 templates")
-    p.add_option("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
-    p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
-    p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
-    p.add_option("-l", "--limit-to-modules", '--limit-to', action="store", dest="limit_to", default=None,
-                 help="Limit building module documentation to comma-separated list of plugins. Specify non-existing plugin name for no plugins.")
-    p.add_option('-V', action='version', help='Show version number and exit')
-    p.add_option('-v', '--verbose', dest='verbosity', default=0, action="count", help="verbose mode (increase number of 'v's for more)")
-    return p
 
 
 def jinja2_environment(template_dir, typ, plugin_type):
@@ -734,82 +713,106 @@ def validate_options(options):
         sys.exit("--template-dir must be specified")
 
 
-def main():
+class DocumentPlugins(Command):
+    name = 'document-plugins'
 
-    # INIT
-    p = generate_parser()
-    (options, args) = p.parse_args()
-    if not options.template_dir:
-        options.template_dir = ["hacking/templates"]
-    validate_options(options)
-    display.verbosity = options.verbosity
-    plugin_type = options.plugin_type
+    @classmethod
+    def init_parser(cls, add_parser):
+        parser = add_parser(cls.name, description='Generate module documentation from metadata')
 
-    display.display("Evaluating %s files..." % plugin_type)
+        parser.add_argument("-A", "--ansible-version", action="store", dest="ansible_version",
+                            default="unknown", help="Ansible version number")
+        parser.add_argument("-M", "--module-dir", action="store", dest="module_dir",
+                            default=MODULEDIR, help="Ansible library path")
+        parser.add_argument("-P", "--plugin-type", action="store", dest="plugin_type",
+                            default='module', help="The type of plugin (module, lookup, etc)")
+        parser.add_argument("-T", "--template-dir", action="append", dest="template_dir",
+                            help="directory containing Jinja2 templates")
+        parser.add_argument("-t", "--type", action='store', dest='type', choices=['rst'],
+                            default='rst', help="Document type")
+        parser.add_argument("-o", "--output-dir", action="store", dest="output_dir", default=None,
+                            help="Output directory for module files")
+        parser.add_argument("-I", "--includes-file", action="store", dest="includes_file",
+                            default=None, help="Create a file containing list of processed modules")
+        parser.add_argument("-l", "--limit-to-modules", '--limit-to', action="store",
+                            dest="limit_to", default=None, help="Limit building module documentation"
+                            " to comma-separated list of plugins. Specify non-existing plugin name"
+                            " for no plugins.")
+        parser.add_argument('-V', action='version', help='Show version number and exit')
+        parser.add_argument('-v', '--verbose', dest='verbosity', default=0, action="count",
+                            help="verbose mode (increase number of 'v's for more)")
 
-    # prep templating
-    templates = jinja2_environment(options.template_dir, options.type, plugin_type)
+    @staticmethod
+    def main(args):
+        if not args.template_dir:
+            args.template_dir = ["hacking/templates"]
+        validate_options(args)
+        display.verbosity = args.verbosity
+        plugin_type = args.plugin_type
 
-    # set file/directory structure
-    if plugin_type == 'module':
-        # trim trailing s off of plugin_type for plugin_type=='modules'. ie 'copy_module.rst'
-        outputname = '%s_' + '%s.rst' % plugin_type
-        output_dir = options.output_dir
-    else:
-        # for plugins, just use 'ssh.rst' vs 'ssh_module.rst'
-        outputname = '%s.rst'
-        output_dir = '%s/plugins/%s' % (options.output_dir, plugin_type)
+        display.display("Evaluating %s files..." % plugin_type)
 
-    display.vv('output name: %s' % outputname)
-    display.vv('output dir: %s' % output_dir)
+        # prep templating
+        templates = jinja2_environment(args.template_dir, args.type, plugin_type)
 
-    # Convert passed-in limit_to to None or list of modules.
-    if options.limit_to is not None:
-        options.limit_to = [s.lower() for s in options.limit_to.split(",")]
+        # set file/directory structure
+        if plugin_type == 'module':
+            # trim trailing s off of plugin_type for plugin_type=='modules'. ie 'copy_module.rst'
+            outputname = '%s_' + '%s.rst' % plugin_type
+            output_dir = args.output_dir
+        else:
+            # for plugins, just use 'ssh.rst' vs 'ssh_module.rst'
+            outputname = '%s.rst'
+            output_dir = '%s/plugins/%s' % (args.output_dir, plugin_type)
 
-    plugin_info, categories = get_plugin_info(options.module_dir, limit_to=options.limit_to, verbose=(options.verbosity > 0))
+        display.vv('output name: %s' % outputname)
+        display.vv('output dir: %s' % output_dir)
 
-    categories['all'] = {'_modules': plugin_info.keys()}
+        # Convert passed-in limit_to to None or list of modules.
+        if args.limit_to is not None:
+            args.limit_to = [s.lower() for s in args.limit_to.split(",")]
 
-    if display.verbosity >= 3:
-        display.vvv(pp.pformat(categories))
-    if display.verbosity >= 5:
-        display.vvvvv(pp.pformat(plugin_info))
+        plugin_info, categories = get_plugin_info(args.module_dir, limit_to=args.limit_to, verbose=(args.verbosity > 0))
 
-    # Transform the data
-    if options.type == 'rst':
-        display.v('Generating rst')
-        for key, record in plugin_info.items():
-            display.vv(key)
-            if display.verbosity >= 5:
-                display.vvvvv(pp.pformat(('record', record)))
-            if record.get('doc', None):
-                short_desc = record['doc']['short_description'].rstrip('.')
-                if short_desc is None:
-                    display.warning('short_description for %s is None' % key)
-                    short_desc = ''
-                record['doc']['short_description'] = rst_ify(short_desc)
+        categories['all'] = {'_modules': plugin_info.keys()}
 
-    if plugin_type == 'module':
-        display.v('Generating Categories')
-        # Write module master category list
-        category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
-        category_index_name = '%ss_by_category.rst' % plugin_type
-        write_data(category_list_text, output_dir, category_index_name)
+        if display.verbosity >= 3:
+            display.vvv(pp.pformat(categories))
+        if display.verbosity >= 5:
+            display.vvvvv(pp.pformat(plugin_info))
 
-    # Render all the individual plugin pages
-    display.v('Generating plugin pages')
-    process_plugins(plugin_info, templates, outputname, output_dir, options.ansible_version, plugin_type)
+        # Transform the data
+        if args.type == 'rst':
+            display.v('Generating rst')
+            for key, record in plugin_info.items():
+                display.vv(key)
+                if display.verbosity >= 5:
+                    display.vvvvv(pp.pformat(('record', record)))
+                if record.get('doc', None):
+                    short_desc = record['doc']['short_description'].rstrip('.')
+                    if short_desc is None:
+                        display.warning('short_description for %s is None' % key)
+                        short_desc = ''
+                    record['doc']['short_description'] = rst_ify(short_desc)
 
-    # Render all the categories for modules
-    if plugin_type == 'module':
-        display.v('Generating Category lists')
-        category_list_name_template = 'list_of_%s_' + '%ss.rst' % plugin_type
-        process_categories(plugin_info, categories, templates, output_dir, category_list_name_template, plugin_type)
+        if plugin_type == 'module':
+            display.v('Generating Categories')
+            # Write module master category list
+            category_list_text = templates['category_list'].render(categories=sorted(categories.keys()))
+            category_index_name = '%ss_by_category.rst' % plugin_type
+            write_data(category_list_text, output_dir, category_index_name)
+
+        # Render all the individual plugin pages
+        display.v('Generating plugin pages')
+        process_plugins(plugin_info, templates, outputname, output_dir, args.ansible_version, plugin_type)
 
         # Render all the categories for modules
-        process_support_levels(plugin_info, categories, templates, output_dir, plugin_type)
+        if plugin_type == 'module':
+            display.v('Generating Category lists')
+            category_list_name_template = 'list_of_%s_' + '%ss.rst' % plugin_type
+            process_categories(plugin_info, categories, templates, output_dir, category_list_name_template, plugin_type)
 
+            # Render all the categories for modules
+            process_support_levels(plugin_info, categories, templates, output_dir, plugin_type)
 
-if __name__ == '__main__':
-    main()
+        return 0
