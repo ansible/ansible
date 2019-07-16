@@ -3649,7 +3649,6 @@ lib/ansible/modules/web_infrastructure/htpasswd.py E338
 lib/ansible/modules/web_infrastructure/jenkins_job_info.py E338
 lib/ansible/modules/web_infrastructure/jenkins_job.py E338
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E322
-lib/ansible/modules/web_infrastructure/jenkins_plugin.py E324
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E337
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py E338
 lib/ansible/modules/web_infrastructure/jenkins_script.py E337
