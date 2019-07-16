@@ -332,12 +332,14 @@ def content_check(proxmox, node, ostemplate, template_store):
 def node_check(proxmox, node):
     return [True for nd in proxmox.nodes.get() if nd['node'] == node]
 
+
 def proxmox_version(proxmox):
     apireturn = proxmox.version.get()
     if 'release' in apireturn:
-      return float(apireturn['release']) # >= Proxmox 6
+        return float(apireturn['release'])  # >= Proxmox 6
     else:
-      return float(apireturn['version']) # < Proxmox 6
+        return float(apireturn['version'])  # < Proxmox 6
+
 
 def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout, **kwargs):
     proxmox_node = proxmox.nodes(node)

@@ -786,9 +786,10 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 def proxmox_version(proxmox):
     apireturn = proxmox.version.get()
     if 'release' in apireturn:
-      return float(apireturn['release']) # >= Proxmox 6
+        return float(apireturn['release'])  # >= Proxmox 6
     else:
-      return float(apireturn['version']) # < Proxmox 6
+        return float(apireturn['version'])  # < Proxmox 6
+
 
 def main():
     module = AnsibleModule(
