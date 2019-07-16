@@ -110,6 +110,11 @@ class AnsibleCollectionLoader(object):
         sub_collection = fullname.count('.') > 1
 
         synpkg_def = _SYNTHETIC_PACKAGES.get(fullname)
+        synpkg_remainder = ''
+
+        if not synpkg_def:
+            synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
+            synpkg_remainder = '.' + fullname.rpartition('.')[2]
 
         # FIXME: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
         if synpkg_def:
@@ -121,7 +126,7 @@ class AnsibleCollectionLoader(object):
 
                 if not map_package:
                     raise KeyError('invalid synthetic map package definition (no target "map" defined)')
-                mod = import_module(map_package)
+                mod = import_module(map_package + synpkg_remainder)
 
                 sys.modules[fullname] = mod
 
@@ -195,7 +200,7 @@ class AnsibleCollectionLoader(object):
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
-        return None
+        raise ImportError('module {0} not found'.format(fullname))
 
     @staticmethod
     def _extend_path_with_ns(path, ns):
