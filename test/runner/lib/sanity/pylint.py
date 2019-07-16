@@ -116,16 +116,16 @@ class PylintTest(SanitySingleVersion):
 
         paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/')) and i.path not in skip_paths_set)
 
-        module_paths = [p.split(os.path.sep) for p in paths if is_subdir(p, 'lib/ansible/modules/')]
-        module_dirs = sorted(set([p[3] for p in module_paths if len(p) > 4]))
+        module_paths = [os.path.relpath(p, 'lib/ansible/modules/').split(os.path.sep) for p in paths if is_subdir(p, 'lib/ansible/modules/')]
+        module_dirs = sorted(set([p[0] for p in module_paths if len(p) > 1]))
 
         large_module_group_threshold = 500
         large_module_groups = [key for key, value in
-                               itertools.groupby(module_paths, lambda p: p[3] if len(p) > 4 else '') if len(list(value)) > large_module_group_threshold]
+                               itertools.groupby(module_paths, lambda p: p[0] if len(p) > 1 else '') if len(list(value)) > large_module_group_threshold]
 
-        large_module_group_paths = [p.split(os.path.sep) for p in paths
+        large_module_group_paths = [os.path.relpath(p, 'lib/ansible/modules/').split(os.path.sep) for p in paths
                                     if any(is_subdir(p, os.path.join('lib/ansible/modules/', g)) for g in large_module_groups)]
-        large_module_group_dirs = sorted(set([os.path.sep.join(p[3:5]) for p in large_module_group_paths if len(p) > 5]))
+        large_module_group_dirs = sorted(set([os.path.sep.join(p[:2]) for p in large_module_group_paths if len(p) > 2]))
 
         contexts = []
         remaining_paths = set(paths)
@@ -154,13 +154,6 @@ class PylintTest(SanitySingleVersion):
 
             return context_filter
 
-        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
-        add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
-        add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
-        add_context(remaining_paths, 'units', filter_path('test/units/'))
-        add_context(remaining_paths, 'test', filter_path('test/'))
-        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
-
         for large_module_group_dir in large_module_group_dirs:
             add_context(remaining_paths, 'modules/%s' % large_module_group_dir, filter_path('lib/ansible/modules/%s/' % large_module_group_dir))
 
@@ -169,6 +162,14 @@ class PylintTest(SanitySingleVersion):
 
         add_context(remaining_paths, 'modules', filter_path('lib/ansible/modules/'))
         add_context(remaining_paths, 'module_utils', filter_path('lib/ansible/module_utils/'))
+
+        add_context(remaining_paths, 'units', filter_path('test/units/'))
+
+        add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
+        add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
+        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+        add_context(remaining_paths, 'test', filter_path('test/'))
+        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
         add_context(remaining_paths, 'ansible', lambda p: True)
 
         messages = []
@@ -298,8 +299,10 @@ class PylintTest(SanitySingleVersion):
             '--load-plugins', ','.join(load_plugins),
         ] + paths
 
+        append_python_path = [plugin_dir]
+
         env = ansible_environment(args)
-        env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, plugin_dir)
+        env['PYTHONPATH'] += os.path.pathsep + os.path.pathsep.join(append_python_path)
 
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
