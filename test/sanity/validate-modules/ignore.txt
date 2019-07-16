@@ -1248,7 +1248,6 @@ lib/ansible/modules/cloud/vmware/vmware_datastore_cluster.py E337
 lib/ansible/modules/cloud/vmware/vmware_datastore_facts.py E337
 lib/ansible/modules/cloud/vmware/vmware_datastore_maintenancemode.py E337
 lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py E337
-lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py E338
 lib/ansible/modules/cloud/vmware/vmware_dns_config.py E337
 lib/ansible/modules/cloud/vmware/vmware_drs_group_facts.py E337
 lib/ansible/modules/cloud/vmware/vmware_drs_group.py E337
