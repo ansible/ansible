@@ -15,7 +15,7 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
 $tags = Get-AnsibleParam -obj $params -name "tags" -type "list"
-$parameterlist = Get-AnsibleParam -obj $params -name "parameterlist" -type "dict"
+$testParameters = Get-AnsibleParam -obj $params -name "test_parameters" -type "dict"
 $minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str" -failifempty $false
 
 $result = @{
@@ -79,15 +79,15 @@ if($tags.count){
 }
 # Run Pester tests
 If (Test-Path -LiteralPath $path -PathType Leaf) {
-    if ($parameterlist.keys.count) {
-        $Parameters.Script = @{Path = $Path ; Parameters = $parameterlist }
-        $parameterListCheckModeMsg = "with $($parameterlist.keys -join ',') parameters"
+    if ($testParameters.keys.count) {
+        $Parameters.Script = @{Path = $Path ; Parameters = $testParameters }
+        $testParametersCheckModeMsg = "with $($testParameters.keys -join ',') parameters"
     }
     else {
         $Parameters.Script = $Path
     }
     if ($check_mode) {
-        $result.output = "Run pester test in the file: $path $parameterListCheckModeMsg"
+        $result.output = "Run pester test in the file: $path $testParametersCheckModeMsg"
     } else {
         try {
             $result.output = Invoke-Pester @Parameters
