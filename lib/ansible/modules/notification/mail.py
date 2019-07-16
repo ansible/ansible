@@ -203,7 +203,7 @@ import smtplib
 import ssl
 import traceback
 from email import encoders
-from email.utils import parseaddr, formataddr
+from email.utils import parseaddr, formataddr, formatdate
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -326,6 +326,7 @@ def main():
 
     msg = MIMEMultipart(_charset=charset)
     msg['From'] = formataddr((sender_phrase, sender_addr))
+    msg['Date'] = formatdate(localtime=True)
     msg['Subject'] = Header(subject, charset)
     msg.preamble = "Multipart message"
 

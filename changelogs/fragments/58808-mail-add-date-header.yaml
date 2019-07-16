@@ -1,0 +1,2 @@
+minor_changes:
+  - Add date header to the email based on local time in mail module (https://github.com/ansible/ansible/issues/58808).
