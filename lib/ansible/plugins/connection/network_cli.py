@@ -600,5 +600,7 @@ class Connection(NetworkConnectionBase):
         purposes only and should be properly cleaned up.
         """
 
+        # Force a fresh connect if for some reason we have connected before.
+        self.close()
         self._connect()
         self.close()
