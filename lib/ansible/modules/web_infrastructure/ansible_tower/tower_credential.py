@@ -62,11 +62,12 @@ options:
       type: str
     username:
       description:
-        - Username for this credential. access_key for AWS.
+        - Username for this credential. ``access_key`` for AWS.
       type: str
     password:
       description:
-        - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
+        - Password for this credential. ``secret_key`` for AWS. ``api_key`` for RAX.
+        - Use "ASK" and launch in Tower to be prompted.
       type: str
     ssh_key_data:
       description:
@@ -75,7 +76,8 @@ options:
       type: str
     ssh_key_unlock:
       description:
-        - Unlock password for ssh_key. Use ASK for prompting.
+        - Unlock password for ssh_key.
+        - Use "ASK" and launch in Tower to be prompted.
       type: str
     authorize:
       description:
@@ -118,15 +120,18 @@ options:
       type: str
     become_username:
       description:
-        - Become username. Use ASK for prompting.
+        - Become username.
+        - Use "ASK" and launch in Tower to be prompted.
       type: str
     become_password:
       description:
-        - Become password. Use ASK for prompting.
+        - Become password.
+        - Use "ASK" and launch in Tower to be prompted.
       type: str
     vault_password:
       description:
-        - Vault password. Use ASK for prompting.
+        - Vault password.
+        - Use "ASK" and launch in Tower to be prompted.
       type: str
     vault_id:
       description:
