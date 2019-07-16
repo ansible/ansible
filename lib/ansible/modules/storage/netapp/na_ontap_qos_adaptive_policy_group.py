@@ -17,7 +17,7 @@ short_description: NetApp ONTAP Adaptive Quality of Service policy group.
 extends_documentation_fragment:
   - netapp.na_ontap
 version_added: '2.9'
-author: NetApp Professional Services - (@joshedmonds) <edmonds@netapp.com>
+author: NetApp Ansible Team (@joshedmonds) <ng-ansibleteam@netapp.com>
 
 description:
   - Create, destroy, modify, or rename an Adaptive QoS policy group on NetApp ONTAP. Module is based on the standard QoS policy group module.
