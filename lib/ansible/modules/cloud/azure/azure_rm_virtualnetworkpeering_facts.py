@@ -26,9 +26,7 @@ options:
         required: True
     virtual_network:
         description:
-            - The name of Virtual network.
-            - It can be name of virtual network.
-            - It can be virtual network resource ID.
+            - Name or resource ID of a virtual network.
         required: True
     name:
         description:
@@ -93,7 +91,7 @@ vnetpeerings:
                     sample: 10.1.0.0/16
         peering_state:
             description:
-                - The status of the virtual network peering.
+                - The state of the virtual network peering.
             returned: always
             type: str
             sample: Connected
@@ -105,25 +103,25 @@ vnetpeerings:
             sample: Succeeded
         allow_forwarded_traffic:
             description:
-                - Whether the forwarded traffic from the VMs in the remote Virtual Network will be allowed/disallowed.
+                - Whether forwarded traffic from the VMs in the remote Virtual Network will be allowed/disallowed.
             returned: always
             type: bool
             sample: False
         allow_gateway_transit:
             description:
-                - If gateway links can be used in remote Virtual Networking to link to this Virtual Network.
+                - Whether gateway links can be used in remote Virtual Networking to link to this Virtual Network.
             returned: always
             type: bool
             sample: False
         allow_virtual_network_access:
             description:
-                - Whether the VMs in the linked Virtual Network space would be able to access all the VMs in local Virtual Network space.
+                - Whether the VMs in the linked Virtual Network space can access all the VMs in local Virtual Network space.
             returned: always
             type: bool
             sample: False
         use_remote_gateways:
             description:
-                - If remote gateways can be used on this Virtual Network.
+                - Whether remote gateways can be used on this Virtual Network.
             returned: always
             type: bool
             sample: False

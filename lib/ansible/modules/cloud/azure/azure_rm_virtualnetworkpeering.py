@@ -30,9 +30,7 @@ options:
         required: true
     virtual_network:
         description:
-            - Virtual network to be peered.
-            - It can be name of virtual network.
-            - It can be virtual network resource ID.
+            - Name or resource ID of the virtual network to be peered.
         required: true
     remote_virtual_network:
         description:
