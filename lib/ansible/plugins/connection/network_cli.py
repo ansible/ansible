@@ -209,7 +209,7 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
 
 
@@ -319,7 +319,9 @@ class Connection(NetworkConnectionBase):
         '''
         Connects to the remote device and starts the terminal
         '''
-        if not self.connected:
+        if self.connected is not True:
+            # Replace with truthy-but-not-True value to avoid infinite recursion.
+            self._connected = "connecting"
             self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
@@ -450,6 +452,7 @@ class Connection(NetworkConnectionBase):
                 else:
                     command_prompt_matched = True
 
+    @ensure_connect
     def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False, check_all=False):
         '''
         Sends the command to the device in the opened shell
