@@ -13,7 +13,8 @@ from types import ModuleType
 
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.utils.singleton import Singleton
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
 try:
@@ -34,7 +35,7 @@ _collection_qualified_re = re.compile(to_text(r'^(\w+)\.(\w+)\.(\w+)'))
 
 
 # FIXME: exception handling/error logging
-class AnsibleCollectionLoader(object):
+class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def __init__(self):
         self._n_configured_paths = C.config.get_config_value('COLLECTIONS_PATHS')
 
@@ -66,7 +67,7 @@ class AnsibleCollectionLoader(object):
             sys.modules[pkg_name] = newmod
 
     @property
-    def _n_collection_paths(self):
+    def n_collection_paths(self):
         return self._n_playbook_paths + self._n_configured_paths
 
     def set_playbook_paths(self, b_playbook_paths):
@@ -140,7 +141,7 @@ class AnsibleCollectionLoader(object):
                 return newmod
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
-            package_paths = [self._extend_path_with_ns(p, fullname) for p in self._n_collection_paths]
+            package_paths = [self._extend_path_with_ns(p, fullname) for p in self.n_collection_paths]
         else:  # subpackage; search in all subpaths (we'll limit later inside a collection)
             package_paths = [self._extend_path_with_ns(p, fullname) for p in parent_pkg.__path__]
 
@@ -299,6 +300,4 @@ def is_collection_ref(candidate_name):
 
 
 def set_collection_playbook_paths(b_playbook_paths):
-    # set for any/all AnsibleCollectionLoader instance(s) on meta_path
-    for loader in (l for l in sys.meta_path if isinstance(l, AnsibleCollectionLoader)):
-        loader.set_playbook_paths(b_playbook_paths)
+    AnsibleCollectionLoader().set_playbook_paths(b_playbook_paths)
