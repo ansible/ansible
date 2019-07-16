@@ -458,7 +458,7 @@ def generate_dict(spec):
     for key, val in iteritems(spec):
         if 'default' in val:
             dct = {key: val['default']}
-        elif 'type' in val and (val['type'] == 'dict' or val['type'] == 'list'):
+        elif 'type' in val and val['type'] == 'dict':
             dct = {key: generate_dict(val['options'])}
         else:
             dct = {key: None}

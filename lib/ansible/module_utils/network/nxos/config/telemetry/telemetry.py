@@ -65,9 +65,9 @@ class Telemetry(ConfigBase):
         module_params = self._module.params['config']
 
         # Normalize interface name.
-        int = module_params.get('destination_profile_source_interface')
+        int = module_params.get('source_interface')
         if int:
-            module_params['destination_profile_source_interface'] = normalize_interface(int)
+            module_params['source_interface'] = normalize_interface(int)
 
         existing_telemetry_facts = self.get_telemetry_facts()
         commands.extend(self.set_config(existing_telemetry_facts))
