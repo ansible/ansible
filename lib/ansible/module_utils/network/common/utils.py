@@ -455,6 +455,7 @@ def generate_dict(spec):
     obj = {}
     if not spec:
         return obj
+
     for key, val in iteritems(spec):
         if 'default' in val:
             dct = {key: val['default']}
