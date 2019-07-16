@@ -277,6 +277,15 @@ def _next_usable_query(v, vtype):
                 return str(netaddr.IPAddress(int(v.ip) + 1))
 
 
+def _peer_query(v, vtype):
+    if vtype == 'address':
+        raise errors.AnsibleFilterError("Not a network address")
+    elif vtype == 'network':
+        if v.size != 2:
+            raise errors.AnsibleFilterError("Not a point-to-point network")
+        return str(netaddr.IPAddress(int(v.ip) ^ 1))
+
+
 def _prefix_query(v):
     return int(v.prefixlen)
 
@@ -463,6 +472,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'lo': ('value',),
         'multicast': ('value',),
         'next_usable': ('vtype',),
+        'peer': ('vtype',),
         'previous_usable': ('vtype',),
         'private': ('value',),
         'public': ('value',),
@@ -507,6 +517,7 @@ def ipaddr(value, query='', version=False, alias='ipaddr'):
         'network/prefix': _subnet_query,
         'network_netmask': _network_netmask_query,
         'network_wildcard': _network_wildcard_query,
+        'peer': _peer_query,
         'prefix': _prefix_query,
         'previous_usable': _previous_usable_query,
         'private': _private_query,

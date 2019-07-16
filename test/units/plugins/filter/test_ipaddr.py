@@ -336,6 +336,21 @@ class TestIpFilter(unittest.TestCase):
         address = '1.12.1.254/24'
         self.assertEqual(ipaddr(address, 'next_usable'), None)
 
+    def test_peer(self):
+        address = '1.12.1.0/31'
+        self.assertEqual(ipaddr(address, 'peer'), '1.12.1.1')
+        address = '1.12.1.1/31'
+        self.assertEqual(ipaddr(address, 'peer'), '1.12.1.0')
+        with self.assertRaises(AnsibleFilterError):
+            address = '1.12.1.34'
+            ipaddr(address, 'peer')
+        with self.assertRaises(AnsibleFilterError):
+            address = '1.12.1.34/30'
+            ipaddr(address, 'peer')
+        with self.assertRaises(AnsibleFilterError):
+            address = '1.12.1.34/32'
+            ipaddr(address, 'peer')
+
     def test_previous_usable(self):
         address = '1.12.1.0/24'
         self.assertEqual(ipaddr(address, 'previous_usable'), None)
