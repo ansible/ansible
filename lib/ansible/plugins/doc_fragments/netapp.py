@@ -43,30 +43,33 @@ seealso:
     NA_ONTAP = r'''
 options:
   hostname:
-      required: true
       description:
       - The hostname or IP address of the ONTAP instance.
-  username:
+      type: str
       required: true
+  username:
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
         For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
+      type: str
+      required: true
       aliases: ['user']
   password:
-      required: true
       description:
       - Password for the specified user.
+      type: str
+      required: true
       aliases: ['pass']
   https:
       description:
       - Enable and disable https
       type: bool
-      default: false
+      default: no
   validate_certs:
       description:
-      - If set to C(False), the SSL certificates will not be validated.
+      - If set to C(no), the SSL certificates will not be validated.
       - This should only set to C(False) used on personally controlled sites using self-signed certificates.
-      default: true
+      default: yes
       type: bool
   http_port:
       description:
@@ -96,7 +99,7 @@ requirements:
 notes:
   - The modules prefixed with na\\_ontap are built to support the ONTAP storage platform.
 
-    '''
+'''
 
     # Documentation fragment for ONTAP (na_cdot)
     ONTAP = r'''
@@ -169,8 +172,7 @@ options:
     required: true
     description:
     - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
+      Example https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
     required: false
     default: true
@@ -178,7 +180,8 @@ options:
         - Should https certificates be validated?
     type: bool
   ssid:
-    required: true
+    required: false
+    default: 1
     description:
     - The ID of the array to manage. This value must be unique for each array.
 
