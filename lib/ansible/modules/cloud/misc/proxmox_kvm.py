@@ -783,6 +783,13 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
+def proxmox_version(proxmox):
+    apireturn = proxmox.version.get()
+    if 'release' in apireturn:
+      return float(apireturn['release']) # >= Proxmox 6
+    else:
+      return float(apireturn['version']) # < Proxmox 6
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -898,7 +905,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-        PVE_MAJOR_VERSION = 3 if float(proxmox.version.get()['version']) < 4.0 else 4
+        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < 4.0 else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
