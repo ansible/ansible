@@ -91,6 +91,33 @@
           - 'instance_with_updated_role.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
           - 'instance_with_updated_role.instances[0].instance_id == instance_with_role.instances[0].instance_id'
 
+    - name: Remove the updated instance_role
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-instance-role"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        instance_role: ""
+        <<: *aws_connection_info
+      register: instance_with_removed_role
+      until: "instance_with_removed_role is not failed and 'iam_instance_profile' not in instance_with_removed_role.instances[0]"
+      retries: 10
+
+    - name: Check that the instance_role has been removed
+      ec2_instance:
+        name: "{{ resource_prefix }}-test-instance-role"
+        image_id: "{{ ec2_ami_image[aws_region] }}"
+        security_groups: "{{ sg.group_id }}"
+        instance_type: t2.micro
+        instance_role: ""
+        <<: *aws_connection_info
+      register: instance_with_removed_role
+
+    - assert:
+        that:
+          - not instance_with_removed_role.changed
+          - "'iam_instance_profile' not in instance_with_removed_role.instances[0]"
+
   always:
     - name: Terminate instance
       ec2:

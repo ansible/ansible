@@ -184,6 +184,7 @@ options:
         then the ListInstanceProfiles permission must also be granted.
         U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
         the role with a matching name will be used from the active AWS account.
+      - Provide an empty string ("") to disassociate the current role.
   placement_group:
     description:
       - The placement group that needs to be assigned to the instance
@@ -826,6 +827,14 @@ def build_volume_spec(params):
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
+def get_current_association(ec2, module, instance):
+    try:
+        return ec2.describe_iam_instance_profile_associations(Filters=[{'Name': 'instance-id', 'Values': [instance['InstanceId']]}])
+    except botocore.exceptions.ClientError as e:
+        # check for InvalidAssociationID.NotFound
+        module.fail_json_aws(e, "Could not find instance profile association")
+
+
 def add_or_update_instance_profile(instance, desired_profile_name):
     instance_profile_setting = instance.get('IamInstanceProfile')
     if instance_profile_setting and desired_profile_name:
@@ -838,11 +847,7 @@ def add_or_update_instance_profile(instance, desired_profile_name):
                 return False
         # update association
         ec2 = module.client('ec2')
-        try:
-            association = ec2.describe_iam_instance_profile_associations(Filters=[{'Name': 'instance-id', 'Values': [instance['InstanceId']]}])
-        except botocore.exceptions.ClientError as e:
-            # check for InvalidAssociationID.NotFound
-            module.fail_json_aws(e, "Could not find instance profile association")
+        association = get_current_association(ec2, module, instance)
         try:
             resp = ec2.replace_iam_instance_profile_association(
                 AssociationId=association['IamInstanceProfileAssociations'][0]['AssociationId'],
@@ -851,6 +856,18 @@ def add_or_update_instance_profile(instance, desired_profile_name):
             return True
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e, "Could not associate instance profile")
+
+    elif instance_profile_setting and desired_profile_name is not None:
+        # remove association
+        ec2 = module.client('ec2')
+        association = get_current_association(ec2, module, instance)
+        try:
+            resp = ec2.disassociate_iam_instance_profile(
+                AssociationId=association['IamInstanceProfileAssociations'][0]['AssociationId'],
+            )
+            return True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e, "Could not remove associated instance profile")
 
     if not instance_profile_setting and desired_profile_name:
         # create association
@@ -1176,7 +1193,7 @@ def build_run_instance_spec(params, ec2=None):
     spec['TagSpecifications'] = build_instance_tags(params)
 
     # IAM profile
-    if params.get('instance_role'):
+    if params.get('instance_role') is not None:
         spec['IamInstanceProfile'] = dict(Arn=determine_iam_role(params.get('instance_role')))
 
     spec['InstanceType'] = params['instance_type']
@@ -1472,6 +1489,8 @@ def pretty_instance(i):
 
 
 def determine_iam_role(name_or_arn):
+    if name_or_arn == "":
+        return name_or_arn
     if re.match(r'^arn:aws:iam::\d+:instance-profile/[\w+=/,.@-]+$', name_or_arn):
         return name_or_arn
     iam = module.client('iam', retry_decorator=AWSRetry.jittered_backoff())
