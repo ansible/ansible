@@ -32,7 +32,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': '<support_group>'
+    'supported_by': 'network'
 }
 
 DOCUMENTATION = """
@@ -48,7 +48,6 @@ options:
   config:
     description: The provided configuration
     type: dict
-    elements: dict
     suboptions:
       certificate:
         type: dict
@@ -335,12 +334,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
