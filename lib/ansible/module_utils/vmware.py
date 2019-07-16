@@ -364,7 +364,7 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             if device.ipAddress == []:
                 continue
-            if net_dict.get(device.macAddress) == None:
+            if net_dict.get(device.macAddress) is None:
                 net_dict[device.macAddress] = list(device.ipAddress)
             else:
                 net_dict[device.macAddress].extend(device.ipAddress)
@@ -386,7 +386,8 @@ def gather_vm_facts(content, vm):
         else:
             mac_addr = mac_addr_dash = None
 
-        if (hasattr(entry, 'backing') and hasattr(entry.backing, 'port') and hasattr(entry.backing.port, 'portKey') and hasattr(entry.backing.port, 'portgroupKey')):
+        if (hasattr(entry, 'backing') and hasattr(entry.backing, 'port') and hasattr(entry.backing.port,
+                                                                                     'portKey') and hasattr(entry.backing.port, 'portgroupKey')):
             port_group_key = entry.backing.port.portgroupKey
             port_key = entry.backing.port.portKey
         else:

@@ -24,6 +24,8 @@ author: J Barnett 06/23/2016 01:15
 maintainer: J Barnett (github @jbarnett1981)
 '''
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 import argparse
 import json
 import pymssql
