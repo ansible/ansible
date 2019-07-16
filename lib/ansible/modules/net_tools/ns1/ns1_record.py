@@ -30,6 +30,7 @@ options:
     description:
       - Whether the record should be present or not.  Use C(present) to create
         or update and C(absent) to delete.
+    type: str
     default: present
     choices:
       - absent
@@ -38,16 +39,19 @@ options:
     description:
       - The subdomain of the record. For apex records, this should match the
         value of I(zone).
+    type: str
     required: true
   zone:
     description:
       - Name of the existing DNS zone in which to manage the record.
+    type: str
     required: true
   answers:
     description:
       - An array of answers for this record (order matters). This can take
         many forms depending on record type and desired effect. See
         U(https://ns1.com/api) for more details.
+    type: list
     required: true
     suboptions:
       answer:
@@ -67,12 +71,14 @@ options:
         flag to C(True). This module will then count any record without a valid
         zone as absent.  This is useful for ensuring a record is absent,
         regardless of the status of its zone.
+    type: bool
     required: false
     default: false
   record_mode:
     description:
       - Whether existing I(answers) or I(filters) values unspecified in the module
         should be purged
+    type: str
     default: purge
     choices:
       - append
@@ -80,6 +86,7 @@ options:
   type:
     description:
       - The type of the record to create, modify or delete.
+    type: str
     required: true
     choices:
       - A
@@ -100,24 +107,29 @@ options:
   use_client_subnet:
     description:
       - Whether record should be EDNS-Client-Subnet enabled
+    type: bool
     required: false
   meta:
     description:
       - Record level metadata.
+    type: dict
     required: false
   link:
     description:
       - The target of a linked record.
+    type: str
     required: false
   filters:
     description:
       - An array of filters for the record, for use in configuring dynamic
         records (order matters)
+    type: list
     required: false
     suboptions:
       filter:
         description:
           - The type of filter.
+        type: str
         required: false
       config:
         description:
@@ -127,11 +139,13 @@ options:
   ttl:
     description:
       - The TTL of the record.
+    type: int
     required: false
     default: 3600
   regions:
     description:
       - The regions object for the record set.
+    type: dict
     required: false
 
 extends_documentation_fragment:
