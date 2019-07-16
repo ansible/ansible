@@ -280,7 +280,7 @@ class Line(object):
                 if self.password is not None:
                     fields.append(self.password)
                 else:
-                    self.password('none')
+                    fields.append('none')
             if self.opts:
                 fields.append(str(self.opts))
             return ' '.join(fields)
