@@ -189,6 +189,8 @@ class Npm(object):
                 cwd = self.path
 
             rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
+            if rc != 0:
+                self.module.fail_json(msg="Failed to perform %s operation" % args[0], rc=rc, out=out, err=err)
             return out
         return ''
 
