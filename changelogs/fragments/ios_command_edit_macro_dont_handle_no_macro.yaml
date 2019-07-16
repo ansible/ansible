@@ -1,0 +1,2 @@
+bugfixes:
+  - ios_config - fixed issue where the "no macro" command was erroneously handled by edit_macro(). https://github.com/ansible/ansible/issues/55212
