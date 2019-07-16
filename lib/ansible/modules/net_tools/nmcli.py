@@ -575,7 +575,7 @@ except (ImportError, ValueError):
     HAVE_NM_CLIENT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 class Nmcli(object):
@@ -679,6 +679,10 @@ class Nmcli(object):
         self.dhcp_client_id = module.params['dhcp_client_id']
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None):
+        if isinstance(cmd, list):
+            cmd = [to_text(item, nonstring='strict') for item in cmd]
+        else:
+            cmd = to_text(cmd, nonstring='strict')
         return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def merge_secrets(self, proxy, config, setting_name):
@@ -860,7 +864,7 @@ class Nmcli(object):
         # format for modifying team-slave interface
         if self.mtu is not None:
             cmd.append('802-3-ethernet.mtu')
-            cmd.append(self.mtu)
+            cmd.append(to_text(self.mtu))
         return cmd
 
     def create_connection_bond(self):
@@ -884,10 +888,10 @@ class Nmcli(object):
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
-            'miimon': self.miimon,
-            'downdelay': self.downdelay,
-            'updelay': self.updelay,
-            'arp-interval': self.arp_interval,
+            'miimon': to_text(self.miimon),
+            'downdelay': to_text(self.downdelay),
+            'updelay': to_text(self.updelay),
+            'arp-interval': to_text(self.arp_interval),
             'arp-ip-target': self.arp_ip_target,
             'primary': self.primary,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
@@ -912,10 +916,10 @@ class Nmcli(object):
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
-            'miimon': self.miimon,
-            'downdelay': self.downdelay,
-            'updelay': self.updelay,
-            'arp-interval': self.arp_interval,
+            'miimon': to_text(self.miimon),
+            'downdelay': to_text(self.downdelay),
+            'updelay': to_text(self.updelay),
+            'arp-interval': to_text(self.arp_interval),
             'arp-ip-target': self.arp_ip_target,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
@@ -1002,7 +1006,7 @@ class Nmcli(object):
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
-            '802-3-ethernet.mtu': self.mtu,
+            '802-3-ethernet.mtu': to_text(self.mtu),
             'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
@@ -1036,12 +1040,12 @@ class Nmcli(object):
             'ip6': self.ip6,
             'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
-            'bridge.ageing-time': self.ageingtime,
-            'bridge.forward-delay': self.forwarddelay,
-            'bridge.hello-time': self.hellotime,
+            'bridge.ageing-time': to_text(self.ageingtime),
+            'bridge.forward-delay': to_text(self.forwarddelay),
+            'bridge.hello-time': to_text(self.hellotime),
             'bridge.mac-address': self.mac,
-            'bridge.max-age': self.maxage,
-            'bridge.priority': self.priority,
+            'bridge.max-age': to_text(self.maxage),
+            'bridge.priority': to_text(self.priority),
             'bridge.stp': self.bool_to_string(self.stp)
         }
 
@@ -1064,12 +1068,12 @@ class Nmcli(object):
             'ipv6.address': self.ip6,
             'ipv6.gateway': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
-            'bridge.ageing-time': self.ageingtime,
-            'bridge.forward-delay': self.forwarddelay,
-            'bridge.hello-time': self.hellotime,
+            'bridge.ageing-time': to_text(self.ageingtime),
+            'bridge.forward-delay': to_text(self.forwarddelay),
+            'bridge.hello-time': to_text(self.hellotime),
             'bridge.mac-address': self.mac,
-            'bridge.max-age': self.maxage,
-            'bridge.priority': self.priority,
+            'bridge.max-age': to_text(self.maxage),
+            'bridge.priority': to_text(self.priority),
             'bridge.stp': self.bool_to_string(self.stp)
         }
 
@@ -1094,9 +1098,9 @@ class Nmcli(object):
 
         options = {
             'master': self.master,
-            'bridge-port.path-cost': self.path_cost,
+            'bridge-port.path-cost': to_text(self.path_cost),
             'bridge-port.hairpin': self.bool_to_string(self.hairpin),
-            'bridge-port.priority': self.slavepriority,
+            'bridge-port.priority': to_text(self.slavepriority),
         }
 
         for key, value in options.items():
@@ -1110,9 +1114,9 @@ class Nmcli(object):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
         options = {
             'master': self.master,
-            'bridge-port.path-cost': self.path_cost,
+            'bridge-port.path-cost': to_text(self.path_cost),
             'bridge-port.hairpin': self.bool_to_string(self.hairpin),
-            'bridge-port.priority': self.slavepriority,
+            'bridge-port.priority': to_text(self.slavepriority),
         }
 
         for key, value in options.items():
@@ -1134,7 +1138,7 @@ class Nmcli(object):
         elif self.ifname is not None:
             cmd.append(self.ifname)
         else:
-            cmd.append('vlan%s' % self.vlanid)
+            cmd.append('vlan%s' % to_text(self.vlanid))
 
         cmd.append('ifname')
         if self.ifname is not None:
@@ -1142,10 +1146,10 @@ class Nmcli(object):
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
         else:
-            cmd.append('vlan%s' % self.vlanid)
+            cmd.append('vlan%s' % to_text(self.vlanid))
 
         params = {'dev': self.vlandev,
-                  'id': str(self.vlanid),
+                  'id': to_text(self.vlanid),
                   'ip4': self.ip4 or '',
                   'gw4': self.gw4 or '',
                   'ip6': self.ip6 or '',
@@ -1167,10 +1171,10 @@ class Nmcli(object):
         elif self.ifname is not None:
             cmd.append(self.ifname)
         else:
-            cmd.append('vlan%s' % self.vlanid)
+            cmd.append('vlan%s' % to_text(self.vlanid))
 
         params = {'vlan.parent': self.vlandev,
-                  'vlan.id': str(self.vlanid),
+                  'vlan.id': to_text(self.vlanid),
                   'ipv4.address': self.ip4 or '',
                   'ipv4.gateway': self.gw4 or '',
                   'ipv4.dns': self.dns4 or '',
@@ -1193,7 +1197,7 @@ class Nmcli(object):
         elif self.ifname is not None:
             cmd.append(self.ifname)
         else:
-            cmd.append('vxlan%s' % self.vxlanid)
+            cmd.append('vxlan%s' % to_text(self.vxlan_id))
 
         cmd.append('ifname')
         if self.ifname is not None:
@@ -1201,9 +1205,9 @@ class Nmcli(object):
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
         else:
-            cmd.append('vxan%s' % self.vxlanid)
+            cmd.append('vxan%s' % to_text(self.vxlan_id))
 
-        params = {'vxlan.id': self.vxlan_id,
+        params = {'vxlan.id': to_text(self.vxlan_id),
                   'vxlan.local': self.vxlan_local,
                   'vxlan.remote': self.vxlan_remote,
                   'autoconnect': self.bool_to_string(self.autoconnect)
@@ -1221,9 +1225,9 @@ class Nmcli(object):
         elif self.ifname is not None:
             cmd.append(self.ifname)
         else:
-            cmd.append('vxlan%s' % self.vxlanid)
+            cmd.append('vxlan%s' % to_text(self.vxlan_id))
 
-        params = {'vxlan.id': self.vxlan_id,
+        params = {'vxlan.id': to_text(self.vxlan_id),
                   'vxlan.local': self.vxlan_local,
                   'vxlan.remote': self.vxlan_remote,
                   'autoconnect': self.bool_to_string(self.autoconnect)
