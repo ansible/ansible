@@ -1,52 +1,84 @@
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2018, Sumit Kumar <sumit4@netapp.com>, chris Archibald <carchi@netapp.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# (c) 2018, Sumit Kumar <sumit4@netapp.com>, chris Archibald <carchi@netapp.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = r'''
+    DOCUMENTATION = """
 options:
   - See respective platform section for more details
 requirements:
   - See respective platform section for more details
 notes:
   - Ansible modules are available for the following NetApp Storage Platforms: E-Series, ONTAP, SolidFire
-'''
+"""
+    # Documentation fragment for Cloud Volume Services on Azure NetApp (azure_rm_netapp)
+    AZURE_RM_NETAPP = """
+options:
+  resource_group:
+      description:
+      - Name of the resource group.
+      required: true
+      type: str
+requirements:
+    - python >= 2.7
+    - azure >= 2.0.0
+    - Python netapp-mgmt. Install using 'pip install netapp-mgmt'
+    - Python netapp-mgmt-netapp. Install using 'pip install netapp-mgmt-netapp'
+    - For authentication with Azure NetApp log in before you run your tasks or playbook with C(az login).
 
+notes:
+    - The modules prefixed with azure_rm_netapp are built to support the Cloud Volume Services for Azure NetApp Files.
+
+seealso:
+    - name: Sign in with Azure CLI
+      link: https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest
+      description: How to authenticate using the C(az login) command.
+    """
     # Documentation fragment for ONTAP (na_ontap)
-    NA_ONTAP = r'''
+    NA_ONTAP = """
 options:
   hostname:
+      required: true
       description:
       - The hostname or IP address of the ONTAP instance.
-      type: str
-      required: true
   username:
+      required: true
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
         For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
-      type: str
-      required: true
-      aliases: [ user ]
+      aliases: ['user']
   password:
+      required: true
       description:
       - Password for the specified user.
-      type: str
-      required: true
-      aliases: [ pass ]
+      aliases: ['pass']
   https:
       description:
       - Enable and disable https
       type: bool
-      default: no
+      default: false
   validate_certs:
       description:
-      - If set to C(no), the SSL certificates will not be validated.
+      - If set to C(False), the SSL certificates will not be validated.
       - This should only set to C(False) used on personally controlled sites using self-signed certificates.
+      default: true
       type: bool
-      default: yes
   http_port:
       description:
       - Override the default port (80 or 443) with this port
@@ -55,6 +87,14 @@ options:
       description:
       - The ontap api version to use
       type: int
+  use_rest:
+      description:
+      - REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI. 
+      - Always -- will always use the REST API
+      - Never -- will always use the ZAPI
+      - Auto -- will try to use the REST Api
+      default: Auto
+      choices: ['Never', 'Always', 'Auto']
 
 
 requirements:
@@ -67,10 +107,10 @@ requirements:
 notes:
   - The modules prefixed with na\\_ontap are built to support the ONTAP storage platform.
 
-'''
+    """
 
     # Documentation fragment for ONTAP (na_cdot)
-    ONTAP = r'''
+    ONTAP = """
 options:
   hostname:
       required: true
@@ -95,10 +135,10 @@ requirements:
 notes:
   - The modules prefixed with na\\_cdot are built to support the ONTAP storage platform.
 
-'''
+"""
 
     # Documentation fragment for SolidFire
-    SOLIDFIRE = r'''
+    SOLIDFIRE = """
 options:
   hostname:
       required: true
@@ -123,10 +163,10 @@ requirements:
 notes:
   - The modules prefixed with na\\_elementsw are built to support the SolidFire storage platform.
 
-'''
+"""
 
     # Documentation fragment for E-Series
-    ESERIES = r'''
+    ESERIES = """
 options:
   api_username:
     required: true
@@ -140,7 +180,8 @@ options:
     required: true
     description:
     - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
-      Example https://prod-1.wahoo.acme.com/devmgr/v2
+    example:
+    - https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
     required: false
     default: true
@@ -148,8 +189,7 @@ options:
         - Should https certificates be validated?
     type: bool
   ssid:
-    required: false
-    default: 1
+    required: true
     description:
     - The ID of the array to manage. This value must be unique for each array.
 
@@ -158,4 +198,4 @@ notes:
     the storage-system, or an E-Series storage-system that supports the Embedded Web Services API.
   - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
   - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
-'''
+    """
