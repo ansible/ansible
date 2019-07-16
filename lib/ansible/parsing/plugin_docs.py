@@ -90,30 +90,30 @@ def read_docstub(filename):
     operations like ansible-doc -l.
     """
 
-    t_module_data = open(filename, 'r')
     in_documentation = False
     capturing = False
     indent_detection = ''
     doc_stub = []
 
-    for line in t_module_data:
-        if in_documentation:
-            # start capturing the stub until indentation returns
-            if capturing and line.startswith(indent_detection):
-                doc_stub.append(line)
+    with open(filename, 'r') as t_module_data:
+        for line in t_module_data:
+            if in_documentation:
+                # start capturing the stub until indentation returns
+                if capturing and line.startswith(indent_detection):
+                    doc_stub.append(line)
 
-            elif capturing and not line.startswith(indent_detection):
-                break
+                elif capturing and not line.startswith(indent_detection):
+                    break
 
-            elif line.lstrip().startswith('short_description:'):
-                capturing = True
-                # Detect that the short_description continues on the next line if it's indented more
-                # than short_description itself.
-                indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
-                doc_stub.append(line)
+                elif line.lstrip().startswith('short_description:'):
+                    capturing = True
+                    # Detect that the short_description continues on the next line if it's indented more
+                    # than short_description itself.
+                    indent_detection = ' ' * (len(line) - len(line.lstrip()) + 1)
+                    doc_stub.append(line)
 
-        elif line.startswith('DOCUMENTATION') and '=' in line:
-            in_documentation = True
+            elif line.startswith('DOCUMENTATION') and '=' in line:
+                in_documentation = True
 
     short_description = r''.join(doc_stub).strip().rstrip('.')
     data = AnsibleLoader(short_description, file_name=filename).get_single_data()
