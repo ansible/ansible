@@ -23,6 +23,9 @@ def test_import_from_collection(monkeypatch):
 
     from ansible.utils.collection_loader import AnsibleCollectionLoader
 
+    # zap the singleton collection loader instance if it exists
+    AnsibleCollectionLoader._Singleton__instance = None
+
     for index in [idx for idx, obj in enumerate(sys.meta_path) if isinstance(obj, AnsibleCollectionLoader)]:
         # replace any existing collection loaders that may exist
         # since these were loaded during unit test collection

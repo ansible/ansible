@@ -26,6 +26,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
@@ -1054,8 +1055,13 @@ def start_connection(play_context, variables):
 
     env = os.environ.copy()
     env.update({
+        # HACK; most of these paths may change during the controller's lifetime
+        # (eg, due to late dynamic role includes, multi-playbook execution), without a way
+        # to invalidate/update, ansible-connection won't always see the same plugins the controller
+        # can.
         'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
         'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
+        'ANSIBLE_COLLECTIONS_PATHS': os.pathsep.join(AnsibleCollectionLoader().n_collection_paths),
         'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
         'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
