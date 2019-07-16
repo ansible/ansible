@@ -348,6 +348,7 @@ def main():
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
+    db_name = ' '.join(db)
 
     all_databases = False
     if state in ['dump', 'import']:
@@ -384,15 +385,15 @@ def main():
 
     if state == "absent":
         if module.check_mode:
-            module.exit_json(changed=bool(existence_list), db=db)
+            module.exit_json(changed=bool(existence_list), db=db_name, db_list=db)
         try:
             changed = db_delete(cursor, existence_list)
         except Exception as e:
             module.fail_json(msg="error deleting database: %s" % to_native(e))
-        module.exit_json(changed=changed, db=db)
+        module.exit_json(changed=changed, db=db_name, db_list=db)
     elif state == "present":
         if module.check_mode:
-            module.exit_json(changed=bool(non_existence_list), db=db)
+            module.exit_json(changed=bool(non_existence_list), db=db_name, db_list=db)
         changed = False
         if non_existence_list:
             try:
@@ -400,22 +401,22 @@ def main():
             except Exception as e:
                 module.fail_json(msg="error creating database: %s" % to_native(e),
                                  exception=traceback.format_exc())
-        module.exit_json(changed=changed, db=db)
+        module.exit_json(changed=changed, db=db_name, db_list=db)
     elif state == "dump":
         if non_existence_list and not all_databases:
             module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
         if module.check_mode:
-            module.exit_json(changed=True, db=db)
+            module.exit_json(changed=True, db=db_name, db_list=db)
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
-        module.exit_json(changed=True, db=db, msg=stdout)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
     elif state == "import":
         if module.check_mode:
-            module.exit_json(changed=True, db=db)
+            module.exit_json(changed=True, db=db_name, db_list=db)
         if non_existence_list and not all_databases:
             try:
                 db_create(cursor, non_existence_list, encoding, collation)
@@ -429,7 +430,7 @@ def main():
                                        socket, ssl_cert, ssl_key, ssl_ca)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
-        module.exit_json(changed=True, db=db, msg=stdout)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
 
 
 if __name__ == '__main__':
