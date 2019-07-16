@@ -6,7 +6,7 @@ try:
     import solidfire.common
 
     HAS_SF_SDK = True
-except Exception:
+except:
     HAS_SF_SDK = False
 
 
