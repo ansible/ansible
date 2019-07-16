@@ -1,12 +1,14 @@
 # Unsorted tests that were moved from here to unsorted.yml
-- include_tasks: unsorted.yml
+- import_tasks: unsorted.yml
 
 # Test ssl.
 # Restricted using Debian family because of there are errors on other distributions
 # that not related with PostgreSQL or psycopg2 SSL support.
 # The tests' key point is to be sure that ssl options work in general
-- include_tasks: ssl.yml
-  when: ansible_os_family == 'Debian' and postgres_version_resp.stdout is version('9.4', '>=')
+- import_tasks: ssl.yml
+  when:
+  - ansible_os_family == 'Debian'
+  - postgres_version_resp.stdout is version('9.4', '>=')
 
 - include_tasks: '{{ loop_item }}'
   loop:
@@ -67,16 +69,16 @@
     loop_var: loop_item
 
 # Test postgresql_ping module
-- include_tasks: postgresql_ping.yml
+- import_tasks: postgresql_ping.yml
   vars:
     db_name_nonexist: fake_db
 
 # Test default_privs with target_role
-- include_tasks: test_target_role.yml
+- import_tasks: test_target_role.yml
   when: postgres_version_resp.stdout is version('9.1', '>=')
 
 # Test postgresql_sequence module
-- include_tasks: postgresql_sequence.yml
+- import_tasks: postgresql_sequence.yml
   when: postgres_version_resp.stdout is version('9.0', '>=')
 
 # Test postgresql_ext.
@@ -86,10 +88,12 @@
 # missing postgis package in repositories.
 # Anyway, these tests completely depend on Postgres version,
 # not specific distributions.
-- include_tasks: postgresql_ext.yml
-  when: postgres_version_resp.stdout is version('9.1', '>=') and ansible_distribution == 'Fedora'
+- import_tasks: postgresql_ext.yml
+  when:
+  - postgres_version_resp.stdout is version('9.1', '>=')
+  - ansible_distribution == 'Fedora'
 
-- include_tasks: postgresql_ext_version_opt.yml
+- import_tasks: postgresql_ext_version_opt.yml
   when: ansible_distribution == 'Ubuntu'
 
 # Test postgresql_lang module.
@@ -98,7 +102,7 @@
 # so I restricted the tests using CentOS because the results
 # depend only on Postgres version
 # (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
-- include_tasks: postgresql_lang.yml
+- import_tasks: postgresql_lang.yml
   when: ansible_distribution == 'CentOS'
 
 # dump/restore tests per format
@@ -121,7 +125,7 @@
 
 # dump/restore tests per other logins
 # ============================================================
-- include_tasks: state_dump_restore.yml
+- import_tasks: state_dump_restore.yml
   vars:
     file: dbdata.tar
     test_fixture: admin
