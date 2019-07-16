@@ -240,6 +240,13 @@ options:
           are the friendly names of CPU platforms .
         required: false
         type: str
+      labels:
+        description:
+        - The labels key/value pairs to assign to instances that are created from
+          this template.
+        required: false
+        version_added: 2.9
+        type: dict
       metadata:
         description:
         - The metadata key/value pairs to assign to instances that are created from
@@ -683,6 +690,13 @@ properties:
         the friendly names of CPU platforms .
       returned: success
       type: str
+    labels:
+      description:
+      - The labels key/value pairs to assign to instances that are created from
+        this template.
+      required: false
+      version_added: 2.9
+      type: dict
     metadata:
       description:
       - The metadata key/value pairs to assign to instances that are created from
@@ -922,6 +936,7 @@ def main():
                     ),
                     machine_type=dict(required=True, type='str'),
                     min_cpu_platform=dict(type='str'),
+                    labels=dict(type='dict'),
                     metadata=dict(type='dict'),
                     guest_accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
                     network_interfaces=dict(
@@ -1191,6 +1206,7 @@ class InstanceTemplateProperties(object):
                 u'disks': InstanceTemplateDisksArray(self.request.get('disks', []), self.module).to_request(),
                 u'machineType': self.request.get('machine_type'),
                 u'minCpuPlatform': self.request.get('min_cpu_platform'),
+                u'labels': self.request.get('labels'),
                 u'metadata': self.request.get('metadata'),
                 u'guestAccelerators': InstanceTemplateGuestacceleratorsArray(self.request.get('guest_accelerators', []), self.module).to_request(),
                 u'networkInterfaces': InstanceTemplateNetworkinterfacesArray(self.request.get('network_interfaces', []), self.module).to_request(),
@@ -1208,6 +1224,7 @@ class InstanceTemplateProperties(object):
                 u'disks': InstanceTemplateDisksArray(self.request.get(u'disks', []), self.module).from_response(),
                 u'machineType': self.request.get(u'machineType'),
                 u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
+                u'labels': self.request.get(u'labels'),
                 u'metadata': self.request.get(u'metadata'),
                 u'guestAccelerators': InstanceTemplateGuestacceleratorsArray(self.request.get(u'guestAccelerators', []), self.module).from_response(),
                 u'networkInterfaces': InstanceTemplateNetworkinterfacesArray(self.request.get(u'networkInterfaces', []), self.module).from_response(),
