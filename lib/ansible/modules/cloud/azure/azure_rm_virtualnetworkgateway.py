@@ -15,11 +15,11 @@ module: azure_rm_virtualnetworkgateway
 
 version_added: "2.8"
 
-short_description: Manage Azure virtual network gateways.
+short_description: Manage Azure virtual network gateways
 
 description:
-    - Create, update or delete a virtual network gateway(VPN Gateway). When creating a VPN Gateway you must provide the name of an
-      existing virtual network.
+    - Create, update or delete a virtual network gateway(VPN Gateway).
+    - When creating a VPN Gateway you must provide the name of an existing virtual network.
 
 options:
     resource_group:
@@ -32,8 +32,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the VPN Gateway. Use 'present' to create or update VPN gateway and
-              'absent' to delete VPN gateway.
+            - State of the VPN Gateway. Use C(present) to create or update VPN gateway and C(absent) to delete VPN gateway.
         default: present
         choices:
             - absent
@@ -41,58 +40,58 @@ options:
         required: false
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
         required: false
     virtual_network:
         description:
-            - An existing virtual network with which the VPN Gateway will be associated. Required
-              when creating a VPN Gateway.
-            - It can be the virtual network's name.
-            - Make sure your virtual network is in the same resource group as VPN gateway when you give only the name.
-            - It can be the virtual network's resource id.
-            - It can be a dict which contains C(name) and C(resource_group) of the virtual network.
+            - An existing virtual network with which the VPN Gateway will be associated.
+            - Required when creating a VPN Gateway.
+            - Can be the name of the virtual network.
+            - Must be in the same resource group as VPN gateway when specified by name.
+            - Can be the resource ID of the virtual network.
+            - Can be a dict which contains I(name) and I(resource_group) of the virtual network.
         aliases:
             - virtual_network_name
         required: true
     ip_configurations:
         description:
-            - List of ip configurations
+            - List of IP configurations.
         suboptions:
             name:
                 description:
-                    - Name of the ip configuration.
+                    - Name of the IP configuration.
                 required: true
             private_ip_allocation_method:
                 description:
-                    - private ip allocation method.
+                    - Private IP allocation method.
                 choices:
                     - dynamic
                     - static
                 default: dynamic
             public_ip_address_name:
                 description:
-                    - Name of the public ip address. None for disable ip address.
+                    - Name of the public IP address. Use 'None' to disable the public IP address.
             subnet:
                 description:
                     - ID of the gateway subnet for VPN.
                 default: GatewaySubnet
     gateway_type:
         description:
-            - The type of this virtual network gateway
+            - The type of this virtual network gateway.
         default: vpn
         choices:
             - vpn
             - express_route
     vpn_type:
         description:
-            - The type of this virtual network gateway
+            - The type of this virtual private network.
         default: route_based
         choices:
             - route_based
             - policy_based
     enable_bgp:
         description:
-            - Whether BGP is enabled for this virtual network gateway or not
+            - Whether BGP is enabled for this virtual network gateway or not.
         default: false
     sku:
         description:
@@ -116,7 +115,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Madhura Naniwadekar (@Madhura-CSI)"
+    - Madhura Naniwadekar (@Madhura-CSI)
 '''
 
 EXAMPLES = '''
@@ -159,7 +158,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Virtual Network Gateway resource ID
+        - Virtual Network Gateway resource ID.
     returned: always
     type: str
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworkGateways/myV
