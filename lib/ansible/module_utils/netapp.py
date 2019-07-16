@@ -529,8 +529,8 @@ def get_cserver(connection, is_rest=False):
     vservers = json.get('records')
     if vservers is not None:
         for vserver in vservers:
-             if vserver['type'] == 'admin':     # cluster admin
-                 return vserver['vserver']
+            if vserver['type'] == 'admin':     # cluster admin
+                return vserver['vserver']
         if len(vservers) == 1:                  # assume vserver admin
             return vservers[0]['vserver']
 
@@ -580,7 +580,7 @@ class OntapRestAPI(object):
             response.raise_for_status()
             json_dict, json_error = get_json(response)
         except requests.exceptions.HTTPError as err:
-            _, json_error = get_json(response)
+            junk, json_error = get_json(response)
             if json_error is None:
                 self.log_error(status_code, 'HTTP error: %s' % err)
                 error_details = str(err)
@@ -622,7 +622,7 @@ class OntapRestAPI(object):
             return False
         method = 'HEAD'
         api = 'cluster/software'
-        status_code, _ = self.send_request(method, api, params=None, return_status_code=True)
+        status_code, junk = self.send_request(method, api, params=None, return_status_code=True)
         if status_code == 200:
             return True
         return False

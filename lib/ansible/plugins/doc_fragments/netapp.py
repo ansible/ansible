@@ -1,34 +1,22 @@
-#
-# (c) 2018, Sumit Kumar <sumit4@netapp.com>, chris Archibald <carchi@netapp.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Sumit Kumar <sumit4@netapp.com>, chris Archibald <carchi@netapp.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = """
+    DOCUMENTATION = r'''
 options:
   - See respective platform section for more details
 requirements:
   - See respective platform section for more details
 notes:
   - Ansible modules are available for the following NetApp Storage Platforms: E-Series, ONTAP, SolidFire
-"""
+'''
+
     # Documentation fragment for Cloud Volume Services on Azure NetApp (azure_rm_netapp)
-    AZURE_RM_NETAPP = """
+    AZURE_RM_NETAPP = r'''
 options:
   resource_group:
       description:
@@ -49,9 +37,10 @@ seealso:
     - name: Sign in with Azure CLI
       link: https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest
       description: How to authenticate using the C(az login) command.
-    """
+    '''
+
     # Documentation fragment for ONTAP (na_ontap)
-    NA_ONTAP = """
+    NA_ONTAP = r'''
 options:
   hostname:
       required: true
@@ -107,10 +96,10 @@ requirements:
 notes:
   - The modules prefixed with na\\_ontap are built to support the ONTAP storage platform.
 
-    """
+    '''
 
     # Documentation fragment for ONTAP (na_cdot)
-    ONTAP = """
+    ONTAP = r'''
 options:
   hostname:
       required: true
@@ -135,10 +124,10 @@ requirements:
 notes:
   - The modules prefixed with na\\_cdot are built to support the ONTAP storage platform.
 
-"""
+'''
 
     # Documentation fragment for SolidFire
-    SOLIDFIRE = """
+    SOLIDFIRE = r'''
 options:
   hostname:
       required: true
@@ -163,10 +152,10 @@ requirements:
 notes:
   - The modules prefixed with na\\_elementsw are built to support the SolidFire storage platform.
 
-"""
+'''
 
     # Documentation fragment for E-Series
-    ESERIES = """
+    ESERIES = r'''
 options:
   api_username:
     required: true
@@ -198,4 +187,4 @@ notes:
     the storage-system, or an E-Series storage-system that supports the Embedded Web Services API.
   - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
   - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
-    """
+    '''
