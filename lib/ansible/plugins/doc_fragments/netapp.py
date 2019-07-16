@@ -53,13 +53,13 @@ options:
         For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
       type: str
       required: true
-      aliases: [user]
+      aliases: [ user ]
   password:
       description:
       - Password for the specified user.
       type: str
       required: true
-      aliases: [pass]
+      aliases: [ pass ]
   https:
       description:
       - Enable and disable https
@@ -69,8 +69,8 @@ options:
       description:
       - If set to C(no), the SSL certificates will not be validated.
       - This should only set to C(False) used on personally controlled sites using self-signed certificates.
-      default: yes
       type: bool
+      default: yes
   http_port:
       description:
       - Override the default port (80 or 443) with this port
