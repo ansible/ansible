@@ -15,7 +15,7 @@
                 "states:UpdateStateMachine"
             ],
             "Resource": [
-                "arn:aws:states:{{aws_region}}:{{aws_account}}:stateMachine:*"
+                "arn:aws:states:*"
             ]
         }
     ]
