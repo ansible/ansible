@@ -1,0 +1,71 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_telemetry global config sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: set facts common
+  # nd_* vars are "non-default" values
+  set_fact:
+    certificate:
+      key: /bootflash/server.key
+      hostname: localhost
+    compression: gzip
+    source_interface: Loopback55
+    vrf: management
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: telemetry
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
+- block:
+  - name: Telemetry Global - merged
+    nxos_telemetry: &tms_global_merged
+      state: 'merged'
+      config:
+        certificate: "{{ certificate }}"
+        compression: "{{ compression }}"
+        source_interface: "{{ source_interface }}"
+        vrf: "{{ vrf }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Telemetry Global - merged - idempotence
+    nxos_telemetry: *tms_global_merged
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Telemetry Global - deleted
+    nxos_telemetry: &tms_global_deleted
+      state: 'deleted'
+      config:
+        certificate: "{{ certificate }}"
+        compression: "{{ compression }}"
+        source_interface: "{{ source_interface }}"
+        vrf: "{{ vrf }}"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Telemetry Global - deleted - idempotence
+    nxos_telemetry: *tms_global_deleted
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_telemetry global config sanity test"
