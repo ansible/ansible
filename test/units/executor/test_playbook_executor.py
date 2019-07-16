@@ -26,7 +26,7 @@ from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils import context_objects as co
-
+from ansible.utils.singleton import Singleton
 from units.mock.loader import DictDataLoader
 
 
@@ -34,11 +34,11 @@ class TestPlaybookExecutor(unittest.TestCase):
 
     def setUp(self):
         # Reset command line args for every test
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
 
     def tearDown(self):
         # And cleanup after ourselves too
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
 
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({

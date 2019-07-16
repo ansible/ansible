@@ -36,15 +36,16 @@ from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.utils import context_objects as co
+from ansible.utils.singleton import Singleton
 from units.compat import unittest
 from units.compat.mock import call, patch, MagicMock
 
 
 @pytest.fixture(autouse='function')
 def reset_cli_args():
-    co.GlobalCLIArgs._Singleton__instance = None
+    Singleton.clear(co.GlobalCLIArgs)
     yield
-    co.GlobalCLIArgs._Singleton__instance = None
+    Singleton.clear(co.GlobalCLIArgs)
 
 
 class TestGalaxy(unittest.TestCase):
@@ -110,12 +111,12 @@ class TestGalaxy(unittest.TestCase):
 
     def setUp(self):
         # Reset the stored command line args
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
         self.default_args = ['ansible-galaxy']
 
     def tearDown(self):
         # Reset the stored command line args
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
 
     def test_init(self):
         galaxy_cli = GalaxyCLI(args=self.default_args)
@@ -158,7 +159,7 @@ class TestGalaxy(unittest.TestCase):
         # removing role
         # Have to reset the arguments in the context object manually since we're doing the
         # equivalent of running the command line program twice
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
         gc = GalaxyCLI(args=["ansible-galaxy", "remove", role_file, self.role_name])
         gc.run()
 
@@ -560,16 +561,16 @@ def collection_artifact(collection_skeleton, tmp_path_factory):
 
     # Because we call GalaxyCLI in collection_skeleton we need to reset the singleton back to None so it uses the new
     # args, we reset the original args once it is done.
-    orig_cli_args = co.GlobalCLIArgs._Singleton__instance
+    orig_cli_args = co.GlobalCLIArgs()
     try:
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
         galaxy_args = ['ansible-galaxy', 'collection', 'build', collection_skeleton, '--output-path', output_dir]
         gc = GalaxyCLI(args=galaxy_args)
         gc.run()
 
         yield output_dir
     finally:
-        co.GlobalCLIArgs._Singleton__instance = orig_cli_args
+        Singleton.set(co.GlobalCLIArgs, orig_cli_args)
 
 
 def test_invalid_skeleton_path():

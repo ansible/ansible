@@ -25,15 +25,16 @@ from ansible.galaxy import collection
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
+from ansible.utils.singleton import Singleton
 
 
 def call_galaxy_cli(args):
-    orig = co.GlobalCLIArgs._Singleton__instance
-    co.GlobalCLIArgs._Singleton__instance = None
+    orig = Singleton.get(co.GlobalCLIArgs)
+    Singleton.clear(co.GlobalCLIArgs)
     try:
         GalaxyCLI(args=['ansible-galaxy', 'collection'] + args).run()
     finally:
-        co.GlobalCLIArgs._Singleton__instance = orig
+        Singleton.set(co.GlobalCLIArgs, orig)
 
 
 def artifact_json(namespace, name, version, dependencies, server):

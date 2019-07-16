@@ -26,6 +26,7 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.plugins.callback import CallbackBase
 from ansible.utils import context_objects as co
+from ansible.utils.singleton import Singleton
 
 __metaclass__ = type
 
@@ -38,7 +39,7 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
         passwords = []
 
         # Reset the stored command line args
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
         self._tqm = TaskQueueManager(inventory, variable_manager, loader, passwords)
         self._playbook = Playbook(loader)
 
@@ -51,7 +52,7 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
 
     def tearDown(self):
         # Reset the stored command line args
-        co.GlobalCLIArgs._Singleton__instance = None
+        Singleton.clear(co.GlobalCLIArgs)
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start(self):
         """

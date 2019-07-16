@@ -27,3 +27,29 @@ class Singleton(type):
                 cls.__instance = super(Singleton, cls).__call__(*args, **kw)
 
         return cls.__instance
+
+    """Reset a singleton instance (mainly for unit tests to avoid
+    reaching into the classobj directly)"""
+    @staticmethod
+    def clear(singleton_class):
+        Singleton.assert_is_singleton(singleton_class)
+        singleton_class.__instance = None
+
+    """Force a singleton to a specific instance (mainly for unit tests
+    to avoid reaching into the classobj directly)"""
+    @staticmethod
+    def set(singleton_class, obj):
+        Singleton.assert_is_singleton(singleton_class)
+        singleton_class.__instance = obj
+
+    """Directly sample the singleton state without creating an instance
+    (mainly for unit tests to avoid reaching into the classobj directly)"""
+    @staticmethod
+    def get(singleton_class):
+        Singleton.assert_is_singleton(singleton_class)
+        return singleton_class.__instance
+
+    @staticmethod
+    def assert_is_singleton(singleton_class):
+        if not isinstance(singleton_class, Singleton):
+            raise TypeError("{0} must be a Singleton type object")

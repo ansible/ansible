@@ -18,6 +18,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
 from ansible.plugins.loader import become_loader
 from ansible.utils import context_objects as co
+from ansible.utils.singleton import Singleton
 
 
 @pytest.fixture
@@ -39,9 +40,9 @@ def parser():
 
 @pytest.fixture
 def reset_cli_args():
-    co.GlobalCLIArgs._Singleton__instance = None
+    Singleton.clear(co.GlobalCLIArgs)
     yield
-    co.GlobalCLIArgs._Singleton__instance = None
+    Singleton.clear(co.GlobalCLIArgs)
 
 
 def test_play_context(mocker, parser, reset_cli_args):
