@@ -319,17 +319,15 @@ class Connection(NetworkConnectionBase):
         '''
         Connects to the remote device and starts the terminal
         '''
-        if self.connected is not True:
-            # Replace with truthy-but-not-True value to avoid infinite recursion.
-            self._connected = "connecting"
+        if not self.connected:
             self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
             self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
             self.paramiko_conn.force_persistence = self.force_persistence
             ssh = self.paramiko_conn._connect()
 
-            host = self.get_option('host')
             self.queue_message('vvvv', 'ssh connection done, setting terminal')
+            self._connected = True
 
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
@@ -340,8 +338,11 @@ class Connection(NetworkConnectionBase):
 
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
-            self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
-                         newline=self._terminal.terminal_inital_prompt_newline)
+            self.receive(
+                prompts=self._terminal.terminal_initial_prompt,
+                answer=self._terminal.terminal_initial_answer,
+                newline=self._terminal.terminal_inital_prompt_newline
+            )
 
             self.queue_message('vvvv', 'firing event: on_open_shell()')
             self._terminal.on_open_shell()
@@ -352,7 +353,6 @@ class Connection(NetworkConnectionBase):
                 self._terminal.on_become(passwd=auth_pass)
 
             self.queue_message('vvvv', 'ssh connection has completed successfully')
-            self._connected = True
 
         return self
 
