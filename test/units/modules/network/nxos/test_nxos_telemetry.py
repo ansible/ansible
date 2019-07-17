@@ -288,6 +288,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_input_validation_1(self):
         # Mandatory parameter 'id' missing.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'}}
         ], 'destination_groups')
@@ -301,6 +302,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_input_validation_2(self):
         # Parameter 'destination' is not a dict.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '88',
              'destination': '192.168.1.1',
@@ -316,6 +318,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_input_validation_3(self):
         # Parameter 'destination' is not a dict.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '88',
              'ip': '192.168.1.1',
@@ -333,6 +336,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS destgroup config is not present.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '88',
              'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
@@ -363,6 +367,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS destgroup config is not present.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '88',
              'destination': {'ip': '192.168.1.1', 'port': '5001', 'protocol': 'GRPC', 'encoding': 'GPB'},
@@ -381,6 +386,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS destgroup config is not present.
         # Configure only identifier
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '88'}
         ], 'destination_groups')
@@ -396,6 +402,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS destgroup config is not present.
         # Configure only identifier
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.2', 'port': '60001', 'protocol': 'grpc', 'encoding': 'gpb'},
@@ -409,6 +416,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS destgroup config is not present.
         # Configure only identifier
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2'}
         ], 'destination_groups')
@@ -417,8 +425,9 @@ class TestNxosTelemetryModule(TestNxosModule):
 
     def test_tms_destgroup_merged_aggregate_idempotent_n9k(self):
         # Assumes feature telemetry is enabled
-        # TMS destgroup config is not present.
+        # TMS destgroup config is present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
@@ -430,9 +439,57 @@ class TestNxosTelemetryModule(TestNxosModule):
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
+    def test_tms_destgroup_change_n9k(self):
+        # TMS destgroup config is not present.
+        # Change protocol and encoding for dest group 2
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': '2',
+             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'http', 'encoding': 'JSON'}
+             },
+            {'id': '10',
+             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
+             }
+        ], 'destination_groups')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry', 'destination-group 2',
+            'ip address 192.168.0.1 port 50001 protocol http encoding json'
+        ])
+
+    def test_tms_destgroup_add_n9k(self):
+        # TMS destgroup config is not present.
+        # Add destinations to destgroup 10
+        # Add new destgroup 55 and 56
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': '10',
+             'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
+             },
+            {'id': '10',
+             'destination': {'ip': '192.168.0.10', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
+             },
+            {'id': '55',
+             'destination': {'ip': '192.168.0.2', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
+             },
+            {'id': '56'},
+        ], 'destination_groups')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'destination-group 10',
+            'ip address 192.168.0.10 port 50001 protocol grpc encoding gpb',
+            'destination-group 55',
+            'ip address 192.168.0.2 port 50001 protocol grpc encoding gpb',
+            'destination-group 56'
+        ])
+
     def test_tms_destgroup_deleted_n9k(self):
         # Delete destination groups
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
@@ -451,6 +508,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_destgroup_deleted_idempotent_n9k(self):
         # Delete destination groups
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'destination': {'ip': '192.168.0.1', 'port': '50001', 'protocol': 'gRPC', 'encoding': 'gpb'}
@@ -484,6 +542,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS sensorgroup config is not present.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         td55_name = 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]'
         td55_fc = 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'
         args = build_args([
@@ -521,6 +580,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_input_validation_1(self):
         # Mandatory parameter 'id' missing.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'data_source': 'DME',
              'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
@@ -536,6 +596,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_input_validation_2(self):
         # Path present but mandatory 'name' key is not
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'DME',
@@ -552,6 +613,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_resource_key_n9k(self):
         # TMS sensorgroup config is not present.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77'}
         ], 'sensor_groups')
@@ -566,6 +628,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path key name provided
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'DME',
@@ -585,6 +648,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path keys name and depth provided
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'DME',
@@ -604,6 +668,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path keys name, depth and query_condition provided
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'DME',
@@ -623,6 +688,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Only path keys name, depth and filter_condition provided
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'DME',
@@ -642,6 +708,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # Assumes feature telemetry is enabled
         # TMS sensorgroup config is not present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'data_source': 'DME',
@@ -654,6 +721,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_vxlan_idempotent_n9k(self):
         # TMS sensorgroup config present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '56',
              'data_source': 'DME',
@@ -666,6 +734,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_idempotent_variable1_n9k(self):
         # TMS sensorgroup config is present with path key name.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'data_source': 'DME',
@@ -678,6 +747,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_idempotent_variable2_n9k(self):
         # TMS sensorgroup config is present with path key name and depth.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'data_source': 'DME',
@@ -690,6 +760,7 @@ class TestNxosTelemetryModule(TestNxosModule):
     def test_tms_sensorgroup_idempotent_resource_key_n9k(self):
         # TMS sensorgroup config is present resource key only.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '55'}
         ], 'sensor_groups')
@@ -700,6 +771,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is present.
         # Make absent with all playbook keys provided
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2',
              'data_source': 'DME',
@@ -716,6 +788,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is present.
         # Make absent with only identifier playbook keys provided
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '2'}
         ], 'sensor_groups', state='deleted')
@@ -729,6 +802,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Path name 'environment' test
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'YANG',
@@ -748,6 +822,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Path name 'interface' test
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'NATIVE',
@@ -767,6 +842,7 @@ class TestNxosTelemetryModule(TestNxosModule):
         # TMS sensorgroup config is not present.
         # Path name 'resources' test
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         args = build_args([
             {'id': '77',
              'data_source': 'NX-API',
@@ -782,10 +858,169 @@ class TestNxosTelemetryModule(TestNxosModule):
             'path resources',
         ])
 
+    # ---------------------------------
+    # Telemetry Subscription Test Cases
+    # ---------------------------------
+
+    def test_tms_subscription_merged_n9k(self):
+        # TMS subscription config is not present.
+        self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': 5,
+             'destination_group': 55,
+             'sensor_group': {'id': 1, 'sample_interval': 1000},
+             },
+            {'id': 88,
+             'destination_group': 3,
+             'sensor_group': {'id': 4, 'sample_interval': 2000},
+             },
+        ], 'subscriptions')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'feature telemetry',
+            'telemetry',
+            'subscription 5',
+            'dst-grp 55',
+            'snsr-grp 1 sample-interval 1000',
+            'subscription 88',
+            'dst-grp 3',
+            'snsr-grp 4 sample-interval 2000'
+        ])
+
+    def test_tms_subscription_merged_idempotent_n9k(self):
+        # TMS subscription config is not present.
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': 3,
+             },
+            {'id': 7,
+             'destination_group': 10,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 2,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+        ], 'subscriptions')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=False)
+
+    def test_tms_subscription_merged_change1_n9k(self):
+        # TMS subscription config present.
+        # Change sample interval for sensor group 2
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': 3,
+             },
+            {'id': 7,
+             'destination_group': 10,
+             'sensor_group': {'id': 2, 'sample_interval': 3000},
+             },
+            {'id': 5,
+             'destination_group': 2,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+        ], 'subscriptions')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'subscription 7',
+            'snsr-grp 2 sample-interval 3000'
+        ])
+
+    def test_tms_subscription_add_n9k(self):
+        # TMS subscription config present.
+        # Add new destination_group and sensor_group to subscription 5
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': 3,
+             },
+            {'id': 7,
+             'destination_group': 10,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 2,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 7,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 8,
+             'sensor_group': {'id': 9, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 9,
+             'sensor_group': {'id': 10, 'sample_interval': 1000},
+             },
+        ], 'subscriptions')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'subscription 5',
+            'dst-grp 7',
+            'dst-grp 8',
+            'dst-grp 9',
+            'snsr-grp 9 sample-interval 1000',
+            'snsr-grp 10 sample-interval 1000'
+        ])
+
+    def test_tms_subscription_deleted_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS sensorgroup config is not present.
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': 3,
+             },
+            {'id': 7,
+             'destination_group': 10,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 2,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+        ], 'subscriptions', state='deleted')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=True, commands=[
+            'telemetry',
+            'no subscription 3',
+            'no subscription 7',
+            'no subscription 5'
+        ])
+
+    def test_tms_subscription_deleted_idempotent_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS sensorgroup config is not present.
+        self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': 3,
+             },
+            {'id': 7,
+             'destination_group': 10,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+            {'id': 5,
+             'destination_group': 2,
+             'sensor_group': {'id': 2, 'sample_interval': 1000},
+             },
+        ], 'subscriptions', state='deleted')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=False)
+
     def test_telemetry_full_n9k(self):
         # Assumes feature telemetry is disabled
         # TMS global config is not present.
         self.execute_show_command.return_value = None
+        self.get_platform_shortname.return_value = 'N9K'
         set_module_args({
             'state': 'merged',
             'config': {

@@ -1117,12 +1117,13 @@ class NxosCmdRef:
             # Multiple Instances:
             if isinstance(existing, dict) and multiple:
                 item_found = False
-                for dkey, dvalue in existing.items():
-                    if isinstance(dvalue, dict):
+
+                for ekey, evalue in existing.items():
+                    if isinstance(evalue, dict):
                         # Remove values set to string 'None' from dvalue
-                        dvalue = dict((k, v) for k, v in dvalue.items() if v != 'None')
-                    for pkey, pval in playval.items():
-                        if compare(pval, dvalue):
+                        evalue = dict((k, v) for k, v in evalue.items() if v != 'None')
+                    for pkey, pvalue in playval.items():
+                        if compare(pvalue, evalue):
                             if playval_copy.get(pkey):
                                 del playval_copy[pkey]
                 if not playval_copy:
@@ -1136,6 +1137,7 @@ class NxosCmdRef:
                 if not playval_copy:
                     continue
 
+            playval = playval_copy
             # Multiple Instances:
             if isinstance(existing, dict):
                 for dkey, dvalue in existing.items():

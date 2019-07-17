@@ -58,6 +58,12 @@ class TelemetryFacts(object):
         cmd_ref['TMS_SENSORGROUP'] = {}
         cmd_ref['TMS_SUBSCRIPTION'] = {}
 
+        # For fact gathering, module state should be 'present' when using
+        # NxosCmdRef to query state
+        if self._module.params.get('state'):
+            saved_module_state = self._module.params['state']
+            self._module.params['state'] = 'present'
+
         # Get Telemetry Global Data
         cmd_ref['TMS_GLOBAL']['ref'] = []
         cmd_ref['TMS_GLOBAL']['ref'].append(NxosCmdRef(self._module, TMS_GLOBAL))
@@ -104,12 +110,14 @@ class TelemetryFacts(object):
 
         objs = []
         objs = self.render_config(self.generated_spec, cmd_ref)
-        facts = {}
+        facts = {'telemetry': {}}
         if objs:
             # params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['telemetry'] = objs
 
         ansible_facts['ansible_network_resources'].update(facts)
+        if self._module.params.get('state'):
+            self._module.params['state'] = saved_module_state
         return ansible_facts
 
     def render_config(self, spec, cmd_ref):

@@ -52,7 +52,7 @@ class Telemetry(ConfigBase):
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         telemetry_facts = facts['ansible_network_resources'].get('telemetry')
         if not telemetry_facts:
-            return []
+            return {}
         return telemetry_facts
 
     def edit_config(self, commands):
@@ -269,16 +269,19 @@ class Telemetry(ConfigBase):
         """
         commands = cmd_ref['TMS_GLOBAL']['ref'][0].get_proposed()
 
+        # Order matters when removing non global telemetry configuration.
+        # Remove subscriptions first
+
+        if cmd_ref['TMS_SUBSCRIPTION'].get('ref'):
+            for cr in cmd_ref['TMS_SUBSCRIPTION']['ref']:
+                commands.extend(cr.get_proposed())
+
         if cmd_ref['TMS_DESTGROUP'].get('ref'):
             for cr in cmd_ref['TMS_DESTGROUP']['ref']:
                 commands.extend(cr.get_proposed())
 
         if cmd_ref['TMS_SENSORGROUP'].get('ref'):
             for cr in cmd_ref['TMS_SENSORGROUP']['ref']:
-                commands.extend(cr.get_proposed())
-
-        if cmd_ref['TMS_SUBSCRIPTION'].get('ref'):
-            for cr in cmd_ref['TMS_SUBSCRIPTION']['ref']:
                 commands.extend(cr.get_proposed())
 
         return remove_duplicate_context(commands)
