@@ -111,7 +111,9 @@
   become: yes
 
 - name: assert output message restore the database
-  assert: { that: result is changed }
+  assert:
+    that:
+    - result is changed
 
 - name: select data from table employee
   command: '{{ user_str }} -c "{{ sql_select }}"'

@@ -14,7 +14,7 @@
   assert:
     that:
        - result is changed
-       - "result.db =='{{ db_name }}'"
+       - "result.db == db_name"
 
 - name: Check that database created
   become_user: "{{ pg_user }}"
@@ -748,7 +748,7 @@
 - assert:
     that:
       - "result_database.stdout_lines[-1] == '(1 row)'"
-      - "'{{ db_user2 }}=Cc' in result_database.stdout"
+      - "db_user2 ~ '=Cc' in result_database.stdout"
 
 - name: Remove user
   postgresql_user:
