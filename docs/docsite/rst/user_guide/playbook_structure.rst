@@ -44,7 +44,7 @@ What is the ``---`` we see on top of YAML files? This is a 'document separator',
 Tasks
 =====
 
-Tasks are the most common and used item in Ansible, they are the basis of everythign else and they define the 'actions' to take against our targets. A task only requires an ``action`` this normally corresponds to an existing module and/or action plugin.
+Tasks are the most common and used item in Ansible, they are the basis of everything else and they define the 'actions' to take against our targets. A task only requires an ``action`` this normally corresponds to an existing module and/or action plugin.
 
 .. code::
 
