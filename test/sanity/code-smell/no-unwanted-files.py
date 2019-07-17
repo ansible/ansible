@@ -22,6 +22,7 @@ def main():
         # allowed special cases
         'lib/ansible/config/base.yml',
         'lib/ansible/config/module_defaults.yml',
+        'lib/ansible/galaxy/data/collection_galaxy.yml',
     )
 
     skip_directories = (
