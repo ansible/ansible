@@ -136,6 +136,20 @@ EXAMPLES = r'''
     state: absent
 '''
 
+RETURN = r'''
+db:
+  description: Database names in string format delimted by white space.
+  returned: always
+  type: str
+  sample: "foo bar"
+db_list:
+  description: List of database names.
+  returned: always
+  type: list
+  sample: ["foo", "bar"]
+  version_added: '2.9'
+'''
+
 import os
 import subprocess
 import traceback
@@ -320,7 +334,7 @@ def main():
 
     db = module.params["name"]
     if not db:
-        module.exit_json(changed=False, db=db)
+        module.exit_json(changed=False, db=db, db_list=[])
     db = [each_db.strip() for each_db in db]
 
     encoding = module.params["encoding"]

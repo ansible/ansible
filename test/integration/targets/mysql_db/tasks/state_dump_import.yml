@@ -218,7 +218,10 @@
   register: import_result2
 
 - name: assert output message restored a database from dump file2
-  assert: { that: "import_result2.changed == true" }
+  assert:
+    that:
+      - import_result2.changed == true"
+       - import_result2.db_list == ['{{ db_name2 }}']
 
 - name: run command to list databases
   command: mysql "-e show databases like 'data%';"

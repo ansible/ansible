@@ -70,6 +70,7 @@
   assert:
     that:
        - result.changed == true
+       - result.db_list == ['{{ db1_name }}', '{{ db2_name }}', '{{ db3_name }}']
 
 - name: run command to list databases like specified database name
   command: mysql "-e show databases like 'database%';"
@@ -348,6 +349,7 @@
   assert:
     that:
        - dump_result.changed == true
+       - dump_result.db_list == ['{{ db1_name }}', '{{ db2_name }}', '{{ db3_name }}']
 
 - name: run command to list databases like specified database name
   command: mysql "-e show databases like 'database%';"
@@ -442,6 +444,7 @@
   assert:
     that:
        - result.changed == true
+       - result.db_list == ['{{ db2_name }}', '{{ db3_name }}']
 
 - name: run command to list databases like specified database name
   command: mysql "-e show databases like 'database%';"
