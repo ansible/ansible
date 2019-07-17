@@ -67,7 +67,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
 
 # Check:
 - name: Check that nothing was changed after the prev step
@@ -99,7 +99,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
 
 # Check:
 - name: Check that nothing was changed after the prev step
@@ -131,7 +131,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
 
 # Cleanup:
 - name: Drop test view
@@ -187,7 +187,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Get foreign data wrapper privileges
   become: yes
@@ -220,7 +220,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 # Test
 - name: Revoke foreign data wrapper privileges
@@ -238,7 +238,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Get foreign data wrapper privileges
   become: yes
@@ -271,7 +271,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 # Test
 - name: Grant foreign server privileges
@@ -289,7 +289,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Get foreign server privileges
   become: yes
@@ -322,7 +322,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 # Test
 - name: Revoke foreign server privileges
@@ -340,7 +340,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == true"
+      - result is changed
 
 - name: Get foreign server privileges
   become: yes
@@ -373,7 +373,7 @@
 # Checks
 - assert:
     that:
-      - "result.changed == false"
+      - result is not changed
 
 # Foreign data wrapper cleanup
 - name: Drop foreign server
@@ -420,7 +420,7 @@
 
 # Checks
 - assert:
-    that: result.changed == true
+    that: result is changed
 
 - name: Check that all functions have execute privileges
   become: yes
@@ -448,7 +448,7 @@
 
 # Checks
 - assert:
-    that: result.changed == false
+    that: result is not changed
 
 # Test
 - name: Revoke execute to all functions
@@ -467,7 +467,7 @@
 
 # Checks
 - assert:
-    that: result.changed == true
+    that: result is changed
 
 # Test
 - name: Revoke execute to all functions again
@@ -485,7 +485,7 @@
   ignore_errors: yes
 
 - assert:
-    that: result.changed == false
+    that: result is not changed
 
 # Function ALL_IN_SCHEMA cleanup
 - name: Remove function for test
@@ -567,7 +567,7 @@
 
 # Checks
 - assert:
-    that: result.changed == true
+    that: result is changed
   when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Check that all partitioned tables have select privileges
@@ -606,7 +606,7 @@
 
 # Checks
 - assert:
-    that: result.changed == false
+    that: result is not changed
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Test
@@ -627,7 +627,7 @@
 
 # Checks
 - assert:
-    that: result.changed == true
+    that: result is changed
   when: postgres_version_resp.stdout is version('10', '>=')
 
 - name: Check that all partitioned tables don't have select privileges
@@ -665,7 +665,7 @@
   when: postgres_version_resp.stdout is version('10', '>=')
 
 - assert:
-    that: result.changed == false
+    that: result is not changed
   when: postgres_version_resp.stdout is version('10', '>=')
 
 # Table ALL_IN_SCHEMA cleanup

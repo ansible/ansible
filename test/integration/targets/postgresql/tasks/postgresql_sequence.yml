@@ -59,7 +59,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar'
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar\""]
 
@@ -94,7 +94,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar'
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar\""]
 
@@ -130,7 +130,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar'
       - result.queries == ["DROP SEQUENCE \"public\".\"foobar\""]
 
@@ -165,7 +165,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar'
       - result.queries == ["DROP SEQUENCE \"public\".\"foobar\""]
 
@@ -200,7 +200,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == False
+      - result is not changed
       - result.sequence == 'foobar'
       - result.queries == []
 
@@ -239,7 +239,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_desc'
       - result.increment == '-1'
       - result.minvalue == '1'
@@ -277,7 +277,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_desc'
       - result.newname == 'foobar_with_options'
       - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_desc\" RENAME TO \"foobar_with_options\""]
@@ -313,7 +313,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_desc'
       - result.newname == 'foobar_with_options'
       - result.queries == ["ALTER SEQUENCE \"public\".\"foobar_desc\" RENAME TO \"foobar_with_options\""]
@@ -350,7 +350,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_with_options'
       - result.schema == 'public'
       - result.newschema == 'foobar_schema'
@@ -387,7 +387,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_with_options'
       - result.schema == 'public'
       - result.newschema == 'foobar_schema'
@@ -426,7 +426,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_with_options'
       - result.owner == "{{ pg_user }}"
       - result.queries == ["ALTER SEQUENCE \"foobar_schema\".\"foobar_with_options\" OWNER TO \"{{ db_user1 }}\""]
@@ -470,7 +470,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar_with_options'
       - result.owner == "{{ pg_user }}"
       - result.queries == ["ALTER SEQUENCE \"foobar_schema\".\"foobar_with_options\" OWNER TO \"{{ db_user1 }}\""]
@@ -539,7 +539,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'seq1'
       - result.queries == ["DROP SEQUENCE \"public\".\"seq1\" CASCADE"]
 
@@ -575,7 +575,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'seq1'
       - result.queries == ["DROP SEQUENCE \"public\".\"seq1\" CASCADE"]
 
@@ -611,7 +611,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar2'
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar2\"", "ALTER SEQUENCE \"public\".\"foobar2\" OWNER TO \"ansible_db_user2\""]
 
@@ -646,7 +646,7 @@
 - name: postgresql_sequence - check with assert the output
   assert:
     that:
-      - result.changed == True
+      - result is changed
       - result.sequence == 'foobar2'
       - result.queries == ["CREATE SEQUENCE \"public\".\"foobar2\"", "ALTER SEQUENCE \"public\".\"foobar2\" OWNER TO \"ansible_db_user2\""]
 

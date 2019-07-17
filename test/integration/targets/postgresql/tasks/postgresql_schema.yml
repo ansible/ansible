@@ -34,7 +34,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.schema == 'acme'
 
 - name: Check that the new schema "acme" not exists
@@ -63,7 +63,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.schema == 'acme'
       - result.queries == [ 'CREATE SCHEMA "acme"' ]
 
@@ -95,7 +95,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == false
+      - result is not changed
 
 - name: Check that the new schema "acme" still exists
   become: yes
@@ -124,7 +124,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.queries == [ 'DROP SCHEMA "acme"' ]
 
 - name: Check that no schema "acme" exists
@@ -163,7 +163,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.schema == 'acme'
       - result.queries == [ 'CREATE SCHEMA "acme"' ]
       - result2.changed == true
@@ -210,7 +210,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.queries == [ 'DROP SCHEMA "acme" CASCADE' ]
 
 - name: Check that no schema "acme" exists
@@ -241,7 +241,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.schema == 'acme'
       - result.queries == [ 'CREATE SCHEMA "acme" AUTHORIZATION "{{ db_user2 }}"' ]
 
@@ -273,7 +273,7 @@
 # Checks
 - assert:
     that:
-      - result.changed == true
+      - result is changed
       - result.queries == [ 'DROP SCHEMA "acme"' ]
 
 - name: Check that no schema "acme" exists

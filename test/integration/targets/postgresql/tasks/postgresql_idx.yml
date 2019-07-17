@@ -75,7 +75,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.tblname == ''
     - result.name == 'test0_idx'
     - result.state == 'absent'
@@ -114,7 +114,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.tblname == 'test_table'
     - result.name == 'test0_idx'
     - result.state == 'present'
@@ -153,7 +153,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.tblname == 'test_table'
     - result.name == 'test0_idx'
     - result.state == 'present'
@@ -185,7 +185,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.tblname == 'foo_table'
     - result.name == 'foo_test_idx'
     - result.state == 'present'
@@ -215,7 +215,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.tblname == 'test_table'
     - result.name == 'test_brin_idx'
     - result.state == 'present'
@@ -237,13 +237,13 @@
     table: test_table
     columns: id
     idxname: test1_idx
-    cond: id > 1 AND id != 10
+    cond: 'id > 1 AND id != 10'
   register: result
   ignore_errors: yes
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.tblname == 'test_table'
     - result.name == 'test1_idx'
     - result.state == 'present'
@@ -272,7 +272,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.name == 'foo_test_idx'
     - result.state == 'present'
     - result.schema == 'foo'
@@ -313,7 +313,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.name == 'foo_test_idx'
     - result.state == 'absent'
     - result.schema == 'foo'
@@ -351,5 +351,5 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.query == ''
