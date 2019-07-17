@@ -311,19 +311,9 @@ class GalaxyCLI(CLI):
         raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
 
     @staticmethod
-    def _get_skeleton_galaxy_yml(inject_data):
-        meta_template = '''### REQUIRED
-{% for option in required_config %}
-{{ option.description | comment_ify }}
-{{ {option.key: option.value} | to_yaml }}
-{% endfor %}
-
-### OPTIONAL but strongly adviced
-{% for option in optional_config %}
-{{ option.description | comment_ify }}
-{{ {option.key: option.value} | to_yaml }}
-{% endfor %}
-'''
+    def _get_skeleton_galaxy_yml(template_path, inject_data):
+        with open(to_bytes(template_path, errors='surrogate_or_strict'), 'rb') as template_obj:
+            meta_template = to_text(template_obj.read(), errors='surrogate_or_strict')
 
         galaxy_meta = get_collections_galaxy_meta_info()
 
@@ -368,9 +358,7 @@ class GalaxyCLI(CLI):
         template = env.from_string(meta_template)
         meta_value = template.render({'required_config': required_config, 'optional_config': optional_config})
 
-        doc_link = get_versioned_doclink('collections/collections_galaxy_meta.html')
-
-        return "# See {0} for more information\n{1}".format(doc_link, meta_value)
+        return meta_value
 
 ############################
 # execute actions
@@ -469,11 +457,11 @@ class GalaxyCLI(CLI):
                                    "however it will reset any main.yml files that may have\n"
                                    "been modified there already." % to_native(obj_path))
 
-        # Only create our galaxy.yml file if using the default skeleton
-        create_meta = False
         if obj_skeleton is not None:
+            own_skeleton = False
             skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
         else:
+            own_skeleton = True
             obj_skeleton = self.galaxy.default_role_skeleton_path
             skeleton_ignore_expressions = ['^.*/.git_keep$']
             create_meta = galaxy_type == 'collection'
@@ -507,11 +495,15 @@ class GalaxyCLI(CLI):
             for f in files:
                 filename, ext = os.path.splitext(f)
 
-                if rel_root == '.' and f in ['galaxy.yml', 'galaxy.yml.j2']:
-                    create_meta = False
-
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
                     continue
+                elif own_skeleton and rel_root == '.' and f == 'galaxy.yml.j2':
+                    # Special use case for galaxy.yml.j2 in our own default collection skeleton. We build the options
+                    # dynamically which requires special options to be set.
+                    meta_value = GalaxyCLI._get_skeleton_galaxy_yml(os.path.join(root, rel_root, f), inject_data)
+                    b_dest_file = to_bytes(os.path.join(obj_path, rel_root, filename), errors='surrogate_or_strict')
+                    with open(b_dest_file, 'wb') as galaxy_obj:
+                        galaxy_obj.write(to_bytes(meta_value, errors='surrogate_or_strict'))
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
                     dest_file = os.path.join(obj_path, rel_root, filename)
@@ -524,11 +516,6 @@ class GalaxyCLI(CLI):
                 b_dir_path = to_bytes(os.path.join(obj_path, rel_root, d), errors='surrogate_or_strict')
                 if not os.path.exists(b_dir_path):
                     os.makedirs(b_dir_path)
-
-        if create_meta:
-            meta_value = GalaxyCLI._get_skeleton_galaxy_yml(inject_data)
-            with open(os.path.join(b_obj_path, b'galaxy.yml'), 'wb') as galaxy_obj:
-                galaxy_obj.write(to_bytes(meta_value, errors='surrogate_or_strict'))
 
         display.display("- %s was created successfully" % obj_name)
 
