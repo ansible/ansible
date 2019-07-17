@@ -230,13 +230,13 @@ class GalaxyRole(object):
                                 'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
                                 'install.' % ', '.join([v.vstring for v in loose_versions])
                             )
-                        self.version = str(loose_versions[-1])
+                        self.version = to_text(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:
                         self.version = 'master'
                 elif self.version != 'master':
-                    if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
+                    if role_versions and to_text(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
