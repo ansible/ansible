@@ -66,3 +66,43 @@ def diff_list_of_dicts(want, have):
         diff.append(dict((x, y) for x, y in element))
 
     return diff
+
+
+def get_arp_monitor_target_diff(want_item, have_item):
+    want_arp_target = []
+    have_arp_target = []
+
+    want_arp_monitor = want_item.get('arp-monitor') or {}
+    if want_arp_monitor and 'target' in want_arp_monitor:
+        want_arp_target = want_arp_monitor['target']
+
+    if not have_item:
+        diff = want_arp_target
+    else:
+        have_arp_monitor = have_item.get('arp-monitor') or {}
+        if have_arp_monitor and 'target' in have_arp_monitor:
+            have_arp_target = have_arp_monitor['target']
+
+        diff = list_diff_want_only(want_arp_target, have_arp_target)
+    return diff
+
+
+
+def list_diff_have_only(want_list, have_list):
+    if have_list and not want_list:
+        diff = have_list
+    elif not have_list:
+        diff = None
+    else:
+        diff = [i for i in have_list + want_list if i in have_list and i not in want_list]
+    return diff
+
+
+def list_diff_want_only(want_list, have_list):
+    if have_list and not want_list:
+        diff = None
+    elif not have_list:
+        diff = want_list
+    else:
+        diff = [i for i in have_list + want_list if i in want_list and i not in have_list]
+    return diff

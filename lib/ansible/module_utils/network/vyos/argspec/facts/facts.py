@@ -1,3 +1,5 @@
+#
+# -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -22,7 +24,9 @@ class FactsArgs(object):  # pylint: disable=R0903
         'interfaces',
         '!interfaces',
         'l3_interfaces',
-        '!l3_interfaces'
+        '!l3_interfaces',
+        'lag_interfaces',
+        '!lag_interfaces'
     ]
 
     argument_spec = {
