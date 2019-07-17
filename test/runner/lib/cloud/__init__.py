@@ -183,7 +183,7 @@ class CloudBase(ABC):
 
         def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the config file to the payload file list."""
-            if self.config_path:
+            if self._get_cloud_config(self._CONFIG_PATH, ''):
                 pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
 
                 if pair not in files:
