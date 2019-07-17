@@ -138,7 +138,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 db:
-  description: Database names in string format delimted by white space.
+  description: Database names in string format delimited by white space.
   returned: always
   type: str
   sample: "foo bar"

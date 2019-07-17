@@ -365,6 +365,15 @@
 - name: state dump - file name should exist
   file: name={{ dump1_file }} state=file
 
+- name: Check if db1 database create command is present in the dumped file
+  shell: "grep -i 'CREATE DATABASE.*`{{ db1_name }}`' {{ dump1_file }}"
+
+- name: Check if db2 database create command is present in the dumped file
+  shell: "grep -i 'CREATE DATABASE.*`{{ db2_name }}`' {{ dump1_file }}"
+
+- name: Check if db3 database create command is present in the dumped file
+  shell: "grep -i 'CREATE DATABASE.*`{{ db3_name }}`' {{ dump1_file }}"
+
 # ==========================================================================
 # Dump all databases
 
