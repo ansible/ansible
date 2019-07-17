@@ -60,13 +60,13 @@ class DocumentConfig(Command):
         template_file = os.path.basename(template_file_full_path)
         template_dir = os.path.dirname(template_file_full_path)
 
-        if args.docs:
-            with open(args.docs) as f:
-                docs = yaml.safe_load(f)
-        else:
-            docs = {}
+        if not args.docs:
+            print('Definitions for keywords must be specified via `--docs-source FILENAME`')
+            return 1
 
-        config_options = docs
+        with open(args.docs) as f:
+            config_options = yaml.safe_load(f)
+
         config_options = fix_description(config_options)
 
         env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True,)
