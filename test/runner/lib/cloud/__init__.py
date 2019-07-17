@@ -13,6 +13,8 @@ import random
 import re
 import tempfile
 
+import lib.types as t
+
 from lib.util import (
     ApplicationError,
     display,
@@ -59,7 +61,7 @@ def get_cloud_platforms(args, targets=None):
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
     else:
-        cloud_platforms = set(get_cloud_platform(t) for t in targets)
+        cloud_platforms = set(get_cloud_platform(target) for target in targets)
 
     cloud_platforms.discard(None)
 
@@ -149,7 +151,7 @@ def cloud_init(args, targets):
         results[provider.platform] = dict(
             platform=provider.platform,
             setup_seconds=int(end_time - start_time),
-            targets=[t.name for t in targets],
+            targets=[target.name for target in targets],
         )
 
     if not args.explain and results:
