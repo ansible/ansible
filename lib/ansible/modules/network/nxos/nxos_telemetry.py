@@ -211,23 +211,11 @@ EXAMPLES = """
       vrf: management
       destination_groups:
         - id: 2
-          destination:
-            ip: 192.168.0.2
-            port: 50001
-            protocol: gPRC
-            encoding: GPB
         - id: 55
-          destination:
-            ip: 192.168.0.55
-            port: 60001
-            protocol: gPRC
-            encoding: GPB
       sensor_groups:
         - id: 1
-          data_source: NX-API
-          path:
-            name: '"show lldp neighbors detail"'
-            depth: 0
+      subscriptions:
+        - id: 1
     state: deleted
 
 
@@ -279,30 +267,6 @@ EXAMPLES = """
             id: 55
             sample_interval: 2000
     state: merged
-
-
-# Using overridden
-
-- name: Override Telemetry Configuration
-  nxos_telemetry:
-    config:
-      certificate:
-        key: /bootflash/server.key
-        hostname: localhost
-      compression: gzip
-      source_interface: Ethernet1/1
-      vrf: management
-      destination_groups:
-        - id: 2
-          destination:
-            ip: 192.168.0.2
-            port: 50001
-            protocol: gPRC
-            encoding: GPB
-      subscriptions:
-        - id: 5
-          destination_group: 55
-    state: overridden
 
 
 # Using replaced
