@@ -1,0 +1,2 @@
+bugfixes:
+    - Do not assume None is equal as connection and become tools can have different unspecified defaults.
