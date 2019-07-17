@@ -71,22 +71,22 @@ options:
     version_added: "2.5"
   tag_name:
     description:
-      -  When reuse_existing_ip_allowed is true, suppplement with this option to only reuse
-      an Elastic IP if it is tagged with tag_name.
+      - When reuse_existing_ip_allowed is true, suppplement with this option to only reuse
+        an Elastic IP if it is tagged with tag_name.
     default: 'no'
-    version_added "2.9"
+    version_added: "2.9"
   tag_value:
     description:
-      -  Supplements tag_name but also checks that the value of the tag provided in tag_name matches tag_value.
-      matches the tag_value
+      - Supplements tag_name but also checks that the value of the tag provided in tag_name matches tag_value.
+        matches the tag_value
     default: 'no'
-    version_added "2.9"
+    version_added: "2.9"
   public_ipv4_pool:
     description:
       - Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP)
-      only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
+        only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
     default: 'no'
-    version_added "2.9"
+    version_added: "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
