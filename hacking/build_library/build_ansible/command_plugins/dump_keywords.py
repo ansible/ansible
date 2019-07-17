@@ -106,16 +106,12 @@ class DocumentKeywords(Command):
                             help="directory containing Jinja2 templates")
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
                             default='/tmp/', help="Output directory for rst files")
-        parser.add_argument("-d", "--docs-source", action="store", dest="docs", default=None,
-                            help="Source for attribute docs")
+        parser.add_argument("keyword_defs", metavar="KEYWORD-DEFINITIONS.yml", type=str,
+                            help="Source for playbook keyword docs")
 
     @staticmethod
     def main(args):
-        if not args.docs:
-            print('Definitions for keywords must be specified via `--docs-source FILENAME`')
-            return 1
-
-        keyword_definitions = load_definitions(args.docs)
+        keyword_definitions = load_definitions(args.keyword_defs)
         pb_keywords = extract_keywords(keyword_definitions)
 
         keyword_page = generate_page(pb_keywords, args.template_dir)
