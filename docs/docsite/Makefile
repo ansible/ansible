@@ -38,7 +38,7 @@ all: docs
 
 docs: htmldocs
 
-generate_rst: collection_meta config cli keywords modules plugins testing
+generate_rst: collections_meta config cli keywords modules plugins testing
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
@@ -80,7 +80,7 @@ clean:
 
 .PHONY: docs clean
 
-collection_meta: ../templates/collections_galaxy_meta.rst.j2
+collections_meta: ../templates/collections_galaxy_meta.rst.j2
 	PYTHONPATH=../../lib $(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/collections/ -d ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
 
 # TODO: make generate_man output dir cli option
