@@ -21,28 +21,28 @@ module: azure_rm_virtualmachine_facts
 
 version_added: "2.7"
 
-short_description: Get virtual machine facts.
+short_description: Get virtual machine facts
 
 description:
-  - Get facts for one or all virtual machines in a resource group.
+    - Get facts for one or all virtual machines in a resource group.
 
 options:
     resource_group:
         description:
-        - Name of the resource group containing the virtual machines (required when filtering by vm name).
+            - Name of the resource group containing the virtual machines (required when filtering by vm name).
     name:
         description:
-        - Name of the virtual machine.
+            - Name of the virtual machine.
     tags:
         description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
-  - azure
+    - azure
 
 author:
-  - "Gustavo Muniz do Carmo (@gustavomcarmo)"
-  - "Zim Kalinowski (@zikalino)"
+    - Gustavo Muniz do Carmo (@gustavomcarmo)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -66,7 +66,8 @@ EXAMPLES = '''
 
 RETURN = '''
 vms:
-    description: List of virtual machines.
+    description:
+        - List of virtual machines.
     returned: always
     type: complex
     contains:
@@ -85,23 +86,31 @@ vms:
                 enabled:
                     description:
                         - Indicates if boot diagnostics are enabled.
+                    returned: always
                     type: bool
                     sample: true
                 storage_uri:
                     description:
                         - Indicates the storage account used by boot diagnostics.
+                    returned: always
                     type: str
                     sample: https://mystorageaccountname.blob.core.windows.net/
                 console_screenshot_uri:
                     description:
                         - Contains a URI to grab a console screenshot.
                         - Only present if enabled.
+                    returned: always
                     type: str
+                    sample: https://mystorageaccountname.blob.core.windows.net/bootdiagnostics-myvm01-a4db09a6-ab7f-4d80-9da8-fbceaef9288a/
+                            myVm.a4db09a6-ab7f-4d80-9da8-fbceaef9288a.screenshot.bmp
                 serial_console_log_uri:
                     description:
                         - Contains a URI to grab the serial console log.
                         - Only present if enabled.
+                    returned: always
                     type: str
+                    sample: https://mystorageaccountname.blob.core.windows.net/bootdiagnostics-myvm01-a4db09a6-ab7f-4d80-9da8-fbceaef9288a/
+                            myVm.a4db09a6-ab7f-4d80-9da8-fbceaef9288a.serialconsole.log
         data_disks:
             description:
                 - List of attached data disks.
@@ -111,21 +120,25 @@ vms:
                 caching:
                     description:
                         - Type of data disk caching.
+                    returned: always
                     type: str
                     sample: ReadOnly
                 disk_size_gb:
                     description:
-                        - The initial disk size in GB for blank data disks
+                        - The initial disk size in GB for blank data disks.
+                    returned: always
                     type: int
                     sample: 64
                 lun:
                     description:
-                        - The logical unit number for data disk
+                        - The logical unit number for data disk.
+                    returned: always
                     type: int
                     sample: 0
                 managed_disk_type:
                     description:
-                        - Managed data disk type
+                        - Managed data disk type.
+                    returned: always
                     type: str
                     sample: Standard_LRS
         id:
@@ -136,13 +149,13 @@ vms:
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVm
         image:
             description:
-                - Image specification
+                - Image specification.
             returned: always
             type: complex
             contains:
                 offer:
                     description:
-                        - Offer.
+                        - The offer of the platform image or marketplace image used to create the virtual machine.
                     type: str
                     returned: when created from marketplace image
                     sample: RHEL
@@ -166,7 +179,7 @@ vms:
                     sample: 7.5.2018050901
                 id:
                     description:
-                        - Custom image resource id.
+                        - Custom image resource ID.
                     type: str
                     returned: when created from custom image
                     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage
@@ -185,6 +198,7 @@ vms:
         network_interface_names:
             description:
                 - List of attached network interfaces.
+            returned: always
             type: list
             sample: [
                 "myNetworkInterface"
@@ -192,35 +206,43 @@ vms:
         os_disk_caching:
             description:
                 - Type of OS disk caching.
+            returned: always
             type: str
             sample: ReadOnly
         os_type:
             description:
                 - Base type of operating system.
+            returned: always
             type: str
             sample: Linux
         resource_group:
             description:
                 - Resource group.
+            returned: always
             type: str
             sample: myResourceGroup
         state:
             description:
                 - State of the resource.
+            returned: always
             type: str
             sample: present
         tags:
             description:
-                - Tags.
+                - Resource tags.
+            returned: always
             type: dict
+            sample: { "key1":"value1" }
         vm_size:
             description:
                 - Virtual machine size.
+            returned: always
             type: str
             sample: Standard_D4
         power_state:
             description:
                 - Power state of the virtual machine.
+            returned: always
             type: str
             sample: running
 '''

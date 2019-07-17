@@ -23,6 +23,9 @@ def test_import_from_collection(monkeypatch):
 
     from ansible.utils.collection_loader import AnsibleCollectionLoader
 
+    # zap the singleton collection loader instance if it exists
+    AnsibleCollectionLoader._Singleton__instance = None
+
     for index in [idx for idx, obj in enumerate(sys.meta_path) if isinstance(obj, AnsibleCollectionLoader)]:
         # replace any existing collection loaders that may exist
         # since these were loaded during unit test collection
@@ -68,6 +71,46 @@ def test_import_from_collection(monkeypatch):
         answer = question()
     finally:
         sys.settrace(original_trace_function)
+
+    # make sure 'import ... as ...' works on builtin synthetic collections
+    # the following import is not supported (it tries to find module_utils in ansible.plugins)
+    # import ansible_collections.ansible.builtin.plugins.module_utils as c1
+    import ansible_collections.ansible.builtin.plugins.action as c2
+    import ansible_collections.ansible.builtin.plugins as c3
+    import ansible_collections.ansible.builtin as c4
+    import ansible_collections.ansible as c5
+    import ansible_collections as c6
+
+    # make sure 'import ...' works on builtin synthetic collections
+    import ansible_collections.ansible.builtin.plugins.module_utils
+
+    import ansible_collections.ansible.builtin.plugins.action
+    assert ansible_collections.ansible.builtin.plugins.action == c3.action == c2
+
+    import ansible_collections.ansible.builtin.plugins
+    assert ansible_collections.ansible.builtin.plugins == c4.plugins == c3
+
+    import ansible_collections.ansible.builtin
+    assert ansible_collections.ansible.builtin == c5.builtin == c4
+
+    import ansible_collections.ansible
+    assert ansible_collections.ansible == c6.ansible == c5
+
+    import ansible_collections
+    assert ansible_collections == c6
+
+    # make sure 'from ... import ...' works on builtin synthetic collections
+    from ansible_collections.ansible import builtin
+    from ansible_collections.ansible.builtin import plugins
+    assert builtin.plugins == plugins
+
+    from ansible_collections.ansible.builtin.plugins import action
+    from ansible_collections.ansible.builtin.plugins.action import command
+    assert action.command == command
+
+    from ansible_collections.ansible.builtin.plugins.module_utils import basic
+    from ansible_collections.ansible.builtin.plugins.module_utils.basic import AnsibleModule
+    assert basic.AnsibleModule == AnsibleModule
 
     # make sure relative imports work from collections code
     # these require __package__ to be set correctly
