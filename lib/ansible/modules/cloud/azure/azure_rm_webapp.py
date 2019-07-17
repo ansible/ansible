@@ -40,7 +40,7 @@ options:
             - App service plan. Required for creation.
             - It can be name of existing app service plan in same resource group as web app.
             - It can be resource ID of existing app service plan. for example
-              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>.
             - It can be a dict which contains I(name), I(resource_group), I(sku), I(is_linux) and I(number_of_workers).
             - I(name). Name of app service plan.
             - I(resource_group). Resource group name of app service plan.
@@ -75,10 +75,10 @@ options:
                     - C(net_framework) supported value sample, C(v4.0) for .NET 4.6 and C(v3.0) for .NET 3.5.
                     - C(php) supported value sample, C(5.5), C(5.6), C(7.0).
                     - C(python) supported value sample, e.g., C(5.5), C(5.6), C(7.0).
-                    - C(node) supported value sample, 6.6, 6.9.
+                    - C(node) supported value sample, C(6.6), C(6.9).
                     - C(dotnetcore) supported value sample, C(1.0), C(1.1), C(1.2).
                     - C(ruby) supported value sample, C(2.3).
-                    - C(java) supported value sample, C(1.9) for windows web app. C(1.8) for Linux web app.
+                    - C(java) supported value sample, C(1.9) for Windows web app. C(1.8) for Linux web app.
             settings:
                 description:
                     - List of settings of the framework.
@@ -86,12 +86,12 @@ options:
                     java_container:
                         description:
                             - Name of Java container.
-                            - This is supported by specific framework C(java) only. e.g. I(Tomcat), C(Jetty).
+                            - This is supported by specific framework C(java) only. e.g. C(Tomcat), C(Jetty).
                     java_container_version:
                         description:
                             - Version of Java container.
                             - This is supported by specific framework C(java) only.
-                            - For Tomcat, e.g. C(8.0), C(8.5), C(9.0). For Jetty, e.g. C(9.1), C(9.3).
+                            - For C(Tomcat), e.g. C(8.0), C(8.5), C(9.0). For C(Jetty,) e.g. C(9.1), C(9.3).
 
     container_settings:
         description:

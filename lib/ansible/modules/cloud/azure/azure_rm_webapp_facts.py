@@ -19,7 +19,7 @@ module: azure_rm_webapp_facts
 
 version_added: "2.7"
 
-short_description: Get azure web app facts
+short_description: Get Azure web app facts
 
 description:
     - Get facts for a specific web app or all web app in a resource group, or all web app in current subscription.
