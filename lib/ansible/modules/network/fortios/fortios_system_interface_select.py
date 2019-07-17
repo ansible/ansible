@@ -23,11 +23,11 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: fortios_system_firmware_upgrade
-short_description: Perform firmware upgrade with local firmware file in Fortinet's FortiOS and FortiGate.
+module: fortios_system_interface_select
+short_description: Retrieve statistics for all system interfaces in Fortinet's FortiOS and FortiGate.
 description:
     - This module is able to configure a FortiGate or FortiOS device by allowing the
-      user to set and modify system feature and firmware category.
+      user to set and modify system feature and interface category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
       Tested with FOS v6.0.2
 version_added: "2.9"
@@ -67,30 +67,13 @@ options:
             - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
-    system_firmware:
+    system_interface:
         description:
-            - Perform firmware upgrade with local firmware file.
+            - Retrieve statistics for all system interfaces.
         type: dict
         default: null
         type: dict
         suboptions:
-            filename:
-                description:
-                    - Name and path of the local firmware file.
-                type: str
-            format_partition:
-                description:
-                    - Set to true to format boot partition before upgrade.
-                type: bool
-            source:
-                description:
-                    - Firmware file data source [upload|usb|fortiguard].
-                type: str
-                required: true
-                choices:
-                    - upload
-                    - usb
-                    - fortiguard
 '''
 
 EXAMPLES = '''
@@ -101,59 +84,14 @@ EXAMPLES = '''
    password: ""
    vdom: "root"
   tasks:
-  - name: Perform firmware upgrade with local firmware file.
-    fortios_system_firmware_upgrade:
+  - name: Retrieve statistics for all system interfaces.
+    fortios_system_interface_select:
       host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
-      system_firmware:
-        filename: "<your_own_value>"
-        format_partition: "<your_own_value>"
-        source: "upload"
-    register: fortios_system_firmware_upgrade_result
-
-  - debug:
-      var:
-        # please check the following status to confirm
-        fortios_system_firmware_upgrade_result.meta.results.status
-
-  - name: Perform firmware upgrade with firmware file on USB.
-    fortios_system_firmware_upgrade:
-      host:  "{{ host }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      vdom:  "{{ vdom }}"
-      https: "False"
-      system_firmware:
-        filename: "<your_own_value>"
-        format_partition: "<your_own_value>"
-        source: "usb"
-    register: fortios_system_firmware_upgrade_result
-
-  - debug:
-      var:
-        # please check the following status to confirm
-        fortios_system_firmware_upgrade_result.meta.results.status
-
-  - name: Perform firmware upgrade from FortiGuard.
-    fortios_system_firmware_upgrade:
-      host:  "{{ host }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      vdom:  "{{ vdom }}"
-      https: "False"
-      system_firmware:
-        filename: "<your_own_value>"
-        format_partition: "<your_own_value>"
-        source: "fortiguard"
-    register: fortios_system_firmware_upgrade_result
-
-  - debug:
-      var:
-        # please check the following status to confirm
-        fortios_system_firmware_upgrade_result.meta.results.status
+      system_interface:
 '''
 
 RETURN = '''
@@ -166,12 +104,12 @@ http_method:
   description: Last method used to provision the content into FortiGate
   returned: always
   type: str
-  sample: 'POST'
+  sample: 'GET'
 name:
   description: Name of the table used to fulfill the request
   returned: always
   type: str
-  sample: "firmware"
+  sample: "interface"
 path:
   description: Path of the table used to fulfill the request
   returned: always
@@ -209,8 +147,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.fortios.fortios import FortiOSHandler
 from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
-import os
-import base64
 
 
 def login(data, fos):
@@ -227,8 +163,8 @@ def login(data, fos):
     fos.login(host, username, password)
 
 
-def filter_system_firmware_data(json):
-    option_list = ['filename', 'format_partition', 'source']
+def filter_system_interface_data(json):
+    option_list = []
     dictionary = {}
 
     for attribute in option_list:
@@ -238,30 +174,30 @@ def filter_system_firmware_data(json):
     return dictionary
 
 
+def flatten_multilists_attributes(data):
+    multilist_attrs = [['allowaccess'], ['ipv6', 'ip6_allowaccess']]
+
+    for attr in multilist_attrs:
+        try:
+            path = "data['" + "']['".join(elem for elem in attr) + "']"
+            current_val = eval(path)
+            flattened_val = ' '.join(elem for elem in current_val)
+            exec(path + '= flattened_val')
+        except BaseException:
+            pass
+
+    return data
+
+
 def underscore_to_hyphen(data):
     return data
 
 
-def system_firmware(data, fos, check_mode=False):
+def system_interface(data, fos, check_mode=False):
     vdom = data['vdom']
 
-    system_firmware_data = data['system_firmware']
-
-    filtered_data = {}
-    filtered_data['source'] = system_firmware_data['source']
-    if hasattr(system_firmware_data, 'format_partition'):
-        filtered_data['format_partition'] = system_firmware_data['format_partition']
-    if filtered_data['source'] == 'upload':
-        try:
-            filtered_data['file_content'] = base64.b64encode(open(system_firmware_data['filename'], 'rb').read()).decode('utf-8')
-        except Exception:
-            filtered_data['file_content'] = ''
-    else:
-        filtered_data['filename'] = system_firmware_data['filename']
-
-    return fos.execute('system',
-                       'firmware/upgrade',
-                       data=filtered_data,
+    return fos.monitor('system',
+                       'interface/select',
                        vdom=vdom)
 
 
@@ -272,8 +208,7 @@ def is_successful_status(status):
 
 def fortios_system(data, fos):
 
-    if data['system_firmware']:
-        resp = system_firmware(data, fos)
+    resp = system_interface(data, fos)
 
     return not is_successful_status(resp), \
         resp['status'] == "success", \
@@ -287,13 +222,9 @@ def main():
         "password": {"required": False, "type": "str", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
-        "system_firmware": {
-            "required": True, "type": "dict",
+        "system_interface": {
+            "required": False, "type": "dict",
             "options": {
-                "filename": {"required": True, "type": "str"},
-                "format_partition": {"required": False, "type": "bool"},
-                "source": {"required": True, "type": "str",
-                           "choices": ["upload", "usb", "fortiguard"]}
 
             }
         }
