@@ -84,10 +84,10 @@ cli:
 	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst ../../lib/ansible/cli/*.py
 
 keywords: ../templates/playbooks_keywords.rst.j2
-	PYTHONPATH=../../lib $(KEYWORD_DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ -d ./keyword_desc.yml
+	PYTHONPATH=../../lib $(KEYWORD_DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ ./keyword_desc.yml
 
 config: ../templates/config.rst.j2
-	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ -d ../../lib/ansible/config/base.yml
+	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ ../../lib/ansible/config/base.yml
 
 modules: ../templates/plugin.rst.j2
 	PYTHONPATH=../../lib $(PLUGIN_FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/modules/ $(MODULE_ARGS)
