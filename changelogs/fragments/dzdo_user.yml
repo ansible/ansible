@@ -1,0 +1,4 @@
+bugfixes:
+- >
+  dzdo - setting ``become: yes`` with dzdo become_method had no effect because
+  there was no default set for become_user.
