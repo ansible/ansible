@@ -169,6 +169,44 @@ EXAMPLES = '''
 - name: output the IP
   debug:
     msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
+
+- name: allocate eip - reuse unallocated ips (if found) with FREE tag
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: FREE
+
+- name: allocate eip - reuse unallocted ips if tag reserved is nope
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: reserved
+    tag_value: nope
+
+- name: allocate new eip - from servers given ipv4 pool
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+- name: allocate eip - from a given pool (if no free addresses where dev-servers tag is dynamic)
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: dev-servers
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+- name: allocate eip from pool - check if tag reserved_for exists and value is our hostname
+  ec2_eip:
+    region: us-east-1
+    in_vpc: yes
+    reuse_existing_ip_allowed: yes
+    tag_name: reserved_for
+    tag_value: "{{ inventory_hostname }}"
+    public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
 '''
 
 RETURN = '''
