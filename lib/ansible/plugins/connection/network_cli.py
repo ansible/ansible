@@ -207,6 +207,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
@@ -299,7 +300,7 @@ class Connection(NetworkConnectionBase):
         play_context.deserialize(pc_data)
 
         self.queue_message('vvvv', 'updating play_context for connection')
-        if self._play_context.become ^ play_context.become:
+        if boolean(self._play_context.become) ^ boolean(play_context.become):
             if play_context.become is True:
                 auth_pass = play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
