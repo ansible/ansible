@@ -232,6 +232,11 @@ def test_invalid_dict_metadata():
                                    module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1",\n' + REGULAR_IMPORTS,
                                    offsets=True)
 
+    with pytest.raises(md.ParseError, message='Ansible plugin metadata must be a dict'):
+        assert md.extract_metadata(module_ast=ast.parse(LICENSE + FUTURE_IMPORTS + STANDARD_METADATA + REGULAR_IMPORTS),
+                                   module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version"}\n' + REGULAR_IMPORTS,
+                                   offsets=True)
+
 
 def test_multiple_statements_limitation():
     with pytest.raises(md.ParseError, message='Multiple statements per line confuses the module metadata parser.'):
