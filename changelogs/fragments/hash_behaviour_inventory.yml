@@ -1,0 +1,2 @@
+bugfixes:
+    - Inventory sources now respect setting ``hash_behaviour``. Previously each new inventory source would overwrite existing vars, even when ``hash_behavior`` was set to ``merge``.

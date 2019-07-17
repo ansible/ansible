@@ -22,8 +22,9 @@ from itertools import chain
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
-
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -245,7 +246,10 @@ class Group:
         if key == 'ansible_group_priority':
             self.set_priority(int(value))
         else:
-            self.vars[key] = value
+            if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
+                self.vars[key] = combine_vars(self.vars[key], value)
+            else:
+                self.vars[key] = value
 
     def clear_hosts_cache(self):
 
