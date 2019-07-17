@@ -69,6 +69,24 @@ options:
     default: 'no'
     type: bool
     version_added: "2.5"
+  tag_name:
+    description:
+      -  When reuse_existing_ip_allowed is true, suppplement with this option to only reuse
+      an Elastic IP if it is tagged with tag_name.
+    default: 'no'
+    version_added "2.9"
+  tag_value:
+    description:
+      -  Supplements tag_name but also checks that the value of the tag provided in tag_name matches tag_value.
+      matches the tag_value
+    default: 'no'
+    version_added "2.9"
+  public_ipv4_pool:
+    description:
+      - Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP)
+      only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
+    default: 'no'
+    version_added "2.9"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -168,6 +186,7 @@ public_ip:
 
 try:
     import boto.exception
+    from boto.ec2.address import Address
 except ImportError:
     pass  # Taken care of by ec2.HAS_BOTO
 
@@ -263,10 +282,14 @@ def address_is_associated_with_device(ec2, address, device_id, is_instance=True)
     return False
 
 
-def allocate_address(ec2, domain, reuse_existing_ip_allowed):
+def allocate_address(ec2, domain, reuse_existing_ip_allowed, check_mode, tag_dict=None, public_ipv4_pool=None):
     """ Allocate a new elastic IP address (when needed) and return it """
     if reuse_existing_ip_allowed:
         domain_filter = {'domain': domain or 'standard'}
+
+        if tag_dict is not None:
+            domain_filter.update(tag_dict)
+
         all_addresses = ec2.get_all_addresses(filters=domain_filter)
 
         if domain == 'vpc':
@@ -277,6 +300,9 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
                                       if not a.instance_id]
         if unassociated_addresses:
             return unassociated_addresses[0], False
+
+    if public_ipv4_pool:
+        return allocate_address_from_pool(ec2, domain, check_mode, public_ipv4_pool), True
 
     return ec2.allocate_address(domain=domain), True
 
@@ -326,7 +352,7 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
         if check_mode:
             return {'changed': True}
 
-        address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+        address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed, check_mode)
 
     if device_id:
         # Allocate an IP for instance since no public_ip was provided
@@ -369,6 +395,41 @@ def ensure_absent(ec2, address, device_id, check_mode, is_instance=True):
         return release_address(ec2, address, check_mode)
 
 
+def allocate_address_from_pool(ec2, domain, check_mode, public_ipv4_pool):
+    # type: (EC2Connection, str, bool, str) -> Address
+    """ Overrides boto's allocate_address function to support BYOIP """
+    params = {}
+
+    if domain is not None:
+        params['Domain'] = domain
+
+    if public_ipv4_pool is not None:
+        ec2.APIVersion = "2016-11-15"  # Workaround to force amazon to accept this attribute
+        params['PublicIpv4Pool'] = public_ipv4_pool
+
+    if check_mode:
+        params['DryRun'] = 'true'
+
+    return ec2.get_object('AllocateAddress', params, Address, verb='POST')
+
+
+def generate_tag_dict(module, tag_name, tag_value):
+    # type: (AnsibleModule, str, str) -> Optional[Dict]
+    """ Generates a dictionary to be passed as a filter to Amazon """
+    if tag_name and not tag_value:
+        if tag_name.startswith('tag:'):
+            tag_name = tag_name.strip('tag:')
+        return {'tag-key': tag_name}
+
+    elif tag_name and tag_value:
+        if not tag_name.startswith('tag:'):
+            tag_name = 'tag:' + tag_name
+        return {tag_name: tag_value}
+
+    elif tag_value and not tag_name:
+        module.fail_json(msg="parameters are required together: ('tag_name', 'tag_value')")
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -382,7 +443,10 @@ def main():
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
         wait_timeout=dict(default=300, type='int'),
-        private_ip_address=dict(required=False, default=None, type='str')
+        private_ip_address=dict(required=False, default=None, type='str'),
+        tag_name=dict(required=False, default=None, type='str', aliases=['tag-key', 'if_tagged_with']),
+        tag_value=dict(required=False, default=None, type='str', aliases=['ta']),
+        public_ipv4_pool=dict(required=False, default=None, type='str')
     ))
 
     module = AnsibleModule(
@@ -408,6 +472,9 @@ def main():
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
     allow_reassociation = module.params.get('allow_reassociation')
+    tag_name = module.params.get('tag_name')
+    tag_value = module.params.get('tag_value')
+    public_ipv4_pool = module.params.get('public_ipv4_pool')
 
     if instance_id:
         warnings = ["instance_id is no longer used, please use device_id going forward"]
@@ -420,6 +487,8 @@ def main():
             if device_id.startswith('eni-') and not in_vpc:
                 module.fail_json(msg="If you are specifying an ENI, in_vpc must be true")
             is_instance = False
+
+    tag_dict = generate_tag_dict(module, tag_name, tag_value)
 
     try:
         if device_id:
@@ -436,7 +505,7 @@ def main():
                 if address:
                     changed = False
                 else:
-                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed)
+                    address, changed = allocate_address(ec2, domain, reuse_existing_ip_allowed, module.check_mode, tag_dict, public_ipv4_pool)
                 result = {'changed': changed, 'public_ip': address.public_ip, 'allocation_id': address.allocation_id}
         else:
             if device_id:
