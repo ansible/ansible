@@ -426,7 +426,7 @@ files:
     ignored: skvidal
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan robinro
-  $modules/remote_management/foreman/: $team_foreman 
+  $modules/remote_management/foreman/: $team_foreman
   $modules/remote_management/hpilo/:
     ignored: dagwieers
     maintainers: haad
@@ -544,6 +544,8 @@ files:
     support: community
   contrib/inventory/digital_ocean.py: *digital_ocean
   contrib/inventory/docker: *docker
+  contrib/inventory/foreman.py:
+    maintainers: $team_foreman
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
