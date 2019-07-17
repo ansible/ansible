@@ -8,6 +8,11 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
+                    'supported_by': 'community'}
+
+
+DOCUMENTATION = """
+---
 module: icx_banner
 version_added: "2.9"
 author: "Ruckus Wireless (@Commscope)"
@@ -192,10 +197,6 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-
-    # results['want']=want
-    # results['have']=have
-
     commands = map_obj_to_commands((want, have), module)
     results['commands'] = commands
 
