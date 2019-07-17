@@ -1,6 +1,6 @@
 - name: "Admin user is allowed to access pg_authid relation: password comparison will succeed, password won't be updated"
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
@@ -21,7 +21,7 @@
   shell: 'psql -c "select * from pg_authid;" {{ db_name }} {{ db_user1 }}'
   environment:
     PGPASSWORD: '{{ db_password }}'
-  ignore_errors: True
+  ignore_errors: yes
   register: pg_authid
 
 - assert:
@@ -31,7 +31,7 @@
 
 - name: "Normal user isn't allowed to access pg_authid relation: password comparison will fail, password will be updated"
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_user:
     name: "{{ db_user1 }}"
     encrypted: 'yes'
