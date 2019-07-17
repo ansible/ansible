@@ -20,7 +20,7 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 from ..filters import documented_type, html_ify  # pylint: disable=relative-beyond-top-level
 
 
-DEFAULT_TEMPLATE_FILE = 'collection_galaxy_meta.rst.j2'
+DEFAULT_TEMPLATE_FILE = 'collections_galaxy_meta.rst.j2'
 DEFAULT_TEMPLATE_DIR = pathlib.Path(__file__).parents[4] / 'docs/templates'
 
 

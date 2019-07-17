@@ -19,7 +19,7 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.galaxy import Galaxy, get_collection_galaxy_meta_info
+from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import build_collection, install_collections, parse_collections_requirements_file, \
     publish_collection
@@ -325,7 +325,7 @@ class GalaxyCLI(CLI):
 {% endfor %}
 '''
 
-        galaxy_meta = get_collection_galaxy_meta_info()
+        galaxy_meta = get_collections_galaxy_meta_info()
 
         required_config = []
         optional_config = []
@@ -359,7 +359,7 @@ class GalaxyCLI(CLI):
             return textwrap.fill(v, width=117, initial_indent="# ", subsequent_indent="# ", break_on_hyphens=False)
 
         def to_yaml(v):
-            return yaml.safe_dump(v).rstrip()
+            return yaml.safe_dump(v, default_flow_style=False).rstrip()
 
         env = Environment(loader=BaseLoader)
         env.filters['comment_ify'] = comment_ify
@@ -368,7 +368,7 @@ class GalaxyCLI(CLI):
         template = env.from_string(meta_template)
         meta_value = template.render({'required_config': required_config, 'optional_config': optional_config})
 
-        doc_link = get_versioned_doclink('collections/collection_galaxy_meta.html')
+        doc_link = get_versioned_doclink('collections/collections_galaxy_meta.html')
 
         return "# See {0} for more information\n{1}".format(doc_link, meta_value)
 

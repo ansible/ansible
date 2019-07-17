@@ -76,13 +76,12 @@ clean:
 	rm -f rst/plugins/*/*.rst
 	rm -f rst/reference_appendices/config.rst
 	rm -f rst/reference_appendices/playbooks_keywords.rst
-	rm -f rst/collections/collection_galaxy_meta.rst
+	rm -f rst/collections/collections_galaxy_meta.rst
 
 .PHONY: docs clean
 
-collection_meta: ../templates/collection_galaxy_meta.rst.j2
-	mkdir -p rst/collections
-	PYTHONPATH=../../lib $(COLLECTION_DUMPER) --template-file=../templates/collection_galaxy_meta.rst.j2 --output-dir=rst/collections/ -d ../../lib/ansible/galaxy/data/collection_galaxy.yml
+collection_meta: ../templates/collections_galaxy_meta.rst.j2
+	PYTHONPATH=../../lib $(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/collections/ -d ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
 
 # TODO: make generate_man output dir cli option
 cli:

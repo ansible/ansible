@@ -33,8 +33,8 @@ from ansible.module_utils._text import to_bytes
 #      default_meta_template
 
 
-def get_collection_galaxy_meta_info():
-    meta_path = os.path.join(os.path.dirname(__file__), 'data', 'collection_galaxy.yml')
+def get_collections_galaxy_meta_info():
+    meta_path = os.path.join(os.path.dirname(__file__), 'data', 'collections_galaxy_meta.yml')
     with open(to_bytes(meta_path, errors='surrogate_or_strict'), 'rb') as galaxy_obj:
         return yaml.safe_load(galaxy_obj)
 

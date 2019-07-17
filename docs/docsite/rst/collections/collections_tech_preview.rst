@@ -56,7 +56,7 @@ galaxy.yml
 ----------
 
 A collection must have a ``galaxy.yml`` file that contains the necessary information to build a collection artifact.
-See :ref:`collection_galaxy_meta` for details on how this file is structured.
+See :ref:`collections_galaxy_meta` for details on how this file is structured.
 
 
 docs directory

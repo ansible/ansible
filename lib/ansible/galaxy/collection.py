@@ -23,7 +23,7 @@ from yaml.error import YAMLError
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
-from ansible.galaxy import get_collection_galaxy_meta_info
+from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
 from ansible.utils.display import Display
@@ -525,7 +525,7 @@ def _tarfile_extract(tar, member):
 
 
 def _get_galaxy_yml(b_galaxy_yml_path):
-    meta_info = get_collection_galaxy_meta_info()
+    meta_info = get_collections_galaxy_meta_info()
 
     mandatory_keys = set()
     string_keys = set()
