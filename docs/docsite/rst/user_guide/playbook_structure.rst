@@ -38,7 +38,7 @@ They can intermix so you can have a list of dictionaries and lists in dictionari
 '---'
 -----
 
-What is the ``---`` we see on top of YAML files? This is a 'document separator', this is an OPTIONAL indicator that a YAML document is tarting and not needed for Ansible to function (though some linting programs will complain if it is missing).
+What is the ``---`` we see on top of YAML files? This is a 'document separator', this is an OPTIONAL indicator that a YAML document is starting and not needed for Ansible to function (though some linting programs will complain if it is missing).
 
 
 Tasks
