@@ -70,6 +70,7 @@ options:
     system_firmware:
         description:
             - Perform firmware upgrade with local firmware file.
+        type: dict
         default: null
         type: dict
         suboptions:
