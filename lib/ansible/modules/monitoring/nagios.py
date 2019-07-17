@@ -294,11 +294,7 @@ def main():
         # Make sure there's an actual service selected
         if not services:
             module.fail_json(msg='no service selected to set downtime for')
-        # Make sure minutes is a number
-        try:
-            m = int(minutes)
-        except Exception:
-            module.fail_json(msg='minutes is not a valid integer')
+        m = int(minutes)
 
     ######################################################################
     if action == 'delete_downtime':
@@ -313,10 +309,7 @@ def main():
         if not servicegroup:
             module.fail_json(msg='no servicegroup selected to set downtime for')
         # Make sure minutes is a number
-        try:
-            m = int(minutes)
-        except Exception:
-            module.fail_json(msg='minutes is not a valid integer')
+        m = int(minutes)
 
     ##################################################################
     if action in ['enable_alerts', 'disable_alerts']:
