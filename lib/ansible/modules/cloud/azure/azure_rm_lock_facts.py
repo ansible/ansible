@@ -17,37 +17,40 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_lock_facts
 version_added: "2.9"
-short_description: Manage Azure locks.
+short_description: Manage Azure locks
 description:
     - Create, delete an Azure lock.
 options:
     name:
         description:
             - Name of the lock.
+        type: str
         required: true
     managed_resource_id:
         description:
-            - Id of the resource where need to manage the lock.
+            - ID of the resource where need to manage the lock.
             - Get this via facts module.
-            - Cannot be set mutal with C(resource_group).
-            - Manage subscription if both C(managed_managed_resource_id) and C(resource_group) not defined.
+            - Cannot be set mutal with I(resource_group).
+            - Manage subscription if both I(managed_managed_resource_id) and I(resource_group) not defined.
             - "'/subscriptions/{subscriptionId}' for subscriptions."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources."
-            - Can get all locks with 'child scope' for this resource, use 'managed_resource_id' in response for further management.
+            - Can get all locks with 'child scope' for this resource, use I(managed_resource_id) in response for further management.
+        type: str
     resource_group:
         description:
             - Resource group name where need to manage the lock.
             - The lock is in the resource group level.
-            - Cannot be set mutal with C(managed_resource_id).
-            - Query subscription if both C(managed_resource_id) and C(resource_group) not defined.
-            - Can get all locks with 'child scope' in this resource_group, use the 'managed_resource_id' in response for further management.
+            - Cannot be set mutal with I(managed_resource_id).
+            - Query subscription if both I(managed_resource_id) and I(resource_group) not defined.
+            - Can get all locks with 'child scope' in this I(resource_group), use the I(managed_resource_id) in response for further management.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -79,13 +82,14 @@ EXAMPLES = '''
 
 RETURN = '''
 locks:
-    description: List of locks dicts.
+    description:
+        - List of locks dicts.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Id of the Lock.
+                - ID of the Lock.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Authorization/locks/myLock"
@@ -97,7 +101,7 @@ locks:
             sample: myLock
         level:
             description:
-                - Type level of the lock
+                - Type level of the lock.
             returned: always
             type: str
             sample: can_not_delete

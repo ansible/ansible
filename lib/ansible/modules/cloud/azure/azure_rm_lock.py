@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_lock
 version_added: "2.9"
-short_description: Manage Azure locks.
+short_description: Manage Azure locks
 description:
     - Create, delete an Azure lock.
     - To create or delete management locks, you must have access to Microsoft.Authorization/* or Microsoft.Authorization/locks/* actions.
@@ -26,24 +26,28 @@ options:
     name:
         description:
             - Name of the lock.
+        type: str
         required: true
     managed_resource_id:
         description:
             - Manages a lock for the specified resource ID.
-            - Mututally exclusive with C(resource_group)).
-            - If neither C(managed_resource_id) or C(resource_group) are specified, manage a lock for the current subscription.
+            - Mututally exclusive with I(resource_group).
+            - If neither I(managed_resource_id) or I(resource_group) are specified, manage a lock for the current subscription.
             - "'/subscriptions/{subscriptionId}' for subscriptions."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources."
+        type: str
     resource_group:
         description:
             - Manage a lock for the named resource group.
-            - Mutually exclusive with C(managed_resource_id).
-            - If neither C(managed_resource_id) or C(resource_group) are specified, manage a lock for the current subscription.
+            - Mutually exclusive with I(managed_resource_id).
+            - If neither I(managed_resource_id) or I(resource_group) are specified, manage a lock for the current subscription.
+        type: str
     state:
         description:
-            - Assert the state of the lock.
+            - State of the lock.
             - Use C(present) to create or update a lock and C(absent) to delete a lock.
+        type: str
         default: present
         choices:
             - absent
@@ -51,6 +55,7 @@ options:
     level:
         description:
             - The lock level type.
+        type: str
         choices:
             - can_not_delete
             - read_only
@@ -58,7 +63,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
