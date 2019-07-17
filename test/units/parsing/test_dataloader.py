@@ -131,6 +131,10 @@ class TestDataLoader(unittest.TestCase):
     def test_path_dwim_tilde_slash(self):
         self.assertEqual(self._loader.path_dwim('~/'), os.path.expanduser('~'))
 
+    def test_path_dwim_not_a_string(self):
+        data = {'foo': 'bar'}
+        self.assertEqual(self._loader.path_dwim(data), data)
+
     def test_get_real_file(self):
         self.assertEqual(self._loader.get_real_file(__file__), __file__)
 

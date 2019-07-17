@@ -42,10 +42,15 @@ UNQUOTE_DATA = (
     (u'"1""2"', u'1""2'),
     (u'\'1\'\'2\'', u'1\'\'2'),
     (u'"1" 2 "3"', u'1" 2 "3'),
-    (u'"1"\'2\'"3"', u'1"\'2\'"3'),
+    (u'"1"\'2\'"3"', u'1"\'2\'"3')
 )
 
 
 @pytest.mark.parametrize("quoted, expected", UNQUOTE_DATA)
 def test_unquote(quoted, expected):
     assert unquote(quoted) == expected
+
+
+def test_no_string_unquote():
+    data = {'foo': 'bar'}
+    assert unquote(data) == data
