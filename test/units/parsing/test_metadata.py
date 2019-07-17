@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # (c) 2017, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
