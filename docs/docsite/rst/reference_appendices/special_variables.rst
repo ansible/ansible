@@ -121,6 +121,9 @@ role_names
 role_path
     The path to the dir of the currently running role
 
+vars
+    Shorthand for `hostvars[inventory_hostname]`
+
 Facts
 -----
 These are variables that contain information pertinent to the current host (`inventory_hostname`). They are only available if gathered first.
