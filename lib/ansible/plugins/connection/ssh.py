@@ -666,7 +666,7 @@ class Connection(ConnectionBase):
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
+                b_args = (b"-o", b"ControlPath=\"" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict') + b"\"")
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
