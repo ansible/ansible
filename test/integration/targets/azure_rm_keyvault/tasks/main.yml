@@ -175,7 +175,22 @@
         state: absent
         key_name: testkey
 
-- name: delete a keyvault key
+- name: Get key current version
+  azure_rm_keyvaultkey_info:
+    vault_uri: https://vault{{ rpfx }}.vault.azure.net
+    name: testkey
+  register: facts
+
+- name: Assert key facts
+  assert:
+    that:
+      - facts['keys'] | length == 1
+      - facts['keys'][0]['kid']
+      - facts['keys'][0]['permitted_operations'] | length > 0
+      - facts['keys'][0]['type']
+      - facts['keys'][0]['version']
+
+- name: delete a kevyault key
   azure_rm_keyvaultkey:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
     state: absent
