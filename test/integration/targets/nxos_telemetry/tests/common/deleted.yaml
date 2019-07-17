@@ -102,8 +102,8 @@
         - "result.changed == false"
 
   always:
-  # - name: Teardown
-  #   nxos_feature: *setup_teardown
-  #   ignore_errors: yes
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_telemetry subscription sanity test"
