@@ -202,6 +202,7 @@ def run_module():
 
     # Connect to ServiceNow
     service_now_client = ServiceNowClient(module)
+    service_now_client.login()
     conn = service_now_client.conn
 
     params = module.params
