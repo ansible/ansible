@@ -14,7 +14,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
@@ -79,7 +79,11 @@ class ConfigCLI(CLI):
 
         if context.CLIARGS['config_file']:
             self.config_file = unfrackpath(context.CLIARGS['config_file'], follow=False)
-            self.config = ConfigManager(self.config_file)
+            b_config = to_bytes(self.config_file)
+            if os.path.exists(b_config) and os.access(b_config, os.R_OK):
+                self.config = ConfigManager(self.config_file)
+            else:
+                raise AnsibleOptionsError('The provided configuration file is missing or not accessible: %s' % to_native(self.config_file))
         else:
             self.config = ConfigManager()
             self.config_file = find_ini_config_file()
