@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt migrate virtual machine with state present and not only running BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1722403)
