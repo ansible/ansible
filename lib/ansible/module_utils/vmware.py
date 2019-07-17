@@ -17,6 +17,11 @@ import time
 import traceback
 from random import randint
 from distutils.version import StrictVersion
+from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.basic import env_fallback, missing_required_lib
+from ansible.module_utils.urls import generic_urlparse
 
 REQUESTS_IMP_ERR = None
 try:
@@ -37,12 +42,6 @@ except ImportError:
     PYVMOMI_IMP_ERR = traceback.format_exc()
     HAS_PYVMOMI = False
     HAS_PYVMOMIJSON = False
-
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
-from ansible.module_utils.six.moves.urllib.parse import urlparse
-from ansible.module_utils.basic import env_fallback, missing_required_lib
-from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -365,7 +364,13 @@ def gather_vm_facts(content, vm):
     vmnet = _get_vm_prop(vm, ('guest', 'net'))
     if vmnet:
         for device in vmnet:
-            net_dict[device.macAddress] = list(device.ipAddress)
+            if device.ipAddress == []:
+                continue
+            if net_dict.get(device.macAddress) is None:
+                net_dict[device.macAddress] = list(device.ipAddress)
+            else:
+                net_dict[device.macAddress].extend(device.ipAddress)
+                net_dict[device.macAddress] = list(set(net_dict[device.macAddress]))
 
     if vm.guest.ipAddress:
         if ':' in vm.guest.ipAddress:
@@ -373,7 +378,6 @@ def gather_vm_facts(content, vm):
         else:
             facts['ipv4'] = vm.guest.ipAddress
 
-    ethernet_idx = 0
     for entry in vm.config.hardware.device:
         if not hasattr(entry, 'macAddress'):
             continue
@@ -384,15 +388,14 @@ def gather_vm_facts(content, vm):
         else:
             mac_addr = mac_addr_dash = None
 
-        if (hasattr(entry, 'backing') and hasattr(entry.backing, 'port') and
-                hasattr(entry.backing.port, 'portKey') and hasattr(entry.backing.port, 'portgroupKey')):
+        if (hasattr(entry, 'backing') and hasattr(entry.backing, 'port') and hasattr(entry.backing.port, 'portKey') and hasattr(entry.backing.port, 'portgroupKey')):
             port_group_key = entry.backing.port.portgroupKey
             port_key = entry.backing.port.portKey
         else:
             port_group_key = None
             port_key = None
 
-        factname = 'hw_eth' + str(ethernet_idx)
+        factname = entry.deviceInfo.label
         facts[factname] = {
             'addresstype': entry.addressType,
             'label': entry.deviceInfo.label,
@@ -403,8 +406,7 @@ def gather_vm_facts(content, vm):
             'portgroup_portkey': port_key,
             'portgroup_key': port_group_key,
         }
-        facts['hw_interfaces'].append('eth' + str(ethernet_idx))
-        ethernet_idx += 1
+        facts['hw_interfaces'].append(entry.deviceInfo.label)
 
     snapshot_facts = list_snapshots(vm)
     if 'snapshots' in snapshot_facts:
@@ -601,8 +603,7 @@ def run_command_in_guest(content, vm, username, password, program_path, program_
     result = {'failed': False}
 
     tools_status = vm.guest.toolsStatus
-    if (tools_status == 'toolsNotInstalled' or
-            tools_status == 'toolsNotRunning'):
+    if (tools_status == 'toolsNotInstalled' or tools_status == 'toolsNotRunning'):
         result['failed'] = True
         result['msg'] = "VMwareTools is not installed or is not running in the guest"
         return result
