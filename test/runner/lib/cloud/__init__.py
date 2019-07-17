@@ -179,6 +179,17 @@ class CloudBase(ABC):
         self.args = args
         self.platform = self.__module__.split('.')[2]
 
+        def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """Add the config file to the payload file list."""
+            if self.config_path:
+                pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
+
+                if pair not in files:
+                    display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
+                    files.append(pair)
+
+        data_context().register_payload_callback(config_callback)
+
     @property
     def setup_executed(self):
         """
