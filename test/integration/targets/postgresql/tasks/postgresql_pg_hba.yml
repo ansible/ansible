@@ -143,8 +143,9 @@
 - assert:
     that:
     - 'pg_hba.pg_hba == [
-           { "db": "all", "method": "md5", "type": "local", "usr": "postgres" },
            { "db": "all", "method": "ldap", "type": "local", "usr": "+some", "options": "ldapserver=example.com ldapport=389 ldapprefix=\"cn=\"" },
+           { "db": "all", "method": "md5", "type": "local", "usr": "postgres" },
+           { "db": "all", "method": "md5", "type": "local", "usr": "test" },
            { "db": "all", "method": "md5", "type": "local", "usr": "all" },
            { "db": "all", "method": "cert", "src": "blue", "type": "hostssl", "usr": "+some", "options": "clientcert=1 map=mymap" },
            { "db": "all", "method": "cert", "src": "red", "type": "hostssl", "usr": "+some", "options": "clientcert=1 map=mymap" },
