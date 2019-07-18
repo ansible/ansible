@@ -36,6 +36,7 @@ options:
    name:
      description:
      - Name of the virtual machine to work with.
+     - This is required parameter, if C(uuid) or C(moid) is not supplied.
      required: True
    state:
      description:
@@ -47,7 +48,13 @@ options:
    uuid:
      description:
      - UUID of the virtual machine to manage if known. This is VMware's unique identifier.
-     - This is required parameter, if C(name) is not supplied.
+     - This is required parameter, if C(name) or C(moid) is not supplied.
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -111,6 +118,17 @@ EXAMPLES = '''
   delegate_to: localhost
   register: attributes
 
+- name: Remove virtual machine Attribute using Virtual Machine MoID
+  vmware_guest_custom_attributes:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    moid: vm-42
+    state: absent
+    attributes:
+      - name: MyAttribute
+  delegate_to: localhost
+  register: attributes
 '''
 
 RETURN = """
@@ -185,6 +203,7 @@ def main():
         name=dict(required=True, type='str'),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         state=dict(type='str', default='present',
                    choices=['absent', 'present']),
@@ -201,7 +220,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_one_of=[['name', 'uuid']],
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ],
     )
 
     if module.params.get('folder'):
@@ -224,8 +245,9 @@ def main():
         module.exit_json(**results)
     else:
         # virtual machine does not exists
+        vm_id = (module.params.get('name') or module.params.get('uuid') or module.params.get('moid'))
         module.fail_json(msg="Unable to manage custom attributes for non-existing"
-                             " virtual machine %s" % (module.params.get('name') or module.params.get('uuid')))
+                             " virtual machine %s" % vm_id)
 
 
 if __name__ == '__main__':

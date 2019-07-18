@@ -48,6 +48,8 @@
 
 - set_fact: vm1_instance_uuid="{{ guest_facts_0001['instance']['instance_uuid'] }}"
 
+- set_fact: vm1_moid="{{ guest_facts_0001['instance']['moid'] }}"
+
 - debug:
     var: vm1_uuid
 
@@ -153,7 +155,7 @@
      - "guest_facts_0004['instance']['snapshots'][0]['name'] == 'snap1'"
      - "guest_facts_0004['instance']['snapshots'][1]['name'] == 'snap2'"
      - "guest_facts_0004['instance']['current_snapshot']['name'] == 'snap2'"
-     - "guest_facts_0002['instance']['hw_folder'] is defined"
+     - "guest_facts_0004['instance']['hw_folder'] is defined"
 
 # Testcase 0005: Get details about virtual machines using UUID
 - name: get list of facts about virtual machines using instance UUID
@@ -186,5 +188,39 @@
       - "guest_facts_0005['instance']['guest_consolidation_needed'] is defined"
       - "guest_facts_0005['instance']['instance_uuid'] is defined"
       - "guest_facts_0005['instance']['instance_uuid'] == vm1_instance_uuid"
-      - "guest_facts_0001['instance']['moid'] is defined"
-      - "guest_facts_0001['instance']['vimref'] is defined"
+      - "guest_facts_0005['instance']['moid'] is defined"
+      - "guest_facts_0005['instance']['vimref'] is defined"
+
+# Testcase 0006: Get details about virtual machines using MoID
+- name: get list of facts about virtual machines using instance MoID
+  vmware_guest_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    moid: "{{ vm1_moid }}"
+    use_instance_uuid: True
+  register: guest_facts_0006
+
+- debug:
+    msg: "{{ guest_facts_0006 }}"
+
+- assert:
+    that:
+      - "guest_facts_0006['instance']['hw_name'] == virtual_machines[0].name"
+      - "guest_facts_0006['instance']['hw_product_uuid'] is defined"
+      - "guest_facts_0006['instance']['hw_product_uuid'] == vm1_uuid"
+      - "guest_facts_0006['instance']['hw_cores_per_socket'] is defined"
+      - "guest_facts_0006['instance']['hw_datastores'] is defined"
+      - "guest_facts_0006['instance']['hw_esxi_host'] is defined"
+      - "guest_facts_0006['instance']['hw_files'] is defined"
+      - "guest_facts_0006['instance']['hw_guest_ha_state'] is defined"
+      - "guest_facts_0006['instance']['hw_is_template'] is defined"
+      - "guest_facts_0006['instance']['hw_folder'] is defined"
+      - "guest_facts_0006['instance']['guest_question'] is defined"
+      - "guest_facts_0006['instance']['guest_consolidation_needed'] is defined"
+      - "guest_facts_0006['instance']['instance_uuid'] is defined"
+      - "guest_facts_0006['instance']['instance_uuid'] == vm1_instance_uuid"
+      - "guest_facts_0006['instance']['moid'] is defined"
+      - "guest_facts_0006['instance']['vimref'] is defined"

@@ -28,11 +28,17 @@ options:
   name:
     description:
     - Name of the virtual machine to export.
-    - This is a required parameter, if parameter C(uuid) is not supplied.
+    - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
   uuid:
     description:
     - Uuid of the virtual machine to export.
-    - This is a required parameter, if parameter C(name) is not supplied.
+    - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+  moid:
+    description:
+    - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+    - This is required if C(name) or C(uuid) is not supplied.
+    version_added: '2.9'
+    type: str
   datacenter:
     default: ha-datacenter
     description:
@@ -304,6 +310,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
         export_dir=dict(type='str'),
@@ -313,7 +320,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            required_one_of=[
-                               ['name', 'uuid'],
+                               ['name', 'uuid', 'moid'],
                            ],
                            )
     pyv = VMwareExportVmOvf(module)
