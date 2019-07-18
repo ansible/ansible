@@ -1,0 +1,2 @@
+bugfixes:
+- "pip - Remove the unused and undocumented option ``use_mirrors``."

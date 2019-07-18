@@ -587,7 +587,6 @@ def main():
             virtualenv_site_packages=dict(type='bool', default=False),
             virtualenv_command=dict(type='path', default='virtualenv'),
             virtualenv_python=dict(type='str'),
-            use_mirrors=dict(type='bool', default=True),
             extra_args=dict(type='str'),
             editable=dict(type='bool', default=False),
             chdir=dict(type='path'),
