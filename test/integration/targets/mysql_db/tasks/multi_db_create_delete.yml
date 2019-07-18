@@ -1,0 +1,557 @@
+# Copyright (c) 2019, Pratik Gadiya <pratikgadiya1@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- set_fact:
+    db1_name="database1"
+    db2_name="database2"
+    db3_name="database3"
+    db4_name="database4"
+    db5_name="database5"
+    dump1_file="/tmp/dump1_file.sql"
+    dump2_file="/tmp/all.sql"
+
+# ============================== CREATE TEST ===============================
+#
+# ==========================================================================
+# Initial check - To confirm that database does not exist before executing check mode tasks
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases does not exist
+  assert:
+    that:
+      - "'{{ db1_name }}' not in mysql_result.stdout"
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db3_name }}' not in mysql_result.stdout"
+
+# ==========================================================================
+# Create multiple databases that does not exists (check mode)
+- name: Create multiple databases that does not exists (check mode)
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_result
+  check_mode: yes
+
+- name: assert successful completion of create database using check_mode since databases does not exist prior
+  assert:
+    that:
+       - check_mode_result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases does not exist (since created via check mode)
+  assert:
+    that:
+      - "'{{ db1_name }}' not in mysql_result.stdout"
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db3_name }}' not in mysql_result.stdout"
+
+# ==========================================================================
+# Create multiple databases
+- name: Create multiple databases
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert successful completion of create database
+  assert:
+    that:
+       - result.changed == true
+       - result.db_list == ['{{ db1_name }}', '{{ db2_name }}', '{{ db3_name }}']
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist after creation
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+# =========================================================================
+# Recreate already existing databases (check mode)
+- name: Recreate already existing databases (check mode)
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_result
+  check_mode: yes
+
+- name: assert that recreation of existing databases does not make change (since recreated using check mode)
+  assert:
+    that:
+       - check_mode_result.changed == false
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist (since performed recreation of existing databases via check mode)
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+# ==========================================================================
+# Recreate same databases
+- name: Recreate multiple databases
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert that recreation of existing databases does not make change
+  assert:
+    that:
+       - result.changed == false
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases does priorly exist
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+# ==========================================================================
+# Delete one of the databases (db2 here)
+- name: Delete db2 database
+  mysql_db:
+    name:
+      - '{{ db2_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert successful completion of deleting database
+  assert:
+    that:
+       - result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that only db2 database does not exist
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+# =========================================================================
+# Recreate multiple databases in which few databases does not exists (check mode)
+- name: Recreate multiple databases in which few databases does not exists (check mode)
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_result
+  check_mode: yes
+
+- name: assert successful completion of recreation of partially existing database using check mode
+  assert:
+    that:
+       - check_mode_result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that recreated non existing databases does not exist (since created via check mode)
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+ 
+# ==========================================================================
+# Create multiple databases
+- name: Create multiple databases
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert successful completion of create database
+  assert:
+    that:
+       - result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+# ============================== DUMP TEST =================================
+#
+# ==========================================================================
+# Check that dump file does not exist
+- name: Dump file does not exist
+  file: name={{ dump1_file }} state=absent
+
+# ==========================================================================
+# Dump existing databases (check mode)
+- name: Dump existing databases (check mode)
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db3_name }}'
+    state: dump
+    target: '{{ dump1_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_dump_result
+  check_mode: yes
+
+- name: assert successful completion of dump operation using check mode
+  assert:
+    that:
+       - check_mode_dump_result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist (check mode)
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+- name: state dump - file name should not exist (since dumped via check mode)
+  file: name={{ dump1_file }} state=absent
+
+# ==========================================================================
+# Dump existing and non-existing databases (check mode)
+- name: Dump existing and non-existing databases (check mode)
+  mysql_db:
+    name:
+      - "{{ db1_name }}"
+      - "{{ db4_name }}"
+      - "{{ db3_name }}"
+    state: dump
+    login_unix_socket: '{{ mysql_socket }}'
+    target: "{{ dump1_file }}"
+  register: check_mode_dump_result
+  ignore_errors: True
+  check_mode: yes
+
+- name: assert that dump operation of existing and non existing databases does not make change (using check mode)
+  assert:
+    that:
+       - "'Cannot dump database' in check_mode_dump_result['msg']"
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist (since check mode)
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+
+- name: state dump - file name should not exist (since prior dump operation performed via check mode)
+  file: name={{ dump1_file }} state=absent
+
+# ==========================================================================
+# Dump non-existing databases (check mode)
+- name: Dump non-existing databases (check mode)
+  mysql_db:
+    name:
+      - "{{ db4_name }}"
+      - "{{ db5_name }}"
+    state: dump
+    target: "{{ dump1_file }}"
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_dump_result
+  ignore_errors: True
+  check_mode: yes
+
+- name: assert successful completion of dump operation using check mode
+  assert:
+    that:
+       - "'Cannot dump database' in check_mode_dump_result['msg']"
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist (since delete via check mode)
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+      - "'{{ db5_name }}' not in mysql_result.stdout"
+
+- name: state dump - file name should not exist (since prior dump operation performed via check mode)
+  file: name={{ dump1_file }} state=absent
+
+# ==========================================================================
+# Dump existing databases
+- name: Dump existing databases
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: dump
+    target: '{{ dump1_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+  register: dump_result
+
+- name: assert successful completion of dump operation
+  assert:
+    that:
+       - dump_result.changed == true
+       - dump_result.db_list == ['{{ db1_name }}', '{{ db2_name }}', '{{ db3_name }}']
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+- name: state dump - file name should exist
+  file: name={{ dump1_file }} state=file
+
+- name: Check if db1 database create command is present in the dumped file
+  shell: "grep -i 'CREATE DATABASE.*`{{ db1_name }}`' {{ dump1_file }}"
+
+- name: Check if db2 database create command is present in the dumped file
+  shell: "grep -i 'CREATE DATABASE.*`{{ db2_name }}`' {{ dump1_file }}"
+
+- name: Check if db3 database create command is present in the dumped file
+  shell: "grep -i 'CREATE DATABASE.*`{{ db3_name }}`' {{ dump1_file }}"
+
+# ==========================================================================
+# Dump all databases
+
+- name: state dump - dump2 file name should not exist
+  file: name={{ dump2_file }} state=absent
+
+- name: Dump existing databases
+  mysql_db:
+    name: all
+    state: dump
+    target: '{{ dump2_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+  register: dump_result
+
+- name: assert successful completion of dump operation
+  assert:
+    that:
+       - dump_result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist
+  assert:
+    that:
+      - "'{{ db1_name }}' in mysql_result.stdout"
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+      - "'{{ db5_name }}' not in mysql_result.stdout"
+
+- name: state dump - file name should exist
+  file: name={{ dump2_file }} state=file
+
+# ============================ DELETE TEST =================================
+#
+# ==========================================================================
+# Delete multiple databases which already exists (check mode)
+- name: Delete multiple databases which already exists (check mode)
+  mysql_db:
+    name:
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_result
+  check_mode: yes
+
+- name: assert successful completion of delete databases which already exists using check mode
+  assert:
+    that:
+       - check_mode_result.changed == true
+
+- name: run command to test state=absent for a database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases exist even after deleting (since deleted via check mode)
+  assert:
+    that:
+      - "'{{ db2_name }}' in mysql_result.stdout"
+      - "'{{ db3_name }}' in mysql_result.stdout"
+
+# ==========================================================================
+# Delete multiple databases
+- name: Delete multiple databases
+  mysql_db:
+    name:
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert successful completion of deleting database
+  assert:
+    that:
+       - result.changed == true
+       - result.db_list == ['{{ db2_name }}', '{{ db3_name }}']
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases does not exist
+  assert:
+    that:
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db3_name }}' not in mysql_result.stdout"
+
+# ==========================================================================
+# Delete non existing databases (check mode)
+- name: Delete non existing databases (check mode)
+  mysql_db:
+    name:
+      - '{{ db2_name }}'
+      - '{{ db4_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: check_mode_result
+  check_mode: yes
+
+- name: assert that deletion of non existing databases does not make change (using check mode)
+  assert:
+    that:
+       - check_mode_result.changed == false
+
+- name: run command to test state=absent for a database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases does not exist since were deleted priorly (check mode)
+  assert:
+    that:
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+
+# ==========================================================================
+# Delete already deleted databases
+- name: Delete already deleted databases
+  mysql_db:
+    name:
+      - '{{ db2_name }}'
+      - '{{ db4_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert that deletion of non existing databases does not make change
+  assert:
+    that:
+       - result.changed == false
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that databases does not exists
+  assert:
+    that:
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+
+# ==========================================================================
+# Delete all databases
+- name: Delete all databases
+  mysql_db:
+    name:
+      - '{{ db1_name }}'
+      - '{{ db2_name }}'
+      - '{{ db3_name }}'
+      - '{{ db4_name }}'
+      - '{{ db5_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: assert successful completion of deleting database
+  assert:
+    that:
+       - result.changed == true
+
+- name: run command to list databases like specified database name
+  command: mysql "-e show databases like 'database%';"
+  register: mysql_result
+
+- name: assert that specific databases does not exist
+  assert:
+    that:
+      - "'{{ db1_name }}' not in mysql_result.stdout"
+      - "'{{ db2_name }}' not in mysql_result.stdout"
+      - "'{{ db3_name }}' not in mysql_result.stdout"
+      - "'{{ db4_name }}' not in mysql_result.stdout"
+      - "'{{ db5_name }}' not in mysql_result.stdout"
+
+- name: state dump - dump 1 file name should be removed
+  file: name={{ dump1_file }} state=absent
+
+- name: state dump - dump 2 file name should be removed
+  file: name={{ dump2_file }} state=absent
