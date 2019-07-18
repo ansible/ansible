@@ -234,12 +234,17 @@ class ManagePosixCI:
         """Wait for instance to respond to SSH."""
         for dummy in range(1, 90):
             try:
-                pwd = self.ssh('pwd', capture=True)[0]
+                stdout = self.ssh('pwd', capture=True)[0]
 
                 if self.core_ci.args.explain:
                     return '/pwd'
 
-                return pwd.strip()
+                pwd = stdout.strip().splitlines()[-1]
+
+                if not pwd.startswith('/'):
+                    raise Exception('Unexpected current working directory "%s" from "pwd" command output:\n%s' % stdout)
+
+                return pwd
             except SubprocessError:
                 time.sleep(10)
 
