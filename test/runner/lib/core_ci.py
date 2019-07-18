@@ -575,12 +575,12 @@ class SshKey:
             self.key = key
             self.pub = pub
 
-        def ssh_key_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
-            """Add the SSH keys to the payload file list."""
-            files.append((key, key_dst))
-            files.append((pub, pub_dst))
+            def ssh_key_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+                """Add the SSH keys to the payload file list."""
+                files.append((key, key_dst))
+                files.append((pub, pub_dst))
 
-        data_context().register_payload_callback(ssh_key_callback)
+            data_context().register_payload_callback(ssh_key_callback)
 
         if args.explain:
             self.pub_contents = None
