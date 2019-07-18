@@ -7,7 +7,6 @@ import glob
 import json
 import os
 import re
-import sys
 
 import lib.types as t
 

@@ -8,7 +8,6 @@ import re
 import errno
 import itertools
 import abc
-import sys
 
 from lib.util import (
     ApplicationError,
