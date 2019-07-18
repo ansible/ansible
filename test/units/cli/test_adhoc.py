@@ -6,10 +6,26 @@ __metaclass__ = type
 
 import pytest
 import re
+import time
 
 from ansible import context
 from ansible.cli.adhoc import AdHocCLI, display
 from ansible.errors import AnsibleOptionsError
+
+
+# @pytest.mark.timeout(2)
+# def test_sleep_1():
+#     time.sleep(4)
+
+
+# def test_sleep_2():
+#     time.sleep(120)
+
+# def test_sleep_3():
+#     time.sleep(120)
+
+# def test_sleep_4():
+#     time.sleep(120)
 
 
 def test_parse():
@@ -32,6 +48,7 @@ def test_with_command():
 
 
 def test_simple_command():
+
     """ Test valid command and its run"""
     adhoc_cli = AdHocCLI(['/bin/ansible', '-m', 'command', 'localhost', '-a', 'echo "hi"'])
     adhoc_cli.parse()

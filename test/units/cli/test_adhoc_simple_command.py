@@ -6,6 +6,15 @@ __metaclass__ = type
 
 
 from ansible.cli.adhoc import AdHocCLI
+from ansible.module_utils._text import to_bytes
+
+
+def my_trace(frame, event, arg):
+    tf = open('/tmp/trace.log', 'ab')
+    # with tempfile.TemporaryFile() as tf:
+    tf.write(b'%s %s %s' % (to_bytes(frame.f_code.co_filename), to_bytes(frame.f_lineno), to_bytes(event)))
+    tf.write(b'In test_adhoc_simple_command.py\n')
+    tf.close()
 
 
 def test_simple_command():
