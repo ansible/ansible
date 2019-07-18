@@ -44,6 +44,7 @@ options:
     description:
     - The GCP location for the TPU.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
