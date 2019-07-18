@@ -34,10 +34,12 @@ options:
      description:
      - Name of the VM to work with.
      - This is required if C(uuid) or C(moid) parameter is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) or C(moid) parameter is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -54,15 +56,18 @@ options:
      description:
      - List of the boot devices.
      default: []
+     type: list
    name_match:
      description:
      - If multiple virtual machines matching the name, use the first or last found.
      default: 'first'
      choices: ['first', 'last']
+     type: str
    boot_delay:
      description:
      - Delay in milliseconds before starting the boot sequence.
      default: 0
+     type: int
    enter_bios_setup:
      description:
      - If set to C(True), the virtual machine automatically enters BIOS setup the next time it boots.
@@ -80,10 +85,12 @@ options:
      - Specify the time in milliseconds between virtual machine boot failure and subsequent attempt to boot again.
      - If set, will automatically set C(boot_retry_enabled) to C(True) as this parameter is required.
      default: 0
+     type: int
    boot_firmware:
      description:
      - Choose which firmware should be used to boot the virtual machine.
      choices: ["bios", "efi"]
+     type: str
    secure_boot_enabled:
      description:
      - Choose if EFI secure boot should be enabled.  EFI secure boot can only be enabled with boot_firmware = efi

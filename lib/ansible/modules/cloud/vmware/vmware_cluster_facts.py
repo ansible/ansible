@@ -34,12 +34,14 @@ options:
      - Datacenter to search for cluster/s.
      - This parameter is required, if C(cluster_name) is not supplied.
      required: False
+     type: str
    cluster_name:
      description:
      - Name of the cluster.
      - If set, facts of this cluster will be returned.
      - This parameter is required, if C(datacenter) is not supplied.
      required: False
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

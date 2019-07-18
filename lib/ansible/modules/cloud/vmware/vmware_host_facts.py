@@ -38,6 +38,7 @@ options:
     - Host facts about the specified ESXi server will be returned.
     - By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
     version_added: 2.8
+    type: str
   show_tag:
     description:
     - Tags related to Host are shown if set to C(True).
