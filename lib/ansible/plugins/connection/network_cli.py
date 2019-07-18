@@ -596,7 +596,7 @@ class Connection(NetworkConnectionBase):
 
         As it is used by wait_for_connection, it is called by that module's action plugin,
         which is on the controller process, which means that nothing done on this instance
-        should impact the actual persistent conneciton... this check is for informational
+        should impact the actual persistent connection... this check is for informational
         purposes only and should be properly cleaned up.
         """
 
