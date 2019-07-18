@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import re
+import collections
 
 import lib.types as t
 
@@ -35,6 +36,7 @@ from lib.ansible_util import (
 from lib.target import (
     walk_internal_targets,
     walk_sanity_targets,
+    TestTarget,
 )
 
 from lib.executor import (
@@ -54,6 +56,8 @@ from lib.test import (
     TestFailure,
     TestSkipped,
     TestMessage,
+    calculate_best_confidence,
+    calculate_confidence,
 )
 
 from lib.data import (
@@ -147,7 +151,7 @@ def collect_code_smell_tests():
     """
     :rtype: tuple[SanityFunc]
     """
-    skip_file = 'test/sanity/code-smell/skip.txt'
+    skip_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/skip.txt')
     ansible_only_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/ansible-only.txt')
 
     skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
@@ -369,6 +373,10 @@ class SanitySingleVersion(SanityFunc):
         :rtype: TestResult
         """
 
+    def load_settings(self, args, code):  # type: (SanityConfig, t.Optional[str]) -> SanitySettings
+        """Load settings for this sanity test."""
+        return SanitySettings(args, self.name, code, None)
+
 
 class SanityMultipleVersion(SanityFunc):
     """Base class for sanity test plugins which should run on multiple python versions."""
@@ -380,6 +388,223 @@ class SanityMultipleVersion(SanityFunc):
         :type python_version: str
         :rtype: TestResult
         """
+
+    def load_settings(self, args, code, python_version):  # type: (SanityConfig, t.Optional[str], t.Optional[str]) -> SanitySettings
+        """Load settings for this sanity test."""
+        return SanitySettings(args, self.name, code, python_version)
+
+
+class SanitySettings:
+    """Settings for sanity tests."""
+    def __init__(self,
+                 args,  # type: SanityConfig
+                 name,  # type: str
+                 code,  # type: t.Optional[str]
+                 python_version,  # type: t.Optional[str]
+                 ):  # type: (...) -> None
+        self.args = args
+        self.code = code
+        self.ignore_settings = SanitySettingsFile(args, name, 'ignore', code, python_version)
+        self.skip_settings = SanitySettingsFile(args, name, 'skip', code, python_version)
+
+    def filter_skipped_paths(self, paths):  # type: (t.List[str]) -> t.List[str]
+        """Return the given paths, with any skipped paths filtered out."""
+        return sorted(set(paths) - set(self.skip_settings.entries.keys()))
+
+    def filter_skipped_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given targets, with any skipped paths filtered out."""
+        return sorted(target for target in targets if target.path not in self.skip_settings.entries)
+
+    def process_errors(self, errors, paths):  # type: (t.List[SanityMessage], t.List[str]) -> t.List[SanityMessage]
+        """Return the given errors filtered for ignores and with any settings related errors included."""
+        errors = self.ignore_settings.filter_messages(errors)
+        errors.extend(self.ignore_settings.get_errors(paths))
+        errors.extend(self.skip_settings.get_errors([]))
+
+        for ignore_path, ignore_entry in self.ignore_settings.entries.items():
+            skip_entry = self.skip_settings.entries.get(ignore_path)
+
+            if not skip_entry:
+                continue
+
+            skip_line_no = skip_entry[SanitySettingsFile.NO_CODE]
+
+            for ignore_line_no in ignore_entry.values():
+                candidates = ((self.ignore_settings.path, ignore_line_no), (self.skip_settings.path, skip_line_no))
+
+                errors.append(SanityMessage(
+                    code=self.code,
+                    message="Ignoring '%s' is unnecessary due to skip entry on line %d of '%s'" % (ignore_path, skip_line_no, self.skip_settings.relative_path),
+                    path=self.ignore_settings.relative_path,
+                    line=ignore_line_no,
+                    column=1,
+                    confidence=calculate_best_confidence(candidates, self.args.metadata) if self.args.metadata.changes else None,
+                ))
+
+        errors = sorted(set(errors))
+
+        return errors
+
+
+class SanitySettingsFile:
+    """Interface to sanity ignore or sanity skip file settings."""
+    NO_CODE = '_'
+
+    def __init__(self,
+                 args,  # type: SanityConfig
+                 name,  # type: str
+                 mode,  # type: str
+                 code,  # type: t.Optional[str]
+                 python_version,  # type: t.Optional[str]
+                 ):  # type: (...) -> None
+        """
+        :param mode: must be either "ignore" or "skip"
+        :param code: a code for ansible-test to use for internal errors, using a style that matches codes used by the test, or None if codes are not used
+        """
+        if mode == 'ignore':
+            self.parse_codes = bool(code)
+        elif mode == 'skip':
+            self.parse_codes = False
+        else:
+            raise Exception('Unsupported mode: %s' % mode)
+
+        if name == 'compile':
+            filename = 'python%s-%s' % (python_version, mode)
+        else:
+            filename = '%s-%s' % (mode, python_version) if python_version else mode
+
+        self.args = args
+        self.code = code
+        self.relative_path = 'test/sanity/%s/%s.txt' % (name, filename)
+        self.path = os.path.join(data_context().content.root, self.relative_path)
+        self.entries = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
+        self.parse_errors = []  # type: t.List[t.Tuple[int, int, str]]
+        self.file_not_found_errors = []  # type: t.List[t.Tuple[int, str]]
+        self.used_line_numbers = set()  # type: t.Set[int]
+
+        lines = read_lines_without_comments(self.path, optional=True)
+        paths = set(data_context().content.all_files())
+
+        for line_no, line in enumerate(lines, start=1):
+            if not line:
+                continue
+
+            if line.startswith(' '):
+                self.parse_errors.append((line_no, 1, 'Line cannot start with a space'))
+                continue
+
+            if line.endswith(' '):
+                self.parse_errors.append((line_no, len(line), 'Line cannot end with a space'))
+                continue
+
+            parts = line.split(' ')
+            path = parts[0]
+
+            if path not in paths:
+                self.file_not_found_errors.append((line_no, path))
+                continue
+
+            if self.parse_codes:
+                if len(parts) < 2:
+                    self.parse_errors.append((line_no, len(line), 'Code required after path'))
+                    continue
+
+                code = parts[1]
+
+                if not code:
+                    self.parse_errors.append((line_no, len(path) + 1, 'Code after path cannot be empty'))
+                    continue
+
+                if len(parts) > 2:
+                    self.parse_errors.append((line_no, len(path) + len(code) + 2, 'Code cannot contain spaces'))
+                    continue
+
+                existing = self.entries.get(path, {}).get(code)
+
+                if existing:
+                    self.parse_errors.append((line_no, 1, "Duplicate code '%s' for path '%s' first found on line %d" % (code, path, existing)))
+                    continue
+            else:
+                if len(parts) > 1:
+                    self.parse_errors.append((line_no, len(path) + 1, 'Path cannot contain spaces'))
+                    continue
+
+                code = self.NO_CODE
+                existing = self.entries.get(path)
+
+                if existing:
+                    self.parse_errors.append((line_no, 1, "Duplicate path '%s' first found on line %d" % (path, existing[code])))
+                    continue
+
+            self.entries[path][code] = line_no
+
+    def filter_messages(self, messages):  # type: (t.List[SanityMessage]) -> t.List[SanityMessage]
+        """Return a filtered list of the given messages using the entries that have been loaded."""
+        filtered = []
+
+        for message in messages:
+            path_entry = self.entries.get(message.path)
+
+            if path_entry:
+                code = message.code if self.code else self.NO_CODE
+                line_no = path_entry.get(code)
+
+                if line_no:
+                    self.used_line_numbers.add(line_no)
+                    continue
+
+            filtered.append(message)
+
+        return filtered
+
+    def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
+        """Return error messages related to issues with the file."""
+        messages = []
+
+        # parse errors
+
+        messages.extend(SanityMessage(
+            code=self.code,
+            message=message,
+            path=self.relative_path,
+            line=line,
+            column=column,
+            confidence=calculate_confidence(self.path, line, self.args.metadata) if self.args.metadata.changes else None,
+        ) for line, column, message in self.parse_errors)
+
+        # file not found errors
+
+        messages.extend(SanityMessage(
+            code=self.code,
+            message="File '%s' does not exist" % path,
+            path=self.relative_path,
+            line=line,
+            column=1,
+            confidence=calculate_best_confidence(((self.path, line), (path, 0)), self.args.metadata) if self.args.metadata.changes else None,
+        ) for line, path in self.file_not_found_errors)
+
+        # unused errors
+
+        unused = []  # type: t.List[t.Tuple[int, str, str]]
+
+        for path in paths:
+            path_entry = self.entries.get(path)
+
+            if not path_entry:
+                continue
+
+            unused.extend((line_no, path, code) for code, line_no in path_entry.items() if line_no not in self.used_line_numbers)
+
+        messages.extend(SanityMessage(
+            code=self.code,
+            message="Ignoring '%s' on '%s' is unnecessary" % (code, path) if self.code else "Ignoring '%s' is unnecessary" % path,
+            path=self.relative_path,
+            line=line,
+            column=1,
+            confidence=calculate_best_confidence(((self.path, line), (path, 0)), self.args.metadata) if self.args.metadata.changes else None,
+        ) for line, path, code in unused)
+
+        return messages
 
 
 SANITY_TESTS = (

@@ -17,7 +17,6 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    read_lines_without_comments,
 )
 
 from lib.util_common import (
@@ -50,10 +49,12 @@ class AnsibleDocTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/ansible-doc/skip.txt'
-        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+        settings = self.load_settings(args, None, python_version)
 
-        targets_include = [target for target in targets.include if target.path not in skip_paths and os.path.splitext(target.path)[1] == '.py']
+        targets_include = [target for target in targets.include if os.path.splitext(target.path)[1] == '.py']
+        targets_include = settings.filter_skipped_targets(targets_include)
+
+        paths = [target.path for target in targets_include]
 
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([
@@ -125,6 +126,8 @@ class AnsibleDocTest(SanityMultipleVersion):
             if stderr:
                 summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
                 return SanityFailure(self.name, summary=summary, python_version=python_version)
+
+        error_messages = settings.process_errors(error_messages, paths)
 
         if error_messages:
             return SanityFailure(self.name, messages=error_messages, python_version=python_version)
