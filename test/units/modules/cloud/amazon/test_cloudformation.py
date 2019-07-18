@@ -86,8 +86,10 @@ def test_invalid_template_json(placeboify):
         'TemplateBody': bad_json_tpl,
     }
     m = FakeModule(disable_rollback=False)
-    with pytest.raises(Exception, message='Malformed JSON should cause the test to fail') as exc_info:
+    with pytest.raises(Exception) as exc_info:
         cfn_module.create_stack(m, params, connection, default_events_limit)
+        pytest.fail('Expected malformed JSON to have caused the call to fail')
+
     assert exc_info.match('FAIL')
     assert "ValidationError" in m.exit_kwargs['msg']
 
@@ -139,13 +141,15 @@ def test_get_nonexistent_stack(placeboify):
 
 def test_missing_template_body():
     m = FakeModule()
-    with pytest.raises(Exception, message='Expected module to fail with no template') as exc_info:
+    with pytest.raises(Exception) as exc_info:
         cfn_module.create_stack(
             module=m,
             stack_params={},
             cfn=None,
             events_limit=default_events_limit
         )
+        pytest.fail('Expected module to have failed with no template')
+
     assert exc_info.match('FAIL')
     assert not m.exit_args
     assert "Either 'template', 'template_body' or 'template_url' is required when the stack does not exist." == m.exit_kwargs['msg']
@@ -156,13 +160,15 @@ def test_disable_rollback_and_on_failure_defined():
         on_create_failure='DELETE',
         disable_rollback=True,
     )
-    with pytest.raises(Exception, message='Expected module to fail with both on_create_failure and disable_rollback defined') as exc_info:
+    with pytest.raises(Exception) as exc_info:
         cfn_module.create_stack(
             module=m,
             stack_params={'TemplateBody': ''},
             cfn=None,
             events_limit=default_events_limit
         )
+        pytest.fail('Expected module to fail with both on_create_failure and disable_rollback defined')
+
     assert exc_info.match('FAIL')
     assert not m.exit_args
     assert "You can specify either 'on_create_failure' or 'disable_rollback', but not both." == m.exit_kwargs['msg']
