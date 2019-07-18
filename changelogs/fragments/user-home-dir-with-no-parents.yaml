@@ -1,0 +1,2 @@
+bugfixes:
+  - user - create parent directories when the specified home path has parent directiries that do not exist (https://github.com/ansible/ansible/issues/41393)
