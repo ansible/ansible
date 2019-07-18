@@ -81,7 +81,7 @@ clean:
 .PHONY: docs clean
 
 collections_meta: ../templates/collections_galaxy_meta.rst.j2
-	PYTHONPATH=../../lib $(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/collections/ -d ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
+	PYTHONPATH=../../lib $(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/dev_guide/ -d ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
 
 # TODO: make generate_man output dir cli option
 cli:

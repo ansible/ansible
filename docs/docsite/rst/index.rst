@@ -55,12 +55,6 @@ Ansible releases a new major release of Ansible approximately three to four time
    scenario_guides/virt_guides
 
 .. toctree::
-    :maxdepth: 2
-    :caption: Ansible Collections
-
-    collections/index
-
-.. toctree::
    :maxdepth: 2
    :caption: Ansible for Network Automation
 
