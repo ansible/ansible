@@ -44,9 +44,15 @@ options:
     vm_uuid:
       description:
       - UUID of the virtual machine to perform a vMotion operation on.
-      - This is a required parameter, if C(vm_name) is not set.
+      - This is a required parameter, if C(vm_name) or C(moid) is not set.
       aliases: ['uuid']
       version_added: 2.7
+    moid:
+      description:
+      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+      - This is required if C(vm_name) or C(vm_uuid) is not supplied.
+      version_added: '2.9'
+      type: str
     use_instance_uuid:
       description:
       - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -74,6 +80,16 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     validate_certs: no
     vm_name: 'vm_name_as_per_vcenter'
+    destination_host: 'destination_host_as_per_vcenter'
+  delegate_to: localhost
+
+- name: Perform vMotion of virtual machine
+  vmware_vmotion:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    moid: vm-42
     destination_host: 'destination_host_as_per_vcenter'
   delegate_to: localhost
 
@@ -108,7 +124,7 @@ running_host:
 '''
 
 try:
-    from pyVmomi import vim
+    from pyVmomi import vim, VmomiSupport
 except ImportError:
     pass
 
@@ -126,12 +142,13 @@ class VmotionManager(PyVmomi):
         self.vm_uuid = self.params.get('vm_uuid', None)
         self.use_instance_uuid = self.params.get('use_instance_uuid', False)
         self.vm_name = self.params.get('vm_name', None)
+        self.moid = self.params.get('moid') or None
         result = dict()
 
         self.get_vm()
         if self.vm is None:
-            self.module.fail_json(msg="Failed to find the virtual"
-                                      " machine with %s" % (self.vm_uuid or self.vm_name))
+            vm_id = self.vm_uuid or self.vm_name or self.moid
+            self.module.fail_json(msg="Failed to find the virtual machine with %s" % vm_id)
 
         # Get Destination Host System if specified by user
         dest_host_name = self.params.get('destination_host', None)
@@ -147,7 +164,7 @@ class VmotionManager(PyVmomi):
             self.datastore_object = find_datastore_by_name(content=self.content,
                                                            datastore_name=dest_datastore)
 
-        # Atleast one of datastore, host system is required to migrate
+        # At-least one of datastore, host system is required to migrate
         if self.datastore_object is None and self.host_object is None:
             self.module.fail_json(msg="Unable to find destination datastore"
                                       " and destination host system.")
@@ -261,13 +278,11 @@ class VmotionManager(PyVmomi):
 
         """
         vms = []
-        if self.vm_uuid and not self.use_instance_uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="uuid")
-            vms = [vm_obj]
-        elif self.vm_uuid and self.use_instance_uuid:
-            vm_obj = find_vm_by_id(self.content,
-                                   vm_id=self.params['vm_uuid'],
-                                   vm_id_type="instance_uuid")
+        if self.vm_uuid:
+            if not self.use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="uuid")
+            elif self.use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.params['vm_uuid'], vm_id_type="instance_uuid")
             vms = [vm_obj]
         elif self.vm_name:
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
@@ -277,6 +292,10 @@ class VmotionManager(PyVmomi):
                 if temp_vm_object.obj.name == self.vm_name:
                     vms.append(temp_vm_object.obj)
                     break
+        elif self.moid:
+            vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.moid, self.si._stub)
+            if vm_obj:
+                vms.append(vm_obj)
 
         if len(vms) > 1:
             self.module.fail_json(msg="Multiple virtual machines with same name %s found."
@@ -291,6 +310,7 @@ def main():
         dict(
             vm_name=dict(aliases=['vm']),
             vm_uuid=dict(aliases=['uuid']),
+            moid=dict(type='str'),
             use_instance_uuid=dict(type='bool', default=False),
             destination_host=dict(aliases=['destination']),
             destination_datastore=dict(aliases=['datastore'])
@@ -302,10 +322,10 @@ def main():
         supports_check_mode=True,
         required_one_of=[
             ['destination_host', 'destination_datastore'],
-            ['vm_uuid', 'vm_name'],
+            ['vm_uuid', 'vm_name', 'moid'],
         ],
         mutually_exclusive=[
-            ['vm_uuid', 'vm_name'],
+            ['vm_uuid', 'vm_name', 'moid'],
         ],
     )
 

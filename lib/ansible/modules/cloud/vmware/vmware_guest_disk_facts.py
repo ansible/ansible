@@ -36,11 +36,17 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is required parameter, if parameter C(uuid) is not supplied.
+     - This is required parameter, if parameter C(uuid) or C(moid) is not supplied.
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is required parameter, if parameter C(name) is not supplied.
+     - This is required parameter, if parameter C(name) or C(moid) is not supplied.
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
+     type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -62,8 +68,6 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
-     - '   folder: vm/folder2'
-     - '   folder: folder2'
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
@@ -91,6 +95,17 @@ EXAMPLES = '''
     datacenter: ha-datacenter
     validate_certs: no
     name: VM_225
+  delegate_to: localhost
+  register: disk_facts
+
+- name: Gather disk facts from virtual machine using moid
+  vmware_guest_disk_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: ha-datacenter
+    validate_certs: no
+    moid: vm-42
   delegate_to: localhost
   register: disk_facts
 '''
@@ -270,13 +285,16 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[['name', 'uuid']],
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ],
         supports_check_mode=True,
     )
 
@@ -298,7 +316,8 @@ def main():
     else:
         # We unable to find the virtual machine user specified
         # Bail out
-        module.fail_json(msg="Unable to gather disk facts for non-existing VM %s" % (module.params.get('uuid') or module.params.get('name')))
+        vm_id = (module.params.get('uuid') or module.params.get('moid') or module.params.get('name'))
+        module.fail_json(msg="Unable to gather disk facts for non-existing VM %s" % vm_id)
 
 
 if __name__ == '__main__':

@@ -51,8 +51,14 @@ options:
   uuid:
     description:
       - UUID of the instance to manage if known, this is VMware's unique identifier.
-      - This is required, if C(name) is not supplied.
+      - This is required, if C(name) or C(moid) is not supplied.
     required: false
+  moid:
+    description:
+      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+      - This is required if C(name) or C(uuid) is not supplied.
+    version_added: '2.9'
+    type: str
   folder:
     description:
       - Destination folder, absolute or relative path to find an existing guest.
@@ -103,6 +109,18 @@ EXAMPLES = '''
     validate_certs: no
     datacenter: "{{ datacenter_name }}"
     uuid: 32074771-7d6b-699a-66a8-2d9cf8236fff
+    state: absent
+  delegate_to: localhost
+  register: vnc_result
+
+- name: Disable VNC remote display on the VM using MoID
+  vmware_guest_vnc:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter_name }}"
+    moid: vm-42
     state: absent
   delegate_to: localhost
   register: vnc_result
@@ -195,6 +213,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         vnc_ip=dict(type='str', default='0.0.0.0'),
         vnc_port=dict(type='int', default=0),
@@ -206,10 +225,10 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_one_of=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ],
         mutually_exclusive=[
-            ['name', 'uuid']
+            ['name', 'uuid', 'moid']
         ]
     )
 
@@ -227,8 +246,8 @@ def main():
             module.params['vnc_password']
         )
     else:
-        module.fail_json(msg="Unable to set VNC config for non-existing virtual machine : '%s'" % (module.params.get('uuid') or
-                                                                                                   module.params.get('name')))
+        vm_id = module.params.get('uuid') or module.params.get('name') or module.params.get('moid')
+        module.fail_json(msg="Unable to set VNC config for non-existing virtual machine : '%s'" % vm_id)
 
     if result.get('failed') is True:
         module.fail_json(**result)
