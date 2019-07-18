@@ -61,9 +61,9 @@ class SessionConfigurationException(Exception):
 class RestOperationException(Exception):
     """ Encapsulate a REST API error """
     def __init__(self, error):
-        self.status = error.get('status', None)
-        self.errors = [err.get('message') for err in error.get('errors', {})]
-        self.message = ' '.join(self.errors)
+        self.status = to_native(error.get('status', None))
+        self.errors = [to_native(err.get('message')) for err in error.get('errors', {})]
+        self.message = to_native(' '.join(self.errors))
 
 
 def generate_docstring(operation_spec):
@@ -176,9 +176,9 @@ class RestOperation(object):
 
         if result or result == {}:
             if not request_error:
-                return to_native(result)
+                return result
             else:
-                raise RestOperationException(to_native(result))
+                raise RestOperationException(result)
 
         # Raise a generic RestOperationException if this fails
         raise RestOperationException({
