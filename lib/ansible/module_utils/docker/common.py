@@ -75,7 +75,7 @@ except ImportError:
 
 
 try:
-    from request.exceptions import RequestException
+    from requests.exceptions import RequestException
 except ImportError:
     # Either docker-py is no longer using requests, or docker-py isn't around either,
     # or docker-py's dependency requests is missing. In any case, define an exception
