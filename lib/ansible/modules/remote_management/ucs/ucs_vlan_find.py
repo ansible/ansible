@@ -108,7 +108,6 @@ def main():
 
     if object_dict is None:
         module.fail_json(msg="Failed to query vlan objects")
-        return 0
 
     vlnlist = []
     for ob in object_dict:
