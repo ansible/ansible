@@ -857,14 +857,7 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler.notified_hosts:
-                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
-                    if C.HANDLERS_TAGS_SUPPORT:
-                        if not ((handler.action == 'include' and handler.evaluate_tags([], iterator._play.skip_tags, all_vars=handler_vars))
-                                or handler.evaluate_tags(iterator._play.only_tags, iterator._play.skip_tags, all_vars=handler_vars)):
-                            continue
-
                     result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
-
                     if not result:
                         break
         return result
@@ -881,12 +874,6 @@ class StrategyBase:
 
         notified_hosts = self._filter_notified_hosts(notified_hosts)
 
-        if len(notified_hosts) > 0:
-            saved_name = handler.name
-            handler.name = handler_name
-            self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
-            handler.name = saved_name
-
         bypass_host_loop = False
         try:
             action = action_loader.get(handler.action, class_only=True)
@@ -898,6 +885,7 @@ class StrategyBase:
             pass
 
         host_results = []
+        callback_sent = False
         for host in notified_hosts:
             if not iterator.is_failed(host) or iterator._play.force_handlers:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
@@ -906,6 +894,18 @@ class StrategyBase:
                 if not handler.cached_name:
                     handler.name = templar.template(handler.name)
                     handler.cached_name = True
+
+                if C.HANDLERS_TAGS_SUPPORT:
+                    if not ((handler.action == 'include' and handler.evaluate_tags([], iterator._play.skip_tags, all_vars=task_vars))
+                            or handler.evaluate_tags(iterator._play.only_tags, iterator._play.skip_tags, all_vars=task_vars)):
+                        continue
+
+                if not callback_sent:
+                    saved_name = handler.name
+                    handler.name = handler_name
+                    self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+                    handler.name = saved_name
+                    callback_sent = True
 
                 self._queue_task(host, handler, task_vars, play_context)
 
