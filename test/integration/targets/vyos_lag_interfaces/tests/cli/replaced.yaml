@@ -13,7 +13,7 @@
             mode: "802.3ad"
             hash-policy: "layer2"
             members:
-                - member: eth3
+                - member: eth2
       state: replaced
   register: result
 

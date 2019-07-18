@@ -11,16 +11,15 @@
         hash-policy: "layer2"
         mode: "active-backup"
         members:
-          - member: eth2
           - member: eth1
-        primary: eth2
+        primary: eth1
 
       - name: bond1
         hash-policy: "layer2+3"
         mode: "active-backup"
         members:
-          - member: eth3
-        primary: eth3
+          - member: eth2
+        primary: eth2
 
     state: merged
   register: base_config
@@ -39,14 +38,13 @@
         hash-policy: "layer2+3"
         mode: "802.3ad"
         members:
-          - member: eth2
           - member: eth1
 
       - name: bond1
         hash-policy: "layer2"
         mode: "xor-hash"
         members:
-          - member: eth3
+          - member: eth2
     state: merged
   register: result
 

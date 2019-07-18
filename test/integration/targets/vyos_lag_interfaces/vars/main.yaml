@@ -8,45 +8,42 @@ merged:
   commands:
     - "set interfaces bonding bond0 hash-policy 'layer2'"
     - "set interfaces bonding bond0 mode 'active-backup'"
-    - "set interfaces ethernet eth2 bond-group bond0"
     - "set interfaces ethernet eth1 bond-group bond0"
-    - "set interfaces bonding bond0 primary 'eth2'"
+    - "set interfaces bonding bond0 primary 'eth1'"
     - "set interfaces bonding bond1 hash-policy 'layer2+3'"
     - "set interfaces bonding bond1 mode 'active-backup'"
-    - "set interfaces ethernet eth3 bond-group bond1"
-    - "set interfaces bonding bond1 primary 'eth3'"
+    - "set interfaces ethernet eth2 bond-group bond1"
+    - "set interfaces bonding bond1 primary 'eth2'"
 
   after:
     - name: "bond0"
       hash-policy: "layer2"
       members:
         - member: eth1
-        - member: eth2
       mode: "active-backup"
-      primary: eth2
+      primary: eth1
 
     - name: "bond1"
       hash-policy: "layer2+3"
       members:
-        - member: eth3
+        - member: eth2
       mode: "active-backup"
-      primary: eth3
+      primary: eth2
 
 populate:
   - name: "bond0"
     hash-policy: "layer2"
     members:
       - member: eth1
-      - member: eth2
     mode: "active-backup"
-    primary: eth2
+    primary: eth1
 
   - name: "bond1"
     hash-policy: "layer2+3"
     members:
-      - member: eth3
+      - member: eth2
     mode: "active-backup"
-    primary: eth3
+    primary: eth2
 
 replaced:
   commands:
@@ -59,26 +56,23 @@ replaced:
       hash-policy: "layer2"
       members:
         - member: eth1
-        - member: eth2
       mode: "active-backup"
-      primary: eth2
+      primary: eth1
 
     - name: "bond1"
       hash-policy: "layer2"
       members:
-        - member: eth3
+        - member: eth2
       mode: "802.3ad"
 
 overridden:
   commands:
     - "delete interfaces bonding bond0 hash-policy"
     - "delete interfaces ethernet eth1 bond-group bond0"
-    - "delete interfaces ethernet eth2 bond-group bond0"
     - "delete interfaces bonding bond0 mode"
     - "delete interfaces bonding bond0 primary"
     - "set interfaces bonding bond1 hash-policy 'layer2'"
     - "set interfaces ethernet eth1 bond-group bond1"
-    - "set interfaces ethernet eth2 bond-group bond1"
 
   after:
     - name: "bond0"
@@ -87,19 +81,17 @@ overridden:
       members:
         - member: eth1
         - member: eth2
-        - member: eth3
       mode: "active-backup"
-      primary: eth3
+      primary: eth2
 
 deleted:
   commands:
     - "delete interfaces bonding bond0 hash-policy"
     - "delete interfaces ethernet eth1 bond-group bond0"
-    - "delete interfaces ethernet eth2 bond-group bond0"
     - "delete interfaces bonding bond0 mode"
     - "delete interfaces bonding bond0 primary"
     - "delete interfaces bonding bond1 hash-policy"
-    - "delete interfaces ethernet eth3 bond-group bond1"
+    - "delete interfaces ethernet eth2 bond-group bond1"
     - "delete interfaces bonding bond1 mode"
     - "delete interfaces bonding bond1 primary"
 
@@ -114,13 +106,12 @@ round_trip:
       hash-policy: "layer2+3"
       members:
         - member: eth1
-        - member: eth2
       mode: "802.3ad"
-      primary: eth2
+      primary: eth1
 
     - name: "bond1"
       hash-policy: "layer2"
       members:
-        - member: eth3
+        - member: eth2
       mode: "xor-hash"
-      primary: eth3
+      primary: eth2

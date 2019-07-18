@@ -19,6 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'network'}
@@ -44,22 +48,27 @@ options:
     description:
       - Name of the link aggregation group.
     required: true
+    type: str
   mode:
     description:
       - Mode of the link aggregation group.
     choices: ['802.3ad', 'active-backup', 'broadcast',
               'round-robin', 'transmit-load-balance',
               'adaptive-load-balance', 'xor-hash', 'on']
+    type: str
   members:
     description:
       - List of members of the link aggregation group.
+    type: list
   aggregate:
     description: List of link aggregation definitions.
+    type: list
   state:
     description:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent', 'up', 'down']
+    type: str
 extends_documentation_fragment: vyos
 """
 

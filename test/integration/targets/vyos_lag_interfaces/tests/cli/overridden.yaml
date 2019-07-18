@@ -14,8 +14,7 @@
             members:
                 - member: eth1
                 - member: eth2
-                - member: eth3
-            primary: eth3
+            primary: eth2
             hash-policy: layer2
       state: overridden
   register: result
