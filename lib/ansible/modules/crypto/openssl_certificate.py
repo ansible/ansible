@@ -58,9 +58,10 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
+            - The C(entrust) provider will fail if select_crypto_backend is set to C(cryptography)
         type: str
         required: true
-        choices: [ acme, assertonly, ownca, selfsigned ]
+        choices: [ acme, assertonly, entrust, ownca, selfsigned ]
 
     force:
         description:
@@ -373,6 +374,101 @@ options:
         default: no
         version_added: "2.8"
 
+    entrust_cert_type:
+        default: STANDARD_SSL
+        choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING',
+        'CDS_INDIVIDUAL', 'CDS_GROUP', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT' ]
+        description:
+            - The type of certificate product to request.
+        version_added: "2.9"
+
+    entrust_requester_email:
+        description:
+            - The email of the requester of the certificate (for tracking purposes).
+        version_added: "2.9"
+
+    entrust_requester_name:
+        description:
+            - The name of the requester of the certificate (for tracking purposes).
+        version_added: "2.9"
+
+    entrust_requester_phone:
+        description:
+            - The phone number of the requester of the certificate (for tracking purposes).
+        version_added: "2.9"
+
+    entrust_api_user:
+        description:
+            - The username for authentication to the Entrust ECS API.
+        version_added: "2.9"
+
+    entrust_api_key:
+        description:
+            - The key (password) for authentication to the Entrust ECS API.
+        version_added: "2.9"
+
+    entrust_api_client_cert_path:
+        description:
+            - The path of the client certificate used to authenticate to the Entrust ECS API.
+        version_added: "2.9"
+
+    entrust_api_client_cert_key_path:
+        description:
+            - The path of the key for the client certificate used to authenticate to the Entrust ECS API
+        version_added: "2.9"
+
+    entrust_reissue_if_expires_in:
+        description:
+            - If this value is set and an existing certificate is present, it will be reissued if it expires within this number of seconds.
+            - If not present or value is 0, it will be reissued if the certificate is already expired.
+            - For example, if you want to reissue a certificate if it is expiring within a month, set this to 2592000.
+              Certificates with more seconds remainingpast this number of seconds from when the module is called will be left as is.
+        type: int
+        version_added: "2.9"
+
+    entrust_not_after:
+        description:
+            - The point in time at which the certificate stops being valid.
+            - Time can be specified either as relative time or as absolute timestamp.
+            - Time will always be interpreted as UTC.
+            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
+              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+            - Note that if using relative time this module is NOT idempotent.
+            - If this value is not specified, the certificate will stop being valid 365 days from now.
+        type: str
+        default: +365d
+
+    entrust_eku:
+        default: SERVER_AND_CLIENT_AUTH
+        choices: ['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']
+        description:
+            - The extended key usage requested for the certificate.
+        version_added: "2.9"
+
+    entrust_api_specification_path:
+        type: path
+        default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
+        description:
+            - Path to the specification file defining the Entrust ECS api.
+            - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
+
+    validate_ocsp:
+        type: bool
+        default: no
+        description:
+            - This is currently supported only  when provider is entrust.
+            - If set to True, this module will perform an OCSP check on a certificate before indicating that the state is present and certificate is valid.
+            - If OCSP validation is not required, leave this as False and OCSP will not be checked.
+        version_added: "2.9"
+
+    validate_ocsp_timeout:
+        description:
+            - We will wait up to I(validate_ocsp_timeout) seconds for a valid OCSP response. It is often the case that a
+              new response will take some time before the OCSP response is available.
+        type: int
+        default: 600
+        version_added: "2.9"
+
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
@@ -420,6 +516,21 @@ EXAMPLES = r'''
     acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
     force: yes
+
+- name: Generate an Entrust certificate via the Entrust ECS API
+  openssl_certificate:
+    path: /etc/ssl/crt/ansible.com.crt
+    csr_path: /etc/ssl/csr/ansible.com.csr
+    provider: entrust
+    entrust_requester_name: Jo Doe
+    entrust_requester_email: jdoe@ansible.com
+    entrust_requester_phone: 555-555-5555
+    entrust_cert_type: STANDARD_SSL
+    entrust_api_user: apiusername
+    entrust_api_key: a^lv*32!cd9LnT
+    entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+    entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-key.crt
+    entrust_api_specification_path: /etc/ssl/entrust/api-docs/cms-api-2.1.0.yaml
 
 # Examples for some checks one could use the assertonly provider for:
 
@@ -534,7 +645,10 @@ backup_file:
 
 from random import randint
 import abc
+import base64
+import calendar
 import datetime
+import time
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -543,6 +657,7 @@ from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils.urls import fetch_url
 
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.6'
 MINIMAL_PYOPENSSL_VERSION = '0.15'
@@ -564,6 +679,7 @@ try:
     from cryptography import x509
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives.serialization import Encoding
+    from cryptography.hazmat.primitives.hashes import SHA1
     from cryptography.x509 import NameAttribute, Name
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
@@ -571,6 +687,17 @@ except ImportError:
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
+
+ECS_IMP_ERR = None
+try:
+    from ansible.module_utils.ecs import ECSClient
+    from ansible.module_utils.ecs import RestOperationException
+    from ansible.module_utils.ecs import SessionConfigurationException
+except ImportError:
+    ECS_IMP_ERR = traceback.format_exc()
+    ECS_MODULE_FOUND = False
+else:
+    ECS_MODULE_FOUND = True
 
 
 class CertificateError(crypto_utils.OpenSSLObjectError):
@@ -1699,6 +1826,238 @@ class AssertOnlyCertificate(AssertOnlyCertificateBase):
         return self.cert.get_notBefore(), valid_in_date, self.cert.get_notAfter()
 
 
+class EntrustCertificate(Certificate):
+    """Retrieve a certificate using Entrust (ECS)."""
+
+    def __init__(self, module, backend):
+        super(EntrustCertificate, self).__init__(module, backend)
+        self.renew = False
+        self.trackingId = None
+        self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
+        try:
+            self.ecs_client = ECSClient(
+                entrust_api_user=module.params.get('entrust_api_user'),
+                entrust_api_key=module.params.get('entrust_api_key'),
+                entrust_api_cert=module.params.get('entrust_api_client_cert_path'),
+                entrust_api_cert_key=module.params.get('entrust_api_client_cert_key_path'),
+                entrust_api_specification_path=module.params.get('entrust_api_specification_path')
+            )
+        except SessionConfigurationException as e:
+            module.fail_json(msg='Failed to initialize Entrust Provider: {0}'.format(to_native(e.message)))
+
+    def generate(self, module):
+        if not os.path.exists(self.csr_path):
+            raise CertificateError(
+                'The certificate signing request file {0} does not exist'.format(self.csr_path)
+            )
+
+        if not self.check(module, perms_required=False) or self.force:
+            # Read the CSR that was generated for us
+            body = {}
+            with open(self.csr_path, 'r') as csr_file:
+                body['csr'] = csr_file.read()
+
+            body['certType'] = module.params['entrust_cert_type']
+
+            # Handle expiration (30 days if not specified)
+            expiry = self.notAfter
+            if not expiry:
+                gmt_now = datetime.datetime.fromtimestamp(time.mktime(time.gmtime()))
+                expiry = gmt_now + datetime.timedelta(days=365)
+
+            expiry_iso3339 = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
+            body['certExpiryDate'] = expiry_iso3339
+            body['tracking'] = {
+                'requesterName': module.params['entrust_requester_name'],
+                'requesterEmail': module.params['entrust_requester_email'],
+                'requesterPhone': module.params['entrust_requester_phone']
+            }
+            body['eku'] = module.params['entrust_eku']
+
+            try:
+                # self.renew is set when the current certificate is valid, but expiring too soon
+                if(self.renew):
+                    # A renew doesn't accept certType, it renews with existing cert type
+                    del body['certType']
+                    result = self.ecs_client.RenewCertRequest(
+                        trackingId=self.trackingId,
+                        Body=body
+                    )
+                else:
+                    result = self.ecs_client.NewCertRequest(Body=body)
+                self.trackingId = result.get('trackingId')
+            except RestOperationException as e:
+                module.fail_json(msg='Failed to request new certificate from Entrust (ECS) {0}'.format(to_native(e.message)))
+
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
+            crypto_utils.write_file(module, to_bytes(result.get('endEntityCert')))
+            self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
+            self.changed = True
+
+    def check(self, module, perms_required=True):
+        """Ensure the resource is in its desired state."""
+
+        parent_check = super(EntrustCertificate, self).check(module, perms_required)
+
+        try:
+            cert_details = self._get_cert_details()
+        except RestOperationException as e:
+            module.fail_json(msg='Failed to get status of existing certificate from Entrust ECS API. Error of {0}.'.format(to_native(e.message)))
+
+        # Always issue a new certificate if the certificate is suspended or revoked
+        status = cert_details.get('status', False)
+        if status == 'EXPIRED' or status == "SUSPENDED" or status == "REVOKED":
+            return False
+
+        # If the requested cert type was specified and it is for a different certificate type than the initial certificate, a new one is needed
+        if module.params['entrust_cert_type'] and cert_details.get('certType') and module.params['entrust_cert_type'] != cert_details.get('certType'):
+            return False
+
+        # If specified, reissue if the certificate expires within x seconds
+        # and the request is for the same cert type
+        reissue_within = module.params.get('entrust_reissue_if_expires_in')
+        seconds_to_expiry = cert_details.get('secondsToExpiry')
+        if seconds_to_expiry and seconds_to_expiry < reissue_within:
+            self.renew = True
+            self.trackingId = cert_details.get('trackingId')
+            return False
+
+        def _validate_ocsp(module):
+            """ Validate that the OCSP responder specified in the AIA of the certificate knows our certificate is good."""
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg="OCSP validation requested, but this requires python cryptography >= 2.4")
+
+            # If the crypto backend was pyopenssl, convert to cryptography cert
+            if self.backend == 'pyopenssl':
+                cert = self.cert.to_cryptography()
+            elif self.backend == 'cryptography':
+                cert = self.cert
+
+            aia = cert.extensions.get_extension_for_class(x509.AuthorityInformationAccess)
+
+            aia_ocsp = [x.access_location.value for x in aia.value if x.access_method.dotted_string == '1.3.6.1.5.5.7.48.1']
+            aia_chain = [x.access_location.value for x in aia.value if x.access_method.dotted_string == '1.3.6.1.5.5.7.48.2']
+
+            # If we don't have valid OCSP / CA cert attributes, fail.
+            if len(aia_ocsp) != 1 or len(aia_chain) != 1:
+                module.fail_json("OCSP validation requested, but certificate does not provide the required Authority Information Access")
+            else:
+                aia_ocsp = aia_ocsp[0]
+                aia_chain = aia_chain[0]
+
+            # Read the certificate specified in the AIA of our certificate
+            resp, info = fetch_url(module, aia_chain, method='GET')
+            status_code = info['status']
+            if status_code != 200:
+                module.fail_json(msg=("OCSP validation requested, but unable to read CA certificate chain specified in Authority Information Access "
+                                      "of Certificate. Received HTTP Status Code of {0} from address {1}").format(status_code, aia_chain))
+            try:
+                cert_ca = x509.load_der_x509_certificate(resp.read(), default_backend())
+            except ValueError:
+                error = traceback.format_exc()
+                module.fail_json(msg="OCSP validation requested, but the CA certificate chain could not be loaded.", exception=error)
+
+            # Build the OCSP Request
+            builder = x509.ocsp.OCSPRequestBuilder()
+            builder = builder.add_certificate(cert, cert_ca, SHA1())
+            ocsp_request = builder.build()
+            b_encoded_pub_key = base64.b64encode(ocsp_request.public_bytes(Encoding.DER))
+            ocsp_uri = aia_ocsp + "/" + to_text(b_encoded_pub_key)
+
+            # Get the OCSP response
+            ocsp_timeout = module.params.get('validate_ocsp_timeout')
+            if ocsp_timeout and ocsp_timeout <= 0:
+                ocps_timeout = 100
+            timeout = time.time() + module.params.get('validate_ocsp_timeout')
+            while time.time() <= timeout:
+                err = ""
+                resp, info = fetch_url(module, ocsp_uri, method='GET')
+                status_code = info['status']
+                if status_code != 200:
+                    err = "OCSP verification requested, but could not get response from server."
+                    try:
+                        ocsp_response = x509.ocsp.load_der_ocsp_response(resp.read())
+                    except ValueError:
+                        err = "OCSP verification requested, but got an invalid response from server."
+
+                    response_status = ocsp_response.response_status.name
+                    if response_status == "SUCCESSFUL":
+                        certificate_status = ocsp_response.certificate_status.name
+                        if certificate_status == "GOOD":
+                            return True
+                        elif certificate_status == "REVOKED":
+                            return False
+                        elif ocsp_response.certificate_status.name == "UNKNOWN":
+                            module.fail_json(msg=("OCSP verification requested, but certificate status was reported "
+                                                  "as '{0}' by the server").format(response_status))
+                else:
+                    err = "OCSP verification requested, but got response '{0}' from server.".format(response_status)
+
+                # If there was an error in this run, wait twenty seconds and retry
+                if err:
+                    time.sleep(20)
+
+            module.fail_json(msg="Could not get a valid OCSP response within {0} seconds. {1}".format(
+                module.params.get('validate_ocsp_timeout'),
+                err
+            ))
+
+        if module.params.get('validate_ocsp'):
+            return _validate_ocsp(module) and parent_check
+
+        return parent_check
+
+    def _get_cert_details(self):
+        cert_details = {}
+        if self.cert:
+            serial_number = None
+            expiry = None
+            if self.backend == 'pyopenssl':
+                serial_number = "{0:X}".format(self.cert.get_serial_number())
+                time_string = to_native(self.cert.get_notAfter())
+                expiry = datetime.datetime.strptime(time_string, "%Y%m%d%H%M%SZ")
+            elif self.backend == 'cryptography':
+                serial_number = "{0:X}".format(self.cert.serial_number)
+                expiry = self.cert.not_valid_after
+
+            # get some information about the expiry of this certificate
+            expiry_iso3339 = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
+            cert_details['expiresAfter'] = expiry_iso3339
+
+            # how many seconds until this certificate expires
+            seconds_to_expiry = calendar.timegm(expiry.timetuple()) - calendar.timegm(datetime.datetime.utcnow().timetuple())
+            if seconds_to_expiry < 0:
+                seconds_to_expiry = 0
+            cert_details['secondsToExpiry'] = seconds_to_expiry
+
+            # If a trackingId is not already defined (from the result of a generate)
+            # use the serial number to identify the tracking Id
+            if self.trackingId is None and serial_number is not None:
+                cert_results = self.ecs_client.GetCertificates(serialNumber=serial_number).get('certificates', {})
+                # If we get one result,
+                if len(cert_results) == 1:
+                    self.trackingId = cert_results[0].get('trackingId')
+
+        if self.trackingId is not None:
+            cert_details.update(self.ecs_client.GetCertificate(trackingId=self.trackingId))
+
+        return cert_details
+
+    def dump(self, check_mode=False):
+
+        result = {
+            'changed': self.changed,
+            'filename': self.path,
+            'privatekey': self.privatekey_path,
+            'csr': self.csr_path,
+        }
+
+        result.update(self._get_cert_details())
+
+        return result
+
+
 class AcmeCertificate(Certificate):
     """Retrieve a certificate using the ACME protocol."""
 
@@ -1775,7 +2134,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['present', 'absent']),
             path=dict(type='path', required=True),
-            provider=dict(type='str', choices=['acme', 'assertonly', 'ownca', 'selfsigned']),
+            provider=dict(type='str', choices=['acme', 'assertonly', 'entrust', 'ownca', 'selfsigned']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
             backup=dict(type='bool', default=False),
@@ -1824,9 +2183,33 @@ def main():
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
             acme_chain=dict(type='bool', default=False),
+
+            # provider: entrust
+            entrust_cert_type=dict(type='str', default='STANDARD_SSL',
+                                   choices=['STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL',
+                                            'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING', 'CDS_INDIVIDUAL',
+                                            'CDS_GROUP', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT']),
+            entrust_requester_email=dict(type='str'),
+            entrust_requester_name=dict(type='str'),
+            entrust_requester_phone=dict(type='str'),
+            entrust_api_user=dict(type='str'),
+            entrust_api_key=dict(type='str'),
+            entrust_api_client_cert_path=dict(type='path'),
+            entrust_api_client_cert_key_path=dict(type='path'),
+            entrust_api_specification_path=dict(type='path', default='https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml'),
+            entrust_not_after=dict(type='str', default='+365d'),
+            entrust_reissue_if_expires_in=dict(type='int', default=0),
+            entrust_eku=dict(type='str', default="SERVER_AND_CLIENT_AUTH", choices=['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']),
+            validate_ocsp=dict(type='bool', default=False),
+            validate_ocsp_timeout=dict(type='int', default=600)
         ),
         supports_check_mode=True,
         add_file_common_args=True,
+        required_if=[
+            ['provider', 'entrust', ['entrust_requester_email', 'entrust_requester_name', 'entrust_requester_phone',
+                                     'entrust_api_user', 'entrust_api_key', 'entrust_api_client_cert_path',
+                                     'entrust_api_client_cert_key_path']]
+        ]
     )
 
     try:
@@ -1885,6 +2268,10 @@ def main():
                     certificate = AcmeCertificate(module, 'pyopenssl')
                 elif provider == 'ownca':
                     certificate = OwnCACertificate(module)
+                elif provider == 'entrust':
+                    if not ECS_MODULE_FOUND:
+                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs', exception=ECS_IMP_ERR)
+                    certificate = EntrustCertificate(module, 'pyopenssl')
                 else:
                     certificate = AssertOnlyCertificate(module)
             elif backend == 'cryptography':
@@ -1900,6 +2287,10 @@ def main():
                     certificate = AcmeCertificate(module, 'cryptography')
                 elif provider == 'ownca':
                     certificate = OwnCACertificateCryptography(module)
+                elif provider == 'entrust':
+                    if not ECS_MODULE_FOUND:
+                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs', exception=ECS_IMP_ERR)
+                    certificate = EntrustCertificate(module, 'cryptography')
                 else:
                     certificate = AssertOnlyCertificateCryptography(module)
 
