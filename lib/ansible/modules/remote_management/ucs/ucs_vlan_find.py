@@ -1,3 +1,8 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -17,6 +22,7 @@ options:
     description:
     - Regex pattern to find within the name property of the fabricVlan class.
     - This is required if C(vlanid) parameter is not supplied.
+    type: str
   fabric:
     description:
     - "The fabric configuration of the VLAN.  This can be one of the following:"
@@ -25,11 +31,13 @@ options:
     - "B — The VLAN only applies to fabric B."
     choices: [common, A, B]
     default: common
+    type: str
   vlanid:
     description:
     - The unique string identifier assigned to the VLAN.
     - A VLAN ID can be between '1' and '3967', or between '4048' and '4093'.
     - This is required if C(pattern) parameter is not supplied.
+    type: str
 requirements:
 - ucsmsdk
 author:
