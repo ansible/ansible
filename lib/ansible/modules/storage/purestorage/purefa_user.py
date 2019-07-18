@@ -102,6 +102,8 @@ RETURN = r'''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
 
+MIN_REQUIRED_API_VERSION = '1.14'
+
 
 def get_user(module, array):
     """Return Local User Account or None"""
@@ -200,6 +202,11 @@ def main():
 
     state = module.params['state']
     array = get_system(module)
+    api_version = array._list_available_rest_versions()
+
+    if MIN_REQUIRED_API_VERSION not in api_version:
+        module.fail_json(msg='FlashArray REST version not supported. '
+                             'Minimum version required: {0}'.format(MIN_REQUIRED_API_VERSION))
 
     if state == 'absent':
         delete_user(module, array)
