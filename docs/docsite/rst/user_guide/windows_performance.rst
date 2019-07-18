@@ -50,7 +50,7 @@ high CPU task near startup via `processing the ngen queue <https://docs.microsof
 within your golden image creation, if you know the CPU types won't change between
 golden image build process and runtime.
 
-Place the following near the end of your playbook.
+Place the following near the end of your playbook, bearing in mind the factors that can cause native images to be invalidated (`see MSDN <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-images-and-jit-compilation>`_).
 
 .. code-block:: powershell
 
