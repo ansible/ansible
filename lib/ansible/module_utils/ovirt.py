@@ -281,7 +281,7 @@ def search_by_name(service, name, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search="name={name}".format(name=name)
+            search='name="{name}"'.format(name=name)
         )
     else:
         res = [e for e in service.list() if e.name == name]
