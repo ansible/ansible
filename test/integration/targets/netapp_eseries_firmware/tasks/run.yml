@@ -1,0 +1,72 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: MUST BE DOWNGRADE BEFORE EXECUTING INTEGRATION TO RCB_11.40.3R2_280x_5c7d81b3.dlp and N280X-842834-D02.dlp
+#   loadControllerFirmware_MT swartzn@10.113.1.250 /home/swartzn/Downloads/RCB_11.40.3R2_280x_5c7d81b3.dlp /home/swartzn/Downloads/N280X-842834-D02.dlp
+
+# This integration test will validate upgrade functionality for firmware-only, firmware-and-nvsram, and checkmode.
+#   ***NOTE: Legacy system are not tested by this test.
+
+- name: NetApp Test ASUP module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, and netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined
+          or netapp_e_api_host is undefined or netapp_e_ssid is undefined
+
+- set_fact:
+    path: "/home/swartzn/Downloads/"
+    upgrades:
+    - firmware: "RCB_11.40.3R2_280x_5c7d81b3.dlp"  # RCB_11.40.5_280x_5ceef00e.dlp
+      nvsram: "N280X-842834-D02.dlp"
+    - firmware: "RCB_11.50.2_280x_5ce8501f.dlp"
+      nvsram: "N280X-852834-D02.dlp"
+
+- name: Perform firmware upgrade using the Web Services REST API (checkmode-change, firmware only)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_ssid }}"
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  check_mode: true
+
+- name: Perform firmware upgrade using the Web Services REST API (change, firmware only)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_ssid }}"
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+
+- name: Perform firmware upgrade using the Web Services REST API (no change)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_ssid }}"
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+
+- name: Perform firmware upgrade using the Web Services REST API (change, firmware and nvsram)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_ssid }}"
+    api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_api_username }}"
+    api_password: "{{ netapp_e_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[1]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[1]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
