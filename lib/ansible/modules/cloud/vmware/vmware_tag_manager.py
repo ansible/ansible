@@ -137,6 +137,7 @@ from ansible.module_utils.vmware_rest_client import VmwareRestClient
 from ansible.module_utils.vmware import (PyVmomi, find_dvs_by_name, find_dvspg_by_name)
 try:
     from com.vmware.vapi.std_client import DynamicID
+    from com.vmware.vapi.std.errors_client import Error
 except ImportError:
     pass
 
@@ -239,20 +240,31 @@ class VmwareTagManager(VmwareRestClient):
             if action in ('add', 'present'):
                 if tag_obj not in available_tag_obj:
                     # Tag is not already applied
-                    self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
-                    changed = True
+                    try:
+                        self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
+                        changed = True
+                    except Error as error:
+                        self.module.fail_json(msg="%s" % self.get_error_message(error))
+
             elif action == 'set':
                 # Remove all tags first
-                if not removed_tags_for_set:
-                    for av_tag in available_tag_obj:
-                        self.tag_association_svc.detach(tag_id=av_tag.id, object_id=self.dynamic_managed_object)
-                    removed_tags_for_set = True
-                self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
-                changed = True
+                try:
+                    if not removed_tags_for_set:
+                        for av_tag in available_tag_obj:
+                            self.tag_association_svc.detach(tag_id=av_tag.id, object_id=self.dynamic_managed_object)
+                        removed_tags_for_set = True
+                    self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
+                    changed = True
+                except Error as error:
+                    self.module.fail_json(msg="%s" % self.get_error_message(error))
+
             elif action in ('remove', 'absent'):
                 if tag_obj in available_tag_obj:
-                    self.tag_association_svc.detach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
-                    changed = True
+                    try:
+                        self.tag_association_svc.detach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
+                        changed = True
+                    except Error as error:
+                        self.module.fail_json(msg="%s" % self.get_error_message(error))
 
         results['tag_status']['current_tags'] = [tag.name for tag in self.get_tags_for_object(self.tag_service,
                                                                                               self.tag_association_svc,

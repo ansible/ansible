@@ -26,7 +26,7 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     screens:
         description:
@@ -154,22 +154,13 @@ EXAMPLES = '''
 '''
 
 
+import atexit
 import traceback
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     from zabbix_api import ZabbixAPIException
     from zabbix_api import Already_Exists
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, and there's no higher version so far), it doesn't support the 'screenitem' api call,
-    # we have to inherit the ZabbixAPI class to add 'screenitem' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        screenitem = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.screenitem = ZabbixAPISubClass(self, dict({"prefix": "screenitem"}, **kwargs))
 
     HAS_ZABBIX_API = True
 except ImportError:
@@ -390,9 +381,10 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

@@ -1,6 +1,6 @@
 """Execute Ansible tests."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -18,7 +18,8 @@ import random
 import string
 import shutil
 
-import lib.pytar
+import lib.types as t
+
 import lib.thread
 
 from lib.core_ci import (
@@ -44,23 +45,27 @@ from lib.util import (
     ApplicationError,
     SubprocessError,
     display,
-    run_command,
-    intercept_command,
     remove_tree,
     make_dirs,
     is_shippable,
     is_binary_file,
     find_executable,
     raw_command,
-    get_python_path,
     get_available_port,
     generate_pip_command,
     find_python,
     get_docker_completion,
     get_remote_completion,
-    named_temporary_file,
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
+    INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    get_python_path,
+    intercept_command,
+    named_temporary_file,
+    run_command,
 )
 
 from lib.docker_util import (
@@ -79,7 +84,6 @@ from lib.ansible_util import (
 
 from lib.target import (
     IntegrationTarget,
-    walk_external_targets,
     walk_internal_targets,
     walk_posix_integration_targets,
     walk_network_integration_targets,
@@ -147,7 +151,7 @@ def check_legacy_modules():
     for directory in 'core', 'extras':
         path = 'lib/ansible/modules/%s' % directory
 
-        for root, _, file_names in os.walk(path):
+        for root, _dir_names, file_names in os.walk(path):
             if file_names:
                 # the directory shouldn't exist, but if it does, it must contain no files
                 raise ApplicationError('Files prohibited in "%s". '
@@ -266,7 +270,7 @@ def pip_list(args, pip):
     :type pip: list[str]
     :rtype: str
     """
-    stdout, _ = run_command(args, pip + ['list'], capture=True)
+    stdout = run_command(args, pip + ['list'], capture=True)[0]
     return stdout
 
 
@@ -274,10 +278,13 @@ def generate_egg_info(args):
     """
     :type args: EnvironmentConfig
     """
-    if os.path.isdir('lib/ansible.egg-info'):
+    if not os.path.exists(os.path.join(INSTALL_ROOT, 'setup.py')):
         return
 
-    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], capture=args.verbosity < 3)
+    if os.path.isdir(os.path.join(INSTALL_ROOT, 'lib/ansible.egg-info')):
+        return
+
+    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], cwd=INSTALL_ROOT, capture=args.verbosity < 3)
 
 
 def generate_pip_install(pip, command, packages=None):
@@ -287,8 +294,8 @@ def generate_pip_install(pip, command, packages=None):
     :type packages: list[str] | None
     :rtype: list[str] | None
     """
-    constraints = 'test/runner/requirements/constraints.txt'
-    requirements = 'test/runner/requirements/%s.txt' % command
+    constraints = os.path.join(INSTALL_ROOT, 'test/runner/requirements/constraints.txt')
+    requirements = os.path.join(INSTALL_ROOT, 'test/runner/requirements/%s.txt' % command)
 
     options = []
 
@@ -355,7 +362,7 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
 
     if args.platform:
         get_python_path(args, args.python_executable)  # initialize before starting threads
@@ -408,9 +415,9 @@ def network_init(args, internal_targets):
     if args.metadata.instance_config is not None:
         return
 
-    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
+    platform_targets = set(a for target in internal_targets for a in target.aliases if a.startswith('network/'))
 
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
 
     # generate an ssh key (if needed) up front once, instead of for each instance
     SshKey(args)
@@ -520,7 +527,7 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
     pre_target = None
     post_target = None
     httptester_id = None
@@ -550,7 +557,7 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-        use_httptester = args.httptester and any('needs/httptester/' in t.aliases for t in internal_targets)
+        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
         # if running under Docker delegation, the httptester may have already been started
         docker_httptester = bool(os.environ.get("HTTPTESTER", False))
 
@@ -635,7 +642,7 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     if args.metadata.instance_config is not None:
         return
 
-    instances = []  # type: list [lib.thread.WrappedThread]
+    instances = []  # type: t.List[lib.thread.WrappedThread]
 
     for version in args.windows:
         instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
@@ -762,7 +769,7 @@ def command_integration_filter(args, targets, init_callback=None):
     if not internal_targets:
         raise AllTargetsSkipped()
 
-    if args.start_at and not any(t.name == args.start_at for t in internal_targets):
+    if args.start_at and not any(target.name == args.start_at for target in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
 
     if init_callback:
@@ -832,11 +839,11 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     results = {}
 
-    current_environment = None  # type: EnvironmentDescription | None
+    current_environment = None  # type: t.Optional[EnvironmentDescription]
 
     # common temporary directory path that will be valid on both the controller and the remote
     # it must be common because it will be referenced in environment variables that are shared across multiple hosts
-    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(8))
 
     setup_common_temp_dir(args, common_temp_path)
 
@@ -1034,7 +1041,7 @@ def run_httptester(args, ports=None):
         for localhost_port, container_port in ports.items():
             options += ['-p', '%d:%d' % (localhost_port, container_port)]
 
-    httptester_id, _ = docker_run(args, args.httptester, options=options)
+    httptester_id = docker_run(args, args.httptester, options=options)[0]
 
     if args.explain:
         httptester_id = 'httptester_id'
@@ -1302,7 +1309,7 @@ def command_units(args):
     """
     changes = get_changes_filter(args)
     require = args.require + changes
-    include, exclude = walk_external_targets(walk_units_targets(), args.include, args.exclude, require)
+    include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
 
     if not include:
         raise AllTargetsSkipped()
@@ -1326,21 +1333,29 @@ def command_units(args):
             'pytest',
             '--boxed',
             '-r', 'a',
-            '-n', 'auto',
+            '-n', str(args.num_workers) if args.num_workers else 'auto',
             '--color',
             'yes' if args.color else 'no',
             '--junit-xml',
             'test/results/junit/python%s-units.xml' % version,
         ]
 
+        plugins = []
+
+        if args.coverage:
+            plugins.append('ansible_pytest_coverage')
+
+        if plugins:
+            env['PYTHONPATH'] += ':%s' % os.path.join(INSTALL_ROOT, 'test/units/pytest/plugins')
+
+            for plugin in plugins:
+                cmd.extend(['-p', plugin])
+
         if args.collect_only:
             cmd.append('--collect-only')
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
-
-        if exclude:
-            cmd += ['--ignore=%s' % target.path for target in exclude]
 
         cmd += [target.path for target in include]
 
@@ -1423,7 +1438,7 @@ def detect_changes_shippable(args):
     :type args: TestConfig
     :rtype: list[str] | None
     """
-    git = Git(args)
+    git = Git()
     result = ShippableChanges(args, git)
 
     if result.is_pr:
@@ -1446,7 +1461,7 @@ def detect_changes_local(args):
     :type args: TestConfig
     :rtype: list[str]
     """
-    git = Git(args)
+    git = Git()
     result = LocalChanges(args, git)
 
     display.info('Detected branch %s forked from %s at commit %s' % (
@@ -1782,7 +1797,7 @@ def get_python_interpreter(args, configs, name):
     return python_interpreter
 
 
-class EnvironmentDescription(object):
+class EnvironmentDescription:
     """Description of current running environment."""
     def __init__(self, args):
         """Initialize snapshot of environment configuration.
@@ -1800,9 +1815,10 @@ class EnvironmentDescription(object):
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
+        version_check = os.path.join(INSTALL_ROOT, 'test/runner/versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
-        program_versions = dict((v, self.get_version([python_paths[v], 'test/runner/versions.py'], warnings)) for v in sorted(python_paths) if python_paths[v])
+        program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
@@ -1932,7 +1948,7 @@ class EnvironmentDescription(object):
     def get_version(command, warnings):
         """
         :type command: list[str]
-        :type warnings: list[str]
+        :type warnings: list[text]
         :rtype: list[str]
         """
         try:

@@ -14,6 +14,7 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 # Modules parameters
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
+$tags = Get-AnsibleParam -obj $params -name "tags" -type "list"
 $minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str" -failifempty $false
 
 $result = @{
@@ -72,6 +73,9 @@ If ($result.pester_version -ge "4.0.0") {
     }
 }
 
+if($tags.count){
+    $Parameters.Tag = $tags
+}
 # Run Pester tests
 If (Test-Path -LiteralPath $path -PathType Leaf) {
     if ($check_mode) {

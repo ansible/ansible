@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import atexit
 import io
 import os
 import os.path
@@ -22,14 +23,14 @@ except ImportError:
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.utils import py3compat
-from ansible.utils.path import unfrackpath
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
 
 Plugin = namedtuple('Plugin', 'name type')
@@ -76,6 +77,7 @@ def ensure_type(value, value_type, origin=None):
         :string: Same as 'str'
     '''
 
+    errmsg = ''
     basedir = None
     if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
         basedir = origin
@@ -96,37 +98,63 @@ def ensure_type(value, value_type, origin=None):
         elif value_type == 'list':
             if isinstance(value, string_types):
                 value = [x.strip() for x in value.split(',')]
+            elif not isinstance(value, Sequence):
+                errmsg = 'list'
 
         elif value_type == 'none':
             if value == "None":
                 value = None
 
+            if value is not None:
+                errmsg = 'None'
+
         elif value_type == 'path':
-            value = resolve_path(value, basedir=basedir)
+            if isinstance(value, string_types):
+                value = resolve_path(value, basedir=basedir)
+            else:
+                errmsg = 'path'
 
         elif value_type in ('tmp', 'temppath', 'tmppath'):
-            value = resolve_path(value, basedir=basedir)
-            if not os.path.exists(value):
-                makedirs_safe(value, 0o700)
-            prefix = 'ansible-local-%s' % os.getpid()
-            value = tempfile.mkdtemp(prefix=prefix, dir=value)
+            if isinstance(value, string_types):
+                value = resolve_path(value, basedir=basedir)
+                if not os.path.exists(value):
+                    makedirs_safe(value, 0o700)
+                prefix = 'ansible-local-%s' % os.getpid()
+                value = tempfile.mkdtemp(prefix=prefix, dir=value)
+                atexit.register(cleanup_tmp_file, value, warn=True)
+            else:
+                errmsg = 'temppath'
 
         elif value_type == 'pathspec':
             if isinstance(value, string_types):
                 value = value.split(os.pathsep)
-            value = [resolve_path(x, basedir=basedir) for x in value]
+
+            if isinstance(value, Sequence):
+                value = [resolve_path(x, basedir=basedir) for x in value]
+            else:
+                errmsg = 'pathspec'
 
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
                 value = value.split(',')
-            value = [resolve_path(x, basedir=basedir) for x in value]
+
+            if isinstance(value, Sequence):
+                value = [resolve_path(x, basedir=basedir) for x in value]
+            else:
+                errmsg = 'pathlist'
 
         elif value_type in ('str', 'string'):
-            value = unquote(to_text(value, errors='surrogate_or_strict'))
+            if isinstance(value, string_types):
+                value = unquote(to_text(value, errors='surrogate_or_strict'))
+            else:
+                errmsg = 'string'
 
         # defaults to string type
         elif isinstance(value, string_types):
             value = unquote(value)
+
+        if errmsg:
+            raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -214,7 +242,8 @@ def find_ini_config_file(warnings=None):
     potential_paths.append("/etc/ansible/ansible.cfg")
 
     for path in potential_paths:
-        if os.path.exists(to_bytes(path)):
+        b_path = to_bytes(path)
+        if os.path.exists(b_path) and os.access(b_path, os.R_OK):
             break
     else:
         path = None
@@ -254,9 +283,8 @@ class ConfigManager(object):
 
         # consume configuration
         if self._config_file:
-            if os.path.exists(to_bytes(self._config_file)):
-                # initialize parser and read config
-                self._parse_config_file()
+            # initialize parser and read config
+            self._parse_config_file()
 
         # update constants
         self.update_config_data()

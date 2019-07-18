@@ -76,7 +76,7 @@ resources:
       type: int
     backends:
       description:
-      - The list of backends that serve this BackendService.
+      - The set of backends that serve this BackendService.
       returned: success
       type: complex
       contains:
@@ -267,7 +267,7 @@ resources:
       type: bool
     healthChecks:
       description:
-      - The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
+      - The set of URLs to the HttpHealthCheck or HttpsHealthCheck resource for health
         checking this BackendService. Currently at most one health check can be specified,
         and a health check is required.
       - For internal load balancing, a URL to a HealthCheck resource must be specified

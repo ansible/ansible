@@ -1,6 +1,6 @@
 """Test runner for all Ansible tests."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import errno
 import os
@@ -21,6 +21,7 @@ from lib.util import (
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
+    INSTALL_ROOT,
 )
 
 from lib.delegation import (
@@ -86,8 +87,7 @@ import lib.cover
 def main():
     """Main program function."""
     try:
-        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
-        os.chdir(git_root)
+        os.chdir(INSTALL_ROOT)
         initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
@@ -170,6 +170,7 @@ def parse_args():
                         action='store_true',
                         help='run ansible commands in debug mode')
 
+    # noinspection PyTypeChecker
     common.add_argument('--truncate',
                         dest='truncate',
                         metavar='COLUMNS',
@@ -381,6 +382,11 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
+    # noinspection PyTypeChecker
+    units.add_argument('--num-workers',
+                       type=int,
+                       help='number of workers to use (default: auto)')
+
     units.add_argument('--requirements-mode',
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
@@ -527,6 +533,7 @@ def parse_args():
                      action='store_true',
                      help='dump environment to disk')
 
+    # noinspection PyTypeChecker
     env.add_argument('--timeout',
                      type=int,
                      metavar='MINUTES',
@@ -749,6 +756,7 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
 
@@ -840,13 +848,12 @@ def complete_network_testcase(prefix, parsed_args, **_):
         return []
 
     test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
-    connections = os.listdir(test_dir)
+    connection_dirs = [path for path in [os.path.join(test_dir, name) for name in os.listdir(test_dir)] if os.path.isdir(path)]
 
-    for conn in connections:
-        if os.path.isdir(os.path.join(test_dir, conn)):
-            for testcase in os.listdir(os.path.join(test_dir, conn)):
-                if testcase.startswith(prefix):
-                    testcases.append(testcase.split('.')[0])
+    for connection_dir in connection_dirs:
+        for testcase in os.listdir(connection_dir):
+            if testcase.startswith(prefix):
+                testcases.append(testcase.split('.')[0])
 
     return testcases
 

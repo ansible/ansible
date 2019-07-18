@@ -1,19 +1,21 @@
 """Access Ansible Core CI remote services."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import tempfile
 import time
 
-import lib.pytar
-
 from lib.util import (
     SubprocessError,
     ApplicationError,
-    run_command,
-    intercept_command,
     cmd_quote,
+)
+
+from lib.util_common import (
+    intercept_command,
+    run_command,
+    INSTALL_ROOT,
 )
 
 from lib.core_ci import (
@@ -28,8 +30,12 @@ from lib.config import (
     ShellConfig,
 )
 
+from lib.payload import (
+    create_payload,
+)
 
-class ManageWindowsCI(object):
+
+class ManageWindowsCI:
     """Manage access to a Windows instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -53,7 +59,6 @@ class ManageWindowsCI(object):
         """Used in delegate_remote to setup the host, no action is required for Windows.
         :type python_version: str
         """
-        pass
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
@@ -133,7 +138,7 @@ class ManageWindowsCI(object):
         raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
 
 
-class ManageNetworkCI(object):
+class ManageNetworkCI:
     """Manage access to a network instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -174,7 +179,7 @@ class ManageNetworkCI(object):
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
 
 
-class ManagePosixCI(object):
+class ManagePosixCI:
     """Manage access to a POSIX instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -235,7 +240,7 @@ class ManagePosixCI(object):
         """Configure remote host for testing.
         :type python_version: str
         """
-        self.upload('test/runner/setup/remote.sh', '/tmp')
+        self.upload(os.path.join(INSTALL_ROOT, 'test/runner/setup/remote.sh'), '/tmp')
         self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
 
     def upload_source(self):
@@ -244,8 +249,7 @@ class ManagePosixCI(object):
             remote_source_dir = '/tmp'
             remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
-            if not self.core_ci.args.explain:
-                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.DefaultTarFilter())
+            create_payload(self.core_ci.args, local_source_fd.name)
 
             self.upload(local_source_fd.name, remote_source_dir)
             self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)

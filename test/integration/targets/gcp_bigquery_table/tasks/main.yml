@@ -66,7 +66,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['resources'] | length >= 1
+      - results['resources'] | map(attribute='tableReference') | map(attribute='tableId') | select("match", ".*example_table.*") | list | length == 1
 # ----------------------------------------------------------------------------
 - name: create a table that already exists
   gcp_bigquery_table:
@@ -104,7 +104,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that table was deleted
   gcp_bigquery_table_facts:
       dataset: example_dataset
@@ -117,7 +116,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['resources'] | length == 0
+      - results['resources'] | map(attribute='tableReference') | map(attribute='tableId') | select("match", ".*example_table.*") | list | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a table that does not exist
   gcp_bigquery_table:
@@ -136,7 +135,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

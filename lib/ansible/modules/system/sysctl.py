@@ -271,7 +271,6 @@ class SysctlModule(object):
 
     # Run sysctl -p
     def reload_sysctl(self):
-        # do it
         if self.platform == 'freebsd':
             # freebsd doesn't support -p, so reload the sysctl service
             rc, out, err = self.module.run_command('/etc/rc.d/sysctl reload', environ_update=self.LANG_ENV)
@@ -282,10 +281,16 @@ class SysctlModule(object):
                 rc = 0
                 if k != self.args['name']:
                     rc = self.set_token_value(k, v)
+                    # FIXME this check is probably not needed as set_token_value would fail_json if rc != 0
                     if rc != 0:
                         break
             if rc == 0 and self.args['state'] == "present":
                 rc = self.set_token_value(self.args['name'], self.args['value'])
+
+            # set_token_value would have called fail_json in case of failure
+            # so return here and do not continue to the error processing below
+            # https://github.com/ansible/ansible/issues/58158
+            return
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]

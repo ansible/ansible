@@ -26,16 +26,12 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.junos.junos import junos_provider_spec
-from ansible.plugins.loader import module_loader
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.utils.display import Display
 
 display = Display()
 
-NETCONF_SUPPORTED_MODULES = frozenset(('junos_banner', 'junos_command', 'junos_config', 'junos_facts', 'junos_interface',
-                                       'junos_l2_interface', 'junos_l3_interface', 'junos_linkagg', 'junos_lldp',
-                                       'junos_lldp_interface', 'junos_logging', 'junos_package', 'junos_rpc', 'junos_scp',
-                                       'junos_static_route', 'junos_system', 'junos_user', 'junos_vlan', 'junos_vrf'))
+CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
 
 
 class ActionModule(ActionNetworkModule):
@@ -44,29 +40,18 @@ class ActionModule(ActionNetworkModule):
         del tmp  # tmp no longer has any effect
 
         self._config_module = True if self._task.action == 'junos_config' else False
-        module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
-        if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
-            return super(ActionModule, self).run(task_vars=task_vars)
-
         socket_path = None
 
         if self._play_context.connection == 'local':
-            args_provider = self._task.args.get('provider', {})
             provider = load_provider(junos_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             pc.network_os = 'junos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
 
-            if self._task.action in ['junos_netconf', 'junos_ping']:
-                if args_provider.get('transport') == 'netconf':
-                    return {'failed': True, 'msg': "Transport type 'netconf' is not valid for '%s' module. "
-                                                   "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
-                                                   % self._task.action}
-            else:
-                if provider['transport'] == 'netconf' and self._task.action not in NETCONF_SUPPORTED_MODULES:
-                    return {'failed': True, 'msg': "Transport type '%s' is not valid for '%s' module. "
-                                                   "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
-                                                   % (provider['transport'], self._task.action)}
+            if provider['transport'] == 'cli' and self._task.action not in CLI_SUPPORTED_MODULES:
+                return {'failed': True, 'msg': "Transport type '%s' is not valid for '%s' module. "
+                                               "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
+                                               % (provider['transport'], self._task.action)}
 
             if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
                 pc.connection = 'network_cli'
@@ -102,7 +87,8 @@ class ActionModule(ActionNetworkModule):
                     display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                     del self._task.args['provider']
 
-            if self._play_context.connection == 'netconf' and self._task.action not in NETCONF_SUPPORTED_MODULES:
+            if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
+                    (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (self._play_context.connection, self._task.action)}

@@ -750,6 +750,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
+                                     allow_unauthenticated=allow_unauthenticated,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)

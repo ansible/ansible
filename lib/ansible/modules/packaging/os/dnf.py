@@ -329,6 +329,11 @@ class DnfModule(YumDnf):
         except AttributeError:
             self.with_modules = False
 
+    def is_lockfile_pid_valid(self):
+        # FIXME? it looks like DNF takes care of invalid lock files itself?
+        # https://github.com/ansible/ansible/issues/57189
+        return True
+
     def _sanitize_dnf_error_msg(self, spec, error):
         """
         For unhandled dnf.exceptions.Error scenarios, there are certain error
@@ -941,14 +946,7 @@ class DnfModule(YumDnf):
                             self.module_base.install([module])
                             self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 # Install groups.
                 for group in groups:
@@ -1011,14 +1009,7 @@ class DnfModule(YumDnf):
                                 response['results'].append("Module {0} upgraded.".format(module))
                             self.module_base.upgrade([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 for group in groups:
                     try:
@@ -1082,14 +1073,7 @@ class DnfModule(YumDnf):
                             self.module_base.disable([module])
                             self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(
-                                " ".join(
-                                    (
-                                        ' '.join(module),
-                                        to_native(e)
-                                    )
-                                )
-                            )
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
                 for group in groups:
                     try:

@@ -641,8 +641,8 @@ options:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
       - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
-        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
-        Note that the docker daemon might not support all modes and combinations of such modes."
+        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave), and
+        C(nocopy). Note that the docker daemon might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
@@ -835,8 +835,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: "true"
-      - arg2: "whatever"
+      arg1: "true"
+      arg2: "whatever"
     volumes:
       - /tmp:/tmp
     comparisons:
@@ -849,8 +849,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: "true"
-      - arg2: "whatever"
+      arg1: "true"
+      arg2: "whatever"
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
@@ -955,6 +955,7 @@ from ansible.module_utils.docker.common import (
     sanitize_result,
     parse_healthcheck,
     DOCKER_COMMON_ARGS,
+    RequestException,
 )
 from ansible.module_utils.six import string_types
 
@@ -982,7 +983,7 @@ REQUIRES_CONVERSION_TO_BYTES = [
 
 def is_volume_permissions(input):
     for part in input.split(','):
-        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave'):
+        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave', 'nocopy'):
             return False
     return True
 
@@ -1419,7 +1420,7 @@ class TaskParameters(DockerBaseClass):
                         break
                 except NotFound as e:
                     self.client.fail(
-                        "Cannot inspect the network '{0}' to determine the default IP.".format(net['name']),
+                        "Cannot inspect the network '{0}' to determine the default IP: {1}".format(net['name'], e),
                         exception=traceback.format_exc()
                     )
         return ip
@@ -2651,9 +2652,9 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             try:
                 if self.parameters.stop_timeout:
-                    response = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
+                    dummy = self.client.restart(container_id, timeout=self.parameters.stop_timeout)
                 else:
-                    response = self.client.restart(container_id)
+                    dummy = self.client.restart(container_id)
             except Exception as exc:
                 self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
@@ -3029,6 +3030,8 @@ def main():
         client.module.exit_json(**sanitize_result(cm.results))
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

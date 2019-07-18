@@ -55,7 +55,7 @@ options:
       - C(present) and C(installed) will simply ensure that a desired package is installed.
       - C(latest) will update the specified package if it's not of the latest available version.
       - C(absent) and C(removed) will remove the specified package.
-      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is¬
+      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
     choices: [ absent, installed, latest, present, removed ]
   enablerepo:
@@ -336,6 +336,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
+import errno
 import os
 import re
 import tempfile
@@ -409,6 +410,48 @@ class YumModule(YumDnf):
                         self.module.warn("Repository %s not found." % rid)
                     else:
                         raise e
+
+    def is_lockfile_pid_valid(self):
+        try:
+            try:
+                with open(self.lockfile, 'r') as f:
+                    oldpid = int(f.readline())
+            except ValueError:
+                # invalid data
+                os.unlink(self.lockfile)
+                return False
+
+            if oldpid == os.getpid():
+                # that's us?
+                os.unlink(self.lockfile)
+                return False
+
+            try:
+                with open("/proc/%d/stat" % oldpid, 'r') as f:
+                    stat = f.readline()
+
+                if stat.split()[2] == 'Z':
+                    # Zombie
+                    os.unlink(self.lockfile)
+                    return False
+            except IOError:
+                # either /proc is not mounted or the process is already dead
+                try:
+                    # check the state of the process
+                    os.kill(oldpid, 0)
+                except OSError as e:
+                    if e.errno == errno.ESRCH:
+                        # No such process
+                        os.unlink(self.lockfile)
+                        return False
+
+                    self.module.fail_json(msg="Unable to check PID %s in  %s: %s" % (oldpid, self.lockfile, to_native(e)))
+        except (IOError, OSError) as e:
+            # lockfile disappeared?
+            return False
+
+        # another copy seems to be running
+        return True
 
     def yum_base(self):
         my = yum.YumBase()

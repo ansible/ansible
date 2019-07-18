@@ -992,6 +992,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
 
+            # in some cases a traceback will arrive on stdout instead of stderr, such as when using ssh with -tt
+            if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
+                data['exception'] = data['module_stdout']
+
             # The default
             data['msg'] = "MODULE FAILURE"
 
@@ -1035,9 +1039,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        if (sudoable and self._connection.transport != 'network_cli' and self._connection.become and
-                (C.BECOME_ALLOW_SAME_USER or
-                 self.get_become_option('become_user') != self._get_remote_user())):
+        ruser = self._get_remote_user()
+        buser = self.get_become_option('become_user')
+        if (sudoable and self._connection.become and  # if sudoable and have become
+                self._connection.transport != 'network_cli' and  # if not using network_cli
+                (C.BECOME_ALLOW_SAME_USER or (buser != ruser and (ruser or buser)))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 

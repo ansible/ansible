@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_trafficmanagerendpoint
 version_added: "2.7"
-short_description: Manage Azure Traffic Manager endpoint.
+short_description: Manage Azure Traffic Manager endpoint
 description:
     - Create, update and delete Azure Traffic Manager endpoint.
 
@@ -31,7 +31,8 @@ options:
         type: str
         required: true
     profile_name:
-        description: Name of Traffic Manager profile where this endpoints attaches to.
+        description:
+            - Name of Traffic Manager profile where this endpoints attaches to.
         type: str
         required: true
     type:
@@ -45,7 +46,7 @@ options:
     target_resource_id:
         description:
             - The Azure Resource URI of the of the endpoint.
-            - Not applicable to endpoints of I(type) C(external_endpoints).
+            - Not applicable to endpoints of I(type=external_endpoints).
         type: str
     target:
         description:
@@ -63,7 +64,7 @@ options:
         type: int
     priority:
         description:
-            - The priority of this endpoint when traffic manager profile has routing_method of C(priority).
+            - The priority of this endpoint when traffic manager profile has routing_method of I(priority).
             - Possible values are from 1 to 1000, lower values represent higher priority.
             - This is an optional parameter. If specified, it must be specified on all endpoints.
             - No two endpoints can share the same priority value.
@@ -75,7 +76,7 @@ options:
     min_child_endpoints:
         description:
             - The minimum number of endpoints that must be available in the child profile in order for the parent profile to be considered available.
-            - Only applicable to endpoint of I(type) (nested_endpoints).
+            - Only applicable to endpoint of I(type=nested_endpoints).
         type: int
     geo_mapping:
         description:
@@ -93,8 +94,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 
 '''
 
@@ -113,12 +114,13 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-  description: The ID of the traffic manager endpoint
-  returned: when traffic manager endpoint exists
-  type: str
-  example:
-    "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/trafficManagerProfiles/testProfil
-     e/externalEndpoints/testendpoint"
+    description:
+        - The ID of the traffic manager endpoint.
+    returned: when traffic manager endpoint exists
+    type: str
+    example:
+        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/trafficManagerProfiles/testProfil
+        e/externalEndpoints/testendpoint"
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 from ansible.module_utils.common.dict_transformations import _snake_to_camel

@@ -1,5 +1,6 @@
 """CloudStack plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -225,7 +226,7 @@ class CsCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True)
         endpoint = self.endpoint
 
-        for _ in range(1, 30):
+        for _iteration in range(1, 30):
             display.info('Waiting for CloudStack service: %s' % endpoint, verbosity=1)
 
             try:
@@ -245,7 +246,7 @@ class CsCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True)
         endpoint = '%s/admin.json' % self.endpoint
 
-        for _ in range(1, 30):
+        for _iteration in range(1, 30):
             display.info('Waiting for CloudStack credentials: %s' % endpoint, verbosity=1)
 
             response = client.get(endpoint)

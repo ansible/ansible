@@ -3,7 +3,8 @@
 Playbook Keywords
 =================
 
-These are the keywords available on common playbook objects.
+These are the keywords available on common playbook objects. Keywords are one of several sources for configuring Ansible behavior. See :ref:`general_precedence_rules` for details on the relative precedence of each source.
+
 
 .. note:: Please note:
 
@@ -18,15 +19,15 @@ These are the keywords available on common playbook objects.
    :local:
    :depth: 1
 
-{% for name in clist %}
+{% for name in playbook_class_names %}
 
 {{ name }}
 {{ '-' * name|length }}
 .. glossary::
 
-{% for attribute in oblist[name]|sort %}
+{% for attribute in pb_keywords[name]|sort %}
     {{ attribute }}
-        {{ oblist[name][attribute] |indent(8) }}
+        {{ pb_keywords[name][attribute] |indent(8) }}
 
 {% endfor %}
 {% endfor %}

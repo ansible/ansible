@@ -1,5 +1,6 @@
 """Sanity test using rstcheck."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 
@@ -13,10 +14,14 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     parse_to_list_of_dict,
     display,
     read_lines_without_comments,
+    INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -40,7 +45,7 @@ class RstcheckTest(SanitySingleVersion):
             display.warning('Skipping rstcheck on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        ignore_file = 'test/sanity/rstcheck/ignore-substitutions.txt'
+        ignore_file = os.path.join(INSTALL_ROOT, 'test/sanity/rstcheck/ignore-substitutions.txt')
         ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))

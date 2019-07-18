@@ -1,6 +1,6 @@
 """Access Ansible Core CI remote services."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -18,10 +18,13 @@ from lib.http import (
 
 from lib.util import (
     ApplicationError,
-    run_command,
     make_dirs,
     display,
     is_shippable,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -34,7 +37,7 @@ AWS_ENDPOINTS = {
 }
 
 
-class AnsibleCoreCI(object):
+class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
     def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None, provider=None):
         """
@@ -183,7 +186,7 @@ class AnsibleCoreCI(object):
         display.info('Getting available endpoints...', verbosity=1)
         sleep = 3
 
-        for _ in range(1, 10):
+        for _iteration in range(1, 10):
             response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
 
             if response.status_code == 200:
@@ -321,7 +324,7 @@ class AnsibleCoreCI(object):
 
     def wait(self):
         """Wait for the instance to become ready."""
-        for _ in range(1, 90):
+        for _iteration in range(1, 90):
             if self.get().running:
                 return
             time.sleep(10)
@@ -534,7 +537,7 @@ class CoreHttpError(HttpError):
         self.remote_stack_trace = remote_stack_trace
 
 
-class SshKey(object):
+class SshKey:
     """Container for SSH key used to connect to remote instances."""
     KEY_NAME = 'id_rsa'
     PUB_NAME = 'id_rsa.pub'
@@ -571,7 +574,7 @@ class SshKey(object):
                 self.pub_contents = pub_fd.read().strip()
 
 
-class InstanceConnection(object):
+class InstanceConnection:
     """Container for remote instance status and connection details."""
     def __init__(self, running, hostname, port, username, password):
         """

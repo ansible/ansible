@@ -50,30 +50,38 @@ DOCUMENTATION = '''
             choices: ['application', 'serviceaccount', 'machineaccount']
             env:
                 - name: GCP_AUTH_KIND
-                  version_added: "2.8"
+                  version_added: "2.8.2"
         scopes:
             description: list of authentication scopes
             type: list
             default: ['https://www.googleapis.com/auth/compute']
             env:
                 - name: GCP_SCOPES
-                  version_added: "2.8"
+                  version_added: "2.8.2"
         service_account_file:
             description:
                 - The path of a Service Account JSON file if serviceaccount is selected as type.
             type: path
             env:
                 - name: GCP_SERVICE_ACCOUNT_FILE
-                  version_added: "2.8"
+                  version_added: "2.8.2"
                 - name: GCE_CREDENTIALS_FILE_PATH
                   version_added: "2.8"
+        service_account_contents:
+            description:
+                - A string representing the contents of a Service Account JSON file. This should not be passed in as a dictionary,
+                  but a string that has the exact contents of a service account json file (valid JSON).
+            type: string
+            env:
+                - name: GCP_SERVICE_ACCOUNT_CONTENTS
+            version_added: "2.8.2"
         service_account_email:
             description:
                 - An optional service account email address if machineaccount is selected
                   and the user does not wish to use the default email.
             env:
                 - name: GCP_SERVICE_ACCOUNT_EMAIL
-                  version_added: "2.8"
+                  version_added: "2.8.2"
         vars_prefix:
             description: prefix to apply to host variables, does not include facts nor params
             default: ''
@@ -309,7 +317,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return a dict with key/value pairs for each in list.
         '''
         new_metadata = {}
-        print(metadata)
         for pair in metadata:
             new_metadata[pair["key"]] = pair["value"]
         return new_metadata
@@ -448,6 +455,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'zones': self.get_option('zones'),
             'auth_kind': self.get_option('auth_kind'),
             'service_account_file': self.get_option('service_account_file'),
+            'service_account_contents': self.get_option('service_account_contents'),
             'service_account_email': self.get_option('service_account_email'),
         }
 

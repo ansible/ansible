@@ -46,6 +46,7 @@
             "ecs:StopTask",
             "ecs:UpdateService",
             "elasticloadbalancing:Describe*",
+            "iam:GetInstanceProfile",
             "iam:GetPolicy",
             "iam:GetPolicyVersion",
             "iam:GetRole",

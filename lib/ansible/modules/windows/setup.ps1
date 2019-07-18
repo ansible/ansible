@@ -29,22 +29,28 @@ Function Get-MachineSid {
     # only accessible by the Local System account. This method get's the local
     # admin account (ends with -500) and lops it off to get the machine sid.
 
-    $admins_sid = "S-1-5-32-544"
-    $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value 
-
-    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
-    $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
-    $group_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.GroupPrincipal($principal_context, $admin_group)
-    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($group_principal)
-    $groups = $searcher.FindOne()
-
     $machine_sid = $null
-    foreach ($user in $groups.Members) {
-        $user_sid = $user.Sid
-        if ($user_sid.Value.EndsWith("-500")) {
-            $machine_sid = $user_sid.AccountDomainSid.Value
-            break
+
+    try {
+        $admins_sid = "S-1-5-32-544"
+    $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value
+
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+        $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
+        $group_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.GroupPrincipal($principal_context, $admin_group)
+        $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($group_principal)
+        $groups = $searcher.FindOne()
+
+        foreach ($user in $groups.Members) {
+            $user_sid = $user.Sid
+            if ($user_sid.Value.EndsWith("-500")) {
+                $machine_sid = $user_sid.AccountDomainSid.Value
+                break
+            }
         }
+    } catch {
+        #can fail for any number of reasons, if it does just return the original null
+        Add-Warning -obj $result -message "Error during machine sid retrieval: $($_.Exception.Message)"
     }
 
     return $machine_sid
@@ -134,7 +140,7 @@ $osversion = [Environment]::OSVersion
 
 if($gather_subset.Contains('all_ipv4_addresses') -or $gather_subset.Contains('all_ipv6_addresses')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
-    
+
     # TODO: split v4/v6 properly, return in separate keys
     $ips = @()
     Foreach ($ip in $netcfg.IPAddress) {
@@ -212,9 +218,9 @@ if($gather_subset.Contains('distribution')) {
 if($gather_subset.Contains('env')) {
     $env_vars = @{ }
     foreach ($item in Get-ChildItem Env:) {
-        $name = $item | select -ExpandProperty Name
+        $name = $item | Select-Object -ExpandProperty Name
         # Powershell ConvertTo-Json fails if string ends with \
-        $value = ($item | select -ExpandProperty Value).TrimEnd("\")
+        $value = ($item | Select-Object -ExpandProperty Value).TrimEnd("\")
         $env_vars.Add($name, $value)
     }
 
@@ -226,7 +232,7 @@ if($gather_subset.Contains('env')) {
 if($gather_subset.Contains('facter')) {
     # See if Facter is on the System Path
     Try {
-        $facter_exe = Get-Command facter -ErrorAction Stop
+        Get-Command facter -ErrorAction Stop > $null
         $facter_installed = $true
     } Catch {
         $facter_installed = $false
@@ -234,7 +240,7 @@ if($gather_subset.Contains('facter')) {
 
     # Get JSON from Facter, and parse it out.
     if ($facter_installed) {
-        &facter -j | Tee-Object  -Variable facter_output | Out-Null
+        &facter -j | Tee-Object  -Variable facter_output > $null
         $facts = "$facter_output" | ConvertFrom-Json
         ForEach($fact in $facts.PSObject.Properties) {
             $fact_name = $fact.Name
@@ -246,7 +252,7 @@ if($gather_subset.Contains('facter')) {
 if($gather_subset.Contains('interfaces')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
     $ActiveNetcfg = @()
-    $ActiveNetcfg += $netcfg | where {$_.ipaddress -ne $null}
+    $ActiveNetcfg += $netcfg | Where-Object {$_.ipaddress -ne $null}
 
     $namespaces = Get-LazyCimInstance __Namespace -namespace root
     if ($namespaces | Where-Object { $_.Name -eq "StandardCimv" }) {
@@ -254,7 +260,7 @@ if($gather_subset.Contains('interfaces')) {
         $guid_key = "InterfaceGUID"
         $name_key = "Name"
     } else {
-        $net_adapters = Get-LazyCimInstance Win32_NetworkAdapter        
+        $net_adapters = Get-LazyCimInstance Win32_NetworkAdapter
         $guid_key = "GUID"
         $name_key = "NetConnectionID"
     }
@@ -412,7 +418,7 @@ if($gather_subset.Contains('windows_domain')) {
 if($gather_subset.Contains('winrm')) {
 
     $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse -ErrorAction SilentlyContinue | `
-        Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
+        Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | Select-Object PSParentPath
     if ($winrm_https_listener_parent_paths -isnot [array]) {
        $winrm_https_listener_parent_paths = @($winrm_https_listener_parent_paths)
     }
@@ -429,14 +435,16 @@ if($gather_subset.Contains('winrm')) {
 
     $winrm_cert_thumbprints = @()
     foreach ($https_listener in $https_listeners) {
-        $winrm_cert_thumbprints += $https_listener | where {$_.Name -EQ "CertificateThumbprint" } | select Value
+        $winrm_cert_thumbprints += $https_listener | Where-Object {$_.Name -EQ "CertificateThumbprint" } | Select-Object Value
     }
 
     $winrm_cert_expiry = @()
     foreach ($winrm_cert_thumbprint in $winrm_cert_thumbprints) {
         Try {
-            $winrm_cert_expiry += Get-ChildItem -Path Cert:\LocalMachine\My | where Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | select NotAfter
-        } Catch {}
+            $winrm_cert_expiry += Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object Thumbprint -EQ $winrm_cert_thumbprint.Value.ToString().ToUpper() | Select-Object NotAfter
+        } Catch {
+            Add-Warning -obj $result -message "Error during certificate expiration retrieval: $($_.Exception.Message)"
+        }
     }
 
     $winrm_cert_expirations = $winrm_cert_expiry | Sort-Object NotAfter
@@ -460,14 +468,14 @@ if($gather_subset.Contains('virtual')) {
             $machine_role="guest"
         }
 
-        "VirtualBox" { 
-            $machine_type="VirtualBox" 
+        "VirtualBox" {
+            $machine_type="VirtualBox"
             $machine_role="guest"
         }
 
         "HVM domU" {
             $machine_type="Xen"
-            $machine_role="guest" 
+            $machine_role="guest"
         }
 
         default {
@@ -475,7 +483,7 @@ if($gather_subset.Contains('virtual')) {
             $machine_role="NA"
         }
     }
-    
+
     $ansible_facts += @{
         ansible_virtualization_role = $machine_role
         ansible_virtualization_type = $machine_type

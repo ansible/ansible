@@ -34,7 +34,7 @@ options:
         required: true
     artifact_store:
         description:
-            - Location information where articacts are stored (on S3). Dictionary with fields type and location.
+            - Location information where artifacts are stored (on S3). Dictionary with fields type and location.
         required: true
         suboptions:
             type:
@@ -71,13 +71,13 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Example for creating a pipeline for continouos deploy of Github code to an ECS cluster (container)
+# Example for creating a pipeline for continuous deploy of Github code to an ECS cluster (container)
 - code_pipeline:
     name: my_deploy_pipeline
     role_arn: arn:aws:iam::123456:role/AWS-CodePipeline-Service
     artifact_store:
       type: S3
-      locatation: my_s3_codepipline_bucket
+      location: my_s3_codepipline_bucket
     stages:
       - name: Get_source
         actions:
@@ -159,7 +159,7 @@ pipeline:
       type: complex
       contains:
         type:
-          desrciption: The type of the artifacts store, such as S3
+          description: The type of the artifacts store, such as S3
           returned: always
           type: string
           sample: S3

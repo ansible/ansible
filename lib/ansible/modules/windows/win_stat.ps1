@@ -77,7 +77,7 @@ $module.Result.stat = @{ exists=$false }
 
 Load-LinkUtils
 $info, $link_info = Get-FileInfo -Path $path -Follow:$follow
-If ($null -ne $info) {    
+If ($null -ne $info) {
     $epoch_date = Get-Date -Date "01/01/1970"
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {

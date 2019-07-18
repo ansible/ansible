@@ -274,7 +274,7 @@ other non-iterable types returned by a plugin were accepted without error or war
 Lookup
 -------
 
-A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :doc:`lookup <../plugins/lookup>` page for more details.
+A new option was added to lookup plugins globally named ``error`` which allows you to control how errors produced by the lookup are handled, before this option they were always fatal. Valid values for this option are ``warn``, ``ignore`` and ``strict``. See the :ref:`lookup <lookup_plugins>` page for more details.
 
 
 Porting custom scripts

@@ -29,16 +29,16 @@ description:
         C(zbx_image_maintenance) contains name of the image used to display map element in maintenance.
         C(zbx_image_problem) contains name of the image used to display map element with problems.
         C(zbx_url) contains map element URL in C(name:url) format.
-            More than one url could be specified by adding some prefix (e.g., C(zbx_url1), C(zbx_url2))."
+            More than one URL could be specified by adding a postfix (e.g., C(zbx_url1), C(zbx_url2))."
     - "The following extra link attributes are supported:
         C(zbx_draw_style) contains link line draw style. Possible values: C(line), C(bold), C(dotted), C(dashed).
         C(zbx_trigger) contains name of the trigger used as a link indicator in C(host_name:trigger_name) format.
-            More than one trigger could be specified by adding some prefix (e.g., C(zbx_trigger1), C(zbx_trigger2)).
+            More than one trigger could be specified by adding a postfix (e.g., C(zbx_trigger1), C(zbx_trigger2)).
         C(zbx_trigger_color) contains indicator color specified either as CSS3 name or as a hexadecimal code starting with C(#).
         C(zbx_trigger_draw_style) contains indicator draw style. Possible values are the same as for C(zbx_draw_style)."
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
     - pydotplus
     - webcolors
     - Pillow
@@ -80,7 +80,7 @@ options:
         default: 40
     expand_problem:
         description:
-            - Whether the the problem trigger will be displayed for elements with a single problem.
+            - Whether the problem trigger will be displayed for elements with a single problem.
         required: false
         type: bool
         default: true
@@ -114,11 +114,11 @@ EXAMPLES = '''
 # [web]
 # web[01:03].example.com ansible_host=127.0.0.1
 # [db]
-# db.example.com  ansible_host=127.0.0.1
+# db.example.com ansible_host=127.0.0.1
 # [backup]
-# backup.example.com   ansible_host=127.0.0.1
+# backup.example.com ansible_host=127.0.0.1
 ###
-### Each inventory host presents in Zabbix with same name.
+### Each inventory host is present in Zabbix with a matching name.
 ###
 ### Contents of 'map.j2':
 # digraph G {
@@ -173,6 +173,7 @@ ANSIBLE_METADATA = {
 }
 
 
+import atexit
 import base64
 import traceback
 
@@ -196,7 +197,7 @@ except ImportError:
     HAS_WEBCOLORS = False
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
@@ -791,6 +792,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

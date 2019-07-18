@@ -1,6 +1,6 @@
 """Analyze C# import statements."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re
@@ -51,6 +51,7 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
     """Return a list of module_utils imports found in the specified source file.
     :type path: str
     :type module_utils: set[str]
+    :type is_pure_csharp: bool
     :rtype: set[str]
     """
     imports = set()

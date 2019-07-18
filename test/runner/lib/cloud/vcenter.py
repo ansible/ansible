@@ -1,5 +1,6 @@
 """VMware vCenter plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import time
@@ -53,7 +54,7 @@ class VcenterProvider(CloudProvider):
             self.image = 'quay.io/ansible/vcenter-test-container:1.5.0'
         self.container_name = ''
 
-        # VMWare tests can be run on govcsim or baremetal, either BYO with a static config
+        # VMware tests can be run on govcsim or baremetal, either BYO with a static config
         # file or hosted in worldstream.  Using an env var value of 'worldstream' with appropriate
         # CI credentials will deploy a dynamic baremetal environment. The simulator is the default
         # if no other config if provided.
@@ -63,6 +64,7 @@ class VcenterProvider(CloudProvider):
         self.endpoint = ''
         self.hostname = ''
         self.port = 443
+        self.proxy = None
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -211,7 +213,10 @@ class VcenterProvider(CloudProvider):
                              provider='vmware')
 
     def _setup_static(self):
-        parser = ConfigParser()
+        parser = ConfigParser({
+            'vcenter_port': '443',
+            'vmware_proxy_host': None,
+            'vmware_proxy_port': None})
         parser.read(self.config_static_path)
 
         self.endpoint = parser.get('DEFAULT', 'vcenter_hostname')
@@ -219,19 +224,23 @@ class VcenterProvider(CloudProvider):
 
         if parser.get('DEFAULT', 'vmware_validate_certs').lower() in ('no', 'false'):
             self.insecure = True
+        proxy_host = parser.get('DEFAULT', 'vmware_proxy_host')
+        proxy_port = int(parser.get('DEFAULT', 'vmware_proxy_port'))
+        if proxy_host and proxy_port:
+            self.proxy = 'http://%s:%d' % (proxy_host, proxy_port)
 
         self._wait_for_service()
 
     def _wait_for_service(self):
-        """Wait for the VCenter service endpoint to accept connections."""
+        """Wait for the vCenter service endpoint to accept connections."""
         if self.args.explain:
             return
 
-        client = HttpClient(self.args, always=True, insecure=self.insecure)
+        client = HttpClient(self.args, always=True, insecure=self.insecure, proxy=self.proxy)
         endpoint = 'https://%s:%s' % (self.endpoint, self.port)
 
         for i in range(1, 30):
-            display.info('Waiting for VCenter service: %s' % endpoint, verbosity=1)
+            display.info('Waiting for vCenter service: %s' % endpoint, verbosity=1)
 
             try:
                 client.get(endpoint)
@@ -241,7 +250,7 @@ class VcenterProvider(CloudProvider):
 
             time.sleep(10)
 
-        raise ApplicationError('Timeout waiting for VCenter service.')
+        raise ApplicationError('Timeout waiting for vCenter service.')
 
 
 class VcenterEnvironment(CloudEnvironment):

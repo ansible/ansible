@@ -1,9 +1,12 @@
 """Diff parsing functions and classes."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import re
 import textwrap
 import traceback
+
+import lib.types as t
 
 from lib.util import (
     ApplicationError,
@@ -18,7 +21,7 @@ def parse_diff(lines):
     return DiffParser(lines).files
 
 
-class FileDiff(object):
+class FileDiff:
     """Parsed diff for a single file."""
     def __init__(self, old_path, new_path):
         """
@@ -27,7 +30,7 @@ class FileDiff(object):
         """
         self.old = DiffSide(old_path, new=False)
         self.new = DiffSide(new_path, new=True)
-        self.headers = []  # list [str]
+        self.headers = []  # type: t.List[str]
         self.binary = False
 
     def append_header(self, line):
@@ -44,7 +47,7 @@ class FileDiff(object):
         return self.old.is_complete and self.new.is_complete
 
 
-class DiffSide(object):
+class DiffSide:
     """Parsed diff for a single 'side' of a single file."""
     def __init__(self, path, new):
         """
@@ -57,9 +60,9 @@ class DiffSide(object):
         self.eof_newline = True
         self.exists = True
 
-        self.lines = []  # type: list [tuple[int, str]]
-        self.lines_and_context = []  # type: list [tuple[int, str]]
-        self.ranges = []  # type: list [tuple[int, int]]
+        self.lines = []  # type: t.List[t.Tuple[int, str]]
+        self.lines_and_context = []  # type: t.List[t.Tuple[int, str]]
+        self.ranges = []  # type: t.List[t.Tuple[int, int]]
 
         self._next_line_number = 0
         self._lines_remaining = 0
@@ -131,20 +134,20 @@ class DiffSide(object):
         return ['%s:%4d %s' % (self.path, line[0], line[1]) for line in lines]
 
 
-class DiffParser(object):
+class DiffParser:
     """Parse diff lines."""
     def __init__(self, lines):
         """
         :type lines: list[str]
         """
         self.lines = lines
-        self.files = []  # type: list [FileDiff]
+        self.files = []  # type: t.List[FileDiff]
 
         self.action = self.process_start
         self.line_number = 0
-        self.previous_line = None  # type: str
-        self.line = None  # type: str
-        self.file = None  # type: FileDiff
+        self.previous_line = None  # type: t.Optional[str]
+        self.line = None  # type: t.Optional[str]
+        self.file = None  # type: t.Optional[FileDiff]
 
         for self.line in self.lines:
             self.line_number += 1

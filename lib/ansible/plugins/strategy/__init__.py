@@ -350,6 +350,10 @@ class StrategyBase:
 
         return [actual_host]
 
+    def get_handler_templar(self, handler_task, iterator):
+        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
+        return Templar(loader=self._loader, variables=handler_vars)
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -373,8 +377,7 @@ class StrategyBase:
                 for handler_task in handler_block.block:
                     if handler_task.name:
                         if not handler_task.cached_name:
-                            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
-                            templar = Templar(loader=self._loader, variables=handler_vars)
+                            templar = self.get_handler_templar(handler_task, iterator)
                             handler_task.name = templar.template(handler_task.name)
                             handler_task.cached_name = True
 
@@ -530,6 +533,10 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
+                                        templar = self.get_handler_templar(listening_handler, iterator)
+                                        listeners = listening_handler.get_validated_value(
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, templar
+                                        )
                                         if handler_name not in listeners:
                                             continue
                                         else:
@@ -704,7 +711,7 @@ class StrategyBase:
             new_groups = host_info.get('groups', [])
             for group_name in new_groups:
                 if group_name not in self._inventory.groups:
-                    self._inventory.add_group(group_name)
+                    group_name = self._inventory.add_group(group_name)
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
@@ -731,11 +738,15 @@ class StrategyBase:
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
-        for name in [group_name] + parent_group_names:
+        if group_name not in self._inventory.groups:
+            group_name = self._inventory.add_group(group_name)
+
+        for name in parent_group_names:
             if name not in self._inventory.groups:
                 # create the new group and add it to inventory
                 self._inventory.add_group(name)
                 changed = True
+
         group = self._inventory.groups[group_name]
         for parent_group_name in parent_group_names:
             parent_group = self._inventory.groups[parent_group_name]
@@ -814,7 +825,7 @@ class StrategyBase:
 
         except AnsibleError as e:
             if isinstance(e, AnsibleFileNotFound):
-                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(included_file._filename)
+                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
             else:
                 reason = to_text(e)
 
@@ -884,9 +895,13 @@ class StrategyBase:
             if not iterator.is_failed(host) or iterator._play.force_handlers:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
+                templar = Templar(loader=self._loader, variables=task_vars)
+                if not handler.cached_name:
+                    handler.name = templar.template(handler.name)
+                    handler.cached_name = True
+
                 self._queue_task(host, handler, task_vars, play_context)
 
-                templar = Templar(loader=self._loader, variables=task_vars)
                 if templar.template(handler.run_once) or bypass_host_loop:
                     break
 

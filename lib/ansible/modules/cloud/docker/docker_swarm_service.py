@@ -44,7 +44,6 @@ options:
         description:
           - Config's ID.
         type: str
-        required: yes
       config_name:
         description:
           - Config's name as defined at its creation.
@@ -598,7 +597,6 @@ options:
         description:
           - Secret's ID.
         type: str
-        required: yes
       secret_name:
         description:
           - Secret's name as defined at its creation.
@@ -993,8 +991,7 @@ EXAMPLES = '''
     name: myservice
     image: alpine:edge
     configs:
-      - config_id: myconfig_id
-        config_name: myconfig_name
+      - config_name: myconfig_name
         filename: "/tmp/config.txt"
 
 - name: Set networks
@@ -1009,8 +1006,7 @@ EXAMPLES = '''
     name: myservice
     image: alpine:edge
     secrets:
-      - secret_id: mysecret_id
-        secret_name: mysecret_name
+      - secret_name: mysecret_name
         filename: "/run/secrets/secret.txt"
 
 - name: Start service with healthcheck
@@ -1055,9 +1051,10 @@ from ansible.module_utils.docker.common import (
     DifferenceTracker,
     DockerBaseClass,
     convert_duration_to_nanosecond,
-    parse_healthcheck
-
+    parse_healthcheck,
+    RequestException,
 )
+
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
@@ -1480,7 +1477,9 @@ class DockerService(DockerBaseClass):
         }
 
     @classmethod
-    def from_ansible_params(cls, ap, old_service, image_digest, can_update_networks):
+    def from_ansible_params(
+        cls, ap, old_service, image_digest, can_update_networks, secret_ids, config_ids
+    ):
         s = DockerService()
         s.image = image_digest
         s.can_update_networks = can_update_networks
@@ -1616,9 +1615,10 @@ class DockerService(DockerBaseClass):
             s.configs = []
             for param_m in ap['configs']:
                 service_c = {}
-                service_c['config_id'] = param_m['config_id']
-                service_c['config_name'] = param_m['config_name']
-                service_c['filename'] = param_m['filename'] or service_c['config_name']
+                config_name = param_m['config_name']
+                service_c['config_id'] = param_m['config_id'] or config_ids[config_name]
+                service_c['config_name'] = config_name
+                service_c['filename'] = param_m['filename'] or config_name
                 service_c['uid'] = param_m['uid']
                 service_c['gid'] = param_m['gid']
                 service_c['mode'] = param_m['mode']
@@ -1628,9 +1628,10 @@ class DockerService(DockerBaseClass):
             s.secrets = []
             for param_m in ap['secrets']:
                 service_s = {}
-                service_s['secret_id'] = param_m['secret_id']
-                service_s['secret_name'] = param_m['secret_name']
-                service_s['filename'] = param_m['filename'] or service_s['secret_name']
+                secret_name = param_m['secret_name']
+                service_s['secret_id'] = param_m['secret_id'] or secret_ids[secret_name]
+                service_s['secret_name'] = secret_name
+                service_s['filename'] = param_m['filename'] or secret_name
                 service_s['uid'] = param_m['uid']
                 service_s['gid'] = param_m['gid']
                 service_s['mode'] = param_m['mode']
@@ -2326,6 +2327,54 @@ class DockerServiceManager(object):
             self.client.docker_py_version >= LooseVersion('2.7')
         )
 
+    def get_missing_secret_ids(self):
+        """
+        Resolve missing secret ids by looking them up by name
+        """
+        secret_names = [
+            secret['secret_name']
+            for secret in self.client.module.params.get('secrets') or []
+            if secret['secret_id'] is None
+        ]
+        if not secret_names:
+            return {}
+        secrets = self.client.secrets(filters={'name': secret_names})
+        secrets = dict(
+            (secret['Spec']['Name'], secret['ID'])
+            for secret in secrets
+            if secret['Spec']['Name'] in secret_names
+        )
+        for secret_name in secret_names:
+            if secret_name not in secrets:
+                self.client.fail(
+                    'Could not find a secret named "%s"' % secret_name
+                )
+        return secrets
+
+    def get_missing_config_ids(self):
+        """
+        Resolve missing config ids by looking them up by name
+        """
+        config_names = [
+            config['config_name']
+            for config in self.client.module.params.get('configs') or []
+            if config['config_id'] is None
+        ]
+        if not config_names:
+            return {}
+        configs = self.client.configs(filters={'name': config_names})
+        configs = dict(
+            (config['Spec']['Name'], config['ID'])
+            for config in configs
+            if config['Spec']['Name'] in config_names
+        )
+        for config_name in config_names:
+            if config_name not in configs:
+                self.client.fail(
+                    'Could not find a config named "%s"' % config_name
+                )
+        return configs
+
     def run(self):
         self.diff_tracker = DifferenceTracker()
         module = self.client.module
@@ -2351,11 +2400,15 @@ class DockerServiceManager(object):
             )
         try:
             can_update_networks = self.can_update_networks()
+            secret_ids = self.get_missing_secret_ids()
+            config_ids = self.get_missing_config_ids()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
                 image_digest,
-                can_update_networks
+                can_update_networks,
+                secret_ids,
+                config_ids
             )
         except Exception as e:
             return self.client.fail(
@@ -2375,7 +2428,9 @@ class DockerServiceManager(object):
                 msg = 'Service removed'
                 changed = True
             else:
-                changed, differences, need_rebuild, force_update = new_service.compare(current_service)
+                changed, differences, need_rebuild, force_update = new_service.compare(
+                    current_service
+                )
                 if changed:
                     self.diff_tracker.merge(differences)
                     if need_rebuild:
@@ -2504,7 +2559,7 @@ def main():
             tmpfs_mode=dict(type='int')
         )),
         configs=dict(type='list', elements='dict', options=dict(
-            config_id=dict(type='str', required=True),
+            config_id=dict(type='str'),
             config_name=dict(type='str', required=True),
             filename=dict(type='str'),
             uid=dict(type='str'),
@@ -2512,7 +2567,7 @@ def main():
             mode=dict(type='int'),
         )),
         secrets=dict(type='list', elements='dict', options=dict(
-            secret_id=dict(type='str', required=True),
+            secret_id=dict(type='str'),
             secret_name=dict(type='str', required=True),
             filename=dict(type='str'),
             uid=dict(type='str'),
@@ -2759,6 +2814,8 @@ def main():
         client.module.exit_json(**results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

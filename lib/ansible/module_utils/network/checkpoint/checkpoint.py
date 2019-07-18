@@ -36,7 +36,7 @@ from ansible.module_utils.connection import Connection
 checkpoint_argument_spec_for_objects = dict(
     auto_publish_session=dict(type='bool'),
     wait_for_task=dict(type='bool', default=True),
-    state=dict(type='str', required=True, choices=['present', 'absent']),
+    state=dict(type='str', choices=['present', 'absent'], default='present'),
     version=dict(type='str')
 )
 
@@ -134,7 +134,7 @@ def api_command(module, command):
     payload = get_payload_from_parameters(module)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
-    version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
+    version = ('v' + module.params['version'] + '/') if module.params.get('version') else ''
 
     code, response = send_request(connection, version, command, payload)
     result = {'changed': True}
@@ -159,7 +159,7 @@ def api_call(module, api_call_object):
     payload = get_payload_from_parameters(module)
     connection = Connection(module._socket_path)
     # if user insert a specific version, we add it to the url
-    version = ('v' + module.params['version'] + '/') if module.params['version'] else ''
+    version = ('v' + module.params['version'] + '/') if module.params.get('version') else ''
 
     payload_for_equals = {'type': api_call_object, 'params': payload}
     equals_code, equals_response = send_request(connection, version, 'equals', payload_for_equals)

@@ -68,7 +68,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.query == 'ANALYZE test_table'
     - result.rowcount == 0
     - result.statusmessage == 'ANALYZE'
@@ -90,7 +90,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.query == 'SELECT version();\nSELECT story FROM test_table\nWHERE id = 1;\n'
     - result.rowcount == 1
     - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
@@ -110,7 +110,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.query == 'SELECT * FROM test_table'
     - result.rowcount == 3
     - result.statusmessage == 'SELECT 3' or result.statusmessage == 'SELECT'
@@ -137,7 +137,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.query == "SELECT id FROM test_table WHERE id = 1 AND story = 'first'" or result.query == "SELECT id FROM test_table WHERE id = 1 AND story = E'first'"
     - result.rowcount == 1
     - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
@@ -159,7 +159,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.query == "SELECT story FROM test_table WHERE id = 2 AND story = 'second'" or result.query == "SELECT story FROM test_table WHERE id = 2 AND story = E'second'"
     - result.rowcount == 1
     - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
@@ -178,11 +178,58 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.query == "UPDATE test_table SET story = 'new' WHERE id = 3"
     - result.rowcount == 1
     - result.statusmessage == 'UPDATE 1'
     - result.query_result == {}
+
+# Check:
+- name: check the previous update
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT * FROM test_table WHERE story = 'new' AND id = 3
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Test check_mode:
+- name: postgresql_query - simple update query in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: UPDATE test_table SET story = 'CHECK_MODE' WHERE id = 3
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "UPDATE test_table SET story = 'CHECK_MODE' WHERE id = 3"
+    - result.rowcount == 1
+    - result.statusmessage == 'UPDATE 1'
+    - result.query_result == {}
+
+# Check:
+- name: check the previous update that nothing has been changed
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: SELECT * FROM test_table WHERE story = 'CHECK_MODE' AND id = 3
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
 
 # Try to update not existing row:
 - name: postgresql_query - try to update not existing row
@@ -197,7 +244,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.query == "UPDATE test_table SET story = 'new' WHERE id = 100"
     - result.rowcount == 0
     - result.statusmessage == 'UPDATE 0'
@@ -219,7 +266,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.query == "INSERT INTO test_table (id, story) VALUES (4, 'fourth')" or result.query == "INSERT INTO test_table (id, story) VALUES (4, E'fourth')"
     - result.rowcount == 1
     - result.statusmessage == 'INSERT 0 1'
@@ -238,7 +285,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.query == "TRUNCATE test_table"
     - result.rowcount == 0
     - result.statusmessage == 'TRUNCATE TABLE'
@@ -257,7 +304,59 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.query == "ALTER TABLE test_table ADD COLUMN foo int"
     - result.rowcount == 0
     - result.statusmessage == 'ALTER TABLE'
+
+#############################
+# Test autocommit parameter #
+#############################
+- name: postgresql_query - vacuum without autocommit must fail
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: VACUUM
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+- name: postgresql_query - autocommit in check_mode must fail
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: VACUUM
+    autocommit: yes
+  check_mode: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+    - result.msg == "Using autocommit is mutually exclusive with check_mode"
+
+- name: postgresql_query - vacuum with autocommit
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    query: VACUUM
+    autocommit: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "VACUUM"
+    - result.rowcount == 0
+    - result.statusmessage == 'VACUUM'
+    - result.query_result == {}

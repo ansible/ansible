@@ -61,7 +61,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a service account
   gcp_iam_service_account:
-    name: "{{ sa_name }}"
+    name: sa-{{ resource_name.split("-")[-1] }}@graphite-playground.google.com.iam.gserviceaccount.com
     display_name: My Ansible test key
     project: test_project
     auth_kind: serviceaccount

@@ -165,9 +165,14 @@ class GcpSession(object):
             self.module.fail_json(msg="Credential type '%s' not implemented" % cred_type)
 
     def _headers(self):
-        return {
-            'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
-        }
+        if self.module.params.get('env_type'):
+            return {
+                'User-Agent': "Google-Ansible-MM-{0}-{1}".format(self.product, self.module.params.get('env_type'))
+            }
+        else:
+            return {
+                'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
+            }
 
     def _merge_dictionaries(self, a, b):
         new = a.copy()
@@ -189,7 +194,7 @@ class GcpModule(AnsibleModule):
                     type='str',
                     fallback=(env_fallback, ['GCP_PROJECT'])),
                 auth_kind=dict(
-                    required=False,
+                    required=True,
                     fallback=(env_fallback, ['GCP_AUTH_KIND']),
                     choices=['machineaccount', 'serviceaccount', 'application'],
                     type='str'),
@@ -208,7 +213,11 @@ class GcpModule(AnsibleModule):
                 scopes=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SCOPES']),
-                    type='list')
+                    type='list'),
+                env_type=dict(
+                    required=False,
+                    fallback=(env_fallback, ['GCP_ENV_TYPE']),
+                    type='str')
             )
         )
 

@@ -196,6 +196,7 @@ template_json:
 from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+import atexit
 import json
 import traceback
 
@@ -492,6 +493,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout,
                         user=http_login_user, passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except ZabbixAPIException as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

@@ -118,6 +118,52 @@ class TestHashParams(unittest.TestCase):
 
         self.assertRaises(TypeError, hash_params, params)
 
+    def test_param_dict_dupe_values(self):
+        params1 = {'foo': False}
+        params2 = {'bar': False}
+
+        res1 = hash_params(params1)
+        res2 = hash_params(params2)
+
+        hash1 = hash(res1)
+        hash2 = hash(res2)
+        self.assertNotEqual(res1, res2)
+        self.assertNotEqual(hash1, hash2)
+
+    def test_param_dupe(self):
+        params1 = {
+            # 'from_files': {},
+            'tags': [],
+            u'testvalue': False,
+            u'testvalue2': True,
+            # 'when': []
+        }
+        params2 = {
+            # 'from_files': {},
+            'tags': [],
+            u'testvalue': True,
+            u'testvalue2': False,
+            # 'when': []
+        }
+        res1 = hash_params(params1)
+        res2 = hash_params(params2)
+
+        self.assertNotEqual(hash(res1), hash(res2))
+        self.assertNotEqual(res1, res2)
+
+        foo = {}
+        foo[res1] = 'params1'
+        foo[res2] = 'params2'
+
+        self.assertEqual(len(foo), 2)
+
+        del foo[res2]
+        self.assertEqual(len(foo), 1)
+
+        for key in foo:
+            self.assertTrue(key in foo)
+            self.assertIn(key, foo)
+
 
 class TestRole(unittest.TestCase):
 

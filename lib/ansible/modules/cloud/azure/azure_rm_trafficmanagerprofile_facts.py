@@ -29,7 +29,7 @@ options:
             - Limit results to a specific Traffic Manager profile.
     resource_group:
         description:
-            - The resource group to search for the desired Traffic Manager profile
+            - The resource group to search for the desired Traffic Manager profile.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -38,8 +38,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
@@ -59,7 +59,8 @@ EXAMPLES = '''
 
 RETURN = '''
 tms:
-    description: List of Traffic Manager profiles.
+    description:
+        - List of Traffic Manager profiles.
     returned: always
     type: complex
     contains:
@@ -78,127 +79,165 @@ tms:
         state:
             description:
                 - The state of the Traffic Manager profile.
+            returned: always
             type: str
             sample: present
         location:
             description:
                 - Location of the Traffic Manager profile.
+            returned: always
             type: str
             sample: global
         profile_status:
             description:
                 - The status of the Traffic Manager profile.
+            returned: always
             type: str
             sample: Enabled
         routing_method:
             description:
                 - The traffic routing method of the Traffic Manager profile.
+            returned: always
             type: str
             sample: performance
         dns_config:
             description:
                 - The DNS settings of the Traffic Manager profile.
+            returned: always
             type: complex
-            sample:
-                relative_name: testTm
-                fqdn: testTm.trafficmanager.net
-                ttl: 60
+            contains:
+                relative_name:
+                    description:
+                        - The relative DNS name provided by the Traffic Manager profile.
+                    returned: always
+                    type: str
+                    sample: testTm
+                fqdn:
+                    description:
+                        - The fully-qualified domain name(FQDN) of the Traffic Manager profile.
+                    returned: always
+                    type: str
+                    sample: testTm.trafficmanager.net
+                ttl:
+                    description:
+                        - The DNS Time-To-Live(TTL), in seconds.
+                    returned: always
+                    type: int
+                    sample: 60
         monitor_config:
             description:
                 - The endpoint monitoring settings of the Traffic Manager profile.
+            returned: always
             type: complex
             contains:
                 protocol:
                     description:
-                        - The protocol (HTTP, HTTPS or TCP) used to probe for endpoint health.
+                        - The protocol C(HTTP), C(HTTPS) or C(TCP) used to probe for endpoint health.
+                    returned: always
                     type: str
                     sample: HTTP
                 port:
                     description:
                         - The TCP port used to probe for endpoint health.
+                    returned: always
                     type: int
                     sample: 80
                 path:
                     description:
                         - The path relative to the endpoint domain name used to probe for endpoint health.
+                    returned: always
                     type: str
                     sample: /
                 interval:
                     description:
                         - The monitor interval for endpoints in this profile in seconds.
+                    returned: always
                     type: int
                     sample: 10
                 timeout:
                     description:
                         - The monitor timeout for endpoints in this profile in seconds.
+                    returned: always
                     type: int
                     sample: 30
                 tolerated_failures:
                     description:
                         - The number of consecutive failed health check before declaring an endpoint Degraded after the next failed health check.
+                    returned: always
                     type: int
                     sample: 3
         endpoints:
             description:
                 - The list of endpoints in the Traffic Manager profile.
-            type: list
-            element: complex
+            returned: always
+            type: complex
             contains:
                 id:
                     description:
-                        - Fully qualified resource Id for the resource.
+                        - Fully qualified resource ID for the resource.
+                    returned: always
                     type: str
                     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/trafficMan
                              agerProfiles/tmtest/externalEndpoints/e1"
                 name:
                     description:
                         - The name of the endpoint.
+                    returned: always
                     type: str
                     sample: e1
                 type:
                     description:
                         - The type of the endpoint.
+                    returned: always
                     type: str
                     sample: external_endpoints
                 target_resource_id:
                     description:
                         - The Azure Resource URI of the of the endpoint.
+                    returned: always
                     type: str
                     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ClassicCompute/dom
                              ainNames/vscjavaci"
                 target:
                     description:
                         - The fully-qualified DNS name of the endpoint.
+                    returned: always
                     type: str
                     sample: 8.8.8.8
                 status:
                     description:
                         - The status of the endpoint.
+                    returned: always
                     type: str
                     sample: Enabled
                 weight:
                     description:
-                        - The weight of this endpoint when the profile has routing_method C(weighted).
+                        - The weight of this endpoint when the profile has I(routing_method=weighted).
+                    returned: always
                     type: int
                     sample: 10
                 priority:
                     description:
-                        - The priority of this endpoint when the profile has routing_method C(priority).
+                        - The priority of this endpoint when the profile has I(routing_method=priority).
+                    returned: always
                     type: str
                     sample: 3
                 location:
                     description:
-                        - The location of endpoints when type is C(external_endpoints) or C(nested_endpoints), and profile routing_method is (performance).
+                        - The location of endpoints when I(type=external_endpoints) or I(type=nested_endpoints), and profile I(routing_method=performance).
+                    returned: always
                     type: str
                     sample: East US
                 min_child_endpoints:
                     description:
                         - The minimum number of endpoints that must be available in the child profile to make the parent profile available.
+                    returned: always
                     type: int
                     sample: 3
                 geo_mapping:
                     description:
                         - The list of countries/regions mapped to this endpoint when the profile has routing_method C(geographic).
+                    returned: always
                     type: list
                     sample: [
                         "GEO-NA",
