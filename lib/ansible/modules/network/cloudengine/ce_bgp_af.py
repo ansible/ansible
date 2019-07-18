@@ -206,7 +206,7 @@ options:
         description:
             - If the value is true, BGP deterministic-MED is enabled.
               If the value is false, BGP deterministic-MED is disabled.
-        type: str 
+        type: str
         choices: ['no_use','true','false']
         default: no_use
     preference_external:
