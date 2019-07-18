@@ -297,7 +297,7 @@ class MavenDownloader:
         self.base = base
         self.local = local
         self.headers = headers
-        self.user_agent = "Maven Artifact Downloader/1.0"
+        self.user_agent = "Ansible {0} maven_artifact".format(self.module.ansible_version)
         self.latest_version_found = None
         self.metadata_file_name = "maven-metadata-local.xml" if local else "maven-metadata.xml"
 
@@ -380,7 +380,7 @@ class MavenDownloader:
         # Hack to add parameters in the way that fetch_url expects
         self.module.params['url_username'] = self.module.params.get('username', '')
         self.module.params['url_password'] = self.module.params.get('password', '')
-        self.module.params['http_agent'] = self.module.params.get('user_agent', None)
+        self.module.params['http_agent'] = self.user_agent
 
         response, info = fetch_url(self.module, url_to_use, timeout=req_timeout, headers=self.headers)
         if info['status'] == 200:
