@@ -21,6 +21,36 @@ Playbook
 
  * ``hash_behaviour`` now affects inventory sources. If you have it set to ``merge``, the data you get from inventory might change and you will have to update playbooks accordingly. If you're using the default setting (``overwrite``), you will see no changes. Inventory was ignoring this setting.
 
+Tags on handlers
+----------------
+
+In Ansible 2.9, handlers respect tags and thus can be controller by ``--tags`` and ``--skip-tags`` CLI parameters::
+
+    - hosts: all
+      tasks:
+        - name: Task notifying a handler
+          command: "true"
+          tags:
+            - tasks
+          notify:
+            - tagged_handler
+       handlers:
+         - name: tagged_handler
+           debug:
+             msg: This is a handler controller by a tag
+           tags:
+             - handlers
+
+Running the following will skip running the handler even though the task has notified it::
+
+    ansible-playbook --skip-tags handlers playbook.yml
+
+
+In Ansible 2.8 tags on handlers are ignored. The following will result in handlers being run in 2.8, whereas in 2.9, handlers will be skipped::
+    ansible-playbook --tags tasks handlers playbook.yml
+
+To restore the old behavior in Ansible 2.9 set ``HANDLERS_TAGS_SUPPORT`` to ``False```.
+
 
 Command Line
 ============

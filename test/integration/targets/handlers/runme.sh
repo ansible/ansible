@@ -84,3 +84,14 @@ result="$(ansible-playbook test_handlers_template_run_once.yml -i inventory.hand
 set -e
 grep -q "handler A" <<< "$result"
 grep -q "handler B" <<< "$result"
+
+# Test using tags on handlers
+[ "$(ANSIBLE_HANDLERS_TAGS_SUPPORT=0 ansible-playbook test_handlers_tags.yml -i inventory.handlers -v "$@" --tags tasks \
+| egrep -o 'RUNNING HANDLER \[.*?]')" = "RUNNING HANDLER [debug_handler]" ]
+
+[ "$(ANSIBLE_HANDLERS_TAGS_SUPPORT=1 ansible-playbook test_handlers_tags.yml -i inventory.handlers -v "$@" --tags tasks,handlers \
+| egrep -o 'RUNNING HANDLER \[.*?]')" = "RUNNING HANDLER [debug_handler]" ]
+
+ANSIBLE_HANDLERS_TAGS_SUPPORT=1 ansible-playbook test_handlers_tags.yml -i inventory.handlers -v "$@" --tags tasks | grep -v "RUNNING HANDLER [debug_handler]"
+
+ANSIBLE_HANDLERS_TAGS_SUPPORT=1 ansible-playbook test_handlers_tags.yml -i inventory.handlers -v "$@" --skip-tags handlers | grep -v "RUNNING HANDLER [debug_handler]"

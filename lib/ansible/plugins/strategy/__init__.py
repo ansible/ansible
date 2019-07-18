@@ -857,7 +857,14 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 if handler.notified_hosts:
+                    handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler)
+                    if C.HANDLERS_TAGS_SUPPORT:
+                        if not ((handler.action == 'include' and handler.evaluate_tags([], iterator._play.skip_tags, all_vars=handler_vars))
+                                or handler.evaluate_tags(iterator._play.only_tags, iterator._play.skip_tags, all_vars=handler_vars)):
+                            continue
+
                     result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+
                     if not result:
                         break
         return result

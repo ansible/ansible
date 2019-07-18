@@ -1348,6 +1348,15 @@ GALAXY_TOKEN:
   ini:
   - {key: token, section: galaxy}
   yaml: {key: galaxy.token}
+HANDLERS_TAGS_SUPPORT:
+  name: Handlers respect tags
+  default: True
+  description: 'Set this to "False" if you want to avoid handlers respecting tags; the default behavior in Ansible 2.8 and older.'
+  env: [{name: ANSIBLE_HANDLERS_TAGS_SUPPORT}]
+  ini:
+  - {key: handlers_tags_support, section: defaults}
+  type: boolean
+  version_added: "2.9"
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True

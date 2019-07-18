@@ -1,0 +1,15 @@
+- hosts: A
+  gather_facts: false
+  connection: local
+  handlers:
+    - name: debug_handler
+      debug:
+        msg: handler
+      tags:
+        - handlers
+  tasks:
+    - command: "true"
+      notify:
+        - debug_handler
+      tags:
+        - tasks
