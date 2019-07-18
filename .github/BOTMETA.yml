@@ -1098,6 +1098,10 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/kubectl.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   $plugins/connection/lxd.py:
     maintainers: mattclay
   $plugins/connection/netconf.py:
