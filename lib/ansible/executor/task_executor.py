@@ -416,8 +416,8 @@ class TaskExecutor:
                     'connection': self._connection._load_name,
                     'shell': self._connection._shell._load_name
                 }
-                if self._play_context.become:
-                    clear_plugins['become'] = self._get_become(self._play_context.become_method)._load_name
+                if self._connection.become:
+                    clear_plugins['become'] = self._connection.become._load_name
 
                 for plugin_type, plugin_name in iteritems(clear_plugins):
                     for var in C.config.get_plugin_vars(plugin_type, plugin_name):
