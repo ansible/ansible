@@ -433,7 +433,7 @@ class GalaxyCLI(CLI):
 
             inject_data.update(dict(
                 namespace=namespace,
-                name=collection_name,
+                collection_name=collection_name,
                 version='1.0.0',
                 readme='README.md',
                 authors=['your name <example@domain.com>'],
@@ -464,7 +464,6 @@ class GalaxyCLI(CLI):
             own_skeleton = True
             obj_skeleton = self.galaxy.default_role_skeleton_path
             skeleton_ignore_expressions = ['^.*/.git_keep$']
-            create_meta = galaxy_type == 'collection'
 
         obj_skeleton = os.path.expanduser(obj_skeleton)
         skeleton_ignore_re = [re.compile(x) for x in skeleton_ignore_expressions]
@@ -497,10 +496,16 @@ class GalaxyCLI(CLI):
 
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
                     continue
-                elif own_skeleton and rel_root == '.' and f == 'galaxy.yml.j2':
+                elif galaxy_type == 'collection' and own_skeleton and rel_root == '.' and f == 'galaxy.yml.j2':
                     # Special use case for galaxy.yml.j2 in our own default collection skeleton. We build the options
                     # dynamically which requires special options to be set.
-                    meta_value = GalaxyCLI._get_skeleton_galaxy_yml(os.path.join(root, rel_root, f), inject_data)
+
+                    # The templated data's keys must match the key name but the inject data contains collection_name
+                    # instead of name. We just make a copy and change the key back to name for this file.
+                    template_data = inject_data.copy()
+                    template_data['name'] = template_data.pop('collection_name')
+
+                    meta_value = GalaxyCLI._get_skeleton_galaxy_yml(os.path.join(root, rel_root, f), template_data)
                     b_dest_file = to_bytes(os.path.join(obj_path, rel_root, filename), errors='surrogate_or_strict')
                     with open(b_dest_file, 'wb') as galaxy_obj:
                         galaxy_obj.write(to_bytes(meta_value, errors='surrogate_or_strict'))

@@ -38,7 +38,7 @@ class DocumentCollectionMeta(Command):
                             help="directory containing Jinja2 templates")
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/',
                             help="Output directory for rst files")
-        parser.add_argument("-d", "--docs-source", action="store", dest="docs", default=None,
+        parser.add_argument("-d", "--docs-source", action="store", dest="docs", required=True,
                             help="Source for attribute docs")
 
     @staticmethod

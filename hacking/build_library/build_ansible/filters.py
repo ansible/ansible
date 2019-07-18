@@ -6,7 +6,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-from jinja2.runtime import Undefined
 
 try:
     from html import escape as html_escape
@@ -16,6 +15,8 @@ except ImportError:
 
     def html_escape(text, quote=True):
         return cgi.escape(text, quote)
+
+from jinja2.runtime import Undefined
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
