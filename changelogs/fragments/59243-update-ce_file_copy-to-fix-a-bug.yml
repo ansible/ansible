@@ -1,0 +1,2 @@
+bugfixes:
+- Using neconf API to send cli commands is a bug, now fix it(https://github.com/ansible/ansible/pull/59071)
