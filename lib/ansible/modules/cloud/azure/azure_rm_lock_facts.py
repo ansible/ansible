@@ -31,7 +31,7 @@ options:
             - ID of the resource where need to manage the lock.
             - Get this via facts module.
             - Cannot be set mutal with I(resource_group).
-            - Manage subscription if both I(managed_managed_resource_id) and I(resource_group) not defined.
+            - Manage subscription if both I(managed_resource_id) and I(resource_group) not defined.
             - "'/subscriptions/{subscriptionId}' for subscriptions."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups."
             - "'/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{namespace}/{resourceType}/{resourceName}' for resources."
@@ -43,7 +43,7 @@ options:
             - The lock is in the resource group level.
             - Cannot be set mutal with I(managed_resource_id).
             - Query subscription if both I(managed_resource_id) and I(resource_group) not defined.
-            - Can get all locks with 'child scope' in this I(resource_group), use the I(managed_resource_id) in response for further management.
+            - Can get all locks with 'child scope' in this resource group, use the I(managed_resource_id) in response for further management.
         type: str
 
 extends_documentation_fragment:
