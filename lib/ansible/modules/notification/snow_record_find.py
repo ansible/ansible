@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -227,6 +229,7 @@ def run_module():
 
     # Connect to ServiceNow
     service_now_client = ServiceNowClient(module)
+    service_now_client.login()
     conn = service_now_client.conn
 
     params = module.params
