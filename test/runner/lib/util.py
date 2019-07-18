@@ -452,7 +452,7 @@ def remove_tree(path):
     :type path: str
     """
     try:
-        shutil.rmtree(path)
+        shutil.rmtree(to_bytes(path))
     except OSError as ex:
         if ex.errno != errno.ENOENT:
             raise
@@ -463,7 +463,7 @@ def make_dirs(path):
     :type path: str
     """
     try:
-        os.makedirs(path)
+        os.makedirs(to_bytes(path))
     except OSError as ex:
         if ex.errno != errno.EEXIST:
             raise

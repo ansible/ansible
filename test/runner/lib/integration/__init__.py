@@ -29,6 +29,7 @@ from lib.util import (
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
     INSTALL_ROOT,
+    to_bytes,
 )
 
 from lib.util_common import (
@@ -219,7 +220,7 @@ def integration_test_environment(args, target, inventory_path):
             display.info('Copying %s/ to %s/' % (dir_src, dir_dst), verbosity=2)
 
             if not args.explain:
-                shutil.copytree(dir_src, dir_dst, symlinks=True)
+                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)
 
         for file_src, file_dst in file_copies:
             display.info('Copying %s to %s' % (file_src, file_dst), verbosity=2)
