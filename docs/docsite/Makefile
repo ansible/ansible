@@ -76,7 +76,7 @@ clean:
 	rm -f rst/plugins/*/*.rst
 	rm -f rst/reference_appendices/config.rst
 	rm -f rst/reference_appendices/playbooks_keywords.rst
-	rm -f rst/collections/collections_galaxy_meta.rst
+	rm -f rst/dev_guide/collections_galaxy_meta.rst
 
 .PHONY: docs clean
 
