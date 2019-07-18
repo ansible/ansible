@@ -163,14 +163,17 @@ notes:
 options:
   api_username:
     required: true
+    type: str
     description:
     - The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
   api_password:
     required: true
+    type: str
     description:
     - The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
   api_url:
     required: true
+    type: str
     description:
     - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
       Example https://prod-1.wahoo.acme.com/devmgr/v2
@@ -182,7 +185,8 @@ options:
     type: bool
   ssid:
     required: false
-    default: 1
+    default: "1"
+    type: str
     description:
     - The ID of the array to manage. This value must be unique for each array.
 
