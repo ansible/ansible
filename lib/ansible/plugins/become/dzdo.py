@@ -25,7 +25,7 @@ DOCUMENTATION = """
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_DZDO_USER
         become_exe:
-            description: Sudo executable
+            description: Dzdo executable
             default: dzdo
             ini:
               - section: privilege_escalation
@@ -87,8 +87,8 @@ class BecomeModule(BecomeBase):
 
         flags = self.get_option('become_flags') or ''
         if self.get_option('become_pass'):
-            self._prompt = '[dzdo via ansible, key=%s] password:' % self._id
-            flags = '%s -p "%s"' % (flags.replace('-n', ''), self._prompt)
+            self.prompt = '[dzdo via ansible, key=%s] password:' % self._id
+            flags = '%s -p "%s"' % (flags.replace('-n', ''), self.prompt)
 
         user = self.get_option('become_user') or ''
         if user:
