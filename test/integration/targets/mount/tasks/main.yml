@@ -320,7 +320,7 @@
 
     - name: Fail if they are the same
       fail:
-        msg: "Filesytem was not remounted, testing of module failed!"
+        msg: "Filesytem was not remounted, testing of the module failed!"
       when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout and ansible_system in ('Linux')
   always:
     - name: Umount the test FS
