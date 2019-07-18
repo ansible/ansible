@@ -24,14 +24,17 @@ options:
     resource_group:
         description:
             - Name of resource group.
+        type: str
         required: true
     name:
         description:
             - Name of the automation account.
+        type: str
         required: true
     state:
         description:
-            - Assert the state of the automation account. Use C(present) to create or update a automation account and C(absent) to delete an automation account.
+            - State of the automation account. Use C(present) to create or update a automation account and C(absent) to delete an automation account.
+        type: str
         default: present
         choices:
             - absent
@@ -39,14 +42,15 @@ options:
     location:
         description:
             - Location of the resource.
-            - If not specified, use C(resource_group) location.
+            - If not specified, use I(resource_group) location.
+        type: str
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -65,7 +69,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Automation account resource path.
+    description:
+        - Automation account resource path.
     type: str
     returned: success
     example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing"

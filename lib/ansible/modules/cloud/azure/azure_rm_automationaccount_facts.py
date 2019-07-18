@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_automationaccount_facts
 version_added: '2.9'
-short_description: Get Azure automation account facts.
+short_description: Get Azure automation account facts
 description:
     - Get facts of automation account.
 
@@ -25,34 +25,37 @@ options:
     resource_group:
         description:
             - The name of the resource group.
+        type: str
         required: True
     name:
         description:
             - The name of the automation account.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
     list_statistics:
         description:
             - List statistics details for a automation account.
-            - Note this will cost network overhead, suggest only used when C(name) set.
+            - Note this will cost network overhead, suggest only used when I(name) set.
         type: bool
     list_usages:
         description:
             - List usage details for a automation account.
-            - Note this will cost network overhead, suggest only used when C(name) set.
+            - Note this will cost network overhead, suggest only used when I(name) set.
         type: bool
     list_keys:
         description:
             - List keys for a automation account.
-            - Note this will cost network overhead, suggest only used when C(name) set.
+            - Note this will cost network overhead, suggest only used when I(name) set.
         type: bool
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - 'Yuwei Zhou (@yuwzho)'
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -75,137 +78,163 @@ EXAMPLES = '''
 
 RETURN = '''
 automation_accounts:
-    description: List of automation account  dicts.
+    description:
+        - List of automation account dicts.
     returned: always
-    type: list
+    type: complex
     contains:
         id:
             description:
-                - Resource id.
+                - Resource ID.
             type: str
+            returned: always
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
                      /myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing"
         resource_group:
             description:
                 - Resource group name.
             type: str
+            returned: always
             sample: myResourceGroup
         name:
             description:
                 - Resource name.
             type: str
+            returned: always
             sample: Testing
         location:
             description:
                 - Resource location.
             type: str
+            returned: always
             sample: eastus
         creation_time:
             description:
                 - Resource creation date time.
             type: str
+            returned: always
             sample: "2019-04-26T02:55:16.500Z"
         last_modified_time:
             description:
                 - Resource last modified date time.
             type: str
+            returned: always
             sample: "2019-04-26T02:55:16.500Z"
         state:
             description:
                 - Resource state.
             type: str
+            returned: always
             sample: ok
         keys:
             description:
                 - Resource keys.
-            type: lsit
+            type: complex
+            returned: always
             contains:
                 key_name:
                     description:
                         - Name of the key.
                     type: str
+                    returned: always
                     sample: Primary
                 permissions:
                     description:
                         - Permission of the key.
                     type: str
+                    returned: always
                     sample: Full
                 value:
                     description:
                         - Value of the key.
                     type: str
+                    returned: always
                     sample: "MbepKTO6IyGwml0GaKBkKN"
         statistics:
             description:
                 - Resource statistics.
-            type: list
+            type: complex
+            returned: always
             contains:
                 counter_property:
                     description:
                         - Property value of the statistic.
                     type: str
+                    returned: always
                     sample: New
                 counter_value:
                     description:
                         - Value of the statistic.
                     type: int
+                    returned: always
                     sample: 0
                 end_time:
                     description:
                         - EndTime of the statistic.
                     type: str
+                    returned: always
                     sample: "2019-04-26T06:29:43.587518Z"
                 id:
                     description:
-                        - Id of the statistic.
+                        - ID of the statistic.
                     type: str
+                    returned: always
                     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
                              /myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing/statistics/New"
                 start_time:
                     description:
                         - StartTime of the statistic.
                     type: str
+                    returned: always
                     sample: "2019-04-26T06:29:43.587518Z"
         usages:
             description:
                 - Resource usages.
-            type: list
+            type: complex
+            returned: always
             contains:
                 current_value:
                     description:
                         - Current usage.
                     type: float
+                    returned: always
                     sample: 0.0
                 limit:
                     description:
                         - Max limit.
-                        - "-1 for unlimited"
+                        - "-1 for unlimited".
                     type: long
+                    returned: always
                     sample: -1
                 name:
                     description:
                         - Usage counter name.
                     type: complex
+                    returned: always
                     contains:
                         localized_value:
                             description:
                                 - Localized name.
                             type: str
+                            returned: always
                             sample: "SubscriptionUsage"
                         value:
                             description:
                                 - Name value.
                             type: str
+                            returned: always
                             sample: "SubscriptionUsage"
                 unit:
                     description:
                         - Usage unit name.
                     type: str
+                    returned: always
                     sample: "Minute"
                 throttle_status:
                     description:
                         - Usage throttle status.
                     type: str
+                    returned: always
                     sample: "NotThrottled"
 
 '''
