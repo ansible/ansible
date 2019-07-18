@@ -113,8 +113,13 @@ def main():
 
         try:
             args.func(config)
+            delegate_args = None
         except Delegate as ex:
-            delegate(config, ex.exclude, ex.require, ex.integration_targets)
+            # save delegation args for use once we exit the exception handler
+            delegate_args = (ex.exclude, ex.require, ex.integration_targets)
+
+        if delegate_args:
+            delegate(config, *delegate_args)
 
         display.review_warnings()
     except ApplicationWarning as ex:
