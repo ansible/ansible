@@ -52,7 +52,7 @@ golden image build process and runtime.
 
 Place the following near the end of your playbook, bearing in mind the factors that can cause native images to be invalidated (`see MSDN <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#native-images-and-jit-compilation>`_).
 
-.. code-block:: powershell
+.. code-block:: yaml
 
     - name: generate native .NET images for CPU
       win_dotnet_ngen: {}
