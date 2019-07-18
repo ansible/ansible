@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2019, Ansible Project
 # Copyright: (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
@@ -87,7 +88,7 @@ class ServiceNowClient(object):
     def snow_argument_spec():
         return dict(
             instance=dict(type='str', required=True),
-            username=dict(type='str', required=True, no_log=True),
+            username=dict(type='str', required=True),
             password=dict(type='str', required=True, no_log=True),
             client_id=dict(type='str', no_log=True),
             client_secret=dict(type='str', no_log=True),
