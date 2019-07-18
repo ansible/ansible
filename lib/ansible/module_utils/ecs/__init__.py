@@ -32,14 +32,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os
 import re
 import time
-import json
+import traceback
 
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.urls import Request
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import Request
 
 YAML_IMP_ERR = None
 try:
@@ -101,10 +103,13 @@ def bind(instance, method, operation_spec):
 
 
 class RestOperation(object):
-    def __init__(self, session, uri, method, parameters={}):
+    def __init__(self, session, uri, method, parameters=None):
         self.session = session
         self.method = method
-        self.parameters = parameters
+        if parameters is None:
+            self.parameters = {}
+        else:
+            self.parameters = parameters
         self.url = '{scheme}://{host}{base_path}{uri}'.format(
             scheme='https',
             host=session._spec.get('host'),
@@ -296,7 +301,7 @@ class Session(object):
             with open(entrust_api_specification_path) as f:
                 if('.json' in entrust_api_specification_path):
                     self._spec = json.load(f)
-                elif('.yml' in entrust_api_specification_path or '.yaml' in entrust_api_specification_path_path):
+                elif('.yml' in entrust_api_specification_path or '.yaml' in entrust_api_specification_path):
                     self._spec = yaml.load(f, Loader=yaml.SafeLoader)
 
     def get_config(self, item):

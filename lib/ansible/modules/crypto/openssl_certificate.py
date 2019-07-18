@@ -375,46 +375,54 @@ options:
         version_added: "2.8"
 
     entrust_cert_type:
+        description:
+            - The type of certificate product to request.
+        type: str
         default: STANDARD_SSL
         choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING',
         'CDS_INDIVIDUAL', 'CDS_GROUP', 'CDS_ENT_LITE', 'CDS_ENT_PRO', 'SMIME_ENT' ]
-        description:
-            - The type of certificate product to request.
         version_added: "2.9"
 
     entrust_requester_email:
         description:
             - The email of the requester of the certificate (for tracking purposes).
+        type: str
         version_added: "2.9"
 
     entrust_requester_name:
         description:
             - The name of the requester of the certificate (for tracking purposes).
+        type: str
         version_added: "2.9"
 
     entrust_requester_phone:
         description:
             - The phone number of the requester of the certificate (for tracking purposes).
+        type: str
         version_added: "2.9"
 
     entrust_api_user:
         description:
             - The username for authentication to the Entrust ECS API.
+        type: str
         version_added: "2.9"
 
     entrust_api_key:
         description:
             - The key (password) for authentication to the Entrust ECS API.
+        type: str
         version_added: "2.9"
 
     entrust_api_client_cert_path:
         description:
             - The path of the client certificate used to authenticate to the Entrust ECS API.
+        type: path
         version_added: "2.9"
 
     entrust_api_client_cert_key_path:
         description:
             - The path of the key for the client certificate used to authenticate to the Entrust ECS API
+        type: path
         version_added: "2.9"
 
     entrust_reissue_if_expires_in:
@@ -437,28 +445,31 @@ options:
             - If this value is not specified, the certificate will stop being valid 365 days from now.
         type: str
         default: +365d
+        version_added: "2.9"
 
     entrust_eku:
-        default: SERVER_AND_CLIENT_AUTH
-        choices: ['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']
         description:
             - The extended key usage requested for the certificate.
+        choices: ['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']
+        type: str
+        default: SERVER_AND_CLIENT_AUTH
         version_added: "2.9"
 
     entrust_api_specification_path:
-        type: path
-        default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
         description:
             - Path to the specification file defining the Entrust ECS api.
             - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
+        type: path
+        default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
+        version_added: "2.9"
 
     validate_ocsp:
-        type: bool
-        default: no
         description:
             - This is currently supported only  when provider is entrust.
             - If set to True, this module will perform an OCSP check on a certificate before indicating that the state is present and certificate is valid.
             - If OCSP validation is not required, leave this as False and OCSP will not be checked.
+        type: bool
+        default: no
         version_added: "2.9"
 
     validate_ocsp_timeout:
