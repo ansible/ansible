@@ -74,7 +74,8 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
-      - C(remounted) specifies that the device will be remounted for when you want to force a refresh on the mount itself (option added in 2.9).
+      - C(remounted) specifies that the device will be remounted for when you 
+        want to force a refresh on the mount itself (option added in 2.9).
     type: str
     required: true
     choices: [ absent, mounted, present, unmounted, remounted ]
