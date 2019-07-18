@@ -160,9 +160,6 @@ def integration_test_environment(args, target, inventory_path):
         display.warning('Disabling unicode in the temp work dir is a temporary debugging feature that may be removed in the future without notice.')
         suffix = '-ansible'
 
-    if isinstance('', bytes):
-        suffix = suffix.encode('utf-8')
-
     if args.explain:
         temp_dir = os.path.join(root_temp_dir, '%stemp%s' % (prefix, suffix))
     else:

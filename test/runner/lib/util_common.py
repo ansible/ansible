@@ -21,6 +21,7 @@ from lib.util import (
     MODE_FILE_EXECUTE,
     PYTHON_PATHS,
     raw_command,
+    to_bytes,
 )
 
 
@@ -56,14 +57,11 @@ def named_temporary_file(args, prefix, suffix, directory, content):
     :param content: str | bytes | unicode
     :rtype: str
     """
-    if not isinstance(content, bytes):
-        content = content.encode('utf-8')
-
     if args.explain:
         yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
     else:
         with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
-            tempfile_fd.write(content)
+            tempfile_fd.write(to_bytes(content))
             tempfile_fd.flush()
 
             yield tempfile_fd.name

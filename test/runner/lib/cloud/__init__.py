@@ -22,6 +22,7 @@ from lib.util import (
     import_plugins,
     load_plugins,
     ABC,
+    to_bytes,
 )
 
 from lib.target import (
@@ -351,7 +352,7 @@ class CloudProvider(CloudBase):
 
             display.info('>>> Config: %s\n%s' % (filename, content.strip()), verbosity=3)
 
-            config_fd.write(content.encode('utf-8'))
+            config_fd.write(to_bytes(content))
             config_fd.flush()
 
     def _read_config_template(self):

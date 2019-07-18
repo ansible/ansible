@@ -22,6 +22,7 @@ from lib.util import (
     make_dirs,
     display,
     is_shippable,
+    to_text,
 )
 
 from lib.util_common import (
@@ -347,7 +348,7 @@ class AnsibleCoreCI:
 
         if self.platform == 'windows':
             with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'rb') as winrm_config_fd:
-                winrm_config = winrm_config_fd.read().decode('utf-8')
+                winrm_config = to_text(winrm_config_fd.read())
         else:
             winrm_config = None
 

@@ -9,6 +9,7 @@ import os
 from lib.util import (
     display,
     make_dirs,
+    to_bytes,
 )
 
 from lib.config import (
@@ -153,7 +154,7 @@ class TestResult:
             return
 
         with open(path, 'wb') as xml:
-            xml.write(report.encode('utf-8', 'strict'))
+            xml.write(to_bytes(report))
 
 
 class TestTimeout(TestResult):

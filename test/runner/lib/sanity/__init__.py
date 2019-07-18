@@ -299,10 +299,6 @@ class SanityCodeSmellTest(SanityTest):
             if always:
                 paths = []
 
-            # short-term work-around for paths being str instead of unicode on python 2.x
-            if sys.version_info[0] == 2:
-                paths = [p.decode('utf-8') for p in paths]
-
             if text is not None:
                 if text:
                     paths = [p for p in paths if not is_binary_file(p)]

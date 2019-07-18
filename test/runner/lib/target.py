@@ -15,6 +15,7 @@ from lib.util import (
     display,
     read_lines_without_comments,
     is_subdir,
+    to_text,
 )
 
 from lib.data import (
@@ -32,8 +33,6 @@ def find_target_completion(target_func, prefix):
     """
     try:
         targets = target_func()
-        if sys.version_info[0] == 2:
-            prefix = prefix.encode()
         short = os.environ.get('COMP_TYPE') == '63'  # double tab completion from bash
         matches = walk_completion_targets(targets, prefix, short)
         return matches
@@ -336,7 +335,7 @@ def analyze_integration_target_dependencies(integration_targets):
                 with open(meta_path, 'rb') as meta_fd:
                     # try and decode the file as a utf-8 string, skip if it contains invalid chars (binary file)
                     try:
-                        meta_lines = meta_fd.read().decode('utf-8').splitlines()
+                        meta_lines = to_text(meta_fd.read()).splitlines()
                     except UnicodeDecodeError:
                         continue
 
