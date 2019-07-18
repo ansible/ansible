@@ -76,6 +76,7 @@ options:
         point.
       - C(remounted) specifies that the device will be remounted for when you 
         want to force a refresh on the mount itself (added in 2.9).
+        Note this will always returned changed=true.
     type: str
     required: true
     choices: [ absent, mounted, present, unmounted, remounted ]
