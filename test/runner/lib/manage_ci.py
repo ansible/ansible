@@ -242,7 +242,7 @@ class ManagePosixCI:
                 pwd = stdout.strip().splitlines()[-1]
 
                 if not pwd.startswith('/'):
-                    raise Exception('Unexpected current working directory "%s" from "pwd" command output:\n%s' % stdout)
+                    raise Exception('Unexpected current working directory "%s" from "pwd" command output:\n%s' % (pwd, stdout))
 
                 return pwd
             except SubprocessError:
