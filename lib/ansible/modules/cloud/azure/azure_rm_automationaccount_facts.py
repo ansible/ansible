@@ -201,8 +201,7 @@ automation_accounts:
                     sample: 0.0
                 limit:
                     description:
-                        - Max limit.
-                        - "-1 for unlimited".
+                        - Max limit, C(-1) for unlimited.
                     type: long
                     returned: always
                     sample: -1
