@@ -168,6 +168,28 @@ class NetAppModule(object):
         '''
         pass
 
+    @staticmethod
+    def compare_lists(current, desired, get_list_diff):
+        ''' compares two lists and return a list of elements that are either the desired elements or elements that are modified from the current state
+        depending on the get_list_diff flag
+            :param: current: current item attribute in ONTAP
+            :param: desired: attributes from playbook
+            :param: get_list_diff: specifies whether to have a diff of desired list w.r.t current list for an attribute
+            :return: list of attributes to be modified
+            :rtype: list
+        '''
+        desired_diff_list = [item for item in desired if item not in current]  # get what in desired and not in current
+        current_diff_list = [item for item in current if item not in desired]  # get what in current but not in desired
+
+        if desired_diff_list or current_diff_list:
+            # there are changes
+            if get_list_diff:
+                return desired_diff_list
+            else:
+                return desired
+        else:
+            return []
+
     def get_modified_attributes(self, current, desired, get_list_diff=False):
         ''' takes two dicts of attributes and return a dict of attributes that are
             not in the current state
@@ -195,13 +217,11 @@ class NetAppModule(object):
         for key, value in current.items():
             if key in desired and desired[key] is not None:
                 if type(value) is list:
-                    value.sort()
-                    desired[key].sort()
-                if cmp(value, desired[key]) != 0:
-                    if not get_list_diff:
-                        modified[key] = desired[key]
-                    else:
-                        modified[key] = [item for item in desired[key] if item not in value]
+                    modified_list = self.compare_lists(value, desired[key], get_list_diff)  # get modified list from current and desired
+                    if modified_list:
+                        modified[key] = modified_list
+                elif cmp(value, desired[key]) != 0:
+                    modified[key] = desired[key]
         if modified:
             self.changed = True
         return modified

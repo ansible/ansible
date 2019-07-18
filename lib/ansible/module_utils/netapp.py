@@ -117,7 +117,8 @@ def na_ontap_host_argument_spec():
         https=dict(required=False, type='bool', default=False),
         validate_certs=dict(required=False, type='bool', default=True),
         http_port=dict(required=False, type='int'),
-        ontapi=dict(required=False, type='int')
+        ontapi=dict(required=False, type='int'),
+        use_rest=dict(required=False, type='str', default='Auto', choices=['Never', 'Always', 'Auto'])
     )
 
 
@@ -542,6 +543,7 @@ class OntapRestAPI(object):
         self.username = self.module.params['username']
         self.password = self.module.params['password']
         self.hostname = self.module.params['hostname']
+        self.use_rest = self.module.params['use_rest']
         self.verify = self.module.params['validate_certs']
         self.timeout = timeout
         self.url = 'https://' + self.hostname + '/api/'
@@ -615,6 +617,10 @@ class OntapRestAPI(object):
         return self.send_request(method, api, params, json=data)
 
     def is_rest(self):
+        if self.use_rest == "Always":
+            return True
+        if self.use_rest == 'Never':
+            return False
         method = 'HEAD'
         api = 'cluster/software'
         status_code, junk = self.send_request(method, api, params=None, return_status_code=True)
