@@ -55,10 +55,12 @@ options:
     description:
     - Cloud Storage bucket name.
     required: true
+    type: str
   cdn_policy:
     description:
     - Cloud CDN configuration for this Backend Bucket.
     required: false
+    type: dict
     version_added: 2.8
     suboptions:
       signed_url_cache_max_age_sec:
@@ -72,11 +74,13 @@ options:
           The actual headers served in responses will not be altered.'
         required: false
         default: '3600'
+        type: int
   description:
     description:
     - An optional textual description of the resource; provided by the client when
       the resource is created.
     required: false
+    type: str
   enable_cdn:
     description:
     - If true, enable Cloud CDN for this BackendBucket.
@@ -91,6 +95,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/backendBuckets)'
