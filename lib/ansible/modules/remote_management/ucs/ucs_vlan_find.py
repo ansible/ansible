@@ -11,6 +11,7 @@ module: ucs_vlan_find
 short_description: Find VLANs on Cisco UCS Manager
 description:
 - Find VLANs on Cisco UCS Manager based on different criteria.
+extends_documentation_fragment: ucs
 options:
   pattern:
     description:
