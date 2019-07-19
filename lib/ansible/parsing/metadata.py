@@ -167,7 +167,7 @@ def extract_metadata(module_ast=None, module_data=None, offsets=False):
         column the metadata starts on, line the metadata ends on, column the
         metadata ends on, and the names the metadata is assigned to.  One of
         the names the metadata is assigned to will be ANSIBLE_METADATA.  If no
-        metadata is found, the tuple will be (None, -1, -1, -1, -1, None).
+        metadata is found, the tuple will be (``DEFAULT_METADATA``, -1, -1, -1, -1, None).
         If ``offsets`` is False then the tuple will consist of
         (metadata, -1, -1, -1, -1, None).
     :raises ansible.parsing.metadata.ParseError: if ``module_data`` does not parse
@@ -241,5 +241,8 @@ def extract_metadata(module_ast=None, module_data=None, offsets=False):
         if metadata is not None:
             # Once we've found the metadata we're done
             break
+
+    if not metadata:
+        metadata = DEFAULT_METADATA
 
     return metadata, start_line, start_col, end_line, end_col, targets

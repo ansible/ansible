@@ -26,6 +26,8 @@ import pytest
 
 from ansible.parsing import metadata as md
 
+# Tuple returned when module_ast/module_data kwarg does not contein ANSIBLE_METADATA:
+DEF_METADATA_RET_TUPLE = (md.DEFAULT_METADATA, -1, -1, -1, -1, None)
 
 LICENSE = b"""# some license text boilerplate
 # That we have at the top of files
@@ -237,3 +239,9 @@ def test_multiple_statements_limitation():
     with pytest.raises(md.ParseError, match='Multiple statements per line confuses the module metadata parser.'):
         assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1"}; a=b\n' + REGULAR_IMPORTS,
                                    offsets=True)
+
+@pytest.mark.parametrize("offsets", [True, False])
+def test_module_data_without_metadata(offsets):
+    assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS, offsets=offsets) == DEF_METADATA_RET_TUPLE
+    assert md.extract_metadata(module_ast=ast.parse(LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS),
+                               module_data=LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS, offsets=offsets) == DEF_METADATA_RET_TUPLE
