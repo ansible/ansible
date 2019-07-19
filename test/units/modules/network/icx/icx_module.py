@@ -40,8 +40,8 @@ class TestICXModule(ModuleTestCase):
     def get_running_config(self, compare=None):
         if compare is not None:
             diff = compare
-        elif os.environ.get('CHECK_RUNNING_CONFIG') is not None:
-            if os.environ.get('CHECK_RUNNING_CONFIG') == 'False':
+        elif os.environ.get('ANSIBLE_CHECK_ICX_RUNNING_CONFIG') is not None:
+            if os.environ.get('ANSIBLE_CHECK_ICX_RUNNING_CONFIG') == 'False':
                 diff = False
             else:
                 diff = True
