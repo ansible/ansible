@@ -60,10 +60,12 @@ def compare_lower(a, b):
 
 def get_pid(name):
     pids = []
+    
     for proc in psutil.process_iter(attrs=['name', 'cmdline']):
         if compare_lower(proc.info['name'], pgname) or \
                 proc.info['cmdline'] and compare_lower(proc.info['cmdline'][0], pgname):
-            pids.append(str(proc.pid))
+            pids.append(proc.pid)
+
     return pids
 
 def main():
