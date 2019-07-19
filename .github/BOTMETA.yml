@@ -1504,8 +1504,6 @@ files:
   test/runner/lib/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
-  test/sanity/pep8/legacy-files.txt:
-    notified: mattclay
   test/units/module_utils/docker/:
     <<: *docker
     support: community
