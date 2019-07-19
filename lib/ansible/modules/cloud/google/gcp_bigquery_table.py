@@ -51,40 +51,49 @@ options:
     description:
     - Reference describing the ID of this table.
     required: false
+    type: dict
     suboptions:
       dataset_id:
         description:
         - The ID of the dataset containing this table.
         required: false
+        type: str
       project_id:
         description:
         - The ID of the project containing this table.
         required: false
+        type: str
       table_id:
         description:
         - The ID of the the table.
         required: false
+        type: str
   description:
     description:
     - A user-friendly description of the dataset.
     required: false
+    type: str
   friendly_name:
     description:
     - A descriptive name for this table.
     required: false
+    type: str
   labels:
     description:
     - The labels associated with this dataset. You can use these to organize and group
       your datasets .
     required: false
+    type: dict
   name:
     description:
     - Name of the table.
     required: false
+    type: str
   view:
     description:
     - The view definition.
     required: false
+    type: dict
     suboptions:
       use_legacy_sql:
         description:
@@ -95,6 +104,7 @@ options:
         description:
         - Describes user-defined function resources used in the query.
         required: false
+        type: list
         suboptions:
           inline_code:
             description:
@@ -102,61 +112,74 @@ options:
               Providing a inline code resource is equivalent to providing a URI for
               a file containing the same code.
             required: false
+            type: str
           resource_uri:
             description:
             - A code resource to load from a Google Cloud Storage URI (gs://bucket/path).
             required: false
+            type: str
   time_partitioning:
     description:
     - If specified, configures time-based partitioning for this table.
     required: false
+    type: dict
     suboptions:
       expiration_ms:
         description:
         - Number of milliseconds for which to keep the storage for a partition.
         required: false
+        type: int
       type:
         description:
         - The only type supported is DAY, which will generate one partition per day.
         - 'Some valid choices include: "DAY"'
         required: false
+        type: str
   schema:
     description:
     - Describes the schema of this table.
     required: false
+    type: dict
     suboptions:
       fields:
         description:
         - Describes the fields in a table.
         required: false
+        type: list
         suboptions:
           description:
             description:
             - The field description. The maximum length is 1,024 characters.
             required: false
+            type: str
           fields:
             description:
             - Describes the nested schema fields if the type property is set to RECORD.
             required: false
+            type: list
           mode:
             description:
             - The field mode.
             - 'Some valid choices include: "NULLABLE", "REQUIRED", "REPEATED"'
             required: false
+            type: str
           name:
             description:
             - The field name.
             required: false
+            type: str
           type:
             description:
             - The field data type.
             - 'Some valid choices include: "STRING", "BYTES", "INTEGER", "FLOAT",
               "TIMESTAMP", "DATE", "TIME", "DATETIME", "RECORD"'
             required: false
+            type: str
   encryption_configuration:
     description:
     - Custom encryption configuration.
     required: false
+    type: dict
     suboptions:
       kms_key_name:
         description:
@@ -164,17 +187,20 @@ options:
           BigQuery table. The BigQuery Service Account associated with your project
           requires access to this encryption key.
         required: false
+        type: str
   expiration_time:
     description:
     - The time when this table expires, in milliseconds since the epoch. If not present,
       the table will persist indefinitely.
     required: false
+    type: int
   external_data_configuration:
     description:
     - Describes the data format, location, and other properties of a table stored
       outside of BigQuery. By defining these properties, the data source can then
       be queried as if it were a standard BigQuery table.
     required: false
+    type: dict
     suboptions:
       autodetect:
         description:
@@ -187,6 +213,7 @@ options:
         - The compression type of the data source.
         - 'Some valid choices include: "GZIP", "NONE"'
         required: false
+        type: str
       ignore_unknown_values:
         description:
         - Indicates if BigQuery should allow extra values that are not represented
@@ -199,12 +226,14 @@ options:
           data .
         required: false
         default: '0'
+        type: int
       source_format:
         description:
         - The data format.
         - 'Some valid choices include: "CSV", "GOOGLE_SHEETS", "NEWLINE_DELIMITED_JSON",
           "AVRO", "DATASTORE_BACKUP", "BIGTABLE"'
         required: false
+        type: str
       source_uris:
         description:
         - The fully-qualified URIs that point to your data in Google Cloud.
@@ -216,44 +245,53 @@ options:
           backups, exactly one URI can be specified. Also, the ''*'' wildcard character
           is not allowed.'
         required: false
+        type: list
       schema:
         description:
         - The schema for the data. Schema is required for CSV and JSON formats.
         required: false
+        type: dict
         suboptions:
           fields:
             description:
             - Describes the fields in a table.
             required: false
+            type: list
             suboptions:
               description:
                 description:
                 - The field description.
                 required: false
+                type: str
               fields:
                 description:
                 - Describes the nested schema fields if the type property is set to
                   RECORD .
                 required: false
+                type: list
               mode:
                 description:
                 - Field mode.
                 - 'Some valid choices include: "NULLABLE", "REQUIRED", "REPEATED"'
                 required: false
+                type: str
               name:
                 description:
                 - Field name.
                 required: false
+                type: str
               type:
                 description:
                 - Field data type.
                 - 'Some valid choices include: "STRING", "BYTES", "INTEGER", "FLOAT",
                   "TIMESTAMP", "DATE", "TIME", "DATETIME", "RECORD"'
                 required: false
+                type: str
       google_sheets_options:
         description:
         - Additional options if sourceFormat is set to GOOGLE_SHEETS.
         required: false
+        type: dict
         suboptions:
           skip_leading_rows:
             description:
@@ -261,10 +299,12 @@ options:
               when reading the data.
             required: false
             default: '0'
+            type: int
       csv_options:
         description:
         - Additional properties to set if sourceFormat is set to CSV.
         required: false
+        type: dict
         suboptions:
           allow_jagged_rows:
             description:
@@ -283,24 +323,29 @@ options:
             - The character encoding of the data.
             - 'Some valid choices include: "UTF-8", "ISO-8859-1"'
             required: false
+            type: str
           field_delimiter:
             description:
             - The separator for fields in a CSV file.
             required: false
+            type: str
           quote:
             description:
             - The value that is used to quote data sections in a CSV file.
             required: false
+            type: str
           skip_leading_rows:
             description:
             - The number of rows at the top of a CSV file that BigQuery will skip
               when reading the data.
             required: false
             default: '0'
+            type: int
       bigtable_options:
         description:
         - Additional options if sourceFormat is set to BIGTABLE.
         required: false
+        type: dict
         suboptions:
           ignore_unspecified_column_families:
             description:
@@ -319,24 +364,28 @@ options:
             - List of column families to expose in the table schema along with their
               types.
             required: false
+            type: list
             suboptions:
               columns:
                 description:
                 - Lists of columns that should be exposed as individual fields as
                   opposed to a list of (column name, value) pairs.
                 required: false
+                type: list
                 suboptions:
                   encoding:
                     description:
                     - The encoding of the values when the type is not STRING.
                     - 'Some valid choices include: "TEXT", "BINARY"'
                     required: false
+                    type: str
                   field_name:
                     description:
                     - If the qualifier is not a valid BigQuery field identifier, a
                       valid identifier must be provided as the column field name and
                       is used as field name in queries.
                     required: false
+                    type: str
                   only_read_latest:
                     description:
                     - If this is set, only the latest version of value in this column
@@ -347,21 +396,25 @@ options:
                     description:
                     - Qualifier of the column.
                     required: true
+                    type: str
                   type:
                     description:
                     - The type to convert the value in cells of this column.
                     - 'Some valid choices include: "BYTES", "STRING", "INTEGER", "FLOAT",
                       "BOOLEAN"'
                     required: false
+                    type: str
               encoding:
                 description:
                 - The encoding of the values when the type is not STRING.
                 - 'Some valid choices include: "TEXT", "BINARY"'
                 required: false
+                type: str
               family_id:
                 description:
                 - Identifier of the column family.
                 required: false
+                type: str
               only_read_latest:
                 description:
                 - If this is set only the latest version of value are exposed for
@@ -374,10 +427,12 @@ options:
                 - 'Some valid choices include: "BYTES", "STRING", "INTEGER", "FLOAT",
                   "BOOLEAN"'
                 required: false
+                type: str
   dataset:
     description:
     - Name of the dataset.
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 

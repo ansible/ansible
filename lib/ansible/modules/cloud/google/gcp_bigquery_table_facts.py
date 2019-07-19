@@ -44,6 +44,7 @@ options:
     description:
     - Name of the dataset.
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 
