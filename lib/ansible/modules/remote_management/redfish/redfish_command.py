@@ -27,47 +27,57 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   id:
     required: false
     description:
       - ID of user to add/delete/modify
+    type: str
     version_added: "2.8"
   new_username:
     required: false
     description:
       - name of user to add/delete/modify
+    type: str
     version_added: "2.8"
   new_password:
     required: false
     description:
       - password of user to add/delete/modify
+    type: str
     version_added: "2.8"
   roleid:
     required: false
     description:
       - role of user to add/delete/modify
+    type: str
     version_added: "2.8"
   bootdevice:
     required: false
     description:
       - bootdevice when setting boot configuration
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
@@ -78,11 +88,13 @@ options:
     required: false
     description:
       - UEFI target when bootdevice is "UefiTarget"
+    type: str
     version_added: "2.9"
   boot_next:
     required: false
     description:
       - BootNext target when bootdevice is "UefiBootNext"
+    type: str
     version_added: "2.9"
 
 author: "Jose Delarosa (@jose-delarosa)"
@@ -238,8 +250,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -263,7 +274,7 @@ def main():
         }
 
         # execute only if we find an Account service resource
-        result = rf_utils._find_accountservice_resource(rf_uri)
+        result = rf_utils._find_accountservice_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -272,7 +283,7 @@ def main():
 
     elif category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -286,7 +297,7 @@ def main():
                     module.params['boot_next'])
 
     elif category == "Chassis":
-        result = rf_utils._find_chassis_resource(rf_uri)
+        result = rf_utils._find_chassis_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -308,7 +319,7 @@ def main():
         }
 
         # execute only if we find a Manager service resource
-        result = rf_utils._find_managers_resource(rf_uri)
+        result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 

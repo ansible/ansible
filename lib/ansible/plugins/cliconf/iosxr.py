@@ -60,9 +60,12 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_image'] = match.group(1)
 
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
-        if match:
-            device_info['network_os_model'] = match.group(1)
+        model_search_strs = [r'^Cisco (.+) \(revision', r'^[Cc]isco (\S+ \S+).+bytes of .*memory']
+        for item in model_search_strs:
+            match = re.search(item, data, re.M)
+            if match:
+                device_info['network_os_model'] = match.group(1)
+                break
 
         match = re.search(r'^(.+) uptime', data, re.M)
         if match:
@@ -115,6 +118,11 @@ class Cliconf(CliconfBase):
             cmd = line['command']
             results.append(self.send_command(**line))
             requests.append(cmd)
+
+        # Before any commit happend, we can get a real configuration
+        # diff from the device and make it available by the iosxr_config module.
+        # This information can be usefull either in check mode or normal mode.
+        resp['show_commit_config_diff'] = self.get('show commit changes diff')
 
         if commit:
             self.commit(comment=comment, label=label, replace=replace)

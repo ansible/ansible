@@ -203,8 +203,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Sertac Ozercan (@sozercan)"
-    - "Yuwei Zhou (@yuwzho)"
+    - Sertac Ozercan (@sozercan)
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -254,7 +254,7 @@ state:
         dns_prefix: aks9860bdcd89
         id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
-        kubernetes_version: 1.11.4
+        kubernetes_version: 1.13.5
         linux_profile:
            admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADA.....

@@ -232,6 +232,15 @@ EXAMPLES = '''
     name: myhost
     force: True
 
+# Retry removing host when failed (https://bugzilla.redhat.com/show_bug.cgi?id=1719271)
+- ovirt_host:
+    state: absent
+    name: myhost
+  register: result
+  until: not result.failed
+  retries: 6
+  delay: 20
+
 # Change host Name
 - ovirt_host:
     id: 00000000-0000-0000-0000-000000000000
@@ -278,6 +287,9 @@ from ansible.module_utils.ovirt import (
 
 
 class HostsModule(BaseModule):
+    def __init__(self, start_event=None, *args, **kwargs):
+        super(HostsModule, self).__init__(*args, **kwargs)
+        self.start_event = start_event
 
     def build_entity(self):
         return otypes.Host(
@@ -344,13 +356,24 @@ class HostsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def raise_host_exception(self):
+        events = self._connection.system_service().events_service().list(from_=int(self.start_event.index))
+        error_events = [
+            event.description for event in events
+            if event.host is not None and (event.host.id == self.param('id') or event.host.name == self.param('name')) and
+            event.severity in [otypes.LogSeverity.WARNING, otypes.LogSeverity.ERROR]
+        ]
+        if error_events:
+            raise Exception("Error message: %s" % error_events)
+        return True
+
     def failed_state_after_reinstall(self, host, count=0):
         if host.status in [
             hoststate.ERROR,
             hoststate.INSTALL_FAILED,
             hoststate.NON_OPERATIONAL,
         ]:
-            return True
+            return self.raise_host_exception()
 
         # If host is in non-responsive state after upgrade/install
         # let's wait for few seconds and re-check again the state:
@@ -362,7 +385,7 @@ class HostsModule(BaseModule):
                     count + 1,
                 )
             else:
-                return True
+                return self.raise_host_exception()
 
         return False
 
@@ -460,10 +483,12 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         hosts_service = connection.system_service().hosts_service()
+        start_event = connection.system_service().events_service().list(max=1)[0]
         hosts_module = HostsModule(
             connection=connection,
             module=module,
             service=hosts_service,
+            start_event=start_event,
         )
 
         state = module.params['state']

@@ -194,7 +194,7 @@ EXAMPLES = r'''
     name: smbhost
     type: generic_password
     username: smbuser
-    password: smbuser
+    secret: smbuser
     state: present
 
 - name: Remove a generic credential

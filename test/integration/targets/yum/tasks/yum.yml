@@ -92,6 +92,43 @@
         - "yum_result is success"
         - "not yum_result is changed"
 
+# This test case is unfortunately distro specific because we have to specify
+# repo names which are not the same across Fedora/RHEL/CentOS for base/updates
+- name: install sos again with missing repo enablerepo
+  yum:
+    name: sos
+    state: present
+    enablerepo:
+      - "thisrepodoesnotexist"
+      - "base"
+      - "updates"
+    disablerepo: "*"
+  register: yum_result
+  when: ansible_distribution == 'CentOS'
+- name: verify no change on fourth install with missing repo enablerepo (yum)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is not changed"
+  when: ansible_distribution == 'CentOS'
+
+- name: install sos again with only missing repo enablerepo
+  yum:
+    name: sos
+    state: present
+    enablerepo: "thisrepodoesnotexist"
+  ignore_errors: true
+  register: yum_result
+- name: verify no change on fifth install with only missing repo enablerepo (yum)
+  assert:
+    that:
+        - "yum_result is not success"
+  when: ansible_pkg_mgr == 'yum'
+- name: verify no change on fifth install with only missing repo enablerepo (dnf)
+  assert:
+    that:
+        - "yum_result is success"
+  when: ansible_pkg_mgr == 'dnf'
 
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
@@ -357,7 +394,7 @@
 
 - name: install group
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: present
   register: yum_result
 
@@ -376,7 +413,7 @@
 
 - name: install the group again
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: present
   register: yum_result
 
@@ -396,7 +433,7 @@
 - name: install the group again but also with a package that is not yet installed
   yum:
     name:
-      - "@Development Tools"
+      - "@Custom Group"
       - sos
     state: present
   register: yum_result
@@ -416,7 +453,7 @@
 
 - name: try to install the group again, with --check to check 'changed'
   yum:
-    name: "@Development Tools"
+    name: "@Custom Group"
     state: present
   check_mode: yes
   register: yum_result

@@ -81,6 +81,11 @@ options:
         description:
             - A user friendly name for this health monitor.
         required: true
+    radius_monitor:
+        description:
+            - Health monitor for radius.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     receive_timeout:
         description:
             - A valid response from the server is expected within the receive timeout window.
@@ -88,13 +93,16 @@ options:
             - If server status is regularly flapping up and down, consider increasing this value.
             - Allowed values are 1-2400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
-            - Units(SEC).
     send_interval:
         description:
             - Frequency, in seconds, that monitors are sent to a server.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
-            - Units(SEC).
+    sip_monitor:
+        description:
+            - Health monitor for sip.
+            - Field introduced in 17.2.8, 18.1.3, 18.2.1.
+        version_added: "2.9"
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
@@ -110,7 +118,7 @@ options:
         description:
             - Type of the health monitor.
             - Enum options - HEALTH_MONITOR_PING, HEALTH_MONITOR_TCP, HEALTH_MONITOR_HTTP, HEALTH_MONITOR_HTTPS, HEALTH_MONITOR_EXTERNAL, HEALTH_MONITOR_UDP,
-            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB.
+            - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB, HEALTH_MONITOR_SIP, HEALTH_MONITOR_RADIUS.
         required: true
     udp_monitor:
         description:
@@ -154,7 +162,7 @@ obj:
 from ansible.module_utils.basic import AnsibleModule
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+        avi_common_argument_spec, avi_ansible_api, HAS_AVI)
 except ImportError:
     HAS_AVI = False
 
@@ -175,8 +183,10 @@ def main():
         is_federated=dict(type='bool',),
         monitor_port=dict(type='int',),
         name=dict(type='str', required=True),
+        radius_monitor=dict(type='dict',),
         receive_timeout=dict(type='int',),
         send_interval=dict(type='int',),
+        sip_monitor=dict(type='dict',),
         successful_checks=dict(type='int',),
         tcp_monitor=dict(type='dict',),
         tenant_ref=dict(type='str',),
@@ -190,7 +200,7 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'healthmonitor',
                            set([]))

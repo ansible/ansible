@@ -54,11 +54,8 @@ options:
     - "* FIRST_GEN: First Generation instance. MySQL only."
     - "* SECOND_GEN: Second Generation instance or PostgreSQL instance."
     - "* EXTERNAL: A database server that is not managed by Google."
+    - 'Some valid choices include: "FIRST_GEN", "SECOND_GEN", "EXTERNAL"'
     required: false
-    choices:
-    - FIRST_GEN
-    - SECOND_GEN
-    - EXTERNAL
   connection_name:
     description:
     - Connection name of the Cloud SQL instance used in connection strings.
@@ -70,12 +67,8 @@ options:
       MYSQL_5_7. Defaults to MYSQL_5_6.
     - 'PostgreSQL instances: POSTGRES_9_6 The databaseVersion property can not be
       changed after instance creation.'
+    - 'Some valid choices include: "MYSQL_5_5", "MYSQL_5_6", "MYSQL_5_7", "POSTGRES_9_6"'
     required: false
-    choices:
-    - MYSQL_5_5
-    - MYSQL_5_6
-    - MYSQL_5_7
-    - POSTGRES_9_6
   failover_replica:
     description:
     - The name and status of the failover replica. This property is applicable only
@@ -94,11 +87,8 @@ options:
     - "* CLOUD_SQL_INSTANCE: A Cloud SQL instance that is not replicating from a master."
     - "* ON_PREMISES_INSTANCE: An instance running on the customer's premises."
     - "* READ_REPLICA_INSTANCE: A Cloud SQL instance configured as a read-replica."
+    - 'Some valid choices include: "CLOUD_SQL_INSTANCE", "ON_PREMISES_INSTANCE", "READ_REPLICA_INSTANCE"'
     required: false
-    choices:
-    - CLOUD_SQL_INSTANCE
-    - ON_PREMISES_INSTANCE
-    - READ_REPLICA_INSTANCE
   ipv6_address:
     description:
     - The IPv6 address assigned to the instance. This property is applicable only
@@ -206,6 +196,23 @@ options:
     - The user settings.
     required: false
     suboptions:
+      database_flags:
+        description:
+        - The database flags passed to the instance at startup.
+        required: false
+        version_added: 2.9
+        suboptions:
+          name:
+            description:
+            - The name of the flag. These flags are passed at instance startup, so
+              include both server options and system variables for MySQL. Flags should
+              be specified with underscores, not hyphens.
+            required: false
+          value:
+            description:
+            - The value of the flag. Booleans should be set to on for true and off
+              for false. This field must be omitted if the flag doesn't take a value.
+            required: false
       ip_configuration:
         description:
         - The settings for IP Management. This allows to enable or disable the instance
@@ -255,10 +262,8 @@ options:
       availability_type:
         description:
         - The availabilityType define if your postgres instance is run zonal or regional.
+        - 'Some valid choices include: "ZONAL", "REGIONAL"'
         required: false
-        choices:
-        - ZONAL
-        - REGIONAL
       backup_configuration:
         description:
         - The daily backup configuration for the instance.
@@ -500,6 +505,25 @@ settings:
   returned: success
   type: complex
   contains:
+    databaseFlags:
+      description:
+      - The database flags passed to the instance at startup.
+      returned: success
+      type: complex
+      contains:
+        name:
+          description:
+          - The name of the flag. These flags are passed at instance startup, so include
+            both server options and system variables for MySQL. Flags should be specified
+            with underscores, not hyphens.
+          returned: success
+          type: str
+        value:
+          description:
+          - The value of the flag. Booleans should be set to on for true and off for
+            false. This field must be omitted if the flag doesn't take a value.
+          returned: success
+          type: str
     ipConfiguration:
       description:
       - The settings for IP Management. This allows to enable or disable the instance
@@ -607,11 +631,11 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            backend_type=dict(type='str', choices=['FIRST_GEN', 'SECOND_GEN', 'EXTERNAL']),
+            backend_type=dict(type='str'),
             connection_name=dict(type='str'),
-            database_version=dict(type='str', choices=['MYSQL_5_5', 'MYSQL_5_6', 'MYSQL_5_7', 'POSTGRES_9_6']),
+            database_version=dict(type='str'),
             failover_replica=dict(type='dict', options=dict(name=dict(type='str'))),
-            instance_type=dict(type='str', choices=['CLOUD_SQL_INSTANCE', 'ON_PREMISES_INSTANCE', 'READ_REPLICA_INSTANCE']),
+            instance_type=dict(type='str'),
             ipv6_address=dict(type='str'),
             master_instance_name=dict(type='str'),
             max_disk_size=dict(type='int'),
@@ -643,6 +667,7 @@ def main():
             settings=dict(
                 type='dict',
                 options=dict(
+                    database_flags=dict(type='list', elements='dict', options=dict(name=dict(type='str'), value=dict(type='str'))),
                     ip_configuration=dict(
                         type='dict',
                         options=dict(
@@ -654,7 +679,7 @@ def main():
                         ),
                     ),
                     tier=dict(type='str'),
-                    availability_type=dict(type='str', choices=['ZONAL', 'REGIONAL']),
+                    availability_type=dict(type='str'),
                     backup_configuration=dict(
                         type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
                     ),
@@ -968,6 +993,7 @@ class InstanceSettings(object):
     def to_request(self):
         return remove_nones_from_dict(
             {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get('database_flags', []), self.module).to_request(),
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
                 u'tier': self.request.get('tier'),
                 u'availabilityType': self.request.get('availability_type'),
@@ -978,12 +1004,40 @@ class InstanceSettings(object):
     def from_response(self):
         return remove_nones_from_dict(
             {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get(u'databaseFlags', []), self.module).from_response(),
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
                 u'tier': self.request.get(u'tier'),
                 u'availabilityType': self.request.get(u'availabilityType'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
             }
         )
+
+
+class InstanceDatabaseflagsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name'), u'value': item.get('value')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'value': item.get(u'value')})
 
 
 class InstanceIpconfiguration(object):

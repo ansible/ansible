@@ -107,7 +107,7 @@ fingerprint:
     description: The fingerprint of the key.
     returned: changed or success
     type: str
-    sample: 4096 SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM example@example.com (RSA)
+    sample: SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM
 public_key:
     description: The public key of the generated SSH private key
     returned: changed or success
@@ -116,6 +116,7 @@ public_key:
 '''
 
 import os
+import stat
 import errno
 
 from ansible.module_utils.basic import AnsibleModule
@@ -180,8 +181,13 @@ class Keypair(object):
                 args.extend(['-C', ""])
 
             try:
+                if os.path.exists(self.path) and not os.access(self.path, os.W_OK):
+                    os.chmod(self.path, stat.S_IWUSR + stat.S_IRUSR)
                 self.changed = True
-                module.run_command(args)
+                stdin_data = None
+                if os.path.exists(self.path):
+                    stdin_data = 'y'
+                module.run_command(args, data=stdin_data)
                 proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
                 self.fingerprint = proc[1].split()
                 pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
@@ -201,7 +207,13 @@ class Keypair(object):
             return os.path.exists(self.path)
 
         if _check_state():
-            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
+            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path], check_rc=False)
+            if not proc[0] == 0:
+                if os.path.isdir(self.path):
+                    module.fail_json(msg='%s is a directory. Please specify a path to a file.' % (self.path))
+
+                return False
+
             fingerprint = proc[1].split()
             pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
             pubkey = pubkey[1].strip('\n')
@@ -232,13 +244,13 @@ class Keypair(object):
         # return result as a dict
 
         """Serialize the object into a dictionary."""
-
         result = {
             'changed': self.changed,
             'size': self.size,
             'type': self.type,
             'filename': self.path,
-            'fingerprint': self.fingerprint,
+            # On removal this has no value
+            'fingerprint': self.fingerprint[1] if self.fingerprint else '',
             'public_key': self.public_key,
         }
 

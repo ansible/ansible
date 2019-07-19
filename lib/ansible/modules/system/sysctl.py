@@ -65,7 +65,7 @@ EXAMPLES = '''
 # Set vm.swappiness to 5 in /etc/sysctl.conf
 - sysctl:
     name: vm.swappiness
-    value: 5
+    value: '5'
     state: present
 
 # Remove kernel.panic entry from /etc/sysctl.conf
@@ -77,20 +77,20 @@ EXAMPLES = '''
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl:
     name: kernel.panic
-    value: 3
+    value: '3'
     sysctl_file: /tmp/test_sysctl.conf
     reload: no
 
 # Set ip forwarding on in /proc and verify token value with the sysctl command
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
     state: present
     reload: yes
@@ -271,7 +271,6 @@ class SysctlModule(object):
 
     # Run sysctl -p
     def reload_sysctl(self):
-        # do it
         if self.platform == 'freebsd':
             # freebsd doesn't support -p, so reload the sysctl service
             rc, out, err = self.module.run_command('/etc/rc.d/sysctl reload', environ_update=self.LANG_ENV)
@@ -282,10 +281,16 @@ class SysctlModule(object):
                 rc = 0
                 if k != self.args['name']:
                     rc = self.set_token_value(k, v)
+                    # FIXME this check is probably not needed as set_token_value would fail_json if rc != 0
                     if rc != 0:
                         break
             if rc == 0 and self.args['state'] == "present":
                 rc = self.set_token_value(self.args['name'], self.args['value'])
+
+            # set_token_value would have called fail_json in case of failure
+            # so return here and do not continue to the error processing below
+            # https://github.com/ansible/ansible/issues/58158
+            return
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]

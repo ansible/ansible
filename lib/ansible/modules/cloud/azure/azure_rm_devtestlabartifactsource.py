@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifactsource
 version_added: "2.8"
-short_description: Manage Azure DevTest Labs Artifacts Source instance.
+short_description: Manage Azure DevTest Labs Artifacts Source instance
 description:
     - Create, update and delete instance of Azure DevTest Labs Artifacts Source.
 
@@ -36,13 +36,13 @@ options:
         required: True
     display_name:
         description:
-            - "The artifact source's display name."
+            - The artifact source's display name.
     uri:
         description:
-            - "The artifact source's URI."
+            - The artifact source's URI.
     source_type:
         description:
-            - "The artifact source's type."
+            - The artifact source's type.
         choices:
             - 'vso'
             - 'github'
@@ -54,7 +54,7 @@ options:
             - The folder containing Azure Resource Manager templates.
     branch_ref:
         description:
-            - "The artifact source's branch reference."
+            - The artifact source's branch reference.
     security_token:
         description:
             - The security token to authenticate to the artifact source.
@@ -64,19 +64,19 @@ options:
         type: bool
     state:
       description:
-        - Assert the state of the DevTest Labs Artifacts Source.
-        - Use 'present' to create or update an DevTest Labs Artifacts Source and 'absent' to delete it.
+          - Assert the state of the DevTest Labs Artifacts Source.
+          - Use C(present) to create or update an DevTest Labs Artifacts Source and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

@@ -139,18 +139,21 @@
     that:
       - output.changed == true
 
-- name: Use REST API to retrieve keyvault (as facts not available yet)
-  azure_rm_resource_facts:
-    api_version: '2018-02-14'
+- name: Get key vault facts
+  azure_rm_keyvault_info:
     resource_group: "{{ resource_group }}"
-    provider: keyvault
-    resource_type: vaults
-    resource_name: "vault{{ rpfx }}"
-  register: output
+    name: "vault{{ rpfx }}"
+  register: facts
+
 - name: Assert the facts are properly set
   assert:
     that:
-      - output.response[0].tags.aaa == "bbb"
+      - facts['keyvaults'] | length == 1
+      - facts['keyvaults'][0]['vault_uri'] != None
+      - facts['keyvaults'][0]['name'] != None
+      - facts['keyvaults'][0]['access_policies'] != None
+      - facts['keyvaults'][0]['sku'] != None
+      - facts['keyvaults'][0]['id'] != None
 #
 # azure_rm_keyvaultkey tests
 #
@@ -172,7 +175,22 @@
         state: absent
         key_name: testkey
 
-- name: delete a keyvault key
+- name: Get key current version
+  azure_rm_keyvaultkey_info:
+    vault_uri: https://vault{{ rpfx }}.vault.azure.net
+    name: testkey
+  register: facts
+
+- name: Assert key facts
+  assert:
+    that:
+      - facts['keys'] | length == 1
+      - facts['keys'][0]['kid']
+      - facts['keys'][0]['permitted_operations'] | length > 0
+      - facts['keys'][0]['type']
+      - facts['keys'][0]['version']
+
+- name: delete a kevyault key
   azure_rm_keyvaultkey:
     keyvault_uri: https://vault{{ rpfx }}.vault.azure.net
     state: absent

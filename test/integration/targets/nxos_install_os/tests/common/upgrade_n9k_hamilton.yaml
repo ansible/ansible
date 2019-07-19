@@ -8,12 +8,12 @@
 
 - set_fact: checkmode='no'
 - set_fact: issu='desired'
-- set_fact: copy_images=False
+- set_fact: copy_images=True
 
 # Set boot pointers and reload
 - set_fact: force=False
 
-- set_fact: delete_files=False
+- set_fact: delete_files=True
 - set_fact:
     delete_image_list:
       - nxos*.bin

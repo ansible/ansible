@@ -26,7 +26,7 @@ requirements: [ "requests >= 1.0.0" ]
 options:
     name:
         description:
-            - Name of the queue to create
+            - Name of the queue
         required: true
     state:
         description:

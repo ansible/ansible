@@ -56,6 +56,7 @@ options:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   ip_address:
     description:
     - The IP address that this forwarding rule is serving on behalf of.
@@ -78,27 +79,22 @@ options:
       * projects/project/regions/region/addresses/address * regions/region/addresses/address
       * global/addresses/address * address .'
     required: false
+    type: str
   ip_protocol:
     description:
     - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP,
       AH, SCTP or ICMP. When the load balancing scheme is INTERNAL_SELF_MANAGED, only
       TCP is valid.
+    - 'Some valid choices include: "TCP", "UDP", "ESP", "AH", "SCTP", "ICMP"'
     required: false
-    choices:
-    - TCP
-    - UDP
-    - ESP
-    - AH
-    - SCTP
-    - ICMP
+    type: str
   ip_version:
     description:
     - The IP Version that will be used by this global forwarding rule.
     - Valid options are IPV4 or IPV6.
+    - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
-    choices:
-    - IPV4
-    - IPV6
+    type: str
   load_balancing_scheme:
     description:
     - This signifies what the GlobalForwardingRule will be used for.
@@ -106,10 +102,10 @@ options:
       Global HTTP(S) LB. The value of EXTERNAL means that this will be used for External
       Global Load Balancing (HTTP(S) LB, External TCP/UDP LB, SSL Proxy) NOTE: Currently
       global forwarding rules cannot be used for INTERNAL load balancing.'
+    - 'Some valid choices include: "INTERNAL_SELF_MANAGED", "EXTERNAL"'
     required: false
-    choices:
-    - INTERNAL_SELF_MANAGED
-    - EXTERNAL
+    default: EXTERNAL
+    type: str
   name:
     description:
     - Name of the resource; provided by the client when the resource is created. The
@@ -119,6 +115,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - This field is not used for external load balancing.
@@ -131,6 +128,7 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   port_range:
     description:
     - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -145,11 +143,13 @@ options:
       43, 110, 143, 195, 443, 465, 587, 700, 993, 995, 1883, 5222 * TargetVpnGateway:
       500, 4500 .'
     required: false
+    type: str
   target:
     description:
     - The URL of the target resource to receive the matched traffic.
     - The forwarded traffic must be of a type appropriate to the target object.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -190,7 +190,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-globalforwardingrule
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'
@@ -356,9 +356,9 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             ip_address=dict(type='str'),
-            ip_protocol=dict(type='str', choices=['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']),
-            ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            load_balancing_scheme=dict(type='str', choices=['INTERNAL_SELF_MANAGED', 'EXTERNAL']),
+            ip_protocol=dict(type='str'),
+            ip_version=dict(type='str'),
+            load_balancing_scheme=dict(default='EXTERNAL', type='str'),
             name=dict(required=True, type='str'),
             network=dict(type='dict'),
             port_range=dict(type='str'),

@@ -11,15 +11,20 @@
                 "s3:GetBucketRequestPayment",
                 "s3:GetBucketTagging",
                 "s3:GetBucketVersioning",
+                "s3:GetEncryptionConfiguration",
                 "s3:GetObject",
+                "s3:GetBucketNotification",
+                "s3:HeadBucket",
                 "s3:ListBucket",
                 "s3:PutBucketAcl",
                 "s3:PutBucketPolicy",
                 "s3:PutBucketRequestPayment",
                 "s3:PutBucketTagging",
                 "s3:PutBucketVersioning",
+                "s3:PutEncryptionConfiguration",
                 "s3:PutObject",
-                "s3:PutObjectAcl"
+                "s3:PutObjectAcl",
+                "s3:PutBucketNotification"
             ],
             "Effect": "Allow",
             "Resource": [
@@ -33,6 +38,14 @@
                 "s3:ListAllMyBuckets"
             ],
             "Effect": "Allow",
+            "Resource": "*"
+        },
+        {
+            "Sid": "ManageEFS",
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:*"
+            ],
             "Resource": "*"
         }
     ]

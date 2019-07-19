@@ -72,7 +72,7 @@ validate_certs: False
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
 
@@ -162,9 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     # get next page
                     params['page'] += 1
 
-            # Set the cache if it is enabled or if the cache was refreshed
-            if self.use_cache or self.get_option('cache'):
-                self._cache[self.cache_key][url] = results
+            self._cache[self.cache_key][url] = results
 
         return self._cache[self.cache_key][url]
 
@@ -215,9 +213,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                             try:
                                 self.inventory.set_variable(host['name'], self.get_option('vars_prefix') + k, v)
                             except ValueError as e:
-                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+                                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
                 except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_native(e)))
+                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_text(e)))
 
                 # set host vars from params
                 if self.get_option('want_params'):

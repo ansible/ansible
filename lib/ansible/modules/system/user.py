@@ -60,12 +60,14 @@ options:
               C(null), or C(~), the user is removed from all groups except the
               primary group. (C(~) means C(null) in YAML)
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
+            - Has no effect when C(local) is C(True)
         type: list
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
             - If C(no), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
+            - Has no effect when C(local) is C(True)
         type: bool
         default: no
     shell:
@@ -91,7 +93,7 @@ options:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
             - To create a disabled account on Linux systems, set this to C('!') or C('*').
-            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
     state:
@@ -616,7 +618,7 @@ class User(object):
             else:
                 cmd.append('-N')
 
-        if self.groups is not None and len(self.groups):
+        if self.groups is not None and not self.local and len(self.groups):
             groups = self.get_groups_set()
             cmd.append('-G')
             cmd.append(','.join(groups))
@@ -626,6 +628,12 @@ class User(object):
             cmd.append(self.comment)
 
         if self.home is not None:
+            # If the specified path to the user home contains parent directories that
+            # do not exist, first create the home directory since useradd cannot
+            # create parent directories
+            parent = os.path.dirname(self.home)
+            if not os.path.isdir(parent):
+                self.create_homedir(self.home)
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -737,7 +745,7 @@ class User(object):
                     else:
                         groups_need_mod = True
 
-            if groups_need_mod:
+            if groups_need_mod and not self.local:
                 if self.append and not has_append:
                     cmd.append('-A')
                     cmd.append(','.join(group_diff))
@@ -2881,7 +2889,24 @@ def main():
         if not user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+
+            # Check to see if the provided home path contains parent directories
+            # that do not exist.
+            path_needs_parents = False
+            if user.home:
+                parent = os.path.basename(user.home)
+                if not os.path.isdir(parent):
+                    path_needs_parents = True
+
             (rc, out, err) = user.create_user()
+
+            # If the home path had parent directories that needed to be created,
+            # make sure file permissions are correct in the created home directory.
+            if path_needs_parents:
+                info = user.user_info()
+                if info is not False:
+                    user.chown_homedir(info[2], info[3], user.home)
+
             if module.check_mode:
                 result['system'] = user.name
             else:

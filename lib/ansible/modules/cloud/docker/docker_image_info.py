@@ -154,13 +154,21 @@ images:
     ]
 '''
 
+import traceback
+
 try:
     from docker import utils
+    from docker.errors import DockerException
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    is_image_name_id,
+    RequestException,
+)
 
 
 class ImageManager(DockerBaseClass):
@@ -234,13 +242,18 @@ def main():
     if client.module._name == 'docker_image_facts':
         client.module.deprecate("The 'docker_image_facts' module has been renamed to 'docker_image_info'", version='2.12')
 
-    results = dict(
-        changed=False,
-        images=[]
-    )
+    try:
+        results = dict(
+            changed=False,
+            images=[]
+        )
 
-    ImageManager(client, results)
-    client.module.exit_json(**results)
+        ImageManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

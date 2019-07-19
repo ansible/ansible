@@ -20,7 +20,7 @@ module: azure_rm_virtualmachineimage_facts
 
 version_added: "2.1"
 
-short_description: Get virtual machine image facts.
+short_description: Get virtual machine image facts
 
 description:
     - Get facts for virtual machine images.
@@ -28,15 +28,15 @@ description:
 options:
     location:
         description:
-            - Azure location value (ie. westus, eastus, eastus2, northcentralus, etc.). Supplying only a
-              location value will yield a list of available publishers for the location.
+            - Azure location value, for example C(westus), C(eastus), C(eastus2), C(northcentralus), etc.
+            - Supplying only a location value will yield a list of available publishers for the location.
         required: true
     publisher:
         description:
             - Name of an image publisher. List image offerings associated with a particular publisher.
     offer:
         description:
-            - Name of an image offering. Combine with sku to see a list of available image versions.
+            - Name of an image offering. Combine with SKU to see a list of available image versions.
     sku:
         description:
             - Image offering SKU. Combine with offer to see a list of available versions.
@@ -48,8 +48,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -82,10 +82,35 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_vmimages:
-    description: List of image dicts.
+    description:
+        - List of image dicts.
     returned: always
     type: list
-    example: []
+    example: [ {
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150410",
+                "location": "eastus",
+                "name": "7.1.20150410"
+            },
+            {
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150605",
+                "location": "eastus",
+                "name": "7.1.20150605"
+            },
+            {
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                 Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20150731",
+                "location": "eastus",
+                "name": "7.1.20150731"
+            },
+            {
+                "id": "/Subscriptions/xxx...xxx/Providers/Microsoft.Compute/Locations/eastus/
+                Publishers/OpenLogic/ArtifactTypes/VMImage/Offers/CentOS/Skus/7.1/Versions/7.1.20160308",
+                "location": "eastus",
+                "name": "7.1.20160308"
+            }
+           ]
 '''
 
 try:

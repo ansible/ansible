@@ -294,6 +294,7 @@ options:
             authentication_certificates:
                 description:
                     - List of references to application gateway authentication certificates.
+                    - Applicable only when C(cookie_based_affinity) is enabled, otherwise quietly ignored.
                 suboptions:
                     id:
                         description:
@@ -381,7 +382,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

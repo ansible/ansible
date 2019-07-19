@@ -454,7 +454,7 @@ class DldpInterface(object):
 
         # get global DLDP info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("data/dldp/dldpInterfaces/dldpInterface")
+        topo = root.find("dldp/dldpInterfaces/dldpInterface")
         if topo is None:
             self.module.fail_json(
                 msg="Error: Get current DLDP configration failed.")

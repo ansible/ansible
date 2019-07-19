@@ -53,8 +53,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -108,11 +108,11 @@ def main():
         module.params['scopes'] = ['https://www.googleapis.com/auth/iam']
 
     items = fetch_list(module, collection(module))
-    if items.get('items'):
-        items = items.get('items')
+    if items.get('accounts'):
+        items = items.get('accounts')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

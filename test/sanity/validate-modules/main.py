@@ -16,8 +16,8 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import abc
 import argparse
@@ -38,6 +38,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
@@ -93,7 +94,7 @@ class ReporterEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-class Reporter(object):
+class Reporter:
     def __init__(self):
         self.files = OrderedDict()
 
@@ -185,7 +186,7 @@ class Reporter(object):
 
         warnings is not respected in this output
         """
-        ret = [len(r['errors']) for _, r in self.files.items()]
+        ret = [len(r['errors']) for r in self.files.values()]
 
         with Reporter._output_handle(output) as handle:
             print(json.dumps(Reporter._filter_out_ok(self.files), indent=4, cls=ReporterEncoder), file=handle)
@@ -241,7 +242,7 @@ class ModuleValidator(Validator):
 
         self.path = path
         self.basename = os.path.basename(self.path)
-        self.name, _ = os.path.splitext(self.basename)
+        self.name = os.path.splitext(self.basename)[0]
 
         self.analyze_arg_spec = analyze_arg_spec
 
@@ -1021,9 +1022,9 @@ class ModuleValidator(Validator):
                     msg='No EXAMPLES provided'
                 )
             else:
-                _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
-                                               doc_info['EXAMPLES']['lineno'],
-                                               self.name, 'EXAMPLES', load_all=True)
+                _doc, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
+                                                  doc_info['EXAMPLES']['lineno'],
+                                                  self.name, 'EXAMPLES', load_all=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -1177,10 +1178,17 @@ class ModuleValidator(Validator):
                 deprecated_args_from_argspec.add(arg)
                 deprecated_args_from_argspec.update(data.get('aliases', []))
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
-                # Record provider options from network modules, for later comparison
-                for provider_arg, provider_data in data.get('options', {}).items():
-                    provider_args.add(provider_arg)
-                    provider_args.update(provider_data.get('aliases', []))
+                if data.get('options') is not None and not isinstance(data.get('options'), Mapping):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=331,
+                        msg="Argument 'options' in argument_spec['provider'] must be a dictionary/hash when used",
+                    )
+                elif data.get('options'):
+                    # Record provider options from network modules, for later comparison
+                    for provider_arg, provider_data in data.get('options', {}).items():
+                        provider_args.add(provider_arg)
+                        provider_args.update(provider_data.get('aliases', []))
 
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
@@ -1245,8 +1253,16 @@ class ModuleValidator(Validator):
 
             # TODO: needs to recursively traverse suboptions
             doc_type = docs.get('options', {}).get(arg, {}).get('type')
-            if 'type' in data:
-                if data['type'] != doc_type and doc_type is not None:
+            if 'type' in data and data['type'] is not None:
+                if doc_type is None:
+                    if not arg.startswith('_'):  # hidden parameter, for example _raw_params
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=337,
+                            msg="Argument '%s' in argument_spec defines type as %r "
+                                "but documentation doesn't define type" % (arg, data['type'])
+                        )
+                elif data['type'] != doc_type:
                     self.reporter.error(
                         path=self.object_path,
                         code=325,
@@ -1254,7 +1270,14 @@ class ModuleValidator(Validator):
                             "but documentation defines type as %r" % (arg, data['type'], doc_type)
                     )
             else:
-                if doc_type != 'str' and doc_type is not None:
+                if doc_type is None:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=338,
+                        msg="Argument '%s' in argument_spec uses default type ('str') "
+                            "but documentation doesn't define type" % (arg)
+                    )
+                elif doc_type != 'str':
                     self.reporter.error(
                         path=self.object_path,
                         code=335,
@@ -1464,7 +1487,7 @@ class ModuleValidator(Validator):
     @staticmethod
     def is_blacklisted(path):
         base_name = os.path.basename(path)
-        file_name, _ = os.path.splitext(base_name)
+        file_name = os.path.splitext(base_name)[0]
 
         if file_name.startswith('_') and os.path.islink(path):
             return True
@@ -1676,7 +1699,7 @@ def main():
         sys.exit(reporter.json(warnings=args.warnings, output=args.output))
 
 
-class GitCache(object):
+class GitCache:
     def __init__(self, base_branch):
         self.base_branch = base_branch
 

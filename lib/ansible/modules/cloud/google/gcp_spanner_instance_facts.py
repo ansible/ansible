@@ -53,8 +53,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -71,7 +71,7 @@ items:
         your databases in this instance. It determines where your data is stored.
         Values are typically of the form `regional-europe-west1` , `us-central` etc.
       - In order to obtain a valid list please consult the [Configuration section
-        of the docs](U(https://cloud.google.com/spanner/docs/instances).)
+        of the docs](U(https://cloud.google.com/spanner/docs/instances)).
       returned: success
       type: str
     displayName:
@@ -115,7 +115,7 @@ def main():
         items = items.get('instances')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

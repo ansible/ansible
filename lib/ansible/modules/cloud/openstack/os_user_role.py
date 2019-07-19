@@ -41,8 +41,8 @@ options:
           If you are using keystone version 2, then this value is required.
    domain:
      description:
-        - ID of the domain to scope the role association to. Valid only with
-          keystone version 3, and required if I(project) is not specified.
+        - Name or ID of the domain to scope the role association to. Valid only
+          with keystone version 3, and required if I(project) is not specified.
    state:
      description:
        - Should the roles be present or absent on the user.
@@ -137,7 +137,7 @@ def main():
         filters['role'] = r['id']
 
         if domain:
-            d = cloud.get_domain(domain)
+            d = cloud.get_domain(name_or_id=domain)
             if d is None:
                 module.fail_json(msg="Domain %s is not valid" % domain)
             filters['domain'] = d['id']
@@ -155,6 +155,7 @@ def main():
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
             filters['group'] = g['id']
+        domain_id = None
         if project:
             if domain:
                 p = cloud.get_project(project, domain_id=filters['domain'])
@@ -162,7 +163,7 @@ def main():
                 # filter. Once we identified the project (using the domain as
                 # a filter criteria), we need to remove the domain itself from
                 # the filters list.
-                filters.pop('domain')
+                domain_id = filters.pop('domain')
             else:
                 p = cloud.get_project(project)
 
@@ -179,13 +180,13 @@ def main():
 
         if state == 'present':
             if not assignment:
-                kwargs = _build_kwargs(user, group, project, domain)
+                kwargs = _build_kwargs(user, group, project, domain_id)
                 cloud.grant_role(role, **kwargs)
                 changed = True
 
         elif state == 'absent':
             if assignment:
-                kwargs = _build_kwargs(user, group, project, domain)
+                kwargs = _build_kwargs(user, group, project, domain_id)
                 cloud.revoke_role(role, **kwargs)
                 changed = True
 

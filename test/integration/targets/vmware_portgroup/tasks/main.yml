@@ -4,9 +4,14 @@
 
 - when: vcsim is not defined
   block:
-    - debug: var=ccr1
 
-    - debug: var=host1
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_datacenter: true
+        setup_attach_host: true
+        setup_cluster: true
+        setup_switch: true
 
     - name: Create portgroup without Portgroup and vSwitch
       vmware_portgroup:
@@ -40,7 +45,7 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
-        vswitch: 'vSwitch_03'
+        vswitch: '{{ switch1 }}'
         portgroup: 'pg_03'
         validate_certs: no
       ignore_errors: yes
@@ -55,7 +60,7 @@
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
-        vswitch: 'vSwitch_03'
+        vswitch: '{{ switch1 }}'
         portgroup: 'pg_03'
         cluster_name: "{{ ccr1 }}"
         validate_certs: no

@@ -68,7 +68,7 @@ options:
     required: false
   redis_configs:
     description:
-    - Redis configuration parameters, according to U(http://redis.io/topics/config.)
+    - Redis configuration parameters, according to U(http://redis.io/topics/config).
     - 'Please check Memorystore documentation for the list of supported parameters:
       U(https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)
       .'
@@ -105,11 +105,9 @@ options:
     description:
     - 'The service tier of the instance. Must be one of these values: - BASIC: standalone
       instance - STANDARD_HA: highly available primary/replica instances .'
+    - 'Some valid choices include: "BASIC", "STANDARD_HA"'
     required: false
     default: BASIC
-    choices:
-    - BASIC
-    - STANDARD_HA
   region:
     description:
     - The name of the Redis region of the instance.
@@ -194,7 +192,7 @@ labels:
   type: dict
 redisConfigs:
   description:
-  - Redis configuration parameters, according to U(http://redis.io/topics/config.)
+  - Redis configuration parameters, according to U(http://redis.io/topics/config).
   - 'Please check Memorystore documentation for the list of supported parameters:
     U(https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)
     .'
@@ -280,7 +278,7 @@ def main():
             memory_size_gb=dict(required=True, type='int'),
             redis_version=dict(type='str'),
             reserved_ip_range=dict(type='str'),
-            tier=dict(default='BASIC', type='str', choices=['BASIC', 'STANDARD_HA']),
+            tier=dict(default='BASIC', type='str'),
             region=dict(required=True, type='str'),
         )
     )
@@ -305,7 +303,7 @@ def main():
             changed = True
     else:
         if state == 'present':
-            fetch = create(module, collection(module))
+            fetch = create(module, create_link(module))
             changed = True
         else:
             fetch = {}
@@ -378,6 +376,10 @@ def self_link(module):
 
 
 def collection(module):
+    return "https://redis.googleapis.com/v1/projects/{project}/locations/{region}/instances".format(**module.params)
+
+
+def create_link(module):
     return "https://redis.googleapis.com/v1/projects/{project}/locations/{region}/instances?instanceId={name}".format(**module.params)
 
 

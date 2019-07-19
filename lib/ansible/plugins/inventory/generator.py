@@ -101,9 +101,8 @@ class InventoryModule(BaseInventoryPlugin):
         return valid
 
     def template(self, pattern, variables):
-        t = self.templar
-        t.set_available_variables(variables)
-        return t.do_template(pattern)
+        self.templar.available_variables = variables
+        return self.templar.do_template(pattern)
 
     def add_parents(self, inventory, child, parents, template_vars):
         for parent in parents:

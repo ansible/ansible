@@ -29,6 +29,7 @@ VSPHERE_IMP_ERR = None
 try:
     from com.vmware.vapi.std_client import DynamicID
     from vmware.vapi.vsphere.client import create_vsphere_client
+    from com.vmware.vapi.std.errors_client import Unauthorized
     HAS_VSPHERE = True
 except ImportError:
     VSPHERE_IMP_ERR = traceback.format_exc()
@@ -48,6 +49,22 @@ class VmwareRestClient(object):
         self.params = module.params
         self.check_required_library()
         self.api_client = self.connect_to_vsphere_client()
+
+    # Helper function
+    def get_error_message(self, error):
+        """
+        Helper function to show human readable error messages.
+        """
+        err_msg = []
+        if not error.messages:
+            if isinstance(error, Unauthorized):
+                return "Authorization required."
+            return "Generic error occurred."
+
+        for err in error.messages:
+            err_msg.append(err.default_message % err.args)
+
+        return " ,".join(err_msg)
 
     def check_required_library(self):
         """

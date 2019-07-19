@@ -278,6 +278,8 @@ You can link from your module documentation to other module docs, other resource
     - To refer a collection of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
     - Because it stands out better, using ``seealso`` is preferred for general references over the use of notes or adding links to the description.
 
+.. _module_docs_fragments:
+
 Documentation fragments
 -----------------------
 

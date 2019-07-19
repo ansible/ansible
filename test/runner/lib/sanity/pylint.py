@@ -1,11 +1,14 @@
 """Sanity test using pylint."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import collections
 import itertools
 import json
 import os
 import datetime
+
+import lib.types as t
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -17,10 +20,15 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    run_command,
     display,
     read_lines_without_comments,
     ConfigParser,
+    INSTALL_ROOT,
+    is_subdir,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.executor import (
@@ -51,12 +59,6 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
-    def __init__(self):
-        super(PylintTest, self).__init__()
-
-        self.plugin_dir = 'test/sanity/pylint/plugins'
-        self.plugin_names = sorted(p[0] for p in [os.path.splitext(p) for p in os.listdir(self.plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
-
     def test(self, args, targets):
         """
         :type args: SanityConfig
@@ -67,15 +69,19 @@ class PylintTest(SanitySingleVersion):
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        skip_paths = read_lines_without_comments(PYLINT_SKIP_PATH)
+        plugin_dir = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/plugins')
+        plugin_names = sorted(p[0] for p in [
+            os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
+
+        skip_paths = read_lines_without_comments(PYLINT_SKIP_PATH, optional=True)
 
         invalid_ignores = []
 
         supported_versions = set(SUPPORTED_PYTHON_VERSIONS) - set(UNSUPPORTED_PYTHON_VERSIONS)
         supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
 
-        ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH)
-        ignore = collections.defaultdict(dict)
+        ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH, optional=True)
+        ignore = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
         line = 0
 
         for ignore_entry in ignore_entries:
@@ -108,17 +114,18 @@ class PylintTest(SanitySingleVersion):
 
         skip_paths_set = set(skip_paths)
 
-        paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths_set)
+        paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/')) and i.path not in skip_paths_set)
 
-        module_paths = [p.split(os.path.sep) for p in paths if p.startswith('lib/ansible/modules/')]
-        module_dirs = sorted(set([p[3] for p in module_paths if len(p) > 4]))
+        module_paths = [os.path.relpath(p, 'lib/ansible/modules/').split(os.path.sep) for p in paths if is_subdir(p, 'lib/ansible/modules/')]
+        module_dirs = sorted(set([p[0] for p in module_paths if len(p) > 1]))
 
         large_module_group_threshold = 500
         large_module_groups = [key for key, value in
-                               itertools.groupby(module_paths, lambda p: p[3] if len(p) > 4 else '') if len(list(value)) > large_module_group_threshold]
+                               itertools.groupby(module_paths, lambda p: p[0] if len(p) > 1 else '') if len(list(value)) > large_module_group_threshold]
 
-        large_module_group_paths = [p.split(os.path.sep) for p in paths if any(p.startswith('lib/ansible/modules/%s/' % g) for g in large_module_groups)]
-        large_module_group_dirs = sorted(set([os.path.sep.join(p[3:5]) for p in large_module_group_paths if len(p) > 5]))
+        large_module_group_paths = [os.path.relpath(p, 'lib/ansible/modules/').split(os.path.sep) for p in paths
+                                    if any(is_subdir(p, os.path.join('lib/ansible/modules/', g)) for g in large_module_groups)]
+        large_module_group_dirs = sorted(set([os.path.sep.join(p[:2]) for p in large_module_group_paths if len(p) > 2]))
 
         contexts = []
         remaining_paths = set(paths)
@@ -143,14 +150,9 @@ class PylintTest(SanitySingleVersion):
                 :type path_to_filter: str
                 :rtype: bool
                 """
-                return path_to_filter.startswith(path_filter)
+                return is_subdir(path_to_filter, path_filter)
 
             return context_filter
-
-        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
-        add_context(remaining_paths, 'units', filter_path('test/units/'))
-        add_context(remaining_paths, 'test', filter_path('test/'))
-        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
 
         for large_module_group_dir in large_module_group_dirs:
             add_context(remaining_paths, 'modules/%s' % large_module_group_dir, filter_path('lib/ansible/modules/%s/' % large_module_group_dir))
@@ -160,6 +162,14 @@ class PylintTest(SanitySingleVersion):
 
         add_context(remaining_paths, 'modules', filter_path('lib/ansible/modules/'))
         add_context(remaining_paths, 'module_utils', filter_path('lib/ansible/module_utils/'))
+
+        add_context(remaining_paths, 'units', filter_path('test/units/'))
+
+        add_context(remaining_paths, 'validate-modules', filter_path('test/sanity/validate-modules/'))
+        add_context(remaining_paths, 'sanity', filter_path('test/sanity/'))
+        add_context(remaining_paths, 'ansible-test', filter_path('test/runner/'))
+        add_context(remaining_paths, 'test', filter_path('test/'))
+        add_context(remaining_paths, 'hacking', filter_path('hacking/'))
         add_context(remaining_paths, 'ansible', lambda p: True)
 
         messages = []
@@ -172,7 +182,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.utcnow()
-            messages += self.pylint(args, context, context_paths)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names)
             context_end = datetime.datetime.utcnow()
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -202,7 +212,7 @@ class PylintTest(SanitySingleVersion):
 
         for error in errors:
             if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
+                ignore[error.path][error.code] = 0  # error ignored, clear line number of ignore entry to track usage
             else:
                 filtered.append(error)  # error not ignored
 
@@ -259,17 +269,13 @@ class PylintTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def pylint(self, args, context, paths):
-        """
-        :type args: SanityConfig
-        :type context: str
-        :type paths: list[str]
-        :rtype: list[dict[str, str]]
-        """
-        rcfile = 'test/sanity/pylint/config/%s' % context.split('/')[0]
+    @staticmethod
+    def pylint(args, context, paths, plugin_dir, plugin_names):  # type: (SanityConfig, str, t.List[str], str, t.List[str]) -> t.List[t.Dict[str, str]]
+        """Run pylint using the config specified by the context on the specified paths."""
+        rcfile = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
 
         if not os.path.exists(rcfile):
-            rcfile = 'test/sanity/pylint/config/default'
+            rcfile = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/config/default')
 
         parser = ConfigParser()
         parser.read(rcfile)
@@ -280,7 +286,7 @@ class PylintTest(SanitySingleVersion):
             config = dict()
 
         disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
-        load_plugins = set(self.plugin_names) - disable_plugins
+        load_plugins = set(plugin_names) - disable_plugins
 
         cmd = [
             args.python_executable,
@@ -293,8 +299,10 @@ class PylintTest(SanitySingleVersion):
             '--load-plugins', ','.join(load_plugins),
         ] + paths
 
+        append_python_path = [plugin_dir]
+
         env = ansible_environment(args)
-        env['PYTHONPATH'] += '%s%s' % (os.path.pathsep, self.plugin_dir)
+        env['PYTHONPATH'] += os.path.pathsep + os.path.pathsep.join(append_python_path)
 
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)

@@ -119,9 +119,8 @@ def search_obj_in_list(name, lst):
     return None
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
 
     for w in want:
         name = w['name']
@@ -170,11 +169,10 @@ def map_obj_to_commands(updates, module):
                 if mode != obj_in_have['mode']:
                     if obj_in_have['mode'] == 'access':
                         commands.append('no switchport access vlan {0}'.format(obj_in_have['access_vlan']))
+                        commands.append('switchport mode trunk')
                         if native_vlan:
-                            commands.append('switchport mode trunk')
                             commands.append('switchport trunk native vlan {0}'.format(native_vlan))
                         if trunk_allowed_vlans:
-                            commands.append('switchport mode trunk')
                             commands.append('switchport trunk allowed vlan {0}'.format(trunk_allowed_vlans))
                     else:
                         if obj_in_have['native_vlan']:
@@ -213,11 +211,12 @@ def map_config_to_obj(module, warnings):
     for item in set(match):
         command = {'command': 'show interfaces {0} switchport | include Switchport'.format(item),
                    'output': 'text'}
-        command_result = run_commands(module, command)
-        if command_result[0] == "% Interface does not exist":
+        command_result = run_commands(module, command, check_rc=False)
+        if "Interface does not exist" in command_result[0]:
             warnings.append("Could not gather switchport information for {0}: {1}".format(item, command_result[0]))
             continue
-        elif command_result[0] != "":
+
+        if command_result[0]:
             switchport_cfg = command_result[0].split(':')[1].strip()
 
             if switchport_cfg == 'Enabled':
@@ -228,17 +227,16 @@ def map_config_to_obj(module, warnings):
             obj = {
                 'name': item.lower(),
                 'state': state,
+                'access_vlan': parse_config_argument(configobj, item, 'switchport access vlan'),
+                'native_vlan': parse_config_argument(configobj, item, 'switchport trunk native vlan'),
+                'trunk_allowed_vlans': parse_config_argument(configobj, item, 'switchport trunk allowed vlan'),
             }
+            if obj['access_vlan']:
+                obj['mode'] = 'access'
+            else:
+                obj['mode'] = 'trunk'
 
-        obj['access_vlan'] = parse_config_argument(configobj, item, 'switchport access vlan')
-        obj['native_vlan'] = parse_config_argument(configobj, item, 'switchport trunk native vlan')
-        obj['trunk_allowed_vlans'] = parse_config_argument(configobj, item, 'switchport trunk allowed vlan')
-        if obj['access_vlan']:
-            obj['mode'] = 'access'
-        else:
-            obj['mode'] = 'trunk'
-
-        instances.append(obj)
+            instances.append(obj)
 
     return instances
 
@@ -300,13 +298,11 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    result = {'changed': False, 'warnings': warnings}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module, warnings)
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:

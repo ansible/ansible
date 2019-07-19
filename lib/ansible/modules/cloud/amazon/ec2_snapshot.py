@@ -126,7 +126,7 @@ from ansible.module_utils.ec2 import HAS_BOTO, ec2_argument_spec, ec2_connect
 
 # Find the most recent snapshot
 def _get_snapshot_starttime(snap):
-    return datetime.datetime.strptime(snap.start_time, '%Y-%m-%dT%H:%M:%S.000Z')
+    return datetime.datetime.strptime(snap.start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
 
 
 def _get_most_recent_snapshot(snapshots, max_snapshot_age_secs=None, now=None):
@@ -147,7 +147,7 @@ def _get_most_recent_snapshot(snapshots, max_snapshot_age_secs=None, now=None):
     youngest_snapshot = max(snapshots, key=_get_snapshot_starttime)
 
     # See if the snapshot is younger that the given max age
-    snapshot_start = datetime.datetime.strptime(youngest_snapshot.start_time, '%Y-%m-%dT%H:%M:%S.000Z')
+    snapshot_start = datetime.datetime.strptime(youngest_snapshot.start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
     snapshot_age = now - snapshot_start
 
     if max_snapshot_age_secs is not None:

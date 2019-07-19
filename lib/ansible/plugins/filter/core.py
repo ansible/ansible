@@ -36,7 +36,7 @@ import yaml
 
 import datetime
 from functools import partial
-from random import Random, SystemRandom, shuffle, randint
+from random import Random, SystemRandom, shuffle
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
@@ -280,7 +280,7 @@ def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
 
-def mandatory(a):
+def mandatory(a, msg=None):
     from jinja2.runtime import Undefined
 
     ''' Make a variable mandatory '''
@@ -289,7 +289,12 @@ def mandatory(a):
             name = "'%s' " % to_text(a._undefined_name)
         else:
             name = ''
-        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+
+        if msg is not None:
+            raise AnsibleFilterError(to_native(msg))
+        else:
+            raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+
     return a
 
 
@@ -533,7 +538,7 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
     return dict((item[key_name], item[value_name]) for item in mylist)
 
 
-def random_mac(value):
+def random_mac(value, seed=None):
     ''' takes string prefix, and return it completed with random bytes
         to get a complete 6 bytes MAC address '''
 
@@ -558,8 +563,12 @@ def random_mac(value):
     if len(err):
         raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
 
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
     # Generate random int between x1000000000 and xFFFFFFFFFF
-    v = randint(68719476736, 1099511627775)
+    v = r.randint(68719476736, 1099511627775)
     # Select first n chars to complement input prefix
     remain = 2 * (6 - len(mac_items))
     rnd = ('%x' % v)[:remain]

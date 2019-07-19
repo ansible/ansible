@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 """Prevent unwanted files from being added to the source tree."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import sys
 
@@ -19,10 +22,6 @@ def main():
         # allowed special cases
         'lib/ansible/config/base.yml',
         'lib/ansible/config/module_defaults.yml',
-        # temporary skip, relocate these to docs
-        'lib/ansible/modules/cloud/amazon/GUIDELINES.md',
-        'lib/ansible/modules/cloud/openstack/README.md',
-        'lib/ansible/modules/cloud/ovirt/README.rst',
     )
 
     skip_directories = (

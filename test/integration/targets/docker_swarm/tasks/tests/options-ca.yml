@@ -147,7 +147,8 @@
   - assert:
       that:
       - output_1 is failed
-      - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+      - "('version is ' ~ docker_py_version ~ ' ') in output_1.msg"
+      - "'Minimum version required is 2.6.0 ' in output_1.msg"
     when: docker_py_version is version('2.6.0', '<')
 
   when: pyopenssl_version.stdout is version('0.15', '>=') or cryptography_version.stdout is version('1.6', '>=')

@@ -1,0 +1,2 @@
+minor_changes:
+    - added ``use`` option to ``hostname`` module to allow user to override autodetection.

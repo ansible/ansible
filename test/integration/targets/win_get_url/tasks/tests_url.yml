@@ -188,6 +188,8 @@
     dest: '{{ testing_dir }}\headers.txt'
     headers:
       testing: 123
+      User-Agent: 'badAgent'
+      accept: 'text/html'
   register: headers
 
 - name: get result of send request with headers
@@ -201,3 +203,5 @@
     - headers is changed
     - headers.status_code == 200
     - (headers_actual.content | b64decode | from_json).headers.Testing == '123'
+    - (headers_actual.content | b64decode | from_json).headers["User-Agent"] == 'badAgent'
+    - (headers_actual.content | b64decode | from_json).headers.Accept == 'text/html'

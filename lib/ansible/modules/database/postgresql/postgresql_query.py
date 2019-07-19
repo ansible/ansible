@@ -56,18 +56,13 @@ options:
     type: str
     aliases:
     - login_db
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+  autocommit:
+    description:
+    - Execute in autocommit mode when the query can't be run inside a transaction block
+      (e.g., VACUUM).
+    - Mutually exclusive with I(check_mode).
+    type: bool
+    version_added: '2.9'
 author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
@@ -110,6 +105,12 @@ EXAMPLES = r'''
     path_to_script: /var/lib/pgsql/test.sql
     positional_args:
     - 1
+
+- name: Example of using autocommit parameter
+  postgresql_query:
+    db: test_db
+    query: VACUUM
+    autocommit: yes
 '''
 
 RETURN = r'''
@@ -145,10 +146,12 @@ except ImportError:
     # ansible.module_utils.postgres
     pass
 
-import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -166,6 +169,7 @@ def main():
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
+        autocommit=dict(type='bool'),
     )
 
     module = AnsibleModule(
@@ -178,6 +182,10 @@ def main():
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
     path_to_script = module.params["path_to_script"]
+    autocommit = module.params["autocommit"]
+
+    if autocommit and module.check_mode:
+        module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
 
     if positional_args and named_args:
         module.fail_json(msg="positional_args and named_args params are mutually exclusive")
@@ -191,7 +199,8 @@ def main():
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
-    db_connection = connect_to_db(module, autocommit=False)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=autocommit)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Prepare args:
@@ -245,7 +254,8 @@ def main():
     if module.check_mode:
         db_connection.rollback()
     else:
-        db_connection.commit()
+        if not autocommit:
+            db_connection.commit()
 
     kw = dict(
         changed=changed,

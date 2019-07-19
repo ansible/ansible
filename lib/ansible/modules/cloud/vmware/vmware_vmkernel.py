@@ -286,18 +286,7 @@ class PyVmomiHelper(PyVmomi):
             self.ip_address = self.params['network'].get('ip_address', None)
             self.subnet_mask = self.params['network'].get('subnet_mask', None)
             self.default_gateway = self.params['network'].get('default_gateway', None)
-            if self.network_type == 'static':
-                if not self.ip_address:
-                    module.fail_json(msg="ip_address is a required parameter when network type is set to 'static'")
-                if not self.subnet_mask:
-                    module.fail_json(msg="subnet_mask is a required parameter when network type is set to 'static'")
             self.tcpip_stack = self.params['network'].get('tcpip_stack')
-        else:
-            self.network_type = 'dhcp'
-            self.ip_address = None
-            self.subnet_mask = None
-            self.default_gateway = None
-            self.tcpip_stack = 'default'
         self.device = self.params['device']
         if self.network_type == 'dhcp' and not self.device:
             module.fail_json(msg="device is a required parameter when network type is set to 'dhcp'")
@@ -323,6 +312,14 @@ class PyVmomiHelper(PyVmomi):
                 msg="Failed to get details of ESXi server. Please specify esxi_hostname."
             )
 
+        if self.network_type == 'static':
+            if self.module.params['state'] == 'absent':
+                pass
+            elif not self.ip_address:
+                module.fail_json(msg="ip_address is a required parameter when network type is set to 'static'")
+            elif not self.subnet_mask:
+                module.fail_json(msg="subnet_mask is a required parameter when network type is set to 'static'")
+
         # find Port Group
         if self.vswitch_name:
             self.port_group_obj = self.get_port_group_by_name(
@@ -346,13 +343,9 @@ class PyVmomiHelper(PyVmomi):
         else:
             # config change (e.g. DHCP to static, or vice versa); doesn't work with virtual port change
             self.vnic = self.get_vmkernel_by_portgroup_new(port_group_name=self.port_group_name)
-            if not self.vnic:
-                if self.network_type == 'static':
-                    # vDS to vSS or vSS to vSS (static IP)
-                    self.vnic = self.get_vmkernel_by_ip(ip_address=self.ip_address)
-                elif self.network_type == 'dhcp':
-                    # vDS to vSS or vSS to vSS (DHCP)
-                    self.vnic = self.get_vmkernel_by_device(device_name=self.device)
+            if not self.vnic and self.network_type == 'static':
+                # vDS to vSS or vSS to vSS (static IP)
+                self.vnic = self.get_vmkernel_by_ip(ip_address=self.ip_address)
 
     def get_port_group_by_name(self, host_system, portgroup_name, vswitch_name):
         """
@@ -426,9 +419,9 @@ class PyVmomiHelper(PyVmomi):
         Returns: vmkernel managed object if vmkernel found, false if not
 
         """
-        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.spec.ip.ipAddress == ip_address]
-        if vnics:
-            return vnics[0]
+        for vnic in self.esxi_host_obj.config.network.vnic:
+            if vnic.spec.ip.ipAddress == ip_address:
+                return vnic
         return None
 
     def get_vmkernel_by_device(self, device_name):
@@ -440,9 +433,9 @@ class PyVmomiHelper(PyVmomi):
         Returns: vmkernel managed object if vmkernel found, false if not
 
         """
-        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
-        if vnics:
-            return vnics[0]
+        for vnic in self.esxi_host_obj.config.network.vnic:
+            if vnic.device == device_name:
+                return vnic
         return None
 
     def check_state(self):
@@ -451,11 +444,7 @@ class PyVmomiHelper(PyVmomi):
         Returns: Present if found and absent if not found
 
         """
-        state = 'absent'
-        if self.vnic:
-            state = 'present'
-
-        return state
+        return 'present' if self.vnic else 'absent'
 
     def host_vmk_delete(self):
         """
@@ -496,7 +485,7 @@ class PyVmomiHelper(PyVmomi):
 
     def host_vmk_update(self):
         """
-        Function to update VMKernel with given parameters
+        Update VMKernel with given parameters
         Returns: NA
 
         """

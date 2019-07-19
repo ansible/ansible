@@ -1,6 +1,6 @@
 """Classify changes in Ansible code."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import collections
 import os
@@ -170,7 +170,7 @@ def categorize_changes(args, paths, verbose_command=None):
     return changes
 
 
-class PathMapper(object):
+class PathMapper:
     """Map file paths to test commands and targets."""
     def __init__(self, args):
         """

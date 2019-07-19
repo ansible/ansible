@@ -53,14 +53,23 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
     name:
       description:
       - Name of the topic.
+      returned: success
+      type: str
+    kmsKeyName:
+      description:
+      - The resource name of the Cloud KMS CryptoKey to be used to protect access
+        to messsages published on this topic. Your project's PubSub service account
+        (`service-{{PROJECT_NUMBER}}@gcp-sa-pubsub.iam.gserviceaccount.com`) must
+        have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
+      - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
       returned: success
       type: str
     labels:
@@ -92,7 +101,7 @@ def main():
         items = items.get('topics')
     else:
         items = []
-    return_value = {'items': items}
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

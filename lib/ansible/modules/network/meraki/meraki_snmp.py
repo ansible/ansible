@@ -117,32 +117,32 @@ data:
             returned: success
             type: str
             sample: 16100
-        v2cEnabled:
+        v2c_enabled:
             description: Shows enabled state of SNMPv2c
             returned: success
             type: bool
             sample: true
-        v3Enabled:
+        v3_enabled:
             description: Shows enabled state of SNMPv3
             returned: success
             type: bool
             sample: true
-        v3AuthMode:
+        v3_auth_mode:
             description: The SNMP version 3 authentication mode either MD5 or SHA.
             returned: success
             type: str
             sample: SHA
-        v3PrivMode:
+        v3_priv_mode:
             description: The SNMP version 3 privacy mode DES or AES128.
             returned: success
             type: str
             sample: AES128
-        v2CommunityString:
+        v2_community_string:
             description: Automatically generated community string for SNMPv2c.
             returned: When SNMPv2c is enabled.
             type: str
             sample: o/8zd-JaSb
-        v3User:
+        v3_user:
             description: Automatically generated username for SNMPv3.
             returned: When SNMPv3c is enabled.
             type: str
@@ -153,6 +153,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -201,15 +202,26 @@ def set_snmp(meraki, org_id):
         full_compare['v2cEnabled'] = False
     path = meraki.construct_path('create', org_id=org_id)
     snmp = get_snmp(meraki, org_id)
-    ignored_parameters = ('v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User')
+    ignored_parameters = ['v3AuthPass', 'v3PrivPass', 'hostname', 'port', 'v2CommunityString', 'v3User']
     if meraki.is_update_required(snmp, full_compare, optional_ignore=ignored_parameters):
+        if meraki.module.check_mode is True:
+            diff = recursive_diff(snmp, full_compare)
+            snmp.update(payload)
+            meraki.result['data'] = snmp
+            meraki.result['diff'] = {'before': diff[0],
+                                     'after': diff[1]}
+            meraki.exit_json(**meraki.result)
         r = meraki.request(path,
                            method='PUT',
                            payload=json.dumps(payload))
         if meraki.status == 200:
+            diff = recursive_diff(snmp, r)
+            meraki.result['diff'] = {'before': diff[0],
+                                     'after': diff[1]}
             meraki.result['changed'] = True
             return r
-    return -1
+    else:
+        return snmp
 
 
 def main():
@@ -218,8 +230,6 @@ def main():
     # the module
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['present', 'query'], default='present'),
-                         org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
                          v2c_enabled=dict(type='bool'),
                          v3_enabled=dict(type='bool'),
                          v3_auth_mode=dict(type='str', choices=['SHA', 'MD5']),
@@ -261,9 +271,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    # FIXME: Work with Meraki so they can implement a check mode
-    if module.check_mode:
-        meraki.exit_json(**meraki.result)
 
     # execute checks for argument completeness
 
@@ -276,7 +283,6 @@ def main():
     org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_snmp(meraki, org_id)
     elif meraki.params['state'] == 'present':

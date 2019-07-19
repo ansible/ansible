@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 """Automatically retry failed commands."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # noinspection PyCompatibility
 import argparse
@@ -75,12 +75,14 @@ def parse_args():
                         const='yes',
                         default='auto')
 
+    # noinspection PyTypeChecker
     parser.add_argument('--tries',
                         metavar='TRIES',
                         type=int,
                         default=3,
                         help='number of tries to execute command (default: %(default)s)')
 
+    # noinspection PyTypeChecker
     parser.add_argument('--sleep',
                         metavar='SECONDS',
                         type=int,

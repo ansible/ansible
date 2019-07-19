@@ -406,7 +406,7 @@ class LinkStatus(object):
 
         # get link status information
         root = ElementTree.fromstring(xml_str)
-        intfs_info = root.find("data/ifm/interfaces")
+        intfs_info = root.find("ifm/interfaces")
         if not intfs_info:
             return
 
@@ -452,7 +452,7 @@ class LinkStatus(object):
 
         # get link status information
         root = ElementTree.fromstring(xml_str)
-        intf_info = root.find("data/ifm/interfaces/interface")
+        intf_info = root.find("ifm/interfaces/interface")
         if intf_info:
             for eles in intf_info:
                 if eles.tag in ["ifDynamicInfo", "ifStatistics", "ifClearedStat"]:
@@ -508,7 +508,7 @@ class LinkStatus(object):
 
         # get link status information
         root = ElementTree.fromstring(xml_str)
-        port_info = root.find("data/devm/ports/port")
+        port_info = root.find("devm/ports/port")
         if port_info:
             for eles in port_info:
                 if eles.tag == "ethernetPort":

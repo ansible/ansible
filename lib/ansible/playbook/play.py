@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -103,6 +104,8 @@ class Play(Base, Taggable, CollectionSearch):
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
+            if data['hosts'] is None or all(host is None for host in data['hosts']):
+                raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
@@ -143,7 +146,7 @@ class Play(Base, Taggable, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
         '''

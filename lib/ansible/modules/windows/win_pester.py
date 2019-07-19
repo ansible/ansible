@@ -26,6 +26,12 @@ options:
       - If the path is a folder, the module will consider all ps1 files as Pester tests.
     type: str
     required: true
+  tags:
+    description:
+      - Runs only tests in Describe blocks with specified Tags values.
+      - Accepts multiple comma seperated tags.
+    type: list
+    version_added: '2.9'
   version:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
@@ -46,6 +52,11 @@ EXAMPLES = r'''
 - name: Run the pester test provided in the path parameter.
   win_pester:
     path: C:\Pester
+
+- name: Run the pester tests only for the tags specified.
+  win_pester:
+    path: C:\Pester\TestScript.tests
+    tags: CI,UnitTests
 
 # Run pesters tests files that are present in the specified folder
 # ensure that the pester module version available is greater or equal to the version parameter.

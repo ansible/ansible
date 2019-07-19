@@ -66,6 +66,8 @@ grep -q "ERROR! The requested handler 'notify_inexistent_handler' was not found 
 # Notify inexistent handlers without errors when ANSIBLE_ERROR_ON_MISSING_HANDLER=false
 ANSIBLE_ERROR_ON_MISSING_HANDLER=false ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers -v "$@"
 
+ANSIBLE_ERROR_ON_MISSING_HANDLER=false ansible-playbook test_templating_in_handlers.yml -v "$@"
+
 # https://github.com/ansible/ansible/issues/36649
 output_dir=/tmp
 set +e

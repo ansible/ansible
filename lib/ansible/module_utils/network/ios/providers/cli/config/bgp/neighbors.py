@@ -163,7 +163,7 @@ class AFNeighbors(CliProvider):
             return cmd
 
     def _render_next_hop_self(self, item, config=None):
-        cmd = 'neighbor %s activate' % item['neighbor']
+        cmd = 'neighbor %s next-hop-self' % item['neighbor']
         if item['next_hop_self'] is False:
             if not config or cmd in config:
                 cmd = 'no %s' % cmd

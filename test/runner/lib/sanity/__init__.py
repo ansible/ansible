@@ -1,5 +1,6 @@
 """Execute Ansible sanity tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import abc
 import glob
@@ -8,25 +9,31 @@ import os
 import re
 import sys
 
+import lib.types as t
+
 from lib.util import (
     ApplicationError,
     SubprocessError,
     display,
-    run_command,
     import_plugins,
     load_plugins,
     parse_to_list_of_dict,
     ABC,
+    INSTALL_ROOT,
     is_binary_file,
     read_lines_without_comments,
 )
 
+from lib.util_common import (
+    run_command,
+)
+
 from lib.ansible_util import (
     ansible_environment,
+    check_pyyaml,
 )
 
 from lib.target import (
-    walk_external_targets,
     walk_internal_targets,
     walk_sanity_targets,
 )
@@ -72,16 +79,16 @@ def command_sanity(args):
     tests = sanity_get_tests()
 
     if args.test:
-        tests = [t for t in tests if t.name in args.test]
+        tests = [target for target in tests if target.name in args.test]
     else:
-        disabled = [t.name for t in tests if not t.enabled and not args.allow_disabled]
-        tests = [t for t in tests if t.enabled or args.allow_disabled]
+        disabled = [target.name for target in tests if not target.enabled and not args.allow_disabled]
+        tests = [target for target in tests if target.enabled or args.allow_disabled]
 
         if disabled:
             display.warning('Skipping tests disabled by default without --allow-disabled: %s' % ', '.join(sorted(disabled)))
 
     if args.skip_test:
-        tests = [t for t in tests if t.name not in args.skip_test]
+        tests = [target for target in tests if target.name not in args.skip_test]
 
     total = 0
     failed = []
@@ -99,6 +106,8 @@ def command_sanity(args):
         for version in versions:
             if args.python and version and version != args.python_version:
                 continue
+
+            check_pyyaml(args, version or args.python_version)
 
             display.info('Sanity check using %s%s' % (test.name, ' with Python %s' % version if version else ''))
 
@@ -133,12 +142,12 @@ def command_sanity(args):
 
 def collect_code_smell_tests():
     """
-    :rtype: tuple[SanityCodeSmellTest]
+    :rtype: tuple[SanityFunc]
     """
     skip_file = 'test/sanity/code-smell/skip.txt'
-    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True)
+    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
 
-    paths = glob.glob('test/sanity/code-smell/*')
+    paths = glob.glob(os.path.join(INSTALL_ROOT, 'test/sanity/code-smell/*'))
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityCodeSmellTest(p) for p in paths)
@@ -187,10 +196,9 @@ class SanityFailure(TestFailure):
 
 class SanityMessage(TestMessage):
     """Single sanity test message for one file."""
-    pass
 
 
-class SanityTargets(object):
+class SanityTargets:
     """Sanity test target information."""
     def __init__(self, include, exclude, require):
         """
@@ -201,7 +209,6 @@ class SanityTargets(object):
         self.all = not include
         self.targets = tuple(sorted(walk_sanity_targets()))
         self.include = walk_internal_targets(self.targets, include, exclude, require)
-        self.include_external, self.exclude_external = walk_external_targets(self.targets, include, exclude, require)
 
 
 class SanityTest(ABC):
@@ -215,6 +222,10 @@ class SanityTest(ABC):
 
 class SanityCodeSmellTest(SanityTest):
     """Sanity test script."""
+    UNSUPPORTED_PYTHON_VERSIONS = (
+        '2.6',  # some tests use voluptuous, but the version we require does not support python 2.6
+    )
+
     def __init__(self, path):
         name = os.path.splitext(os.path.basename(path))[0]
         config_path = os.path.splitext(path)[0] + '.json'
@@ -238,6 +249,10 @@ class SanityCodeSmellTest(SanityTest):
         :type targets: SanityTargets
         :rtype: TestResult
         """
+        if args.python_version in self.UNSUPPORTED_PYTHON_VERSIONS:
+            display.warning('Skipping %s on unsupported Python version %s.' % (self.name, args.python_version))
+            return SanitySkipped(self.name)
+
         if self.path.endswith('.py'):
             cmd = [args.python_executable, self.path]
         else:
@@ -347,7 +362,6 @@ class SanitySingleVersion(SanityFunc):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        pass
 
 
 class SanityMultipleVersion(SanityFunc):
@@ -360,7 +374,6 @@ class SanityMultipleVersion(SanityFunc):
         :type python_version: str
         :rtype: TestResult
         """
-        pass
 
 
 SANITY_TESTS = (
@@ -370,7 +383,7 @@ SANITY_TESTS = (
 def sanity_init():
     """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
     import_plugins('sanity')
-    sanity_plugins = {}  # type: dict[str, type]
+    sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityFunc]]
     load_plugins(SanityFunc, sanity_plugins)
     sanity_tests = tuple([plugin() for plugin in sanity_plugins.values()])
     global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement

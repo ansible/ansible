@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - add support for ``nocopy`` mode for volumes."

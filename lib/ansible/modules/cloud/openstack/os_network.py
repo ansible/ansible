@@ -83,6 +83,12 @@ options:
           not provided.
      type: int
      version_added: "2.9"
+   dns_domain:
+     description:
+       -  The DNS domain value to set.
+          Network will use Openstack defaults if this option is
+          not provided.
+     version_added: "2.9"
 requirements:
      - "openstacksdk"
 '''
@@ -122,6 +128,10 @@ network:
             description: The MTU of a network resource.
             type: int
             sample: 0
+        dns_domain:
+            description: The DNS domain of a network resource.
+            type: str
+            sample: "sample.openstack.org."
         admin_state_up:
             description: The administrative state of the network.
             type: bool
@@ -172,7 +182,8 @@ def main():
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None),
         port_security_enabled=dict(type='bool'),
-        mtu=dict(required=False, type='int')
+        mtu=dict(required=False, type='int'),
+        dns_domain=dict(required=False)
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -189,6 +200,7 @@ def main():
     project = module.params.get('project')
     port_security_enabled = module.params.get('port_security_enabled')
     mtu = module.params.get('mtu')
+    dns_domain = module.params.get('dns_domain')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -217,12 +229,12 @@ def main():
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider, project_id,
                                                port_security_enabled=port_security_enabled,
-                                               mtu_size=mtu)
+                                               mtu_size=mtu, dns_domain=dns_domain)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
                                                external, provider,
                                                port_security_enabled=port_security_enabled,
-                                               mtu_size=mtu)
+                                               mtu_size=mtu, dns_domain=dns_domain)
                 changed = True
             else:
                 changed = False

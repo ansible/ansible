@@ -4,10 +4,11 @@
 
 - import_role:
     name: prepare_vmware_tests
+  vars:
+    setup_datacenter: true
 
-# Testcase 0001: Add Distributed vSwitch
 - &dvs_data
-  name: add distributed vSwitch
+  name: Add distributed vSwitch
   vmware_dvswitch:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
@@ -22,12 +23,44 @@
     discovery_operation: both
   register: dvs_result_0001
 
-- name: ensure distributed vswitch is present
+- name: Ensure distributed vswitch is present
   assert:
     that:
       - dvs_result_0001.changed
 
-# Testcase 0002: Add Distributed vSwitch again
+- name: Create a VM folder on given Datacenter
+  vcenter_folder:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ dc1 }}'
+    folder_name: network_folder
+    folder_type: network
+    state: present
+    validate_certs: no
+  register:
+    network_folder_result
+
+- name: Add distributed vSwitch using folder
+  vmware_dvswitch:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "{{ network_folder_result.result.path }}"
+    state: present
+    switch_name: dvswitch_0002
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+  register: dvs_result_0002
+
+- name: Ensure distributed vswitch is present
+  assert:
+    that:
+      - dvs_result_0002.changed
+
 # vcsim doesn't support ldp check (self.dvs.config.linkDiscoveryProtocolConfig.protocol)
 - when: vcsim is not defined
   block:
@@ -39,7 +72,6 @@
     assert:
       that:
         - not dvs_result_0002.changed
-
 
 # FIXME: Remove this testcase from block once vcsim supports distributed vswitch delete method
 # Currently, vcsim does not support distributed vswitch delete option,

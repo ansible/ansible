@@ -68,7 +68,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'www.testzone-4.com.'in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'www.testzone-4.com.'in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a resource record set that already exists
   gcp_dns_resource_record_set:
@@ -108,7 +108,6 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that resource_record_set was deleted
   gcp_dns_resource_record_set_facts:
       managed_zone: "{{ managed_zone }}"
@@ -121,7 +120,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'www.testzone-4.com.'not in \"{{ results['items'] | map(attribute='name') | list }}\""
+      - "'www.testzone-4.com.'not in \"{{ results['resources'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a resource record set that does not exist
   gcp_dns_resource_record_set:
@@ -141,7 +140,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

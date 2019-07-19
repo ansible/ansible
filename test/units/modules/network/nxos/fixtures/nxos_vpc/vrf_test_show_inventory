@@ -1,0 +1,13 @@
+{
+  "TABLE_inv": {
+    "ROW_inv": [
+      {
+        "name": "Chassis",
+        "desc": "Nexus9000 C9504 (4 Slot) Chassis",
+        "productid": "N9K-C9504",
+        "vendorid": "V01",
+        "serialnum": "BR-549"
+      }
+    ]
+  }
+}

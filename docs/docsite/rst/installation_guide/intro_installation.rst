@@ -113,13 +113,19 @@ On RHEL and CentOS:
 
     $ sudo yum install ansible
 
-RPMs for RHEL 7 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
+RPMs for RHEL 7  and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
 
-To enable the Ansible Engine repository, run the following command:
+To enable the Ansible Engine repository for RHEL 8, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.7-rpms
+    $ sudo subscription-manager repos --enable ansible-2.8-for-rhel-8-x86_64-rpms
+
+To enable the Ansible Engine repository for RHEL 7, run the following command:
+
+.. code-block:: bash
+
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.8-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
@@ -327,7 +333,7 @@ If you wish to install Ansible globally, run the following commands::
 
 .. note::
 
-    Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to you system that leave it in an inconsistent on non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system.
+    Running ``pip`` with ``sudo`` will make global changes to the system. Since ``pip`` does not coordinate with system package managers, it could make changes to your system that leaves it in an inconsistent or non-functioning state. This is particularly true for macOS. Installing with ``--user`` is recommended unless you understand fully the implications of modifying global files on the system.
 
 .. note::
 

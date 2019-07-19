@@ -44,12 +44,13 @@ options:
     vrrp_type:
         description:
             - Type of a VRRP backup group.
+        type: str
         choices: ['normal', 'member', 'admin']
     admin_ignore_if_down:
         description:
             - mVRRP ignores an interface Down event.
-        type: bool
-        default: 'no'
+        type: str
+        choices: ['true','false']
     admin_vrid:
         description:
             - Tracked mVRRP ID. The value is an integer ranging from 1 to 255.
@@ -59,8 +60,8 @@ options:
     admin_flowdown:
         description:
             - Disable the flowdown function for service VRRP.
-        type: bool
-        default: 'no'
+        type: str
+        choices: ['true','false']
     priority:
         description:
             - Configured VRRP priority.
@@ -68,6 +69,7 @@ options:
     version:
         description:
             - VRRP version. The default version is v2.
+        type: str
         choices: ['v2','v3']
     advertise_interval:
         description:
@@ -95,13 +97,14 @@ options:
             - Authentication type used for VRRP packet exchanges between virtual routers.
               The values are noAuthentication, simpleTextPassword, md5Authentication.
               The default value is noAuthentication.
+        type: str
         choices: ['simple','md5','none']
     is_plain:
         description:
             - Select the display mode of an authentication key.
               By default, an authentication key is displayed in ciphertext.
-        type: bool
-        default: 'no'
+        type: str
+        choices: ['true','false']
     auth_key:
         description:
             - This object is set based on the authentication type.
@@ -111,10 +114,12 @@ options:
     fast_resume:
         description:
             - mVRRP's fast resume mode.
+        type: str
         choices: ['enable','disable']
     state:
         description:
             - Specify desired state of the resource.
+        type: str
         default: present
         choices: ['present','absent']
 
@@ -482,7 +487,7 @@ class Vrrp(object):
             virtual_ip_info["vrrpVirtualIpInfos"] = list()
             root = ElementTree.fromstring(xml_str)
             vrrp_virtual_ip_infos = root.findall(
-                "data/vrrp/vrrpGroups/vrrpGroup/virtualIps/virtualIp")
+                "vrrp/vrrpGroups/vrrpGroup/virtualIps/virtualIp")
             if vrrp_virtual_ip_infos:
                 for vrrp_virtual_ip_info in vrrp_virtual_ip_infos:
                     virtual_ip_dict = dict()
@@ -508,7 +513,7 @@ class Vrrp(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/vrrp/vrrpGlobalCfg")
+                "vrrp/vrrpGlobalCfg")
 
             if global_info:
                 for tmp in global_info:
@@ -532,7 +537,7 @@ class Vrrp(object):
 
             root = ElementTree.fromstring(xml_str)
             global_info = root.findall(
-                "data/vrrp/vrrpGroups/vrrpGroup")
+                "vrrp/vrrpGroups/vrrpGroup")
 
             if global_info:
                 for tmp in global_info:
@@ -693,7 +698,6 @@ class Vrrp(object):
 
     def is_vrrp_group_info_change(self):
         """whether vrrp group attribute info change"""
-
         if self.vrrp_type:
             if self.vrrp_group_info["vrrpType"] != self.vrrp_type:
                 return True
@@ -896,19 +900,13 @@ class Vrrp(object):
                 conf_str += "<adminVrrpId>%s</adminVrrpId>" % self.admin_vrid
             if self.admin_interface:
                 conf_str += "<adminIfName>%s</adminIfName>" % self.admin_interface
-                if self.admin_flowdown is True or self.admin_flowdown is False:
-                    admin_flowdown = "false"
-                    if self.admin_flowdown is True:
-                        admin_flowdown = "true"
-                    conf_str += "<unflowdown>%s</unflowdown>" % admin_flowdown
+                if self.admin_flowdown:
+                    conf_str += "<unflowdown>%s</unflowdown>" % self.admin_flowdown
             if self.priority:
                 conf_str += "<priority>%s</priority>" % self.priority
             if self.vrrp_type == "admin":
-                if self.admin_ignore_if_down is True or self.admin_ignore_if_down is False:
-                    admin_ignore_if_down = "false"
-                    if self.admin_ignore_if_down is True:
-                        admin_ignore_if_down = "true"
-                    conf_str += "<adminIgnoreIfDown>%s</adminIgnoreIfDown>" % admin_ignore_if_down
+                if self.admin_ignore_if_down:
+                    conf_str += "<adminIgnoreIfDown>%s</adminIgnoreIfDown>" % self.admin_ignore_if_down
             if self.fast_resume:
                 fast_resume = "false"
                 if self.fast_resume == "enable":
@@ -925,10 +923,7 @@ class Vrrp(object):
             if self.auth_key:
                 conf_str += "<authenticationKey>%s</authenticationKey>" % self.auth_key
             if self.auth_mode == "simple":
-                is_plain = "false"
-                if self.is_plain is True:
-                    is_plain = "true"
-                conf_str += "<isPlain>%s</isPlain>" % is_plain
+                conf_str += "<isPlain>%s</isPlain>" % self.is_plain
 
             conf_str += CE_NC_SET_VRRP_GROUP_INFO_TAIL
             recv_xml = set_nc_config(self.module, conf_str)
@@ -938,7 +933,7 @@ class Vrrp(object):
 
             if self.interface and self.vrid:
                 if self.vrrp_type == "admin":
-                    if self.admin_ignore_if_down is True:
+                    if self.admin_ignore_if_down == "true":
                         self.updates_cmd.append(
                             "interface %s" % self.interface)
                         self.updates_cmd.append(
@@ -979,7 +974,7 @@ class Vrrp(object):
                         "vrrp vrid %s holding-multiplier %s" % (self.vrid, self.holding_multiplier))
 
                 if self.admin_vrid and self.admin_interface:
-                    if self.admin_flowdown is True:
+                    if self.admin_flowdown == "true":
                         self.updates_cmd.append(
                             "interface %s" % self.interface)
                         self.updates_cmd.append("vrrp vrid %s track admin-vrrp interface %s vrid %s unflowdown" %
@@ -992,7 +987,7 @@ class Vrrp(object):
 
                 if self.auth_mode and self.auth_key:
                     if self.auth_mode == "simple":
-                        if self.is_plain is True:
+                        if self.is_plain == "true":
                             self.updates_cmd.append(
                                 "interface %s" % self.interface)
                             self.updates_cmd.append("vrrp vrid %s authentication-mode simple plain %s" %
@@ -1174,7 +1169,7 @@ class Vrrp(object):
             self.existing["vrrp_type"] = self.vrrp_group_info["vrrpType"]
             if self.vrrp_type == "admin":
                 self.existing["admin_ignore_if_down"] = self.vrrp_group_info[
-                    "authenticationMode"]
+                    "adminIgnoreIfDown"]
             if self.admin_vrid and self.admin_interface:
                 self.existing["admin_vrid"] = self.vrrp_group_info[
                     "adminVrrpId"]
@@ -1237,9 +1232,9 @@ class Vrrp(object):
             self.end_state["vrrp_type"] = self.vrrp_group_info["vrrpType"]
             if self.vrrp_type == "admin":
                 self.end_state["admin_ignore_if_down"] = self.vrrp_group_info[
-                    "authenticationMode"]
+                    "adminIgnoreIfDown"]
             if self.admin_vrid and self.admin_interface:
-                self.existing["admin_vrid"] = self.vrrp_group_info[
+                self.end_state["admin_vrid"] = self.vrrp_group_info[
                     "adminVrrpId"]
                 self.end_state["admin_interface"] = self.vrrp_group_info[
                     "adminIfName"]
@@ -1266,6 +1261,8 @@ class Vrrp(object):
                 self.end_state["auth_mode"] = self.vrrp_group_info[
                     "authenticationMode"]
                 self.end_state["is_plain"] = self.vrrp_group_info["isPlain"]
+        if self.existing == self.end_state:
+            self.changed = False
 
     def work(self):
         """worker"""
@@ -1300,7 +1297,7 @@ class Vrrp(object):
                 if not self.vrrp_group_info:
                     self.module.fail_json(
                         msg='Error: The VRRP group does not exist.')
-                if self.admin_ignore_if_down is True:
+                if self.admin_ignore_if_down == "true":
                     if self.vrrp_type != "admin":
                         self.module.fail_json(
                             msg='Error: vrrpType must be admin when admin_ignore_if_down is true.')
@@ -1342,10 +1339,10 @@ def main():
         vrid=dict(type='str'),
         virtual_ip=dict(type='str'),
         vrrp_type=dict(type='str', choices=['normal', 'member', 'admin']),
-        admin_ignore_if_down=dict(type='bool', default=False),
+        admin_ignore_if_down=dict(type='str', choices=['true', 'false']),
         admin_vrid=dict(type='str'),
         admin_interface=dict(type='str'),
-        admin_flowdown=dict(type='bool', default=False),
+        admin_flowdown=dict(type='str', choices=['true', 'false']),
         priority=dict(type='str'),
         version=dict(type='str', choices=['v2', 'v3']),
         advertise_interval=dict(type='str'),
@@ -1354,7 +1351,7 @@ def main():
         recover_delay=dict(type='str'),
         holding_multiplier=dict(type='str'),
         auth_mode=dict(type='str', choices=['simple', 'md5', 'none']),
-        is_plain=dict(type='bool', default=False),
+        is_plain=dict(type='str', choices=['true', 'false']),
         auth_key=dict(type='str'),
         fast_resume=dict(type='str', choices=['enable', 'disable']),
         state=dict(type='str', default='present',

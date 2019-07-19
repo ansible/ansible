@@ -20,12 +20,13 @@ DELETE_HEADERS = {'accept': 'application/json', 'OData-Version': '4.0'}
 
 class RedfishUtils(object):
 
-    def __init__(self, creds, root_uri, timeout):
+    def __init__(self, creds, root_uri, timeout, module):
         self.root_uri = root_uri
         self.creds = creds
         self.timeout = timeout
+        self.module = module
+        self.service_root = '/redfish/v1/'
         self._init_session()
-        return
 
     # The following functions are to send GET/POST/PATCH/DELETE requests
     def get_request(self, uri):
@@ -154,8 +155,8 @@ class RedfishUtils(object):
     def _init_session(self):
         pass
 
-    def _find_accountservice_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_accountservice_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -173,8 +174,8 @@ class RedfishUtils(object):
             self.accounts_uri = accounts
         return {'ret': True}
 
-    def _find_sessionservice_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_sessionservice_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -192,8 +193,8 @@ class RedfishUtils(object):
             self.sessions_uri = sessions
         return {'ret': True}
 
-    def _find_systems_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_systems_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -210,8 +211,8 @@ class RedfishUtils(object):
                 'msg': "ComputerSystem's Members array is either empty or missing"}
         return {'ret': True}
 
-    def _find_updateservice_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_updateservice_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -228,9 +229,9 @@ class RedfishUtils(object):
             self.firmware_uri = firmware_inventory
             return {'ret': True}
 
-    def _find_chassis_resource(self, uri):
+    def _find_chassis_resource(self):
         chassis_service = []
-        response = self.get_request(self.root_uri + uri)
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -247,8 +248,8 @@ class RedfishUtils(object):
             self.chassis_uri_list = chassis_service
             return {'ret': True}
 
-    def _find_managers_resource(self, uri):
-        response = self.get_request(self.root_uri + uri)
+    def _find_managers_resource(self):
+        response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -619,16 +620,21 @@ class RedfishUtils(object):
         return result
 
     def manage_system_power(self, command):
-        result = {}
         key = "Actions"
 
         # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
-        result['ret'] = True
         data = response['data']
         power_state = data["PowerState"]
+
+        if power_state == "On" and command == 'PowerOn':
+            return {'ret': True, 'changed': False}
+
+        if power_state == "Off" and command in ['PowerGracefulShutdown', 'PowerForceOff']:
+            return {'ret': True, 'changed': False}
+
         reset_action = data[key]["#ComputerSystem.Reset"]
         action_uri = reset_action["target"]
         allowable_vals = reset_action.get("ResetType@Redfish.AllowableValues", [])
@@ -656,8 +662,7 @@ class RedfishUtils(object):
         response = self.post_request(self.root_uri + action_uri, payload)
         if response['ret'] is False:
             return response
-        result['ret'] = True
-        return result
+        return {'ret': True, 'changed': True}
 
     def list_users(self):
         result = {}
@@ -1190,8 +1195,7 @@ class RedfishUtils(object):
             result['ret'] = True
             data = response['data']
             if key in data:
-                response = self.get_request(self.root_uri + chassis_uri +
-                                            "/" + key)
+                response = self.get_request(self.root_uri + data[key]['@odata.id'])
                 data = response['data']
                 if 'PowerControl' in data:
                     if len(data['PowerControl']) > 0:
@@ -1364,8 +1368,8 @@ class RedfishUtils(object):
         key = "EthernetInterfaces"
         # Get these entries, but does not fail if not found
         properties = ['Description', 'FQDN', 'IPv4Addresses', 'IPv6Addresses',
-                      'NameServers', 'PermanentMACAddress', 'SpeedMbps', 'MTUSize',
-                      'AutoNeg', 'Status']
+                      'NameServers', 'MACAddress', 'PermanentMACAddress',
+                      'SpeedMbps', 'MTUSize', 'AutoNeg', 'Status']
 
         response = self.get_request(self.root_uri + resource_uri)
         if response['ret'] is False:

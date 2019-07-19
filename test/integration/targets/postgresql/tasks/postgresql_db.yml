@@ -1,0 +1,169 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# The file for testing new options for postgresql_db module.
+
+- vars:
+    db_tablespace: bar
+    tblspc_location: /ssd
+    db_name: acme
+    block_parameters: &block_parameters
+      become_user: "{{ pg_user }}"
+      become: yes
+    task_parameters: &task_parameters
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: "{{ pg_user }}"
+
+  # Start tablespace option tests:
+  block:
+  # create tablespace for tests
+  - name: postgresql_db_tablespace - Create tablespace
+    <<: *task_parameters
+    postgresql_tablespace:
+      <<: *pg_parameters
+      login_db: postgres
+      name: "{{ db_tablespace }}"
+      location: "{{ tblspc_location }}"
+
+  # Check mode for DB creation with tablespace option:
+  - name: postgresql_db_tablespace - Create DB with tablespace option in check mode
+    <<: *task_parameters
+    check_mode: yes
+    postgresql_db:
+      <<: *pg_parameters
+      maintenance_db: postgres
+      name: "{{ db_name }}"
+      tablespace: "{{ db_tablespace }}"
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 0 because actually nothing changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      login_db: postgres
+      query: >
+        SELECT 1 FROM pg_database AS d JOIN pg_tablespace AS t
+        ON d.dattablespace = t.oid WHERE d.datname = '{{ db_name }}'
+        AND t.spcname = '{{ db_tablespace }}'
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  # Actual mode for creation with tablespace option:
+  - name: postgresql_db_tablespace - Create DB with tablespace option
+    <<: *task_parameters
+    postgresql_db:
+      <<: *pg_parameters
+      maintenance_db: postgres
+      name: "{{ db_name }}"
+      tablespace: "{{ db_tablespace }}"
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      login_db: postgres
+      query: >
+        SELECT 1 FROM pg_database AS d JOIN pg_tablespace AS t
+        ON d.dattablespace = t.oid WHERE d.datname = '{{ db_name }}'
+        AND t.spcname = '{{ db_tablespace }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+ 
+  # Try to change tablespace to the same:
+  - name: postgresql_db_tablespace - The same DB with tablespace option again
+    <<: *task_parameters
+    postgresql_db:
+      <<: *pg_parameters
+      maintenance_db: postgres
+      name: "{{ db_name }}"
+      tablespace: "{{ db_tablespace }}"
+
+  - assert:
+      that:
+      - result is not changed
+
+  # Try to change tablespace in check_mode:
+  - name: postgresql_db_tablespace - Change tablespace in check_mode
+    <<: *task_parameters
+    check_mode: yes
+    postgresql_db:
+      <<: *pg_parameters
+      maintenance_db: postgres
+      name: "{{ db_name }}"
+      tablespace: pg_default
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1 because actually nothing changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      login_db: postgres
+      query: >
+        SELECT 1 FROM pg_database AS d JOIN pg_tablespace AS t
+        ON d.dattablespace = t.oid WHERE d.datname = '{{ db_name }}'
+        AND t.spcname = '{{ db_tablespace }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Try to change tablespace to pg_default in actual mode:
+  - name: postgresql_db_tablespace - Change tablespace in actual mode
+    <<: *task_parameters
+    postgresql_db:
+      <<: *pg_parameters
+      maintenance_db: postgres
+      name: "{{ db_name }}"
+      tablespace: pg_default
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      login_db: postgres
+      query: >
+        SELECT 1 FROM pg_database AS d JOIN pg_tablespace AS t
+        ON d.dattablespace = t.oid WHERE d.datname = '{{ db_name }}'
+        AND t.spcname = 'pg_default'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Cleanup:
+  - name: postgresql_db_tablespace - Drop test DB
+    <<: *task_parameters
+    postgresql_db:
+      <<: *pg_parameters
+      maintenance_db: postgres
+      name: "{{ db_name }}"
+      state: absent
+
+  - name: postgresql_db_tablespace - Remove tablespace
+    <<: *task_parameters
+    postgresql_tablespace:
+      <<: *pg_parameters
+      login_db: postgres
+      name: "{{ db_tablespace }}"
+      state: absent
+
+  <<: *block_parameters
+  # End of tablespace block

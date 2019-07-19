@@ -60,17 +60,20 @@ options:
     - How often (in seconds) to send a health check. The default value is 5 seconds.
     required: false
     default: '5'
+    type: int
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   healthy_threshold:
     description:
     - A so-far unhealthy instance will be marked healthy after this many consecutive
       successes. The default value is 2.
     required: false
     default: '2'
+    type: int
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -80,6 +83,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   timeout_sec:
     description:
     - How long (in seconds) to wait before claiming failure.
@@ -87,6 +91,7 @@ options:
       value than checkIntervalSec.
     required: false
     default: '5'
+    type: int
     aliases:
     - timeout_seconds
   unhealthy_threshold:
@@ -95,21 +100,20 @@ options:
       failures. The default value is 2.
     required: false
     default: '2'
+    type: int
   type:
     description:
     - Specifies the type of the healthCheck, either TCP, SSL, HTTP or HTTPS. If not
       specified, the default is TCP. Exactly one of the protocol-specific health check
       field must be specified, which must match type field.
+    - 'Some valid choices include: "TCP", "SSL", "HTTP", "HTTPS"'
     required: false
-    choices:
-    - TCP
-    - SSL
-    - HTTP
-    - HTTPS
+    type: str
   http_health_check:
     description:
     - A nested object resource.
     required: false
+    type: dict
     suboptions:
       host:
         description:
@@ -117,41 +121,46 @@ options:
         - If left empty (default value), the public IP on behalf of which this health
           check is performed will be used.
         required: false
+        type: str
       request_path:
         description:
         - The request path of the HTTP health check request.
         - The default value is /.
         required: false
         default: "/"
+        type: str
       response:
         description:
         - The bytes to match against the beginning of the response data. If left empty
           (the default value), any response will indicate health. The response data
           can only be ASCII.
         required: false
+        type: str
       port:
         description:
         - The TCP port number for the HTTP health check request.
         - The default value is 80.
         required: false
+        type: int
       port_name:
         description:
         - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
           are defined, port takes precedence.
         required: false
+        type: str
       proxy_header:
         description:
         - Specifies the type of proxy header to append before sending data to the
           backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
         required: false
         default: NONE
-        choices:
-        - NONE
-        - PROXY_V1
+        type: str
   https_health_check:
     description:
     - A nested object resource.
     required: false
+    type: dict
     suboptions:
       host:
         description:
@@ -159,41 +168,46 @@ options:
         - If left empty (default value), the public IP on behalf of which this health
           check is performed will be used.
         required: false
+        type: str
       request_path:
         description:
         - The request path of the HTTPS health check request.
         - The default value is /.
         required: false
         default: "/"
+        type: str
       response:
         description:
         - The bytes to match against the beginning of the response data. If left empty
           (the default value), any response will indicate health. The response data
           can only be ASCII.
         required: false
+        type: str
       port:
         description:
         - The TCP port number for the HTTPS health check request.
         - The default value is 443.
         required: false
+        type: int
       port_name:
         description:
         - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
           are defined, port takes precedence.
         required: false
+        type: str
       proxy_header:
         description:
         - Specifies the type of proxy header to append before sending data to the
           backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
         required: false
         default: NONE
-        choices:
-        - NONE
-        - PROXY_V1
+        type: str
   tcp_health_check:
     description:
     - A nested object resource.
     required: false
+    type: dict
     suboptions:
       request:
         description:
@@ -201,35 +215,39 @@ options:
           (default value is empty). If both request and response are empty, the connection
           establishment alone will indicate health. The request data can only be ASCII.
         required: false
+        type: str
       response:
         description:
         - The bytes to match against the beginning of the response data. If left empty
           (the default value), any response will indicate health. The response data
           can only be ASCII.
         required: false
+        type: str
       port:
         description:
         - The TCP port number for the TCP health check request.
         - The default value is 443.
         required: false
+        type: int
       port_name:
         description:
         - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
           are defined, port takes precedence.
         required: false
+        type: str
       proxy_header:
         description:
         - Specifies the type of proxy header to append before sending data to the
           backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
         required: false
         default: NONE
-        choices:
-        - NONE
-        - PROXY_V1
+        type: str
   ssl_health_check:
     description:
     - A nested object resource.
     required: false
+    type: dict
     suboptions:
       request:
         description:
@@ -237,31 +255,34 @@ options:
           (default value is empty). If both request and response are empty, the connection
           establishment alone will indicate health. The request data can only be ASCII.
         required: false
+        type: str
       response:
         description:
         - The bytes to match against the beginning of the response data. If left empty
           (the default value), any response will indicate health. The response data
           can only be ASCII.
         required: false
+        type: str
       port:
         description:
         - The TCP port number for the SSL health check request.
         - The default value is 443.
         required: false
+        type: int
       port_name:
         description:
         - Port name as defined in InstanceGroup#NamedPort#name. If both port and port_name
           are defined, port takes precedence.
         required: false
+        type: str
       proxy_header:
         description:
         - Specifies the type of proxy header to append before sending data to the
           backend, either NONE or PROXY_V1. The default is NONE.
+        - 'Some valid choices include: "NONE", "PROXY_V1"'
         required: false
         default: NONE
-        choices:
-        - NONE
-        - PROXY_V1
+        type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/healthChecks)'
@@ -535,7 +556,7 @@ def main():
             name=dict(required=True, type='str'),
             timeout_sec=dict(default=5, type='int', aliases=['timeout_seconds']),
             unhealthy_threshold=dict(default=2, type='int'),
-            type=dict(type='str', choices=['TCP', 'SSL', 'HTTP', 'HTTPS']),
+            type=dict(type='str'),
             http_health_check=dict(
                 type='dict',
                 options=dict(
@@ -544,7 +565,7 @@ def main():
                     response=dict(type='str'),
                     port=dict(type='int'),
                     port_name=dict(type='str'),
-                    proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1']),
+                    proxy_header=dict(default='NONE', type='str'),
                 ),
             ),
             https_health_check=dict(
@@ -555,7 +576,7 @@ def main():
                     response=dict(type='str'),
                     port=dict(type='int'),
                     port_name=dict(type='str'),
-                    proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1']),
+                    proxy_header=dict(default='NONE', type='str'),
                 ),
             ),
             tcp_health_check=dict(
@@ -565,7 +586,7 @@ def main():
                     response=dict(type='str'),
                     port=dict(type='int'),
                     port_name=dict(type='str'),
-                    proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1']),
+                    proxy_header=dict(default='NONE', type='str'),
                 ),
             ),
             ssl_health_check=dict(
@@ -575,7 +596,7 @@ def main():
                     response=dict(type='str'),
                     port=dict(type='int'),
                     port_name=dict(type='str'),
-                    proxy_header=dict(default='NONE', type='str', choices=['NONE', 'PROXY_V1']),
+                    proxy_header=dict(default='NONE', type='str'),
                 ),
             ),
         ),
