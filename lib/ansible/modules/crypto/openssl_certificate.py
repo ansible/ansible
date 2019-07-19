@@ -425,15 +425,6 @@ options:
         type: path
         version_added: "2.9"
 
-    entrust_reissue_if_expires_in:
-        description:
-            - If this value is set and an existing certificate is present, it will be reissued if it expires within this number of seconds.
-            - If not present or value is 0, it will be reissued if the certificate is already expired.
-            - For example, if you want to reissue a certificate if it is expiring within a month, set this to 2592000.
-              Certificates with more seconds remainingpast this number of seconds from when the module is called will be left as is.
-        type: int
-        version_added: "2.9"
-
     entrust_not_after:
         description:
             - The point in time at which the certificate stops being valid.
@@ -1825,7 +1816,6 @@ class EntrustCertificate(Certificate):
 
     def __init__(self, module, backend):
         super(EntrustCertificate, self).__init__(module, backend)
-        self.renew = False
         self.trackingId = None
         self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
         try:
@@ -1869,16 +1859,7 @@ class EntrustCertificate(Certificate):
             body['eku'] = module.params['entrust_eku']
 
             try:
-                # self.renew is set when the current certificate is valid, but expiring too soon
-                if(self.renew):
-                    # A renew doesn't accept certType, it renews with existing cert type
-                    del body['certType']
-                    result = self.ecs_client.RenewCertRequest(
-                        trackingId=self.trackingId,
-                        Body=body
-                    )
-                else:
-                    result = self.ecs_client.NewCertRequest(Body=body)
+                result = self.ecs_client.NewCertRequest(Body=body)
                 self.trackingId = result.get('trackingId')
             except RestOperationException as e:
                 module.fail_json(msg='Failed to request new certificate from Entrust (ECS) {0}'.format(to_native(e.message)))
@@ -1908,15 +1889,6 @@ class EntrustCertificate(Certificate):
         if module.params['entrust_cert_type'] and cert_details.get('certType') and module.params['entrust_cert_type'] != cert_details.get('certType'):
             return False
 
-        # If specified, reissue if the certificate expires within x seconds
-        # and the request is for the same cert type
-        reissue_within = module.params.get('entrust_reissue_if_expires_in')
-        seconds_to_expiry = cert_details.get('secondsToExpiry')
-        if seconds_to_expiry and seconds_to_expiry < reissue_within:
-            self.renew = True
-            self.trackingId = cert_details.get('trackingId')
-            return False
-
         return parent_check
 
     def _get_cert_details(self):
@@ -1935,12 +1907,6 @@ class EntrustCertificate(Certificate):
             # get some information about the expiry of this certificate
             expiry_iso3339 = expiry.strftime("%Y-%m-%dT%H:%M:%S.00Z")
             cert_details['expiresAfter'] = expiry_iso3339
-
-            # how many seconds until this certificate expires
-            seconds_to_expiry = calendar.timegm(expiry.timetuple()) - calendar.timegm(datetime.datetime.utcnow().timetuple())
-            if seconds_to_expiry < 0:
-                seconds_to_expiry = 0
-            cert_details['secondsToExpiry'] = seconds_to_expiry
 
             # If a trackingId is not already defined (from the result of a generate)
             # use the serial number to identify the tracking Id
@@ -2109,8 +2075,7 @@ def main():
             entrust_api_client_cert_key_path=dict(type='path'),
             entrust_api_specification_path=dict(type='path', default='https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml'),
             entrust_not_after=dict(type='str', default='+365d'),
-            entrust_reissue_if_expires_in=dict(type='int', default=0),
-            entrust_eku=dict(type='str', default="SERVER_AND_CLIENT_AUTH", choices=['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']),
+            entrust_eku=dict(type='str', default="SERVER_AND_CLIENT_AUTH", choices=['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH'])
         ),
         supports_check_mode=True,
         add_file_common_args=True,
