@@ -42,7 +42,7 @@ options:
     location:
         description:
             - Location of the resource.
-            - If not specified, use I(resource_group) location.
+            - If not specified, use resource group location.
         type: str
 
 extends_documentation_fragment:
@@ -73,7 +73,7 @@ id:
         - Automation account resource path.
     type: str
     returned: success
-    example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
