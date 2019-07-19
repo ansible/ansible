@@ -488,7 +488,7 @@ def append_param(rule, param, flag, is_list):
         elif param is not None:
             if param[0] == '!':
                 rule.extend(['!', flag, param[1:]])
-            else
+            else:
                 rule.extend([flag, param])
 
 
