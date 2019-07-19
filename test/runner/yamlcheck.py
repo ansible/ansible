@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """Show python and pip versions."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import json
 

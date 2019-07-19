@@ -113,21 +113,6 @@ try:
 except ImportError:
     HAS_SCP = False
 
-CE_NC_GET_DISK_INFO = """
-<filter type="subtree">
-  <vfm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <dfs>
-      <df>
-        <fileSys></fileSys>
-        <inputPath></inputPath>
-        <totalSize></totalSize>
-        <freeSize></freeSize>
-      </df>
-    </dfs>
-  </vfm>
-</filter>
-"""
-
 CE_NC_GET_FILE_INFO = """
 <filter type="subtree">
   <vfm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
@@ -144,13 +129,12 @@ CE_NC_GET_FILE_INFO = """
 
 CE_NC_GET_SCP_ENABLE = """
 <filter type="subtree">
-      <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-        <sshServerEnable>
-          <scpIpv4Enable></scpIpv4Enable>
-          <scpIpv6Enable></scpIpv6Enable>
-        </sshServerEnable>
-      </sshs>
-    </filter>
+  <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+    <sshServer>
+      <scpEnable></scpEnable>
+    </sshServer>
+  </sshs>
+</filter>
 """
 
 
@@ -231,7 +215,7 @@ class FileCopy(object):
 
         # get file info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("vfm/dirs/dir")
+        topo = root.find("data/vfm/dirs/dir")
         if topo is None:
             return False, 0
 
@@ -249,19 +233,16 @@ class FileCopy(object):
     def enough_space(self):
         """Whether device has enough space"""
 
-        xml_str = CE_NC_GET_DISK_INFO
-        ret_xml = get_nc_config(self.module, xml_str)
-        if "<data/>" in ret_xml:
-            return
+        commands = list()
+        cmd = 'dir %s' % self.file_system
+        commands.append(cmd)
+        output = run_commands(self.module, commands)
+        if not output:
+            return True
 
-        xml_str = ret_xml.replace('\r', '').replace('\n', '').\
-            replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
-            replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
-
-        root = ElementTree.fromstring(xml_str)
-        topo = root.find("vfm/dfs/df/freeSize")
-        kbytes_free = topo.text
-
+        match = re.search(r'\((.*) KB free\)', output[0])
+        kbytes_free = match.group(1)
+        kbytes_free = kbytes_free.replace(',', '')
         file_size = os.path.getsize(self.local_file)
         if int(kbytes_free) * 1024 > file_size:
             return True
@@ -303,6 +284,7 @@ class FileCopy(object):
                 self.module.fail_json(msg='Could not transfer file. There was an error '
                                       'during transfer. Please make sure the format of '
                                       'input parameters is right.')
+
         scp.close()
         return True
 
@@ -310,10 +292,9 @@ class FileCopy(object):
         """Get scp enable state"""
 
         xml_str = CE_NC_GET_SCP_ENABLE
-        scp_enable = dict()
         ret_xml = get_nc_config(self.module, xml_str)
         if "<data/>" in ret_xml:
-            return scp_enable
+            return False
 
         xml_str = ret_xml.replace('\r', '').replace('\n', '').\
             replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
@@ -321,14 +302,15 @@ class FileCopy(object):
 
         # get file info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("sshs/sshServerEnable")
+        topo = root.find("data/sshs/sshServer")
         if topo is None:
-            return scp_enable
+            return False
 
         for eles in topo:
-            scp_enable[eles.tag] = eles.text
+            if eles.tag in ["scpEnable"]:
+                return True, eles.text
 
-        return scp_enable
+        return False
 
     def work(self):
         """Excute task """
@@ -349,13 +331,10 @@ class FileCopy(object):
             self.module.fail_json(
                 msg="'Error: The maximum length of remote_file is 4096.'")
 
-        cur_state = self.get_scp_enable()
-        if len(cur_state) > 0 and (cur_state.get('scpIpv4Enable').lower() == 'disable' or cur_state.get('scpIpv6Enable').lower() == 'disable'):
+        retcode, cur_state = self.get_scp_enable()
+        if retcode and cur_state == 'Disable':
             self.module.fail_json(
-                msg="'Error: Please ensure ipv4 and ipv6 SCP server are enabled.'")
-        elif len(cur_state) == 0:
-            self.module.fail_json(
-                msg="'Error: Please ensure ipv4 and ipv6 SCP server are enabled.'")
+                msg="'Error: Please ensure SCP server is enabled.'")
 
         if not os.path.isfile(self.local_file):
             self.module.fail_json(

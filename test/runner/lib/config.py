@@ -1,23 +1,18 @@
 """Configuration classes."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import os
 import sys
 
-import lib.types as t
-
 from lib.util import (
+    CommonConfig,
     is_shippable,
     docker_qualify_image,
     find_python,
     generate_pip_command,
     get_docker_completion,
     ApplicationError,
-)
-
-from lib.util_common import (
-    CommonConfig,
 )
 
 from lib.metadata import (
@@ -79,7 +74,7 @@ class EnvironmentConfig(CommonConfig):
         self.python_interpreter = args.python_interpreter
 
         self.delegate = self.tox or self.docker or self.remote
-        self.delegate_args = []  # type: t.List[str]
+        self.delegate_args = []  # type: list[str]
 
         if self.delegate:
             self.requirements = True
@@ -117,10 +112,9 @@ class TestConfig(EnvironmentConfig):
         self.coverage = args.coverage  # type: bool
         self.coverage_label = args.coverage_label  # type: str
         self.coverage_check = args.coverage_check  # type: bool
-        self.coverage_config_base_path = None  # type: t.Optional[str]
-        self.include = args.include or []  # type: t.List[str]
-        self.exclude = args.exclude or []  # type: t.List[str]
-        self.require = args.require or []  # type: t.List[str]
+        self.include = args.include or []  # type: list [str]
+        self.exclude = args.exclude or []  # type: list [str]
+        self.require = args.require or []  # type: list [str]
 
         self.changed = args.changed  # type: bool
         self.tracked = args.tracked  # type: bool
@@ -129,7 +123,7 @@ class TestConfig(EnvironmentConfig):
         self.staged = args.staged  # type: bool
         self.unstaged = args.unstaged  # type: bool
         self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: t.List[str]
+        self.changed_path = args.changed_path  # type: list [str]
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
@@ -164,8 +158,8 @@ class SanityConfig(TestConfig):
         """
         super(SanityConfig, self).__init__(args, 'sanity')
 
-        self.test = args.test  # type: t.List[str]
-        self.skip_test = args.skip_test  # type: t.List[str]
+        self.test = args.test  # type: list [str]
+        self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
 
@@ -232,7 +226,7 @@ class WindowsIntegrationConfig(IntegrationConfig):
         """
         super(WindowsIntegrationConfig, self).__init__(args, 'windows-integration')
 
-        self.windows = args.windows  # type: t.List[str]
+        self.windows = args.windows  # type: list [str]
 
         if self.windows:
             self.allow_destructive = True
@@ -247,7 +241,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
         """
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
 
-        self.platform = args.platform  # type: t.List[str]
+        self.platform = args.platform  # type: list [str]
         self.inventory = args.inventory  # type: str
         self.testcase = args.testcase  # type: str
 
@@ -261,7 +255,6 @@ class UnitsConfig(TestConfig):
         super(UnitsConfig, self).__init__(args, 'units')
 
         self.collect_only = args.collect_only  # type: bool
-        self.num_workers = args.num_workers  # type: int
 
         self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
 
@@ -279,7 +272,7 @@ class CoverageConfig(EnvironmentConfig):
         """
         super(CoverageConfig, self).__init__(args, 'coverage')
 
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
+        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: frozenset [str]
         self.all = args.all if 'all' in args else False  # type: bool
         self.stub = args.stub if 'stub' in args else False  # type: bool
 

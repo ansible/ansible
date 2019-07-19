@@ -67,12 +67,12 @@
     state: dump
   register: result
   become_user: "{{ pg_user }}"
-  become: yes
+  become: True
 
 - name: assert output message backup the database
   assert:
     that:
-       - result is changed
+       - "result.changed == true"
 
 - name: assert database was backed up successfully
   command: file {{ db_file_name }}
@@ -108,12 +108,10 @@
     state: restore
   register: result
   become_user: "{{ pg_user }}"
-  become: yes
+  become: True
 
 - name: assert output message restore the database
-  assert:
-    that:
-    - result is changed
+  assert: { that: "result.changed == true" }
 
 - name: select data from table employee
   command: '{{ user_str }} -c "{{ sql_select }}"'

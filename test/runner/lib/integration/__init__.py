@@ -1,11 +1,12 @@
 """Ansible integration test infrastructure."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import contextlib
 import json
 import os
 import shutil
+import stat
 import tempfile
 
 from lib.target import (
@@ -23,16 +24,12 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
+    named_temporary_file,
     COVERAGE_CONFIG_PATH,
     COVERAGE_OUTPUT_PATH,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
-    INSTALL_ROOT,
-)
-
-from lib.util_common import (
-    named_temporary_file,
 )
 
 from lib.cache import (
@@ -175,9 +172,9 @@ def integration_test_environment(args, target, inventory_path):
         ansible_config = os.path.join(integration_dir, '%s.cfg' % args.command)
 
         file_copies = [
-            (os.path.join(INSTALL_ROOT, 'test/integration/%s.cfg' % args.command), ansible_config),
-            (os.path.join(INSTALL_ROOT, 'test/integration/integration_config.yml'), os.path.join(integration_dir, vars_file)),
-            (os.path.join(INSTALL_ROOT, inventory_path), os.path.join(integration_dir, inventory_name)),
+            ('test/integration/%s.cfg' % args.command, ansible_config),
+            ('test/integration/integration_config.yml', os.path.join(integration_dir, vars_file)),
+            (inventory_path, os.path.join(integration_dir, inventory_name)),
         ]
 
         file_copies += [(path, os.path.join(temp_dir, path)) for path in files_needed]
@@ -255,7 +252,7 @@ def integration_test_config_file(args, env_config, integration_dir):
         yield path
 
 
-class IntegrationEnvironment:
+class IntegrationEnvironment(object):
     """Details about the integration environment."""
     def __init__(self, integration_dir, inventory_path, ansible_config, vars_file):
         self.integration_dir = integration_dir

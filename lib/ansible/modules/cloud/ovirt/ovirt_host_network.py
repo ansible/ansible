@@ -186,7 +186,6 @@ from ansible.module_utils.ovirt import (
     get_link_name,
     ovirt_full_argument_spec,
     search_by_name,
-    engine_supported
 )
 
 
@@ -324,9 +323,10 @@ class HostNetworksModule(BaseModule):
         return update
 
     def _action_save_configuration(self, entity):
-        if not self._module.check_mode:
-            self._service.service(entity.id).commit_net_config()
-        self.changed = True
+        if self._module.params['save']:
+            if not self._module.check_mode:
+                self._service.service(entity.id).commit_net_config()
+            self.changed = True
 
 
 def needs_sync(nics_service):
@@ -414,9 +414,10 @@ def main():
                         removed_bonds.append(otypes.HostNic(id=host_nic.id))
 
             # Assign the networks:
-            setup_params = dict(
+            host_networks_module.action(
                 entity=host,
                 action='setup_networks',
+                post_action=host_networks_module._action_save_configuration,
                 check_connectivity=module.params['check'],
                 removed_bonds=removed_bonds if removed_bonds else None,
                 modified_bonds=[
@@ -465,11 +466,6 @@ def main():
                     ) for network in networks
                 ] if networks else None,
             )
-            if engine_supported(connection, '4.3'):
-                setup_params['commit_on_success'] = module.params['save']
-            elif module.params['save']:
-                setup_params['post_action'] = host_networks_module._action_save_configuration
-            host_networks_module.action(**setup_params)
         elif state == 'absent' and nic:
             attachments = []
             nic_service = nics_service.nic_service(nic.id)
@@ -495,9 +491,10 @@ def main():
             # Need to check if there are any labels to be removed, as backend fail
             # if we try to send remove non existing label, for bond and attachments it's OK:
             if (labels and set(labels).intersection(attached_labels)) or bond or attachments:
-                setup_params = dict(
+                host_networks_module.action(
                     entity=host,
                     action='setup_networks',
+                    post_action=host_networks_module._action_save_configuration,
                     check_connectivity=module.params['check'],
                     removed_bonds=[
                         otypes.HostNic(
@@ -509,11 +506,6 @@ def main():
                     ] if labels else None,
                     removed_network_attachments=attachments if attachments else None,
                 )
-                if engine_supported(connection, '4.3'):
-                    setup_params['commit_on_success'] = module.params['save']
-                elif module.params['save']:
-                    setup_params['post_action'] = host_networks_module._action_save_configuration
-                host_networks_module.action(**setup_params)
 
         nic = search_by_name(nics_service, nic_name)
         module.exit_json(**{

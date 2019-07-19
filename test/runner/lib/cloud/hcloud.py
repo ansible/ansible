@@ -1,6 +1,5 @@
 """Hetzner Cloud plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import os
 
@@ -94,9 +93,6 @@ class HcloudCloudEnvironment(CloudEnvironment):
     """
 
     def get_environment_config(self):
-        """
-        :rtype: CloudEnvironmentConfig
-        """
         parser = ConfigParser()
         parser.read(self.config_path)
 

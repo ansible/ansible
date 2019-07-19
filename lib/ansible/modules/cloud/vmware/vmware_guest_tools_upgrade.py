@@ -30,7 +30,7 @@ options:
    name:
         description:
             - Name of the virtual machine to work with.
-            - This is required if C(uuid) or C(moid) is not supplied.
+            - This is required if C(UUID) is not supplied.
    name_match:
         description:
             - If multiple virtual machines matching the name, use the first or last found.
@@ -39,13 +39,7 @@ options:
    uuid:
         description:
             - UUID of the instance to manage if known, this is VMware's unique identifier.
-            - This is required if C(name) or C(moid) is not supplied.
-   moid:
-        description:
-            - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
-            - This is required if C(name) or C(uuid) is not supplied.
-        version_added: '2.9'
-        type: str
+            - This is required if C(name) is not supplied.
    folder:
         description:
             - Destination folder, absolute or relative path to find an existing guest.
@@ -61,6 +55,7 @@ options:
             - '   folder: /folder1/datacenter1/vm'
             - '   folder: folder1/datacenter1/vm'
             - '   folder: /folder1/datacenter1/vm/folder2'
+            - '   folder: vm/folder2'
    datacenter:
         description:
             - Destination datacenter where the virtual machine exists.
@@ -71,22 +66,13 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Upgrade VMware Tools using uuid
+- name: Upgrade VMware Tools
   vmware_guest_tools_upgrade:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
-  delegate_to: localhost
-
-- name: Upgrade VMware Tools using MoID
-  vmware_guest_tools_upgrade:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ datacenter_name }}"
-    moid: vm-42
   delegate_to: localhost
 '''
 
@@ -159,16 +145,11 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_one_of=[
-            ['name', 'uuid', 'moid']
-        ]
-    )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=[['name', 'uuid']])
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
@@ -192,8 +173,7 @@ def main():
         except Exception as exc:
             module.fail_json(msg='Unknown error: %s' % to_native(exc))
     else:
-        vm_id = module.params.get('uuid') or module.params.get('name') or module.params.get('moid')
-        module.fail_json(msg='Unable to find VM %s' % vm_id)
+        module.fail_json(msg='Unable to find VM %s' % (module.params.get('uuid') or module.params.get('name')))
 
 
 if __name__ == '__main__':

@@ -48,7 +48,7 @@ options:
         default: yes
     conn_name:
         description:
-            - The name used to call the connection. Pattern is <type>[-<ifname>][-<num>].
+            - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
         type: str
         required: true
     ifname:
@@ -1145,7 +1145,7 @@ class Nmcli(object):
             cmd.append('vlan%s' % self.vlanid)
 
         params = {'dev': self.vlandev,
-                  'id': str(self.vlanid),
+                  'id': self.vlanid,
                   'ip4': self.ip4 or '',
                   'gw4': self.gw4 or '',
                   'ip6': self.ip6 or '',
@@ -1170,7 +1170,7 @@ class Nmcli(object):
             cmd.append('vlan%s' % self.vlanid)
 
         params = {'vlan.parent': self.vlandev,
-                  'vlan.id': str(self.vlanid),
+                  'vlan.id': self.vlanid,
                   'ipv4.address': self.ip4 or '',
                   'ipv4.gateway': self.gw4 or '',
                   'ipv4.dns': self.dns4 or '',

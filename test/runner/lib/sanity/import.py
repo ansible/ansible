@@ -1,6 +1,5 @@
 """Sanity test for proper import exception handling."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import os
 
@@ -14,19 +13,14 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
+    run_command,
+    intercept_command,
     remove_tree,
     display,
     find_python,
     read_lines_without_comments,
     parse_to_list_of_dict,
     make_dirs,
-    is_subdir,
-)
-
-from lib.util_common import (
-    intercept_command,
-    run_command,
-    INSTALL_ROOT,
 )
 
 from lib.ansible_util import (
@@ -52,15 +46,14 @@ class ImportTest(SanityMultipleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/import/skip.txt'
-        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
-
+        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True)
         skip_paths_set = set(skip_paths)
 
         paths = sorted(
             i.path
             for i in targets.include
             if os.path.splitext(i.path)[1] == '.py' and
-            (is_subdir(i.path, 'lib/ansible/modules/') or is_subdir(i.path, 'lib/ansible/module_utils/')) and
+            (i.path.startswith('lib/ansible/modules/') or i.path.startswith('lib/ansible/module_utils/')) and
             i.path not in skip_paths_set
         )
 
@@ -87,7 +80,7 @@ class ImportTest(SanityMultipleVersion):
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
         if not args.explain:
-            os.symlink(os.path.abspath(os.path.join(INSTALL_ROOT, 'test/sanity/import/importer.py')), importer_path)
+            os.symlink(os.path.abspath('test/sanity/import/importer.py'), importer_path)
 
         # create a minimal python library
         python_path = os.path.abspath('test/runner/.tox/import/lib')

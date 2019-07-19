@@ -1,6 +1,6 @@
 """Python native TGZ creation."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import abc
 import tarfile
@@ -28,6 +28,7 @@ class TarFilter(ABC):
         :type item: tarfile.TarInfo
         :rtype: tarfile.TarInfo | None
         """
+        pass
 
 
 class DefaultTarFilter(TarFilter):

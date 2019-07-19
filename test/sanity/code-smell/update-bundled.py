@@ -16,17 +16,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-This test checks whether the libraries we're bundling are out of date and need to be synced with
-a newer upstream release.
-"""
-
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
 import fnmatch
 import json
+import os
+import os.path
 import re
 import sys
 from distutils.version import LooseVersion
@@ -40,13 +38,6 @@ BUNDLED_RE = re.compile(b'\\b_BUNDLED_METADATA\\b')
 
 
 def get_bundled_libs(paths):
-    """
-    Return the set of known bundled libraries
-
-    :arg paths: The paths which the test has been instructed to check
-    :returns: The list of all files which we know to contain bundled libraries.  If a bundled
-        library consists of multiple files, this should be the file which has metadata included.
-    """
     bundled_libs = set()
     for filename in fnmatch.filter(paths, 'lib/ansible/compat/*/__init__.py'):
         bundled_libs.add(filename)
@@ -61,13 +52,6 @@ def get_bundled_libs(paths):
 
 
 def get_files_with_bundled_metadata(paths):
-    """
-    Search for any files which have bundled metadata inside of them
-
-    :arg paths: Iterable of filenames to search for metadata inside of
-    :returns: A set of pathnames which contained metadata
-    """
-
     with_metadata = set()
     for path in paths:
         if path == 'test/sanity/code-smell/update-bundled.py':
@@ -83,13 +67,6 @@ def get_files_with_bundled_metadata(paths):
 
 
 def get_bundled_metadata(filename):
-    """
-    Retrieve the metadata about a bundled library from a python file
-
-    :arg filename: The filename to look inside for the metadata
-    :raises ValueError: If we're unable to extract metadata from the file
-    :returns: The metadata from the python file
-    """
     with open(filename, 'r') as module:
         for line in module:
             if line.strip().startswith('_BUNDLED_METADATA'):
@@ -104,17 +81,9 @@ def get_bundled_metadata(filename):
 
 
 def get_latest_applicable_version(pypi_data, constraints=None):
-    """Get the latest pypi version of the package that we allow
-
-    :arg pypi_data: Pypi information about the data as returned by
-        ``https://pypi.org/pypi/{pkg_name}/json``
-    :kwarg constraints: version constraints on what we're allowed to use as specified by
-        the bundled metadata
-    :returns: The most recent version on pypi that are allowed by ``constraints``
-    """
     latest_version = "0"
-    if constraints:
-        version_specification = packaging.specifiers.SpecifierSet(constraints)
+    if 'version_constraints' in metadata:
+        version_specification = packaging.specifiers.SpecifierSet(metadata['version_constraints'])
         for version in pypi_data['releases']:
             if version in version_specification:
                 if LooseVersion(version) > LooseVersion(latest_version):
@@ -125,9 +94,7 @@ def get_latest_applicable_version(pypi_data, constraints=None):
     return latest_version
 
 
-def main():
-    """Entrypoint to the script"""
-
+if __name__ == '__main__':
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     bundled_libs = get_bundled_libs(paths)
@@ -162,7 +129,3 @@ def main():
                 metadata['version'],
                 latest_version,
                 'https://pypi.org/pypi/{0}/json'.format(metadata['pypi_name'])))
-
-
-if __name__ == '__main__':
-    main()

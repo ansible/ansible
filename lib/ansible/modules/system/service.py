@@ -320,7 +320,7 @@ class Service(object):
             lines = psout.split("\n")
             for line in lines:
                 if self.pattern in line and "pattern=" not in line:
-                    # so as to not confuse ./hacking/test-module.py
+                    # so as to not confuse ./hacking/test-module
                     self.running = True
                     break
 
@@ -1157,7 +1157,7 @@ class OpenBsdService(Service):
 
     def service_control(self):
         if self.enable_cmd:
-            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name), daemonize=True)
+            return self.execute_command("%s -f %s %s" % (self.svc_cmd, self.action, self.name))
         else:
             return self.execute_command("%s -f %s" % (self.svc_cmd, self.action))
 

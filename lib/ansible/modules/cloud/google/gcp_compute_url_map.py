@@ -195,7 +195,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-urlmap
     backends:
-    - group: "{{ instancegroup.selfLink }}"
+    - group: "{{ instancegroup }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'

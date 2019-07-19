@@ -10,7 +10,7 @@ This document discusses the setup that is required before Ansible can communicat
 Host Requirements
 `````````````````
 For Ansible to communicate to a Windows host and use Windows modules, the
-Windows host must meet these requirements:
+Windows host must meet the following requirements:
 
 * Ansible's supported Windows versions generally match those under current
   and extended support from Microsoft. Supported desktop OSs include
@@ -148,7 +148,9 @@ following command:
 
     winrm enumerate winrm/config/Listener
 
-This will output something like::
+This will output something like the following:
+
+.. code-block:: guess
 
     Listener
         Address = *
@@ -191,7 +193,10 @@ the key options that are useful to understand are:
 * ``CertificateThumbprint``: If running over an HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
-  command with the relevant certificate thumbprint in PowerShell::
+  command with the relevant certificate thumbprint in PowerShell:
+
+  .. comment: Pygments powershell lexer does not support colons (i.e. URLs)
+  .. code-block:: guess
 
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
     Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
@@ -235,7 +240,10 @@ There are three ways to set up a WinRM listener:
 
 Delete WinRM Listener
 +++++++++++++++++++++
-To remove a WinRM listener::
+To remove a WinRM listener:
+
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
+.. code-block:: guess
 
     # Remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
@@ -260,7 +268,9 @@ following command:
     winrm get winrm/config/Service
     winrm get winrm/config/Winrs
 
-This will output something like::
+This will output something like the following:
+
+.. code-block:: guess
 
     Service
         RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
@@ -328,7 +338,11 @@ options are:
 * ``Winrs\MaxMemoryPerShellMB``: This is the maximum amount of memory allocated
   per shell, including the shell's child processes.
 
-To modify a setting under the ``Service`` key in PowerShell::
+To modify a setting under the ``Service`` key in PowerShell, the following
+command can be used:
+
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
+.. code-block:: guess
 
     # substitute {path} with the path to the option after winrm/config/Service
     Set-Item -Path WSMan:\localhost\Service\{path} -Value "value here"
@@ -336,7 +350,11 @@ To modify a setting under the ``Service`` key in PowerShell::
     # for example, to change Service\Auth\CbtHardeningLevel run
     Set-Item -Path WSMan:\localhost\Service\Auth\CbtHardeningLevel -Value Strict
 
-To modify a setting under the ``Winrs`` key in PowerShell::
+To modify a setting under the ``Winrs`` key in PowerShell, the following
+command can be used:
+
+.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
+.. code-block:: guess
 
     # Substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
@@ -356,7 +374,10 @@ could in fact be issues with the host setup instead.
 
 One easy way to determine whether a problem is a host issue is to
 run the following command from another Windows host to connect to the
-target Windows host::
+target Windows host:
+
+.. comment: Pygments powershell lexer does not support -u:Username
+.. code-block:: guess
 
     # Test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig

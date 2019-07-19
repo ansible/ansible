@@ -343,9 +343,13 @@ class PyVmomiHelper(PyVmomi):
         else:
             # config change (e.g. DHCP to static, or vice versa); doesn't work with virtual port change
             self.vnic = self.get_vmkernel_by_portgroup_new(port_group_name=self.port_group_name)
-            if not self.vnic and self.network_type == 'static':
-                # vDS to vSS or vSS to vSS (static IP)
-                self.vnic = self.get_vmkernel_by_ip(ip_address=self.ip_address)
+            if not self.vnic:
+                if self.network_type == 'static':
+                    # vDS to vSS or vSS to vSS (static IP)
+                    self.vnic = self.get_vmkernel_by_ip(ip_address=self.ip_address)
+                elif self.network_type == 'dhcp':
+                    # vDS to vSS or vSS to vSS (DHCP)
+                    self.vnic = self.get_vmkernel_by_device(device_name=self.device)
 
     def get_port_group_by_name(self, host_system, portgroup_name, vswitch_name):
         """
@@ -419,9 +423,9 @@ class PyVmomiHelper(PyVmomi):
         Returns: vmkernel managed object if vmkernel found, false if not
 
         """
-        for vnic in self.esxi_host_obj.config.network.vnic:
-            if vnic.spec.ip.ipAddress == ip_address:
-                return vnic
+        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.spec.ip.ipAddress == ip_address]
+        if vnics:
+            return vnics[0]
         return None
 
     def get_vmkernel_by_device(self, device_name):
@@ -433,9 +437,9 @@ class PyVmomiHelper(PyVmomi):
         Returns: vmkernel managed object if vmkernel found, false if not
 
         """
-        for vnic in self.esxi_host_obj.config.network.vnic:
-            if vnic.device == device_name:
-                return vnic
+        vnics = [vnic for vnic in self.esxi_host_obj.config.network.vnic if vnic.device == device_name]
+        if vnics:
+            return vnics[0]
         return None
 
     def check_state(self):
@@ -444,7 +448,11 @@ class PyVmomiHelper(PyVmomi):
         Returns: Present if found and absent if not found
 
         """
-        return 'present' if self.vnic else 'absent'
+        state = 'absent'
+        if self.vnic:
+            state = 'present'
+
+        return state
 
     def host_vmk_delete(self):
         """
@@ -485,7 +493,7 @@ class PyVmomiHelper(PyVmomi):
 
     def host_vmk_update(self):
         """
-        Update VMKernel with given parameters
+        Function to update VMKernel with given parameters
         Returns: NA
 
         """

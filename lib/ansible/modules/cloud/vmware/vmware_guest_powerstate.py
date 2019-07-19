@@ -41,13 +41,7 @@ options:
   uuid:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
-    - This is required if C(name) or C(moid) is not supplied.
-  moid:
-    description:
-    - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
-    - This is required if C(name) or C(uuid) is not supplied.
-    version_added: '2.9'
-    type: str
+    - This is required if name is not supplied.
   use_instance_uuid:
     description:
     - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -124,18 +118,6 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
-- name: Set the state of a virtual machine to poweron using MoID
-  vmware_guest_powerstate:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-    folder: "/{{ datacenter_name }}/vm/my_folder"
-    moid: vm-42
-    state: powered-on
-  delegate_to: localhost
-  register: deploy
-
 - name: Set the state of a virtual machine to poweroff at given scheduled time
   vmware_guest_powerstate:
     hostname: "{{ vcenter_hostname }}"
@@ -185,7 +167,6 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         force=dict(type='bool', default=False),
@@ -196,13 +177,12 @@ def main():
         state_change_timeout=dict(type='int', default=0),
     )
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=False,
-        mutually_exclusive=[
-            ['name', 'uuid', 'moid'],
-        ],
-    )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False,
+                           mutually_exclusive=[
+                               ['name', 'uuid'],
+                           ],
+                           )
 
     result = dict(changed=False,)
 
@@ -264,8 +244,7 @@ def main():
         else:
             result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
     else:
-        id = module.params.get('uuid') or module.params.get('moid') or module.params.get('name')
-        module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % id)
+        module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
 
     if result.get('failed') is True:
         module.fail_json(**result)

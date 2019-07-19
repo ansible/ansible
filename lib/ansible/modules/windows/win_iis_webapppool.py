@@ -82,7 +82,7 @@ EXAMPLES = r'''
 - name: Restart an application pool (non-idempotent)
   win_iis_webapppool:
     name: AppPool
-    state: restarted
+    state: restart
 
 - name: Change application pool attributes using new dict style
   win_iis_webapppool:

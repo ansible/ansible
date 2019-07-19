@@ -25,9 +25,9 @@ import os
 import re
 import sys
 
-from distutils.version import StrictVersion
-
 import yaml
+
+from distutils.version import StrictVersion
 
 import ansible.config
 
@@ -39,32 +39,32 @@ DOC_RE = re.compile(b'^DOCUMENTATION', flags=re.M)
 ANSIBLE_MAJOR = StrictVersion('.'.join(ansible_version.split('.')[:2]))
 
 
-def find_deprecations(obj, path=None):
-    if not isinstance(obj, (list, dict)):
+def find_deprecations(o, path=None):
+    if not isinstance(o, (list, dict)):
         return
 
     try:
-        items = obj.items()
+        items = o.items()
     except AttributeError:
-        items = enumerate(obj)
+        items = enumerate(o)
 
-    for key, value in items:
+    for k, v in items:
         if path is None:
             this_path = []
         else:
             this_path = path[:]
 
-        this_path.append(key)
+        this_path.append(k)
 
-        if key != 'deprecated':
-            for result in find_deprecations(value, path=this_path):
+        if k != 'deprecated':
+            for result in find_deprecations(v, path=this_path):
                 yield result
         else:
             try:
-                version = value['version']
+                version = v['version']
                 this_path.append('version')
             except KeyError:
-                version = value['removed_in']
+                version = v['removed_in']
                 this_path.append('removed_in')
             if StrictVersion(version) <= ANSIBLE_MAJOR:
                 yield (this_path, version)
@@ -75,12 +75,12 @@ def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as f:
             try:
-                mm_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             except ValueError:
                 continue
-            if DOC_RE.search(mm_file):
+            if DOC_RE.search(mm):
                 plugins.append(path)
-            mm_file.close()
+            mm.close()
 
     for plugin in plugins:
         data = {}

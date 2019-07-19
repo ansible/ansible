@@ -9,9 +9,7 @@ infra:
       type: nfs
       server: gateway.test
       path: /srv/share/isos
-      # https://github.com/ansible/ansible/issues/58541 prevents us
-      # from using the "ro: true" mode
-      ro: false
+      ro: true
     LocalDS_1:
       type: nfs
       server: gateway.test

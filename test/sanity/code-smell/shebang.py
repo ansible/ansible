@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import stat
@@ -41,7 +39,7 @@ def main():
         'test/utils/shippable/timing.py',
         'test/integration/targets/old_style_modules_posix/library/helloworld.sh',
         # The following are Python 3.6+.  Only run by release engineers
-        'hacking/build-ansible.py',
+        'hacking/build-ansible',
     ])
 
     # see https://unicode.org/faq/utf_bom.html#bom1
@@ -76,8 +74,6 @@ def main():
             is_module = False
             is_integration = False
 
-            dirname = os.path.dirname(path)
-
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
             elif path.startswith('lib/') or path.startswith('test/runner/lib/'):
@@ -91,14 +87,14 @@ def main():
             elif path.startswith('test/integration/targets/'):
                 is_integration = True
 
+                dirname = os.path.dirname(path)
+
                 if dirname.endswith('/library') or dirname.endswith('/plugins/modules') or dirname in (
-                        # non-standard module library directories
-                        'test/integration/targets/module_precedence/lib_no_extension',
-                        'test/integration/targets/module_precedence/lib_with_extension',
+                    # non-standard module library directories
+                    'test/integration/targets/module_precedence/lib_no_extension',
+                    'test/integration/targets/module_precedence/lib_with_extension',
                 ):
                     is_module = True
-            elif dirname == 'plugins/modules':
-                is_module = True
 
             if is_module:
                 if executable:

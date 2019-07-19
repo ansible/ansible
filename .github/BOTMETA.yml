@@ -426,7 +426,7 @@ files:
     ignored: skvidal
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan robinro
-  $modules/remote_management/foreman/: $team_foreman
+  $modules/remote_management/foreman/: ehelms
   $modules/remote_management/hpilo/:
     ignored: dagwieers
     maintainers: haad
@@ -544,8 +544,6 @@ files:
     support: community
   contrib/inventory/digital_ocean.py: *digital_ocean
   contrib/inventory/docker: *docker
-  contrib/inventory/foreman.py:
-    maintainers: $team_foreman
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -1022,8 +1020,6 @@ files:
     support: core
   $plugins/callback/grafana_annotations.py:
     maintainers: rrey
-  $plugins/callback/foreman.py:
-    maintainers: $team_foreman
   $plugins/callback/junit:
     support: core
   $plugins/callback/minimal:
@@ -1098,10 +1094,6 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
-  $plugins/connection/kubectl.py:
-    support: community
-    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
-    labels: k8s
   $plugins/connection/lxd.py:
     maintainers: mattclay
   $plugins/connection/netconf.py:
@@ -1195,8 +1187,6 @@ files:
   $plugins/inventory/docker_swarm.py:
     <<: *docker
     maintainers: $team_docker morph027
-  $plugins/inventory/foreman.py:
-    maintainers: $team_foreman
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1546,11 +1536,11 @@ macros:
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
   team_aireos: jmighion
-  team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
+  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino
+  team_azure: haroldwongms nitzmahone trstringer yuwzho yungezz zikalino
   team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
@@ -1561,7 +1551,6 @@ macros:
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet WojciechowskiPiotr
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
-  team_foreman: ehelms ares xprazak2 ekohl
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_ftd: annikulin
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
