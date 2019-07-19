@@ -339,7 +339,7 @@ options:
     description:
       - Wait N seconds for the xtables lock to prevent multiple instances of
         the program from running concurrently.
-    type: str
+    type: int
     version_added: "2.9"
 '''
 
@@ -483,11 +483,11 @@ def append_param(rule, param, flag, is_list):
         for item in param:
             append_param(rule, item, flag, False)
     else:
-        if param is not None:
+        if isinstance(param, str):
             if param[0] == '!':
                 rule.extend(['!', flag, param[1:]])
-            else:
-                rule.extend([flag, param])
+        elif param is not None:
+            rule.extend([flag, str(param)])
 
 
 def append_tcp_flags(rule, param, flag):
@@ -654,7 +654,7 @@ def main():
             chain=dict(type='str'),
             rule_num=dict(type='str'),
             protocol=dict(type='str'),
-            wait=dict(type='str'),
+            wait=dict(type='int'),
             source=dict(type='str'),
             to_source=dict(type='str'),
             destination=dict(type='str'),
