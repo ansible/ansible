@@ -56,6 +56,10 @@ options:
        by specifying it as module parameter.
     type: bool
     default: yes
+<<<<<<< 980ef355e802b295f6b4256969cf9ded6ac6b7c1
+=======
+
+>>>>>>> new changes
 """
 
 EXAMPLES = """
