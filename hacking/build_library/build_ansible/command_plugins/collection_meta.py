@@ -17,7 +17,7 @@ from ansible.module_utils._text import to_bytes
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
-from ..jinja2.filters import documented_type, html_ify  # pylint: disable=relative-beyond-top-level
+from ..jinja2.filters import documented_type, rst_ify  # pylint: disable=relative-beyond-top-level
 
 
 DEFAULT_TEMPLATE_FILE = 'collections_galaxy_meta.rst.j2'
@@ -56,7 +56,7 @@ class DocumentCollectionMeta(Command):
                           variable_end_string="}@",
                           trim_blocks=True)
         env.filters['documented_type'] = documented_type
-        env.filters['html_ify'] = html_ify
+        env.filters['rst_ify'] = rst_ify
 
         template = env.get_template(template_file)
         output_name = os.path.join(output_dir, template_file.replace('.j2', ''))
