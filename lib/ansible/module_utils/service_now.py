@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import traceback
-from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 # Pull in pysnow
 HAS_PYSNOW = False
@@ -87,9 +87,9 @@ class ServiceNowClient(object):
     @staticmethod
     def snow_argument_spec():
         return dict(
-            instance=dict(type='str', required=True),
-            username=dict(type='str', required=True),
-            password=dict(type='str', required=True, no_log=True),
+            instance=dict(type='str', required=False, fallback=(env_fallback, ['SN_INSTANCE'])),
+            username=dict(type='str', required=False, fallback=(env_fallback, ['SN_USERNAME'])),
+            password=dict(type='str', required=False, no_log=True, fallback=(env_fallback, ['SN_PASSWORD'])),
             client_id=dict(type='str', no_log=True),
             client_secret=dict(type='str', no_log=True),
         )

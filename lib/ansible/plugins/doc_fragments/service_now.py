@@ -13,19 +13,25 @@ options:
     instance:
       description:
       - The ServiceNow instance name, without the domain, service-now.com.
-      required: true
+      - If the value is not specified in the task, the value of environment variable C(SN_INSTANCE) will be used instead.
+      - Environment variable support added in Ansible 2.9.
+      required: false
       type: str
     username:
       description:
       - Name of user for connection to ServiceNow.
       - Required whether using Basic or OAuth authentication.
-      required: true
+      - If the value is not specified in the task, the value of environment variable C(SN_USERNAME) will be used instead.
+      - Environment variable support added in Ansible 2.9.
+      required: false
       type: str
     password:
       description:
       - Password for username.
       - Required whether using Basic or OAuth authentication.
-      required: true
+      - If the value is not specified in the task, the value of environment variable C(SN_PASSWORD) will be used instead.
+      - Environment variable support added in Ansible 2.9.
+      required: false
       type: str
     client_id:
       description:
