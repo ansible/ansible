@@ -433,7 +433,7 @@ def check_existing_commit_labels(conn, label):
 
 
 def load_config(module, command_filter, commit=False, replace=False,
-                comment=None, admin=False, running=None, nc_get_filter=None,
+                comment=None, admin=False, exclusive=False, running=None, nc_get_filter=None,
                 label=None):
 
     conn = get_connection(module)
@@ -472,7 +472,8 @@ def load_config(module, command_filter, commit=False, replace=False,
                         ' and rerun task' % label
                     )
 
-            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
+            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin,
+                                        exclusive=exclusive, replace=replace, comment=comment, label=label)
             if module._diff:
                 diff = response.get('diff')
 
