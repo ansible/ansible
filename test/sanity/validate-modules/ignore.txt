@@ -1849,7 +1849,6 @@ lib/ansible/modules/network/cloudengine/ce_bfd_view.py E338
 lib/ansible/modules/network/cloudengine/ce_bgp_af.py E322
 lib/ansible/modules/network/cloudengine/ce_bgp_af.py E324
 lib/ansible/modules/network/cloudengine/ce_bgp_af.py E337
-lib/ansible/modules/network/cloudengine/ce_bgp_af.py E338
 lib/ansible/modules/network/cloudengine/ce_bgp_neighbor_af.py E322
 lib/ansible/modules/network/cloudengine/ce_bgp_neighbor_af.py E324
 lib/ansible/modules/network/cloudengine/ce_bgp_neighbor_af.py E326
