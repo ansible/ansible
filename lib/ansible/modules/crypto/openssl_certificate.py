@@ -701,9 +701,9 @@ else:
 
 ECS_IMP_ERR = None
 try:
-    from ansible.module_utils.ecs import ECSClient
-    from ansible.module_utils.ecs import RestOperationException
-    from ansible.module_utils.ecs import SessionConfigurationException
+    from ansible.module_utils.ecs.api import ECSClient
+    from ansible.module_utils.ecs.api import RestOperationException
+    from ansible.module_utils.ecs.api import SessionConfigurationException
 except ImportError:
     ECS_IMP_ERR = traceback.format_exc()
     ECS_MODULE_FOUND = False
@@ -2281,7 +2281,7 @@ def main():
                     certificate = OwnCACertificate(module)
                 elif provider == 'entrust':
                     if not ECS_MODULE_FOUND:
-                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs', exception=ECS_IMP_ERR)
+                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs.api', exception=ECS_IMP_ERR)
                     certificate = EntrustCertificate(module, 'pyopenssl')
                 else:
                     certificate = AssertOnlyCertificate(module)
@@ -2300,7 +2300,7 @@ def main():
                     certificate = OwnCACertificateCryptography(module)
                 elif provider == 'entrust':
                     if not ECS_MODULE_FOUND:
-                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs', exception=ECS_IMP_ERR)
+                        module.fail_json(msg='Entrust provider requires module_util ansible.module_utils.ecs.api', exception=ECS_IMP_ERR)
                     certificate = EntrustCertificate(module, 'cryptography')
                 else:
                     certificate = AssertOnlyCertificateCryptography(module)
