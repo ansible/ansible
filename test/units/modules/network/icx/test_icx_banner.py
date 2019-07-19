@@ -51,7 +51,6 @@ class TestICXBannerModule(TestICXModule):
             set_module_args(dict(banner='motd', text='welcome\nnew user'))
             commands = ['banner motd $\nwelcome\nnew user\n$']
             self.execute_module(changed=True, commands=commands)
-
         else:
             for banner_type in ('motd', 'exec', 'incoming'):
                 set_module_args(dict(banner=banner_type, text='test\nbanner\nstring'))
