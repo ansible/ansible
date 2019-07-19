@@ -240,7 +240,7 @@ class LinuxHardware(Hardware):
         # The fields for ARM CPUs do not always include 'vendor_id' or 'model name',
         # and sometimes includes both 'processor' and 'Processor'.
         # Always use 'processor' count for ARM systems
-        if collected_facts.get('ansible_architecture').startswith(('armv', 'aarch')):
+        if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch')):
             i = processor_occurence
 
         # FIXME
