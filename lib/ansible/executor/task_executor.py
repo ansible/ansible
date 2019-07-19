@@ -412,6 +412,20 @@ class TaskExecutor:
             results.append(res)
             del task_vars[loop_var]
 
+            # clear 'connection related' plugin variables for next iteration
+            if self._connection:
+                clear_plugins = {
+                    'connection': self._connection._load_name,
+                    'shell': self._connection._shell._load_name
+                }
+                if self._connection.become:
+                    clear_plugins['become'] = self._connection.become._load_name
+
+                for plugin_type, plugin_name in iteritems(clear_plugins):
+                    for var in C.config.get_plugin_vars(plugin_type, plugin_name):
+                        if var in task_vars:
+                            del task_vars[var]
+
         self._task.no_log = no_log
 
         return results
