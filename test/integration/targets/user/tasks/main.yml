@@ -942,9 +942,6 @@
   assert:
     that:
       - local_user_test_1 is changed
-      - local_user_test_1['warnings'] | length > 0
-      - "'user was not found in /etc/passwd. The local user account may already exist if the local account
-        database exists somewhere other than /etc/passwd.' in local_user_test_1['warnings'][0]"
       - local_user_test_2 is not changed
       - local_user_test_3 is failed
       - "local_user_test_3['msg'] is search('parameters are mutually exclusive: groups|local')"
@@ -954,3 +951,11 @@
       - local_user_test_remove_2 is not changed
   tags:
     - user_test_local_mode
+
+- name: Ensure warnings were displayed
+  assert:
+    that:
+      - local_user_test_1['warnings'] | length > 0
+      - "'user was not found in /etc/passwd. The local user account may already exist if the local account
+        database exists somewhere other than /etc/passwd.' in local_user_test_1['warnings'][0]"
+  when: ansible_facts.system in ['Linux']
