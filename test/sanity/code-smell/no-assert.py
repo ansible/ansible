@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import print_function
 
 import os
 import re

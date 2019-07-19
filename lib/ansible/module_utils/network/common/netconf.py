@@ -31,9 +31,9 @@ from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
 
 try:
-    from ncclient.xml_ import NCElement, new_ele, sub_ele
+    from ncclient.xml_ import NCElement
     HAS_NCCLIENT = True
-except (ImportError, AttributeError):
+except ImportError:
     HAS_NCCLIENT = False
 
 try:
@@ -139,24 +139,3 @@ def remove_namespaces(data):
         raise ImportError("ncclient is required but does not appear to be installed.  "
                           "It can be installed using `pip install ncclient`")
     return NCElement(data, transform_reply()).data_xml
-
-
-def build_root_xml_node(tag):
-    return new_ele(tag)
-
-
-def build_child_xml_node(parent, tag, text=None, attrib=None):
-    element = sub_ele(parent, tag)
-    if text:
-        element.text = to_text(text)
-    if attrib:
-        element.attrib.update(attrib)
-    return element
-
-
-def build_subtree(parent, path):
-    element = parent
-    for field in path.split('/'):
-        sub_element = build_child_xml_node(element, field)
-        element = sub_element
-    return element

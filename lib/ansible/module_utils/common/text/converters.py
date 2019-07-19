@@ -8,6 +8,8 @@ __metaclass__ = type
 import datetime
 import json
 
+from itertools import repeat
+
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import Set
 from ansible.module_utils.six import (
@@ -15,6 +17,7 @@ from ansible.module_utils.six import (
     iteritems,
     text_type,
 )
+from ansible.module_utils.six.moves import map
 
 
 def _json_encode_fallback(obj):
@@ -51,11 +54,11 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
     if isinstance(d, text_type):
         return to_bytes(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_bytes(o, encoding, errors) for o in iteritems(d))
+        return dict(map(container_to_bytes, iteritems(d), repeat(encoding), repeat(errors)))
     elif isinstance(d, list):
-        return [container_to_bytes(o, encoding, errors) for o in d]
+        return list(map(container_to_bytes, d, repeat(encoding), repeat(errors)))
     elif isinstance(d, tuple):
-        return tuple(container_to_bytes(o, encoding, errors) for o in d)
+        return tuple(map(container_to_bytes, d, repeat(encoding), repeat(errors)))
     else:
         return d
 
@@ -71,10 +74,10 @@ def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
         # Warning, can traceback
         return to_text(d, encoding=encoding, errors=errors)
     elif isinstance(d, dict):
-        return dict(container_to_text(o, encoding, errors) for o in iteritems(d))
+        return dict(map(container_to_text, iteritems(d), repeat(encoding), repeat(errors)))
     elif isinstance(d, list):
-        return [container_to_text(o, encoding, errors) for o in d]
+        return list(map(container_to_text, d, repeat(encoding), repeat(errors)))
     elif isinstance(d, tuple):
-        return tuple(container_to_text(o, encoding, errors) for o in d)
+        return tuple(map(container_to_text, d, repeat(encoding), repeat(errors)))
     else:
         return d

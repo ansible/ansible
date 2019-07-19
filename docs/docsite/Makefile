@@ -1,10 +1,10 @@
 OS := $(shell uname -s)
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"):
-PLUGIN_FORMATTER=../../hacking/build-ansible.py document-plugins
+FORMATTER=../bin/plugin_formatter.py
 TESTING_FORMATTER=../bin/testing_formatter.sh
-KEYWORD_DUMPER=../../hacking/build-ansible.py document-keywords
-CONFIG_DUMPER=../../hacking/build-ansible.py document-config
-GENERATE_CLI=../../hacking/build-ansible.py generate-man
+DUMPER=../bin/dump_keywords.py
+CONFIG_DUMPER=../bin/dump_config.py
+GENERATE_CLI=../bin/generate_man.py
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
@@ -79,24 +79,24 @@ clean:
 .PHONY: docs clean
 
 # TODO: make generate_man output dir cli option
-cli:
+cli: $(GENERATE_CLI)
 	mkdir -p rst/cli
 	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst ../../lib/ansible/cli/*.py
 
-keywords: ../templates/playbooks_keywords.rst.j2
-	PYTHONPATH=../../lib $(KEYWORD_DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ ./keyword_desc.yml
+keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
+	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ -d ./keyword_desc.yml
 
-config: ../templates/config.rst.j2
-	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ ../../lib/ansible/config/base.yml
+config:
+	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ -d ../../lib/ansible/config/base.yml
 
-modules: ../templates/plugin.rst.j2
-	PYTHONPATH=../../lib $(PLUGIN_FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/modules/ $(MODULE_ARGS)
+modules: $(FORMATTER) ../templates/plugin.rst.j2
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/modules/ $(MODULE_ARGS)
 
-plugins: ../templates/plugin.rst.j2
+plugins: $(FORMATTER) ../templates/plugin.rst.j2
 	@echo "looping over doc plugins"
 	for plugin in $(DOC_PLUGINS); \
 	do \
-		PYTHONPATH=../../lib $(PLUGIN_FORMATTER) -t rst --plugin-type $$plugin --template-dir=../templates --module-dir=../../lib/ansible/plugins/$$plugin -o rst $(PLUGIN_ARGS); \
+		PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type $$plugin --template-dir=../templates --module-dir=../../lib/ansible/plugins/$$plugin -o rst $(PLUGIN_ARGS); \
 	done
 
 testing:

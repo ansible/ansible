@@ -1,13 +1,10 @@
 """Sanity test using PSScriptAnalyzer."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import collections
 import json
 import os
 import re
-
-import lib.types as t
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -19,13 +16,9 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
+    run_command,
     find_executable,
     read_lines_without_comments,
-)
-
-from lib.util_common import (
-    run_command,
-    INSTALL_ROOT,
 )
 
 from lib.config import (
@@ -49,12 +42,12 @@ class PslintTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        skip_paths = read_lines_without_comments(PSLINT_SKIP_PATH, optional=True)
+        skip_paths = read_lines_without_comments(PSLINT_SKIP_PATH)
 
         invalid_ignores = []
 
-        ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH, optional=True)
-        ignore = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
+        ignore_entries = read_lines_without_comments(PSLINT_IGNORE_PATH)
+        ignore = collections.defaultdict(dict)
         line = 0
 
         for ignore_entry in ignore_entries:
@@ -85,11 +78,9 @@ class PslintTest(SanitySingleVersion):
 
         # Make sure requirements are installed before running sanity checks
         cmds = [
-            [os.path.join(INSTALL_ROOT, 'test/runner/requirements/sanity.ps1')],
-            [os.path.join(INSTALL_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths
+            ['test/runner/requirements/sanity.ps1'],
+            ['test/sanity/pslint/pslint.ps1'] + paths
         ]
-
-        stdout = ''
 
         for cmd in cmds:
             try:
@@ -137,7 +128,7 @@ class PslintTest(SanitySingleVersion):
 
         for error in errors:
             if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = 0  # error ignored, clear line number of ignore entry to track usage
+                ignore[error.path][error.code] = None  # error ignored, clear line number of ignore entry to track usage
             else:
                 filtered.append(error)  # error not ignored
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import ast
 import json
@@ -21,7 +21,7 @@ def main():
     checker.report()
 
 
-class YamlChecker:
+class YamlChecker(object):
     """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
     def __init__(self):
         self.messages = []
@@ -38,11 +38,9 @@ class YamlChecker:
         """
         :type paths: str
         """
-        config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
-
-        yaml_conf = YamlLintConfig(file=os.path.join(config_path, 'default.yml'))
-        module_conf = YamlLintConfig(file=os.path.join(config_path, 'modules.yml'))
-        plugin_conf = YamlLintConfig(file=os.path.join(config_path, 'plugins.yml'))
+        yaml_conf = YamlLintConfig(file='test/sanity/yamllint/config/default.yml')
+        module_conf = YamlLintConfig(file='test/sanity/yamllint/config/modules.yml')
+        plugin_conf = YamlLintConfig(file='test/sanity/yamllint/config/plugins.yml')
 
         for path in paths:
             extension = os.path.splitext(path)[1]
@@ -177,7 +175,7 @@ class YamlChecker:
                 column=ex.offset,
                 level='error',
             ))
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:
             self.messages.append(dict(
                 code='python-parse-error',
                 message=str(ex),

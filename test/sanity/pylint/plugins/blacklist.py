@@ -9,7 +9,7 @@ from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
 
-class BlacklistEntry:
+class BlacklistEntry(object):
     """Defines a import blacklist entry."""
     def __init__(self, alternative, modules_only=False, names=None, ignore_paths=None):
         """

@@ -40,7 +40,7 @@
 
 # Checks
 - assert:
-    that: result is changed
+    that: result.changed == true
 
 - name: Check that default privileges are set
   become: yes
@@ -68,7 +68,7 @@
 
 # Checks
 - assert:
-    that: result is changed
+    that: result.changed == true
 
 # Cleanup
 - name: Remove user given permissions

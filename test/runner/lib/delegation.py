@@ -1,11 +1,14 @@
 """Delegate test execution to another environment."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import os
 import re
 import sys
 import tempfile
+
+import lib.pytar
+import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
@@ -39,14 +42,10 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
+    run_command,
     common_environment,
     pass_vars,
     display,
-)
-
-from lib.util_common import (
-    run_command,
-    INSTALL_ROOT,
 )
 
 from lib.docker_util import (
@@ -67,10 +66,6 @@ from lib.cloud import (
 
 from lib.target import (
     IntegrationTarget,
-)
-
-from lib.payload import (
-    create_payload,
 )
 
 
@@ -165,7 +160,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, None, INSTALL_ROOT, INSTALL_ROOT, options, exclude, require)
+        cmd = generate_command(args, None, os.path.abspath('bin/ansible-test'), options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -226,11 +221,7 @@ def delegate_docker(args, exclude, require, integration_targets):
     }
 
     python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
-
-    install_root = '/root/ansible'
-    content_root = install_root
-
-    cmd = generate_command(args, python_interpreter, install_root, content_root, options, exclude, require)
+    cmd = generate_command(args, python_interpreter, '/root/ansible/bin/ansible-test', options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -249,7 +240,13 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
         try:
-            create_payload(args, local_source_fd.name)
+            if not args.explain:
+                if args.docker_keep_git:
+                    tar_filter = lib.pytar.AllowGitTarFilter()
+                else:
+                    tar_filter = lib.pytar.DefaultTarFilter()
+
+                lib.pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
 
             if use_httptester:
                 httptester_id = run_httptester(args)
@@ -288,7 +285,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 for cloud_platform in cloud_platforms:
                     test_options += cloud_platform.get_docker_run_options()
 
-            test_id = docker_run(args, test_image, options=test_options)[0]
+            test_id, _ = docker_run(args, test_image, options=test_options)
 
             if args.explain:
                 test_id = 'test_id'
@@ -296,7 +293,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 test_id = test_id.strip()
 
             # write temporary files to /root since /tmp isn't ready immediately on container start
-            docker_put(args, test_id, os.path.join(INSTALL_ROOT, 'test/runner/setup/docker.sh'), '/root/docker.sh')
+            docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
             docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
             docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
             docker_exec(args, test_id, ['mkdir', '/root/ansible'])
@@ -310,16 +307,16 @@ def delegate_docker(args, exclude, require, integration_targets):
             # also disconnect from the network once requirements have been installed
             if isinstance(args, UnitsConfig):
                 writable_dirs = [
-                    os.path.join(content_root, '.pytest_cache'),
+                    '/root/ansible/.pytest_cache',
                 ]
 
                 docker_exec(args, test_id, ['mkdir', '-p'] + writable_dirs)
                 docker_exec(args, test_id, ['chmod', '777'] + writable_dirs)
 
-                docker_exec(args, test_id, ['find', os.path.join(content_root, 'test/results/'), '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
+                docker_exec(args, test_id, ['find', '/root/ansible/test/results/', '-type', 'd', '-exec', 'chmod', '777', '{}', '+'])
 
                 docker_exec(args, test_id, ['chmod', '755', '/root'])
-                docker_exec(args, test_id, ['chmod', '644', os.path.join(content_root, args.metadata_path)])
+                docker_exec(args, test_id, ['chmod', '644', '/root/ansible/%s' % args.metadata_path])
 
                 docker_exec(args, test_id, ['useradd', 'pytest', '--create-home'])
 
@@ -338,7 +335,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', os.path.join(content_root, 'test'), 'results'])
+                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
                     docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
                     run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
         finally:
@@ -377,7 +374,6 @@ def delegate_remote(args, exclude, require, integration_targets):
 
     httptester_id = None
     ssh_options = []
-    content_root = None
 
     try:
         core_ci.start()
@@ -400,11 +396,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             }
 
             python_interpreter = get_python_interpreter(args, get_remote_completion(), args.remote)
-
-            install_root = 'ansible'
-            content_root = install_root
-
-            cmd = generate_command(args, python_interpreter, install_root, content_root, options, exclude, require)
+            cmd = generate_command(args, python_interpreter, 'ansible/bin/ansible-test', options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
@@ -445,8 +437,8 @@ def delegate_remote(args, exclude, require, integration_targets):
                 if args.raw:
                     download = False
 
-            if download and content_root:
-                manage.ssh('rm -rf /tmp/results && cp -a %s/test/results /tmp/results && chmod -R a+r /tmp/results' % content_root)
+            if download:
+                manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results && chmod -R a+r /tmp/results')
                 manage.download('/tmp/results', 'test')
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -456,12 +448,11 @@ def delegate_remote(args, exclude, require, integration_targets):
             docker_rm(args, httptester_id)
 
 
-def generate_command(args, python_interpreter, install_root, content_root, options, exclude, require):
+def generate_command(args, python_interpreter, path, options, exclude, require):
     """
     :type args: EnvironmentConfig
     :type python_interpreter: str | None
-    :type install_root: str
-    :type content_root: str
+    :type path: str
     :type options: dict[str, int]
     :type exclude: list[str]
     :type require: list[str]
@@ -469,7 +460,7 @@ def generate_command(args, python_interpreter, install_root, content_root, optio
     """
     options['--color'] = 1
 
-    cmd = [os.path.join(install_root, 'bin/ansible-test')]
+    cmd = [path]
 
     if python_interpreter:
         cmd = [python_interpreter] + cmd
@@ -478,14 +469,7 @@ def generate_command(args, python_interpreter, install_root, content_root, optio
     # This is only needed because ansible-test relies on Python's file system encoding.
     # Environments that do not have the locale configured are thus unable to work with unicode file paths.
     # Examples include FreeBSD and some Linux containers.
-    env_vars = dict(
-        LC_ALL='en_US.UTF-8',
-        ANSIBLE_TEST_CONTENT_ROOT=content_root,
-    )
-
-    env_args = ['%s=%s' % (key, env_vars[key]) for key in sorted(env_vars)]
-
-    cmd = ['/usr/bin/env'] + env_args + cmd
+    cmd = ['/usr/bin/env', 'LC_ALL=en_US.UTF-8'] + cmd
 
     cmd += list(filter_options(args, sys.argv[1:], options, exclude, require))
     cmd += ['--color', 'yes' if args.color else 'no']

@@ -75,6 +75,7 @@
   assert:
     that:
       - result.changed == true
+      - result.has_key('kind') == False
 - name: verify that global_address was deleted
   gcp_compute_global_address_facts:
       filters:
@@ -102,3 +103,4 @@
   assert:
     that:
       - result.changed == false
+      - result.has_key('kind') == False

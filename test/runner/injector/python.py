@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 """Provides an entry point for python scripts and python modules on the controller with the current python interpreter and optional code coverage collection."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
 import os
 import sys
@@ -20,17 +18,13 @@ def main():
             args += ['-m', 'coverage.__main__', 'run', '--rcfile', coverage_config]
         else:
             if sys.version_info >= (3, 4):
-                # noinspection PyUnresolvedReferences
                 import importlib.util
 
-                # noinspection PyUnresolvedReferences
                 found = bool(importlib.util.find_spec('coverage'))
             else:
-                # noinspection PyDeprecation
                 import imp
 
                 try:
-                    # noinspection PyDeprecation
                     imp.find_module('coverage')
                     found = True
                 except ImportError:

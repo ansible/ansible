@@ -145,10 +145,10 @@ EXAMPLES = r'''
     block: |
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
-  loop:
-    - { name: host1, ip: 10.10.1.10 }
-    - { name: host2, ip: 10.10.1.11 }
-    - { name: host3, ip: 10.10.1.12 }
+  with_items:
+  - { name: host1, ip: 10.10.1.10 }
+  - { name: host2, ip: 10.10.1.11 }
+  - { name: host3, ip: 10.10.1.12 }
 '''
 
 import re

@@ -29,9 +29,7 @@
   ignore_errors: True
 
 - name: remove old db (RedHat or Suse)
-  file:
-    path: "{{ pg_dir }}"
-    state: absent
+  command: rm -rf "{{ pg_dir }}"
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
@@ -39,21 +37,18 @@
   file:
     path: "{{ pg_dir }}"
     state: absent
-  ignore_errors: True
   when: ansible_os_family == "FreeBSD"
 
-# Theoretically, pg_dropcluster should work but it doesn't so remove files
-- name: remove old db config and files (debian)
-  file:
-    path: '{{ loop_item }}'
-    state: absent
+# Theoretically, pg_dropcluster should work but it doesn't so rm files
+- name: remove old db config (debian)
+  command: rm -rf /etc/postgresql
   ignore_errors: True
   when: ansible_os_family == "Debian"
-  loop:
-  - /etc/postgresql
-  - /var/lib/postgresql
-  loop_control:
-    loop_var: loop_item
+
+- name: remove old db files (debian)
+  command: rm -rf /var/lib/postgresql
+  ignore_errors: True
+  when: ansible_os_family == "Debian"
 
 - name: install dependencies for postgresql test
   package: name={{ postgresql_package_item }} state=present
@@ -180,13 +175,3 @@
   - dummy--1.0--2.0.sql
   - dummy--2.0--3.0.sql
   when: ansible_os_family == 'Debian'
-
-- name: Get PostgreSQL version
-  become_user: "{{ pg_user }}"
-  become: yes
-  shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
-  register: postgres_version_resp
-
-- name: Print PostgreSQL server version
-  debug:
-    msg: "{{ postgres_version_resp.stdout }}"

@@ -1,10 +1,12 @@
 ---
 # Upgrade using SSH
 - include: network_cli.yaml
-  when: ansible_connection == 'network_cli'
+  when: connection_type == 'network_cli'
+- include: network_local.yaml
+  when: connection_type == 'cli_local'
 
 # Upgrade using NX-API
 - include: httpapi.yaml
-  when: ansible_connection == 'httpapi'
+  when: connection_type == 'httpapi'
 - include: nxapi.yaml
-  when: ansible_connection == 'local'
+  when: connection_type == 'nxapi_local'

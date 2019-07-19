@@ -1,6 +1,5 @@
 """Sanity test using yamllint."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import json
 import os
@@ -15,12 +14,8 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    display,
-    INSTALL_ROOT,
-)
-
-from lib.util_common import (
     run_command,
+    display,
 )
 
 from lib.config import (
@@ -76,7 +71,7 @@ class YamllintTest(SanitySingleVersion):
         """
         cmd = [
             args.python_executable,
-            os.path.join(INSTALL_ROOT, 'test/sanity/yamllint/yamllinter.py'),
+            'test/sanity/yamllint/yamllinter.py',
         ]
 
         data = '\n'.join(paths)

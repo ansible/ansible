@@ -1,6 +1,5 @@
 """Execute Ansible sanity tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import abc
 import glob
@@ -9,23 +8,17 @@ import os
 import re
 import sys
 
-import lib.types as t
-
 from lib.util import (
     ApplicationError,
     SubprocessError,
     display,
+    run_command,
     import_plugins,
     load_plugins,
     parse_to_list_of_dict,
     ABC,
-    INSTALL_ROOT,
     is_binary_file,
     read_lines_without_comments,
-)
-
-from lib.util_common import (
-    run_command,
 )
 
 from lib.ansible_util import (
@@ -79,16 +72,16 @@ def command_sanity(args):
     tests = sanity_get_tests()
 
     if args.test:
-        tests = [target for target in tests if target.name in args.test]
+        tests = [t for t in tests if t.name in args.test]
     else:
-        disabled = [target.name for target in tests if not target.enabled and not args.allow_disabled]
-        tests = [target for target in tests if target.enabled or args.allow_disabled]
+        disabled = [t.name for t in tests if not t.enabled and not args.allow_disabled]
+        tests = [t for t in tests if t.enabled or args.allow_disabled]
 
         if disabled:
             display.warning('Skipping tests disabled by default without --allow-disabled: %s' % ', '.join(sorted(disabled)))
 
     if args.skip_test:
-        tests = [target for target in tests if target.name not in args.skip_test]
+        tests = [t for t in tests if t.name not in args.skip_test]
 
     total = 0
     failed = []
@@ -142,12 +135,12 @@ def command_sanity(args):
 
 def collect_code_smell_tests():
     """
-    :rtype: tuple[SanityFunc]
+    :rtype: tuple[SanityCodeSmellTest]
     """
     skip_file = 'test/sanity/code-smell/skip.txt'
-    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
+    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True)
 
-    paths = glob.glob(os.path.join(INSTALL_ROOT, 'test/sanity/code-smell/*'))
+    paths = glob.glob('test/sanity/code-smell/*')
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityCodeSmellTest(p) for p in paths)
@@ -196,9 +189,10 @@ class SanityFailure(TestFailure):
 
 class SanityMessage(TestMessage):
     """Single sanity test message for one file."""
+    pass
 
 
-class SanityTargets:
+class SanityTargets(object):
     """Sanity test target information."""
     def __init__(self, include, exclude, require):
         """
@@ -362,6 +356,7 @@ class SanitySingleVersion(SanityFunc):
         :type targets: SanityTargets
         :rtype: TestResult
         """
+        pass
 
 
 class SanityMultipleVersion(SanityFunc):
@@ -374,6 +369,7 @@ class SanityMultipleVersion(SanityFunc):
         :type python_version: str
         :rtype: TestResult
         """
+        pass
 
 
 SANITY_TESTS = (
@@ -383,7 +379,7 @@ SANITY_TESTS = (
 def sanity_init():
     """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
     import_plugins('sanity')
-    sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityFunc]]
+    sanity_plugins = {}  # type: dict[str, type]
     load_plugins(SanityFunc, sanity_plugins)
     sanity_tests = tuple([plugin() for plugin in sanity_plugins.values()])
     global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement

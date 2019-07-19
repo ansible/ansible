@@ -1,6 +1,6 @@
 """Analyze python import statements."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import ast
 import os
@@ -122,27 +122,23 @@ def enumerate_module_utils():
     module_utils = []
     base_path = 'lib/ansible/module_utils'
 
-    paths = []
-
-    for root, _dir_names, file_names in os.walk(base_path):
+    for root, _, file_names in os.walk(base_path):
         for file_name in file_names:
-            paths.append(os.path.join(root, file_name))
+            path = os.path.join(root, file_name)
+            name, ext = os.path.splitext(file_name)
 
-    for path in paths:
-        name, ext = os.path.splitext(path)
+            if path == 'lib/ansible/module_utils/__init__.py':
+                continue
 
-        if path == 'lib/ansible/module_utils/__init__.py':
-            continue
+            if ext != '.py':
+                continue
 
-        if ext != '.py':
-            continue
+            if name == '__init__':
+                module_util = root
+            else:
+                module_util = os.path.join(root, name)
 
-        if name.endswith('/__init__'):
-            module_util = os.path.dirname(name)
-        else:
-            module_util = name
-
-        module_utils.append(module_util[4:].replace('/', '.'))
+            module_utils.append(module_util[4:].replace('/', '.'))
 
     return set(module_utils)
 

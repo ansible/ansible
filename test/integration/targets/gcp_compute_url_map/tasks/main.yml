@@ -38,7 +38,7 @@
   gcp_compute_backend_service:
     name: backendservice-urlmap
     backends:
-    - group: "{{ instancegroup.selfLink }}"
+    - group: "{{ instancegroup }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'
@@ -113,6 +113,7 @@
   assert:
     that:
       - result.changed == true
+      - result.has_key('kind') == False
 - name: verify that url_map was deleted
   gcp_compute_url_map_facts:
       filters:
@@ -141,6 +142,7 @@
   assert:
     that:
       - result.changed == false
+      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!
@@ -148,7 +150,7 @@
   gcp_compute_backend_service:
     name: backendservice-urlmap
     backends:
-    - group: "{{ instancegroup.selfLink }}"
+    - group: "{{ instancegroup }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'

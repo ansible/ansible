@@ -49,7 +49,6 @@ options:
     description:
     - Region where the regional interconnect attachment resides.
     required: true
-    type: str
 extends_documentation_fragment: gcp
 '''
 

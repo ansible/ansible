@@ -1,6 +1,5 @@
 """Sanity test for ansible-doc."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import collections
 import os
@@ -17,11 +16,8 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    read_lines_without_comments,
-)
-
-from lib.util_common import (
     intercept_command,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -43,7 +39,7 @@ class AnsibleDocTest(SanityMultipleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/ansible-doc/skip.txt'
-        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True))
 
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([

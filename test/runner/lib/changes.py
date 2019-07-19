@@ -1,6 +1,6 @@
 """Detect changes in Ansible code."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import re
 import os
@@ -9,11 +9,8 @@ from lib.util import (
     ApplicationError,
     SubprocessError,
     MissingEnvironmentVariable,
-    display,
-)
-
-from lib.util_common import (
     CommonConfig,
+    display,
 )
 
 from lib.http import (
@@ -42,9 +39,10 @@ class InvalidBranch(ApplicationError):
 
 class ChangeDetectionNotSupported(ApplicationError):
     """Exception for cases where change detection is not supported."""
+    pass
 
 
-class ShippableChanges:
+class ShippableChanges(object):
     """Change information for Shippable build."""
     def __init__(self, args, git):
         """
@@ -119,7 +117,7 @@ class ShippableChanges:
         return last_successful_commit
 
 
-class LocalChanges:
+class LocalChanges(object):
     """Change information for local work."""
     def __init__(self, args, git):
         """

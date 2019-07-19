@@ -1,6 +1,6 @@
 """Code coverage utilities."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import os
 import re
@@ -13,11 +13,8 @@ from lib.target import (
 from lib.util import (
     display,
     ApplicationError,
-    common_environment,
-)
-
-from lib.util_common import (
     run_command,
+    common_environment,
 )
 
 from lib.config import (
