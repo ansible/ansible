@@ -50,6 +50,7 @@ options:
     - A reference to the region where the regional forwarding rule resides.
     - This field is not applicable to global forwarding rules.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -44,6 +44,7 @@ options:
     description:
     - Region where the scheduler job resides .
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -55,27 +55,32 @@ options:
     description:
     - The name of the job.
     required: true
+    type: str
   description:
     description:
     - A human-readable description for the job. This string must not contain more
       than 500 characters.
     required: false
+    type: str
   schedule:
     description:
     - Describes the schedule on which the job will be executed.
     required: false
+    type: str
   time_zone:
     description:
     - Specifies the time zone to be used in interpreting schedule.
     - The value of this field must be a time zone name from the tz database.
     required: false
     default: Etc/UTC
+    type: str
   retry_config:
     description:
     - By default, if a job does not complete successfully, meaning that an acknowledgement
       is not received from the handler, then it will be retried with exponential backoff
       according to the settings .
     required: false
+    type: dict
     suboptions:
       retry_count:
         description:
@@ -83,6 +88,7 @@ options:
           exponential backoff procedure described by maxDoublings.
         - Values greater than 5 and negative values are not allowed.
         required: false
+        type: int
       max_retry_duration:
         description:
         - The time limit for retrying a failed job, measured from time when an execution
@@ -90,16 +96,19 @@ options:
           until both limits are reached.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         required: false
+        type: str
       min_backoff_duration:
         description:
         - The minimum amount of time to wait before retrying a job after it fails.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         required: false
+        type: str
       max_backoff_duration:
         description:
         - The maximum amount of time to wait before retrying a job after it fails.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         required: false
+        type: str
       max_doublings:
         description:
         - The time between retries will double maxDoublings times.
@@ -107,11 +116,13 @@ options:
           times, then increases linearly, and finally retries retries at intervals
           of maxBackoffDuration up to retryCount times.
         required: false
+        type: int
   pubsub_target:
     description:
     - Pub/Sub target If the job providers a Pub/Sub target the cron will publish a
       message to the provided topic .
     required: false
+    type: dict
     suboptions:
       topic_name:
         description:
@@ -119,31 +130,37 @@ options:
           when a job is delivered. The topic name must be in the same format as required
           by PubSub's PublishRequest.name, for example projects/PROJECT_ID/topics/TOPIC_ID.
         required: true
+        type: str
       data:
         description:
         - The message payload for PubsubMessage.
         - Pubsub message must contain either non-empty data, or at least one attribute.
         required: false
+        type: str
       attributes:
         description:
         - Attributes for PubsubMessage.
         - Pubsub message must contain either non-empty data, or at least one attribute.
         required: false
+        type: dict
   app_engine_http_target:
     description:
     - App Engine HTTP target.
     - If the job providers a App Engine HTTP target the cron will send a request to
       the service instance .
     required: false
+    type: dict
     suboptions:
       http_method:
         description:
         - Which HTTP method to use for the request.
         required: false
+        type: str
       app_engine_routing:
         description:
         - App Engine Routing setting for the job.
         required: false
+        type: dict
         suboptions:
           service:
             description:
@@ -151,64 +168,76 @@ options:
             - By default, the job is sent to the service which is the default service
               when the job is attempted.
             required: false
+            type: str
           version:
             description:
             - App version.
             - By default, the job is sent to the version which is the default version
               when the job is attempted.
             required: false
+            type: str
           instance:
             description:
             - App instance.
             - By default, the job is sent to an instance which is available when the
               job is attempted.
             required: false
+            type: str
       relative_uri:
         description:
         - The relative URI.
         required: true
+        type: str
       body:
         description:
         - HTTP request body. A request body is allowed only if the HTTP method is
           POST or PUT. It will result in invalid argument error to set a body on a
           job with an incompatible HttpMethod.
         required: false
+        type: str
       headers:
         description:
         - HTTP request headers.
         - This map contains the header field names and values. Headers can be set
           when the job is created.
         required: false
+        type: dict
   http_target:
     description:
     - HTTP target.
     - If the job providers a http_target the cron will send a request to the targeted
       url .
     required: false
+    type: dict
     suboptions:
       uri:
         description:
         - The full URI path that the request will be sent to.
         required: true
+        type: str
       http_method:
         description:
         - Which HTTP method to use for the request.
         required: false
+        type: str
       body:
         description:
         - HTTP request body. A request body is allowed only if the HTTP method is
           POST, PUT, or PATCH. It is an error to set body on a job with an incompatible
           HttpMethod.
         required: false
+        type: str
       headers:
         description:
         - This map contains the header field names and values. Repeated headers are
           not supported, but a header value can contain commas.
         required: false
+        type: dict
   region:
     description:
     - Region where the scheduler job resides .
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/scheduler/docs/reference/rest/)'

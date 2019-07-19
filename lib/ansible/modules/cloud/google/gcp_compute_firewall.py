@@ -59,6 +59,7 @@ options:
     - The list of ALLOW rules specified by this firewall. Each rule specifies a protocol
       and port-range tuple that describes a permitted connection.
     required: false
+    type: list
     suboptions:
       ip_protocol:
         description:
@@ -67,6 +68,7 @@ options:
           well known protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol
           number.
         required: true
+        type: str
       ports:
         description:
         - An optional list of ports to which this rule applies. This field is only
@@ -75,11 +77,13 @@ options:
           port.
         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
         required: false
+        type: list
   denied:
     description:
     - The list of DENY rules specified by this firewall. Each rule specifies a protocol
       and port-range tuple that describes a denied connection.
     required: false
+    type: list
     version_added: 2.8
     suboptions:
       ip_protocol:
@@ -89,6 +93,7 @@ options:
           well known protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol
           number.
         required: true
+        type: str
       ports:
         description:
         - An optional list of ports to which this rule applies. This field is only
@@ -97,17 +102,20 @@ options:
           port.
         - 'Example inputs include: ["22"], ["80","443"], and ["12345-12349"].'
         required: false
+        type: list
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   destination_ranges:
     description:
     - If destination ranges are specified, the firewall will apply only to traffic
       that has destination IP address in these ranges. These ranges must be expressed
       in CIDR format. Only IPv4 is supported.
     required: false
+    type: list
     version_added: 2.8
   direction:
     description:
@@ -116,6 +124,7 @@ options:
       traffic, it is NOT supported to specify sourceRanges OR sourceTags.'
     - 'Some valid choices include: "INGRESS", "EGRESS"'
     required: false
+    type: str
     version_added: 2.8
   disabled:
     description:
@@ -135,6 +144,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - 'URL of the network resource for this firewall rule. If not specified when creating
@@ -151,6 +161,7 @@ options:
     required: false
     default:
       selfLink: global/networks/default
+    type: dict
   priority:
     description:
     - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -160,6 +171,7 @@ options:
       1). DENY rules take precedence over ALLOW rules having equal priority.
     required: false
     default: '1000'
+    type: int
     version_added: 2.8
   source_ranges:
     description:
@@ -171,6 +183,7 @@ options:
       property. The connection does not need to match both properties for the firewall
       to apply. Only IPv4 is supported.
     required: false
+    type: list
   source_service_accounts:
     description:
     - If source service accounts are specified, the firewall will apply only to traffic
@@ -183,6 +196,7 @@ options:
       The connection does not need to match both properties for the firewall to apply.
       sourceServiceAccounts cannot be used at the same time as sourceTags or targetTags.
     required: false
+    type: list
     version_added: 2.8
   source_tags:
     description:
@@ -195,6 +209,7 @@ options:
       tag listed in the sourceTags property. The connection does not need to match
       both properties for the firewall to apply.
     required: false
+    type: list
   target_service_accounts:
     description:
     - A list of service accounts indicating sets of instances located in the network
@@ -203,6 +218,7 @@ options:
       If neither targetServiceAccounts nor targetTags are specified, the firewall
       rule applies to all instances on the specified network.
     required: false
+    type: list
     version_added: 2.8
   target_tags:
     description:
@@ -211,6 +227,7 @@ options:
     - If no targetTags are specified, the firewall rule applies to all instances on
       the specified network.
     required: false
+    type: list
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/firewalls)'

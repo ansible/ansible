@@ -51,35 +51,42 @@ options:
     description:
     - Dataset name.
     required: false
+    type: str
   access:
     description:
     - Access controls on the bucket.
     required: false
+    type: list
     suboptions:
       domain:
         description:
         - A domain to grant access to. Any users signed in with the domain specified
           will be granted the specified access .
         required: false
+        type: str
       group_by_email:
         description:
         - An email address of a Google Group to grant access to.
         required: false
+        type: str
       role:
         description:
         - Describes the rights granted to the user specified by the other member of
           the access object .
         - 'Some valid choices include: "READER", "WRITER", "OWNER"'
         required: false
+        type: str
       special_group:
         description:
         - A special group to grant access to.
         required: false
+        type: str
       user_by_email:
         description:
         - 'An email address of a user to grant access to. For example: fred@example.com
           .'
         required: false
+        type: str
       view:
         description:
         - A view from a different dataset to grant access to. Queries executed against
@@ -87,24 +94,29 @@ options:
           is not required when this field is set. If that view is updated by any user,
           access to the view needs to be granted again via an update operation.
         required: false
+        type: dict
         suboptions:
           dataset_id:
             description:
             - The ID of the dataset containing this table.
             required: true
+            type: str
           project_id:
             description:
             - The ID of the project containing this table.
             required: true
+            type: str
           table_id:
             description:
             - The ID of the table. The ID must contain only letters (a-z, A-Z), numbers
               (0-9), or underscores. The maximum length is 1,024 characters.
             required: true
+            type: str
   dataset_reference:
     description:
     - A reference that identifies the dataset.
     required: true
+    type: dict
     suboptions:
       dataset_id:
         description:
@@ -112,33 +124,40 @@ options:
           only letters (a-z, A-Z), numbers (0-9), or underscores. The maximum length
           is 1,024 characters.
         required: true
+        type: str
       project_id:
         description:
         - The ID of the project containing this dataset.
         required: false
+        type: str
   default_table_expiration_ms:
     description:
     - The default lifetime of all tables in the dataset, in milliseconds .
     required: false
+    type: int
   description:
     description:
     - A user-friendly description of the dataset.
     required: false
+    type: str
   friendly_name:
     description:
     - A descriptive name for the dataset.
     required: false
+    type: str
   labels:
     description:
     - The labels associated with this dataset. You can use these to organize and group
       your datasets .
     required: false
+    type: dict
   location:
     description:
     - The geographic location where the dataset should reside. Possible values include
       EU and US. The default value is US.
     required: false
     default: US
+    type: str
 extends_documentation_fragment: gcp
 '''
 
