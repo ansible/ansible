@@ -437,6 +437,10 @@ options:
             - The point in time at which the certificate stops being valid.
             - Time can be specified either as relative time or as absolute timestamp.
             - Time will always be interpreted as UTC.
+            - Note that only the date (day, month, year) is supported for specifying expiry date of the issued certificate.
+            - The full date-time is adjusted to EST (GMT -5:00) before issuance, which may result in a certificate with an expiration date one day
+              earlier than expected if a relative time is used.
+            - The minimum certificate lifetime is 90 days, and maximum is three years.
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent.
