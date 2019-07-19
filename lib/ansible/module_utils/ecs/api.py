@@ -229,8 +229,8 @@ class Resource(object):
                 setattr(self, operation_name, bind(self, op.restmethod, operation_spec))
 
 
-# Functions similarly to requests.session, except leveraging the ansible urls package
-class Session(object):
+# Session to encapsulate the connection parameters of the module_utils Request object, the api spec, etc
+class ECSSession(object):
     def __init__(self, name, **kwargs):
         """
         Initialize our session
@@ -281,11 +281,6 @@ class Session(object):
         if not valid_file_format.match(entrust_api_specification_path):
             raise SessionConfigurationException(to_native("OpenAPI specification filename must end in .json, .yml or .yaml"))
 
-        # If you need to configure custom CA certificates for verifying the
-        # connection to the server (for example, because your infrastructure
-        # has a friendly proxy intercepting TLS traffic), you can use the
-        # global variable 'REQUESTS_CA_BUNDLE' to point to a folder containing
-        # certificates you want to trust.
         self.verify = True
 
         if entrust_api_specification_path.startswith("http"):
@@ -354,7 +349,7 @@ def ECSClient(entrust_api_user=None, entrust_api_key=None, entrust_api_cert=None
     entrust_api_cert_key = to_text(entrust_api_cert_key)
     entrust_api_specification_path = to_text(entrust_api_specification_path)
 
-    return Session(
+    return ECSSession(
         "ecs",
         entrust_api_user=entrust_api_user,
         entrust_api_key=entrust_api_key,
