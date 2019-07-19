@@ -48,6 +48,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   check_interval_sec:
     description:
     - How often (in seconds) to send a health check. The default value is 5 seconds.

@@ -52,6 +52,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   base_instance_name:
     description:
     - The base instance name to use for instances in this group. The value must be
