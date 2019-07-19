@@ -240,6 +240,7 @@ def test_multiple_statements_limitation():
         assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1"}; a=b\n' + REGULAR_IMPORTS,
                                    offsets=True)
 
+
 @pytest.mark.parametrize("offsets", [True, False])
 def test_module_data_without_metadata(offsets):
     assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + REGULAR_IMPORTS, offsets=offsets) == DEF_METADATA_RET_TUPLE
