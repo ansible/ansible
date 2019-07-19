@@ -82,7 +82,7 @@ def extract_powershell_module_utils_imports(path, module_utils):
 
         for line in lines:
             line_number += 1
-            match = re.search(r'(?i)^#\s*(?:requires\s+-module|ansiblerequires\s+-powershell)(?:s?)\s*((?:Ansible|AnsibleCollections)\..+)', line)
+            match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|AnsibleCollections)\..+)', line)
 
             if not match:
                 continue
