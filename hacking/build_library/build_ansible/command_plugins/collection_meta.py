@@ -17,7 +17,7 @@ from ansible.module_utils._text import to_bytes
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
-from ..filters import documented_type, html_ify  # pylint: disable=relative-beyond-top-level
+from ..jinja2.filters import documented_type, html_ify  # pylint: disable=relative-beyond-top-level
 
 
 DEFAULT_TEMPLATE_FILE = 'collections_galaxy_meta.rst.j2'
@@ -38,8 +38,8 @@ class DocumentCollectionMeta(Command):
                             help="directory containing Jinja2 templates")
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/',
                             help="Output directory for rst files")
-        parser.add_argument("-d", "--docs-source", action="store", dest="docs", required=True,
-                            help="Source for attribute docs")
+        parser.add_argument("collection_defs", metavar="COLLECTION-OPTION-DEFINITIONS.yml", type=str,
+                            help="Source for collection metadata option docs")
 
     @staticmethod
     def main(args):
@@ -48,11 +48,8 @@ class DocumentCollectionMeta(Command):
         template_file = os.path.basename(template_file_full_path)
         template_dir = os.path.dirname(template_file_full_path)
 
-        if args.docs:
-            with open(args.docs) as f:
-                docs = yaml.safe_load(f)
-        else:
-            docs = {}
+        with open(args.collection_defs) as f:
+            options = yaml.safe_load(f)
 
         env = Environment(loader=FileSystemLoader(template_dir),
                           variable_start_string="@{",
@@ -63,7 +60,7 @@ class DocumentCollectionMeta(Command):
 
         template = env.get_template(template_file)
         output_name = os.path.join(output_dir, template_file.replace('.j2', ''))
-        temp_vars = {'options': docs}
+        temp_vars = {'options': options}
 
         data = to_bytes(template.render(temp_vars))
         update_file_if_different(output_name, data)

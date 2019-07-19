@@ -46,7 +46,7 @@ from ansible.utils.display import Display
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
 from ..commands import Command  # pylint: disable=relative-beyond-top-level
-from ..filters import do_max, documented_type, html_ify, rst_fmt, rst_ify, rst_xline  # pylint: disable=relative-beyond-top-level
+from ..jinja2.filters import do_max, documented_type, html_ify, rst_fmt, rst_ify, rst_xline  # pylint: disable=relative-beyond-top-level
 
 
 #####################################################################################
