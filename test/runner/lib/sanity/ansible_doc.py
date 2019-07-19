@@ -43,7 +43,9 @@ class AnsibleDocTest(SanityMultipleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/ansible-doc/skip.txt'
-        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+
+        targets_include = [target for target in targets.include if target.path not in skip_paths and os.path.splitext(target.path)[1] == '.py']
 
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([
@@ -56,9 +58,9 @@ class AnsibleDocTest(SanityMultipleVersion):
             'test',
         ])
 
-        modules = sorted(set(m for i in targets.include for m in i.modules) - skip_modules)
+        modules = sorted(set(m for i in targets_include for m in i.modules))
 
-        plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
+        plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets_include if
                    os.path.basename(i.path) != '__init__.py' and
                    re.search(r'^lib/ansible/plugins/[^/]+/', i.path)
                    and i.path != 'lib/ansible/plugins/cache/base.py']
