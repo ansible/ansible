@@ -196,6 +196,7 @@ except ImportError:
     pass  # handled by AnsibleAwsModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import AWSRetry
 
 
 def create_lifecycle_rule(client, module):
@@ -301,7 +302,7 @@ def create_lifecycle_rule(client, module):
 
     # Write lifecycle to bucket
     try:
-        client.put_bucket_lifecycle_configuration(Bucket=name, LifecycleConfiguration=lifecycle_configuration)
+        AWSRetry.jittered_backoff()(client.put_bucket_lifecycle_configuration)(Bucket=name, LifecycleConfiguration=lifecycle_configuration)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e)
 
