@@ -144,10 +144,14 @@ options:
             - storage_blob
     managed_disk_type:
         description:
+<<<<<<< cded409c5f0a4500ca14c0f9c2ec8d07feba7ac6
 <<<<<<< 78f2bc62ecbf94709af04a6ffc272b5c802bb23b
             - Managed OS disk type.
 =======
             - Managed OS disk type
+=======
+            - Managed OS disk type.
+>>>>>>> add new
             - Create OS disk with managed disk if defined.
             - If not defined, the OS disk will be created with virtual hard disk (VHD).
 >>>>>>> support datadisk updated
