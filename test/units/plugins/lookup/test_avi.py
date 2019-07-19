@@ -46,7 +46,7 @@ with open(fixture_path + '/avi.json') as json_file:
 @pytest.fixture
 def dummy_credentials():
     dummy_credentials = {}
-    dummy_credentials['controller'] = "10.11.12.13"
+    dummy_credentials['controller'] = "192.0.2.13"
     dummy_credentials['username'] = "admin"
     dummy_credentials['password'] = "password"
     dummy_credentials['api_version'] = "17.2.14"
