@@ -56,10 +56,16 @@ options:
        by specifying it as module parameter.
     type: bool
     default: yes
+<<<<<<< 3fbe6494404da6befe1a8d24567f5934295faf82
 <<<<<<< adfbd04b3ab611a9807a36c7d4ab648d53a811be
 
 =======
 >>>>>>> new module
+=======
+  notes:
+    - Tested against ICX 10.1
+
+>>>>>>> added notes
 """
 
 EXAMPLES = """
