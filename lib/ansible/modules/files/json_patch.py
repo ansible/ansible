@@ -20,7 +20,7 @@ module: json_patch
 author: "Joey Espinosa (@ParticleDecay)"
 short_description: Patch JSON documents
 requirements: []
-version_added: "2.8"
+version_added: "2.9"
 description:
     - Patch JSON documents using JSON Patch standard
     - "RFC 6901: https://tools.ietf.org/html/rfc6901"
@@ -300,20 +300,25 @@ class JSONPatcher(object):
         """Return a value at 'path'."""
         elements = path.lstrip('/').split('/')
         next_obj = obj
-        for elem in elements:
+        for idx, elem in enumerate(elements):
             try:
                 next_obj = next_obj[elem]
             except KeyError:
-                raise PathError("'%s' was not found in the JSON object" % path)
+                if idx == (len(elements) - 1):  # this helps us stay idempotent
+                    return None
+                raise PathError("'%s' was not found in the JSON object" % path)  # wrong path specified
             except TypeError:  # it's a list
                 if not elem.isdigit():
                     raise PathError("'%s' is not a valid index for a JSON array" % path)
                 try:
                     next_obj = next_obj[int(elem)]
                 except IndexError:
+                    if idx == (len(elements) - 1):  # this helps us stay idempotent
+                        return None
                     raise PathError("specified index '%s' was not found in JSON array" % path)
         return next_obj
 
+    # https://tools.ietf.org/html/rfc6902#section-4.1
     def add(self, path, value, obj, **discard):
         """Perform an 'add' operation."""
         chg = False
@@ -362,6 +367,7 @@ class JSONPatcher(object):
                 obj[int(path)], chg, tst = self.add(remaining, value, next_obj)
             return obj, chg, None
 
+    # https://tools.ietf.org/html/rfc6902#section-4.2
     def remove(self, path, obj, **discard):
         """Perform a 'remove' operation."""
         removed = None
@@ -370,14 +376,14 @@ class JSONPatcher(object):
             try:
                 removed = obj.pop(path)
             except KeyError:
-                raise PathError("'%s' was not found in the JSON object" % path)
+                return obj, None, None
             except TypeError:  # it's a list
                 if not path.isdigit():
                     raise PathError("'%s' is not a valid index for a JSON array" % path)
                 try:
                     removed = obj.pop(int(path))
                 except IndexError:
-                    raise PathError("specified index '%s' was not found in JSON array" % path)
+                    return obj, None, None
             return obj, removed, None
         else:  # traverse obj until last path member
             elements = path.split('/')
@@ -403,24 +409,37 @@ class JSONPatcher(object):
                 obj[int(path)], removed, tst = self.remove(remaining, next_obj)
             return obj, removed, None
 
+    # https://tools.ietf.org/html/rfc6902#section-4.3
     def replace(self, path, value, obj, **discard):
         """Perform a 'replace' operation."""
+        old_value = self._get(path, obj)
+        if old_value == value:
+            return obj, False, None
+        if old_value is None:  # the target location must exist for operation to be successful
+            raise PathError("could not find '%s' member in JSON object" % path)
         new_obj, dummy, tst = self.remove(path, obj)
         new_obj, chg, tst = self.add(path, value, new_obj)
         return new_obj, chg, None
 
+    # https://tools.ietf.org/html/rfc6902#section-4.4
     def move(self, from_path, path, obj, **discard):
         """Perform a 'move' operation."""
+        chg = False
         new_obj, removed, tst = self.remove(from_path, obj)
-        new_obj, chg, tst = self.add(path, removed, new_obj)
+        if removed is not None:  # don't inadvertently add 'None' as a value somewhere
+            new_obj, chg, tst = self.add(path, removed, new_obj)
         return new_obj, chg, None
 
+    # https://tools.ietf.org/html/rfc6902#section-4.5
     def copy(self, from_path, path, obj, **discard):
         """Perform a 'copy' operation."""
         value = self._get(from_path, obj)
+        if value is None:
+            raise PathError("could not find '%s' member in JSON object" % path)
         new_obj, chg, tst = self.add(path, value, obj)
         return new_obj, chg, None
 
+    # https://tools.ietf.org/html/rfc6902#section-4.6
     def test(self, path, value, obj, **discard):
         """Perform a 'test' operation.
 

@@ -1,0 +1,240 @@
+# test code for the json_patch module
+# (c) 2019, Joey Espinosa <jlouis.espinosa@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: deploy the test json file
+  copy:
+    src: test.json
+    dest: "{{ output_dir }}/test.json"
+  register: result
+
+- name: store the checksum of the test json file
+  set_fact:
+    test_json_checksum: "91b69ff162bb0805386ae0d57a30a6b992bc5ecc"
+
+- name: assert that the test json file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == test_json_checksum
+      - result.state == "file"
+
+- name: add a 'qux' member to the json object, and back it up
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: add
+        path: "/foo/qux"
+        value: "quux"
+    backup: yes
+  register: add_result1
+
+- name: assert that the 'qux' member was added and backup is valid
+  assert:
+    that:
+      - add_result1 is changed
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.qux') == 'quux'"
+
+- name: stat the backed up file
+  stat:
+    path: "{{ add_result1.backup }}"
+  register: backed_up
+
+- name: assert that backup is valid
+  assert:
+    that:
+      - backed_up.stat.checksum == test_json_checksum
+
+- name: add the 'qux' member to the json object again
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: add
+        path: "/foo/qux"
+        value: "quux"
+  register: add_result2
+
+- name: assert that the add did not change this time
+  assert:
+    that:
+      - add_result2 is not changed
+
+- name: remove the 'bar' member from the json object
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: remove
+        path: "/foo/bar"
+  register: remove_result1
+
+- name: assert that the 'bar' member was removed
+  assert:
+    that:
+      - remove_result1 is changed
+      - "not lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.bar')"
+
+- name: remove the 'bar' member from the json object again
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: remove
+        path: "/foo/bar"
+  register: remove_result2
+
+- name: assert that the remove did not change this time
+  assert:
+    that:
+      - remove_result2 is not changed
+      - "not lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.bar')"
+
+- name: restore the backup json file
+  copy:
+    src: "{{ add_result1.backup }}"
+    dest: "{{ output_dir }}/test.json"
+  register: restored_file
+
+- name: assert that the backup file was successfully deployed
+  assert:
+    that:
+      - restored_file is changed
+      - restored_file.checksum == test_json_checksum
+      - restored_file.state == "file"
+
+- name: move the 'one' member to 'uno'
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: move
+        from: "/foo/one"
+        path: "/foo/uno"
+  register: move_result1
+
+- name: assert that the 'one' member was moved
+  assert:
+    that:
+      - move_result1 is changed
+      - "not lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.one')"
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.uno') == 1"
+
+- name: move the 'one' member to 'uno' again
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: move
+        from: "/foo/one"
+        path: "/foo/uno"
+  register: move_result2
+
+- name: assert that the move did not change this time
+  assert:
+    that:
+      - move_result2 is not changed
+      - "not lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.one')"
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.uno') == 1"
+
+- name: replace the 'uno' member with a new value
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: replace
+        path: "/foo/uno"
+        value: "one"
+  register: replace_result1
+
+- name: assert that the 'uno' member's value was replaced
+  assert:
+    that:
+      - replace_result1 is changed
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.uno') == 'one'"
+
+- name: replace the 'uno' member's value again
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: replace
+        path: "/foo/uno"
+        value: "one"
+  register: replace_result2
+
+- name: assert that the replace did not change this time
+  assert:
+    that:
+      - replace_result2 is not changed
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.uno') == 'one'"
+
+- name: copy the 'uno' member into a new member and change its value
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: copy
+        from: "/foo/uno"
+        path: "/foo/dos"
+  register: copy_result1
+
+- name: assert that the copy duplicated the value
+  assert:
+    that:
+      - copy_result1 is changed
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.dos') == 'one'"
+
+- name: copy the 'uno' member into a new member again
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: copy
+        from: "/foo/uno"
+        path: "/foo/dos"
+  register: copy_result2
+
+- name: assert that the copy did not change this time
+  assert:
+    that:
+      - copy_result2 is not changed
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.dos') == 'one'"
+
+- name: test the value of 'dos' is 'two'
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    operations:
+      - op: test
+        path: "/foo/dos"
+        value: "two"
+  register: test_result1
+
+- name: assert that the test did not pass
+  assert:
+    that:
+      - test_result1 is not changed
+      - not test_result1.tested
+      - "lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.dos') == 'one'"
+
+- name: add a 'qux' member into another json file
+  json_patch:
+    src: "{{ output_dir }}/test.json"
+    dest: "{{ output_dir }}/test2.json"
+    operations:
+      - op: add
+        path: "/foo/qux"
+        value: "quux"
+  register: dest_result1
+
+- name: assert that the member was added to a new file and only that file
+  assert:
+    that:
+      - dest_result1 is changed
+      - "lookup('file', '{{ output_dir }}/test2.json') | from_json | json_query('foo.qux') == 'quux'"
+      - "not lookup('file', '{{ output_dir }}/test.json') | from_json | json_query('foo.qux')"

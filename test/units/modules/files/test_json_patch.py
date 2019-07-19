@@ -3,6 +3,9 @@ import pytest
 
 from ansible.modules.files.json_patch import JSONPatcher, PathError
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 sample_json = json.dumps([
     {"foo": {"one": 1, "two": 2, "three": 3}, "enabled": True},
@@ -101,14 +104,25 @@ def test_op_remove_baz_list_member():
         assert obj['bar'] != 'potatoes'
 
 
-def test_op_remove_fail_on_nonexistent_member():
-    """Should raise an exception if removing a non-existent object member."""
+def test_op_remove_fail_on_nonexistent_path():
+    """Should raise an exception if referencing a non-existent tree to remove."""
     patches = [
-        {"op": "remove", "path": "/0/foo/four"}
+        {"op": "remove", "path": "/0/qux/one"}
     ]
     jp = JSONPatcher(sample_json, *patches)
     with pytest.raises(PathError):
         jp.patch()
+
+
+def test_op_remove_unchanged_on_nonexistent_member():
+    """Should not raise an exception if referencing a non-existent leaf to remove."""
+    patches = [
+        {"op": "remove", "path": "/0/foo/four"}
+    ]
+    jp = JSONPatcher(sample_json, *patches)
+    changed, tested = jp.patch()
+    assert changed is False
+    assert tested is None
 
 
 # OPERATION: REPLACE
@@ -124,8 +138,8 @@ def test_op_replace_foo_three():
     assert jp.obj[0]['foo']['three'] == 'booyah'
 
 
-def test_op_replace_fail_on_nonexistent_member():
-    """Should raise an exception if replacing a non-existent object member."""
+def test_op_replace_fail_on_nonexistent_path_or_member():
+    """Should raise an exception if any part of the referenced path does not exist (RFC 6902)."""
     patches = [
         {"op": "replace", "path": "/0/foo/four", "value": 4}
     ]
@@ -161,14 +175,15 @@ def test_op_move_baz_list_foo():
     assert len(jp.obj[0]['foo']['fruits']) == 3
 
 
-def test_op_move_fail_on_nonexistent():
-    """Should raise an exception if moving a non-existent object member."""
+def test_op_move_unchanged_on_nonexistent():
+    """Should not raise an exception if moving a non-existent object member."""
     patches = [
         {"op": "move", "from": "/0/foo/four", "path": "/1/bar/four"}
     ]
     jp = JSONPatcher(sample_json, *patches)
-    with pytest.raises(PathError):
-        jp.patch()
+    changed, tested = jp.patch()
+    assert changed is False
+    assert tested is None
 
 
 def test_op_move_foo_object_end_of_list():
