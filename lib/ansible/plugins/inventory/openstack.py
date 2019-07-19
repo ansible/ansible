@@ -23,7 +23,9 @@ DOCUMENTATION = '''
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
-        - Uses standard clouds.yaml YAML configuration file to configure cloud credentials
+        - Uses standard clouds.yaml YAML configuration file or os-cloud-config
+          U(https://docs.openstack.org/os-client-config/latest/user/configuration.html)
+          to configure cloud credentials
     options:
         plugin:
             description: token that ensures this is a source file for the 'openstack' plugin.
@@ -69,6 +71,7 @@ DOCUMENTATION = '''
             description: |
                 List of clouds from clouds.yaml to use, instead of using
                 the whole list.
+                This parameter is ignored if I(use_os_client_config=True).
             type: list
             default: []
         fail_on_errors:
@@ -78,7 +81,9 @@ DOCUMENTATION = '''
                 When set to False, the inventory will return as many hosts as
                 it can from as many clouds as it can contact. (Note, the
                 default value of this is opposite from the old openstack.py
-                inventory script's option fail_on_errors)
+                inventory script's option fail_on_errors).
+                This parameter is considered true if
+                I(use_os_client_config=True).
             type: bool
             default: 'no'
         clouds_yaml_path:
@@ -99,6 +104,13 @@ DOCUMENTATION = '''
             description: Add hosts to group based on Jinja2 conditionals.
             type: dictionary
             default: {}
+        use_os_client_config:
+            description: |
+                Disables the C(only_clouds), C(fail_on_error), C(clouds_yaml_path)
+                parameters and delegates the configuration to the os-client-config
+                library.
+            type: bool
+            default: 'no'
 '''
 
 EXAMPLES = '''
@@ -111,6 +123,7 @@ fail_on_errors: yes
 
 import collections
 import sys
+import os
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -172,39 +185,48 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # cache expired or doesn't exist yet
                 cache_needs_update = True
 
+        expand_hostvars = self._config_data.get('expand_hostvars', False)
+        fail_on_errors = self._config_data.get('fail_on_errors', False)
+        use_os_client_config = self._config_data.get('use_os_client_config', False)
+
+        # Redict logging to stderr so it does not mix with output
+        # particular ansible-inventory JSON output
+        # TODO(mordred) Integrate openstack's logging with ansible's logging
+        sdk.enable_logging(stream=sys.stderr)
+
         if not source_data:
-            clouds_yaml_path = self._config_data.get('clouds_yaml_path')
-            if clouds_yaml_path:
-                config_files = (clouds_yaml_path +
-                                client_config.CONFIG_FILES)
+            if use_os_client_config:
+                cloud = sdk.connect()
+                source_data = cloud.list_servers(
+                    detailed=expand_hostvars)
             else:
-                config_files = None
+                clouds_yaml_path = self._config_data.get('clouds_yaml_path')
+                if clouds_yaml_path:
+                    config_files = (clouds_yaml_path +
+                                    client_config.CONFIG_FILES)
+                else:
+                    config_files = None
 
-            # Redict logging to stderr so it does not mix with output
-            # particular ansible-inventory JSON output
-            # TODO(mordred) Integrate openstack's logging with ansible's logging
-            sdk.enable_logging(stream=sys.stderr)
-
-            cloud_inventory = sdk_inventory.OpenStackInventory(
-                config_files=config_files,
-                private=self._config_data.get('private', False))
-            only_clouds = self._config_data.get('only_clouds', [])
-            if only_clouds and not isinstance(only_clouds, list):
-                raise ValueError(
-                    'OpenStack Inventory Config Error: only_clouds must be'
-                    ' a list')
-            if only_clouds:
-                new_clouds = []
-                for cloud in cloud_inventory.clouds:
-                    if cloud.name in only_clouds:
-                        new_clouds.append(cloud)
-                cloud_inventory.clouds = new_clouds
-
-            expand_hostvars = self._config_data.get('expand_hostvars', False)
-            fail_on_errors = self._config_data.get('fail_on_errors', False)
-
-            source_data = cloud_inventory.list_hosts(
-                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
+                cloud_inventory = sdk_inventory.OpenStackInventory(
+                    config_files=config_files,
+                    private=self._config_data.get('private', False))
+                only_clouds = self._config_data.get('only_clouds', [])
+                if only_clouds and not isinstance(only_clouds, list):
+                    raise ValueError(
+                        'OpenStack Inventory Config Error: only_clouds must be'
+                        ' a list')
+                env_os_cloud = os.environ.get('OS_CLOUD', None)
+                if env_os_cloud:
+                    only_clouds = [env_os_cloud]
+                if only_clouds:
+                    new_clouds = []
+                    for cloud in cloud_inventory.clouds:
+                        if cloud.name in only_clouds:
+                            new_clouds.append(cloud)
+                    cloud_inventory.clouds = new_clouds
+                source_data = cloud_inventory.list_hosts(
+                    expand=expand_hostvars,
+                    fail_on_cloud_config=fail_on_errors)
 
             if cache_needs_update:
                 self._cache[cache_key] = source_data
