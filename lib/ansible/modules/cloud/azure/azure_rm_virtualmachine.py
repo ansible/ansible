@@ -150,7 +150,7 @@ options:
             - storage_blob
     managed_disk_type:
         description:
-            - Managed OS disk type
+            - Managed OS disk type.
             - Create OS disk with managed disk if defined.
             - If not defined, the OS disk will be created with virtual hard disk (VHD).
         choices:
