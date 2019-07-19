@@ -463,23 +463,6 @@ options:
         default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
         version_added: "2.9"
 
-    validate_ocsp:
-        description:
-            - This is currently supported only  when provider is entrust.
-            - If set to True, this module will perform an OCSP check on a certificate before indicating that the state is present and certificate is valid.
-            - If OCSP validation is not required, leave this as False and OCSP will not be checked.
-        type: bool
-        default: no
-        version_added: "2.9"
-
-    validate_ocsp_timeout:
-        description:
-            - We will wait up to I(validate_ocsp_timeout) seconds for a valid OCSP response. It is often the case that a
-              new response will take some time before the OCSP response is available.
-        type: int
-        default: 600
-        version_added: "2.9"
-
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
@@ -1934,89 +1917,6 @@ class EntrustCertificate(Certificate):
             self.trackingId = cert_details.get('trackingId')
             return False
 
-        def _validate_ocsp(module):
-            """ Validate that the OCSP responder specified in the AIA of the certificate knows our certificate is good."""
-            if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg="OCSP validation requested, but this requires python cryptography >= 2.4")
-
-            # If the crypto backend was pyopenssl, convert to cryptography cert
-            if self.backend == 'pyopenssl':
-                cert = self.cert.to_cryptography()
-            elif self.backend == 'cryptography':
-                cert = self.cert
-
-            aia = cert.extensions.get_extension_for_class(x509.AuthorityInformationAccess)
-
-            aia_ocsp = [x.access_location.value for x in aia.value if x.access_method.dotted_string == '1.3.6.1.5.5.7.48.1']
-            aia_chain = [x.access_location.value for x in aia.value if x.access_method.dotted_string == '1.3.6.1.5.5.7.48.2']
-
-            # If we don't have valid OCSP / CA cert attributes, fail.
-            if len(aia_ocsp) != 1 or len(aia_chain) != 1:
-                module.fail_json("OCSP validation requested, but certificate does not provide the required Authority Information Access")
-            else:
-                aia_ocsp = aia_ocsp[0]
-                aia_chain = aia_chain[0]
-
-            # Read the certificate specified in the AIA of our certificate
-            resp, info = fetch_url(module, aia_chain, method='GET')
-            status_code = info['status']
-            if status_code != 200:
-                module.fail_json(msg=("OCSP validation requested, but unable to read CA certificate chain specified in Authority Information Access "
-                                      "of Certificate. Received HTTP Status Code of {0} from address {1}").format(status_code, aia_chain))
-            try:
-                cert_ca = x509.load_der_x509_certificate(resp.read(), default_backend())
-            except ValueError:
-                error = traceback.format_exc()
-                module.fail_json(msg="OCSP validation requested, but the CA certificate chain could not be loaded.", exception=error)
-
-            # Build the OCSP Request
-            builder = x509.ocsp.OCSPRequestBuilder()
-            builder = builder.add_certificate(cert, cert_ca, SHA1())
-            ocsp_request = builder.build()
-            b_encoded_pub_key = base64.b64encode(ocsp_request.public_bytes(Encoding.DER))
-            ocsp_uri = aia_ocsp + "/" + to_text(b_encoded_pub_key)
-
-            # Get the OCSP response
-            ocsp_timeout = module.params.get('validate_ocsp_timeout')
-            if ocsp_timeout and ocsp_timeout <= 0:
-                ocps_timeout = 100
-            timeout = time.time() + module.params.get('validate_ocsp_timeout')
-            while time.time() <= timeout:
-                err = ""
-                resp, info = fetch_url(module, ocsp_uri, method='GET')
-                status_code = info['status']
-                if status_code != 200:
-                    err = "OCSP verification requested, but could not get response from server."
-                    try:
-                        ocsp_response = x509.ocsp.load_der_ocsp_response(resp.read())
-                    except ValueError:
-                        err = "OCSP verification requested, but got an invalid response from server."
-
-                    response_status = ocsp_response.response_status.name
-                    if response_status == "SUCCESSFUL":
-                        certificate_status = ocsp_response.certificate_status.name
-                        if certificate_status == "GOOD":
-                            return True
-                        elif certificate_status == "REVOKED":
-                            return False
-                        elif ocsp_response.certificate_status.name == "UNKNOWN":
-                            module.fail_json(msg=("OCSP verification requested, but certificate status was reported "
-                                                  "as '{0}' by the server").format(response_status))
-                else:
-                    err = "OCSP verification requested, but got response '{0}' from server.".format(response_status)
-
-                # If there was an error in this run, wait twenty seconds and retry
-                if err:
-                    time.sleep(20)
-
-            module.fail_json(msg="Could not get a valid OCSP response within {0} seconds. {1}".format(
-                module.params.get('validate_ocsp_timeout'),
-                err
-            ))
-
-        if module.params.get('validate_ocsp'):
-            return _validate_ocsp(module) and parent_check
-
         return parent_check
 
     def _get_cert_details(self):
@@ -2211,8 +2111,6 @@ def main():
             entrust_not_after=dict(type='str', default='+365d'),
             entrust_reissue_if_expires_in=dict(type='int', default=0),
             entrust_eku=dict(type='str', default="SERVER_AND_CLIENT_AUTH", choices=['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']),
-            validate_ocsp=dict(type='bool', default=False),
-            validate_ocsp_timeout=dict(type='int', default=600)
         ),
         supports_check_mode=True,
         add_file_common_args=True,
