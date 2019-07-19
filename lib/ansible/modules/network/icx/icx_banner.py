@@ -56,6 +56,7 @@ options:
        by specifying it as module parameter.
     type: bool
     default: yes
+<<<<<<< 07a2e8d7f18612a6d0f9ad34085e94db1d1440bf
 <<<<<<< 3fbe6494404da6befe1a8d24567f5934295faf82
 <<<<<<< adfbd04b3ab611a9807a36c7d4ab648d53a811be
 
@@ -64,6 +65,8 @@ options:
 =======
   notes:
     - Tested against ICX 10.1
+=======
+>>>>>>> new changes
 
 >>>>>>> added notes
 """
