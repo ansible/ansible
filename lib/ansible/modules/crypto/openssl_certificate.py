@@ -58,7 +58,6 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
-            - The C(entrust) provider will fail if select_crypto_backend is set to C(cryptography)
         type: str
         required: true
         choices: [ acme, assertonly, entrust, ownca, selfsigned ]
@@ -377,6 +376,7 @@ options:
     entrust_cert_type:
         description:
             - The type of certificate product to request.
+            - This is only used by the C(entrust) provider.
         type: str
         default: STANDARD_SSL
         choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING',
@@ -386,42 +386,49 @@ options:
     entrust_requester_email:
         description:
             - The email of the requester of the certificate (for tracking purposes).
+            - This is only used by the C(entrust) provider.
         type: str
         version_added: "2.9"
 
     entrust_requester_name:
         description:
             - The name of the requester of the certificate (for tracking purposes).
+            - This is only used by the C(entrust) provider.
         type: str
         version_added: "2.9"
 
     entrust_requester_phone:
         description:
             - The phone number of the requester of the certificate (for tracking purposes).
+            - This is only used by the C(entrust) provider.
         type: str
         version_added: "2.9"
 
     entrust_api_user:
         description:
             - The username for authentication to the Entrust ECS API.
+            - This is only used by the C(entrust) provider.
         type: str
         version_added: "2.9"
 
     entrust_api_key:
         description:
             - The key (password) for authentication to the Entrust ECS API.
+            - This is only used by the C(entrust) provider.
         type: str
         version_added: "2.9"
 
     entrust_api_client_cert_path:
         description:
             - The path of the client certificate used to authenticate to the Entrust ECS API.
+            - This is only used by the C(entrust) provider.
         type: path
         version_added: "2.9"
 
     entrust_api_client_cert_key_path:
         description:
             - The path of the key for the client certificate used to authenticate to the Entrust ECS API
+            - This is only used by the C(entrust) provider.
         type: path
         version_added: "2.9"
 
@@ -434,6 +441,7 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent.
             - If this value is not specified, the certificate will stop being valid 365 days from now.
+            - This is only used by the C(entrust) provider.
         type: str
         default: +365d
         version_added: "2.9"
@@ -441,6 +449,7 @@ options:
     entrust_eku:
         description:
             - The extended key usage requested for the certificate.
+            - This is only used by the C(entrust) provider.
         choices: ['SERVER_AUTH', 'CLIENT_AUTH', 'SERVER_AND_CLIENT_AUTH']
         type: str
         default: SERVER_AND_CLIENT_AUTH
@@ -450,6 +459,7 @@ options:
         description:
             - Path to the specification file defining the Entrust ECS api.
             - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
+            - This is only used by the C(entrust) provider.
         type: path
         default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
         version_added: "2.9"
