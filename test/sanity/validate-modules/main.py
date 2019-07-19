@@ -1144,12 +1144,15 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-    def _validate_argument_spec(self, docs, spec, kwargs, context=[]):
+    def _validate_argument_spec(self, docs, spec, kwargs, context=None):
         if not self.analyze_arg_spec:
             return
 
         if docs is None:
             docs = {}
+
+        if context is None:
+            context = []
 
         if not context:
             try:
