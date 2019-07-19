@@ -161,7 +161,7 @@ def main():
                 lines = psout.split("\n")
                 for line in lines:
                     if module.params['pattern'] in line and "pattern=" not in line:
-                        # so as to not confuse ./hacking/test-module.py
+                        # so as to not confuse ./hacking/test-module
                         running = True
                         break
         else:

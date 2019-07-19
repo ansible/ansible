@@ -1,6 +1,5 @@
 """Sanity test for documentation of sanity tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import os
 
@@ -33,8 +32,12 @@ class SanityDocsTest(SanitySingleVersion):
         :rtype: TestResult
         """
         sanity_dir = 'docs/docsite/rst/dev_guide/testing/sanity'
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         sanity_docs = set(part[0] for part in (os.path.splitext(os.path.basename(path)) for path in data_context().content.get_files(sanity_dir))
                           if part[1] == '.rst')
+=======
+        sanity_docs = set(part[0] for part in (os.path.splitext(name) for name in os.listdir(sanity_dir)) if part[1] == '.rst')
+>>>>>>> Revert "Datadisk test"
         sanity_tests = set(sanity_test.name for sanity_test in sanity_get_tests())
 
         missing = sanity_tests - sanity_docs

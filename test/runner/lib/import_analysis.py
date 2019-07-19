@@ -1,6 +1,6 @@
 """Analyze python import statements."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import ast
 import os
@@ -143,16 +143,35 @@ def enumerate_module_utils():
     """
     module_utils = []
 
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     for path in data_context().content.walk_files(data_context().content.module_utils_path):
         ext = os.path.splitext(path)[1]
 
         if path == os.path.join(data_context().content.module_utils_path, '__init__.py'):
             continue
+=======
+    for root, _, file_names in os.walk(base_path):
+        for file_name in file_names:
+            path = os.path.join(root, file_name)
+            name, ext = os.path.splitext(file_name)
 
-        if ext != '.py':
-            continue
+            if path == 'lib/ansible/module_utils/__init__.py':
+                continue
+>>>>>>> Revert "Datadisk test"
 
+            if ext != '.py':
+                continue
+
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         module_utils.append(get_python_module_utils_name(path))
+=======
+            if name == '__init__':
+                module_util = root
+            else:
+                module_util = os.path.join(root, name)
+
+            module_utils.append(module_util[4:].replace('/', '.'))
+>>>>>>> Revert "Datadisk test"
 
     return set(module_utils)
 

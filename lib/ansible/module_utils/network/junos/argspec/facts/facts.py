@@ -8,8 +8,11 @@ The arg spec for the junos facts module.
 """
 CHOICES = [
     'all',
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     'interfaces',
     'lag_interfaces'
+=======
+>>>>>>> Revert "Datadisk test"
 ]
 
 

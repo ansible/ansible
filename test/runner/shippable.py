@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
 """Verify the current Shippable run has the required number of jobs."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 # noinspection PyCompatibility
 import argparse
@@ -22,10 +22,6 @@ from lib.util import (
     MissingEnvironmentVariable,
 )
 
-from lib.util_common import (
-    CommonConfig,
-)
-
 
 try:
     import argcomplete
@@ -37,21 +33,15 @@ def main():
     """Main program function."""
     try:
         args = parse_args()
-        args.debug = False
-        args.truncate = False
-        args.redact = False
-
-        config = CommonConfig(args, '')
-
-        display.verbosity = config.verbosity
-        display.color = config.color
+        display.verbosity = args.verbosity
+        display.color = args.color
 
         try:
             run_id = os.environ['SHIPPABLE_BUILD_ID']
         except KeyError as ex:
             raise MissingEnvironmentVariable(ex.args[0])
 
-        client = HttpClient(config)
+        client = HttpClient(args)
         response = client.get('https://api.shippable.com/jobs?runIds=%s' % run_id)
         jobs = response.json()
 

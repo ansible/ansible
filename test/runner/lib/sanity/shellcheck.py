@@ -1,6 +1,5 @@
 """Sanity test using shellcheck."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import os
 
@@ -19,11 +18,8 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
-    read_lines_without_comments,
-)
-
-from lib.util_common import (
     run_command,
+    read_lines_without_comments,
 )
 
 from lib.config import (
@@ -40,10 +36,10 @@ class ShellcheckTest(SanitySingleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/shellcheck/skip.txt'
-        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True))
 
         exclude_file = 'test/sanity/shellcheck/exclude.txt'
-        exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
+        exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True))
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh' and i.path not in skip_paths)
 

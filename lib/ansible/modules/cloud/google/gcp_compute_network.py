@@ -53,7 +53,6 @@ options:
     - An optional description of this resource. The resource must be recreated to
       modify this field.
     required: false
-    type: str
   ipv4_range:
     description:
     - If this field is specified, a deprecated legacy network is created.
@@ -64,7 +63,6 @@ options:
     - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
     - The resource must be recreated to modify this field.
     required: false
-    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -74,7 +72,6 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
-    type: str
   auto_create_subnetworks:
     description:
     - When set to `true`, the network is created in "auto subnet mode" and it will
@@ -89,7 +86,6 @@ options:
     - The network-level routing configuration for this network. Used by Cloud Router
       to determine what type of network-wide routing behavior to enforce.
     required: false
-    type: dict
     version_added: 2.8
     suboptions:
       routing_mode:
@@ -101,7 +97,6 @@ options:
           regions.
         - 'Some valid choices include: "REGIONAL", "GLOBAL"'
         required: true
-        type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/networks)'

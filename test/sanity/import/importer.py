@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Import the given python module(s) and report error(s) encountered."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import contextlib
 import os
@@ -12,9 +12,9 @@ import warnings
 
 try:
     import importlib.util
-    imp = None  # pylint: disable=invalid-name
+    imp = None
 except ImportError:
-    importlib = None  # pylint: disable=invalid-name
+    importlib = None
     import imp
 
 try:
@@ -28,9 +28,10 @@ import ansible.module_utils.common.removed
 
 class ImporterAnsibleModuleException(Exception):
     """Exception thrown during initialization of ImporterAnsibleModule."""
+    pass
 
 
-class ImporterAnsibleModule:
+class ImporterAnsibleModule(object):
     """Replacement for AnsibleModule to support import testing."""
     def __init__(self, *args, **kwargs):
         raise ImporterAnsibleModuleException()
@@ -39,7 +40,7 @@ class ImporterAnsibleModule:
 # stop Ansible module execution during AnsibleModule instantiation
 ansible.module_utils.basic.AnsibleModule = ImporterAnsibleModule
 # no-op for _load_params since it may be called before instantiating AnsibleModule
-ansible.module_utils.basic._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
+ansible.module_utils.basic._load_params = lambda *args, **kwargs: {}
 # no-op for removed_module since it is called in place of AnsibleModule instantiation
 ansible.module_utils.common.removed.removed_module = lambda *args, **kwargs: None
 
@@ -104,7 +105,7 @@ def test_python_module(path, base_dir, messages, ansible_module):
     except BaseException as ex:  # pylint: disable=locally-disabled, broad-except
         capture_report(path, capture, messages)
 
-        exc_type, _exc, exc_tb = sys.exc_info()
+        exc_type, _, exc_tb = sys.exc_info()
         message = str(ex)
         results = list(reversed(traceback.extract_tb(exc_tb)))
         source = None
@@ -141,7 +142,7 @@ def test_python_module(path, base_dir, messages, ansible_module):
         report_message(error, messages)
 
 
-class Capture:
+class Capture(object):
     """Captured output and/or exception."""
     def __init__(self):
         self.stdout = StringIO()

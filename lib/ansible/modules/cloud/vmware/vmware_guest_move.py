@@ -32,17 +32,11 @@ options:
    name:
         description:
             - Name of the existing virtual machine to move.
-            - This is required if C(uuid) or C(moid) is not supplied.
+            - This is required if C(UUID) is not supplied.
    uuid:
         description:
             - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
-            - This is required if C(name) or C(moid) is not supplied.
-   moid:
-        description:
-            - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
-            - This is required if C(name) or C(uuid) is not supplied.
-        version_added: '2.9'
-        type: str
+            - This is required if C(name) is not supplied.
    use_instance_uuid:
         description:
             - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -86,17 +80,6 @@ EXAMPLES = r'''
     datacenter: datacenter
     validate_certs: no
     name: testvm-1
-    dest_folder: "/{{ datacenter }}/vm"
-  delegate_to: localhost
-
-- name: Move Virtual Machine using MoID
-  vmware_guest_move:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: datacenter
-    validate_certs: no
-    moid: vm-42
     dest_folder: "/{{ datacenter }}/vm"
   delegate_to: localhost
 
@@ -192,7 +175,6 @@ def main():
         name_match=dict(
             type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         dest_folder=dict(type='str', required=True),
         datacenter=dict(type='str', required=True),
@@ -200,10 +182,10 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=[
-            ['name', 'uuid', 'moid']
+            ['name', 'uuid']
         ],
         mutually_exclusive=[
-            ['name', 'uuid', 'moid']
+            ['name', 'uuid']
         ],
         supports_check_mode=True
     )
@@ -247,8 +229,9 @@ def main():
     else:
         if module.check_mode:
             module.exit_json(changed=False)
-        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
-        module.fail_json(msg="Unable to find VM %s to move to %s" % (vm_id, module.params.get('dest_folder')))
+        module.fail_json(msg="Unable to find VM %s to move to %s" % (
+            (module.params.get('uuid') or module.params.get('name')),
+            module.params.get('dest_folder')))
 
 
 if __name__ == '__main__':

@@ -12,8 +12,11 @@ calls the appropriate facts gathering function
 from ansible.module_utils.network.junos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardware, Config, Interfaces, OFacts, HAS_PYEZ
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
 from ansible.module_utils.network.junos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.junos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
+=======
+>>>>>>> Revert "Datadisk test"
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -22,8 +25,11 @@ FACT_LEGACY_SUBSETS = dict(
     interfaces=Interfaces,
 )
 FACT_RESOURCE_SUBSETS = dict(
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     interfaces=InterfacesFacts,
     lag_interfaces=Lag_interfacesFacts,
+=======
+>>>>>>> Revert "Datadisk test"
 )
 
 

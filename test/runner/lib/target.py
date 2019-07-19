@@ -1,6 +1,6 @@
 """Test target identification, iteration and inclusion/exclusion."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import collections
 import os
@@ -13,12 +13,15 @@ from lib.util import (
     ApplicationError,
     display,
     read_lines_without_comments,
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     is_subdir,
     to_text,
 )
 
 from lib.data import (
     data_context,
+=======
+>>>>>>> Revert "Datadisk test"
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -147,7 +150,13 @@ def walk_module_targets():
     """
     :rtype: collections.Iterable[TestTarget]
     """
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     for target in walk_test_targets(path=data_context().content.module_path, module_path=data_context().content.module_path, extensions=MODULE_EXTENSIONS):
+=======
+    path = 'lib/ansible/modules'
+
+    for target in walk_test_targets(path, path + '/', extensions=MODULE_EXTENSIONS):
+>>>>>>> Revert "Datadisk test"
         if not target.module:
             continue
 
@@ -210,12 +219,18 @@ def walk_integration_targets():
     :rtype: collections.Iterable[IntegrationTarget]
     """
     path = 'test/integration/targets'
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     modules = frozenset(target.module for target in walk_module_targets())
     paths = data_context().content.get_dirs(path)
+=======
+    modules = frozenset(t.module for t in walk_module_targets())
+    paths = sorted(os.path.join(path, p) for p in os.listdir(path))
+>>>>>>> Revert "Datadisk test"
     prefixes = load_integration_prefixes()
 
     for path in paths:
-        yield IntegrationTarget(path, modules, prefixes)
+        if os.path.isdir(path):
+            yield IntegrationTarget(path, modules, prefixes)
 
 
 def load_integration_prefixes():
@@ -223,12 +238,16 @@ def load_integration_prefixes():
     :rtype: dict[str, str]
     """
     path = 'test/integration'
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     file_paths = sorted(f for f in data_context().content.get_files(path) if os.path.splitext(os.path.basename(f))[0] == 'target-prefixes')
+=======
+    names = sorted(f for f in os.listdir(path) if os.path.splitext(f)[0] == 'target-prefixes')
+>>>>>>> Revert "Datadisk test"
     prefixes = {}
 
-    for file_path in file_paths:
-        prefix = os.path.splitext(file_path)[1][1:]
-        with open(file_path, 'r') as prefix_fd:
+    for name in names:
+        prefix = os.path.splitext(name)[1][1:]
+        with open(os.path.join(path, name), 'r') as prefix_fd:
             prefixes.update(dict((k, prefix) for k in prefix_fd.read().splitlines()))
 
     return prefixes
@@ -243,31 +262,50 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
     :type extra_dirs: tuple[str] | None
     :rtype: collections.Iterable[TestTarget]
     """
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     if path:
         file_paths = data_context().content.walk_files(path)
     else:
         file_paths = data_context().content.all_files()
-
-    for file_path in file_paths:
-        name, ext = os.path.splitext(os.path.basename(file_path))
-
-        if extensions and ext not in extensions:
+=======
+    for root, _, file_names in os.walk(path or '.', topdown=False):
+        if root.endswith('/__pycache__'):
             continue
 
-        if prefix and not name.startswith(prefix):
+        if '/.tox/' in root:
             continue
 
-        if os.path.islink(file_path):
-            # special case to allow a symlink of ansible_release.py -> ../release.py
-            if file_path != 'lib/ansible/module_utils/ansible_release.py':
+        if path is None:
+            root = root[2:]
+
+        if root.startswith('.') and root != '.github':
+            continue
+
+        for file_name in file_names:
+            name, ext = os.path.splitext(os.path.basename(file_name))
+>>>>>>> Revert "Datadisk test"
+
+            if name.startswith('.'):
                 continue
 
-        yield TestTarget(file_path, module_path, prefix, path)
+            if extensions and ext not in extensions:
+                continue
 
-    file_paths = []
+            if prefix and not name.startswith(prefix):
+                continue
+
+            file_path = os.path.join(root, file_name)
+
+            if os.path.islink(file_path):
+                # special case to allow a symlink of ansible_release.py -> ../release.py
+                if file_path != 'lib/ansible/module_utils/ansible_release.py':
+                    continue
+
+            yield TestTarget(file_path, module_path, prefix, path)
 
     if extra_dirs:
         for extra_dir in extra_dirs:
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
             for file_path in data_context().content.get_files(extra_dir):
                 file_paths.append(file_path)
 
@@ -276,6 +314,15 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
             continue
 
         yield TestTarget(file_path, module_path, prefix, path)
+=======
+            file_names = os.listdir(extra_dir)
+
+            for file_name in file_names:
+                file_path = os.path.join(extra_dir, file_name)
+
+                if os.path.isfile(file_path) and not os.path.islink(file_path):
+                    yield TestTarget(file_path, module_path, prefix, path)
+>>>>>>> Revert "Datadisk test"
 
 
 def analyze_integration_target_dependencies(integration_targets):
@@ -285,8 +332,8 @@ def analyze_integration_target_dependencies(integration_targets):
     """
     real_target_root = os.path.realpath('test/integration/targets') + '/'
 
-    role_targets = [target for target in integration_targets if target.type == 'role']
-    hidden_role_target_names = set(target.name for target in role_targets if 'hidden/' in target.aliases)
+    role_targets = [t for t in integration_targets if t.type == 'role']
+    hidden_role_target_names = set(t.name for t in role_targets if 'hidden/' in t.aliases)
 
     dependencies = collections.defaultdict(set)
 
@@ -303,21 +350,30 @@ def analyze_integration_target_dependencies(integration_targets):
     # handle symlink dependencies between targets
     # this use case is supported, but discouraged
     for target in integration_targets:
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         for path in data_context().content.walk_files(target.path):
             if not os.path.islink(path):
                 continue
+=======
+        for root, _dummy, file_names in os.walk(target.path):
+            for name in file_names:
+                path = os.path.join(root, name)
 
-            real_link_path = os.path.realpath(path)
+                if not os.path.islink(path):
+                    continue
+>>>>>>> Revert "Datadisk test"
 
-            if not real_link_path.startswith(real_target_root):
-                continue
+                real_link_path = os.path.realpath(path)
 
-            link_target = real_link_path[len(real_target_root):].split('/')[0]
+                if not real_link_path.startswith(real_target_root):
+                    continue
 
-            if link_target == target.name:
-                continue
+                link_target = real_link_path[len(real_target_root):].split('/')[0]
 
-            dependencies[link_target].add(target.name)
+                if link_target == target.name:
+                    continue
+
+                dependencies[link_target].add(target.name)
 
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
     # script based targets are scanned as they may execute a playbook with role dependencies
@@ -379,7 +435,7 @@ def analyze_integration_target_dependencies(integration_targets):
     return dependencies
 
 
-class CompletionTarget:
+class CompletionTarget(object):
     """Command-line argument completion target base class."""
     __metaclass__ = abc.ABCMeta
 
@@ -446,7 +502,7 @@ class TestTarget(CompletionTarget):
 
         name, ext = os.path.splitext(os.path.basename(self.path))
 
-        if module_path and is_subdir(path, module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
+        if module_path and path.startswith(module_path) and name != '__init__' and ext in MODULE_EXTENSIONS:
             self.module = name[len(module_prefix or ''):].lstrip('_')
             self.modules = (self.module,)
         else:

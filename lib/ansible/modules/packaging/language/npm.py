@@ -26,17 +26,14 @@ options:
   name:
     description:
       - The name of a node.js library to install
-    type: str
     required: false
   path:
     description:
       - The base path where to install the node.js libraries
-    type: path
     required: false
   version:
     description:
       - The version to be installed
-    type: str
     required: false
   global:
     description:
@@ -48,7 +45,6 @@ options:
     description:
       - The executable location for npm.
       - This is useful if you are using a version manager, such as nvm
-    type: path
     required: false
   ignore_scripts:
     description:
@@ -79,13 +75,11 @@ options:
     description:
       - The registry to install modules from.
     required: false
-    type: str
     version_added: "1.6"
   state:
     description:
       - The state of the node.js library
     required: false
-    type: str
     default: present
     choices: [ "present", "absent", "latest" ]
 requirements:
@@ -247,12 +241,12 @@ class Npm(object):
 
 def main():
     arg_spec = dict(
-        name=dict(default=None, type='str'),
+        name=dict(default=None),
         path=dict(default=None, type='path'),
-        version=dict(default=None, type='str'),
+        version=dict(default=None),
         production=dict(default='no', type='bool'),
         executable=dict(default=None, type='path'),
-        registry=dict(default=None, type='str'),
+        registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
         ignore_scripts=dict(default=False, type='bool'),
         unsafe_perm=dict(default=False, type='bool'),

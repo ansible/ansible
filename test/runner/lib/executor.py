@@ -1,6 +1,6 @@
 """Execute Ansible tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import json
 import os
@@ -18,8 +18,7 @@ import random
 import string
 import shutil
 
-import lib.types as t
-
+import lib.pytar
 import lib.thread
 
 from lib.core_ci import (
@@ -45,19 +44,24 @@ from lib.util import (
     ApplicationError,
     SubprocessError,
     display,
+    run_command,
+    intercept_command,
     remove_tree,
     make_dirs,
     is_shippable,
     is_binary_file,
     find_executable,
     raw_command,
+    get_python_path,
     get_available_port,
     generate_pip_command,
     find_python,
     get_docker_completion,
     get_remote_completion,
+    named_temporary_file,
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     ANSIBLE_ROOT,
 )
 
@@ -66,6 +70,8 @@ from lib.util_common import (
     intercept_command,
     named_temporary_file,
     run_command,
+=======
+>>>>>>> Revert "Datadisk test"
 )
 
 from lib.docker_util import (
@@ -159,7 +165,7 @@ def check_legacy_modules():
     for directory in 'core', 'extras':
         path = 'lib/ansible/modules/%s' % directory
 
-        for root, _dir_names, file_names in os.walk(path):
+        for root, _, file_names in os.walk(path):
             if file_names:
                 # the directory shouldn't exist, but if it does, it must contain no files
                 raise ApplicationError('Files prohibited in "%s". '
@@ -282,7 +288,7 @@ def pip_list(args, pip):
     :type pip: list[str]
     :rtype: str
     """
-    stdout = run_command(args, pip + ['list'], capture=True)[0]
+    stdout, _ = run_command(args, pip + ['list'], capture=True)
     return stdout
 
 
@@ -290,6 +296,7 @@ def generate_egg_info(args):
     """
     :type args: EnvironmentConfig
     """
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     if not os.path.exists(os.path.join(ANSIBLE_ROOT, 'setup.py')):
         return
 
@@ -297,6 +304,12 @@ def generate_egg_info(args):
         return
 
     run_command(args, [args.python_executable, 'setup.py', 'egg_info'], cwd=ANSIBLE_ROOT, capture=args.verbosity < 3)
+=======
+    if os.path.isdir('lib/ansible.egg-info'):
+        return
+
+    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], capture=args.verbosity < 3)
+>>>>>>> Revert "Datadisk test"
 
 
 def generate_pip_install(pip, command, packages=None):
@@ -306,8 +319,13 @@ def generate_pip_install(pip, command, packages=None):
     :type packages: list[str] | None
     :rtype: list[str] | None
     """
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     constraints = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/constraints.txt')
     requirements = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/%s.txt' % command)
+=======
+    constraints = 'test/runner/requirements/constraints.txt'
+    requirements = 'test/runner/requirements/%s.txt' % command
+>>>>>>> Revert "Datadisk test"
 
     options = []
 
@@ -374,7 +392,7 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
         get_python_path(args, args.python_executable)  # initialize before starting threads
@@ -427,9 +445,9 @@ def network_init(args, internal_targets):
     if args.metadata.instance_config is not None:
         return
 
-    platform_targets = set(a for target in internal_targets for a in target.aliases if a.startswith('network/'))
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     # generate an ssh key (if needed) up front once, instead of for each instance
     SshKey(args)
@@ -539,7 +557,7 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: list [lib.thread.WrappedThread]
     pre_target = None
     post_target = None
     httptester_id = None
@@ -569,7 +587,7 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-        use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in internal_targets)
+        use_httptester = args.httptester and any('needs/httptester/' in t.aliases for t in internal_targets)
         # if running under Docker delegation, the httptester may have already been started
         docker_httptester = bool(os.environ.get("HTTPTESTER", False))
 
@@ -654,7 +672,7 @@ def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, u
     if args.metadata.instance_config is not None:
         return
 
-    instances = []  # type: t.List[lib.thread.WrappedThread]
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     for version in args.windows:
         instance = lib.thread.WrappedThread(functools.partial(windows_start, args, version))
@@ -781,7 +799,7 @@ def command_integration_filter(args, targets, init_callback=None):
     if not internal_targets:
         raise AllTargetsSkipped()
 
-    if args.start_at and not any(target.name == args.start_at for target in internal_targets):
+    if args.start_at and not any(t.name == args.start_at for t in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
 
     if init_callback:
@@ -851,11 +869,11 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     results = {}
 
-    current_environment = None  # type: t.Optional[EnvironmentDescription]
+    current_environment = None  # type: EnvironmentDescription | None
 
     # common temporary directory path that will be valid on both the controller and the remote
     # it must be common because it will be referenced in environment variables that are shared across multiple hosts
-    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(8))
+    common_temp_path = '/tmp/ansible-test-%s' % ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
 
     setup_common_temp_dir(args, common_temp_path)
 
@@ -1053,7 +1071,7 @@ def run_httptester(args, ports=None):
         for localhost_port, container_port in ports.items():
             options += ['-p', '%d:%d' % (localhost_port, container_port)]
 
-    httptester_id = docker_run(args, args.httptester, options=options)[0]
+    httptester_id, _ = docker_run(args, args.httptester, options=options)
 
     if args.explain:
         httptester_id = 'httptester_id'
@@ -1345,13 +1363,14 @@ def command_units(args):
             'pytest',
             '--boxed',
             '-r', 'a',
-            '-n', str(args.num_workers) if args.num_workers else 'auto',
+            '-n', 'auto',
             '--color',
             'yes' if args.color else 'no',
             '--junit-xml',
             'test/results/junit/python%s-units.xml' % version,
         ]
 
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         plugins = []
 
         if args.coverage:
@@ -1366,6 +1385,8 @@ def command_units(args):
             for plugin in plugins:
                 cmd.extend(['-p', plugin])
 
+=======
+>>>>>>> Revert "Datadisk test"
         if args.collect_only:
             cmd.append('--collect-only')
 
@@ -1813,7 +1834,7 @@ def get_python_interpreter(args, configs, name):
     return python_interpreter
 
 
-class EnvironmentDescription:
+class EnvironmentDescription(object):
     """Description of current running environment."""
     def __init__(self, args):
         """Initialize snapshot of environment configuration.
@@ -1831,10 +1852,13 @@ class EnvironmentDescription:
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         version_check = os.path.join(ANSIBLE_ROOT, 'test/runner/versions.py')
+=======
+>>>>>>> Revert "Datadisk test"
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
-        program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])
+        program_versions = dict((v, self.get_version([python_paths[v], 'test/runner/versions.py'], warnings)) for v in sorted(python_paths) if python_paths[v])
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
@@ -1964,7 +1988,7 @@ class EnvironmentDescription:
     def get_version(command, warnings):
         """
         :type command: list[str]
-        :type warnings: list[text]
+        :type warnings: list[str]
         :rtype: list[str]
         """
         try:

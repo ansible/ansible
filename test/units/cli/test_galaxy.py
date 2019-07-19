@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # (c) 2016, Adrian Likins <alikins@redhat.com>
 #
 # This file is part of Ansible
@@ -21,30 +20,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ansible
-import json
 import os
-import pytest
 import shutil
 import tarfile
 import tempfile
 import yaml
 
-import ansible.constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six import PY3
 from ansible.utils import context_objects as co
 from units.compat import unittest
-from units.compat.mock import call, patch, MagicMock
-
-
-@pytest.fixture(autouse='function')
-def reset_cli_args():
-    co.GlobalCLIArgs._Singleton__instance = None
-    yield
-    co.GlobalCLIArgs._Singleton__instance = None
+from units.compat.mock import call, patch
 
 
 class TestGalaxy(unittest.TestCase):
@@ -270,7 +259,7 @@ class ValidRoleTests(object):
     expected_role_dirs = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
     @classmethod
-    def setUpRole(cls, role_name, galaxy_args=None, skeleton_path=None, use_explicit_type=False):
+    def setUpRole(cls, role_name, galaxy_args=None, skeleton_path=None):
         if galaxy_args is None:
             galaxy_args = []
 
@@ -287,12 +276,7 @@ class ValidRoleTests(object):
         cls.role_name = role_name
 
         # create role using default skeleton
-        args = ['ansible-galaxy']
-        if use_explicit_type:
-            args += ['role']
-        args += ['init', '-c', '--offline'] + galaxy_args + ['--init-path', cls.test_dir, cls.role_name]
-
-        gc = GalaxyCLI(args=args)
+        gc = GalaxyCLI(args=['ansible-galaxy', 'init', '-c', '--offline'] + galaxy_args + ['--init-path', cls.test_dir, cls.role_name])
         gc.run()
         cls.gc = gc
 
@@ -432,7 +416,7 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
     @classmethod
     def setUpClass(cls):
         role_skeleton_path = os.path.join(os.path.split(__file__)[0], 'test_data', 'role_skeleton')
-        cls.setUpRole('delete_me_skeleton', skeleton_path=role_skeleton_path, use_explicit_type=True)
+        cls.setUpRole('delete_me_skeleton', skeleton_path=role_skeleton_path)
 
     def test_empty_files_dir(self):
         files_dir = os.path.join(self.role_dir, 'files')
@@ -460,6 +444,7 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
 
     def test_skeleton_option(self):
         self.assertEquals(self.role_skeleton_path, context.CLIARGS['role_skeleton'], msg='Skeleton path was not parsed properly from the command line')
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
 
 
 @pytest.fixture()
@@ -942,3 +927,5 @@ def test_collection_install_custom_server(collection_install):
     GalaxyCLI(args=galaxy_args).run()
 
     assert mock_install.call_args[0][2] == ['https://galaxy-dev.ansible.com']
+=======
+>>>>>>> Revert "Datadisk test"

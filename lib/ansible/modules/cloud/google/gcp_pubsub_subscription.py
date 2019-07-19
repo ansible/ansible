@@ -305,7 +305,6 @@ expirationPolicy:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
-import re
 
 ################################################################################
 # Main
@@ -396,8 +395,8 @@ def delete(module, link):
 
 def resource_to_request(module):
     request = {
-        u'name': name_pattern(module.params.get('name'), module),
-        u'topic': topic_pattern(replace_resource_dict(module.params.get(u'topic', {}), 'name'), module),
+        u'name': module.params.get('name'),
+        u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
         u'labels': module.params.get('labels'),
         u'pushConfig': SubscriptionPushconfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds'),
@@ -405,6 +404,7 @@ def resource_to_request(module):
         u'retainAckedMessages': module.params.get('retain_acked_messages'),
         u'expirationPolicy': SubscriptionExpirationpolicy(module.params.get('expiration_policy', {}), module).to_request(),
     }
+    request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -441,6 +441,8 @@ def return_if_object(module, response, allow_not_found=False):
     except getattr(json.decoder, 'JSONDecodeError', ValueError):
         module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
+    result = decode_request(result, module)
+
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
 
@@ -450,6 +452,7 @@ def return_if_object(module, response, allow_not_found=False):
 def is_different(module, response):
     request = resource_to_request(module)
     response = response_to_hash(module, response)
+    request = decode_request(request, module)
 
     # Remove all output-only from response.
     response_vals = {}
@@ -469,8 +472,8 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'name': name_pattern(module.params.get('name'), module),
-        u'topic': topic_pattern(replace_resource_dict(module.params.get(u'topic', {}), 'name'), module),
+        u'name': module.params.get('name'),
+        u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
         u'labels': response.get(u'labels'),
         u'pushConfig': SubscriptionPushconfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds'),
@@ -480,29 +483,21 @@ def response_to_hash(module, response):
     }
 
 
-def name_pattern(name, module):
-    if name is None:
-        return
+def decode_request(response, module):
+    if 'name' in response:
+        response['name'] = response['name'].split('/')[-1]
 
-    regex = r"projects/.*/subscriptions/.*"
+    if 'topic' in response:
+        response['topic'] = response['topic'].split('/')[-1]
 
-    if not re.match(regex, name):
-        name = "projects/{project}/subscriptions/{name}".format(**module.params)
-
-    return name
+    return response
 
 
-def topic_pattern(name, module):
-    if name is None:
-        return
+def encode_request(request, module):
+    request['topic'] = '/'.join(['projects', module.params['project'], 'topics', replace_resource_dict(request['topic'], 'name')])
+    request['name'] = '/'.join(['projects', module.params['project'], 'subscriptions', module.params['name']])
 
-    regex = r"projects/.*/topics/.*"
-
-    if not re.match(regex, name):
-        formatted_params = {'project': module.params['project'], 'topic': replace_resource_dict(module.params['topic'], 'name')}
-        name = "projects/{project}/topics/{topic}".format(**formatted_params)
-
-    return name
+    return request
 
 
 class SubscriptionPushconfig(object):

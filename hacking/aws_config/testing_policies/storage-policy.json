@@ -13,7 +13,6 @@
                 "s3:GetBucketVersioning",
                 "s3:GetEncryptionConfiguration",
                 "s3:GetObject",
-                "s3:GetBucketNotification",
                 "s3:HeadBucket",
                 "s3:ListBucket",
                 "s3:PutBucketAcl",
@@ -23,8 +22,7 @@
                 "s3:PutBucketVersioning",
                 "s3:PutEncryptionConfiguration",
                 "s3:PutObject",
-                "s3:PutObjectAcl",
-                "s3:PutBucketNotification"
+                "s3:PutObjectAcl"
             ],
             "Effect": "Allow",
             "Resource": [

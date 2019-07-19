@@ -63,7 +63,11 @@ options:
         to a given subset. Possible values for this argument include
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     choices: ['all', 'interfaces', 'lag_interfaces']
+=======
+    choices: ['all']
+>>>>>>> Revert "Datadisk test"
     required: false
     version_added: "2.9"
 requirements:

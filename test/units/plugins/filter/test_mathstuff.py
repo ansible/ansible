@@ -78,10 +78,9 @@ class TestMax:
 
 class TestLogarithm:
     def test_log_non_number(self):
-        # Message changed in python3.6
-        with pytest.raises(AnsibleFilterError, match='log\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
+        with pytest.raises(AnsibleFilterError, message='log() can only be used on numbers: a float is required'):
             ms.logarithm('a')
-        with pytest.raises(AnsibleFilterError, match='log\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
+        with pytest.raises(AnsibleFilterError, message='log() can only be used on numbers: a float is required'):
             ms.logarithm(10, base='a')
 
     def test_log_ten(self):
@@ -97,10 +96,10 @@ class TestLogarithm:
 
 class TestPower:
     def test_power_non_number(self):
-        with pytest.raises(AnsibleFilterError, match='pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
+        with pytest.raises(AnsibleFilterError, message='pow() can only be used on numbers: a float is required'):
             ms.power('a', 10)
 
-        with pytest.raises(AnsibleFilterError, match='pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
+        with pytest.raises(AnsibleFilterError, message='pow() can only be used on numbers: a float is required'):
             ms.power(10, 'a')
 
     def test_power_squared(self):
@@ -112,13 +111,10 @@ class TestPower:
 
 class TestInversePower:
     def test_root_non_number(self):
-        # Message changed in python3.6
-        with pytest.raises(AnsibleFilterError, match="root\\(\\) can only be used on numbers:"
-                           " (could not convert string to float: a"
-                           "|could not convert string to float: 'a')"):
+        with pytest.raises(AnsibleFilterError, message='root() can only be used on numbers: a float is required'):
             ms.inversepower(10, 'a')
 
-        with pytest.raises(AnsibleFilterError, match="root\\(\\) can only be used on numbers: (a float is required|must be real number, not str)"):
+        with pytest.raises(AnsibleFilterError, message='root() can only be used on numbers: a float is required'):
             ms.inversepower('a', 10)
 
     def test_square_root(self):

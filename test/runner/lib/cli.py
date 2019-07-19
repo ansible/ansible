@@ -1,6 +1,6 @@
 """Test runner for all Ansible tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import errno
 import os
@@ -94,7 +94,12 @@ import lib.cover
 def main():
     """Main program function."""
     try:
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         os.chdir(data_context().content.root)
+=======
+        git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
+        os.chdir(git_root)
+>>>>>>> Revert "Datadisk test"
         initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
@@ -182,7 +187,6 @@ def parse_args():
                         action='store_true',
                         help='run ansible commands in debug mode')
 
-    # noinspection PyTypeChecker
     common.add_argument('--truncate',
                         dest='truncate',
                         metavar='COLUMNS',
@@ -394,11 +398,6 @@ def parse_args():
                        action='store_true',
                        help='collect tests but do not execute them')
 
-    # noinspection PyTypeChecker
-    units.add_argument('--num-workers',
-                       type=int,
-                       help='number of workers to use (default: auto)')
-
     units.add_argument('--requirements-mode',
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
@@ -545,7 +544,6 @@ def parse_args():
                      action='store_true',
                      help='dump environment to disk')
 
-    # noinspection PyTypeChecker
     env.add_argument('--timeout',
                      type=int,
                      metavar='MINUTES',
@@ -779,7 +777,6 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
-    # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
 
@@ -871,12 +868,22 @@ def complete_network_testcase(prefix, parsed_args, **_):
         return []
 
     test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     connection_dirs = data_context().content.get_dirs(test_dir)
 
     for connection_dir in connection_dirs:
         for testcase in [os.path.basename(path) for path in data_context().content.get_files(connection_dir)]:
             if testcase.startswith(prefix):
                 testcases.append(testcase.split('.')[0])
+=======
+    connections = os.listdir(test_dir)
+
+    for conn in connections:
+        if os.path.isdir(os.path.join(test_dir, conn)):
+            for testcase in os.listdir(os.path.join(test_dir, conn)):
+                if testcase.startswith(prefix):
+                    testcases.append(testcase.split('.')[0])
+>>>>>>> Revert "Datadisk test"
 
     return testcases
 

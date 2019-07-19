@@ -1,14 +1,17 @@
 """Access Ansible Core CI remote services."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import os
 import tempfile
 import time
 
+import lib.pytar
+
 from lib.util import (
     SubprocessError,
     ApplicationError,
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     cmd_quote,
     display,
 )
@@ -17,6 +20,11 @@ from lib.util_common import (
     intercept_command,
     run_command,
     ANSIBLE_ROOT,
+=======
+    run_command,
+    intercept_command,
+    cmd_quote,
+>>>>>>> Revert "Datadisk test"
 )
 
 from lib.core_ci import (
@@ -31,12 +39,8 @@ from lib.config import (
     ShellConfig,
 )
 
-from lib.payload import (
-    create_payload,
-)
 
-
-class ManageWindowsCI:
+class ManageWindowsCI(object):
     """Manage access to a Windows instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -60,6 +64,7 @@ class ManageWindowsCI:
         """Used in delegate_remote to setup the host, no action is required for Windows.
         :type python_version: str
         """
+        pass
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
@@ -139,7 +144,7 @@ class ManageWindowsCI:
         raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
 
 
-class ManageNetworkCI:
+class ManageNetworkCI(object):
     """Manage access to a network instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -180,7 +185,7 @@ class ManageNetworkCI:
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
 
 
-class ManagePosixCI:
+class ManagePosixCI(object):
     """Manage access to a POSIX instance provided by Ansible Core CI."""
     def __init__(self, core_ci):
         """
@@ -255,7 +260,11 @@ class ManagePosixCI:
         """Configure remote host for testing.
         :type python_version: str
         """
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
         self.upload(os.path.join(ANSIBLE_ROOT, 'test/runner/setup/remote.sh'), '/tmp')
+=======
+        self.upload('test/runner/setup/remote.sh', '/tmp')
+>>>>>>> Revert "Datadisk test"
         self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
 
     def upload_source(self):
@@ -264,7 +273,8 @@ class ManagePosixCI:
             remote_source_dir = '/tmp'
             remote_source_path = os.path.join(remote_source_dir, os.path.basename(local_source_fd.name))
 
-            create_payload(self.core_ci.args, local_source_fd.name)
+            if not self.core_ci.args.explain:
+                lib.pytar.create_tarfile(local_source_fd.name, '.', lib.pytar.DefaultTarFilter())
 
             self.upload(local_source_fd.name, remote_source_dir)
             self.ssh('rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && tar oxzf %s' % remote_source_path)

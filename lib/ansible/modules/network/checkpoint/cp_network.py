@@ -196,9 +196,7 @@ def main():
     argument_spec.update(checkpoint_argument_spec_for_objects)
 
     module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uid']],
-                           mutually_exclusive=[['name', 'uid']],
-                           supports_check_mode=True)
-
+                           mutually_exclusive=[['name', 'uid']])
     api_call_object = 'network'
 
     result = api_call(module, api_call_object)

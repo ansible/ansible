@@ -22,7 +22,7 @@ description:
     - This module can be used to gather facts about virtual machine's snapshots.
 version_added: 2.6
 author:
-    - Abhijeet Kasurde (@Akasurde)
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.0 and 6.5
 requirements:
@@ -32,18 +32,12 @@ options:
    name:
      description:
      - Name of the VM to work with.
-     - This is required if C(uuid) or C(moid) is not supplied.
+     - This is required if C(uuid) is not supplied.
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
-     - This is required if C(name) or C(moid) parameter is not supplied.
+     - This is required if C(name) parameter is not supplied.
      - The C(folder) is ignored, if C(uuid) is provided.
-   moid:
-     description:
-     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
-     - This is required if C(name) or C(uuid) is not supplied.
-     version_added: '2.9'
-     type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -73,25 +67,15 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Gather snapshot facts about the virtual machine in the given vCenter
-  vmware_guest_snapshot_facts:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ datacenter_name }}"
-    name: "{{ guest_name }}"
-  delegate_to: localhost
-  register: snapshot_facts
-
-- name: Gather snapshot facts about the virtual machine using MoID
-  vmware_guest_snapshot_facts:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ datacenter_name }}"
-    moid: vm-42
-  delegate_to: localhost
-  register: snapshot_facts
+  - name: Gather snapshot facts about the virtual machine in the given vCenter
+    vmware_guest_snapshot_facts:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      name: "{{ guest_name }}"
+    delegate_to: localhost
+    register: snapshot_facts
 '''
 
 RETURN = """
@@ -130,7 +114,7 @@ class PyVmomiHelper(PyVmomi):
     @staticmethod
     def gather_guest_snapshot_facts(vm_obj=None):
         """
-        Return snapshot related facts about given virtual machine
+        Function to return snpashot related facts about given virtual machine
         Args:
             vm_obj: Virtual Machine Managed object
 
@@ -147,21 +131,15 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
-        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
     )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_together=[
-            ['name', 'folder']
-        ],
-        required_one_of=[
-            ['name', 'uuid', 'moid']
-        ],
-        supports_check_mode=True,
-    )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_together=[['name', 'folder']],
+                           required_one_of=[['name', 'uuid']],
+                           supports_check_mode=True,
+                           )
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
@@ -173,10 +151,10 @@ def main():
     vm = pyv.get_vm()
 
     if not vm:
-        # If UUID is set, get_vm select UUID, show error message accordingly.
-        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
+        # If UUID is set, getvm select UUID, show error message accordingly.
         module.fail_json(msg="Unable to gather facts about snapshots for"
-                             " non-existing VM ['%s']" % vm_id)
+                             " non-existing VM ['%s']" % (module.params.get('uuid') or
+                                                          module.params.get('name')))
 
     results = dict(changed=False, guest_snapshots=pyv.gather_guest_snapshot_facts(vm_obj=vm))
     module.exit_json(**results)

@@ -6,9 +6,15 @@ pycodestyle
 pylint ; python_version >= '3.5' # pylint 2.0.0 and later require python 3+
 pytest
 rstcheck ; python_version >= '2.7' # rstcheck requires python 2.7+
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
 sphinx ; python_version >= '3.5' # docs build requires python 3+
 sphinx-notfound-page ; python_version >= '3.5' # docs build requires python 3+
 straight.plugin ; python_version >= '3.5' # needed for hacking/build-ansible.py which will host changelog generation and requires python 3+
+=======
+sphinx
+sphinx-notfound-page
+straight.plugin  # needed for hacking/build-ansible which will host changelog generation
+>>>>>>> Revert "Datadisk test"
 virtualenv
 voluptuous ; python_version >= '2.7' # voluptuous 0.11.0 and later require python 2.7+
 yamllint

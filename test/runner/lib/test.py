@@ -1,6 +1,6 @@
 """Classes for storing and processing test results."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import datetime
 import json
@@ -10,8 +10,11 @@ import lib.types as t
 
 from lib.util import (
     display,
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     make_dirs,
     to_bytes,
+=======
+>>>>>>> Revert "Datadisk test"
 )
 
 from lib.config import (
@@ -59,7 +62,7 @@ def calculate_confidence(path, line, metadata):
     return 50
 
 
-class TestResult:
+class TestResult(object):
     """Base class for test results."""
     def __init__(self, command, test, python_version=None):
         """
@@ -100,19 +103,23 @@ class TestResult:
 
     def write_console(self):
         """Write results to console."""
+        pass
 
     def write_lint(self):
         """Write lint results to stdout."""
+        pass
 
     def write_bot(self, args):
         """
         :type args: TestConfig
         """
+        pass
 
     def write_junit(self, args):
         """
         :type args: TestConfig
         """
+        pass
 
     def create_path(self, directory, extension):
         """
@@ -336,8 +343,6 @@ class TestFailure(TestResult):
         if args.explain:
             return
 
-        make_dirs(os.path.dirname(path))
-
         with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
             bot_fd.write('\n')
@@ -421,7 +426,7 @@ class TestFailure(TestResult):
         return message
 
 
-class TestMessage:
+class TestMessage(object):
     """Single test message for one file."""
     def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
         """

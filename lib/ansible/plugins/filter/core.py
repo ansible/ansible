@@ -280,7 +280,7 @@ def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
 
-def mandatory(a, msg=None):
+def mandatory(a):
     from jinja2.runtime import Undefined
 
     ''' Make a variable mandatory '''
@@ -289,12 +289,7 @@ def mandatory(a, msg=None):
             name = "'%s' " % to_text(a._undefined_name)
         else:
             name = ''
-
-        if msg is not None:
-            raise AnsibleFilterError(to_native(msg))
-        else:
-            raise AnsibleFilterError("Mandatory variable %s not defined." % name)
-
+        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
     return a
 
 

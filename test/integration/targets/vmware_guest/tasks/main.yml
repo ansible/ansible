@@ -15,7 +15,6 @@
     - include: poweroff_d1_c1_f0.yml
     - include: poweroff_d1_c1_f1.yml
     - include: check_mode.yml
-    - include: clone_resize_disks.yml
     - include: clone_d1_c1_f0.yml
     - include: create_d1_c1_f0.yml
     - include: cdrom_d1_c1_f0.yml
@@ -40,8 +39,6 @@
       with_items:
         - CDROM-Test
         - CDROM-Test-38679
-        - clone_resize_disks_clone
-        - clone_resize_disks_original
         - newvm_2
         - newvm_3
         - newvmnw_4

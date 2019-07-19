@@ -2,8 +2,8 @@
 Primitive replacement for requests to avoid extra dependency.
 Avoids use of urllib2 due to lack of SNI support.
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from __future__ import absolute_import, print_function
 
 import json
 import time
@@ -22,20 +22,17 @@ except ImportError:
     from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
 
 from lib.util import (
+    CommonConfig,
     ApplicationError,
+    run_command,
     SubprocessError,
     display,
 )
 
-from lib.util_common import (
-    CommonConfig,
-    run_command,
-)
 
-
-class HttpClient:
+class HttpClient(object):
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False, insecure=False, proxy=None):
+    def __init__(self, args, always=False, insecure=False):
         """
         :type args: CommonConfig
         :type always: bool
@@ -44,7 +41,6 @@ class HttpClient:
         self.args = args
         self.always = always
         self.insecure = insecure
-        self.proxy = proxy
 
         self.username = None
         self.password = None
@@ -103,9 +99,6 @@ class HttpClient:
         if data is not None:
             cmd += ['-d', data]
 
-        if self.proxy:
-            cmd += ['-x', self.proxy]
-
         cmd += [url]
 
         attempts = 0
@@ -117,13 +110,11 @@ class HttpClient:
             6,  # CURLE_COULDNT_RESOLVE_HOST
         )
 
-        stdout = ''
-
         while True:
             attempts += 1
 
             try:
-                stdout = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)[0]
+                stdout, _ = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)
                 break
             except SubprocessError as ex:
                 if ex.status in retry_on_status and attempts < max_attempts:
@@ -146,7 +137,7 @@ class HttpClient:
         return HttpResponse(method, url, status_code, body)
 
 
-class HttpResponse:
+class HttpResponse(object):
     """HTTP response from curl."""
     def __init__(self, method, url, status_code, response):
         """

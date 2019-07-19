@@ -44,7 +44,7 @@ options:
    name:
      description:
      - Name of the virtual machine to work with.
-     - This is required parameter, if C(uuid) or C(moid) is not supplied.
+     - This is required parameter, if C(uuid) is not supplied.
    name_match:
      description:
      - If multiple VMs matching the name, use the first or last found.
@@ -53,13 +53,7 @@ options:
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
-     - This is required if C(name) or C(moid) parameter is not supplied.
-   moid:
-     description:
-     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
-     - This is required if C(name) or C(uuid) is not supplied.
-     version_added: '2.9'
-     type: str
+     - This is required if C(name) parameter is not supplied.
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -81,6 +75,8 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     - '   folder: vm/folder2'
+     - '   folder: folder2'
    datacenter:
      description:
      - Destination datacenter for the deploy operation.
@@ -176,17 +172,6 @@ EXAMPLES = '''
       datacenter: "{{ datacenter_name }}"
       folder: "/{{ datacenter_name }}/vm/"
       name: "{{ guest_name }}"
-      state: remove_all
-    delegate_to: localhost
-
-  - name: Remove all snapshots of a VM using MoID
-    vmware_guest_snapshot:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      datacenter: "{{ datacenter_name }}"
-      folder: "/{{ datacenter_name }}/vm/"
-      moid: vm-42
       state: remove_all
     delegate_to: localhost
 
@@ -329,8 +314,8 @@ class PyVmomiHelper(PyVmomi):
 
     def rename_snapshot(self, vm):
         if vm.snapshot is None:
-            vm_id = self.module.params.get('uuid') or self.module.params.get('name') or self.params.get('moid')
-            self.module.fail_json(msg="virtual machine - %s doesn't have any snapshots" % vm_id)
+            self.module.fail_json(msg="virtual machine - %s doesn't have any"
+                                      " snapshots" % (self.module.params.get('uuid') or self.module.params.get('name')))
 
         snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
                                                           self.module.params["snapshot_name"])
@@ -345,10 +330,10 @@ class PyVmomiHelper(PyVmomi):
             else:
                 task = snap_obj.RenameSnapshot(description=self.module.params["new_description"])
         else:
-            vm_id = self.module.params.get('uuid') or self.module.params.get('name') or self.params.get('moid')
             self.module.exit_json(
                 msg="Couldn't find any snapshots with specified name: %s on VM: %s" %
-                    (self.module.params["snapshot_name"], vm_id))
+                    (self.module.params["snapshot_name"],
+                     self.module.params.get('uuid') or self.module.params.get('name')))
         return task
 
     def remove_or_revert_snapshot(self, vm):
@@ -372,9 +357,9 @@ class PyVmomiHelper(PyVmomi):
             elif self.module.params["state"] == "revert":
                 task = snap_obj.RevertToSnapshot_Task()
         else:
-            vm_id = self.module.params.get('uuid') or self.module.params.get('name') or self.params.get('moid')
             self.module.exit_json(msg="Couldn't find any snapshots with"
-                                      " specified name: %s on VM: %s" % (self.module.params["snapshot_name"], vm_id))
+                                      " specified name: %s on VM: %s" % (self.module.params["snapshot_name"],
+                                                                         self.module.params.get('uuid') or self.module.params.get('name')))
 
         return task
 
@@ -412,7 +397,6 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(required=True, type='str'),
@@ -424,15 +408,10 @@ def main():
         new_snapshot_name=dict(type='str'),
         new_description=dict(type='str'),
     )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_together=[
-            ['name', 'folder']
-        ],
-        required_one_of=[
-            ['name', 'uuid', 'moid']
-        ],
-    )
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_together=[['name', 'folder']],
+                           required_one_of=[['name', 'uuid']],
+                           )
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path
@@ -444,8 +423,9 @@ def main():
     vm = pyv.get_vm()
 
     if not vm:
-        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
-        module.fail_json(msg="Unable to manage snapshots for non-existing VM %s" % vm_id)
+        # If UUID is set, getvm select UUID, show error message accordingly.
+        module.fail_json(msg="Unable to manage snapshots for non-existing VM %s" % (module.params.get('uuid') or
+                                                                                    module.params.get('name')))
 
     if not module.params['snapshot_name'] and module.params['state'] != 'remove_all':
         module.fail_json(msg="snapshot_name param is required when state is '%(state)s'" % module.params)

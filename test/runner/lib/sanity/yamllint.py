@@ -1,6 +1,5 @@
 """Sanity test using yamllint."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import absolute_import, print_function
 
 import json
 import os
@@ -15,13 +14,17 @@ from lib.sanity import (
 
 from lib.util import (
     SubprocessError,
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
     display,
     ANSIBLE_ROOT,
     is_subdir,
 )
 
 from lib.util_common import (
+=======
+>>>>>>> Revert "Datadisk test"
     run_command,
+    display,
 )
 
 from lib.config import (
@@ -78,7 +81,11 @@ class YamllintTest(SanitySingleVersion):
         """
         cmd = [
             args.python_executable,
+<<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
             os.path.join(ANSIBLE_ROOT, 'test/sanity/yamllint/yamllinter.py'),
+=======
+            'test/sanity/yamllint/yamllinter.py',
+>>>>>>> Revert "Datadisk test"
         ]
 
         data = '\n'.join(paths)

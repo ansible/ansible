@@ -12,9 +12,9 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 class Command:
     """
-    Subcommands of :program:`build-ansible.py`.
+    Subcommands of :program:`build-ansible`.
 
-    This defines an interface that all subcommands must conform to.  :program:`build-ansible.py` will
+    This defines an interface that all subcommands must conform to.  :program:`build-ansible` will
     require that these things are present in order to proceed.
     """
     @staticmethod
