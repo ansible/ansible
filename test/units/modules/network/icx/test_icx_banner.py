@@ -23,8 +23,6 @@ class TestICXBannerModule(TestICXModule):
         self.mock_get_config = patch('ansible.modules.network.icx.icx_banner.get_config')
         self.get_config = self.mock_get_config.start()
 
-        self.mock_get_env_diff = patch('ansible.modules.network.icx.icx_banner.get_env_diff')
-        self.get_env_diff = self.mock_get_env_diff.start()
         self.set_running_config()
 
     def tearDown(self):
@@ -32,7 +30,6 @@ class TestICXBannerModule(TestICXModule):
         self.mock_exec_command.stop()
         self.mock_load_config.stop()
         self.mock_get_config.stop()
-        self.mock_get_env_diff.stop()
 
     def load_fixtures(self, commands=None):
         compares = None
@@ -40,17 +37,10 @@ class TestICXBannerModule(TestICXModule):
         def load_file(*args, **kwargs):
             module = args
             for arg in args:
-                if arg.params['check_running_config'] is not None:
-                    compares = arg.params['check_running_config']
-                    break
+                if arg.params['check_running_config'] is True:
+                    return load_fixture('icx_banner_show_banner.txt').strip()
                 else:
-                    compares = None
-            env = self.get_running_config(compares)
-            self.get_env_diff.return_value = self.get_running_config(compare=compares)
-            if env is True:
-                return load_fixture('icx_banner_show_banner.txt').strip()
-            else:
-                return ''
+                    return ''
 
         self.exec_command.return_value = (0, '', None)
         self.get_config.side_effect = load_file
