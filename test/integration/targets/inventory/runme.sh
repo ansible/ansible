@@ -9,3 +9,7 @@ if [ "$?" != "1" ]; then
     echo "Non-matching limit should cause failure"
     exit 1
 fi
+
+ansible-playbook -i ../../inventory "$@" strategy.yml
+ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=always ansible-playbook -i ../../inventory "$@" strategy.yml
+ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never ansible-playbook -i ../../inventory "$@" strategy.yml

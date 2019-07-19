@@ -120,9 +120,14 @@ class Group(object):
         cmd = [self.module.get_bin_path(command_name, True), self.name]
         return self.execute_command(cmd)
 
+    def _local_check_gid_exists(self):
+        if self.gid and self.gid in [gr.gr_gid for gr in grp.getgrall()]:
+            self.module.fail_json(msg="GID '{0}' already exists".format(self.gid))
+
     def group_add(self, **kwargs):
         if self.local:
             command_name = 'lgroupadd'
+            self._local_check_gid_exists()
         else:
             command_name = 'groupadd'
         cmd = [self.module.get_bin_path(command_name, True)]
@@ -140,6 +145,7 @@ class Group(object):
     def group_mod(self, **kwargs):
         if self.local:
             command_name = 'lgroupmod'
+            self._local_check_gid_exists()
         else:
             command_name = 'groupmod'
         cmd = [self.module.get_bin_path(command_name, True)]

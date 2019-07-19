@@ -70,6 +70,18 @@
     that:
       - result is failed
 
+- name: ensure unknown scheme fails
+  consul_session:
+    state: info
+    id: '{{ session_id }}'
+    scheme: non_existent
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - result is failed
+
 - name: delete a session
   consul_session:
     state: absent
@@ -79,3 +91,27 @@
 - assert:
     that:
       - result is changed
+
+- name: list sessions after deletion
+  consul_session:
+    state: list
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      # selectattr and equalto not available on Jinja 2.2 provided by CentOS 6
+      # hence the two following tasks (command/assert) are used
+      # - (result['sessions'] | selectattr('ID', 'equalto', session_id) | list | length) == 0
+
+- name: search deleted session
+  command: echo 'session found'
+  loop: "{{ result['sessions'] }}"
+  when: "item.get('ID') == session_id and item.get('Name') == 'testsession'"
+  register: search_deleted
+
+- name: ensure session was deleted
+  assert:
+    that:
+      - search_deleted is success
+      - search_deleted is not changed

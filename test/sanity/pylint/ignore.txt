@@ -83,17 +83,6 @@ test/integration/targets/module_utils/module_utils/sub/bar/bar.py blacklisted-na
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py blacklisted-name
 test/legacy/cleanup_gce.py blacklisted-name
 test/legacy/gce_credentials.py blacklisted-name
-test/runner/lib/cloud/cs.py blacklisted-name
-test/runner/lib/core_ci.py blacklisted-name
-test/runner/lib/delegation.py blacklisted-name
-test/runner/lib/docker_util.py blacklisted-name
-test/runner/lib/executor.py blacklisted-name
-test/runner/lib/http.py blacklisted-name
-test/runner/lib/import_analysis.py blacklisted-name
-test/runner/lib/target.py blacklisted-name
-test/runner/lib/util.py blacklisted-name
-test/sanity/import/importer.py blacklisted-name
-test/sanity/validate-modules/main.py blacklisted-name
 test/units/contrib/inventory/test_vmware_inventory.py blacklisted-name
 test/units/executor/test_play_iterator.py blacklisted-name
 test/units/module_utils/basic/test_run_command.py blacklisted-name

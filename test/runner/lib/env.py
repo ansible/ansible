@@ -1,6 +1,6 @@
 """Show information about the test environment."""
-
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import datetime
 import json
@@ -304,6 +304,7 @@ def get_git_details(args):
     return git_details
 
 
+# noinspection PyUnusedLocal
 def get_merged_commit(args, commit):  # pylint: disable=unused-argument
     """
     :type args: CommonConfig

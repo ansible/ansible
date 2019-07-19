@@ -66,10 +66,7 @@ The following example shows host vars configured for basic authentication:
     ansible_winrm_transport: basic
 
 Basic authentication is not enabled by default on a Windows host but can be
-enabled by running the following in PowerShell:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+enabled by running the following in PowerShell::
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 
@@ -88,10 +85,7 @@ The following example shows host vars configured for certificate authentication:
     ansible_winrm_transport: certificate
 
 Certificate authentication is not enabled by default on a Windows host but can
-be enabled by running the following in PowerShell:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+be enabled by running the following in PowerShell::
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
@@ -212,12 +206,7 @@ The code to import the client certificate public key is:
 
 Mapping a Certificate to an Account
 +++++++++++++++++++++++++++++++++++
-Once the certificate has been imported, it needs to be mapped to the local user account.
-
-This can be done with the following PowerShell command:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+Once the certificate has been imported, map it to the local user account::
 
     $username = "username"
     $password = ConvertTo-SecureString -String "password" -AsPlainText -Force
@@ -514,10 +503,7 @@ another certificate.
     certificate. With CredSSP, message transport still occurs over the WinRM listener,
     but the TLS-encrypted messages inside the channel use the service-level certificate.
 
-To explicitly set the certificate to use for CredSSP:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+To explicitly set the certificate to use for CredSSP::
 
     # Note the value $certificate_thumbprint will be different in each
     # situation, this needs to be set based on the cert that is used.
@@ -566,10 +552,7 @@ A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
 from Ansible can be viewed, manipulated and also the remote session can completely
 be taken over by anyone on the same network. To disable the encryption
-requirement, run the following from PowerShell on the target host:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+requirement::
 
     Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 

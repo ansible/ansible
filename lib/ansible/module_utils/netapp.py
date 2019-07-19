@@ -31,7 +31,7 @@ import json
 import os
 
 from pprint import pformat
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
@@ -47,6 +47,12 @@ try:
     HAS_NETAPP_LIB = True
 except ImportError:
     HAS_NETAPP_LIB = False
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 import ssl
 try:
@@ -111,7 +117,8 @@ def na_ontap_host_argument_spec():
         https=dict(required=False, type='bool', default=False),
         validate_certs=dict(required=False, type='bool', default=True),
         http_port=dict(required=False, type='int'),
-        ontapi=dict(required=False, type='int')
+        ontapi=dict(required=False, type='int'),
+        use_rest=dict(required=False, type='str', default='Auto', choices=['Never', 'Always', 'Auto'])
     )
 
 
@@ -496,7 +503,7 @@ def ems_log_event(source, server, name="Ansible", id="12345", version=ansible_ve
     server.invoke_successfully(ems_log, True)
 
 
-def get_cserver(server):
+def get_cserver_zapi(server):
     vserver_info = zapi.NaElement('vserver-get-iter')
     query_details = zapi.NaElement.create_node_with_children('vserver-info', **{'vserver-type': 'admin'})
     query = zapi.NaElement('query')
@@ -507,3 +514,123 @@ def get_cserver(server):
     attribute_list = result.get_child_by_name('attributes-list')
     vserver_list = attribute_list.get_child_by_name('vserver-info')
     return vserver_list.get_child_content('vserver-name')
+
+
+def get_cserver(connection, is_rest=False):
+    if not is_rest:
+        return get_cserver_zapi(connection)
+
+    params = {'fields': 'type'}
+    api = "private/cli/vserver"
+    json, error = connection.get(api, params)
+    if json is None or error is not None:
+        # exit if there is an error or no data
+        return None
+    vservers = json.get('records')
+    if vservers is not None:
+        for vserver in vservers:
+            if vserver['type'] == 'admin':     # cluster admin
+                return vserver['vserver']
+        if len(vservers) == 1:                  # assume vserver admin
+            return vservers[0]['vserver']
+
+    return None
+
+
+class OntapRestAPI(object):
+    def __init__(self, module, timeout=60):
+        self.module = module
+        self.username = self.module.params['username']
+        self.password = self.module.params['password']
+        self.hostname = self.module.params['hostname']
+        self.use_rest = self.module.params['use_rest']
+        self.verify = self.module.params['validate_certs']
+        self.timeout = timeout
+        self.url = 'https://' + self.hostname + '/api/'
+        self.errors = list()
+        self.debug_logs = list()
+        self.check_required_library()
+
+    def check_required_library(self):
+        if not HAS_REQUESTS:
+            self.module.fail_json(msg=missing_required_lib('requests'))
+
+    def send_request(self, method, api, params, json=None, return_status_code=False):
+        ''' send http request and process reponse, including error conditions '''
+        url = self.url + api
+        status_code = None
+        content = None
+        json_dict = None
+        json_error = None
+        error_details = None
+
+        def get_json(response):
+            ''' extract json, and error message if present '''
+            try:
+                json = response.json()
+            except ValueError:
+                return None, None
+            error = json.get('error')
+            return json, error
+
+        try:
+            response = requests.request(method, url, verify=self.verify, auth=(self.username, self.password), params=params, timeout=self.timeout, json=json)
+            content = response.content  # for debug purposes
+            status_code = response.status_code
+            # If the response was successful, no Exception will be raised
+            response.raise_for_status()
+            json_dict, json_error = get_json(response)
+        except requests.exceptions.HTTPError as err:
+            junk, json_error = get_json(response)
+            if json_error is None:
+                self.log_error(status_code, 'HTTP error: %s' % err)
+                error_details = str(err)
+            # If an error was reported in the json payload, it is handled below
+        except requests.exceptions.ConnectionError as err:
+            self.log_error(status_code, 'Connection error: %s' % err)
+            error_details = str(err)
+        except Exception as err:
+            self.log_error(status_code, 'Other error: %s' % err)
+            error_details = str(err)
+        if json_error is not None:
+            self.log_error(status_code, 'Endpoint error: %d: %s' % (status_code, json_error))
+            error_details = json_error
+        self.log_debug(status_code, content)
+        if return_status_code:
+            return status_code, error_details
+        return json_dict, error_details
+
+    def get(self, api, params):
+        method = 'GET'
+        return self.send_request(method, api, params)
+
+    def post(self, api, data, params=None):
+        method = 'POST'
+        return self.send_request(method, api, params, json=data)
+
+    def patch(self, api, data, params=None):
+        method = 'PATCH'
+        return self.send_request(method, api, params, json=data)
+
+    def delete(self, api, data, params=None):
+        method = 'DELETE'
+        return self.send_request(method, api, params, json=data)
+
+    def is_rest(self):
+        if self.use_rest == "Always":
+            return True
+        if self.use_rest == 'Never':
+            return False
+        method = 'HEAD'
+        api = 'cluster/software'
+        status_code, junk = self.send_request(method, api, params=None, return_status_code=True)
+        if status_code == 200:
+            return True
+        return False
+
+    def log_error(self, status_code, message):
+        self.errors.append(message)
+        self.debug_logs.append((status_code, message))
+
+    def log_debug(self, status_code, content):
+        self.debug_logs.append((status_code, content))

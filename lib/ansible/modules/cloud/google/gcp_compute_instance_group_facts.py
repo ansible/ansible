@@ -49,6 +49,7 @@ options:
     description:
     - A reference to the zone where the instance group resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -18,11 +18,11 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_subnet
 version_added: "2.1"
-short_description: Manage Azure subnets.
+short_description: Manage Azure subnets
 description:
-    - Create, update or delete a subnet within a given virtual network. Allows setting and updating the address
-      prefix CIDR, which must be valid within the context of the virtual network. Use the azure_rm_networkinterface
-      module to associate interfaces with the subnet and assign specific IP addresses.
+    - Create, update or delete a subnet within a given virtual network.
+    - Allows setting and updating the address prefix CIDR, which must be valid within the context of the virtual network.
+    - Use the M(azure_rm_networkinterface) module to associate interfaces with the subnet and assign specific IP addresses.
 options:
     resource_group:
         description:
@@ -34,22 +34,20 @@ options:
         required: true
     address_prefix_cidr:
         description:
-            - CIDR defining the IPv4 address space of the subnet. Must be valid within the context of the
-              virtual network.
+            - CIDR defining the IPv4 address space of the subnet. Must be valid within the context of the virtual network.
         aliases:
             - address_prefix
     security_group:
         description:
             - Existing security group with which to associate the subnet.
             - It can be the security group name which is in the same resource group.
-            - It can be the resource Id.
-            - It can be a dict which contains C(name) and C(resource_group) of the security group.
+            - Can be the resource ID of the security group.
+            - Can be a dict containing the I(name) and I(resource_group) of the security group.
         aliases:
             - security_group_name
     state:
         description:
-            - Assert the state of the subnet. Use C(present) to create or update a subnet and
-              C(absent) to delete a subnet.
+            - Assert the state of the subnet. Use C(present) to create or update a subnet and use C(absent) to delete a subnet.
         default: present
         choices:
             - absent
@@ -63,9 +61,8 @@ options:
     route_table:
         description:
             - The reference of the RouteTable resource.
-            - It can accept both a str or a dict.
-            - The str can be the name or resource id of the route table.
-            - The dict can contains C(name) and C(resource_group) of the route_table.
+            - Can be the name or resource ID of the route table.
+            - Can be a dict containing the I(name) and I(resource_group) of the route table.
         version_added: "2.7"
     service_endpoints:
         description:
@@ -86,8 +83,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -120,37 +117,53 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the subnet.
+    description:
+        - Current state of the subnet.
     returned: success
     type: complex
     contains:
         address_prefix:
-          description: IP address CIDR.
-          type: str
-          example: "10.1.0.0/16"
+            description:
+                - IP address CIDR.
+            returned: always
+            type: str
+            sample: "10.1.0.0/16"
         id:
-          description: Subnet resource path.
-          type: str
-          example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/mySubnet"
+            description:
+                - Subnet resource path.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualNetwork/subnets/mySubnet"
         name:
-          description: Subnet name.
-          type: str
-          example: "foobar"
+            description:
+                - Subnet name.
+            returned: always
+            type: str
+            sample: "foobar"
         network_security_group:
-          type: complex
-          contains:
-            id:
-              description: Security group resource identifier.
-              type: str
-              example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo"
-            name:
-              description: Name of the security group.
-              type: str
-              example: "secgroupfoo"
+            description:
+                - Associated network security group of subnets.
+            returned: always
+            type: complex
+            contains:
+                id:
+                    description:
+                        - Security group resource identifier.
+                    returned: always
+                    type: str
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/secgroupfoo"
+                name:
+                    description:
+                        - Name of the security group.
+                    returned: always
+                    type: str
+                    sample: "secgroupfoo"
         provisioning_state:
-          description: Success or failure of the provisioning event.
-          type: str
-          example: "Succeeded"
+            description:
+                - Success or failure of the provisioning event.
+            returned: always
+            type: str
+            sample: "Succeeded"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN, azure_id_to_dict, format_resource_id

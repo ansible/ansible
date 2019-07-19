@@ -1,5 +1,6 @@
 """Sanity test for PEP 8 style guidelines using pycodestyle."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import re
@@ -14,9 +15,13 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    run_command,
     read_lines_without_comments,
     parse_to_list_of_dict,
+    INSTALL_ROOT,
+)
+
+from lib.util_common import (
+    run_command,
 )
 
 from lib.config import (
@@ -39,13 +44,13 @@ class Pep8Test(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        skip_paths = read_lines_without_comments(PEP8_SKIP_PATH)
-        legacy_paths = read_lines_without_comments(PEP8_LEGACY_PATH)
+        skip_paths = read_lines_without_comments(PEP8_SKIP_PATH, optional=True)
+        legacy_paths = read_lines_without_comments(PEP8_LEGACY_PATH, optional=True)
 
-        legacy_ignore_file = 'test/sanity/pep8/legacy-ignore.txt'
+        legacy_ignore_file = os.path.join(INSTALL_ROOT, 'test/sanity/pep8/legacy-ignore.txt')
         legacy_ignore = set(read_lines_without_comments(legacy_ignore_file, remove_blank_lines=True))
 
-        current_ignore_file = 'test/sanity/pep8/current-ignore.txt'
+        current_ignore_file = os.path.join(INSTALL_ROOT, 'test/sanity/pep8/current-ignore.txt')
         current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
         skip_paths_set = set(skip_paths)

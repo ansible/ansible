@@ -74,6 +74,16 @@ except ImportError:
     HAS_DOCKER_SSLADAPTER = False
 
 
+try:
+    from requests.exceptions import RequestException
+except ImportError:
+    # Either docker-py is no longer using requests, or docker-py isn't around either,
+    # or docker-py's dependency requests is missing. In any case, define an exception
+    # class RequestException so that our code doesn't break.
+    class RequestException(Exception):
+        pass
+
+
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
@@ -123,10 +133,19 @@ if not HAS_DOCKER_PY:
 
 
 def is_image_name_id(name):
-    """Checks whether the given image name is in fact an image ID (hash)."""
+    """Check whether the given image name is in fact an image ID (hash)."""
     if re.match('^sha256:[0-9a-fA-F]{64}$', name):
         return True
     return False
+
+
+def is_valid_tag(tag, allow_empty=False):
+    """Check whether the given string is a valid docker tag name."""
+    if not tag:
+        return allow_empty
+    # See here ("Extended description") for a definition what tags can be:
+    # https://docs.docker.com/engine/reference/commandline/tag/
+    return bool(re.match('^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$', tag))
 
 
 def sanitize_result(data):

@@ -1,14 +1,8 @@
 """Wrapper around git command-line tools."""
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from __future__ import absolute_import, print_function
-
-try:
-    # noinspection PyUnresolvedReferences
-    from typing import (
-        Optional,
-    )
-except ImportError:
-    pass
+import lib.types as t
 
 from lib.util import (
     SubprocessError,
@@ -16,9 +10,9 @@ from lib.util import (
 )
 
 
-class Git(object):
+class Git:
     """Wrapper around git command-line tools."""
-    def __init__(self, root=None):  # type: (Optional[str]) -> None
+    def __init__(self, root=None):  # type: (t.Optional[str]) -> None
         self.git = 'git'
         self.root = root
 

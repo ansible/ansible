@@ -1,5 +1,6 @@
 """VMware vCenter plugin for integration tests."""
-from __future__ import absolute_import, print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os
 import time
@@ -63,6 +64,7 @@ class VcenterProvider(CloudProvider):
         self.endpoint = ''
         self.hostname = ''
         self.port = 443
+        self.proxy = None
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -222,6 +224,10 @@ class VcenterProvider(CloudProvider):
 
         if parser.get('DEFAULT', 'vmware_validate_certs').lower() in ('no', 'false'):
             self.insecure = True
+        proxy_host = parser.get('DEFAULT', 'vmware_proxy_host')
+        proxy_port = int(parser.get('DEFAULT', 'vmware_proxy_port'))
+        if proxy_host and proxy_port:
+            self.proxy = 'http://%s:%d' % (proxy_host, proxy_port)
 
         self._wait_for_service()
 
@@ -230,7 +236,7 @@ class VcenterProvider(CloudProvider):
         if self.args.explain:
             return
 
-        client = HttpClient(self.args, always=True, insecure=self.insecure)
+        client = HttpClient(self.args, always=True, insecure=self.insecure, proxy=self.proxy)
         endpoint = 'https://%s:%s' % (self.endpoint, self.port)
 
         for i in range(1, 30):

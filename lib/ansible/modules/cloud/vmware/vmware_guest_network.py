@@ -32,12 +32,17 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) is not supplied.
+     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
      type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) is not supplied.
+     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
      type: str
    folder:
      description:
@@ -134,6 +139,20 @@ EXAMPLES = '''
         mac: "00:50:56:44:55:77"
   delegate_to: localhost
   register: network_facts
+
+- name: Change network adapter settings of virtual machine using MoID
+  vmware_guest_network:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    moid: vm-42
+    gather_network_facts: false
+    networks:
+      - state: absent
+        mac: "00:50:56:44:55:77"
+  delegate_to: localhost
 '''
 
 RETURN = """
@@ -156,8 +175,6 @@ network_data:
     }
 """
 
-import re
-
 try:
     from pyVmomi import vim
 except ImportError:
@@ -166,7 +183,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, find_obj, get_all_objs, get_parent_datacenter
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_all_objs, get_parent_datacenter
 
 
 class PyVmomiHelper(PyVmomi):
@@ -314,8 +331,8 @@ class PyVmomiHelper(PyVmomi):
                         self.module.fail_json(msg="networks.start_connected parameter should be boolean.")
                     if network['state'].lower() == 'new' and not network['start_connected']:
                         network['connected'] = False
-                # specified network not exist
-                if 'name' in network and not self.network_exists_by_name(self.content, network['name']):
+                # specified network does not exist
+                if 'name' in network and not self.network_exists_by_name(network['name']):
                     self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
                 elif 'vlan' in network:
                     objects = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
@@ -435,6 +452,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
         esxi_hostname=dict(type='str'),
@@ -443,12 +461,18 @@ def main():
         networks=dict(type='list', default=[])
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ]
+    )
+
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
     if not vm:
-        module.fail_json(msg='Unable to find the specified virtual machine uuid: %s, name: %s '
-                             % ((module.params.get('uuid')), (module.params.get('name'))))
+        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
+        module.fail_json(msg='Unable to find the specified virtual machine using %s' % vm_id)
 
     result = pyv.reconfigure_vm_network(vm)
     if result['failed']:

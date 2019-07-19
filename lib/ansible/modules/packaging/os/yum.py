@@ -55,7 +55,7 @@ options:
       - C(present) and C(installed) will simply ensure that a desired package is installed.
       - C(latest) will update the specified package if it's not of the latest available version.
       - C(absent) and C(removed) will remove the specified package.
-      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is¬
+      - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
     choices: [ absent, installed, latest, present, removed ]
   enablerepo:
@@ -413,38 +413,42 @@ class YumModule(YumDnf):
 
     def is_lockfile_pid_valid(self):
         try:
-            with open(self.lockfile, 'r') as f:
-                oldpid = int(f.readline())
-        except ValueError:
-            # invalid data
-            os.unlink(self.lockfile)
-            return False
-        except (IOError, OSError) as e:
-            self.module.fail_json(msg="Failure opening %s: %s" % (self.lockfile, to_native(e)))
-
-        if oldpid == os.getpid():
-            # that's us?
-            os.unlink(self.lockfile)
-            return False
-
-        try:
-            with open("/proc/%d/stat" % oldpid, 'r') as f:
-                stat = f.readline()
-
-            if stat.split()[2] == 'Z':
-                # Zombie
+            try:
+                with open(self.lockfile, 'r') as f:
+                    oldpid = int(f.readline())
+            except ValueError:
+                # invalid data
                 os.unlink(self.lockfile)
                 return False
-        except IOError:
+
+            if oldpid == os.getpid():
+                # that's us?
+                os.unlink(self.lockfile)
+                return False
+
             try:
-                os.kill(oldpid, 0)
-            except OSError as e:
-                if e.errno == errno.ESRCH:
-                    # No such process
+                with open("/proc/%d/stat" % oldpid, 'r') as f:
+                    stat = f.readline()
+
+                if stat.split()[2] == 'Z':
+                    # Zombie
                     os.unlink(self.lockfile)
                     return False
+            except IOError:
+                # either /proc is not mounted or the process is already dead
+                try:
+                    # check the state of the process
+                    os.kill(oldpid, 0)
+                except OSError as e:
+                    if e.errno == errno.ESRCH:
+                        # No such process
+                        os.unlink(self.lockfile)
+                        return False
 
-                self.module.fail_json(msg="Unable to check PID %s in  %s: %s" % (oldpid, self.lockfile, to_native(e)))
+                    self.module.fail_json(msg="Unable to check PID %s in  %s: %s" % (oldpid, self.lockfile, to_native(e)))
+        except (IOError, OSError) as e:
+            # lockfile disappeared?
+            return False
 
         # another copy seems to be running
         return True
