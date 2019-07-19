@@ -243,7 +243,7 @@ class InventoryManager(object):
         else:
             # left with strings or files, let plugins figure it out
 
-            # set so new hosts can use for inventory_file/dir vasr
+            # set so new hosts can use for inventory_file/dir vars
             self._inventory.current_source = source
 
             # try source with each plugin
