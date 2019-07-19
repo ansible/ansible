@@ -15,7 +15,7 @@ class TestAviUser(unittest.TestCase):
     def test_create_user(self):
         set_module_args({
             "avi_credentials": {
-                "controller": "10.23.45.13",
+                "controller": "192.0.2.13",
                 "username": "username",
                 "password": "fakepassword",
                 "api_version": "18.2.5"
@@ -44,7 +44,7 @@ class TestAviUser(unittest.TestCase):
     def test_put_on_user(self):
         set_module_args({
             "avi_credentials": {
-                "controller": "10.23.45.13",
+                "controller": "192.0.2.13",
                 "username": "username",
                 "password": "fakepassword",
                 "api_version": "18.2.5"
@@ -74,7 +74,7 @@ class TestAviUser(unittest.TestCase):
     def test_delete_user(self):
         set_module_args({
             "avi_credentials": {
-                "controller": "10.23.45.13",
+                "controller": "192.0.2.13",
                 "username": "username",
                 "password": "fakepassword",
                 "api_version": "18.2.5"

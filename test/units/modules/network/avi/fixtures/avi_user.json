@@ -2,7 +2,7 @@
 	"mock_create_res": {
 		"ansible_facts": {
 			"avi_api_context": {
-				"10.10.28.97:admin:None": {
+				"192.0.2.97:admin:None": {
 					"csrftoken": "qG23CCARDL3rh1KZ66XXPIeUYCUCOZ4q",
 					"session_id": "h5nynf9u9nompp5byai7vii2v8bbn9kd"
 				}
@@ -23,7 +23,7 @@
 				"avi_credentials": null,
 				"avi_disable_session_cache_as_fact": false,
 				"avi_login_info": null,
-				"controller": "10.10.28.97",
+				"controller": "192.0.2.97",
 				"default_tenant_ref": "/api/tenant?name=********",
 				"email": "test@abc.com",
 				"is_active": true,
@@ -43,10 +43,10 @@
 			"_last_modified": "1559736767460818",
 			"access": [{
 				"all_tenants": false,
-				"role_ref": "https://10.10.28.97/api/tenant/********/role/role-ff851004-bd75-485b-87ec-2fe1d6a03fb9#Tenant-Admin",
-				"tenant_ref": "https://10.10.28.97/api/tenant/********#********"
+				"role_ref": "https://192.0.2.97/api/tenant/********/role/role-ff851004-bd75-485b-87ec-2fe1d6a03fb9#Tenant-Admin",
+				"tenant_ref": "https://192.0.2.97/api/tenant/********#********"
 			}],
-			"default_tenant_ref": "https://10.10.28.97/api/tenant/********#********",
+			"default_tenant_ref": "https://192.0.2.97/api/tenant/********#********",
 			"email": "test@abc.com",
 			"full_name": "testuser",
 			"is_active": true,
@@ -57,8 +57,8 @@
 			"obj_username": "testuser",
 			"password": "<sensitive>",
 			"uid": 2004,
-			"url": "https://10.10.28.97/api/user/user-7087578f-4dfe-4e06-a153-495a91824a1d#testuser",
-			"user_profile_ref": "https://10.10.28.97/api/useraccountprofile/useraccountprofile-78063e7c-b443-48d6-b34c-5253ae1fcd2a#Default-User-Account-Profile",
+			"url": "https://192.0.2.97/api/user/user-7087578f-4dfe-4e06-a153-495a91824a1d#testuser",
+			"user_profile_ref": "https://192.0.2.97/api/useraccountprofile/useraccountprofile-78063e7c-b443-48d6-b34c-5253ae1fcd2a#Default-User-Account-Profile",
 			"username": "testuser",
 			"uuid": "user-7087578f-4dfe-4e06-a153-495a91824a1d"
 		},
@@ -67,16 +67,16 @@
 	"mock_put_res": {
 		"obj": {
 			"username": "testuser",
-			"user_profile_ref": "https://10.10.28.97/api/useraccountprofile/useraccountprofile-546c5e88-6270-4ba1-9cfd-d0c755e68f47#Default-User-Account-Profile",
+			"user_profile_ref": "https://192.0.2.97/api/useraccountprofile/useraccountprofile-546c5e88-6270-4ba1-9cfd-d0c755e68f47#Default-User-Account-Profile",
 			"name": "testuser",
-			"url": "https://10.10.28.97/api/user/user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a#testuser",
+			"url": "https://192.0.2.97/api/user/user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a#testuser",
 			"is_active": true,
 			"uuid": "user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a",
 			"email": "newemail@abc.com",
 			"access": [{
-				"tenant_ref": "https://10.10.28.97/api/tenant/tenant-57af0f3f-6f14-4657-8f32-9b289407752b#Test-Admin",
+				"tenant_ref": "https://192.0.2.97/api/tenant/tenant-57af0f3f-6f14-4657-8f32-9b289407752b#Test-Admin",
 				"all_tenants": false,
-				"role_ref": "https://10.10.28.97/api/tenant/********/role/role-b073ab0d-e1d0-4800-95ef-6ecf2c5ed7d1#Tenant-Admin"
+				"role_ref": "https://192.0.2.97/api/tenant/********/role/role-b073ab0d-e1d0-4800-95ef-6ecf2c5ed7d1#Tenant-Admin"
 			}],
 			"is_superuser": true,
 			"obj_username": "testuser",
@@ -85,7 +85,7 @@
 			"password": "<sensitive>",
 			"local": true,
 			"obj_password": "<sensitive>",
-			"default_tenant_ref": "https://10.10.28.97/api/tenant/********#********",
+			"default_tenant_ref": "https://192.0.2.97/api/tenant/********#********",
 			"uid": 2002
 		},
 		"changed": true,
@@ -100,7 +100,7 @@
 				"is_active": true,
 				"api_context": null,
 				"avi_disable_session_cache_as_fact": false,
-				"controller": "10.10.28.97",
+				"controller": "192.0.2.97",
 				"avi_api_patch_op": null,
 				"access": [{
 					"tenant_ref": "/api/tenant?name=Test-Admin",
@@ -121,7 +121,7 @@
 		},
 		"ansible_facts": {
 			"avi_api_context": {
-				"10.10.28.97:admin:None": {
+				"192.0.2.97:admin:None": {
 					"csrftoken": "Y7CET6zaIC9VZAzBqEW4cWo1N26jPg55",
 					"session_id": "364n7o0p3o5so63b9rzd47v6ehya6xg7"
 				}
@@ -129,15 +129,15 @@
 		},
 		"old_obj": {
 			"username": "testuser",
-			"user_profile_ref": "https://10.10.28.97/api/useraccountprofile/useraccountprofile-546c5e88-6270-4ba1-9cfd-d0c755e68f47#Default-User-Account-Profile",
+			"user_profile_ref": "https://192.0.2.97/api/useraccountprofile/useraccountprofile-546c5e88-6270-4ba1-9cfd-d0c755e68f47#Default-User-Account-Profile",
 			"name": "testuser",
-			"url": "https://10.10.28.97/api/user/user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a#testuser",
+			"url": "https://192.0.2.97/api/user/user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a#testuser",
 			"is_active": true,
 			"uuid": "user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a",
 			"access": [{
-				"tenant_ref": "https://10.10.28.97/api/tenant/tenant-57af0f3f-6f14-4657-8f32-9b289407752b#Test-Admin",
+				"tenant_ref": "https://192.0.2.97/api/tenant/tenant-57af0f3f-6f14-4657-8f32-9b289407752b#Test-Admin",
 				"all_tenants": false,
-				"role_ref": "https://10.10.28.97/api/tenant/********/role/role-b073ab0d-e1d0-4800-95ef-6ecf2c5ed7d1#Tenant-Admin"
+				"role_ref": "https://192.0.2.97/api/tenant/********/role/role-b073ab0d-e1d0-4800-95ef-6ecf2c5ed7d1#Tenant-Admin"
 			}],
 			"is_superuser": true,
 			"full_name": "testuser",
@@ -145,14 +145,14 @@
 			"password": "<sensitive>",
 			"local": true,
 			"email": "test@abc.com",
-			"default_tenant_ref": "https://10.10.28.97/api/tenant/********#********",
+			"default_tenant_ref": "https://192.0.2.97/api/tenant/********#********",
 			"uid": 2002
 		}
 	},
 	"mock_del_res": {
 		"ansible_facts": {
 			"avi_api_context": {
-				"10.10.28.97:admin:None": {
+				"192.0.2.97:admin:None": {
 					"csrftoken": "Vtkx9GeS2lsrld5yX83cmJqbZO3MAimb",
 					"session_id": "ix3t1dja8yzwb155de59viyn96hibn6b"
 				}
@@ -172,7 +172,7 @@
 				"avi_credentials": null,
 				"avi_disable_session_cache_as_fact": false,
 				"avi_login_info": null,
-				"controller": "10.10.28.97",
+				"controller": "192.0.2.97",
 				"default_tenant_ref": "/api/tenant?name=********",
 				"email": "test@abc.com",
 				"is_active": true,
@@ -193,10 +193,10 @@
 			"_last_modified": "1559803346264869",
 			"access": [{
 				"all_tenants": false,
-				"role_ref": "https://10.10.28.97/api/tenant/********/role/role-b073ab0d-e1d0-4800-95ef-6ecf2c5ed7d1#Tenant-Admin",
-				"tenant_ref": "https://10.10.28.97/api/tenant/tenant-57af0f3f-6f14-4657-8f32-9b289407752b#Test-Admin"
+				"role_ref": "https://192.0.2.97/api/tenant/********/role/role-b073ab0d-e1d0-4800-95ef-6ecf2c5ed7d1#Tenant-Admin",
+				"tenant_ref": "https://192.0.2.97/api/tenant/tenant-57af0f3f-6f14-4657-8f32-9b289407752b#Test-Admin"
 			}],
-			"default_tenant_ref": "https://10.10.28.97/api/tenant/********#********",
+			"default_tenant_ref": "https://192.0.2.97/api/tenant/********#********",
 			"email": "newemail@abc.com",
 			"full_name": "testuser",
 			"is_active": true,
@@ -206,8 +206,8 @@
 			"password": "<sensitive>",
 			"ui_property": "",
 			"uid": 2002,
-			"url": "https://10.10.28.97/api/user/user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a#testuser",
-			"user_profile_ref": "https://10.10.28.97/api/useraccountprofile/useraccountprofile-546c5e88-6270-4ba1-9cfd-d0c755e68f47#Default-User-Account-Profile",
+			"url": "https://192.0.2.97/api/user/user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a#testuser",
+			"user_profile_ref": "https://192.0.2.97/api/useraccountprofile/useraccountprofile-546c5e88-6270-4ba1-9cfd-d0c755e68f47#Default-User-Account-Profile",
 			"username": "testuser",
 			"uuid": "user-ed10f328-bd92-4db2-bacd-0cf795fcbf8a"
 		}
