@@ -51,24 +51,29 @@ options:
     description:
     - The immutable name of the TPU.
     required: true
+    type: str
   description:
     description:
     - The user-supplied description of the TPU. Maximum of 512 characters.
     required: false
+    type: str
   accelerator_type:
     description:
     - The type of hardware accelerators associated with this node.
     required: true
+    type: str
   tensorflow_version:
     description:
     - The version of Tensorflow running in the Node.
     required: true
+    type: str
   network:
     description:
     - The name of a network to peer the TPU node to. It must be a preexisting Compute
       Engine network inside of the project on which this API has been activated. If
       none is provided, "default" will be used.
     required: false
+    type: str
   cidr_block:
     description:
     - The CIDR block that the TPU node will use when selecting an IP address. This
@@ -80,10 +85,12 @@ options:
       network, or the provided network is peered with another network that is using
       that CIDR block.
     required: true
+    type: str
   scheduling_config:
     description:
     - Sets the scheduling options for this TPU instance.
     required: false
+    type: dict
     suboptions:
       preemptible:
         description:
@@ -95,10 +102,12 @@ options:
     description:
     - Resource labels to represent user provided metadata.
     required: false
+    type: dict
   zone:
     description:
     - The GCP location for the TPU.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/tpu/docs/reference/rest/)'
@@ -402,7 +411,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
-    raise_if_errors(op_result, ['error'], module)
+    raise_if_errors(wait_done, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 

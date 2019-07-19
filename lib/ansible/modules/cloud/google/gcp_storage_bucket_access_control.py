@@ -65,6 +65,7 @@ options:
       to a gcp_storage_bucket task and then set this bucket field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   entity:
     description:
     - 'The entity holding the permission, in one of the following forms: user-userId
@@ -74,29 +75,35 @@ options:
     - To refer to all members of the Google Apps for Business domain example.com,
       the entity would be domain-example.com.
     required: true
+    type: str
   entity_id:
     description:
     - The ID for the entity.
     required: false
+    type: str
   project_team:
     description:
     - The project team associated with the entity.
     required: false
+    type: dict
     suboptions:
       project_number:
         description:
         - The project team associated with the entity.
         required: false
+        type: str
       team:
         description:
         - The team.
         - 'Some valid choices include: "editors", "owners", "viewers"'
         required: false
+        type: str
   role:
     description:
     - The access permission for the entity.
     - 'Some valid choices include: "OWNER", "READER", "WRITER"'
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 

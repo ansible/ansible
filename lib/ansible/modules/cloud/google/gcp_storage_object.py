@@ -52,6 +52,7 @@ options:
     - Upload or download from the bucket.
     - 'Some valid choices include: "download", "upload"'
     required: false
+    type: str
   overwrite:
     description:
     - "'Overwrite the file on the bucket/local machine. If overwrite is false and
@@ -62,14 +63,17 @@ options:
     description:
     - Source location of file (may be local machine or cloud depending on action).
     required: false
+    type: path
   dest:
     description:
     - Destination location of file (may be local machine or cloud depending on action).
     required: false
+    type: path
   bucket:
     description:
     - The name of the bucket.
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 

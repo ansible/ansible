@@ -60,7 +60,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'webstore' in \"{{ results['resources'] | map(attribute='name') | list }}\""
+      - results['resources'] | map(attribute='name') | select("match", ".*webstore.*") | list | length == 1
 # ----------------------------------------------------------------------------
 - name: create a database that already exists
   gcp_spanner_database:
@@ -101,7 +101,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - "'webstore' not in \"{{ results['resources'] | map(attribute='name') | list }}\""
+      - results['resources'] | map(attribute='name') | select("match", ".*webstore.*") | list | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a database that does not exist
   gcp_spanner_database:
