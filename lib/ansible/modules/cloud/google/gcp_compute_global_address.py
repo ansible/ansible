@@ -52,11 +52,13 @@ options:
     description:
     - The static external IP address represented by this resource.
     required: false
+    type: str
     version_added: 2.8
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -66,18 +68,21 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   ip_version:
     description:
     - The IP Version that will be used by this address. Valid options are `IPV4` or
       `IPV6`. The default value is `IPV4`.
     - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
+    type: str
   prefix_length:
     description:
     - The prefix length of the IP range. If not present, it means the address field
       is a single IP address.
     - This field is not applicable to addresses with addressType=EXTERNAL.
     required: false
+    type: int
     version_added: 2.9
   address_type:
     description:
@@ -87,6 +92,7 @@ options:
     - 'Some valid choices include: "EXTERNAL", "INTERNAL"'
     required: false
     default: EXTERNAL
+    type: str
     version_added: 2.8
   purpose:
     description:
@@ -94,6 +100,7 @@ options:
       - for peer networks This should only be set when using an Internal address.
     - 'Some valid choices include: "VPC_PEERING"'
     required: false
+    type: str
     version_added: 2.9
   network:
     description:
@@ -107,6 +114,7 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
     version_added: 2.9
 extends_documentation_fragment: gcp
 notes:

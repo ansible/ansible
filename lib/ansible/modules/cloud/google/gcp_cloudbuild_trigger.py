@@ -51,10 +51,12 @@ options:
     description:
     - The unique identifier for the trigger.
     required: false
+    type: str
   description:
     description:
     - Human-readable description of the trigger.
     required: false
+    type: str
   disabled:
     description:
     - Whether the trigger is disabled or not. If true, the trigger will never result
@@ -65,11 +67,13 @@ options:
     description:
     - Substitutions data for Build resource.
     required: false
+    type: dict
   filename:
     description:
     - Path, from the source root, to a file whose contents is used for the template.
       Either a filename or build template must be provided.
     required: false
+    type: str
   ignored_files:
     description:
     - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
@@ -80,6 +84,7 @@ options:
       ignored_file globs. If the change has no files that are outside of the ignoredFiles
       globs, then we do not trigger a build.
     required: false
+    type: list
   included_files:
     description:
     - ignoredFiles and includedFiles are file glob matches using http://godoc/pkg/path/filepath#Match
@@ -90,6 +95,7 @@ options:
       is not empty, then we make sure that at least one of those files matches a includedFiles
       glob. If not, then we do not trigger a build.
     required: false
+    type: list
   trigger_template:
     description:
     - Template describing the types of source changes to trigger a build.
@@ -97,48 +103,57 @@ options:
       Any branch or tag change that matches that regular expression will trigger a
       build.
     required: false
+    type: dict
     suboptions:
       project_id:
         description:
         - ID of the project that owns the Cloud Source Repository. If omitted, the
           project ID requesting the build is assumed.
         required: false
+        type: str
       repo_name:
         description:
         - Name of the Cloud Source Repository. If omitted, the name "default" is assumed.
         required: false
         default: default
+        type: str
       dir:
         description:
         - Directory, relative to the source root, in which to run the build.
         - This must be a relative path. If a step's dir is specified and is an absolute
           path, this value is ignored for that step's execution.
         required: false
+        type: str
       branch_name:
         description:
         - Name of the branch to build. Exactly one a of branch name, tag, or commit
           SHA must be provided.
         required: false
+        type: str
       tag_name:
         description:
         - Name of the tag to build. Exactly one of a branch name, tag, or commit SHA
           must be provided.
         required: false
+        type: str
       commit_sha:
         description:
         - Explicit commit SHA to build. Exactly one of a branch name, tag, or commit
           SHA must be provided.
         required: false
+        type: str
   build:
     description:
     - Contents of the build template. Either a filename or build template must be
       provided.
     required: false
+    type: dict
     suboptions:
       tags:
         description:
         - Tags for annotation of a Build. These are not docker tags.
         required: false
+        type: list
       images:
         description:
         - A list of images to be pushed upon the successful completion of all build
@@ -148,10 +163,12 @@ options:
           results field.
         - If any of the images fail to be pushed, the build status is marked FAILURE.
         required: false
+        type: list
       steps:
         description:
         - The operations to be performed on the workspace.
         required: false
+        type: list
         suboptions:
           name:
             description:
@@ -169,6 +186,7 @@ options:
               the host's Docker daemon's cache and is available to use as the name
               for a later build step.
             required: false
+            type: str
           args:
             description:
             - A list of arguments that will be presented to the step when it is started.
@@ -177,6 +195,7 @@ options:
               define an entrypoint, the first element in args is used as the entrypoint,
               and the remainder will be used as arguments.
             required: false
+            type: list
           env:
             description:
             - A list of environment variable definitions to be used when running a
@@ -184,16 +203,19 @@ options:
             - The elements are of the form "KEY=VALUE" for the environment variable
               "KEY" being given the value "VALUE".
             required: false
+            type: list
           id:
             description:
             - Unique identifier for this build step, used in `wait_for` to reference
               this build step as a dependency.
             required: false
+            type: str
           entrypoint:
             description:
             - Entrypoint to be used instead of the build step image's default entrypoint.
             - If unset, the image's default entrypoint is used .
             required: false
+            type: str
           dir:
             description:
             - Working directory to use when running this step's container.
@@ -206,22 +228,26 @@ options:
               which specifies an absolute path, the `RepoSource` `dir` is ignored
               for the step's execution.
             required: false
+            type: str
           secret_env:
             description:
             - A list of environment variables which are encrypted using a Cloud Key
               Management Service crypto key. These values must be specified in the
               build's `Secret`.
             required: false
+            type: list
           timeout:
             description:
             - Time limit for executing this build step. If not defined, the step has
               no time limit and will be allowed to continue to run until either it
               completes or the build itself times out.
             required: false
+            type: str
           timing:
             description:
             - Output only. Stores timing information for executing this build step.
             required: false
+            type: str
           volumes:
             description:
             - List of volumes to mount into the build step.
@@ -231,6 +257,7 @@ options:
             - Using a named volume in only one step is not valid as it is indicative
               of a build request with an incorrect configuration.
             required: false
+            type: list
             suboptions:
               name:
                 description:
@@ -239,12 +266,14 @@ options:
                   for Docker volumes. Each named volume must be used by at least two
                   build steps.
                 required: false
+                type: str
               path:
                 description:
                 - Path at which to mount the volume.
                 - Paths must be absolute and cannot conflict with other volume paths
                   on the same build step or with certain reserved volume paths.
                 required: false
+                type: str
           wait_for:
             description:
             - The ID(s) of the step(s) that this build step depends on.
@@ -253,6 +282,7 @@ options:
               will start when all previous build steps in the `Build.Steps` list have
               completed successfully.
             required: false
+            type: list
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/cloud-build/docs/api/reference/rest/)'

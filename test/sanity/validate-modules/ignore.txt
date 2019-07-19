@@ -648,10 +648,8 @@ lib/ansible/modules/cloud/google/_gcp_backend_service.py E326
 lib/ansible/modules/cloud/google/_gcp_backend_service.py E337
 lib/ansible/modules/cloud/google/_gcp_backend_service.py E338
 lib/ansible/modules/cloud/google/gcp_bigquery_dataset.py E337
-lib/ansible/modules/cloud/google/gcp_bigquery_table_facts.py E337
 lib/ansible/modules/cloud/google/gcp_bigquery_table.py E337
 lib/ansible/modules/cloud/google/gcp_cloudbuild_trigger.py E337
-lib/ansible/modules/cloud/google/gcp_cloudscheduler_job_facts.py E337
 lib/ansible/modules/cloud/google/gcp_cloudscheduler_job.py E337
 lib/ansible/modules/cloud/google/gcp_compute_address_facts.py E337
 lib/ansible/modules/cloud/google/gcp_compute_address.py E337

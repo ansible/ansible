@@ -54,6 +54,7 @@ options:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   ip_address:
     description:
     - The IP address that this forwarding rule is serving on behalf of.
@@ -76,6 +77,7 @@ options:
       * projects/project/regions/region/addresses/address * regions/region/addresses/address
       * global/addresses/address * address .'
     required: false
+    type: str
   ip_protocol:
     description:
     - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP,
@@ -83,6 +85,7 @@ options:
     - When the load balancing scheme is INTERNAL, only TCP and UDP are valid.
     - 'Some valid choices include: "TCP", "UDP", "ESP", "AH", "SCTP", "ICMP"'
     required: false
+    type: str
   backend_service:
     description:
     - A BackendService to receive the matched traffic. This is used only for INTERNAL
@@ -93,11 +96,13 @@ options:
       name-of-resource` to a gcp_compute_backend_service task and then set this backend_service
       field to "{{ name-of-resource }}"'
     required: false
+    type: dict
   ip_version:
     description:
     - ipVersion is not a valid field for regional forwarding rules.
     - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
+    type: str
   load_balancing_scheme:
     description:
     - 'This signifies what the ForwardingRule will be used for and can only take the
@@ -107,6 +112,7 @@ options:
       TCP/UDP LB, SSL Proxy) .'
     - 'Some valid choices include: "INTERNAL", "EXTERNAL"'
     required: false
+    type: str
   name:
     description:
     - Name of the resource; provided by the client when the resource is created. The
@@ -116,6 +122,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - For internal load balancing, this field identifies the network that the load
@@ -128,6 +135,7 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   port_range:
     description:
     - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -142,6 +150,7 @@ options:
       43, 110, 143, 195, 443, 465, 587, 700, 993, 995, 1883, 5222 * TargetVpnGateway:
       500, 4500 .'
     required: false
+    type: str
   ports:
     description:
     - This field is used along with the backend_service field for internal load balancing.
@@ -150,6 +159,7 @@ options:
       be forwarded to the backends configured with this forwarding rule.
     - You may specify a maximum of up to 5 ports.
     required: false
+    type: list
   subnetwork:
     description:
     - The subnetwork that the load balanced IP should belong to for this Forwarding
@@ -162,6 +172,7 @@ options:
       to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   target:
     description:
     - This field is only used for EXTERNAL load balancing.
@@ -174,6 +185,7 @@ options:
       to a gcp_compute_target_pool task and then set this target field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
     version_added: 2.7
   all_ports:
     description:
@@ -191,6 +203,7 @@ options:
       is assumed to be PREMIUM.'
     - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
+    type: str
     version_added: 2.8
   service_label:
     description:
@@ -203,12 +216,14 @@ options:
       except the last character, which cannot be a dash.
     - This field is only used for INTERNAL load balancing.
     required: false
+    type: str
     version_added: 2.8
   region:
     description:
     - A reference to the region where the regional forwarding rule resides.
     - This field is not applicable to global forwarding rules.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/forwardingRule)'
