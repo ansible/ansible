@@ -67,12 +67,3 @@ def get_defaults_flag(module):
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return to_text(out, errors='surrogate_then_replace').strip()
-
-
-def get_env_diff(module, compare=None):
-    connection = get_connection(module)
-    try:
-        out = connection.get_env_diff(compare)
-    except ConnectionError as exc:
-        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
-    return out
