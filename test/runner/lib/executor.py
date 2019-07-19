@@ -1342,6 +1342,7 @@ def command_units(args):
 
         if args.coverage:
             plugins.append('ansible_pytest_coverage')
+            plugins.append('ansible_unit_test_log')
 
         if plugins:
             env['PYTHONPATH'] += ':%s' % os.path.join(INSTALL_ROOT, 'test/units/pytest/plugins')
