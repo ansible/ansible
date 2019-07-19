@@ -44,6 +44,7 @@ options:
     description:
     - The name of the Redis region of the instance.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

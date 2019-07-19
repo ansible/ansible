@@ -52,11 +52,13 @@ options:
     - Output format for the service account key.
     - 'Some valid choices include: "TYPE_UNSPECIFIED", "TYPE_PKCS12_FILE", "TYPE_GOOGLE_CREDENTIALS_FILE"'
     required: false
+    type: str
   key_algorithm:
     description:
     - Specifies the algorithm for the key.
     - 'Some valid choices include: "KEY_ALG_UNSPECIFIED", "KEY_ALG_RSA_1024", "KEY_ALG_RSA_2048"'
     required: false
+    type: str
   service_account:
     description:
     - The name of the serviceAccount.
@@ -66,12 +68,14 @@ options:
       to a gcp_iam_service_account task and then set this service_account field to
       "{{ name-of-resource }}"'
     required: false
+    type: dict
   path:
     description:
     - The full name of the file that will hold the service account private key. The
       management of this file will depend on the value of sync_file parameter.
     - File path must be absolute.
     required: false
+    type: path
 extends_documentation_fragment: gcp
 '''
 

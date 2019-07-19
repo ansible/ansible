@@ -51,6 +51,7 @@ options:
     description:
     - Name of the topic.
     required: true
+    type: str
   kms_key_name:
     description:
     - The resource name of the Cloud KMS CryptoKey to be used to protect access to
@@ -58,11 +59,13 @@ options:
       must have `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
     - The expected format is `projects/*/locations/*/keyRings/*/cryptoKeys/*` .
     required: false
+    type: str
     version_added: 2.9
   labels:
     description:
     - A set of key/value label pairs to assign to this Topic.
     required: false
+    type: dict
     version_added: 2.8
 extends_documentation_fragment: gcp
 notes:

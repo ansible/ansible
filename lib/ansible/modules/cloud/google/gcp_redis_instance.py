@@ -53,19 +53,23 @@ options:
       failures by provisioning it across two zones.
     - If provided, it must be a different zone from the one provided in [locationId].
     required: false
+    type: str
   authorized_network:
     description:
     - The full name of the Google Compute Engine network to which the instance is
       connected. If left unspecified, the default network will be used.
     required: false
+    type: str
   display_name:
     description:
     - An arbitrary and optional user-provided name for the instance.
     required: false
+    type: str
   labels:
     description:
     - Resource labels to represent user provided metadata.
     required: false
+    type: dict
   redis_configs:
     description:
     - Redis configuration parameters, according to U(http://redis.io/topics/config).
@@ -73,6 +77,7 @@ options:
       U(https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs)
       .'
     required: false
+    type: dict
   location_id:
     description:
     - The zone where the instance will be provisioned. If not provided, the service
@@ -80,20 +85,24 @@ options:
       created across two zones for protection against zonal failures. If [alternativeLocationId]
       is also provided, it must be different from [locationId].
     required: false
+    type: str
   name:
     description:
     - The ID of the instance or a fully qualified identifier for the instance. .
     required: true
+    type: str
   memory_size_gb:
     description:
     - Redis memory size in GiB.
     required: true
+    type: int
   redis_version:
     description:
     - The version of Redis software. If not provided, latest supported version will
       be used. Updating the version will perform an upgrade/downgrade to the new version.
       Currently, the supported values are REDIS_3_2 for Redis 3.2.
     required: false
+    type: str
   reserved_ip_range:
     description:
     - The CIDR range of internal addresses that are reserved for this instance. If
@@ -101,6 +110,7 @@ options:
       or 192.168.0.0/29. Ranges must be unique and non-overlapping with existing subnets
       in an authorized network.
     required: false
+    type: str
   tier:
     description:
     - 'The service tier of the instance. Must be one of these values: - BASIC: standalone
@@ -108,10 +118,12 @@ options:
     - 'Some valid choices include: "BASIC", "STANDARD_HA"'
     required: false
     default: BASIC
+    type: str
   region:
     description:
     - The name of the Redis region of the instance.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/memorystore/docs/redis/reference/rest/)'
@@ -459,7 +471,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
-    raise_if_errors(op_result, ['error'], module)
+    raise_if_errors(wait_done, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 

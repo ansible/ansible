@@ -55,20 +55,24 @@ options:
     description:
     - For example, U(www.example.com).
     required: true
+    type: str
   type:
     description:
     - One of valid DNS resource types.
     - 'Some valid choices include: "A", "AAAA", "CAA", "CNAME", "MX", "NAPTR", "NS",
       "PTR", "SOA", "SPF", "SRV", "TLSA", "TXT"'
     required: true
+    type: str
   ttl:
     description:
     - Number of seconds that this ResourceRecordSet can be cached by resolvers.
     required: false
+    type: int
   target:
     description:
     - As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1) .
     required: false
+    type: list
   managed_zone:
     description:
     - Identifies the managed zone addressed by this request.
@@ -78,6 +82,7 @@ options:
       to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
 extends_documentation_fragment: gcp
 '''
 
