@@ -165,6 +165,13 @@ options:
         type: path
     type: dict
     version_added: "2.8"
+  exclusive:
+    description:
+      - Enters into exclusive configuration mode that locks out all users from committing
+        configuration changes until the exclusive session ends.
+    type: bool
+    default: false
+    version_added: "2.9"
 """
 
 EXAMPLES = """
@@ -308,6 +315,7 @@ def run(module, result):
     path = module.params['parents']
     comment = module.params['comment']
     admin = module.params['admin']
+    exclusive = module.params['exclusive']
     check_mode = module.check_mode
     label = module.params['label']
 
@@ -350,7 +358,7 @@ def run(module, result):
         commit = not check_mode
         diff = load_config(
             module, commands, commit=commit,
-            replace=replace_file_path, comment=comment, admin=admin,
+            replace=replace_file_path, comment=comment, admin=admin, exclusive=exclusive,
             label=label
         )
         if diff:
@@ -387,6 +395,7 @@ def main():
         backup_options=dict(type='dict', options=backup_spec),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
         admin=dict(type='bool', default=False),
+        exclusive=dict(type='bool', default=False),
         label=dict()
     )
 
