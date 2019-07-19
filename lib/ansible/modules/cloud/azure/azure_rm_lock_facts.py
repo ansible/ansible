@@ -24,8 +24,8 @@ options:
     name:
         description:
             - Name of the lock.
-        type: str
         required: true
+        type: str
     managed_resource_id:
         description:
             - ID of the resource where need to manage the lock.
