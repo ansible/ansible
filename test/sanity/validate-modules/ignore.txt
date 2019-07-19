@@ -743,13 +743,10 @@ lib/ansible/modules/cloud/google/gcp_redis_instance_facts.py E337
 lib/ansible/modules/cloud/google/gcp_redis_instance.py E337
 lib/ansible/modules/cloud/google/gcp_resourcemanager_project.py E337
 lib/ansible/modules/cloud/google/gcp_sourcerepo_repository.py E337
-lib/ansible/modules/cloud/google/gcp_spanner_database_facts.py E337
 lib/ansible/modules/cloud/google/gcp_spanner_database.py E337
 lib/ansible/modules/cloud/google/gcp_spanner_instance.py E337
-lib/ansible/modules/cloud/google/gcp_sql_database_facts.py E337
 lib/ansible/modules/cloud/google/gcp_sql_database.py E337
 lib/ansible/modules/cloud/google/gcp_sql_instance.py E337
-lib/ansible/modules/cloud/google/gcp_sql_user_facts.py E337
 lib/ansible/modules/cloud/google/gcp_sql_user.py E337
 lib/ansible/modules/cloud/google/gcp_storage_bucket_access_control.py E337
 lib/ansible/modules/cloud/google/gcp_storage_bucket.py E337
@@ -758,7 +755,6 @@ lib/ansible/modules/cloud/google/_gcp_target_proxy.py E322
 lib/ansible/modules/cloud/google/_gcp_target_proxy.py E326
 lib/ansible/modules/cloud/google/_gcp_target_proxy.py E337
 lib/ansible/modules/cloud/google/_gcp_target_proxy.py E338
-lib/ansible/modules/cloud/google/gcp_tpu_node_facts.py E337
 lib/ansible/modules/cloud/google/gcp_tpu_node.py E337
 lib/ansible/modules/cloud/google/gcpubsub_facts.py E322
 lib/ansible/modules/cloud/google/gcpubsub_facts.py E324

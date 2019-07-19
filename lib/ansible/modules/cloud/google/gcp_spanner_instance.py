@@ -52,6 +52,7 @@ options:
     - A unique identifier for the instance, which cannot be changed after the instance
       is created. The name must be between 6 and 30 characters in length.
     required: true
+    type: str
   config:
     description:
     - The name of the instance's configuration (similar but not quite the same as
@@ -61,21 +62,25 @@ options:
     - In order to obtain a valid list please consult the [Configuration section of
       the docs](U(https://cloud.google.com/spanner/docs/instances)).
     required: true
+    type: str
   display_name:
     description:
     - The descriptive name for this instance as it appears in UIs. Must be unique
       per project and between 4 and 30 characters in length.
     required: true
+    type: str
   node_count:
     description:
     - The number of nodes allocated to this instance.
     required: false
     default: '1'
+    type: int
   labels:
     description:
     - 'An object containing a list of "key": value pairs.'
     - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
     required: false
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/spanner/docs/reference/rest/v1/projects.instances)'
@@ -202,7 +207,7 @@ def update(module, link):
 
 def delete(module, link):
     auth = GcpSession(module, 'spanner')
-    return wait_for_operation(module, auth.delete(link))
+    return return_if_object(module, auth.delete(link))
 
 
 def resource_to_request(module):
@@ -303,7 +308,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
-    raise_if_errors(op_result, ['error'], module)
+    raise_if_errors(wait_done, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 

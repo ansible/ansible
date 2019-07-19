@@ -51,19 +51,23 @@ options:
     description:
     - The MySQL charset value.
     required: false
+    type: str
   collation:
     description:
     - The MySQL collation value.
     required: false
+    type: str
   name:
     description:
     - The name of the database in the Cloud SQL instance.
     - This does not include the project ID or instance name.
     required: true
+    type: str
   instance:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
