@@ -44,7 +44,7 @@ class Cliconf(CliconfBase):
         if not flags:
             flags = []
 
-        if self.get_env_diff(compare) is False:
+        if compare is False:
             return ''
         else:
             if source == 'running':
@@ -56,18 +56,6 @@ class Cliconf(CliconfBase):
             cmd = cmd.strip()
 
             return self.send_command(cmd)
-
-    def get_env_diff(self, compare=None):
-        if compare is not None:
-            diff = compare
-        elif os.environ.get('CHECK_RUNNING_CONFIG') is not None:
-            if os.environ.get('CHECK_RUNNING_CONFIG') == 'False':
-                diff = False
-            else:
-                diff = True
-        else:
-            diff = True
-        return diff
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         """
