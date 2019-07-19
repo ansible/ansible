@@ -54,6 +54,8 @@ options:
        by specifying it as module parameter.
     type: bool
     default: yes
+  notes:
+    - Tested against ICX 10.1
 
 """
 
