@@ -225,10 +225,10 @@ def main():
     ssl_context = None
     if not validate_certs:
         try:  # Python 2.7.9 and newer
-            ssl_context = ssl.create_unverified_context()
+            ssl_context = ssl._create_unverified_context()
         except AttributeError:  # Legacy Python that doesn't verify HTTPS certificates by default
             ssl._create_default_context = ssl._create_unverified_context
-        else:  # Python 2.7.8 and older
+        except:  # Python 2.7.8 and older
             ssl._create_default_https_context = ssl._create_unverified_https_context
 
     url = '{proto}://{host}:{port}/cobbler_api'.format(**module.params)
