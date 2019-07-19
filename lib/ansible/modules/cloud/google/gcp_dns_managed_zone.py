@@ -53,14 +53,17 @@ options:
     - A mutable string of at most 1024 characters associated with this resource for
       the user's convenience. Has no effect on the managed zone's function.
     required: true
+    type: str
   dns_name:
     description:
     - The DNS name of this managed zone, for instance "example.com.".
     required: true
+    type: str
   dnssec_config:
     description:
     - DNSSEC configuration.
     required: false
+    type: dict
     version_added: 2.9
     suboptions:
       kind:
@@ -68,23 +71,27 @@ options:
         - Identifies what kind of resource this is.
         required: false
         default: dns#managedZoneDnsSecConfig
+        type: str
       non_existence:
         description:
         - Specifies the mechanism used to provide authenticated denial-of-existence
           responses.
         - 'Some valid choices include: "nsec", "nsec3"'
         required: false
+        type: str
       state:
         description:
         - Specifies whether DNSSEC is enabled, and what mode it is in.
         - 'Some valid choices include: "off", "on", "transfer"'
         required: false
+        type: str
       default_key_specs:
         description:
         - Specifies parameters that will be used for generating initial DnsKeys for
           this ManagedZone. If you provide a spec for keySigning or zoneSigning, you
           must also provide one for the other.
         required: false
+        type: list
         suboptions:
           algorithm:
             description:
@@ -92,10 +99,12 @@ options:
             - 'Some valid choices include: "ecdsap256sha256", "ecdsap384sha384", "rsasha1",
               "rsasha256", "rsasha512"'
             required: false
+            type: str
           key_length:
             description:
             - Length of the keys in bits.
             required: false
+            type: int
           key_type:
             description:
             - Specifies whether this is a key signing key (KSK) or a zone signing
@@ -105,26 +114,31 @@ options:
               and will be used to sign all other types of resource record sets. .
             - 'Some valid choices include: "keySigning", "zoneSigning"'
             required: false
+            type: str
           kind:
             description:
             - Identifies what kind of resource this is.
             required: false
             default: dns#dnsKeySpec
+            type: str
   name:
     description:
     - User assigned name for this resource.
     - Must be unique within the project.
     required: true
+    type: str
   name_server_set:
     description:
     - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet
       is a set of DNS name servers that all host the same ManagedZones. Most users
       will leave this field unset.
     required: false
+    type: str
   labels:
     description:
     - A set of key/value label pairs to assign to this ManagedZone.
     required: false
+    type: dict
     version_added: 2.8
   visibility:
     description:
@@ -134,18 +148,21 @@ options:
     - 'Some valid choices include: "private", "public"'
     required: false
     default: public
+    type: str
     version_added: 2.8
   private_visibility_config:
     description:
     - For privately visible zones, the set of Virtual Private Cloud resources that
       the zone is visible from.
     required: false
+    type: dict
     version_added: 2.8
     suboptions:
       networks:
         description:
         - The list of VPC networks that can see this zone.
         required: false
+        type: list
         suboptions:
           network_url:
             description:
@@ -153,6 +170,7 @@ options:
             - This should be formatted like `U(https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`)
               .
             required: false
+            type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/dns/api/v1/managedZones)'
