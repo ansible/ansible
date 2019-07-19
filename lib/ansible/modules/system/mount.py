@@ -74,9 +74,12 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+      - C(remounted) specifies that the device will be remounted for when you
+        want to force a refresh on the mount itself (added in 2.9). This will
+        always return changed=true.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, unmounted, remounted ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -597,7 +600,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -730,6 +733,14 @@ def main():
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'present':
         name, changed = set_mount(module, args)
+    elif state == 'remounted':
+        if not module.check_mode:
+            res, msg = remount(module, args)
+
+            if res:
+                module.fail_json(msg="Error remounting %s: %s" % (name, msg))
+
+        changed = True
     else:
         module.fail_json(msg='Unexpected position reached')
 
