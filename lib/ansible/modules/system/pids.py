@@ -62,8 +62,8 @@ def get_pid(name):
     pids = []
     
     for proc in psutil.process_iter(attrs=['name', 'cmdline']):
-        if compare_lower(proc.info['name'], pgname) or \
-                proc.info['cmdline'] and compare_lower(proc.info['cmdline'][0], pgname):
+        if compare_lower(proc.info['name'], name) or \
+                proc.info['cmdline'] and compare_lower(proc.info['cmdline'][0], name):
             pids.append(proc.pid)
 
     return pids
