@@ -18,7 +18,7 @@ module: os_address_scope
 short_description: Manage an openstack address scope
 extends_documentation_fragment: openstack
 author: "Dario Zanzico (@dariko)"
-version_added: "2.8"
+version_added: "2.9"
 description:
 - Address scopes can be created, updated and deleted.
 - If I(state) is 'query' the module will return informations about all the
@@ -31,17 +31,20 @@ options:
     description:
     - Name that has to be given to the address scope. This module requires
       address scope names to be unique.
+    type: str
   ip_version:
     default: 4
     choices: [4, 6]
     description:
     - IP protocol version for the address scope.
+    type: int
   project_id:
     default: ""
     description:
     - ID of the address scope project.
     - Can not be updated on a existing address scope.
     - Only administrators can create an address scope in a specific project.
+    type: str
   shared:
     description:
     - Whether this address scope is shared or not.
@@ -55,9 +58,11 @@ options:
     choices:
     - present
     - absent
+    type: str
   availability_zone:
-     description:
-       - Ignored. Present for backwards compatibility
+    description:
+    - Ignored. Present for backwards compatibility
+    type: str
 requirements:
     - "python >= 2.7"
     - "openstacksdk"
