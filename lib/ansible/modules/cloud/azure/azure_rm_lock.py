@@ -96,9 +96,9 @@ RETURN = '''
 id:
     description:
         - Resource ID of the lock.
-    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Authorization/locks/keep"
     returned: success
     type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Authorization/locks/keep"
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
