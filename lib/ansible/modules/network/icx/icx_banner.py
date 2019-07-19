@@ -97,8 +97,8 @@ commands:
 import re
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.icx.icx import load_config, get_config, get_env_diff
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.network.icx.icx import load_config, get_config
 from ansible.module_utils.connection import Connection, ConnectionError
 
 
@@ -158,7 +158,7 @@ def map_config_to_obj(module):
     if output_text:
         obj['text'] = output_text
         obj['state'] = 'present'
-    if get_env_diff(module, module.params['check_running_config']) is False:
+    if module.params['check_running_config'] is False:
         obj = {'banner': module.params['banner'], 'state': 'absent', 'enterkey': False, 'text': 'JUNK'}
     return obj
 
@@ -184,7 +184,7 @@ def main():
         text=dict(),
         enterkey=dict(type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        check_running_config=dict(default=True, type='bool')
+        check_running_config=dict(default=True, type='bool', fallback=(env_fallback, ['ANSIBLE_CHECK_ICX_RUNNING_CONFIG']))
     )
 
     required_one_of = [['text', 'enterkey', 'state']]
