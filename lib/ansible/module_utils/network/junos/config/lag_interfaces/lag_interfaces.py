@@ -162,10 +162,23 @@ class Lag_interfaces(ConfigBase):
                    the current configuration
          """
         intf_xml = []
+        config_filter = """
+            <configuration>
+                <interfaces/>
+            </configuration>
+            """
+        data = self._connection.get_configuration(filter=config_filter)
 
         for config in want:
+            lag_name = config['name']
+
+            # if lag interface not already configured fail module.
+            if not data.xpath("configuration/interfaces/interface[name='%s']" % lag_name):
+                self._module.fail_json(msg="lag interface %s not configured, configure interface"
+                                           " %s before assigning members to lag" % (lag_name, lag_name))
+
             lag_intf_root = build_root_xml_node('interface')
-            build_child_xml_node(lag_intf_root, 'name', config['name'])
+            build_child_xml_node(lag_intf_root, 'name', lag_name)
             ether_options_node = build_subtree(lag_intf_root, 'aggregated-ether-options')
             if config['mode']:
 

@@ -126,9 +126,8 @@ EXAMPLES = """
 - name: "Delete LAG attributes of given interfaces (Note: This won't delete the interface itself)"
   junos_lag_interfaces:
     config:
-      members:
-      - member: ae0
-      - member: ae1
+      - name: ae0
+      - name: ae1
     state: deleted
 
 # After state:
