@@ -694,7 +694,7 @@ class AnsibleModule(object):
         self._set_cwd()
 
         # Do this at the end so that logging parameters have been set up
-        # This is to warn third party module authors that the functionatlity is going away.
+        # This is to warn third party module authors that the functionality is going away.
         # We exclude uri and zfs as they have their own deprecation warnings for users and we'll
         # make sure to update their code to stop using check_invalid_arguments when 2.9 rolls around
         if module_set_check_invalid_arguments and self._name not in ('uri', 'zfs'):
