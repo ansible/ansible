@@ -54,11 +54,11 @@ options:
         description:
             - Indicates the source IP address carried in BFD packets.
     local_discr:
-	    version_added: 2.9
+        version_added: 2.9
         description:
             - The BFD session local identifier does not need to be configured when the mode is auto.
     remote_discr:
-	    version_added: 2.9
+        version_added: 2.9
         description:
             - The BFD session remote identifier does not need to be configured when the mode is auto.
     vrf_name:
