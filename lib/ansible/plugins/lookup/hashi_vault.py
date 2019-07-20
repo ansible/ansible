@@ -31,8 +31,12 @@ DOCUMENTATION = """
       default: 'http://127.0.0.1:8200'
     username:
       description: Authentication user name.
+      env:
+        - name: VAULT_USERNAME
     password:
       description: Authentication password.
+      env:
+        - name: VAULT_PASSWORD
     role_id:
       description: Role id for a vault AppRole auth.
       env:
@@ -54,17 +58,25 @@ DOCUMENTATION = """
     mount_point:
       description: vault mount point, only required if you have a custom mount point.
       default: ldap
+      env:
+        - name: VAULT_MOUNT_POINT
     ca_cert:
       description: path to certificate to use for authentication.
       aliases: [ cacert ]
+      env:
+        - name: VAULT_CACERT
     validate_certs:
       description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
       default: True
+      env:
+        - name: VAULT_SKIP_VALIDATE_CERTS
     namespace:
       version_added: "2.8"
       description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+.
       default: None
+      env:
+        - name: VAULT_NAMESPACE
 """
 
 EXAMPLES = """
@@ -130,7 +142,7 @@ class HashiVault:
     def __init__(self, **kwargs):
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
-        self.namespace = kwargs.get('namespace', None)
+        self.namespace = kwargs.get('namespace', os.environ.get('VAULT_NAMESPACE'))
         self.avail_auth_method = ['approle', 'userpass', 'ldap']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
@@ -145,7 +157,10 @@ class HashiVault:
         else:
             self.secret_field = ''
 
-        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
+        self.verify = self.boolean_or_cacert(
+            kwargs.get('validate_certs', os.environ.get('VAULT_SKIP_VALIDATE_CERTS') is None),
+            kwargs.get('cacert', os.environ.get('VAULT_CACERT', ''))
+        )
 
         # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
         # token auth. This means if a particular auth backend is requested and a token is also given, then we
@@ -203,15 +218,15 @@ class HashiVault:
         return data['data'][self.secret_field]
 
     def check_params(self, **kwargs):
-        username = kwargs.get('username')
+        username = kwargs.get('username', os.environ.get('VAULT_USERNAME'))
         if username is None:
             raise AnsibleError("Authentication method %s requires a username" % self.auth_method)
 
-        password = kwargs.get('password')
+        password = kwargs.get('password', os.environ.get('VAULT_PASSWORD'))
         if password is None:
             raise AnsibleError("Authentication method %s requires a password" % self.auth_method)
 
-        mount_point = kwargs.get('mount_point')
+        mount_point = kwargs.get('mount_point', os.environ.get('VAULT_MOUNT_POINT'))
 
         return username, password, mount_point
 
