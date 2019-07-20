@@ -211,7 +211,7 @@ instance:
         "hw_guest_ha_state": null,
         "hw_guest_id": null,
         "hw_interfaces": [
-            "eth0"
+            "Network adapter 1"
         ],
         "hw_is_template": false,
         "hw_memtotal_mb": 1024,
