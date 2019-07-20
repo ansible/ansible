@@ -34,7 +34,6 @@ lib/ansible/modules/monitoring/zabbix/zabbix_maintenance.py blacklisted-name
 lib/ansible/modules/net_tools/basics/uri.py blacklisted-name
 lib/ansible/modules/network/cloudengine/ce_command.py blacklisted-name
 lib/ansible/modules/network/cloudengine/ce_dldp_interface.py blacklisted-name
-lib/ansible/modules/network/cloudengine/ce_mlag_interface.py blacklisted-name
 lib/ansible/modules/network/cloudvision/cv_server_provision.py blacklisted-name
 lib/ansible/modules/network/illumos/dladm_etherstub.py blacklisted-name
 lib/ansible/modules/network/illumos/dladm_iptun.py blacklisted-name
