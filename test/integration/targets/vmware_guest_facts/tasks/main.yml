@@ -40,8 +40,8 @@
       - "guest_facts_0001['instance']['guest_consolidation_needed'] is defined"
       - "guest_facts_0001['instance']['moid'] is defined"
       - "guest_facts_0001['instance']['vimref'] is defined"
-      - "'portgroup_portkey' in guest_facts_0001['instance']['hw_eth0']"
-      - "'portgroup_key' in guest_facts_0001['instance']['hw_eth0']"
+      - "'portgroup_portkey' in guest_facts_0001['instance']['Network adapter 1']"
+      - "'portgroup_key' in guest_facts_0001['instance']['Network adapter 1']"
       - "guest_facts_0001['instance']['instance_uuid'] is defined"
 
 - set_fact: vm1_uuid="{{ guest_facts_0001['instance']['hw_product_uuid'] }}"

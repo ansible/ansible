@@ -148,7 +148,7 @@ instance:
             "LocalDS_0"
         ],
         "hw_esxi_host": "DC0_H0",
-        "hw_eth0": {
+        "Network adapter 1": {
             "addresstype": "generated",
             "ipaddresses": null,
             "label": "ethernet-0",

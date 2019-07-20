@@ -128,7 +128,7 @@ Running this playbook can take some time, depending on your environment and netw
             "hw_cores_per_socket": 1,
             "hw_datastores": ["ds_204_2"],
             "hw_esxi_host": "10.x.x.x",
-            "hw_eth0": {
+            "Network adapter 1": {
                 "addresstype": "assigned",
                 "ipaddresses": [],
                 "label": "Network adapter 1",

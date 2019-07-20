@@ -189,7 +189,7 @@ instance:
             "ds_226_3"
         ],
         "hw_esxi_host": "10.76.33.226",
-        "hw_eth0": {
+        "Network adapter 1": {
             "addresstype": "assigned",
             "ipaddresses": null,
             "label": "Network adapter 1",
