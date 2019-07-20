@@ -33,5 +33,5 @@
 - name: assert that changes were made
   assert:
     that:
-        - "clone_d1_c1_f0['instance']['Network adapter 1]['addresstype'] == 'manual'"
+        - "clone_d1_c1_f0['instance']['Network adapter 1']['addresstype'] == 'manual'"
         - "clone_d1_c1_f0['instance']['Network adapter 1']['macaddress'] == 'aa:bb:cc:dd:aa:42'"
