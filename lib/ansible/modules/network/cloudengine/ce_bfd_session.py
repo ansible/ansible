@@ -40,6 +40,7 @@ options:
             - BFD session creation mode, the currently created BFD session
               only supports static or static auto-negotiation mode.
         choices: ['static', 'auto']
+        default: static
     addr_type:
         description:
             - Specifies the peer IP address type.
