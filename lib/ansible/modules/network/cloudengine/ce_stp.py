@@ -167,7 +167,22 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import load_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config as get_cli_config
+
+
+def get_config(module, flags):
+
+    cfg = get_cli_config(module, flags)
+    config = cfg.strip() if cfg else ""
+    if config.startswith("display"):
+        configs = config.split("\n")
+        if len(configs) > 1:
+            return "\n".join(configs[1:])
+        else:
+            return ""
+    else:
+        return config
 
 
 class Stp(object):
@@ -229,7 +244,7 @@ class Stp(object):
         """ Cli get interface's stp configuration """
 
         if self.interface:
-            regular = "| ignore-case section include ^interface %s$" % self.interface
+            regular = "| ignore-case section include ^#\s+interface %s" % self.interface
             flags = list()
             flags.append(regular)
             tmp_cfg = get_config(self.module, flags)
@@ -556,6 +571,10 @@ class Stp(object):
                 self.end_state["loop_protection"] = "enable"
             else:
                 self.end_state["loop_protection"] = "disable"
+
+        if self.existing == self.end_state:
+            self.changed = False
+            self.updates_cmd = list()
 
     def present_stp(self):
         """ Present stp configuration """
