@@ -249,14 +249,25 @@ class Lag_interfaces(ConfigBase):
         have_item = have_element['lag']
         want_item = want_element['lag']
 
+        try:
+            temp_have_members = have_item.pop('members', None)
+            temp_want_members = want_item.pop('members', None)
+        except BaseException:
+            pass
+
         updates = dict_diff(have_item, want_item)
+
+        if temp_have_members:
+            have_item['members'] = temp_have_members
+        if temp_want_members:
+            want_item['members'] = temp_want_members
+
+        commands.extend(add_bond_members(want_item, have_item))
 
         if updates:
             for key, value in iteritems(updates):
                 if value:
-                    if key == 'members':
-                        commands.extend(add_bond_members(want_item, have_item))
-                    elif key == 'arp-monitor':
+                    if key == 'arp-monitor':
                         commands.extend(
                             add_arp_monitor(updates, set_cmd, key, want_item, have_item)
                         )

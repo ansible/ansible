@@ -99,7 +99,7 @@ class Lag_interfacesFacts(object):
         arp_monitor_conf = '\n'.join(filter(lambda x: ('arp-monitor' in x), conf))
         lag_conf = '\n'.join(filter(lambda x: ('bond' in x), conf))
         config = self.parse_attribs(
-            ['hash-policy', 'members', 'mode', 'name', 'primary'], lag_conf
+            ['hash-policy', 'mode', 'primary'], lag_conf
         )
         config['arp-monitor'] = self.parse_arp_monitor(arp_monitor_conf)
 
