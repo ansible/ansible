@@ -244,7 +244,7 @@ class Stp(object):
         """ Cli get interface's stp configuration """
 
         if self.interface:
-            regular = "| ignore-case section include ^#\s+interface %s" % self.interface
+            regular = r"| ignore-case section include ^#\s+interface %s" % self.interface
             flags = list()
             flags.append(regular)
             tmp_cfg = get_config(self.module, flags)
