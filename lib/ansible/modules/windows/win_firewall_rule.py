@@ -99,13 +99,6 @@ options:
       - Defaults to C(domain,private,public) when creating a new rule.
     type: list
     aliases: [ profile ]
-  force:
-    description:
-    - Replace any existing rule by removing it first.
-    - This is no longer required in Ansible 2.4 as rules no longer need replacing when being modified.
-    - DEPRECATED in Ansible 2.4 and will be removed in Ansible 2.9.
-    type: bool
-    default: no
 seealso:
 - module: win_firewall
 author:
