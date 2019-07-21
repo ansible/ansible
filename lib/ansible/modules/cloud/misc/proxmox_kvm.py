@@ -898,7 +898,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-        PVE_MAJOR_VERSION = 3 if float(proxmox.version.get()['version']) < 4.0 else 4
+        PVE_MAJOR_VERSION = int(proxmox.version.get()['version'].split('.', 1)[0])
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
