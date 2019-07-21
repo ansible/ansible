@@ -67,6 +67,74 @@
       - "file2_result.changed == false"
       - "file2_result.state == 'absent'"
 
+# Test touch with check_mode is on
+
+- name: verify that touch changes existing file
+  file: path={{output_dir}}/foo.txt state=touch
+  check_mode: yes
+  register: touch_file_exist
+
+- name: verify that file was marked as changed. Atime, mtime were updated
+  assert:
+    that:
+      - touch_file_exist.changed == True
+      - touch_file_exist.diff.after.atime > touch_file_exist.diff.before.atime
+      - touch_file_exist.diff.after.mtime > touch_file_exist.diff.before.mtime
+      - touch_file_exist.diff.before.state == 'file'
+      - touch_file_exist.diff.after.state == 'touch'
+
+- name: Verify that touch creates new file if it doesn't exist
+  file: path={{output_dir}}/new.txt state=touch
+  check_mode: yes
+  register: touch_file_not_exist
+
+- name: verify that file was marked as changes. Atime and mtime weren't included in diff
+  assert:
+    that:
+      - touch_file_not_exist.changed == True
+      - touch_file_not_exist.diff.before.path_content is not defined
+      - touch_file_not_exist.diff.after.path_content is not defined
+
+- name: verify that touch doesn't change file when atime and mtime are preserve
+  file: path={{output_dir}}/foo.txt state=touch access_time=preserve modification_time=preserve
+  check_mode: yes
+  register: touch_file_exist_preserve
+
+- name: verify that files was marked as not changed when atime and mtime were preserved
+  assert:
+    that:
+      - touch_file_exist_preserve.changed == False
+
+- name: verify touch updates only mtime when atime is preserved
+  file: path={{output_dir}}/foo.txt state=touch access_time=preserve
+
+  register: touch_file_exist_atime_preserve
+
+- name: verify that file was marked as changed. Only mtime was updated
+  assert:
+    that:
+      - touch_file_exist_atime_preserve.changed == True
+      - touch_file_exist_atime_preserve.diff.after.mtime > touch_file_exist_atime_preserve.diff.before.mtime
+      - touch_file_exist_atime_preserve.diff.before.state == 'file'
+      - touch_file_exist_atime_preserve.diff.after.state == 'touch'
+      - touch_file_exist_atime_preserve.diff.before.atime is not defined
+      - touch_file_exist_atime_preserve.diff.after.atime is not defined
+
+- name: verify touch updated only atime when mtime is preserved
+  file: path={{output_dir}}/foo.txt state=touch modification_time=preserve
+
+  register: touch_file_exist_mtime_preserve
+
+- name: verify that file was marked as changed. Only atime was updated
+  assert:
+    that:
+      - touch_file_exist_mtime_preserve.changed == True
+      - touch_file_exist_mtime_preserve.diff.after.atime > touch_file_exist_mtime_preserve.diff.before.atime
+      - touch_file_exist_mtime_preserve.diff.before.state == 'file'
+      - touch_file_exist_mtime_preserve.diff.after.state == 'touch'
+      - touch_file_exist_mtime_preserve.diff.before.mtime is not defined
+      - touch_file_exist_mtime_preserve.diff.after.mtime is not defined
+
 - name: verify we can touch a file
   file: path={{output_dir}}/baz.txt state=touch
   register: file3_result
