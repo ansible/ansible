@@ -362,3 +362,16 @@
   assert:
     that:
     - not actual.exists
+
+# Tests https://github.com/ansible/ansible/issues/59337
+- name: test out all registry hives
+  win_reg_stat:
+    path: '{{ item }}'
+  register: reg_hive_stat
+  failed_when: not reg_hive_stat.exists
+  with_items:
+  - HKCR:\*
+  - HKCC:\Software
+  - HKCU:\Software
+  - HKLM:\Software
+  - HKU:\.DEFAULT
