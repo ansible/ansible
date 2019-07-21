@@ -37,7 +37,7 @@ No notable changes
 Modules
 =======
 
-No notable changes
+* The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
 
 
 Modules removed

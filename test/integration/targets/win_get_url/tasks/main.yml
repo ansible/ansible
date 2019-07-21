@@ -1,3 +1,5 @@
+# Due to the special environment setup required for proxies, you can manually test out the proxy options with
+# https://github.com/jborean93/ansible-powershell-url-proxy.
 ---
 - name: set fact out special testing dir
   set_fact:

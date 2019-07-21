@@ -37,36 +37,11 @@ options:
     description:
     - The body of the HTTP request/response to the web service.
     type: raw
-  user:
-    description:
-    - Username to use for authentication.
-    type: str
-    version_added: '2.4'
-  password:
-    description:
-    - Password to use for authentication.
-    type: str
-    version_added: '2.4'
-  force_basic_auth:
-    description:
-    - By default the authentication information is only sent when a webservice
-      responds to an initial request with a 401 status. Since some basic auth
-      services do not properly send a 401, logins will fail.
-    - This option forces the sending of the Basic authentication header upon
-      the initial request.
-    type: bool
-    default: no
-    version_added: '2.5'
   dest:
     description:
     - Output the response body to a file.
     type: path
     version_added: '2.3'
-  headers:
-    description:
-    - Extra headers to set on the request, see the examples for more details on
-      how to set this.
-    type: dict
   creates:
     description:
     - A filename, when it already exists, this step will be skipped.
@@ -93,61 +68,36 @@ options:
     type: list
     default: [ 200 ]
     version_added: '2.4'
-  timeout:
+  url_username:
     description:
-    - Specifies how long the request can be pending before it times out (in seconds).
-    - The value 0 (zero) specifies an indefinite time-out.
-    - A Domain Name System (DNS) query can take up to 15 seconds to return or time out.
-      If your request contains a host name that requires resolution, and you set
-      C(timeout) to a value greater than zero, but less than 15 seconds, it can
-      take 15 seconds or more before your request times out.
-    type: int
-    default: 30
-    version_added: '2.4'
+    - The username to use for authentication.
+    - Was originally called I(user) but was changed to I(url_username) in
+      Ansible 2.9.
+    version_added: "2.4"
+  url_password:
+    description:
+    - The password for I(url_username).
+    - Was originally called I(password) but was changed to I(url_password) in
+      Ansible 2.9.
+    version_added: "2.4"
   follow_redirects:
-    description:
-     - Whether or not the C(win_uri) module should follow redirects.
-     - C(all) will follow all redirects.
-     - C(none) will not follow any redirects.
-     - C(safe) will follow only "safe" redirects, where "safe" means that the client is only
-       doing a C(GET) or C(HEAD) on the URI to which it is being redirected.
-    type: str
-    choices: [ all, none, safe ]
-    default: safe
-    version_added: '2.4'
+    version_added: "2.4"
   maximum_redirection:
-    description:
-    - Specifies how many times C(win_uri) redirects a connection to an alternate
-      Uniform Resource Identifier (URI) before the connection fails.
-    - If C(maximum_redirection) is set to 0 (zero)
-      or C(follow_redirects) is set to C(none),
-      or set to C(safe) when not doing C(GET) or C(HEAD) it prevents all redirection.
-    type: int
-    default: 50
-    version_added: '2.4'
-  validate_certs:
-    description:
-    - If C(no), SSL certificates will not be validated.  This should only
-      set to C(no) used on personally controlled sites using self-signed
-      certificates.
-    type: bool
-    default: yes
-    version_added: '2.4'
+    version_added: "2.4"
   client_cert:
-    description:
-    - Specifies the client certificate (.pfx) that is used for a secure web request.
-    - The WinRM connection must be authenticated with C(CredSSP) if the
-      certificate file is not password protected.
-    - Other authentication types can set I(client_cert_password) when the cert
-      is password protected.
-    type: path
-    version_added: '2.4'
+    version_added: "2.4"
   client_cert_password:
-    description:
-    - The password for the client certificate (.pfx) file that is used for a
-      secure web request.
-    type: str
-    version_added: '2.5'
+    version_added: "2.5"
+  use_proxy:
+    version_added: "2.9"
+  proxy_url:
+    version_added: "2.9"
+  proxy_username:
+    version_added: "2.9"
+  proxy_password:
+    version_added: "2.9"
+extends_documentation_fragment:
+- url_windows
 seealso:
 - module: uri
 - module: win_get_url
