@@ -12,7 +12,6 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 PSProvideC
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 PSUseApprovedVerbs
-lib/ansible/module_utils/powershell/Ansible.ModuleUtils.WebRequest.psm1 PSUseDeclaredVarsMoreThanAssignments  # the spec var is not used within the module
 lib/ansible/modules/windows/async_status.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/setup.ps1 PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_acl_inheritance.ps1 PSAvoidTrailingWhitespace

@@ -304,14 +304,13 @@ Function Get-AnsibleWebRequest {
         # For backwards compatibility we need to support setting the User-Agent if the header was set in the task.
         # We just need to make sure that if an explicit http_agent module was set then that takes priority.
         if ($Headers -and $Headers.ContainsKey("User-Agent")) {
-            if ($HttpAgent -eq "ansible-httpget") {
-                $web_request.UserAgent = $Headers['User-Agent']
-            } else {
+            if ($HttpAgent -eq $ansible_web_request_options.http_agent.default) {
+                $HttpAgent = $Headers['User-Agent']
+            } elseif ($null -ne $Module) {
                 $Module.Warn("The 'User-Agent' header and the 'http_agent' was set, using the 'http_agent' for web request")
             }
-        } else {
-            $web_request.UserAgent = $HttpAgent
         }
+        $web_request.UserAgent = $HttpAgent
 
         switch ($FollowRedirects) {
             none { $web_request.AllowAutoRedirect = $false }
