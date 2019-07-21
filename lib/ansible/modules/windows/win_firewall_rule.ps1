@@ -131,11 +131,6 @@ $security = Get-AnsibleParam -obj $params -name "security" -type "str" -validate
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-if ($force) {
-    Add-DeprecationWarning -obj $result -message "'force' isn't required anymore" -version 2.9
-}
-
 if ($diff_support) {
     $result.diff = @{}
     $result.diff.prepared = ""

@@ -140,6 +140,7 @@ Noteworthy module changes
 * The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
 * The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
 * The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
+* The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
 
 
 Plugins
