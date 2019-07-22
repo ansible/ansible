@@ -189,10 +189,10 @@ instance:
             "ds_226_3"
         ],
         "hw_esxi_host": "10.76.33.226",
-        "Network adapter 1": {
+        "Network Adapter 1": {
             "addresstype": "assigned",
             "ipaddresses": null,
-            "label": "Network adapter 1",
+            "label": "Network Adapter 1",
             "macaddress": "00:50:56:87:a5:9a",
             "macaddress_dash": "00-50-56-87-a5-9a",
             "portgroup_key": null,
@@ -211,7 +211,7 @@ instance:
         "hw_guest_ha_state": null,
         "hw_guest_id": null,
         "hw_interfaces": [
-            "Network adapter 1"
+            "Network Adapter 1"
         ],
         "hw_is_template": false,
         "hw_memtotal_mb": 1024,
