@@ -582,6 +582,20 @@ EXAMPLES = '''
     image: customimage001
     zones: [1]
 
+- name: Create a VM with OS disk
+      azure_rm_virtualmachine:
+        resource_group: myResourceGroup
+        name: testvm3773
+        vm_size: Standard_B1ms
+        admin_username: adminUser
+        admin_password: "Password1234!"
+        network_interfaces: vmforimagepfxxyznic
+        storage_account_name: testvmxxxx
+        os_type: Linux
+        os_disk_name: testvm.vhd_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        os_disk_image:
+          uri: https://testvmxxxx.blob.core.windows.net/vhds/testvm.vhd
+
 - name: Remove a VM and all resources that were autocreated
   azure_rm_virtualmachine:
     resource_group: myResourceGroup
