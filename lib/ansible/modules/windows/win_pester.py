@@ -32,7 +32,7 @@ options:
       - Accepts multiple comma seperated tags.
     type: list
     version_added: '2.9'
-  parameterlist:
+  test_parameters:
     description:
       - Allows to specify parameters to the test script.
     type: dict
@@ -73,7 +73,7 @@ EXAMPLES = r'''
 - name: Run the pester test present in a folder with given script parameters.
   win_pester:
     path: C:\Pester\test04.test.ps1
-    parameterlist:
+    test_parameters:
       Process: lsass
       Service: bits
 '''
