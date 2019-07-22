@@ -43,7 +43,7 @@ options:
       aliases: [ datacenter_name ]
     enable_vsan:
       description:
-      - Whether to enable vSAN when the cluster is created.
+      - Whether to enable vSAN.
       type: bool
       default: 'no'
     vsan_auto_claim_storage:
