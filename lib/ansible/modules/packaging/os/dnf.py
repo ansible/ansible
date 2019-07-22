@@ -826,7 +826,10 @@ class DnfModule(YumDnf):
                     self.base.read_comps()
                     already_loaded_comps = True
 
-                grp_env_mdl_candidate = name[1:].strip()
+                if '@' in name:
+                    grp_env_mdl_candidate = name[1:].strip()
+                else:
+                    grp_env_mdl_candidate = name.strip()
 
                 if self.with_modules:
                     mdl = self.module_base._get_modules(grp_env_mdl_candidate)
