@@ -79,6 +79,7 @@ if($tags.count){
 }
 # Run Pester tests
 If (Test-Path -LiteralPath $path -PathType Leaf) {
+    $test_parameters_check_mode_msg = ''
     if ($test_parameters.keys.count) {
         $Parameters.Script = @{Path = $Path ; Parameters = $test_parameters }
         $test_parameters_check_mode_msg = " with $($test_parameters.keys -join ',') parameters"
