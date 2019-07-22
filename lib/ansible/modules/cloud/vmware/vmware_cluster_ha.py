@@ -43,7 +43,7 @@ options:
       aliases: [ datacenter_name ]
     enable_ha:
       description:
-      - If set to C(yes) will enable HA when the cluster is created.
+      - Whether to enable HA when the cluster is created.
       type: bool
       default: 'no'
     ha_host_monitoring:
