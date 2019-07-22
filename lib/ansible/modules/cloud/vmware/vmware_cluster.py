@@ -20,7 +20,7 @@ DOCUMENTATION = r'''
 module: vmware_cluster
 short_description: Manage VMware vSphere clusters
 description:
-    - This module can be used to add and remove VMware vSphere clusters.
+    - Adds or removes VMware vSphere clusters.
     - All values and VMware object names are case sensitive.
 version_added: '2.0'
 author:
