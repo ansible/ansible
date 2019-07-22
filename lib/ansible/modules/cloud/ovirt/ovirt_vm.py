@@ -1274,6 +1274,10 @@ class VmsModule(BaseModule):
             templates = templates_service.list(
                 search='name=%s and cluster=%s' % (self.param('template'), cluster)
             )
+            if not templates:
+                templates = templates_service.list(
+                    search='name=%s' % self.param('template')
+                )
             if self.param('template_version'):
                 templates = [
                     t for t in templates
