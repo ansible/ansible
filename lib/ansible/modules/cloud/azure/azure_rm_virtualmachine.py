@@ -117,7 +117,6 @@ options:
             - For custom images, the name of the image. To narrow the search to a specific resource group, a dict with the keys I(name) and I(resource_group).
             - For Marketplace images, a dict with the keys I(publisher), I(offer), I(sku), and I(version).
             - Set I(version=latest) to get the most recent version of a given image.
-        required: true
     availability_set:
         description:
             - Name or ID of an existing availability set to add the VM to. The I(availability_set) should be in the same resource group as VM.
@@ -174,6 +173,10 @@ options:
             - Windows
             - Linux
         default: Linux
+    os_disk_image:
+        description:
+            - The source user image virtual hard disk. The virtual hard disk will be copied before being attached to the virtual machine. 
+            If SourceImage is provided, the destination virtual hard drive must not exist.
     data_disks:
         description:
             - List of data disks.
@@ -808,6 +811,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             os_disk_size_gb=dict(type='int'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS']),
             os_disk_name=dict(type='str'),
+            os_disk_image=dict(type='dict'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
@@ -828,7 +832,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             license_type=dict(type='str', choices=['Windows_Server', 'Windows_Client']),
             vm_identity=dict(type='str', choices=['SystemAssigned']),
             winrm=dict(type='list'),
-            boot_diagnostics=dict(type='dict'),
+            boot_diagnostics=dict(type='dict')
         )
 
         self.resource_group = None
@@ -852,6 +856,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.os_disk_size_gb = None
         self.managed_disk_type = None
         self.os_disk_name = None
+        self.os_disk_image = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -994,6 +999,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     image_reference = self.get_custom_image_reference(
                         self.image.get('name'),
                         self.image.get('resource_group'))
+                elif self.imge.get('disk_id'):
+                    
                 elif self.image.get('id'):
                     try:
                         image_reference = self.compute_models.ImageReference(id=self.image['id'])
@@ -1063,6 +1070,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('OS Disk name')
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['name'] = self.os_disk_name
+                
+                if self.os_disk_image and \
+                   self.os_disk_image != vm_dict['properties']['storageProfile']['osDisk']['image']:
+                    self.log('CHANGED: virtual machine {0} - OS disk image'.format(self.name))
+                    differences.append('OS Disk image')
+                    changed = True
+                    vm_dict['properties']['storageProfile']['osDisk']['image'] = self.os_disk_image
 
                 if self.os_disk_size_gb and \
                    self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk'].get('diskSizeGB'):
@@ -1269,6 +1283,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
                                 name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
+                                image=self.os_disk_image if self.os_disk_image else None,
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
@@ -1484,6 +1499,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
                                 name=vm_dict['properties']['storageProfile']['osDisk'].get('name'),
+                                image=vm_dict['properties']['storageProfile']['osDisk'].get('image'),
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=vm_dict['properties']['storageProfile']['osDisk'].get('createOption'),
