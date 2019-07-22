@@ -147,6 +147,8 @@ class TestStrategyBase(unittest.TestCase):
             mock_host.has_hostkey = True
             mock_hosts.append(mock_host)
 
+        mock_hosts_names = [h.name for h in mock_hosts]
+
         mock_inventory = MagicMock()
         mock_inventory.get_hosts.return_value = mock_hosts
 
@@ -158,17 +160,18 @@ class TestStrategyBase(unittest.TestCase):
         mock_play.hosts = ["host%02d" % (i + 1) for i in range(0, 5)]
 
         strategy_base = StrategyBase(tqm=mock_tqm)
+        strategy_base._hosts_cache = strategy_base._hosts_cache_all = mock_hosts_names
 
         mock_tqm._failed_hosts = []
         mock_tqm._unreachable_hosts = []
-        self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts)
+        self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), [h.name for h in mock_hosts])
 
         mock_tqm._failed_hosts = ["host01"]
-        self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts[1:])
-        self.assertEqual(strategy_base.get_failed_hosts(play=mock_play), [mock_hosts[0]])
+        self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), [h.name for h in mock_hosts[1:]])
+        self.assertEqual(strategy_base.get_failed_hosts(play=mock_play), [mock_hosts[0].name])
 
         mock_tqm._unreachable_hosts = ["host02"]
-        self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), mock_hosts[2:])
+        self.assertEqual(strategy_base.get_hosts_remaining(play=mock_play), [h.name for h in mock_hosts[2:]])
         strategy_base.cleanup()
 
     @patch.object(WorkerProcess, 'run')
