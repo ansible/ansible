@@ -632,7 +632,7 @@ class SwitchPort(object):
                         self.intf_info["untagVlans"], vlan_untarged_map)
                     if not is_vlan_bitmap_empty(del_vlans):
                         self.updates_cmd.append(
-                            "undo port hybrid untagged vlan  %s"
+                            "undo port hybrid untagged vlan %s"
                             % untagged_vlans.replace(',', ' ').replace('-', ' to '))
                         undo_map = vlan_bitmap_undo(del_vlans)
                         untagged = "%s:%s" % (undo_map, del_vlans)
