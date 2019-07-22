@@ -586,11 +586,11 @@ EXAMPLES = '''
 - name: Create a VM with OS disk
   azure_rm_virtualmachine:
     resource_group: myResourceGroup
-    name: testvm3773
+    name: testvm001
     vm_size: Standard_B1ms
     admin_username: adminUser
      admin_password: "Password1234!"
-    network_interfaces: vmforimagepfxxyznic
+    network_interfaces: vmforimage
     storage_account_name: testvmxxxx
     os_type: Linux
     os_disk_name: testvm.vhd_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
