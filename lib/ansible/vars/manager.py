@@ -140,7 +140,8 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
-    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
+    def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True,
+                 _hosts=None, _hosts_all=None):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -158,6 +159,10 @@ class VariableManager:
         - task->get_vars (if there is a task context)
         - vars_cache[host] (if there is a host context)
         - extra vars
+
+        ``_hosts`` and ``_hosts_all`` should be considered private args, with only internal trusted callers relying
+        on the functionality they provide. These arguments may be removed at a later date without a deprecation
+        period and without warning.
         '''
 
         display.debug("in VariableManager get_vars()")
@@ -169,6 +174,8 @@ class VariableManager:
             task=task,
             include_hostvars=include_hostvars,
             include_delegate_to=include_delegate_to,
+            _hosts=_hosts,
+            _hosts_all=_hosts_all,
         )
 
         # default for all cases
@@ -425,7 +432,8 @@ class VariableManager:
         display.debug("done with get_vars()")
         return all_vars
 
-    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to):
+    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to,
+                             _hosts=None, _hosts_all=None):
         '''
         Returns a dictionary of so-called "magic" variables in Ansible,
         which are special variables we set internally for use.
@@ -470,9 +478,14 @@ class VariableManager:
                 else:
                     pattern = play.hosts or 'all'
                 # add the list of hosts in the play, as adjusted for limit/filters
-                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
+                if not _hosts_all:
+                    _hosts_all = [h.name for h in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
+                if not _hosts:
+                    _hosts = [h.name for h in self._inventory.get_hosts()]
+
+                variables['ansible_play_hosts_all'] = _hosts_all[:]
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
-                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
+                variables['ansible_play_batch'] = [x for x in _hosts if x not in play._removed_hosts]
 
                 # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
                 # however this would take work in the templating engine, so for now we'll add both
@@ -622,19 +635,19 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for host_facts should be a Mapping but is a %s" % type(facts))
 
         try:
-            host_cache = self._fact_cache[host.name]
+            host_cache = self._fact_cache[host]
         except KeyError:
             # We get to set this as new
             host_cache = facts
         else:
             if not isinstance(host_cache, MutableMapping):
                 raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
-                                ' a {1}'.format(host.name, type(host_cache)))
+                                ' a {1}'.format(host, type(host_cache)))
             # Update the existing facts
             host_cache.update(facts)
 
         # Save the facts back to the backing store
-        self._fact_cache[host.name] = host_cache
+        self._fact_cache[host] = host_cache
 
     def set_nonpersistent_facts(self, host, facts):
         '''
@@ -645,18 +658,17 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
         try:
-            self._nonpersistent_fact_cache[host.name].update(facts)
+            self._nonpersistent_fact_cache[host].update(facts)
         except KeyError:
-            self._nonpersistent_fact_cache[host.name] = facts
+            self._nonpersistent_fact_cache[host] = facts
 
     def set_host_variable(self, host, varname, value):
         '''
         Sets a value in the vars_cache for a host.
         '''
-        host_name = host.get_name()
-        if host_name not in self._vars_cache:
-            self._vars_cache[host_name] = dict()
-        if varname in self._vars_cache[host_name] and isinstance(self._vars_cache[host_name][varname], MutableMapping) and isinstance(value, MutableMapping):
-            self._vars_cache[host_name] = combine_vars(self._vars_cache[host_name], {varname: value})
+        if host not in self._vars_cache:
+            self._vars_cache[host] = dict()
+        if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
+            self._vars_cache[host] = combine_vars(self._vars_cache[host], {varname: value})
         else:
-            self._vars_cache[host_name][varname] = value
+            self._vars_cache[host][varname] = value
