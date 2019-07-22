@@ -122,7 +122,7 @@ options:
       description:
       - Priority HA gives to a virtual machine if sufficient capacity is not available
         to power on all failed virtual machines.
-      - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
+      - Valid only if I(ha_vm_monitoring) is set to either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - If set to C(disabled), then HA is disabled for this virtual machine.
       - If set to C(high), then virtual machine with this priority have a higher chance of powering on after a failure,
         when there is insufficient capacity on hosts to meet all virtual machine needs.
