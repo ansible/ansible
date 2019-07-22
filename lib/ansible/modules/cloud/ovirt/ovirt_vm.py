@@ -2488,7 +2488,8 @@ def main():
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
             # Allow migrate vm when state present.
-            vms_module._migrate_vm(vm)
+            if vm:
+                vms_module._migrate_vm(vm)
             ret['changed'] = vms_module.changed
         elif state == 'stopped':
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
