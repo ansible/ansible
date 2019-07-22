@@ -49,8 +49,8 @@ options:
     admin_ignore_if_down:
         description:
             - mVRRP ignores an interface Down event.
-        type: str
-        choices: ['true','false']
+        type: bool
+        default: 'false'
     admin_vrid:
         description:
             - Tracked mVRRP ID. The value is an integer ranging from 1 to 255.
@@ -60,8 +60,8 @@ options:
     admin_flowdown:
         description:
             - Disable the flowdown function for service VRRP.
-        type: str
-        choices: ['true','false']
+        type: bool
+        default: 'false'
     priority:
         description:
             - Configured VRRP priority.
@@ -103,8 +103,8 @@ options:
         description:
             - Select the display mode of an authentication key.
               By default, an authentication key is displayed in ciphertext.
-        type: str
-        choices: ['true','false']
+        type: bool
+        default: 'false'
     auth_key:
         description:
             - This object is set based on the authentication type.
@@ -122,7 +122,6 @@ options:
         type: str
         default: present
         choices: ['present','absent']
-
 '''
 
 EXAMPLES = '''
@@ -137,60 +136,50 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       transport: cli
-
   tasks:
-
   - name: Set vrrp version
     ce_vrrp:
       version: v3
       provider: "{{ cli }}"
-
   - name: Set vrrp gratuitous-arp interval
     ce_vrrp:
       gratuitous_arp_interval: 40
       mlag_id: 4
       provider: "{{ cli }}"
-
   - name: Set vrrp recover-delay
     ce_vrrp:
       recover_delay: 10
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid virtual-ip
     ce_vrrp:
       interface: 40GE2/0/8
       vrid: 1
       virtual_ip: 10.14.2.7
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid admin
     ce_vrrp:
       interface: 40GE2/0/8
       vrid: 1
       vrrp_type: admin
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid fast_resume
     ce_vrrp:
       interface: 40GE2/0/8
       vrid: 1
       fast_resume: enable
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid holding-multiplier
     ce_vrrp:
       interface: 40GE2/0/8
       vrid: 1
       holding_multiplier: 4
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid preempt timer delay
     ce_vrrp:
       interface: 40GE2/0/8
       vrid: 1
       preempt_timer_delay: 10
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid admin-vrrp
     ce_vrrp:
       interface: 40GE2/0/8
@@ -199,7 +188,6 @@ EXAMPLES = '''
       admin_vrid: 2
       vrrp_type: member
       provider: "{{ cli }}"
-
   - name: Set vrrp vrid authentication-mode
     ce_vrrp:
       interface: 40GE2/0/8
@@ -283,14 +271,12 @@ CE_NC_SET_VRRP_GROUP_INFO_HEAD = """
       <vrrpGroup operation="merge">
         <ifName>%s</ifName>
         <vrrpId>%s</vrrpId>
-
 """
 CE_NC_SET_VRRP_GROUP_INFO_TAIL = """
       </vrrpGroup>
     </vrrpGroups>
   </vrrp>
 </config>
-
 """
 CE_NC_GET_VRRP_GLOBAL_INFO = """
 <filter type="subtree">
@@ -303,7 +289,6 @@ CE_NC_GET_VRRP_GLOBAL_INFO = """
     </vrrpGlobalCfg>
   </vrrp>
 </filter>
-
 """
 
 CE_NC_SET_VRRP_GLOBAL_HEAD = """
@@ -315,7 +300,6 @@ CE_NC_SET_VRRP_GLOBAL_TAIL = """
     </vrrpGlobalCfg>
   </vrrp>
 </config>
-
 """
 
 CE_NC_GET_VRRP_VIRTUAL_IP_INFO = """
@@ -334,7 +318,6 @@ CE_NC_GET_VRRP_VIRTUAL_IP_INFO = """
     </vrrpGroups>
   </vrrp>
 </filter>
-
 """
 CE_NC_CREATE_VRRP_VIRTUAL_IP_INFO = """
 <config>
@@ -352,7 +335,6 @@ CE_NC_CREATE_VRRP_VIRTUAL_IP_INFO = """
     </vrrpGroups>
   </vrrp>
 </config>
-
 """
 CE_NC_DELETE_VRRP_VIRTUAL_IP_INFO = """
 <config>
@@ -370,7 +352,6 @@ CE_NC_DELETE_VRRP_VIRTUAL_IP_INFO = """
     </vrrpGroups>
   </vrrp>
 </config>
-
 """
 
 
@@ -436,10 +417,10 @@ class Vrrp(object):
         self.vrid = self.module.params['vrid']
         self.virtual_ip = self.module.params['virtual_ip']
         self.vrrp_type = self.module.params['vrrp_type']
-        self.admin_ignore_if_down = self.module.params['admin_ignore_if_down']
+        self.admin_ignore_if_down = 'false' if self.module.params['admin_ignore_if_down'] is False else 'true'
         self.admin_vrid = self.module.params['admin_vrid']
         self.admin_interface = self.module.params['admin_interface']
-        self.admin_flowdown = self.module.params['admin_flowdown']
+        self.admin_flowdown = 'false' if self.module.params['admin_flowdown'] is False else 'true'
         self.priority = self.module.params['priority']
         self.version = self.module.params['version']
         self.advertise_interval = self.module.params['advertise_interval']
@@ -449,7 +430,7 @@ class Vrrp(object):
         self.recover_delay = self.module.params['recover_delay']
         self.holding_multiplier = self.module.params['holding_multiplier']
         self.auth_mode = self.module.params['auth_mode']
-        self.is_plain = self.module.params['is_plain']
+        self.is_plain = 'false' if self.module.params['is_plain'] is False else 'true'
         self.auth_key = self.module.params['auth_key']
         self.fast_resume = self.module.params['fast_resume']
         self.state = self.module.params['state']
@@ -1339,10 +1320,10 @@ def main():
         vrid=dict(type='str'),
         virtual_ip=dict(type='str'),
         vrrp_type=dict(type='str', choices=['normal', 'member', 'admin']),
-        admin_ignore_if_down=dict(type='str', choices=['true', 'false']),
+        admin_ignore_if_down=dict(type='bool', default='false'),
         admin_vrid=dict(type='str'),
         admin_interface=dict(type='str'),
-        admin_flowdown=dict(type='str', choices=['true', 'false']),
+        admin_flowdown=dict(type='bool', default='false'),
         priority=dict(type='str'),
         version=dict(type='str', choices=['v2', 'v3']),
         advertise_interval=dict(type='str'),
@@ -1351,7 +1332,7 @@ def main():
         recover_delay=dict(type='str'),
         holding_multiplier=dict(type='str'),
         auth_mode=dict(type='str', choices=['simple', 'md5', 'none']),
-        is_plain=dict(type='str', choices=['true', 'false']),
+        is_plain=dict(type='bool', default='false'),
         auth_key=dict(type='str'),
         fast_resume=dict(type='str', choices=['enable', 'disable']),
         state=dict(type='str', default='present',
