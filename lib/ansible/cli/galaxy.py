@@ -8,17 +8,18 @@ __metaclass__ = type
 import os.path
 import re
 import shutil
+import textwrap
 import time
 import yaml
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import BaseLoader, Environment, FileSystemLoader
 
 import ansible.constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.galaxy import Galaxy
+from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import build_collection, install_collections, parse_collections_requirements_file, \
     publish_collection
@@ -309,6 +310,56 @@ class GalaxyCLI(CLI):
 
         raise AnsibleError("Invalid collection name, must be in the format <namespace>.<collection>")
 
+    @staticmethod
+    def _get_skeleton_galaxy_yml(template_path, inject_data):
+        with open(to_bytes(template_path, errors='surrogate_or_strict'), 'rb') as template_obj:
+            meta_template = to_text(template_obj.read(), errors='surrogate_or_strict')
+
+        galaxy_meta = get_collections_galaxy_meta_info()
+
+        required_config = []
+        optional_config = []
+        for meta_entry in galaxy_meta:
+            config_list = required_config if meta_entry.get('required', False) else optional_config
+
+            value = inject_data.get(meta_entry['key'], None)
+            if not value:
+                meta_type = meta_entry.get('type', 'str')
+
+                if meta_type == 'str':
+                    value = ''
+                elif meta_type == 'list':
+                    value = []
+                elif meta_type == 'dict':
+                    value = {}
+
+            meta_entry['value'] = value
+            config_list.append(meta_entry)
+
+        link_pattern = re.compile(r"L\(([^)]+),\s+([^)]+)\)")
+        const_pattern = re.compile(r"C\(([^)]+)\)")
+
+        def comment_ify(v):
+            if isinstance(v, list):
+                v = ". ".join([l.rstrip('.') for l in v])
+
+            v = link_pattern.sub(r"\1 <\2>", v)
+            v = const_pattern.sub(r"'\1'", v)
+
+            return textwrap.fill(v, width=117, initial_indent="# ", subsequent_indent="# ", break_on_hyphens=False)
+
+        def to_yaml(v):
+            return yaml.safe_dump(v, default_flow_style=False).rstrip()
+
+        env = Environment(loader=BaseLoader)
+        env.filters['comment_ify'] = comment_ify
+        env.filters['to_yaml'] = to_yaml
+
+        template = env.from_string(meta_template)
+        meta_value = template.render({'required_config': required_config, 'optional_config': optional_config})
+
+        return meta_value
+
 ############################
 # execute actions
 ############################
@@ -359,30 +410,42 @@ class GalaxyCLI(CLI):
         obj_name = context.CLIARGS['{0}_name'.format(galaxy_type)]
 
         inject_data = dict(
-            author='your name',
             description='your description',
-            company='your company (optional)',
-            license='license (GPL-2.0-or-later, MIT, etc)',
-            issue_tracker_url='http://example.com/issue/tracker',
-            repository_url='http://example.com/repository',
-            documentation_url='http://docs.example.com',
-            homepage_url='http://example.com',
-            min_ansible_version=ansible_version[:3],  # x.y
             ansible_plugin_list_dir=get_versioned_doclink('plugins/plugins.html'),
         )
-
         if galaxy_type == 'role':
-            inject_data['role_name'] = obj_name
-            inject_data['role_type'] = context.CLIARGS['role_type']
-            inject_data['license'] = 'license (GPL-2.0-or-later, MIT, etc)'
+            inject_data.update(dict(
+                author='your name',
+                company='your company (optional)',
+                license='license (GPL-2.0-or-later, MIT, etc)',
+                role_name=obj_name,
+                role_type=context.CLIARGS['role_type'],
+                issue_tracker_url='http://example.com/issue/tracker',
+                repository_url='http://example.com/repository',
+                documentation_url='http://docs.example.com',
+                homepage_url='http://example.com',
+                min_ansible_version=ansible_version[:3],  # x.y
+            ))
+
             obj_path = os.path.join(init_path, obj_name)
         elif galaxy_type == 'collection':
             namespace, collection_name = obj_name.split('.', 1)
 
-            inject_data['namespace'] = namespace
-            inject_data['collection_name'] = collection_name
-            inject_data['license'] = 'GPL-2.0-or-later'
+            inject_data.update(dict(
+                namespace=namespace,
+                collection_name=collection_name,
+                version='1.0.0',
+                readme='README.md',
+                authors=['your name <example@domain.com>'],
+                license=['GPL-2.0-or-later'],
+                repository='http://example.com/repository',
+                documentation='http://docs.example.com',
+                homepage='http://example.com',
+                issues='http://example.com/issue/tracker',
+            ))
+
             obj_path = os.path.join(init_path, namespace, collection_name)
+
         b_obj_path = to_bytes(obj_path, errors='surrogate_or_strict')
 
         if os.path.exists(b_obj_path):
@@ -395,8 +458,10 @@ class GalaxyCLI(CLI):
                                    "been modified there already." % to_native(obj_path))
 
         if obj_skeleton is not None:
+            own_skeleton = False
             skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
         else:
+            own_skeleton = True
             obj_skeleton = self.galaxy.default_role_skeleton_path
             skeleton_ignore_expressions = ['^.*/.git_keep$']
 
@@ -428,8 +493,22 @@ class GalaxyCLI(CLI):
 
             for f in files:
                 filename, ext = os.path.splitext(f)
+
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
                     continue
+                elif galaxy_type == 'collection' and own_skeleton and rel_root == '.' and f == 'galaxy.yml.j2':
+                    # Special use case for galaxy.yml.j2 in our own default collection skeleton. We build the options
+                    # dynamically which requires special options to be set.
+
+                    # The templated data's keys must match the key name but the inject data contains collection_name
+                    # instead of name. We just make a copy and change the key back to name for this file.
+                    template_data = inject_data.copy()
+                    template_data['name'] = template_data.pop('collection_name')
+
+                    meta_value = GalaxyCLI._get_skeleton_galaxy_yml(os.path.join(root, rel_root, f), template_data)
+                    b_dest_file = to_bytes(os.path.join(obj_path, rel_root, filename), errors='surrogate_or_strict')
+                    with open(b_dest_file, 'wb') as galaxy_obj:
+                        galaxy_obj.write(to_bytes(meta_value, errors='surrogate_or_strict'))
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
                     dest_file = os.path.join(obj_path, rel_root, filename)
