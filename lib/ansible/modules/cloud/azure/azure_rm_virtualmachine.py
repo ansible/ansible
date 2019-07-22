@@ -149,6 +149,7 @@ options:
 <<<<<<< cded409c5f0a4500ca14c0f9c2ec8d07feba7ac6
 <<<<<<< 78f2bc62ecbf94709af04a6ffc272b5c802bb23b
             - Managed OS disk type.
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
 =======
             - Managed OS disk type
 =======
@@ -163,6 +164,10 @@ options:
 =======
             - Managed OS disk type.
 >>>>>>> Update azure_rm_virtualmachine document
+=======
+            - Create OS disk with managed disk if defined.
+            - If not defined, the OS disk will be created with virtual hard disk (VHD).
+>>>>>>> Update the document according to the yuwzho-datadisk branch
         choices:
             - Standard_LRS
             - StandardSSD_LRS
@@ -194,6 +199,7 @@ options:
         default: Linux
     data_disks:
         description:
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
 <<<<<<< 87ee39da47c685513b9ae19f4ebc447c959e868d
 <<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
             - List of data disks.
@@ -211,6 +217,10 @@ options:
 =======
             - List of data disks.
 >>>>>>> edits to azure_rm_virtualmachine module docs
+=======
+            - Describes list of data disks.
+            - Use M(azure_rm_mangeddisk) to manage the specific disk.
+>>>>>>> Update the document according to the yuwzho-datadisk branch
         version_added: "2.4"
         suboptions:
             lun:
@@ -218,16 +228,22 @@ options:
 <<<<<<< 03ee048fc14a738fc4ce06b611487bb8516ffce3
 <<<<<<< 7243a556be6049e08308b16674ee8d44d1925381
                     - The logical unit number for data disk.
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
 <<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
                 default: 0
 =======
                     - This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
                 required: true
 >>>>>>> add data disk support
+=======
+                    - This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+                required: true
+>>>>>>> Update the document according to the yuwzho-datadisk branch
                 version_added: "2.4"
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks.
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
 <<<<<<< bd263c3210517078dff604e40d664614400dcb28
 <<<<<<< b72834726012e5dd3bf9c7c8e2ba2cedbfa3d1c9
 =======
@@ -240,10 +256,16 @@ options:
                     - Size can be changed only when the virtual machine is deallocated.
                     - Not used when I(managed_disk_id) defined.
 >>>>>>> add documentation
+=======
+                    - This value cannot be larger than C(1023) GB.
+                    - Size can be changed only when the virtual machine is deallocated.
+                    - Not sure when I(managed_disk_id) defined.
+>>>>>>> Update the document according to the yuwzho-datadisk branch
                 version_added: "2.4"
             managed_disk_type:
                 description:
                     - Managed data disk type.
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
 <<<<<<< 78f2bc62ecbf94709af04a6ffc272b5c802bb23b
 =======
                     - Only used when OS disk created with managed disk.
@@ -272,6 +294,9 @@ options:
 =======
                     - Managed data disk type.
 >>>>>>> Update azure_rm_virtualmachine document
+=======
+                    - Only used when OS disk created with managed disk.
+>>>>>>> Update the document according to the yuwzho-datadisk branch
                 choices:
                     - Standard_LRS
                     - StandardSSD_LRS
@@ -284,11 +309,15 @@ options:
 <<<<<<< bd263c3210517078dff604e40d664614400dcb28
 <<<<<<< 78f2bc62ecbf94709af04a6ffc272b5c802bb23b
                     - Name of an existing storage account that supports creation of VHD blobs.
-                    - If not specified for a new data disk, a new storage account named <vm name>01 will be created using storage type C(Standard_LRS).
+                    - If not specified for a new VM, a new storage account started with I(name) will be created using storage type C(Standard_LRS).
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
                 version_added: "2.4"
             storage_container_name:
                 description:
                     - Name of the container to use within the storage account to store VHD blobs.
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
                     - If not specified, a default container will created.
 =======
                     - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -336,6 +365,12 @@ options:
 =======
                     - If not specified, a default container will created.
 >>>>>>> edits to azure_rm_virtualmachine module docs
+=======
+                    - If no name is specified a default container named 'vhds' will created.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
+>>>>>>> Update the document according to the yuwzho-datadisk branch
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
@@ -371,8 +406,15 @@ options:
 =======
                     - Name of the storage blob used to hold the OS disk image of the VM.
                     - Must end with '.vhd'.
+<<<<<<< 0dbb3ab9e13945ba421013060de4a47bb230bb27
                     - If not specified, defaults to the VM name + '.vhd'.
 >>>>>>> edits to azure_rm_virtualmachine module docs
+=======
+                    - Default to the I(name) + timestamp + I(lun) + '.vhd'.
+                    - Only used when OS disk created with virtual hard disk (VHD).
+                    - Used when I(managed_disk_type) not defined.
+                    - Cannot be updated unless I(lun) updated.
+>>>>>>> Update the document according to the yuwzho-datadisk branch
                 version_added: "2.4"
             caching:
                 description:
@@ -611,8 +653,7 @@ EXAMPLES = '''
 =======
 >>>>>>> Update azure_rm_virtualmachine document
       - lun: 0
-        disk_size_gb: 64
-        managed_disk_type: Standard_LRS
+        managed_disk_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/myDisk"
       - lun: 1
         disk_size_gb: 128
         managed_disk_type: Premium_LRS
