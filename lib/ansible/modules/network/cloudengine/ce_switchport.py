@@ -47,11 +47,11 @@ options:
             - The link type of an interface.
         choices: ['access','trunk', 'hybrid', 'dot1qtunnel']
     default_vlan:
-        version_added: 2.9
+        version_added: 2.8
         description:
             - If C(mode=access, or mode=dot1qtunnel), used as the access VLAN ID, in the range from 1 to 4094.
     pvid_vlan:
-        version_added: 2.9
+        version_added: 2.8
         description:
             - If C(mode=trunk, or mode=hybrid), used as the trunk native VLAN ID, in the range from 1 to 4094.
     trunk_vlans:
@@ -59,12 +59,12 @@ options:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
     untagged_vlans:
-        version_added: 2.9
+        version_added: 2.8
         description:
             - If C(mode=hybrid), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
     tagged_vlans:
-        version_added: 2.9
+        version_added: 2.8
         description:
             - If C(mode=hybrid), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
