@@ -55,7 +55,7 @@ options:
       type: str
       choices: [ 'enabled', 'disabled' ]
       default: 'enabled'
-      version_added: 2.8
+      version_added: 2.9
     ha_vm_monitoring:
       description:
       - State of virtual machine health monitoring service.
@@ -66,7 +66,7 @@ options:
       type: str
       choices: ['vmAndAppMonitoring', 'vmMonitoringOnly', 'vmMonitoringDisabled']
       default: 'vmMonitoringDisabled'
-      version_added: 2.8
+      version_added: 2.9
     ha_failover_level:
       description:
       - Number of host failures that should be tolerated, still guaranteeing sufficient resources to
@@ -74,14 +74,14 @@ options:
       - Accepts integer values only.
       type: int
       default: 2
-      version_added: 2.8
+      version_added: 2.9
     ha_admission_control_enabled:
       description:
       - Determines if strict admission control is enabled.
       - It is recommended to set this parameter to C(True), please refer documentation for more details.
       default: True
       type: bool
-      version_added: 2.8
+      version_added: 2.9
     ha_vm_failure_interval:
       description:
       - The number of seconds after which virtual machine is declared as failed
@@ -90,7 +90,7 @@ options:
       - Unit is seconds.
       type: int
       default: 30
-      version_added: 2.8
+      version_added: 2.9
     ha_vm_min_up_time:
       description:
       - The number of seconds for the virtual machine's heartbeats to stabilize after
@@ -99,7 +99,7 @@ options:
       - Unit is seconds.
       type: int
       default: 120
-      version_added: 2.8
+      version_added: 2.9
     ha_vm_max_failures:
       description:
       - Maximum number of failures and automated resets allowed during the time
@@ -107,7 +107,7 @@ options:
       - Valid only when I(ha_vm_monitoring) is set to either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       type: int
       default: 3
-      version_added: 2.8
+      version_added: 2.9
     ha_vm_max_failure_window:
       description:
       - The number of seconds for the window during which up to C(ha_vm_max_failures) resets
@@ -117,7 +117,7 @@ options:
       - Default specifies no failure window.
       type: int
       default: -1
-      version_added: 2.8
+      version_added: 2.9
     ha_restart_priority:
       description:
       - Priority HA gives to a virtual machine if sufficient capacity is not available
@@ -132,7 +132,7 @@ options:
         when there is insufficient capacity on hosts to meet all virtual machine needs.
       type: str
       default: 'medium'
-      version_added: 2.8
+      version_added: 2.9
       choices: [ 'disabled', 'high', 'low', 'medium' ]
 extends_documentation_fragment: vmware.documentation
 '''
