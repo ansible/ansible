@@ -1,0 +1,2 @@
+bugfixes:
+  - "Check when user does pass empty dict to sysprep. Fixes https://github.com/oVirt/ovirt-ansible-vm-infra/issues/104"
