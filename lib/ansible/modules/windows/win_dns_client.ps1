@@ -199,24 +199,15 @@ if($dns_servers -is [string]) {
     }
 }
 if($adapter_names -is [string]) {
-    $adapter_names = @($adapter_names)
+    if($adapter_names -eq "*") {
+        $adapter_names = Get-NetAdapter | Select-Object -ExpandProperty Name
+    } else {
+        $adapter_names = @($adapter_names)
+    }
 }
 
 
 Try {
-
-    Write-DebugLog ("Validating adapter name {0}" -f $adapter_names)
-
-    $adapters = @($adapter_names)
-
-    If($adapter_names -eq "*") {
-        $adapters = Get-NetAdapter | Select-Object -ExpandProperty Name
-    }
-    # TODO: add support for an actual list of adapter names
-    # validate network adapter names
-    ElseIf(@(Get-NetAdapter | Where-Object Name -eq $adapter_names).Count -eq 0) {
-        throw "Invalid network adapter name: {0}" -f $adapter_names
-    }
 
     Write-DebugLog ("Validating IP addresses ({0})" -f ($dns_servers -join ", "))
     $invalid_addresses = @($dns_servers | Where-Object { -not (Assert-IPAddress $_) })
@@ -227,6 +218,8 @@ Try {
     foreach($adapter_name in $adapter_names) {
         Write-DebugLog ("Validating adapter name {0}" -f $adapter_name)
         if(-not (Get-DnsClientServerAddress -InterfaceAlias $adapter_name)) {
+            # TODO: add support for an actual list of adapter names
+            # validate network adapter names
             throw "Invalid network adapter name: {0}" -f $adapter_name
         }
         if(-not (Test-DnsClientMatch $adapter_name $dns_servers)) {
