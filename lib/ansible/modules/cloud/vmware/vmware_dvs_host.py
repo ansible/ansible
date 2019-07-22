@@ -75,6 +75,22 @@ EXAMPLES = '''
         - vmnic1
     state: present
   delegate_to: localhost
+
+- name: Add Host to dVS/enable learnswitch (https://labs.vmware.com/flings/learnswitch)
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    switch_name: dvSwitch
+    vendor_specific_config:
+        - key: com.vmware.netoverlay.layer1
+          value: learnswitch
+    vmnics:
+        - vmnic0
+        - vmnic1
+    state: present
+  delegate_to: localhost
 '''
 
 try:
