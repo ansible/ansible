@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure all cases of a None remote/become user are covered.
