@@ -58,7 +58,7 @@ options:
       version_added: 2.8
     ha_vm_monitoring:
       description:
-      - Indicates the state of virtual machine health monitoring service.
+      - State of virtual machine health monitoring service.
       - If set to C(vmAndAppMonitoring), HA response to both virtual machine and application heartbeat failure.
       - If set to C(vmMonitoringDisabled), virtual machine health monitoring is disabled.
       - If set to C(vmMonitoringOnly), HA response to virtual machine heartbeat failure.
