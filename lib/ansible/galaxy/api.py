@@ -62,7 +62,7 @@ class GalaxyAPI(object):
 
     def __init__(self, galaxy):
         self.galaxy = galaxy
-        self.token = GalaxyToken()
+        self.token = None
         self._api_server = C.GALAXY_SERVER
         self._validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
@@ -76,6 +76,9 @@ class GalaxyAPI(object):
             self._api_server = context.CLIARGS['api_server']
 
     def __auth_header(self):
+        if self.token is None:
+            self.token = GalaxyToken()
+
         token = self.token.get()
         if token is None:
             raise AnsibleError("No access token. You must first use login to authenticate and obtain an access token.")
