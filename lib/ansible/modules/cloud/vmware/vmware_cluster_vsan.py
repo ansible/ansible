@@ -20,7 +20,7 @@ DOCUMENTATION = r'''
 module: vmware_cluster_vsan
 short_description: Manage vSAN on VMware vSphere clusters
 description:
-    - This module can be used to manage vSAN on VMware vSphere clusters.
+    - Manages vSAN on VMware vSphere clusters.
     - All values and VMware object names are case sensitive.
 version_added: '2.9'
 author:
