@@ -70,7 +70,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description:
-        - Automation account resource path.
+        - Automation account resource ID.
     type: str
     returned: success
     sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Automation/automationAccounts/Testing"
