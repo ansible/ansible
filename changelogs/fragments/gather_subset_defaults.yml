@@ -1,0 +1,2 @@
+bugfixes:
+    - Gather facts should use gather_subset config by default.
