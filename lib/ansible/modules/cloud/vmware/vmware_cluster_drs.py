@@ -48,7 +48,7 @@ options:
       default: 'no'
     drs_enable_vm_behavior_overrides:
       description:
-      - Determines whether DRS Behavior overrides for individual virtual machines are enabled.
+      - Whether DRS Behavior overrides for individual virtual machines are enabled.
       - If set to C(True), overrides C(drs_default_vm_behavior).
       type: bool
       default: True
