@@ -626,7 +626,7 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from the local environment')
 
-    if data_context().content.is_install:
+    if data_context().content.is_ansible:
         if tox_version:
             environments.add_argument('--tox',
                                       metavar='VERSION',
@@ -757,7 +757,7 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
-    if data_context().content.is_install:
+    if data_context().content.is_ansible:
         docker.add_argument('--docker-keep-git',
                             action='store_true',
                             help='transfer git related files into the docker container')

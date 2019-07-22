@@ -9,7 +9,7 @@ import os
 import lib.types as t
 
 from lib.util import (
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from .. import (
@@ -92,7 +92,7 @@ class ContentLayout(Layout):
         self.unit_path = unit_path
         self.unit_module_path = unit_module_path
         self.integration_path = integration_path
-        self.is_install = root == INSTALL_ROOT
+        self.is_ansible = root == ANSIBLE_ROOT
 
     @property
     def prefix(self):  # type: () -> str
@@ -115,7 +115,7 @@ class ContentLayout(Layout):
     @property
     def module_utils_powershell_path(self):  # type: () -> t.Optional[str]
         """Return the path where powershell module_utils are found, if any."""
-        if self.is_install:
+        if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'powershell')
 
         return self.plugin_paths.get('module_utils')
@@ -123,7 +123,7 @@ class ContentLayout(Layout):
     @property
     def module_utils_csharp_path(self):  # type: () -> t.Optional[str]
         """Return the path where csharp module_utils are found, if any."""
-        if self.is_install:
+        if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'csharp')
 
         return self.plugin_paths.get('module_utils')

@@ -15,7 +15,7 @@ from lib.util import (
     COVERAGE_OUTPUT_PATH,
     display,
     find_python,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
     is_shippable,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
@@ -157,7 +157,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
     else:
         # unit tests, sanity tests and other special cases (localhost only)
         # config and results are in the source tree
-        coverage_config_base_path = args.coverage_config_base_path or INSTALL_ROOT
+        coverage_config_base_path = args.coverage_config_base_path or ANSIBLE_ROOT
         coverage_output_base_path = os.path.abspath(os.path.join('test/results'))
 
     config_file = os.path.join(coverage_config_base_path, COVERAGE_CONFIG_PATH)
@@ -210,7 +210,7 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     cmd = list(cmd)
     version = python_version or args.python_version
     interpreter = virtualenv or find_python(version)
-    inject_path = os.path.join(INSTALL_ROOT, 'test/runner/injector')
+    inject_path = os.path.join(ANSIBLE_ROOT, 'test/runner/injector')
 
     if not virtualenv:
         # injection of python into the path is required when not activating a virtualenv

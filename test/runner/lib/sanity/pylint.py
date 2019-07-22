@@ -23,7 +23,7 @@ from lib.util import (
     display,
     read_lines_without_comments,
     ConfigParser,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
     is_subdir,
 )
 
@@ -74,7 +74,7 @@ class PylintTest(SanitySingleVersion):
             display.warning('Skipping pylint on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        plugin_dir = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/plugins')
+        plugin_dir = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/plugins')
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
 
@@ -281,10 +281,10 @@ class PylintTest(SanitySingleVersion):
     @staticmethod
     def pylint(args, context, paths, plugin_dir, plugin_names):  # type: (SanityConfig, str, t.List[str], str, t.List[str]) -> t.List[t.Dict[str, str]]
         """Run pylint using the config specified by the context on the specified paths."""
-        rcfile = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
+        rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
 
         if not os.path.exists(rcfile):
-            rcfile = os.path.join(INSTALL_ROOT, 'test/sanity/pylint/config/default')
+            rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/default')
 
         parser = ConfigParser()
         parser.read(rcfile)

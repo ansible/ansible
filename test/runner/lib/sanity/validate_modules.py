@@ -20,7 +20,7 @@ from lib.util import (
     SubprocessError,
     display,
     read_lines_without_comments,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.util_common import (
@@ -65,7 +65,7 @@ class ValidateModulesTest(SanitySingleVersion):
             display.warning('Skipping validate-modules on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        if data_context().content.is_install:
+        if data_context().content.is_ansible:
             ignore_codes = ()
         else:
             ignore_codes = ((
@@ -84,7 +84,7 @@ class ValidateModulesTest(SanitySingleVersion):
 
         cmd = [
             args.python_executable,
-            os.path.join(INSTALL_ROOT, 'test/sanity/validate-modules/validate-modules'),
+            os.path.join(ANSIBLE_ROOT, 'test/sanity/validate-modules/validate-modules'),
             '--format', 'json',
             '--arg-spec',
         ] + paths

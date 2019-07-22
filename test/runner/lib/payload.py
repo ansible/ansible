@@ -13,7 +13,7 @@ from lib.config import (
 
 from lib.util import (
     display,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.data import (
@@ -34,9 +34,9 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     if args.explain:
         return
 
-    files = [(os.path.join(INSTALL_ROOT, path), path) for path in data_context().install.all_files()]
+    files = [(os.path.join(ANSIBLE_ROOT, path), path) for path in data_context().install.all_files()]
 
-    if not data_context().content.is_install:
+    if not data_context().content.is_ansible:
         files = [f for f in files if
                  f[1].startswith('bin/') or
                  f[1].startswith('lib/') or

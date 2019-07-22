@@ -25,7 +25,7 @@ from lib.util import (
 
 from lib.util_common import (
     run_command,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.config import (
@@ -89,8 +89,8 @@ class PslintTest(SanitySingleVersion):
 
         # Make sure requirements are installed before running sanity checks
         cmds = [
-            [os.path.join(INSTALL_ROOT, 'test/runner/requirements/sanity.ps1')],
-            [os.path.join(INSTALL_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths
+            [os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/sanity.ps1')],
+            [os.path.join(ANSIBLE_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths
         ]
 
         stdout = ''

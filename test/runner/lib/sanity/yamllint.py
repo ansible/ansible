@@ -16,7 +16,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
     is_subdir,
 )
 
@@ -78,7 +78,7 @@ class YamllintTest(SanitySingleVersion):
         """
         cmd = [
             args.python_executable,
-            os.path.join(INSTALL_ROOT, 'test/sanity/yamllint/yamllinter.py'),
+            os.path.join(ANSIBLE_ROOT, 'test/sanity/yamllint/yamllinter.py'),
         ]
 
         data = '\n'.join(paths)

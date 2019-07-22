@@ -46,7 +46,7 @@ from lib.coverage_util import (
 
 from lib.data import (
     data_context,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 
@@ -95,7 +95,7 @@ class ImportTest(SanityMultipleVersion):
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
         if not args.explain:
-            os.symlink(os.path.abspath(os.path.join(INSTALL_ROOT, 'test/sanity/import/importer.py')), importer_path)
+            os.symlink(os.path.abspath(os.path.join(ANSIBLE_ROOT, 'test/sanity/import/importer.py')), importer_path)
 
         # create a minimal python library
         python_path = os.path.abspath('test/runner/.tox/import/lib')
@@ -111,7 +111,7 @@ class ImportTest(SanityMultipleVersion):
             with open(ansible_init, 'w'):
                 pass
 
-            os.symlink(os.path.join(INSTALL_ROOT, 'lib/ansible/module_utils'), ansible_link)
+            os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/module_utils'), ansible_link)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])

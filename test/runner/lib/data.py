@@ -9,7 +9,7 @@ import lib.types as t
 from lib.util import (
     ApplicationError,
     import_plugins,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
     is_subdir,
 )
 
@@ -56,13 +56,13 @@ class DataContext:
         if content_path:
             content = self.create_content_layout(self.__layout_providers, self.__source_providers, content_path, False)
 
-            if content.is_install:
+            if content.is_ansible:
                 install = content
             else:
                 install = None
-        elif is_subdir(current_path, INSTALL_ROOT):
-            content = self.create_content_layout(self.__layout_providers, self.__source_providers, INSTALL_ROOT, False)
-            install = InstallLayout(INSTALL_ROOT, content.all_files())
+        elif is_subdir(current_path, ANSIBLE_ROOT):
+            content = self.create_content_layout(self.__layout_providers, self.__source_providers, ANSIBLE_ROOT, False)
+            install = InstallLayout(ANSIBLE_ROOT, content.all_files())
         else:
             content = self.create_content_layout(self.__layout_providers, self.__source_providers, current_path, True)
             install = None
@@ -95,13 +95,13 @@ class DataContext:
     def create_install_layout(source_providers):  # type: (t.List[t.Type[SourceProvider]]) -> InstallLayout
         """Create an install layout using the given source provider."""
         try:
-            source_provider = find_path_provider(SourceProvider, source_providers, INSTALL_ROOT, False)
+            source_provider = find_path_provider(SourceProvider, source_providers, ANSIBLE_ROOT, False)
         except ProviderNotFoundForPath:
-            source_provider = UnversionedSource(INSTALL_ROOT)
+            source_provider = UnversionedSource(ANSIBLE_ROOT)
 
-        paths = source_provider.get_paths(INSTALL_ROOT)
+        paths = source_provider.get_paths(ANSIBLE_ROOT)
 
-        return InstallLayout(INSTALL_ROOT, paths)
+        return InstallLayout(ANSIBLE_ROOT, paths)
 
     @property
     def install(self):  # type: () -> InstallLayout
@@ -134,7 +134,7 @@ def data_init():  # type: () -> DataContext
  - Ansible source: %s/
  - Ansible collection: {...}/ansible_collections/{namespace}/{collection}/
 
-Current working directory: %s''' % (INSTALL_ROOT, os.getcwd()))
+Current working directory: %s''' % (ANSIBLE_ROOT, os.getcwd()))
 
     return context
 

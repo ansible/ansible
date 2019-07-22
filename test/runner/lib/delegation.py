@@ -46,7 +46,7 @@ from lib.util import (
 
 from lib.util_common import (
     run_command,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.docker_util import (
@@ -169,7 +169,7 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, None, INSTALL_ROOT, data_context().content.root, options, exclude, require)
+        cmd = generate_command(args, None, ANSIBLE_ROOT, data_context().content.root, options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
@@ -304,7 +304,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 test_id = test_id.strip()
 
             # write temporary files to /root since /tmp isn't ready immediately on container start
-            docker_put(args, test_id, os.path.join(INSTALL_ROOT, 'test/runner/setup/docker.sh'), '/root/docker.sh')
+            docker_put(args, test_id, os.path.join(ANSIBLE_ROOT, 'test/runner/setup/docker.sh'), '/root/docker.sh')
             docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
             docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
             docker_exec(args, test_id, ['mkdir', '/root/ansible'])
