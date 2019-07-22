@@ -177,6 +177,7 @@ options:
         description:
             - The source user image virtual hard disk. The virtual hard disk will be copied before being attached to the virtual machine.
             - If SourceImage is provided, the destination virtual hard drive must not exist.
+        version_added: "2.9"
     os_disk_os_type:
         description:
             - This property allows you to specify the type of the OS that is included in the disk if creating a VM from user-image or a specialized VHD.
@@ -184,6 +185,7 @@ options:
             - Windows
             - Linux
         default: Linux
+        version_added: "2.9"
     data_disks:
         description:
             - List of data disks.
