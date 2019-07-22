@@ -232,6 +232,7 @@ options:
                     - Only used when OS disk created with virtual hard disk (VHD).
                     - Used when I(managed_disk_type) not defined.
                     - Cannot be updated unless I(lun) updated.
+                    - If not specified, defaults to the VM name + '.vhd'.
                 version_added: "2.4"
             caching:
                 description:
