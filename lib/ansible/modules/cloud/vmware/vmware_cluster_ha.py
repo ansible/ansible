@@ -48,7 +48,7 @@ options:
       default: 'no'
     ha_host_monitoring:
       description:
-      - Indicates whether HA restarts virtual machines after a host fails.
+      - Whether HA restarts virtual machines after a host fails.
       - If set to C(enabled), HA restarts virtual machines after a host fails.
       - If set to C(disabled), HA does not restart virtual machines after a host fails.
       - If C(enable_ha) is set to C(no), then this value is ignored.
