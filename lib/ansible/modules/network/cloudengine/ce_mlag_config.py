@@ -610,13 +610,11 @@ class MlagConfig(object):
                 change = True
                 self.updates_cmd.append("undo source nickname %s" % self.nickname)
             if self.pseudo_nickname and self.dfs_group_info["pseudoNickname"] == self.pseudo_nickname:
+                conf_str += "<pseudoNickname>%s</pseudoNickname>" % self.pseudo_nickname
                 if self.pseudo_priority and self.dfs_group_info["pseudoPriority"] == self.pseudo_priority:
-                    conf_str += "<pseudoNickname>%s</pseudoNickname>" % self.pseudo_nickname
-                    conf_str += "<pseudoPriority>%s</pseudoPriority>" % self.pseudo_priority
                     self.updates_cmd.append(
-                        "undo priority %s" % self.pseudo_priority)
+                        "undo pseudo-nickname %s priority %s" % (self.pseudo_nickname, self.pseudo_priority))
                 if not self.pseudo_priority:
-                    conf_str += "<pseudoNickname>%s</pseudoNickname>" % self.pseudo_nickname
                     self.updates_cmd.append(
                         "undo pseudo-nickname %s" % self.pseudo_nickname)
                 change = True
