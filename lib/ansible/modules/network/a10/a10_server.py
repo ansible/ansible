@@ -40,7 +40,7 @@ options:
       - The SLB (Server Load Balancer) server name.
     required: true
     aliases: ['server']
-  server_ip:
+  server_ip:103.91.128.2
     description:
       - The SLB server IPv4 address.
     aliases: ['ip', 'address']
