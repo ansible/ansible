@@ -177,13 +177,13 @@ options:
         description:
             - The source user image virtual hard disk. The virtual hard disk will be copied before being attached to the virtual machine.
             If SourceImage is provided, the destination virtual hard drive must not exist.
-        type: dict
     os_disk_os_type:
         description:
             - This property allows you to specify the type of the OS that is included in the disk if creating a VM from user-image or a specialized VHD.
         choices:
             - Windows
             - Linux
+        default: Linux
     data_disks:
         description:
             - List of data disks.
@@ -589,7 +589,7 @@ EXAMPLES = '''
     name: testvm001
     vm_size: Standard_B1ms
     admin_username: adminUser
-     admin_password: "Password1234!"
+    admin_password: "Password1234!"
     network_interfaces: vmforimage
     storage_account_name: testvmxxxx
     os_type: Linux
@@ -1021,7 +1021,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     custom_image = True
                     image_reference = self.get_custom_image_reference(
                         self.image.get('name'),
-                        self.image.get('resource_group'))           
+                        self.image.get('resource_group'))
                 elif self.image.get('id'):
                     try:
                         image_reference = self.compute_models.ImageReference(id=self.image['id'])
