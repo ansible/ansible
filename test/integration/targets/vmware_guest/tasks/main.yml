@@ -29,3 +29,4 @@
 - include: boot_firmware_d1_c1_f0.yml
 - include: clone_with_convert.yml
 #- include: max_connections.yml
+- include: mem_reservation.yml
