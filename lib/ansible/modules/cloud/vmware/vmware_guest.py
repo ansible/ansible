@@ -186,7 +186,7 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
           then will select the less used datastore whose name contains this "disk.datastore" string.'
-    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
           will not be used if C(datastore) is specified outside this C(disk) configuration.'
