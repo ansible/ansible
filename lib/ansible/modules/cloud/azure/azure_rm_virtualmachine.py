@@ -177,6 +177,12 @@ options:
         description:
             - The source user image virtual hard disk. The virtual hard disk will be copied before being attached to the virtual machine. 
             If SourceImage is provided, the destination virtual hard drive must not exist.
+    os_disk_os_type:
+        description:
+            - This property allows you to specify the type of the OS that is included in the disk if creating a VM from user-image or a specialized VHD. 
+        choices:
+            - Windows
+            - Linux
     data_disks:
         description:
             - List of data disks.
@@ -812,6 +818,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS']),
             os_disk_name=dict(type='str'),
             os_disk_image=dict(type='dict'),
+            os_disk_os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
@@ -857,6 +864,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.managed_disk_type = None
         self.os_disk_name = None
         self.os_disk_image = None
+        self.os_disk_os_type = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -1068,13 +1076,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     differences.append('OS Disk name')
                     changed = True
                     vm_dict['properties']['storageProfile']['osDisk']['name'] = self.os_disk_name
-                
-                if self.os_disk_image and \
-                   self.os_disk_image != vm_dict['properties']['storageProfile']['osDisk']['image']:
-                    self.log('CHANGED: virtual machine {0} - OS disk image'.format(self.name))
-                    differences.append('OS Disk image')
-                    changed = True
-                    vm_dict['properties']['storageProfile']['osDisk']['image'] = self.os_disk_image
 
                 if self.os_disk_size_gb and \
                    self.os_disk_size_gb != vm_dict['properties']['storageProfile']['osDisk'].get('diskSizeGB'):
@@ -1282,6 +1283,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             os_disk=self.compute_models.OSDisk(
                                 name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
                                 image=self.os_disk_image if self.os_disk_image else None,
+                                os_type=self.os_disk_os_type if self.os_disk_image else None,
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.compute_models.DiskCreateOptionTypes.from_image,
