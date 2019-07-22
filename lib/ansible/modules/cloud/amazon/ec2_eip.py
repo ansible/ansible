@@ -481,10 +481,10 @@ def main():
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
         wait_timeout=dict(default=300, type='int'),
-        private_ip_address=dict(required=False, default=None, type='str'),
-        tag_name=dict(required=False, default=None, type='str'),
-        tag_value=dict(required=False, default=None, type='str'),
-        public_ipv4_pool=dict(required=False, default=None, type='str')
+        private_ip_address=dict(),
+        tag_name=dict(),
+        tag_value=dict(),
+        public_ipv4_pool=dict()
     ))
 
     module = AnsibleModule(
