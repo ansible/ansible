@@ -263,7 +263,7 @@ def test_build_ignore_files_and_folders(collection_input, monkeypatch):
         ignore_file.write('random')
         ignore_file.flush()
 
-    actual = collection._build_files_manifest(to_bytes(input_dir))
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection')
 
     assert actual['format'] == 1
     for manifest_entry in actual['files']:
@@ -278,6 +278,38 @@ def test_build_ignore_files_and_folders(collection_input, monkeypatch):
     assert mock_display.mock_calls[1][1][0] in expected_msgs
 
 
+def test_build_ignore_older_release_in_root(collection_input, monkeypatch):
+    input_dir = collection_input[0]
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_display)
+
+    # This is expected to be ignored because it is in the root collection dir.
+    release_file = os.path.join(input_dir, 'namespace-collection-0.0.0.tar.gz')
+
+    # This is not expected to be ignored because it is not in the root collection dir.
+    fake_release_file = os.path.join(input_dir, 'plugins', 'namespace-collection-0.0.0.tar.gz')
+
+    for filename in [release_file, fake_release_file]:
+        with open(filename, 'w+') as file_obj:
+            file_obj.write('random')
+            file_obj.flush()
+
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection')
+    assert actual['format'] == 1
+
+    plugin_release_found = False
+    for manifest_entry in actual['files']:
+        assert manifest_entry['name'] != 'namespace-collection-0.0.0.tar.gz'
+        if manifest_entry['name'] == 'plugins/namespace-collection-0.0.0.tar.gz':
+            plugin_release_found = True
+
+    assert plugin_release_found
+
+    assert mock_display.call_count == 1
+    assert mock_display.mock_calls[0][1][0] == "Skipping '%s' for collection build" % to_text(release_file)
+
+
 def test_build_ignore_symlink_target_outside_collection(collection_input, monkeypatch):
     input_dir, outside_dir = collection_input
 
@@ -287,7 +319,7 @@ def test_build_ignore_symlink_target_outside_collection(collection_input, monkey
     link_path = os.path.join(input_dir, 'plugins', 'connection')
     os.symlink(outside_dir, link_path)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir))
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection')
     for manifest_entry in actual['files']:
         assert manifest_entry['name'] != 'plugins/connection'
 
@@ -311,7 +343,7 @@ def test_build_copy_symlink_target_inside_collection(collection_input):
 
     os.symlink(roles_target, roles_link)
 
-    actual = collection._build_files_manifest(to_bytes(input_dir))
+    actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection')
 
     linked_entries = [e for e in actual['files'] if e['name'].startswith('playbooks/roles/linked')]
     assert len(linked_entries) == 3

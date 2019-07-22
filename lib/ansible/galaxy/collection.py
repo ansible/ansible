@@ -358,7 +358,7 @@ def build_collection(collection_path, output_path, force):
         raise AnsibleError("The collection galaxy.yml path '%s' does not exist." % to_native(b_galaxy_path))
 
     collection_meta = _get_galaxy_yml(b_galaxy_path)
-    file_manifest = _build_files_manifest(b_collection_path)
+    file_manifest = _build_files_manifest(b_collection_path, collection_meta['namespace'], collection_meta['name'])
     collection_manifest = _build_manifest(**collection_meta)
 
     collection_output = os.path.join(output_path, "%s-%s-%s.tar.gz" % (collection_meta['namespace'],
@@ -587,9 +587,12 @@ def _get_galaxy_yml(b_galaxy_yml_path):
     return galaxy_yml
 
 
-def _build_files_manifest(b_collection_path):
-    b_ignore_files = frozenset([b'*.pyc', b'*.retry'])
-    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
+def _build_files_manifest(b_collection_path, namespace, name):
+    # Contains tuple of (b_filename, only root) where 'only root' means to only ignore the file in the root dir
+    b_ignore_files = frozenset([(b'*.pyc', False), (b'*.retry', False),
+                                (to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)), True)])
+    b_ignore_dirs = frozenset([(b'CVS', False), (b'.bzr', False), (b'.hg', False), (b'.git', False), (b'.svn', False),
+                               (b'__pycache__', False), (b'.tox', False)])
 
     entry_template = {
         'name': None,
@@ -612,13 +615,16 @@ def _build_files_manifest(b_collection_path):
     }
 
     def _walk(b_path, b_top_level_dir):
+        is_root = b_path == b_top_level_dir
+
         for b_item in os.listdir(b_path):
             b_abs_path = os.path.join(b_path, b_item)
             b_rel_base_dir = b'' if b_path == b_top_level_dir else b_path[len(b_top_level_dir) + 1:]
             rel_path = to_text(os.path.join(b_rel_base_dir, b_item), errors='surrogate_or_strict')
 
             if os.path.isdir(b_abs_path):
-                if b_item in b_ignore_dirs:
+                if any(b_item == b_path for b_path, root_only in b_ignore_dirs
+                       if not root_only or root_only == is_root):
                     display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
                     continue
 
@@ -640,7 +646,8 @@ def _build_files_manifest(b_collection_path):
             else:
                 if b_item == b'galaxy.yml':
                     continue
-                elif any(fnmatch.fnmatch(b_item, b_pattern) for b_pattern in b_ignore_files):
+                elif any(fnmatch.fnmatch(b_item, b_pattern) for b_pattern, root_only in b_ignore_files
+                         if not root_only or root_only == is_root):
                     display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
                     continue
 
