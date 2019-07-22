@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware_guest accepts 0 MB of memory reservation, fix regression introduced via 193f69064fb40a83e3e7d2112ef24868b45233b3 (https://github.com/ansible/ansible/issues/59190).
