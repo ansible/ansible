@@ -36,7 +36,8 @@ options:
   content:
     description:
     - When used instead of C(src), sets the contents of a file directly to the specified value.
-    - For advanced formatting or if C(content) contains a variable, use the C(template) module.
+    - Works only when C(dest) is a file. Creates the file if it does not exist.
+    - For advanced formatting or if C(content) contains a variable, use the M(template) module.
     type: str
     version_added: '1.1'
   dest:
