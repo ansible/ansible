@@ -56,7 +56,7 @@ options:
     drs_default_vm_behavior:
       description:
       - Specifies the cluster-wide default DRS behavior for virtual machines.
-      - If set to C(partiallyAutomated), then vCenter generate recommendations for virtual machine migration and
+      - If set to C(partiallyAutomated), vCenter generates recommendations for virtual machine migration and
         for the placement with a host. vCenter automatically implement placement at power on.
       - If set to C(manual), then vCenter generate recommendations for virtual machine migration and
         for the placement with a host. vCenter should not implement the recommendations automatically.
