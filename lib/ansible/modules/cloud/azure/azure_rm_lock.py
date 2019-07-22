@@ -30,7 +30,7 @@ options:
         required: true
     managed_resource_id:
         description:
-            - Manages a lock for the specified resource ID.
+            - Manage a lock for the specified resource ID.
             - Mututally exclusive with I(resource_group).
             - If neither I(managed_resource_id) or I(resource_group) are specified, manage a lock for the current subscription.
             - "'/subscriptions/{subscriptionId}' for subscriptions."
