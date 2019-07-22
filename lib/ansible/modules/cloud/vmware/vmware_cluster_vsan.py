@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_cluster_vsan
-short_description: Manage vSAN on VMware vSphere clusters
+short_description: Manages virtual storage area network (vSAN) configuration on VMware vSphere clusters
 description:
     - Manages vSAN on VMware vSphere clusters.
     - All values and VMware object names are case sensitive.
