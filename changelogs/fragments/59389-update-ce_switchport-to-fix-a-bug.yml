@@ -1,0 +1,2 @@
+bugfixes:
+- Fix misssing link-type hybrid and dot1qtunnel bug(https://github.com/ansible/ansible/pull/59332)
