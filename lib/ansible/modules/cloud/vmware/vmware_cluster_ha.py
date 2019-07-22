@@ -95,7 +95,7 @@ options:
       description:
       - The number of seconds for the virtual machine's heartbeats to stabilize after
         the virtual machine has been powered on.
-      - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
+      - Valid only when I(ha_vm_monitoring) is set to either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
       type: int
       default: 120
