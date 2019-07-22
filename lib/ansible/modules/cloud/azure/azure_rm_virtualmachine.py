@@ -181,6 +181,7 @@ options:
             - Use M(azure_rm_mangeddisk) to manage the specific disk.
             - This list cannot be changed after creation currently, use M(azure_rm_manageddisk) to manage the data disk.
             - Use M(azure_rm_manageddisk) to manage the specific disk.
+            - List of data disks.
         version_added: "2.4"
         suboptions:
             lun:
@@ -220,7 +221,7 @@ options:
             storage_container_name:
                 description:
                     - Name of the container to use within the storage account to store VHD blobs.
-                    - If no specified, a default container will created.
+                    - If not specified, a default container will created.
                 default: vhds
                 version_added: "2.4"
             storage_blob_name:
