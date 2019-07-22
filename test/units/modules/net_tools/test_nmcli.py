@@ -260,7 +260,7 @@ def test_bond_connection_create(mocked_generic_connection_create):
     assert args[0][7] == 'ifname'
     assert args[0][8] == 'bond_non_existant'
 
-    for param in ['ipv4.gateway', 'primary', 'autoconnect', 'mode', 'active-backup', 'ipv4.address']:
+    for param in ['gw4', 'primary', 'autoconnect', 'mode', 'active-backup', 'ip4']:
         assert param in args[0]
 
 
@@ -284,7 +284,7 @@ def test_generic_connection_create(mocked_generic_connection_create):
     assert args[0][5] == 'con-name'
     assert args[0][6] == 'non_existent_nw_device'
 
-    for param in ['autoconnect', 'ipv4.gateway', 'ipv4.address']:
+    for param in ['autoconnect', 'gw4', 'ip4']:
         assert param in args[0]
 
 
@@ -395,7 +395,7 @@ def test_mod_bridge(mocked_generic_connection_modify):
     assert args[0][1] == 'con'
     assert args[0][2] == 'mod'
     assert args[0][3] == 'non_existent_nw_device'
-    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', 100, 'bridge.stp', 'yes']:
+    for param in ['ipv4.address', '10.10.10.10', 'ipv4.gateway', '10.10.10.1', 'bridge.max-age', 100, 'bridge.stp', 'yes']:
         assert param in args[0]
 
 
