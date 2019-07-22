@@ -130,13 +130,6 @@ try:
 except ImportError:
     pass
 
-# OAuth Variables
-module = None
-client_id = None
-client_secret = None
-instance = None
-session = {'token': None}
-
 
 class BuildQuery(object):
     '''
