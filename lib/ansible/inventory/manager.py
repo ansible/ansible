@@ -421,8 +421,8 @@ class InventoryManager(object):
                     that = set(that)
                     hosts = [h for h in hosts if h in that]
                 else:
-                    added_hosts = set(y.name for y in hosts)
-                    hosts.extend([h for h in that if h.name not in added_hosts])
+                    existing_hosts = set(y.name for y in hosts)
+                    hosts.extend([h for h in that if h.name not in existing_hosts])
         return hosts
 
     def _match_one_pattern(self, pattern):
