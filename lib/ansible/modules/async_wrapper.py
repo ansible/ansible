@@ -21,6 +21,7 @@ import syslog
 import multiprocessing
 
 from ansible.module_utils._text import to_text
+from ansible.utils.path import makedirs_safe
 
 PY3 = sys.version_info[0] == 3
 
@@ -231,14 +232,13 @@ def main():
     jobdir = os.path.expanduser(async_dir)
     job_path = os.path.join(jobdir, jid)
 
-    if not os.path.exists(jobdir):
-        try:
-            os.makedirs(jobdir)
-        except Exception:
-            print(json.dumps({
-                "failed": 1,
-                "msg": "could not create: %s" % jobdir
-            }))
+    try:
+        makedirs_safe(jobdir)
+    except Exception as e:
+        print(json.dumps({
+            "failed": 1,
+            "msg": "could not create %s: %s" % (jobdir, to_text(e))
+        }))
     # immediately exit this process, leaving an orphaned process
     # running which immediately forks a supervisory timing process
 
