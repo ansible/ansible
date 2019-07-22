@@ -1,7 +1,7 @@
-.. _RHV_troubleshooting:
+.. _oVirt_troubleshooting:
 
 **********************************
-Troubleshooting Ansible for RHV
+Troubleshooting Ansible for oVirt
 **********************************
 
 .. contents::
@@ -12,7 +12,7 @@ This section lists things that can go wrong and possible ways to fix them.
 Debugging
 =========
 
-When debugging or creating a new issue, you will need information about your RHV infrastructure.
+When debugging or creating a new issue, you will need information about your oVirt infrastructure.
 
 Troubleshooting Item
 ====================

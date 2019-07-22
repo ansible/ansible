@@ -1,7 +1,7 @@
-.. _RHV_requirements:
+.. _oVirt_requirements:
 
 ********************
-RHV Prerequisites
+oVirt Prerequisites
 ********************
 
 This is what you'll need to get started...

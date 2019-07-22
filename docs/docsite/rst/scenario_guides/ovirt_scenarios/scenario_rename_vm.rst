@@ -1,4 +1,4 @@
-.. _RHV_guest_rename_virtual_machine:
+.. _oVirt_guest_rename_virtual_machine:
 
 **********************************
 Rename an existing virtual machine
@@ -19,28 +19,24 @@ Scenario Requirements
 
     * Ansible 2.5 or later must be installed.
 
-    * The Python module ``Pyvmomi`` must be installed on the Ansible control node (or Target host if not executing against localhost).
-
-    * We recommend installing the latest version with pip: ``pip install Pyvmomi`` (as the OS packages are usually out of date and incompatible).
-
 * Hardware
 
-    * At least one standalone ESXi server or
+    * At least one oVirt Cluster or locally-installed host
 
-    * vCenter Server with at least one ESXi server
+    * oVirt/RHV engine with at least one host
 
 * Access / Credentials
 
-    * Ansible (or the target server) must have network access to the either vCenter server or the ESXi server
+    * Ansible (or the target server) must have network access to the either the engine server
 
-    * Username and Password for vCenter or ESXi server
+    * Username and Password for oVirt/RHV engine admin
 
-    * Hosts in the ESXi cluster must have access to the datastore that the template resides on.
+    * Hosts in the oVirt/RHV cluster must have access to the storage domain that the template resides on.
 
 Caveats
 =======
 
-- All variable names and RHV object names are case sensitive.
+- All variable names and oVirt object names are case sensitive.
 - You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
 
 
@@ -67,7 +63,7 @@ With the following Ansible playbook you can rename an existing virtual machine b
             cluster_name: "DC1_C1"
 
         - name: Get VM "{{ vm_name }}" uuid
-          RHV_guest_facts:
+          oVirt_guest_facts:
             hostname: "{{ vcenter_server }}"
             username: "{{ vcenter_user }}"
             password: "{{ vcenter_pass }}"
@@ -78,7 +74,7 @@ With the following Ansible playbook you can rename an existing virtual machine b
           register: vm_facts
 
         - name: Rename "{{ vm_name }}" to "{{ new_vm_name }}"
-          RHV_guest:
+          oVirt_guest:
             hostname: "{{ vcenter_server }}"
             username: "{{ vcenter_user }}"
             password: "{{ vcenter_pass }}"
@@ -87,27 +83,27 @@ With the following Ansible playbook you can rename an existing virtual machine b
             uuid: "{{ vm_facts.instance.hw_product_uuid }}"
             name: "{{ new_vm_name }}"
 
-Since Ansible utilizes the RHV API to perform actions, in this use case it will be connecting directly to the API from localhost.
+Since Ansible utilizes the oVirt API to perform actions, in this use case it will be connecting directly to the API from localhost.
 
-This means that playbooks will not be running from the vCenter or ESXi Server.
+This means that playbooks will not be running from the engine or host Server.
 
 Note that this play disables the ``gather_facts`` parameter, since you don't want to collect facts about localhost.
 
-You can run these modules against another server that would then connect to the API if localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server. We recommend installing the latest version with pip: ``pip install Pyvmomi`` (as the OS packages are usually out of date and incompatible).
+You can run these modules against another server that would then connect to the API if localhost does not have access to engine. If so, the required Python modules will need to be installed on that target server. We recommend installing the latest version with pip: ``pip install Pyvmomi`` (as the OS packages are usually out of date and incompatible).
 
 Before you begin, make sure you have:
 
-- Hostname of the ESXi server or vCenter server
-- Username and password for the ESXi or vCenter server
+- Hostname of the engine server
+- Username and password for the engine server
 - The UUID of the existing Virtual Machine you want to rename
 
 For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion using :ref:`ansible-vault` or using `Ansible Tower credentials <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_.
 
-If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
+If your engine server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
 
-Now you need to supply the information about the existing virtual machine which will be renamed. For renaming virtual machine, ``RHV_guest`` module uses RHV UUID, which is unique across vCenter environment. This value is autogenerated and can not be changed. You will use ``RHV_guest_facts`` module to find virtual machine and get information about RHV UUID of the virtual machine.
+Now you need to supply the information about the existing virtual machine which will be renamed. For renaming virtual machine, ``oVirt_*`` moduleis use oVirt UUID, which is unique across oVirt environment. This value is autogenerated and can not be changed. You will use ``oVirt_*_facts`` module to find virtual machine and get information about oVirt UUID of the virtual machine.
 
-This value will be used input for ``RHV_guest`` module. Specify new name to virtual machine which conforms to all RHV requirements for naming conventions as ``name`` parameter. Also, provide ``uuid`` as the value of RHV UUID.
+This value will be used input for ``oVirt_*`` modules. Specify new name to virtual machine which conforms to all oVirt requirements for naming conventions as ``name`` parameter. Also, provide ``uuid`` as the value of oVirt UUID.
 
 What to expect
 --------------
@@ -127,7 +123,7 @@ Running this playbook can take some time, depending on your environment and netw
             "guest_tools_status": "guestToolsNotRunning",
             "guest_tools_version": "10247",
             "hw_cores_per_socket": 1,
-            "hw_datastores": ["ds_204_2"],
+            "hw_storage domains": ["ds_204_2"],
             "hw_esxi_host": "10.x.x.x",
             "hw_eth0": {
                 "addresstype": "assigned",
@@ -139,7 +135,7 @@ Running this playbook can take some time, depending on your environment and netw
                 "portgroup_portkey": "15",
                 "summary": "DVSwitch: 50 0c 3a 69 df 78 2c 7b-6e 08 0a 89 e3 a6 31 17"
             },
-            "hw_files": ["[ds_204_2] old_vm_name/old_vm_name.vmx", "[ds_204_2] old_vm_name/old_vm_name.nvram", "[ds_204_2] old_vm_name/old_vm_name.vmsd", "[ds_204_2] old_vm_name/RHV.log", "[ds_204_2] old_vm_name/old_vm_name.vmdk"],
+            "hw_files": ["[ds_204_2] old_vm_name/old_vm_name.vmx", "[ds_204_2] old_vm_name/old_vm_name.nvram", "[ds_204_2] old_vm_name/old_vm_name.vmsd", "[ds_204_2] old_vm_name/oVirt.log", "[ds_204_2] old_vm_name/old_vm_name.vmdk"],
             "hw_folder": "/DC1/vm",
             "hw_guest_full_name": null,
             "hw_guest_ha_state": null,
@@ -170,5 +166,5 @@ If your playbook fails:
 
 - Check if the values provided for username and password are correct.
 - Check if the datacenter you provided is available.
-- Check if the virtual machine specified exists and you have permissions to access the datastore.
+- Check if the virtual machine specified exists and you have permissions to access the storage domain.
 - Ensure the full folder path you specified already exists.

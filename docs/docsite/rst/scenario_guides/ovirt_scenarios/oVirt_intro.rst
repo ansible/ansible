@@ -1,7 +1,7 @@
-.. _RHV_ansible_intro:
+.. _oVirt_ansible_intro:
 
 **********************************
-Introduction to Ansible for RHV
+Introduction to Ansible for oVirt
 **********************************
 
 .. contents::
@@ -10,13 +10,13 @@ Introduction to Ansible for RHV
 Introduction
 ============
 
-Ansible provides various modules to manage RHV infrastructure, which includes datacenter, cluster,
-host system and virtual machine.
+Ansible provides various modules to manage oVirt infrastructure, which includes datacenter, cluster,
+host system and virtual machine, including all their lifecycles.
 
 Requirements
 ============
 
-Ansible RHV modules often require the ovirt-engine-sdk-python package installed.
+Ansible oVirt modules often require the ovirt-engine-sdk-python package installed.
 You can install ovirt-engine-sdk-python using yum in CentOS or RHEL (pending enabled/ available repositories):
 
 .. code-block:: bash
@@ -27,7 +27,7 @@ You can install ovirt-engine-sdk-python using yum in CentOS or RHEL (pending ena
 ovirt_* modules
 ===================
 
-The modules for RHV are all known generally as ``ovirt_<something>``
+The modules for oVirt are all known generally as ``ovirt_<something>``
 
 They are found here: `oVirt Modules <https://docs.ansible.com/ansible/latest/modules/list_of_cloud_modules.html#ovirt>`
 

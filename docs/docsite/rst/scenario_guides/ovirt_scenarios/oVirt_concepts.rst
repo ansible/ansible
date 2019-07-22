@@ -1,12 +1,12 @@
-.. _RHV_concepts:
+.. _oVirt_concepts:
 
 
 ***************************
-Ansible for RHV Concepts
+Ansible for oVirt Concepts
 ***************************
 
-These concepts are common to all uses of Ansible, including RHV automation.
-You need to understand them to use Ansible for RHV automation.
+These concepts are common to all uses of Ansible, including oVirt automation.
+You need to understand them to use Ansible for oVirt automation.
 This basic introduction provides the background you need to follow the
 examples in this guide.
 
@@ -28,7 +28,7 @@ There can be multiple control nodes.
 Delegation
 ==========
 
-If you want to perform a RHV specific task on one host within a RHV Datacenter,
+If you want to perform a oVirt specific task on one host within a RHV Datacenter,
 use the ``delegate_to`` keyword on a task.
 This delegation host will be any host where you have ``pyVmomi`` installed.
 Your control node and ``delegate_to`` host can be same or different.
@@ -38,11 +38,11 @@ Modules
 =======
 
 These are the units of code Ansible executes. Each module has a particular use,
- from creating virtual machines on RHV/ oVirt to managing clusters within a
- oVirt/ RHV datacenter. You can invoke a single module with a task, or invoke
+ from creating virtual machines on oVirt/RHV to managing clusters within a
+ oVirt/RHV datacenter. You can invoke a single module with a task, or invoke
  several different modules in a playbook. For an idea of how many modules
  Ansible includes, take a look at the
- :ref:`list of RHV modules<RHV_ansible_module_index>`.
+ :ref:`list of oVirt modules<oVirt_ansible_module_index>`.
 
 
 Playbooks
@@ -57,9 +57,9 @@ share and understand.
 ovirt-engine-sdk-python
 =======================
 
-Ansible RHV modules often require the ovirt-engine-sdk-python package installed.
+Ansible oVirt modules often require the ovirt-engine-sdk-python package installed.
 
-You need to install this Python SDK on the host from where you want to invoke RHV automation. For example, if you are using a control
+You need to install this Python SDK on the host from where you want to invoke oVirt automation. For example, if you are using a control
 node then it must be installed on that control node.
 
 If you are using any ``delegate_to`` host which is different from your control node then you need to install the same SDK on that

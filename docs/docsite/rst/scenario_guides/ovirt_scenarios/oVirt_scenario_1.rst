@@ -1,12 +1,12 @@
 :orphan:
 
-.. _RHV_scenario_1:
+.. _oVirt_scenario_1:
 
 **********************************
-Sample Scenario for Ansible RHV
+Sample Scenario for Ansible oVirt
 **********************************
 
-If you want to add a scenario to the RHV guide, follow this template, starting with an introductory paragraph here.
+If you want to add a scenario to the oVirt guide, follow this template, starting with an introductory paragraph here.
 
 .. contents::
    :local:
