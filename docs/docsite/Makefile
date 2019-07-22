@@ -5,6 +5,7 @@ TESTING_FORMATTER=../bin/testing_formatter.sh
 KEYWORD_DUMPER=../../hacking/build-ansible.py document-keywords
 CONFIG_DUMPER=../../hacking/build-ansible.py document-config
 GENERATE_CLI=../../hacking/build-ansible.py generate-man
+COLLECTION_DUMPER=../../hacking/build-ansible.py collection-meta
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
@@ -37,7 +38,7 @@ all: docs
 
 docs: htmldocs
 
-generate_rst: config cli keywords modules plugins testing
+generate_rst: collections_meta config cli keywords modules plugins testing
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
@@ -75,8 +76,12 @@ clean:
 	rm -f rst/plugins/*/*.rst
 	rm -f rst/reference_appendices/config.rst
 	rm -f rst/reference_appendices/playbooks_keywords.rst
+	rm -f rst/dev_guide/collections_galaxy_meta.rst
 
 .PHONY: docs clean
+
+collections_meta: ../templates/collections_galaxy_meta.rst.j2
+	PYTHONPATH=../../lib $(COLLECTION_DUMPER) --template-file=../templates/collections_galaxy_meta.rst.j2 --output-dir=rst/dev_guide/ ../../lib/ansible/galaxy/data/collections_galaxy_meta.yml
 
 # TODO: make generate_man output dir cli option
 cli:

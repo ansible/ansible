@@ -23,6 +23,7 @@ from yaml.error import YAMLError
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
+from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
 from ansible.utils.display import Display
@@ -524,11 +525,25 @@ def _tarfile_extract(tar, member):
 
 
 def _get_galaxy_yml(b_galaxy_yml_path):
-    mandatory_keys = frozenset(['namespace', 'name', 'version', 'authors', 'readme'])
-    optional_strings = ('description', 'repository', 'documentation', 'homepage', 'issues', 'license_file')
-    optional_lists = ('license', 'tags', 'authors')  # authors isn't optional but this will ensure it is list
-    optional_dicts = ('dependencies',)
-    all_keys = frozenset(list(mandatory_keys) + list(optional_strings) + list(optional_lists) + list(optional_dicts))
+    meta_info = get_collections_galaxy_meta_info()
+
+    mandatory_keys = set()
+    string_keys = set()
+    list_keys = set()
+    dict_keys = set()
+
+    for info in meta_info:
+        if info.get('required', False):
+            mandatory_keys.add(info['key'])
+
+        key_list_type = {
+            'str': string_keys,
+            'list': list_keys,
+            'dict': dict_keys,
+        }[info.get('type', 'str')]
+        key_list_type.add(info['key'])
+
+    all_keys = frozenset(list(mandatory_keys) + list(string_keys) + list(list_keys) + list(dict_keys))
 
     try:
         with open(b_galaxy_yml_path, 'rb') as g_yaml:
@@ -549,11 +564,11 @@ def _get_galaxy_yml(b_galaxy_yml_path):
                         % (to_text(b_galaxy_yml_path), ", ".join(extra_keys)))
 
     # Add the defaults if they have not been set
-    for optional_string in optional_strings:
+    for optional_string in string_keys:
         if optional_string not in galaxy_yml:
             galaxy_yml[optional_string] = None
 
-    for optional_list in optional_lists:
+    for optional_list in list_keys:
         list_val = galaxy_yml.get(optional_list, None)
 
         if list_val is None:
@@ -561,7 +576,7 @@ def _get_galaxy_yml(b_galaxy_yml_path):
         elif not isinstance(list_val, list):
             galaxy_yml[optional_list] = [list_val]
 
-    for optional_dict in optional_dicts:
+    for optional_dict in dict_keys:
         if optional_dict not in galaxy_yml:
             galaxy_yml[optional_dict] = {}
 
@@ -655,7 +670,7 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
             'tags': tags,
             'description': description,
             'license': license_ids,
-            'license_file': license_file,
+            'license_file': license_file if license_file else None,  # Handle galaxy.yml having an empty string (None)
             'dependencies': dependencies,
             'repository': repository,
             'documentation': documentation,
