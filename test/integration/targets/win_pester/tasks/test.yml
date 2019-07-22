@@ -53,7 +53,7 @@
     that:
     - dir_with_ending_slash.changed
     - not dir_with_ending_slash.failed
-    - dir_with_ending_slash.output.TotalCount == 4
+    - dir_with_ending_slash.output.TotalCount == 6
 
 - name: Run Pester test(s) located in a folder. Folder path does not end with '\'
   win_pester:
@@ -65,7 +65,7 @@
     that:
     - dir_without_ending_slash.changed
     - not dir_without_ending_slash.failed
-    - dir_without_ending_slash.output.TotalCount == 4
+    - dir_without_ending_slash.output.TotalCount == 6
 
 - name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
   win_pester:
@@ -78,7 +78,7 @@
     that:
     - dir_with_version.changed
     - not dir_with_version.failed
-    - dir_with_version.output.TotalCount == 4
+    - dir_with_version.output.TotalCount == 6
 
 - name: Run Pester test(s) specifying a test file without specifying tag
   win_pester:
@@ -102,3 +102,18 @@
     that:
     - test_with_tag.changed
     - test_with_tag.output.TotalCount == 1
+
+- name: Run Pester test(s) specifying a test file with parameters
+  win_pester:
+    path: '{{test_win_pester_path}}\test04.test.ps1'
+    test_parameters:
+      Process: lsass
+      Service: bits
+  register: test_with_parameter
+
+- name: Run Pester test(s) specifying a test file with parameters
+  assert:
+    that:
+    - test_with_parameter.changed
+    - test_with_parameter.output.PassedCount == 2
+    - test_with_parameter.output.TotalCount == 2
