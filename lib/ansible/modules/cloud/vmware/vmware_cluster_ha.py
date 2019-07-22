@@ -104,7 +104,7 @@ options:
       description:
       - Maximum number of failures and automated resets allowed during the time
        that C(ha_vm_max_failure_window) specifies.
-      - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
+      - Valid only when I(ha_vm_monitoring) is set to either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       type: int
       default: 3
       version_added: 2.8
