@@ -81,7 +81,7 @@ options:
      - For using ontap_elementsw, elementsw_ontap snapmirror relationship should exist.
     choices: ['ontap_ontap', 'elementsw_ontap', 'ontap_elementsw']
     default: ontap_ontap
-    version_added: '2.8'
+    version_added: '2.9'
   max_transfer_rate:
     description:
      - Specifies the upper bound, in kilobytes per second, at which data is transferred.
