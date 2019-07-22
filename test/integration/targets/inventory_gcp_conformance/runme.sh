@@ -19,6 +19,8 @@ fi
 echo "PWD: $PWD"
 export PYTHONPATH="${PWD}/lib:$PYTHONPATH"
 
+echo "PYTHONPATH: ${PYTHONPATH}"
+
 # Create fake credentials
 cat << EOF > "$OUTPUT_DIR/gcp_credentials.json"
 {
