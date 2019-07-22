@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_vm - fix for module failure on creation (https://github.com/ansible/ansible/issues/59385)
