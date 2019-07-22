@@ -998,9 +998,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     custom_image = True
                     image_reference = self.get_custom_image_reference(
                         self.image.get('name'),
-                        self.image.get('resource_group'))
-                elif self.imge.get('disk_id'):
-                    
+                        self.image.get('resource_group'))              
                 elif self.image.get('id'):
                     try:
                         image_reference = self.compute_models.ImageReference(id=self.image['id'])
@@ -1210,8 +1208,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
-                    if not image_reference:
-                        self.fail("Parameter error: an image is required when creating a virtual machine.")
+                    # if not image_reference:
+                        # self.fail("Parameter error: an image is required when creating a virtual machine.")
 
                     availability_set_resource = None
                     if self.availability_set:
@@ -1290,7 +1288,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 caching=self.os_disk_caching,
                                 disk_size_gb=self.os_disk_size_gb
                             ),
-                            image_reference=image_reference,
+                            image_reference=image_reference if image_reference else None,
                         ),
                         network_profile=self.compute_models.NetworkProfile(
                             network_interfaces=nics
@@ -1499,7 +1497,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         storage_profile=self.compute_models.StorageProfile(
                             os_disk=self.compute_models.OSDisk(
                                 name=vm_dict['properties']['storageProfile']['osDisk'].get('name'),
-                                image=vm_dict['properties']['storageProfile']['osDisk'].get('image'),
                                 vhd=vhd,
                                 managed_disk=managed_disk,
                                 create_option=vm_dict['properties']['storageProfile']['osDisk'].get('createOption'),
