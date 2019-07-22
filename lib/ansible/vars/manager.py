@@ -160,6 +160,10 @@ class VariableManager:
         - task->get_vars (if there is a task context)
         - vars_cache[host] (if there is a host context)
         - extra vars
+
+        ``_hosts`` and ``_hosts_all`` should be considered private args, with only internal trusted callers relying
+        on the functionality they provide. These arguments may be removed at a later date without a deprecation
+        period and without warning.
         '''
 
         display.debug("in VariableManager get_vars()")
