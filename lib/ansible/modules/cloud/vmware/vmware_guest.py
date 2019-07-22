@@ -896,7 +896,9 @@ class PyVmomiHelper(PyVmomi):
                     rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
-                mem_reservation = self.params['hardware'].get('mem_reservation') or self.params['hardware'].get('memory_reservation')
+                mem_reservation = self.params['hardware'].get('mem_reservation')
+                if mem_reservation is None:
+                    mem_reservation = self.params['hardware'].get('memory_reservation')
                 try:
                     mem_reservation = int(mem_reservation)
                 except ValueError:
