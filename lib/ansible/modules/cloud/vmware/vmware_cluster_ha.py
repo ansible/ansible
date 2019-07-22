@@ -112,7 +112,7 @@ options:
       description:
       - The number of seconds for the window during which up to C(ha_vm_max_failures) resets
         can occur before automated responses stop.
-      - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
+      - Valid only when I(ha_vm_monitoring) is set to either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
       - Default specifies no failure window.
       type: int
