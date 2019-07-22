@@ -60,7 +60,7 @@ options:
         for the placement with a host. vCenter automatically implement placement at power on.
       - If set to C(manual), then vCenter generates recommendations for virtual machine migration and
         for the placement with a host, but does not implement the recommendations automatically.
-      - If set to C(fullyAutomated), then vCenter should automate both the migration of virtual machines
+      - If set to C(fullyAutomated), then vCenter automates both the migration of virtual machines
         and their placement with a host at power on.
       type: str
       default: fullyAutomated
