@@ -55,50 +55,9 @@ and other tools need in order to package, build and publish the collection.::
 galaxy.yml
 ----------
 
-This file contains the information about a collection that is necessary for Ansible tools to operate.
-``galaxy.yml`` has the following fields (subject to changes and expansion):
+A collection must have a ``galaxy.yml`` file that contains the necessary information to build a collection artifact.
+See :ref:`collections_galaxy_meta` for details on how this file is structured.
 
-.. code-block:: yaml
-
-    namespace: "namespace_name"
-    name: "collection_name"
-    version: "1.0.12"
-    authors:
-        - "Author1"
-        - "Author2 (https://author2.example.com)"
-        - "Author3 <author3@example.com>"
-    dependencies:
-        "other_namespace.collection1": ">=1.0.0"
-        "other_namespace.collection2": ">=2.0.0,<3.0.0"
-        "anderson55.my_collection": "*"    # note: "*" selects the highest version available
-    license:
-        - "MIT"
-    tags:
-        - demo
-        - collection
-    repository: "https://www.github.com/my_org/my_collection"
-
-
-Required Fields:
-    - ``namespace``: the namespace that the collection lives under. It must be a valid Python identifier,
-        and may only contain alphanumeric characters and underscores. Additionally
-        the ``namespace`` cannot start with underscores or numbers and cannot contain consecutive
-        underscores.
-    - ``name``: the collection's name. Has the same character restrictions as ``namespace``.
-    - ``version``: the collection's version. To upload to Galaxy, it must be compatible with semantic versioning.
-
-
-Optional Fields:
-    - ``dependencies``: A dictionary where keys are collections, and values are version
-      range `specifiers <https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification>`_.
-      It is good practice to depend on a version range to minimize conflicts, and pin to a
-      a major version to protect against breaking changes. For example: ``"user1.collection1": ">=1.2.2,<2.0.0"``
-      This field allows other collections as dependencies, not traditional roles.
-    - ``description``: A short summary description of the collection.
-    - ``license``: Either a single license or a list of licenses for content inside of a collection.
-      Galaxy currently only accepts `SPDX <https://spdx.org/licenses/>`_ licenses.
-    - ``tags``: a list of tags. These have the same character requirements as ``namespace`` and ``name``.
-    - ``repository``: URL of originating SCM repository.
 
 docs directory
 ---------------

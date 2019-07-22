@@ -1,0 +1,74 @@
+.. _collections_galaxy_meta:
+
+************************************
+Collection Galaxy Metadata Structure
+************************************
+
+.. important::
+    This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing  and should not be deployed in a production environment.
+    Future Galaxy or Ansible releases may introduce breaking changes.
+
+A key component of an Ansible collection is the ``galaxy.yml`` file placed in the root directory of a collection. This
+file contains the metadata of the collection that is used to generate a collection artifact.
+
+Structure
+=========
+
+The ``galaxy.yml`` file must contain the following keys in valid YAML:
+
+.. raw:: html
+
+    <table  border=0 cellpadding=0 class="documentation-table">
+        {# Header of the documentation -#}
+        <tr>
+            <th>Key</th>
+            <th width="100%">Comments</th>
+        </tr>
+        {% for entry in options %}
+            <tr>
+                {# key name with required or type label #}
+                <td>
+                    <b>@{ entry.key }@</b>
+                    <div style="font-size: small">
+                        <span style="color: purple">@{ entry.type | documented_type }@</span>
+                        {% if entry.get('required', False) %} / <span style="color: red">required</span>{% endif %}
+                    </div>
+                </td>
+                {# Comments #}
+                <td>
+                    {% if entry.description is string %}
+                        <div>@{ entry.description | replace('\n', '\n    ') | html_ify }@</div>
+                    {% else %}
+                        {% for desc in entry.description %}
+                            <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                        {% endfor %}
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <br/>
+
+Examples
+========
+
+.. code-block:: yaml
+
+    namespace: "namespace_name"
+    name: "collection_name"
+    version: "1.0.12"
+    readme: "README.md"
+    authors:
+        - "Author1"
+        - "Author2 (https://author2.example.com)"
+        - "Author3 <author3@example.com>"
+    dependencies:
+        "other_namespace.collection1": ">=1.0.0"
+        "other_namespace.collection2": ">=2.0.0,<3.0.0"
+        "anderson55.my_collection": "*"    # note: "*" selects the highest version available
+    license:
+        - "MIT"
+    tags:
+        - demo
+        - collection
+    repository: "https://www.github.com/my_org/my_collection"
