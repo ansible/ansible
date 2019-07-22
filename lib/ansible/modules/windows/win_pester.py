@@ -32,6 +32,11 @@ options:
       - Accepts multiple comma seperated tags.
     type: list
     version_added: '2.9'
+  test_parameters:
+    description:
+      - Allows to specify parameters to the test script.
+    type: dict
+    version_added: '2.9'
   version:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
@@ -64,6 +69,13 @@ EXAMPLES = r'''
   win_pester:
     path: C:\Pester\test01.test.ps1
     version: 4.1.0
+
+- name: Run the pester test present in a folder with given script parameters.
+  win_pester:
+    path: C:\Pester\test04.test.ps1
+    test_parameters:
+      Process: lsass
+      Service: bits
 '''
 
 RETURN = r'''
