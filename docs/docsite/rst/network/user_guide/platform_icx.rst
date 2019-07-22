@@ -11,7 +11,6 @@ ICX supports Enable Mode (Privilege Escalation). This page offers details on how
 Connections Available
 ================================================================================
 
-<<<<<<< c686758fc83eed82e462a907a87ff5ab3f84615e
 .. table::
     :class: documentation-table
 
@@ -36,30 +35,6 @@ Connections Available
 
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
-=======
-+---------------------------+-----------------------------------------------+
-|..                         | CLI                                           |
-+===========================+===============================================+
-| **Protocol**              |  SSH                                          |
-+---------------------------+-----------------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        |
-| |                         | | accepts ``-u myuser -k`` if using password  |
-+---------------------------+-----------------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     |
-+---------------------------+-----------------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         |
-| |                         | |                                             |
-| |                         | |                                             |
-+---------------------------+-----------------------------------------------+
-| | **Enable Mode**         | | supported - use ``ansible_become: yes``     |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      |
-| |                         | | and ``ansible_become_password:``            |
-+---------------------------+-----------------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                |
-+---------------------------+-----------------------------------------------+
-
-For legacy playbooks, ICX still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
->>>>>>> icx .rst
 
 Using CLI in Ansible
 ====================
