@@ -1043,7 +1043,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         buser = self.get_become_option('become_user')
         if (sudoable and self._connection.become and  # if sudoable and have become
                 self._connection.transport != 'network_cli' and  # if not using network_cli
-                (C.BECOME_ALLOW_SAME_USER or (buser != ruser and (ruser or buser)))):  # if we allow same user PE or users are different and either is set
+                (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
