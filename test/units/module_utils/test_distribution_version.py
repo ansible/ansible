@@ -510,6 +510,26 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
         }
     },
     {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux ascii"
+NAME="Devuan GNU/Linux"
+ID=devuan
+HOME_URL="https://www.devuan.org/"
+SUPPORT_URL="https://devuan.org/os/community"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'NA',
+            'distribution_release': u'ascii',
+            'os_family': 'Debian',
+            'distribution_version': u'NA'
+        }
+    },
+    {
         "platform.dist": [
             "Ubuntu",
             "16.04",
@@ -824,10 +844,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 10",
         "uname_v": "Generic_141445-09",
+        "uname_r": "5.10",
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         },
         "platform.dist": [
@@ -845,10 +867,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 11",
         "uname_v": "11.0",
+        "uname_r": "5.11",
         "result": {
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11"
         },
         "platform.dist": [
@@ -864,6 +888,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 11.3",
+        "uname_r": "5.11",
         "platform.dist": [
             "",
             "",
@@ -871,8 +896,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         ],
         "input": {
             "/etc/release": (
-                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  "
-                "All rights reserved.\n                            Assembled 06 October 2015\n"
+                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2018, Oracle and/or its affiliates.  "
+                "All rights reserved.\n                              Assembled 09 May 2018\n"
             )
         },
         "platform.system": "SunOS",
@@ -880,11 +905,36 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 11.3 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11.3"
         }
     },
     {
+        "name": "Solaris 11.4",
+        "uname_r": "5.11",
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": (
+                "                            Oracle Solaris 11.4 SPARC\n    Copyright (c) 1983, 2018, Oracle and/or its affiliates."
+                "  All rights reserved.\n                           Assembled 14 September 2018\n"
+            )
+        },
+        "platform.system": "SunOS",
+        "result": {
+            "distribution_release": "Oracle Solaris 11.4 SPARC",
+            "distribution": "Solaris",
+            "os_family": "Solaris",
+            "distribution_major_version": "11",
+            "distribution_version": "11.4"
+        }
+    },
+    {
         "name": "Solaris 10",
+        "uname_r": "5.10",
         "platform.dist": [
             "",
             "",
@@ -899,6 +949,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         }
     },
@@ -1059,6 +1110,70 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
             "os_family": "Archlinux",
             "distribution_version": "NA"
         }
+    },
+    {
+        'name': "Cumulus Linux 3.7.3",
+        'input': {
+            '/etc/os-release': """NAME="Cumulus Linux"
+VERSION_ID=3.7.3
+VERSION="Cumulus Linux 3.7.3"
+PRETTY_NAME="Cumulus Linux"
+ID=cumulus-linux
+ID_LIKE=debian
+CPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:3.7.3
+HOME_URL="http://www.cumulusnetworks.com/"
+SUPPORT_URL="http://support.cumulusnetworks.com/"
+"""
+        },
+        'platform.dist': ('debian', '8.11', ''),
+        'result': {
+            'distribution': 'Cumulus Linux',
+            'distribution_major_version': '3',
+            'distribution_release': 'Cumulus Linux 3.7.3',
+            'os_family': 'Debian',
+            'distribution_version': '3.7.3',
+        }
+    },
+    {
+        'name': "Cumulus Linux 2.5.4",
+        'input': {
+            '/etc/os-release': """NAME="Cumulus Linux"
+VERSION_ID=2.5.4
+VERSION="2.5.4-6dc6e80-201510091936-build"
+PRETTY_NAME="Cumulus Linux"
+ID=cumulus-linux
+ID_LIKE=debian
+CPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:2.5.4-6dc6e80-201510091936-build
+HOME_URL="http://www.cumulusnetworks.com/"
+SUPPORT_URL="http://support.cumulusnetworks.com/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': 'Cumulus Linux',
+            'distribution_major_version': '2',
+            'distribution_release': '2.5.4-6dc6e80-201510091936-build',
+            'os_family': 'Debian',
+            'distribution_version': '2.5.4',
+        }
+    },
+    {
+        "platform.dist": [
+            "LinuxMint",
+            "18.3",
+            "sylvia",
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.3 (Sylvia)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.3\"\nVERSION_ID=\"18.3\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sylvia\nUBUNTU_CODENAME=xenial",  # noqa
+        },
+        "name": "Linux Mint 18.3",
+        "result": {
+            "distribution_release": "sylvia",
+            "distribution": "Linux Mint",
+            "distribution_major_version": "18",
+            "os_family": "Debian",
+            "distribution_version": "18.3"
+        }
     }
 ]
 
@@ -1089,8 +1204,13 @@ def test_distribution_version(am, mocker, testcase):
             data = data.strip()
         return data
 
-    def mock_get_uname_version(am):
-        return testcase.get('uname_v', None)
+    def mock_get_uname(am, flags):
+        if '-v' in flags:
+            return testcase.get('uname_v', None)
+        elif '-r' in flags:
+            return testcase.get('uname_r', None)
+        else:
+            return None
 
     def mock_file_exists(fname, allow_empty=False):
         if fname not in testcase['input']:
@@ -1132,7 +1252,7 @@ def test_distribution_version(am, mocker, testcase):
         return False
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
     mocker.patch('ansible.module_utils.distro.id', mock_distro_name)

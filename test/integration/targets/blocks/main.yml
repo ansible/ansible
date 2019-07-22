@@ -1,5 +1,5 @@
 - name: simple block test
-  hosts: localhost
+  hosts: testhost
   gather_facts: yes
   strategy: "{{test_strategy|default('linear')}}"
   vars:
@@ -84,7 +84,7 @@
   - debug: msg="TEST COMPLETE"
 
 - name: block with includes
-  hosts: localhost
+  hosts: testhost
   gather_facts: yes
   strategy: "{{test_strategy|default('linear')}}"
   vars:

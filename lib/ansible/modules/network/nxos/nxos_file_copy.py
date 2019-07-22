@@ -113,6 +113,11 @@ options:
       - The remote scp server password which is used to pull the file.
         This is required if file_pull is True.
     version_added: "2.7"
+  vrf:
+    description:
+      - The VRF used to pull the file. Useful when no vrf management is defined
+    default: "management"
+    version_added: "2.9"
 '''
 
 EXAMPLES = '''
@@ -133,6 +138,7 @@ EXAMPLES = '''
       remote_scp_server: "192.168.0.1"
       remote_scp_server_user: "myUser"
       remote_scp_server_password: "myPassword"
+      vrf: "management"
 '''
 
 RETURN = '''
@@ -160,16 +166,11 @@ import re
 import time
 import traceback
 
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_text, to_bytes
-
-try:
-    import paramiko
-    HAS_PARAMIKO = True
-except ImportError:
-    HAS_PARAMIKO = False
 
 try:
     from scp import SCPClient
@@ -293,12 +294,13 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
     try:
         child = pexpect.spawn('ssh ' + username + '@' + hostname + ' -p' + str(port))
         # response could be unknown host addition or Password
-        index = child.expect(['yes', '(?i)Password'])
+        index = child.expect(['yes', '(?i)Password', '#'])
         if index == 0:
             child.sendline('yes')
             child.expect('(?i)Password')
-        child.sendline(password)
-        child.expect('#')
+        if index == 1:
+            child.sendline(password)
+            child.expect('#')
         ldir = '/'
         if local_file_directory:
             dir_array = local_file_directory.split('/')
@@ -312,7 +314,7 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
         ruser = module.params['remote_scp_server_user'] + '@'
         rserver = module.params['remote_scp_server']
         rfile = module.params['remote_file'] + ' '
-        vrf = ' vrf management'
+        vrf = ' vrf ' + module.params['vrf']
         command = (cmdroot + ruser + rserver + rfile + file_system + ldir + local + vrf)
 
         child.sendline(command)
@@ -366,6 +368,7 @@ def main():
         remote_scp_server=dict(type='str'),
         remote_scp_server_user=dict(type='str'),
         remote_scp_server_password=dict(no_log=True),
+        vrf=dict(required=False, type='str', default='management'),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -391,7 +394,7 @@ def main():
                     'installed. It can be installed using `pip install pexpect`'
             )
     else:
-        if not HAS_PARAMIKO:
+        if paramiko is None:
             module.fail_json(
                 msg='library paramiko is required when file_pull is False but does not appear to be '
                     'installed. It can be installed using `pip install paramiko`'

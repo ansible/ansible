@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -54,25 +53,14 @@ options:
     default: present
   name:
     description:
-    - For example, U(www.example.com.)
+    - For example, U(www.example.com).
     required: true
   type:
     description:
     - One of valid DNS resource types.
+    - 'Some valid choices include: "A", "AAAA", "CAA", "CNAME", "MX", "NAPTR", "NS",
+      "PTR", "SOA", "SPF", "SRV", "TLSA", "TXT"'
     required: true
-    choices:
-    - A
-    - AAAA
-    - CAA
-    - CNAME
-    - MX
-    - NAPTR
-    - NS
-    - PTR
-    - SOA
-    - SPF
-    - SRV
-    - TXT
   ttl:
     description:
     - Number of seconds that this ResourceRecordSet can be cached by resolvers.
@@ -84,12 +72,11 @@ options:
   managed_zone:
     description:
     - Identifies the managed zone addressed by this request.
-    - Can be the managed zone name or id.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_dns_managed_zone
-      task and then set this managed_zone field to "{{ name-of-resource }}" Alternatively,
-      you can set this managed_zone to a dictionary with the name key where the value
-      is the name of your ManagedZone'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_dns_managed_zone task and then set this managed_zone field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -97,34 +84,34 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a managed zone
   gcp_dns_managed_zone:
-      name: "managedzone-rrs"
-      dns_name: testzone-4.com.
-      description: test zone
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: managedzone-rrs
+    dns_name: testzone-4.com.
+    description: test zone
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: managed_zone
 
 - name: create a resource record set
   gcp_dns_resource_record_set:
-      name: www.testzone-4.com.
-      managed_zone: "{{ managed_zone }}"
-      type: A
-      ttl: 600
-      target:
-      - 10.1.2.3
-      - 40.5.6.7
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: www.testzone-4.com.
+    managed_zone: "{{ managed_zone }}"
+    type: A
+    ttl: 600
+    target:
+    - 10.1.2.3
+    - 40.5.6.7
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
 name:
   description:
-  - For example, U(www.example.com.)
+  - For example, U(www.example.com).
   returned: success
   type: str
 type:
@@ -145,7 +132,6 @@ target:
 managed_zone:
   description:
   - Identifies the managed zone addressed by this request.
-  - Can be the managed zone name or id.
   returned: success
   type: dict
 '''
@@ -172,10 +158,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
-            type=dict(required=True, type='str', choices=['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NAPTR', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TXT']),
+            type=dict(required=True, type='str'),
             ttl=dict(type='int'),
             target=dict(type='list', elements='str'),
-            managed_zone=dict(required=True, type='dict')
+            managed_zone=dict(required=True, type='dict'),
         )
     )
 
@@ -185,9 +171,7 @@ def main():
     state = module.params['state']
     kind = 'dns#resourceRecordSet'
 
-    fetch = fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                   'dns#resourceRecordSetsListResponse',
-                                   'rrsets')
+    fetch = fetch_wrapped_resource(module, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
     changed = False
 
     if fetch:
@@ -217,9 +201,7 @@ def create(module, link, kind):
     change_id = int(change['id'])
     if change['status'] == 'pending':
         wait_for_change_to_complete(change_id, module)
-    return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                  'dns#resourceRecordSetsListResponse',
-                                  'rrsets')
+    return fetch_wrapped_resource(module, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
 
 
 def update(module, link, kind, fetch):
@@ -227,9 +209,7 @@ def update(module, link, kind, fetch):
     change_id = int(change['id'])
     if change['status'] == 'pending':
         wait_for_change_to_complete(change_id, module)
-    return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                  'dns#resourceRecordSetsListResponse',
-                                  'rrsets')
+    return fetch_wrapped_resource(module, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
 
 
 def delete(module, link, kind, fetch):
@@ -237,9 +217,7 @@ def delete(module, link, kind, fetch):
     change_id = int(change['id'])
     if change['status'] == 'pending':
         wait_for_change_to_complete(change_id, module)
-    return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                  'dns#resourceRecordSetsListResponse',
-                                  'rrsets')
+    return fetch_wrapped_resource(module, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
 
 
 def resource_to_request(module):
@@ -248,7 +226,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'type': module.params.get('type'),
         u'ttl': module.params.get('ttl'),
-        u'rrdatas': module.params.get('target')
+        u'rrdatas': module.params.get('target'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -284,16 +262,13 @@ def self_link(module):
         'project': module.params['project'],
         'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name'),
         'name': module.params['name'],
-        'type': module.params['type']
+        'type': module.params['type'],
     }
     return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets?name={name}&type={type}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')
-    }
+    res = {'project': module.params['project'], 'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')}
     return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res)
 
 
@@ -309,8 +284,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -339,12 +314,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'name': response.get(u'name'),
-        u'type': response.get(u'type'),
-        u'ttl': response.get(u'ttl'),
-        u'rrdatas': response.get(u'target')
-    }
+    return {u'name': response.get(u'name'), u'type': response.get(u'type'), u'ttl': response.get(u'ttl'), u'rrdatas': response.get(u'rrdatas')}
 
 
 def updated_record(module):
@@ -353,7 +323,7 @@ def updated_record(module):
         'name': module.params['name'],
         'type': module.params['type'],
         'ttl': module.params['ttl'] if module.params['ttl'] else 900,
-        'rrdatas': module.params['target']
+        'rrdatas': module.params['target'],
     }
 
 
@@ -376,34 +346,30 @@ class SOAForwardable(object):
 
 
 def prefetch_soa_resource(module):
-    name = module.params['name'].split('.')[1:]
 
-    resource = SOAForwardable({
-        'type': 'SOA',
-        'managed_zone': module.params['managed_zone'],
-        'name': '.'.join(name),
-        'project': module.params['project'],
-        'scopes': module.params['scopes'],
-        'service_account_file': module.params['service_account_file'],
-        'auth_kind': module.params['auth_kind'],
-        'service_account_email': module.params['service_account_email']
-    }, module)
+    resource = SOAForwardable(
+        {
+            'type': 'SOA',
+            'managed_zone': module.params['managed_zone'],
+            'name': replace_resource_dict(module.params['managed_zone'], 'dnsName'),
+            'project': module.params['project'],
+            'scopes': module.params['scopes'],
+            'service_account_file': module.params['service_account_file'],
+            'auth_kind': module.params['auth_kind'],
+            'service_account_email': module.params['service_account_email'],
+        },
+        module,
+    )
 
-    result = fetch_wrapped_resource(resource, 'dns#resourceRecordSet',
-                                    'dns#resourceRecordSetsListResponse',
-                                    'rrsets')
+    result = fetch_wrapped_resource(resource, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
     if not result:
-        raise ValueError("Google DNS Managed Zone %s not found" % module.params['managed_zone']['name'])
+        raise ValueError("Google DNS Managed Zone %s not found" % replace_resource_dict(module.params['managed_zone'], 'name'))
     return result
 
 
 def create_change(original, updated, module):
     auth = GcpSession(module, 'dns')
-    return return_if_change_object(module,
-                                   auth.post(collection(module),
-                                             resource_to_change_request(
-                                                 original, updated, module)
-                                             ))
+    return return_if_change_object(module, auth.post(collection(module), resource_to_change_request(original, updated, module)))
 
 
 # Fetch current SOA. We need the last SOA so we can increment its serial
@@ -459,12 +425,7 @@ def get_change_status(change_id, module):
 
 
 def new_change_request():
-    return {
-        'kind': 'dns#change',
-        'additions': [],
-        'deletions': [],
-        'start_time': datetime.datetime.now().isoformat()
-    }
+    return {'kind': 'dns#change', 'additions': [], 'deletions': [], 'start_time': datetime.datetime.now().isoformat()}
 
 
 def return_if_change_object(module, response):

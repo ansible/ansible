@@ -69,7 +69,28 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["openstacksdk"]
+   port_security_enabled:
+     description:
+        -  Whether port security is enabled on the network or not.
+           Network will use OpenStack defaults if this option is
+           not utilised.
+     type: bool
+     version_added: "2.8"
+   mtu:
+     description:
+       -  The maximum transmission unit (MTU) value to address fragmentation.
+          Network will use OpenStack defaults if this option is
+          not provided.
+     type: int
+     version_added: "2.9"
+   dns_domain:
+     description:
+       -  The DNS domain value to set.
+          Network will use Openstack defaults if this option is
+          not provided.
+     version_added: "2.9"
+requirements:
+     - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -107,6 +128,10 @@ network:
             description: The MTU of a network resource.
             type: int
             sample: 0
+        dns_domain:
+            description: The DNS domain of a network resource.
+            type: str
+            sample: "sample.openstack.org."
         admin_state_up:
             description: The administrative state of the network.
             type: bool
@@ -153,9 +178,12 @@ def main():
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
         provider_network_type=dict(required=False),
-        provider_segmentation_id=dict(required=False),
+        provider_segmentation_id=dict(required=False, type='int'),
         state=dict(default='present', choices=['absent', 'present']),
-        project=dict(default=None)
+        project=dict(default=None),
+        port_security_enabled=dict(type='bool'),
+        mtu=dict(required=False, type='int'),
+        dns_domain=dict(required=False)
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -170,6 +198,9 @@ def main():
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
+    port_security_enabled = module.params.get('port_security_enabled')
+    mtu = module.params.get('mtu')
+    dns_domain = module.params.get('dns_domain')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -196,10 +227,14 @@ def main():
 
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider, project_id)
+                                               external, provider, project_id,
+                                               port_security_enabled=port_security_enabled,
+                                               mtu_size=mtu, dns_domain=dns_domain)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider)
+                                               external, provider,
+                                               port_security_enabled=port_security_enabled,
+                                               mtu_size=mtu, dns_domain=dns_domain)
                 changed = True
             else:
                 changed = False

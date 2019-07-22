@@ -150,8 +150,9 @@ changed:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+from ansible.module_utils.connection import exec_command
 
 
 def is_config_exist(cmp_cfg, test_cfg):
@@ -265,6 +266,22 @@ class VxlanArp(object):
         if not self.module.check_mode:
             load_config(self.module, commands)
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_current_config(self):
         """get current configuration"""
 
@@ -277,9 +294,14 @@ class VxlanArp(object):
             exp += "|^bridge-domain %s$" % self.bridge_domain_id
 
         flags.append(exp)
-        config = get_config(self.module, flags)
+        cfg_str = self.get_config(flags)
+        config = cfg_str.split("\n")
 
-        return config
+        exist_config = ""
+        for cfg in config:
+            if not cfg.startswith("display"):
+                exist_config += cfg
+        return exist_config
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""

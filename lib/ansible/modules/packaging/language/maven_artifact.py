@@ -61,6 +61,11 @@ options:
         description:
             - The password to authenticate with to the Maven Repository. Use AWS secret access key of the repository is hosted on S3
         aliases: [ "aws_secret_access_key" ]
+    headers:
+        description:
+            - Add custom HTTP headers to a request in hash/dict format.
+        type: dict
+        version_added: "2.8"
     dest:
         description:
             - The path where the artifact should be written to
@@ -161,20 +166,25 @@ import posixpath
 import shutil
 import io
 import tempfile
+import traceback
 
+LXML_ETREE_IMP_ERR = None
 try:
     from lxml import etree
     HAS_LXML_ETREE = True
 except ImportError:
+    LXML_ETREE_IMP_ERR = traceback.format_exc()
     HAS_LXML_ETREE = False
 
+BOTO_IMP_ERR = None
 try:
     import boto3
     HAS_BOTO = True
 except ImportError:
+    BOTO_IMP_ERR = traceback.format_exc()
     HAS_BOTO = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -187,7 +197,10 @@ def split_pre_existing_dir(dirname):
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
     if not os.path.exists(b_head):
-        (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
+        if head == dirname:
+            return None, [head]
+        else:
+            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return head, [tail]
     new_directory_list.append(tail)
@@ -199,7 +212,11 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     Walk the new directories list and make sure that permissions are as we would expect
     '''
     if new_directory_list:
-        working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
+        first_sub_dir = new_directory_list.pop(0)
+        if not pre_existing_dir:
+            working_dir = first_sub_dir
+        else:
+            working_dir = os.path.join(pre_existing_dir, first_sub_dir)
         directory_args['path'] = working_dir
         changed = module.set_fs_attributes_if_different(directory_args, changed)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
@@ -273,12 +290,13 @@ class Artifact(object):
 
 
 class MavenDownloader:
-    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False):
+    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False, headers=None):
         self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
         self.base = base
         self.local = local
+        self.headers = headers
         self.user_agent = "Maven Artifact Downloader/1.0"
         self.latest_version_found = None
         self.metadata_file_name = "maven-metadata-local.xml" if local else "maven-metadata.xml"
@@ -364,7 +382,7 @@ class MavenDownloader:
         self.module.params['url_password'] = self.module.params.get('password', '')
         self.module.params['http_agent'] = self.module.params.get('user_agent', None)
 
-        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout)
+        response, info = fetch_url(self.module, url_to_use, timeout=req_timeout, headers=self.headers)
         if info['status'] == 200:
             return response
         if force:
@@ -452,6 +470,7 @@ def main():
             repository_url=dict(default=None),
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
+            headers=dict(type='dict'),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
             dest=dict(type="path", required=True),
@@ -463,7 +482,7 @@ def main():
     )
 
     if not HAS_LXML_ETREE:
-        module.fail_json(msg='module requires the lxml python library installed on the managed machine')
+        module.fail_json(msg=missing_required_lib('lxml'), exception=LXML_ETREE_IMP_ERR)
 
     repository_url = module.params["repository_url"]
     if not repository_url:
@@ -476,13 +495,15 @@ def main():
     local = parsed_url.scheme == "file"
 
     if parsed_url.scheme == 's3' and not HAS_BOTO:
-        module.fail_json(msg='boto3 required for this module, when using s3:// repository URLs')
+        module.fail_json(msg=missing_required_lib('boto3', reason='when using s3:// repository URLs'),
+                         exception=BOTO_IMP_ERR)
 
     group_id = module.params["group_id"]
     artifact_id = module.params["artifact_id"]
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
+    headers = module.params['headers']
     state = module.params["state"]
     dest = module.params["dest"]
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
@@ -491,7 +512,7 @@ def main():
     verify_download = verify_checksum in ['download', 'always']
     verify_change = verify_checksum in ['change', 'always']
 
-    downloader = MavenDownloader(module, repository_url, local)
+    downloader = MavenDownloader(module, repository_url, local, headers)
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)

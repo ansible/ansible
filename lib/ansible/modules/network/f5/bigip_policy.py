@@ -30,9 +30,11 @@ options:
       - The description to attach to the policy.
       - This parameter is only supported on versions of BIG-IP >= 12.1.0. On earlier
         versions it will simply be ignored.
+    type: str
   name:
     description:
       - The name of the policy to create.
+    type: str
     required: True
   state:
     description:
@@ -43,6 +45,7 @@ options:
         When modifying rules, it is required that policies first be in a draft.
       - Drafting is only supported on versions of BIG-IP >= 12.1.0. On versions
         prior to that, specifying a C(state) of C(draft) will raise an error.
+    type: str
     choices:
       - present
       - absent
@@ -55,6 +58,7 @@ options:
         policies, the default is C(first).
       - This module does not allow you to specify the C(best) strategy to use.
         It will choose the system default (C(/Common/best-match)) for you instead.
+    type: str
     choices:
       - first
       - all
@@ -69,9 +73,11 @@ options:
       - The C(actions) for a default rule are C(ignore).
       - The C(bigip_policy_rule) module can be used to create and edit existing
         and new rules.
+    type: list
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -197,23 +203,17 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
@@ -343,7 +343,7 @@ class ComplexChanges(ComplexParameters):
 class BaseManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = None
         self.want = Parameters(params=self.module.params)
 
@@ -1058,7 +1058,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.kwargs = kwargs
 
     def exec_module(self):
@@ -1116,16 +1116,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

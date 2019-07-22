@@ -29,7 +29,7 @@ options:
             - Limit results to a specific CDN profile.
     resource_group:
         description:
-            - The resource group to search for the desired CDN profile
+            - The resource group to search for the desired CDN profile.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -38,15 +38,15 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
-    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
+    - Hai Cao (@caohai)
+    - Yunge Zhu (@yungezz)
 '''
 
 EXAMPLES = '''
     - name: Get facts for one CDN profile
       azure_rm_cdnprofile_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all CDN profiles
       azure_rm_cdnprofile_facts:
@@ -68,7 +68,7 @@ cdnprofiles:
                 - Name of a resource group where the CDN profile exists.
             returned: always
             type: str
-            sample: testGroup
+            sample: myResourceGroup
         name:
             description:
                 - Name of the CDN profile.
@@ -84,7 +84,7 @@ cdnprofiles:
             description:
                 - ID of the CDN profile.
             type: str
-            sample: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Cdn/profiles/myCDN
         provisioning_state:
             description:
                 - Provisioning status of the profile.

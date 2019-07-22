@@ -35,7 +35,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.vars.clean import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 if PY3:
     # OrderedDict is needed for a backwards compat shim on Python3.x only
@@ -46,11 +46,6 @@ else:
 
 global_display = Display()
 
-try:
-    from __main__ import cli
-except ImportError:
-    # using API w/o cli
-    cli = False
 
 __all__ = ["CallbackBase"]
 
@@ -71,11 +66,6 @@ class CallbackBase(AnsiblePlugin):
             self._display = display
         else:
             self._display = global_display
-
-        if cli:
-            self._options = cli.options
-        else:
-            self._options = None
 
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
@@ -108,13 +98,17 @@ class CallbackBase(AnsiblePlugin):
         # load from config
         self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
+    def _run_is_verbose(self, result, verbosity=0):
+        return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
+                and result._result.get('_ansible_verbose_override', False) is False)
+
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        abridged_result = strip_internal_keys(result)
+        abridged_result = strip_internal_keys(module_response_deepcopy(result))
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
@@ -313,7 +307,7 @@ class CallbackBase(AnsiblePlugin):
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
         pass
 
     def playbook_on_setup(self):
@@ -397,8 +391,8 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_handler_task_start(self, task):
         pass  # no v1 correspondence
 
-    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
+    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
+        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
     # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):

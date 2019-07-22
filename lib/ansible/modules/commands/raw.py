@@ -15,12 +15,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: raw
-short_description: Executes a low-down and dirty SSH command
+short_description: Executes a low-down and dirty command
 version_added: historical
 options:
   free_form:
     description:
-      - The raw module takes a free form command to run. There is no parameter actually named 'free form'; see the examples!
+      - The raw module takes a free form command to run.
+      - There is no parameter actually named 'free form'; see the examples!
     required: true
   executable:
     description:

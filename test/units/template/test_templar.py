@@ -104,17 +104,43 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         # self.assertEqual(res['{{ a_keyword }}'], "blip")
         print(res)
 
-    def test_templatable(self):
-        res = self.templar.templatable('foo')
-        self.assertTrue(res)
+    def test_is_template_true(self):
+        tests = [
+            '{{ foo }}',
+            '{% foo %}',
+            '{# foo #}',
+            '{# {{ foo }} #}',
+            '{# {{ nothing }} {# #}',
+            '{# {{ nothing }} {# #} #}',
+            '{% raw %}{{ foo }}{% endraw %}',
+        ]
+        for test in tests:
+            self.assertTrue(self.templar.is_template(test))
 
-    def test_templatable_none(self):
-        res = self.templar.templatable(None)
-        self.assertTrue(res)
+    def test_is_template_false(self):
+        tests = [
+            'foo',
+            '{{ foo',
+            '{% foo',
+            '{# foo',
+            '{{ foo %}',
+            '{{ foo #}',
+            '{% foo }}',
+            '{% foo #}',
+            '{# foo %}',
+            '{# foo }}',
+            '{{ foo {{',
+            '{% raw %}{% foo %}',
+        ]
+        for test in tests:
+            self.assertFalse(self.templar.is_template(test))
 
-    @patch('ansible.template.Templar.template', side_effect=AnsibleError)
-    def test_templatable_exception(self, mock_template):
-        res = self.templar.templatable('foo')
+    def test_is_template_raw_string(self):
+        res = self.templar.is_template('foo')
+        self.assertFalse(res)
+
+    def test_is_template_none(self):
+        res = self.templar.is_template(None)
         self.assertFalse(res)
 
     def test_template_convert_bare_string(self):
@@ -217,11 +243,17 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         # test with fail_on_undefined=False
         self.assertEqual(templar.template("{{bad_var}}", fail_on_undefined=False), "{{bad_var}}")
 
-        # test set_available_variables()
-        templar.set_available_variables(variables=dict(foo="bam"))
+        # test setting available_variables
+        templar.available_variables = dict(foo="bam")
         self.assertEqual(templar.template("{{foo}}"), "bam")
-        # variables must be a dict() for set_available_variables()
-        self.assertRaises(AssertionError, templar.set_available_variables, "foo=bam")
+        # variables must be a dict() for available_variables setter
+        # FIXME Use assertRaises() as a context manager (added in 2.7) once we do not run tests on Python 2.6 anymore.
+        try:
+            templar.available_variables = "foo=bam"
+        except AssertionError as e:
+            pass
+        except Exception:
+            self.fail(e)
 
     def test_templar_escape_backslashes(self):
         # Rule of thumb: If escape backslashes is True you should end up with

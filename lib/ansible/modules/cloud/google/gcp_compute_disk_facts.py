@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -43,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
   zone:
@@ -54,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a disk facts
+- name: " a disk facts"
   gcp_compute_disk_facts:
-      zone: us-central1-a
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    zone: us-central1-a
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -138,6 +138,15 @@ items:
         .'
       returned: success
       type: list
+    physicalBlockSizeBytes:
+      description:
+      - Physical block size of the persistent disk, in bytes. If not present in a
+        request, a default value is used. Currently supported sizes are 4096 and 16384,
+        other sizes may be added in the future.
+      - If an unsupported value is requested, the error message will list the supported
+        values for the caller's project.
+      returned: success
+      type: int
     type:
       description:
       - URL of the disk type resource describing which disk type to use to create
@@ -184,6 +193,11 @@ items:
             key that protects this resource.
           returned: success
           type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
+          returned: success
+          type: str
     sourceImageId:
       description:
       - The ID value of the image used to create this disk. This value identifies
@@ -219,6 +233,11 @@ items:
             key that protects this resource.
           returned: success
           type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
+          returned: success
+          type: str
     sourceSnapshot:
       description:
       - The source snapshot used to create this disk. You can provide this as a partial
@@ -236,6 +255,11 @@ items:
           description:
           - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
             base64 to either encrypt or decrypt this resource.
+          returned: success
+          type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
           returned: success
           type: str
         sha256:
@@ -267,12 +291,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str'),
-            zone=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), zone=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -282,9 +301,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

@@ -215,6 +215,7 @@ def main():
         required_one_of=[
             ['cluster_name', 'datacenter'],
         ],
+        supports_check_mode=True,
     )
     pyv = VmwreClusterFactsManager(module)
     pyv.gather_cluster_facts()

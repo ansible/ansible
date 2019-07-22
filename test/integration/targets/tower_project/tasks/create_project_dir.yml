@@ -1,8 +1,8 @@
 - name: Fetch project_base_dir
   uri:
-    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/config/"
-    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
-    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    url: "https://{{ tower_host}}/api/v2/config/"
+    user: "{{ tower_username }}"
+    password: "{{ tower_password }}"
     validate_certs: false
     return_content: true
   register: awx_config

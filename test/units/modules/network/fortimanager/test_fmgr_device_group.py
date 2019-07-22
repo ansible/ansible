@@ -19,17 +19,13 @@ __metaclass__ = type
 
 import os
 import json
-from pyFMG.fortimgr import FortiManager
+from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
 import pytest
 
 try:
     from ansible.modules.network.fortimanager import fmgr_device_group
 except ImportError:
-    pytest.skip(
-        "Could not load required modules for testing",
-        allow_module_level=True)
-
-fmg_instance = FortiManager("1.1.1.1", "admin", "")
+    pytest.skip("Could not load required modules for testing", allow_module_level=True)
 
 
 def load_fixtures():
@@ -43,229 +39,164 @@ def load_fixtures():
     return [fixture_data]
 
 
+@pytest.fixture(autouse=True)
+def module_mock(mocker):
+    connection_class_mock = mocker.patch('ansible.module_utils.basic.AnsibleModule')
+    return connection_class_mock
+
+
+@pytest.fixture(autouse=True)
+def connection_mock(mocker):
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device_group.Connection')
+    return connection_class_mock
+
+
 @pytest.fixture(scope="function", params=load_fixtures())
 def fixture_data(request):
     func_name = request.function.__name__.replace("test_", "")
     return request.param.get(func_name, None)
 
 
-def test_add_device_group(fixture_data, mocker):
-    mocker.patch(
-        "pyFMG.fortimgr.FortiManager._post_request",
-        side_effect=fixture_data)
+fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
-    paramgram_used = {
-        'grp_desc': 'CreatedbyAnsible',
-        'adom': 'ansible',
-        'grp_members': None,
-        'state': 'present',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_device_group(fmg_instance, paramgram_used)
-    #
+
+def test_add_device_group(fixture_data, mocker):
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+    #  Fixture sets used:###########################
+
+    ##################################################
     # grp_desc: CreatedbyAnsible
     # adom: ansible
     # grp_members: None
-    # state: present
+    # mode: add
     # grp_name: TestGroup
     # vdom: root
-    # mode: add
-    #
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': 'CreatedbyAnsible',
-        'adom': 'ansible',
-        'grp_members': None,
-        'state': 'present',
-        'grp_name': 'testtest',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_device_group(fmg_instance, paramgram_used)
-    #
+    ##################################################
+    ##################################################
     # grp_desc: CreatedbyAnsible
     # adom: ansible
     # grp_members: None
-    # state: present
+    # mode: add
     # grp_name: testtest
     # vdom: root
-    # mode: add
-    #
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT1,FGT2',
-        'state': 'present',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_device_group(fmg_instance, paramgram_used)
-    #
+    ##################################################
+    ##################################################
     # grp_desc: None
     # adom: ansible
-    # grp_members: FGT1,FGT2
-    # state: present
+    # grp_members: FGT1
+    # mode: add
     # grp_name: TestGroup
     # vdom: root
-    # mode: add
-    #
-    assert output['raw_response']['status']['code'] == -2
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT3',
-        'state': 'present',
-        'grp_name': 'testtest',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_device_group(fmg_instance, paramgram_used)
-    #
+    ##################################################
+    ##################################################
     # grp_desc: None
     # adom: ansible
     # grp_members: FGT3
-    # state: present
+    # mode: add
     # grp_name: testtest
     # vdom: root
-    # mode: add
-    #
+    ##################################################
+
+    # Test using fixture 1 #
+    output = fmgr_device_group.add_device_group(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == -2
+    # Test using fixture 2 #
+    output = fmgr_device_group.add_device_group(fmg_instance, fixture_data[1]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 3 #
+    output = fmgr_device_group.add_device_group(fmg_instance, fixture_data[2]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == -2
+    # Test using fixture 4 #
+    output = fmgr_device_group.add_device_group(fmg_instance, fixture_data[3]['paramgram_used'])
     assert output['raw_response']['status']['code'] == -2
 
 
 def test_delete_device_group(fixture_data, mocker):
-    mocker.patch(
-        "pyFMG.fortimgr.FortiManager._post_request",
-        side_effect=fixture_data)
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+    #  Fixture sets used:###########################
 
-    paramgram_used = {
-        'grp_desc': 'CreatedbyAnsible',
-        'adom': 'ansible',
-        'grp_members': None,
-        'state': 'absent',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'delete'}
-    output = fmgr_device_group.delete_device_group(
-        fmg_instance, paramgram_used)
-    #
+    ##################################################
     # grp_desc: CreatedbyAnsible
     # adom: ansible
     # grp_members: None
-    # state: absent
+    # mode: delete
     # grp_name: TestGroup
     # vdom: root
-    # mode: delete
-    #
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': 'CreatedbyAnsible',
-        'adom': 'ansible',
-        'grp_members': None,
-        'state': 'absent',
-        'grp_name': 'testtest',
-        'vdom': 'root',
-        'mode': 'delete'}
-    output = fmgr_device_group.delete_device_group(
-        fmg_instance, paramgram_used)
-    #
+    ##################################################
+    ##################################################
     # grp_desc: CreatedbyAnsible
     # adom: ansible
     # grp_members: None
-    # state: absent
+    # mode: delete
     # grp_name: testtest
     # vdom: root
-    # mode: delete
-    #
+    ##################################################
+
+    # Test using fixture 1 #
+    output = fmgr_device_group.delete_device_group(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 2 #
+    output = fmgr_device_group.delete_device_group(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
 
 
 def test_add_group_member(fixture_data, mocker):
-    mocker.patch(
-        "pyFMG.fortimgr.FortiManager._post_request",
-        side_effect=fixture_data)
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+    #  Fixture sets used:###########################
 
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT1,FGT2',
-        'state': 'present',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_group_member(fmg_instance, paramgram_used)
-    #
+    ##################################################
     # grp_desc: None
     # adom: ansible
-    # grp_members: FGT1,FGT2
-    # state: present
+    # grp_members: FGT1
+    # mode: add
     # grp_name: TestGroup
     # vdom: root
-    # mode: add
-    #
-
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT3',
-        'state': 'present',
-        'grp_name': 'testtest',
-        'vdom': 'root',
-        'mode': 'add'}
-    output = fmgr_device_group.add_group_member(fmg_instance, paramgram_used)
-    #
+    ##################################################
+    ##################################################
     # grp_desc: None
     # adom: ansible
     # grp_members: FGT3
-    # state: present
+    # mode: add
     # grp_name: testtest
     # vdom: root
-    # mode: add
-    #
+    ##################################################
+
+    # Test using fixture 1 #
+    output = fmgr_device_group.add_group_member(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 2 #
+    output = fmgr_device_group.add_group_member(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
 
 
 def test_delete_group_member(fixture_data, mocker):
-    mocker.patch(
-        "pyFMG.fortimgr.FortiManager._post_request",
-        side_effect=fixture_data)
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+    #  Fixture sets used:###########################
 
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT3',
-        'state': 'absent',
-        'grp_name': 'testtest',
-        'vdom': 'root',
-        'mode': 'delete'}
-    output = fmgr_device_group.delete_group_member(
-        fmg_instance, paramgram_used)
-    #
+    ##################################################
     # grp_desc: None
     # adom: ansible
     # grp_members: FGT3
-    # state: absent
+    # mode: delete
     # grp_name: testtest
     # vdom: root
-    # mode: delete
-    #
-    assert output['raw_response']['status']['code'] == 0
-    paramgram_used = {
-        'grp_desc': None,
-        'adom': 'ansible',
-        'grp_members': 'FGT1,FGT2',
-        'state': 'absent',
-        'grp_name': 'TestGroup',
-        'vdom': 'root',
-        'mode': 'delete'}
-    output = fmgr_device_group.delete_group_member(
-        fmg_instance, paramgram_used)
-    #
+    ##################################################
+    ##################################################
     # grp_desc: None
     # adom: ansible
-    # grp_members: FGT1,FGT2
-    # state: absent
+    # grp_members: FGT1
+    # mode: delete
     # grp_name: TestGroup
     # vdom: root
-    # mode: delete
-    #
+    ##################################################
+
+    # Test using fixture 1 #
+    output = fmgr_device_group.delete_group_member(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 2 #
+    output = fmgr_device_group.delete_group_member(fmg_instance, fixture_data[1]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0

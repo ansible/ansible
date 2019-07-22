@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -43,25 +42,26 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a instance template facts
+- name: " a instance template facts"
   gcp_compute_instance_template_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -190,7 +190,7 @@ items:
                   type: int
                 diskType:
                   description:
-                  - Reference to a gcompute_disk_type resource.
+                  - Reference to a disk type.
                   - Specifies the disk type to use to create the instance.
                   - If not specified, the default is pd-standard.
                   returned: success
@@ -243,8 +243,8 @@ items:
               type: str
             source:
               description:
-              - Reference to a gcompute_disk resource. When creating a new instance,
-                one of initializeParams.sourceImage or disks.source is required.
+              - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
+                or disks.source is required.
               - If desired, you can also attach existing non-root persistent disks
                 using this property. This field is only applicable for persistent
                 disks.
@@ -260,7 +260,7 @@ items:
               type: str
         machineType:
           description:
-          - Reference to a gcompute_machine_type resource.
+          - The machine type to use in the VM instance template.
           returned: success
           type: str
         minCpuPlatform:
@@ -320,7 +320,7 @@ items:
                   type: str
                 natIP:
                   description:
-                  - Specifies the title of a gcompute_address.
+                  - Reference to an address.
                   - An external IP address associated with this instance.
                   - Specify an unused static external IP address available to the
                     project or leave this field undefined to use an IP from a shared
@@ -366,10 +366,10 @@ items:
               type: str
             network:
               description:
-              - Specifies the title of an existing gcompute_network. When creating
-                an instance, if neither the network nor the subnetwork is specified,
-                the default network global/networks/default is used; if the network
-                is not specified but the subnetwork is specified, the network is inferred.
+              - Specifies the title of an existing network. When creating an instance,
+                if neither the network nor the subnetwork is specified, the default
+                network global/networks/default is used; if the network is not specified
+                but the subnetwork is specified, the network is inferred.
               returned: success
               type: dict
             networkIP:
@@ -381,7 +381,7 @@ items:
               type: str
             subnetwork:
               description:
-              - Reference to a gcompute_subnetwork resource.
+              - Reference to a VPC network.
               - If the network resource is in legacy mode, do not provide this property.
                 If the network is in auto subnet mode, providing the subnetwork is
                 optional. If the network is in custom subnet mode, then this field
@@ -473,11 +473,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -487,9 +483,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

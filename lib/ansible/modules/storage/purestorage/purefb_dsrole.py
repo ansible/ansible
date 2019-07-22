@@ -19,17 +19,19 @@ short_description: Configure FlashBlade  Management Directory Service Roles
 description:
 - Set or erase directory services role configurations.
 author:
-- Simon Dodsley (@sdodsley)
+- Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   state:
     description:
     - Create or delete directory service role
     default: present
+    type: str
     choices: [ absent, present ]
   role:
     description:
     - The directory service role to work on
     choices: [ array_admin, ops_admin, readonly, storage_admin ]
+    type: str
   group_base:
     description:
     - Specifies where the configured group is located in the directory
@@ -40,18 +42,20 @@ options:
       The order of OUs is important and should get larger in scope from left
       to right.
     - Each OU should not exceed 64 characters in length.
+    type: str
   group:
     description:
     - Sets the common Name (CN) of the configured directory service group
       containing users for the FlashBlade. This name should be just the
       Common Name of the group without the CN= specifier.
     - Common Names should not exceed 64 characters in length.
+    type: str
 extends_documentation_fragment:
 - purestorage.fb
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng array_admin directory service role
+- name: Delete existing array_admin directory service role
   purefb_dsrole:
     role: array_admin
     state: absent
@@ -59,7 +63,7 @@ EXAMPLES = r'''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
 - name: Create array_admin directory service role
-  purefa_ds:
+  purefb_dsrole:
     role: array_admin
     group_base: "OU=PureGroups,OU=SANManagers"
     group: pureadmins
@@ -67,7 +71,7 @@ EXAMPLES = r'''
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
 - name: Update ops_admin directory service role
-  purefa_ds:
+  purefb_dsrole:
     role: ops_admin
     group_base: "OU=PureGroups"
     group: opsgroup

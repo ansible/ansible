@@ -12,5 +12,5 @@
 - assert:
     that:
         - "pbexec_json.rc == 0"
-        - "pbexec_json.events|length == 6"
+        - "pbexec_json.events|length == 7"
         - "'localhost' in pbexec_json.stats.ok"

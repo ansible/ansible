@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -43,25 +42,26 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a global address facts
+- name: " a global address facts"
   gcp_compute_global_address_facts:
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -78,7 +78,6 @@ items:
     description:
       description:
       - An optional description of this resource.
-      - Provide this property when you create the resource.
       returned: success
       type: str
     id:
@@ -99,8 +98,8 @@ items:
       type: str
     ipVersion:
       description:
-      - The IP Version that will be used by this address. Valid options are IPV4 or
-        IPV6. The default value is IPV4.
+      - The IP Version that will be used by this address. Valid options are `IPV4`
+        or `IPV6`. The default value is `IPV4`.
       returned: success
       type: str
     region:
@@ -108,6 +107,13 @@ items:
       - A reference to the region where the regional address resides.
       returned: success
       type: str
+    prefixLength:
+      description:
+      - The prefix length of the IP range. If not present, it means the address field
+        is a single IP address.
+      - This field is not applicable to addresses with addressType=EXTERNAL.
+      returned: success
+      type: int
     addressType:
       description:
       - The type of the address to reserve, default is EXTERNAL.
@@ -115,6 +121,20 @@ items:
       - "* INTERNAL indicates internal IP ranges belonging to some network."
       returned: success
       type: str
+    purpose:
+      description:
+      - The purpose of the resource. For global internal addresses it can be * VPC_PEERING
+        - for peer networks This should only be set when using an Internal address.
+      returned: success
+      type: str
+    network:
+      description:
+      - The URL of the network in which to reserve the IP range. The IP range must
+        be in RFC1918 space. The network cannot be deleted if there are any reserved
+        IP ranges referring to it.
+      - This should only be set when using an Internal address.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
@@ -129,11 +149,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -143,9 +159,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

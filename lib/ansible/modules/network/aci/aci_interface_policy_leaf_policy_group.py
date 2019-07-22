@@ -17,15 +17,6 @@ module: aci_interface_policy_leaf_policy_group
 short_description: Manage fabric interface policy leaf policy groups (infra:AccBndlGrp, infra:AccPortGrp)
 description:
 - Manage fabric interface policy leaf policy groups on Cisco ACI fabrics.
-notes:
-- When using the module please select the appropriate link_aggregation_type (lag_type).
-  C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   policy_group:
@@ -136,6 +127,15 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- When using the module please select the appropriate link_aggregation_type (lag_type).
+  C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -313,18 +313,18 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        policy_group=dict(type='str', aliases=['name', 'policy_group_name']),  # Not required for querying all objects
-        description=dict(type='str', aliases=['descr']),
         # NOTE: Since this module needs to include both infra:AccBndlGrp (for PC and VPC) and infra:AccPortGrp (for leaf access port policy group):
         # NOTE: I'll allow the user to make the choice here (link(PC), node(VPC), leaf(leaf-access port policy group))
         lag_type=dict(type='str', required=True, aliases=['lag_type_name'], choices=['leaf', 'link', 'node']),
+        policy_group=dict(type='str', aliases=['name', 'policy_group_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         link_level_policy=dict(type='str', aliases=['link_level_policy_name']),
         cdp_policy=dict(type='str', aliases=['cdp_policy_name']),
         mcp_policy=dict(type='str', aliases=['mcp_policy_name']),

@@ -51,7 +51,7 @@
 
   - name: test out async with psrp
     win_shell: Start-Sleep -Seconds 2; Write-Output abc
-    async: 5
+    async: 10
     poll: 1
     register: async_out
 

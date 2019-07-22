@@ -253,7 +253,7 @@ class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
     TEST_DIR = 'test/integration'
 
-    def __init__(self, args, config_extension='.yml'):
+    def __init__(self, args, config_extension='.ini'):
         """
         :type args: IntegrationConfig
         :type config_extension: str
@@ -390,10 +390,9 @@ class CloudEnvironment(CloudBase):
         pass
 
     @abc.abstractmethod
-    def configure_environment(self, env, cmd):
-        """Configuration which should be done once for each test target.
-        :type env: dict[str, str]
-        :type cmd: list[str]
+    def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
         """
         pass
 
@@ -404,9 +403,17 @@ class CloudEnvironment(CloudBase):
         """
         pass
 
-    @property
-    def inventory_hosts(self):
+
+class CloudEnvironmentConfig(object):
+    """Configuration for the environment."""
+    def __init__(self, env_vars=None, ansible_vars=None, module_defaults=None, callback_plugins=None):
         """
-        :rtype: str | None
+        :type env_vars: dict[str, str] | None
+        :type ansible_vars: dict[str, any] | None
+        :type module_defaults: dict[str, dict[str, any]] | None
+        :type callback_plugins: list[str] | None
         """
-        return None
+        self.env_vars = env_vars
+        self.ansible_vars = ansible_vars
+        self.module_defaults = module_defaults
+        self.callback_plugins = callback_plugins

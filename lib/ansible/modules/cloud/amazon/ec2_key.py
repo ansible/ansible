@@ -249,7 +249,7 @@ def main():
             force=dict(type='bool', default=True),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(type='bool', default=False),
-            wait_timeout=dict(default=300)
+            wait_timeout=dict(default=300, type='int')
         )
     )
 

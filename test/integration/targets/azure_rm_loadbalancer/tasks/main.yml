@@ -183,6 +183,43 @@
     name: "{{ lbname_c }}"
     state: absent
 
+- name: create load balancer with multiple parameters
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c }}"
+    frontend_ip_configurations:
+      - name: frontendipconf0
+        public_ip_address: "{{ pipaname }}"
+    backend_address_pools:
+      - name: backendaddrpool0
+    probes:
+      - name: prob0
+        port: 80
+    load_balancing_rules:
+      - name: lbrbalancingrule0
+        frontend_ip_configuration: frontendipconf0
+        backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
+        probe: prob0
+    inbound_nat_rules:
+      - name: inboundnatrule0
+        backend_port: 8080
+        protocol: Tcp
+        frontend_port: 8080
+        frontend_ip_configuration: frontendipconf0
+  register: output
+
+- name: assert complex load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c }}"
+    state: absent
+
 - name: Create virtual network
   azure_rm_virtualnetwork:
       resource_group: "{{ resource_group }}"

@@ -58,6 +58,24 @@ options:
         - This is only used if C(reboot=yes) and a reboot is required.
         default: 1200
         version_added: '2.5'
+    server_selection:
+        description:
+        - Defines the Windows Update source catalog.
+        - C(default) Use the default search source. For many systems default is
+          set to the Microsoft Windows Update catalog. Systems participating in
+          Windows Server Update Services (WSUS), Systems Center Configuration
+          Manager (SCCM), or similar corporate update server environments may
+          default to those managed update sources instead of the Windows Update
+          catalog.
+        - C(managed_server) Use a managed server catalog. For environments
+          utilizing Windows Server Update Services (WSUS), Systems Center
+          Configuration Manager (SCCM), or similar corporate update servers, this
+          option selects the defined corporate update source.
+        - C(windows_update) Use the Microsoft Windows Update catalog.
+        type: str
+        choices: [ default, managed_server, windows_update ]
+        default: default
+        version_added: '2.8'
     state:
         description:
         - Controls whether found updates are returned as a list or actually installed.

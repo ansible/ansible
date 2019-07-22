@@ -17,6 +17,23 @@
     that:
     - base_network is successful
 
+- name: setup instance to get network in implementation state
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-cs-ip-address"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    networks:
+      - "{{ base_network.name }}"
+  register: instance
+  until: instance is success
+  retries: 20
+  delay: 5
+- name: verify instance setup
+  assert:
+    that:
+    - instance is successful
+
 - name: setup clean ip_address with tags
   cs_ip_address:
     state: absent
@@ -204,6 +221,17 @@
     that:
     - ip_address is successful
     - ip_address is not changed
+
+- name: cleanup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-cs-ip-address"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify instance cleanup
+  assert:
+    that:
+    - instance is successful
 
 - name: clean the test network
   cs_network:

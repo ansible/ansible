@@ -93,7 +93,7 @@ DEFAULT_BULK_ENET_TEMPLATE = [
     {'name': 'TestNetwork_10', 'vlanId': 10},
 ]
 
-DICT_PARAMS_WITH_CHANGES = yaml.load(YAML_PARAMS_WITH_CHANGES)["data"]
+DICT_PARAMS_WITH_CHANGES = yaml.safe_load(YAML_PARAMS_WITH_CHANGES)["data"]
 
 
 class EthernetNetworkModuleSpec(unittest.TestCase,

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -67,12 +66,10 @@ options:
     description:
     - The type of address to reserve, either INTERNAL or EXTERNAL.
     - If unspecified, defaults to EXTERNAL.
+    - 'Some valid choices include: "INTERNAL", "EXTERNAL"'
     required: false
     default: EXTERNAL
     version_added: 2.7
-    choices:
-    - INTERNAL
-    - EXTERNAL
   description:
     description:
     - An optional description of this resource.
@@ -90,11 +87,9 @@ options:
     - 'The networking tier used for configuring this address. This field can take
       the following values: PREMIUM or STANDARD. If this field is not specified, it
       is assumed to be PREMIUM.'
+    - 'Some valid choices include: "PREMIUM", "STANDARD"'
     required: false
     version_added: 2.8
-    choices:
-    - PREMIUM
-    - STANDARD
   subnetwork:
     description:
     - The URL of the subnetwork in which to reserve the address. If an IP address
@@ -102,10 +97,10 @@ options:
     - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER
       purposes.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-      you can set this subnetwork to a dictionary with the selfLink key where the
-      value is the selfLink of your Subnetwork'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_subnetwork task and then set this subnetwork field to "{{ name-of-resource
+      }}"'
     required: false
     version_added: 2.7
   region:
@@ -123,12 +118,12 @@ notes:
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: test-address1
-      region: us-west1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test-address1
+    region: us-west1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -217,12 +212,12 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             address=dict(type='str'),
-            address_type=dict(default='EXTERNAL', type='str', choices=['INTERNAL', 'EXTERNAL']),
+            address_type=dict(default='EXTERNAL', type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
+            network_tier=dict(type='str'),
             subnetwork=dict(type='dict'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -263,7 +258,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="Address cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -279,7 +275,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'networkTier': module.params.get('network_tier'),
-        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -314,8 +310,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -353,7 +349,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'networkTier': response.get(u'networkTier'),
         u'subnetwork': response.get(u'subnetwork'),
-        u'users': response.get(u'users')
+        u'users': response.get(u'users'),
     }
 
 
@@ -379,9 +375,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

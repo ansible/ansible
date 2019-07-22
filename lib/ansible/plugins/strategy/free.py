@@ -202,15 +202,12 @@ class StrategyModule(StrategyBase):
 
             self.update_active_connections(results)
 
-            try:
-                included_files = IncludedFile.process_include_results(
-                    host_results,
-                    iterator=iterator,
-                    loader=self._loader,
-                    variable_manager=self._variable_manager
-                )
-            except AnsibleError as e:
-                return self._tqm.RUN_ERROR
+            included_files = IncludedFile.process_include_results(
+                host_results,
+                iterator=iterator,
+                loader=self._loader,
+                variable_manager=self._variable_manager
+            )
 
             if len(included_files) > 0:
                 all_blocks = dict((host, []) for host in hosts_left)
@@ -235,7 +232,7 @@ class StrategyModule(StrategyBase):
 
                     for new_block in new_blocks:
                         task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent)
-                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                        final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)

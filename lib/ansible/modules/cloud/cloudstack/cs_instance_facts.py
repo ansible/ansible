@@ -19,22 +19,26 @@ module: cs_instance_facts
 short_description: Gathering facts from the API of instances from Apache CloudStack based clouds.
 description:
     - Gathering facts from the API of an instance.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name or display name of the instance.
+    type: str
     required: true
   domain:
     description:
       - Domain the instance is related to.
+    type: str
   account:
     description:
       - Account the instance is related to.
+    type: str
   project:
     description:
       - Project the instance is related to.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
@@ -157,7 +161,7 @@ affinity_groups:
 tags:
   description: List of resource tags associated with the instance.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 hypervisor:
   description: Hypervisor related to this instance.
@@ -180,6 +184,72 @@ volumes:
   returned: success
   type: list
   sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
+nic:
+  description: List of dictionaries of the instance nics.
+  returned: success
+  type: complex
+  version_added: '2.8'
+  contains:
+    broadcasturi:
+      description: The broadcast uri of the nic.
+      returned: success
+      type: str
+      sample: vlan://2250
+    gateway:
+      description: The gateway of the nic.
+      returned: success
+      type: str
+      sample: 10.1.2.1
+    id:
+      description: The ID of the nic.
+      returned: success
+      type: str
+      sample: 5dc74fa3-2ec3-48a0-9e0d-6f43365336a9
+    ipaddress:
+      description: The ip address of the nic.
+      returned: success
+      type: str
+      sample: 10.1.2.3
+    isdefault:
+      description: True if nic is default, false otherwise.
+      returned: success
+      type: bool
+      sample: true
+    isolationuri:
+      description: The isolation uri of the nic.
+      returned: success
+      type: str
+      sample: vlan://2250
+    macaddress:
+      description: The mac address of the nic.
+      returned: success
+      type: str
+      sample: 06:a2:03:00:08:12
+    netmask:
+      description: The netmask of the nic.
+      returned: success
+      type: str
+      sample: 255.255.255.0
+    networkid:
+      description: The ID of the corresponding network.
+      returned: success
+      type: str
+      sample: 432ce27b-c2bb-4e12-a88c-a919cd3a3017
+    networkname:
+      description: The name of the corresponding network.
+      returned: success
+      type: str
+      sample: network1
+    traffictype:
+      description: The traffic type of the nic.
+      returned: success
+      type: str
+      sample: Guest
+    type:
+      description: The type of the network.
+      returned: success
+      type: str
+      sample: Shared
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -268,6 +338,7 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                 for nic in instance['nic']:
                     if nic['isdefault'] and 'ipaddress' in nic:
                         self.result['default_ip'] = nic['ipaddress']
+                self.result['nic'] = instance['nic']
             volumes = self.get_volumes(instance)
             if volumes:
                 self.result['volumes'] = volumes

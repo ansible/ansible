@@ -24,10 +24,12 @@ options:
   name:
     description:
       - Name of the new application.
+    type: str
     required: True
   description:
     description:
       - Description of the application.
+    type: str
   servers:
     description:
       - A list of servers that the application is hosted on.
@@ -38,13 +40,16 @@ options:
       address:
         description:
           - The IP address of the server.
+        type: str
         required: True
       port:
         description:
           - The port of the server.
           - When creating a new application and specifying a server, if this parameter
             is not provided, the default of C(8000) will be used.
+        type: str
         default: 8000
+    type: list
   inbound_virtual:
     description:
       - Settings to configure the virtual which will receive the inbound connection.
@@ -54,17 +59,20 @@ options:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
           - This parameter is required when creating a new application.
+        type: str
         required: True
       netmask:
         description:
           - Specifies the netmask to associate with the given C(destination).
           - This parameter is required when creating a new application.
+        type: str
         required: True
       port:
         description:
           - The port that the virtual listens for connections on.
           - When creating a new application, if this parameter is not specified, the
             default value of C(53) will be used.
+        type: str
         default: 53
   service_environment:
     description:
@@ -75,6 +83,7 @@ options:
         Therefore, it is crucial that you maintain unique names for items in the
         different service environment types.
       - SSGs are not supported for this type of application.
+    type: str
   add_analytics:
     description:
       - Collects statistics of the BIG-IP that the application is deployed to.
@@ -87,10 +96,11 @@ options:
       - The state of the resource on the system.
       - When C(present), guarantees that the resource exists with the provided attributes.
       - When C(absent), removes the resource from the system.
-    default: present
+    type: str
     choices:
       - absent
       - present
+    default: present
   wait:
     description:
       - If the module should wait for the application to be created, deleted or updated.
@@ -101,7 +111,7 @@ notes:
   - This module does not support updating of your application (whether deployed or not).
     If you need to update the application, the recommended practice is to remove and
     re-create.
-  - Requires BIG-IQ version 6.0 or greater.
+  - This module will not work on BIGIQ version 6.1.x or greater.
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -176,6 +186,7 @@ servers:
 
 import time
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -183,17 +194,15 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.icontrol import bigiq_version
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.icontrol import bigiq_version
 
 
 class Parameters(AnsibleF5Parameters):
@@ -440,7 +449,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.want.client = self.client
         self.have = ApiParameters()
@@ -478,7 +487,15 @@ class ModuleManager(object):
             return True
         return False
 
+    def check_bigiq_version(self):
+        version = bigiq_version(self.client)
+        if LooseVersion(version) >= LooseVersion('6.1.0'):
+            raise F5ModuleError(
+                'Module supports only BIGIQ version 6.0.x or lower.'
+            )
+
     def exec_module(self):
+        self.check_bigiq_version()
         changed = False
         result = dict()
         state = self.want.state
@@ -672,14 +689,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

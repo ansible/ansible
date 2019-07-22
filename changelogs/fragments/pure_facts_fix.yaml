@@ -1,3 +1,0 @@
----
-bugfixes:
-- purefa_facts and purefb_facts now correctly adds facts into main ansible_fact dictionary (https://github.com/ansible/ansible/pull/50349)

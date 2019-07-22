@@ -145,20 +145,24 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             preferred_lb_method='round-robin',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         # Override methods in the specific type of manager
         tm = UntypedManager(module=module)
         tm.exists = Mock(side_effect=[False, True])
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -178,14 +182,17 @@ class TestUntypedManager(unittest.TestCase):
             preferred_lb_method='topology',
             alternate_lb_method='drop-packet',
             fallback_lb_method='cpu',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         current = ApiParameters(params=load_fixture('load_gtm_pool_untyped_default.json'))
@@ -194,6 +201,7 @@ class TestUntypedManager(unittest.TestCase):
         tm = UntypedManager(module=module)
         tm.exists = Mock(side_effect=[True, True])
         tm.update_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=True)
         tm.read_current_from_device = Mock(return_value=current)
 
         # Override methods to force specific logic in the module to happen
@@ -214,19 +222,23 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             state='absent',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         # Override methods in the specific type of manager
         tm = UntypedManager(module=module)
         tm.exists = Mock(side_effect=[True, False])
+        tm.version_is_less_than_12 = Mock(return_value=True)
         tm.remove_from_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen
@@ -263,20 +275,24 @@ class TestTypedManager(unittest.TestCase):
             name='foo',
             preferred_lb_method='round-robin',
             type='a',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         # Override methods in the specific type of manager
         tm = TypedManager(module=module)
         tm.exists = Mock(side_effect=[False, True])
         tm.create_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
 
         # Override methods to force specific logic in the module to happen
         mm = ModuleManager(module=module)
@@ -297,14 +313,17 @@ class TestTypedManager(unittest.TestCase):
             alternate_lb_method='drop-packet',
             fallback_lb_method='cpu',
             type='a',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         current = ApiParameters(params=load_fixture('load_gtm_pool_a_default.json'))
@@ -313,6 +332,7 @@ class TestTypedManager(unittest.TestCase):
         tm = TypedManager(module=module)
         tm.exists = Mock(side_effect=[True, True])
         tm.update_on_device = Mock(return_value=True)
+        tm.version_is_less_than_12 = Mock(return_value=False)
         tm.read_current_from_device = Mock(return_value=current)
 
         # Override methods to force specific logic in the module to happen
@@ -334,19 +354,23 @@ class TestTypedManager(unittest.TestCase):
             name='foo',
             type='a',
             state='absent',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
 
         # Override methods in the specific type of manager
         tm = TypedManager(module=module)
         tm.exists = Mock(side_effect=[True, False])
+        tm.version_is_less_than_12 = Mock(return_value=False)
         tm.remove_from_device = Mock(return_value=True)
 
         # Override methods to force specific logic in the module to happen

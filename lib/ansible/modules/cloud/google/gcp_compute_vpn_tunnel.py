@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -64,24 +63,24 @@ options:
     description:
     - URL of the Target VPN gateway with which this VPN tunnel is associated.
     - 'This field represents a link to a TargetVpnGateway resource in GCP. It can
-      be specified in two ways. You can add `register: name-of-resource` to a gcp_compute_target_vpn_gateway
-      task and then set this target_vpn_gateway field to "{{ name-of-resource }}"
-      Alternatively, you can set this target_vpn_gateway to a dictionary with the
-      selfLink key where the value is the selfLink of your TargetVpnGateway'
-    required: true
+      be specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_target_vpn_gateway task and then set this
+      target_vpn_gateway field to "{{ name-of-resource }}"'
+    required: false
   router:
     description:
     - URL of router resource to be used for dynamic routing.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}" Alternatively,
-      you can set this router to a dictionary with the selfLink key where the value
-      is the selfLink of your Router'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_router task and then set this router field to "{{ name-of-resource
+      }}"'
     required: false
   peer_ip:
     description:
     - IP address of the peer VPN gateway. Only IPv4 is supported.
-    required: true
+    required: false
   shared_secret:
     description:
     - Shared secret used to set the secure session between the Cloud VPN gateway and
@@ -107,10 +106,6 @@ options:
       The ranges should be disjoint.
     - Only IPv4 is supported.
     required: false
-  labels:
-    description:
-    - Labels to apply to this VpnTunnel.
-    required: false
   region:
     description:
     - The region where the tunnel is located.
@@ -125,54 +120,54 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-vpn_tunnel"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-vpn-tunnel
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a router
   gcp_compute_router:
-      name: "router-vpn_tunnel"
-      network: "{{ network }}"
-      bgp:
-        asn: 64514
-        advertise_mode: CUSTOM
-        advertised_groups:
-        - ALL_SUBNETS
-        advertised_ip_ranges:
-        - range: 1.2.3.4
-        - range: 6.7.0.0/16
-      region: us-central1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: router-vpn-tunnel
+    network: "{{ network }}"
+    bgp:
+      asn: 64514
+      advertise_mode: CUSTOM
+      advertised_groups:
+      - ALL_SUBNETS
+      advertised_ip_ranges:
+      - range: 1.2.3.4
+      - range: 6.7.0.0/16
+    region: us-central1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: router
 
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn_tunnel"
-      region: us-west1
-      network: "{{ network }}"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: gateway-vpn-tunnel
+    region: us-west1
+    network: "{{ network }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: gateway
 
 - name: create a vpn tunnel
   gcp_compute_vpn_tunnel:
-      name: "test_object"
-      region: us-west1
-      target_vpn_gateway: "{{ gateway }}"
-      router: "{{ router }}"
-      shared_secret: super secret
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    target_vpn_gateway: "{{ gateway }}"
+    router: "{{ router }}"
+    shared_secret: super secret
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -243,17 +238,6 @@ remoteTrafficSelector:
   - Only IPv4 is supported.
   returned: success
   type: list
-labels:
-  description:
-  - Labels to apply to this VpnTunnel.
-  returned: success
-  type: dict
-labelFingerprint:
-  description:
-  - The fingerprint used for optimistic locking of this resource. Used internally
-    during updates.
-  returned: success
-  type: str
 region:
   description:
   - The region where the tunnel is located.
@@ -282,15 +266,14 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            target_vpn_gateway=dict(required=True, type='dict'),
+            target_vpn_gateway=dict(type='dict'),
             router=dict(type='dict'),
-            peer_ip=dict(required=True, type='str'),
+            peer_ip=dict(type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
             local_traffic_selector=dict(type='list', elements='str'),
             remote_traffic_selector=dict(type='list', elements='str'),
-            labels=dict(type='dict'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -306,7 +289,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -316,7 +299,6 @@ def main():
     else:
         if state == 'present':
             fetch = create(module, collection(module), kind)
-            labels_update(module, module.params, fetch)
             changed = True
         else:
             fetch = {}
@@ -331,29 +313,9 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
-    return fetch_resource(module, self_link(module), kind)
-
-
-def update_fields(module, request, response):
-    if response.get('labels') != request.get('labels'):
-        labels_update(module, request, response)
-
-
-def labels_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/vpnTunnels/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labels': module.params.get('labels'),
-            u'labelFingerprint': response.get('labelFingerprint')
-        }
-    )
+def update(module, link, kind):
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -373,7 +335,6 @@ def resource_to_request(module):
         u'ikeVersion': module.params.get('ike_version'),
         u'localTrafficSelector': module.params.get('local_traffic_selector'),
         u'remoteTrafficSelector': module.params.get('remote_traffic_selector'),
-        u'labels': module.params.get('labels')
     }
     return_vals = {}
     for k, v in request.items():
@@ -408,8 +369,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -450,8 +411,6 @@ def response_to_hash(module, response):
         u'ikeVersion': response.get(u'ikeVersion'),
         u'localTrafficSelector': response.get(u'localTrafficSelector'),
         u'remoteTrafficSelector': response.get(u'remoteTrafficSelector'),
-        u'labels': response.get(u'labels'),
-        u'labelFingerprint': response.get(u'labelFingerprint')
     }
 
 
@@ -477,9 +436,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

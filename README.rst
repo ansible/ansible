@@ -5,23 +5,9 @@ Ansible
 *******
 
 Ansible is a radically simple IT automation system. It handles
-configuration-management, application deployment, cloud provisioning,
-ad-hoc task-execution, and multinode orchestration -- including
-trivializing things like zero-downtime rolling updates with load
-balancers.
-
-Read the documentation and more at https://ansible.com/
-
-You can find installation instructions
-`here <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for a
-variety of platforms.
-
-Most users should probably install a released version of Ansible from ``pip``, a package manager or
-our `release repository <https://releases.ansible.com/ansible/>`_. `Officially supported
-<https://www.ansible.com/ansible-engine>`_ builds of Ansible are also available. Some power users
-run directly from the development branch - while significant efforts are made to ensure that
-``devel`` is reasonably stable, you're more likely to encounter breaking changes when running
-Ansible this way.
+configuration management, application deployment, cloud provisioning,
+ad-hoc task execution, network automation, and multi-node orchestration. Ansible makes complex
+changes like zero-downtime rolling updates with load balancers easy. More information on `the Ansible website <https://ansible.com/>`_.
 
 Design Principles
 =================
@@ -39,6 +25,21 @@ Design Principles
 *  Be usable as non-root.
 *  Be the easiest IT automation system to use, ever.
 
+Use Ansible
+===========
+
+You can install a released version of Ansible via ``pip``, a package manager, or
+our `release repository <https://releases.ansible.com/ansible/>`_. See our
+`installation guide <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for details on installing Ansible
+on a variety of platforms.
+
+Red Hat offers supported builds of `Ansible Engine <https://www.ansible.com/ansible-engine>`_.
+
+Power users and developers can run the ``devel`` branch, which has the latest
+features and fixes, directly. Although it is reasonably stable, you are more likely to encounter
+breaking changes when running the ``devel`` branch. We recommend getting involved
+in the Ansible community if you want to run the ``devel`` branch.
+
 Get Involved
 ============
 
@@ -47,51 +48,35 @@ Get Involved
    kinds of ways to contribute to and interact with the project,
    including mailing list information and how to submit bug reports and
    code to Ansible.
-*  All code submissions are done through pull requests to the ``devel`` branch.
-*  Feel free to talk to us before making larger changes
+*  Join a `Working Group
+   <https://github.com/ansible/community/wiki>`_, an organized community devoted to a specific technology domain or platform.
+*  Submit a proposed code update through a pull request to the ``devel`` branch.
+*  Talk to us before making larger changes
    to avoid duplicate efforts. This not only helps everyone
-   know what's going on, it also helps save time and effort if we decide
+   know what is going on, it also helps save time and effort if we decide
    some changes are needed.
-*  Users list:
-   `ansible-project <https://groups.google.com/group/ansible-project>`_
-*  Development list:
-   `ansible-devel <https://groups.google.com/group/ansible-devel>`_
-*  Announcement list:
-   `ansible-announce <https://groups.google.com/group/ansible-announce>`_
-   -- read only
-*  irc.freenode.net: #ansible
-*  For the full list of Email Lists, IRC channels see the
+*  For a list of email lists, IRC channels and Working Groups, see the
    `Communication page <https://docs.ansible.com/ansible/latest/community/communication.html>`_
 
 Branch Info
 ===========
 
-*  Releases are named after Led Zeppelin songs. (Releases prior to 2.0
-   were named after Van Halen songs.)
-*  The ``devel`` branch corresponds to the release actively under
-   development.
-*  The ``stable-2.x`` branches exist for current releases.
-*  Various release-X.Y branches exist for previous releases.
-*  For information about the active branches see the
-   `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page.
-*  We'd love to have your contributions, read the `Community
-   Guide <https://docs.ansible.com/ansible/latest/community>`_ for notes on
-   how to get started.
+*  The ``devel`` branch corresponds to the release actively under development.
+*  The ``stable-2.X`` branches correspond to stable releases.
+*  Create a branch based on ``devel`` and set up a `dev environment <https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#common-environment-setup>`_ if you want to open a PR.
+*  See the `Ansible release and maintenance <https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html>`_ page for information about active branches.
 
 Roadmap
 =======
 
-Based on team and community feedback, an initial roadmap will be published for a major or minor version (ex: 2.0, 2.1).
-Subminor versions will generally not have roadmaps published.
-
+Based on team and community feedback, an initial roadmap will be published for a major or minor version (ex: 2.7, 2.8).
 The `Ansible Roadmap page <https://docs.ansible.com/ansible/devel/roadmap/>`_ details what is planned and how to influence the roadmap.
 
 Authors
 =======
 
 Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
-(michael.dehaan/gmail/com) and has contributions from over 4000 users
-(and growing). Thanks everyone!
+and has contributions from over 4000 users (and growing). Thanks everyone!
 
 `Ansible <https://www.ansible.com>`_ is sponsored by `Red Hat, Inc.
 <https://www.redhat.com>`_

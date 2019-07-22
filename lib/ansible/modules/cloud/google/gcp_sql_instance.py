@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -55,11 +54,8 @@ options:
     - "* FIRST_GEN: First Generation instance. MySQL only."
     - "* SECOND_GEN: Second Generation instance or PostgreSQL instance."
     - "* EXTERNAL: A database server that is not managed by Google."
+    - 'Some valid choices include: "FIRST_GEN", "SECOND_GEN", "EXTERNAL"'
     required: false
-    choices:
-    - FIRST_GEN
-    - SECOND_GEN
-    - EXTERNAL
   connection_name:
     description:
     - Connection name of the Cloud SQL instance used in connection strings.
@@ -71,25 +67,14 @@ options:
       MYSQL_5_7. Defaults to MYSQL_5_6.
     - 'PostgreSQL instances: POSTGRES_9_6 The databaseVersion property can not be
       changed after instance creation.'
+    - 'Some valid choices include: "MYSQL_5_5", "MYSQL_5_6", "MYSQL_5_7", "POSTGRES_9_6"'
     required: false
-    choices:
-    - MYSQL_5_5
-    - MYSQL_5_6
-    - MYSQL_5_7
-    - POSTGRES_9_6
   failover_replica:
     description:
     - The name and status of the failover replica. This property is applicable only
       to Second Generation instances.
     required: false
     suboptions:
-      available:
-        description:
-        - The availability status of the failover replica. A false status indicates
-          that the failover replica is out of sync. The master can only failover to
-          the falover replica when the status is true.
-        required: false
-        type: bool
       name:
         description:
         - The name of the failover replica. If specified at instance creation, a failover
@@ -102,11 +87,8 @@ options:
     - "* CLOUD_SQL_INSTANCE: A Cloud SQL instance that is not replicating from a master."
     - "* ON_PREMISES_INSTANCE: An instance running on the customer's premises."
     - "* READ_REPLICA_INSTANCE: A Cloud SQL instance configured as a read-replica."
+    - 'Some valid choices include: "CLOUD_SQL_INSTANCE", "ON_PREMISES_INSTANCE", "READ_REPLICA_INSTANCE"'
     required: false
-    choices:
-    - CLOUD_SQL_INSTANCE
-    - ON_PREMISES_INSTANCE
-    - READ_REPLICA_INSTANCE
   ipv6_address:
     description:
     - The IPv6 address assigned to the instance. This property is applicable only
@@ -163,8 +145,8 @@ options:
             required: false
           client_key:
             description:
-            - PEM representation of the slave's private key. The corresponsing public
-              key is encoded in the client's asf asd certificate.
+            - PEM representation of the slave's private key. The corresponding public
+              key is encoded in the client's certificate.
             required: false
           connect_retry_interval:
             description:
@@ -214,6 +196,23 @@ options:
     - The user settings.
     required: false
     suboptions:
+      database_flags:
+        description:
+        - The database flags passed to the instance at startup.
+        required: false
+        version_added: 2.9
+        suboptions:
+          name:
+            description:
+            - The name of the flag. These flags are passed at instance startup, so
+              include both server options and system variables for MySQL. Flags should
+              be specified with underscores, not hyphens.
+            required: false
+          value:
+            description:
+            - The value of the flag. Booleans should be set to on for true and off
+              for false. This field must be omitted if the flag doesn't take a value.
+            required: false
       ip_configuration:
         description:
         - The settings for IP Management. This allows to enable or disable the instance
@@ -260,31 +259,49 @@ options:
           For MySQL instances, this field determines whether the instance is Second
           Generation (recommended) or First Generation.
         required: false
-      settings_version:
+      availability_type:
         description:
-        - The version of instance settings. This is a required field for update method
-          to make sure concurrent updates are handled properly. During update, use
-          the most recent settingsVersion value for this instance and do not try to
-          update this value.
+        - The availabilityType define if your postgres instance is run zonal or regional.
+        - 'Some valid choices include: "ZONAL", "REGIONAL"'
         required: false
+      backup_configuration:
+        description:
+        - The daily backup configuration for the instance.
+        required: false
+        suboptions:
+          enabled:
+            description:
+            - Enable Autobackup for your instance.
+            required: false
+            type: bool
+          binary_log_enabled:
+            description:
+            - Whether binary log is enabled. If backup configuration is disabled,
+              binary log must be disabled as well. MySQL only.
+            required: false
+            type: bool
+          start_time:
+            description:
+            - Define the backup start time in UTC (HH:MM) .
+            required: false
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "test_object"
-      settings:
-        ip_configuration:
-          authorized_networks:
-          - name: google dns server
-            value: 8.8.8.8/32
-        tier: db-n1-standard-1
-      region: us-central1
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: "{{resource_name}}-2"
+    settings:
+      ip_configuration:
+        authorized_networks:
+        - name: google dns server
+          value: 8.8.8.8/32
+      tier: db-n1-standard-1
+    region: us-central1
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -320,7 +337,7 @@ failoverReplica:
       description:
       - The availability status of the failover replica. A false status indicates
         that the failover replica is out of sync. The master can only failover to
-        the falover replica when the status is true.
+        the failover replica when the status is true.
       returned: success
       type: bool
     name:
@@ -427,8 +444,8 @@ replicaConfiguration:
           type: str
         clientKey:
           description:
-          - PEM representation of the slave's private key. The corresponsing public
-            key is encoded in the client's asf asd certificate.
+          - PEM representation of the slave's private key. The corresponding public
+            key is encoded in the client's certificate.
           returned: success
           type: str
         connectRetryInterval:
@@ -488,6 +505,25 @@ settings:
   returned: success
   type: complex
   contains:
+    databaseFlags:
+      description:
+      - The database flags passed to the instance at startup.
+      returned: success
+      type: complex
+      contains:
+        name:
+          description:
+          - The name of the flag. These flags are passed at instance startup, so include
+            both server options and system variables for MySQL. Flags should be specified
+            with underscores, not hyphens.
+          returned: success
+          type: str
+        value:
+          description:
+          - The value of the flag. Booleans should be set to on for true and off for
+            false. This field must be omitted if the flag doesn't take a value.
+          returned: success
+          type: str
     ipConfiguration:
       description:
       - The settings for IP Management. This allows to enable or disable the instance
@@ -539,6 +575,33 @@ settings:
         Generation (recommended) or First Generation.
       returned: success
       type: str
+    availabilityType:
+      description:
+      - The availabilityType define if your postgres instance is run zonal or regional.
+      returned: success
+      type: str
+    backupConfiguration:
+      description:
+      - The daily backup configuration for the instance.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Enable Autobackup for your instance.
+          returned: success
+          type: bool
+        binaryLogEnabled:
+          description:
+          - Whether binary log is enabled. If backup configuration is disabled, binary
+            log must be disabled as well. MySQL only.
+          returned: success
+          type: bool
+        startTime:
+          description:
+          - Define the backup start time in UTC (HH:MM) .
+          returned: success
+          type: str
     settingsVersion:
       description:
       - The version of instance settings. This is a required field for update method
@@ -568,49 +631,60 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            backend_type=dict(type='str', choices=['FIRST_GEN', 'SECOND_GEN', 'EXTERNAL']),
+            backend_type=dict(type='str'),
             connection_name=dict(type='str'),
-            database_version=dict(type='str', choices=['MYSQL_5_5', 'MYSQL_5_6', 'MYSQL_5_7', 'POSTGRES_9_6']),
-            failover_replica=dict(type='dict', options=dict(
-                available=dict(type='bool'),
-                name=dict(type='str')
-            )),
-            instance_type=dict(type='str', choices=['CLOUD_SQL_INSTANCE', 'ON_PREMISES_INSTANCE', 'READ_REPLICA_INSTANCE']),
+            database_version=dict(type='str'),
+            failover_replica=dict(type='dict', options=dict(name=dict(type='str'))),
+            instance_type=dict(type='str'),
             ipv6_address=dict(type='str'),
             master_instance_name=dict(type='str'),
             max_disk_size=dict(type='int'),
             name=dict(required=True, type='str'),
             region=dict(type='str'),
-            replica_configuration=dict(type='dict', options=dict(
-                failover_target=dict(type='bool'),
-                mysql_replica_configuration=dict(type='dict', options=dict(
-                    ca_certificate=dict(type='str'),
-                    client_certificate=dict(type='str'),
-                    client_key=dict(type='str'),
-                    connect_retry_interval=dict(type='int'),
-                    dump_file_path=dict(type='str'),
-                    master_heartbeat_period=dict(type='int'),
-                    password=dict(type='str'),
-                    ssl_cipher=dict(type='str'),
-                    username=dict(type='str'),
-                    verify_server_certificate=dict(type='bool')
-                )),
-                replica_names=dict(type='list', elements='str'),
-                service_account_email_address=dict(type='str')
-            )),
-            settings=dict(type='dict', options=dict(
-                ip_configuration=dict(type='dict', options=dict(
-                    ipv4_enabled=dict(type='bool'),
-                    authorized_networks=dict(type='list', elements='dict', options=dict(
-                        expiration_time=dict(type='str'),
-                        name=dict(type='str'),
-                        value=dict(type='str')
-                    )),
-                    require_ssl=dict(type='bool')
-                )),
-                tier=dict(type='str'),
-                settings_version=dict(type='int')
-            ))
+            replica_configuration=dict(
+                type='dict',
+                options=dict(
+                    failover_target=dict(type='bool'),
+                    mysql_replica_configuration=dict(
+                        type='dict',
+                        options=dict(
+                            ca_certificate=dict(type='str'),
+                            client_certificate=dict(type='str'),
+                            client_key=dict(type='str'),
+                            connect_retry_interval=dict(type='int'),
+                            dump_file_path=dict(type='str'),
+                            master_heartbeat_period=dict(type='int'),
+                            password=dict(type='str'),
+                            ssl_cipher=dict(type='str'),
+                            username=dict(type='str'),
+                            verify_server_certificate=dict(type='bool'),
+                        ),
+                    ),
+                    replica_names=dict(type='list', elements='str'),
+                    service_account_email_address=dict(type='str'),
+                ),
+            ),
+            settings=dict(
+                type='dict',
+                options=dict(
+                    database_flags=dict(type='list', elements='dict', options=dict(name=dict(type='str'), value=dict(type='str'))),
+                    ip_configuration=dict(
+                        type='dict',
+                        options=dict(
+                            ipv4_enabled=dict(type='bool'),
+                            authorized_networks=dict(
+                                type='list', elements='dict', options=dict(expiration_time=dict(type='str'), name=dict(type='str'), value=dict(type='str'))
+                            ),
+                            require_ssl=dict(type='bool'),
+                        ),
+                    ),
+                    tier=dict(type='str'),
+                    availability_type=dict(type='str'),
+                    backup_configuration=dict(
+                        type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
+                    ),
+                ),
+            ),
         )
     )
 
@@ -674,7 +748,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'region': module.params.get('region'),
         u'replicaConfiguration': InstanceReplicaconfiguration(module.params.get('replica_configuration', {}), module).to_request(),
-        u'settings': InstanceSettings(module.params.get('settings', {}), module).to_request()
+        u'settings': InstanceSettings(module.params.get('settings', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -755,7 +829,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'region': response.get(u'region'),
         u'replicaConfiguration': InstanceReplicaconfiguration(response.get(u'replicaConfiguration', {}), module).from_response(),
-        u'settings': InstanceSettings(response.get(u'settings', {}), module).from_response()
+        u'settings': InstanceSettings(response.get(u'settings', {}), module).from_response(),
     }
 
 
@@ -781,9 +855,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'sql#operation')
+        op_result = fetch_resource(module, op_uri, 'sql#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -803,16 +877,10 @@ class InstanceFailoverreplica(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'available': self.request.get('available'),
-            u'name': self.request.get('name')
-        })
+        return remove_nones_from_dict({u'name': self.request.get('name')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'available': self.request.get(u'available'),
-            u'name': self.request.get(u'name')
-        })
+        return remove_nones_from_dict({u'name': self.request.get(u'name')})
 
 
 class InstanceIpaddressesArray(object):
@@ -836,18 +904,10 @@ class InstanceIpaddressesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'ipAddress': item.get('ip_address'),
-            u'timeToRetire': item.get('time_to_retire'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict({u'ipAddress': item.get('ip_address'), u'timeToRetire': item.get('time_to_retire'), u'type': item.get('type')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'ipAddress': item.get(u'ipAddress'),
-            u'timeToRetire': item.get(u'timeToRetire'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict({u'ipAddress': item.get(u'ipAddress'), u'timeToRetire': item.get(u'timeToRetire'), u'type': item.get(u'type')})
 
 
 class InstanceReplicaconfiguration(object):
@@ -859,20 +919,26 @@ class InstanceReplicaconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'failoverTarget': self.request.get('failover_target'),
-            u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(self.request.get('mysql_replica_configuration', {}), self.module).to_request(),
-            u'replicaNames': self.request.get('replica_names'),
-            u'serviceAccountEmailAddress': self.request.get('service_account_email_address')
-        })
+        return remove_nones_from_dict(
+            {
+                u'failoverTarget': self.request.get('failover_target'),
+                u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(self.request.get('mysql_replica_configuration', {}), self.module).to_request(),
+                u'replicaNames': self.request.get('replica_names'),
+                u'serviceAccountEmailAddress': self.request.get('service_account_email_address'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'failoverTarget': self.request.get(u'failoverTarget'),
-            u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(self.request.get(u'mysqlReplicaConfiguration', {}), self.module).from_response(),
-            u'replicaNames': self.request.get(u'replicaNames'),
-            u'serviceAccountEmailAddress': self.request.get(u'serviceAccountEmailAddress')
-        })
+        return remove_nones_from_dict(
+            {
+                u'failoverTarget': self.request.get(u'failoverTarget'),
+                u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(
+                    self.request.get(u'mysqlReplicaConfiguration', {}), self.module
+                ).from_response(),
+                u'replicaNames': self.request.get(u'replicaNames'),
+                u'serviceAccountEmailAddress': self.request.get(u'serviceAccountEmailAddress'),
+            }
+        )
 
 
 class InstanceMysqlreplicaconfiguration(object):
@@ -884,32 +950,36 @@ class InstanceMysqlreplicaconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'caCertificate': self.request.get('ca_certificate'),
-            u'clientCertificate': self.request.get('client_certificate'),
-            u'clientKey': self.request.get('client_key'),
-            u'connectRetryInterval': self.request.get('connect_retry_interval'),
-            u'dumpFilePath': self.request.get('dump_file_path'),
-            u'masterHeartbeatPeriod': self.request.get('master_heartbeat_period'),
-            u'password': self.request.get('password'),
-            u'sslCipher': self.request.get('ssl_cipher'),
-            u'username': self.request.get('username'),
-            u'verifyServerCertificate': self.request.get('verify_server_certificate')
-        })
+        return remove_nones_from_dict(
+            {
+                u'caCertificate': self.request.get('ca_certificate'),
+                u'clientCertificate': self.request.get('client_certificate'),
+                u'clientKey': self.request.get('client_key'),
+                u'connectRetryInterval': self.request.get('connect_retry_interval'),
+                u'dumpFilePath': self.request.get('dump_file_path'),
+                u'masterHeartbeatPeriod': self.request.get('master_heartbeat_period'),
+                u'password': self.request.get('password'),
+                u'sslCipher': self.request.get('ssl_cipher'),
+                u'username': self.request.get('username'),
+                u'verifyServerCertificate': self.request.get('verify_server_certificate'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'caCertificate': self.request.get(u'caCertificate'),
-            u'clientCertificate': self.request.get(u'clientCertificate'),
-            u'clientKey': self.request.get(u'clientKey'),
-            u'connectRetryInterval': self.request.get(u'connectRetryInterval'),
-            u'dumpFilePath': self.request.get(u'dumpFilePath'),
-            u'masterHeartbeatPeriod': self.request.get(u'masterHeartbeatPeriod'),
-            u'password': self.request.get(u'password'),
-            u'sslCipher': self.request.get(u'sslCipher'),
-            u'username': self.request.get(u'username'),
-            u'verifyServerCertificate': self.request.get(u'verifyServerCertificate')
-        })
+        return remove_nones_from_dict(
+            {
+                u'caCertificate': self.request.get(u'caCertificate'),
+                u'clientCertificate': self.request.get(u'clientCertificate'),
+                u'clientKey': self.request.get(u'clientKey'),
+                u'connectRetryInterval': self.request.get(u'connectRetryInterval'),
+                u'dumpFilePath': self.request.get(u'dumpFilePath'),
+                u'masterHeartbeatPeriod': self.request.get(u'masterHeartbeatPeriod'),
+                u'password': self.request.get(u'password'),
+                u'sslCipher': self.request.get(u'sslCipher'),
+                u'username': self.request.get(u'username'),
+                u'verifyServerCertificate': self.request.get(u'verifyServerCertificate'),
+            }
+        )
 
 
 class InstanceSettings(object):
@@ -921,18 +991,53 @@ class InstanceSettings(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
-            u'tier': self.request.get('tier'),
-            u'settingsVersion': self.request.get('settings_version')
-        })
+        return remove_nones_from_dict(
+            {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get('database_flags', []), self.module).to_request(),
+                u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
+                u'tier': self.request.get('tier'),
+                u'availabilityType': self.request.get('availability_type'),
+                u'backupConfiguration': InstanceBackupconfiguration(self.request.get('backup_configuration', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
-            u'tier': self.request.get(u'tier'),
-            u'settingsVersion': self.request.get(u'settingsVersion')
-        })
+        return remove_nones_from_dict(
+            {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get(u'databaseFlags', []), self.module).from_response(),
+                u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
+                u'tier': self.request.get(u'tier'),
+                u'availabilityType': self.request.get(u'availabilityType'),
+                u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
+            }
+        )
+
+
+class InstanceDatabaseflagsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name'), u'value': item.get('value')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'value': item.get(u'value')})
 
 
 class InstanceIpconfiguration(object):
@@ -944,18 +1049,22 @@ class InstanceIpconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'ipv4Enabled': self.request.get('ipv4_enabled'),
-            u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get('authorized_networks', []), self.module).to_request(),
-            u'requireSsl': self.request.get('require_ssl')
-        })
+        return remove_nones_from_dict(
+            {
+                u'ipv4Enabled': self.request.get('ipv4_enabled'),
+                u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get('authorized_networks', []), self.module).to_request(),
+                u'requireSsl': self.request.get('require_ssl'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'ipv4Enabled': self.request.get(u'ipv4Enabled'),
-            u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get(u'authorizedNetworks', []), self.module).from_response(),
-            u'requireSsl': self.request.get(u'requireSsl')
-        })
+        return remove_nones_from_dict(
+            {
+                u'ipv4Enabled': self.request.get(u'ipv4Enabled'),
+                u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get(u'authorizedNetworks', []), self.module).from_response(),
+                u'requireSsl': self.request.get(u'requireSsl'),
+            }
+        )
 
 
 class InstanceAuthorizednetworksArray(object):
@@ -979,18 +1088,29 @@ class InstanceAuthorizednetworksArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'expirationTime': item.get('expiration_time'),
-            u'name': item.get('name'),
-            u'value': item.get('value')
-        })
+        return remove_nones_from_dict({u'expirationTime': item.get('expiration_time'), u'name': item.get('name'), u'value': item.get('value')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'expirationTime': item.get(u'expirationTime'),
-            u'name': item.get(u'name'),
-            u'value': item.get(u'value')
-        })
+        return remove_nones_from_dict({u'expirationTime': item.get(u'expirationTime'), u'name': item.get(u'name'), u'value': item.get(u'value')})
+
+
+class InstanceBackupconfiguration(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'binaryLogEnabled': self.request.get('binary_log_enabled'), u'startTime': self.request.get('start_time')}
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'binaryLogEnabled': self.request.get(u'binaryLogEnabled'), u'startTime': self.request.get(u'startTime')}
+        )
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: service
 version_added: "0.1"
@@ -24,51 +24,61 @@ options:
     name:
         description:
         - Name of the service.
+        type: str
         required: true
     state:
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
-            commands unless necessary.  C(restarted) will always bounce the
-            service.  C(reloaded) will always reload. B(At least one of state
-            and enabled are required.) Note that reloaded will start the
-            service if it is not already started, even if your chosen init
-            system wouldn't normally.
+            commands unless necessary.
+          - C(restarted) will always bounce the service.
+          - C(reloaded) will always reload.
+          - B(At least one of state and enabled are required.)
+          - Note that reloaded will start the service if it is not already started,
+            even if your chosen init system wouldn't normally.
+        type: str
         choices: [ reloaded, restarted, started, stopped ]
     sleep:
         description:
         - If the service is being C(restarted) then sleep this many seconds
-          between the stop and start command. This helps to workaround badly
-          behaving init scripts that exit immediately after signaling a process
-          to stop.
+          between the stop and start command.
+        - This helps to work around badly-behaving init scripts that exit immediately
+          after signaling a process to stop.
+        - Not all service managers support sleep, i.e when using systemd this setting will be ignored.
+        type: int
         version_added: "1.3"
     pattern:
         description:
         - If the service does not respond to the status command, name a
           substring to look for as would be found in the output of the I(ps)
-          command as a stand-in for a status result.  If the string is found,
-          the service will be assumed to be started.
+          command as a stand-in for a status result.
+        - If the string is found, the service will be assumed to be started.
+        type: str
         version_added: "0.7"
     enabled:
         description:
-        - Whether the service should start on boot. B(At least one of state and
-          enabled are required.)
+        - Whether the service should start on boot.
+        - B(At least one of state and enabled are required.)
         type: bool
     runlevel:
         description:
-        - "For OpenRC init scripts (ex: Gentoo) only.  The runlevel that this service belongs to."
+        - For OpenRC init scripts (e.g. Gentoo) only.
+        - The runlevel that this service belongs to.
+        type: str
         default: default
     arguments:
         description:
-        - Additional arguments provided on the command line
+        - Additional arguments provided on the command line.
+        type: str
         aliases: [ args ]
     use:
         description:
-            - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
-            - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
+        - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        type: str
         default: auto
         version_added: 2.2
 notes:
-    - For Windows targets, use the M(win_service) module instead.
+    - For AIX, group subsystem names can be used.
 seealso:
 - module: win_service
 author:
@@ -76,7 +86,7 @@ author:
     - Michael DeHaan
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Start service httpd, if not started
   service:
     name: httpd
@@ -685,12 +695,15 @@ class LinuxService(Service):
             override_file_name = "%s/%s.override" % (initpath, self.name)
 
             # Check to see if files contain the manual line in .conf and fail if True
-            if manreg.search(open(conf_file_name).read()):
+            with open(conf_file_name) as conf_file_fh:
+                conf_file_content = conf_file_fh.read()
+            if manreg.search(conf_file_content):
                 self.module.fail_json(msg="manual stanza not supported in a .conf file")
 
             self.changed = False
             if os.path.exists(override_file_name):
-                override_file_contents = open(override_file_name).read()
+                with open(override_file_name) as override_fh:
+                    override_file_contents = override_fh.read()
                 # Remove manual stanza if present and service enabled
                 if self.enable and manreg.search(override_file_contents):
                     self.changed = True
@@ -1484,19 +1497,64 @@ class AIX(Service):
             self.running = False
 
     def get_aix_src_status(self):
+        # Check subsystem status
         rc, stdout, stderr = self.execute_command("%s -s %s" % (self.lssrc_cmd, self.name))
+        if rc == 1:
+            # If check for subsystem is not ok, check if service name is a
+            # group subsystem
+            rc, stdout, stderr = self.execute_command("%s -g %s" % (self.lssrc_cmd, self.name))
+            if rc == 1:
+                if stderr:
+                    self.module.fail_json(msg=stderr)
+                else:
+                    self.module.fail_json(msg=stdout)
+            else:
+                # Check all subsystem status, if one subsystem is not active
+                # the group is considered not active.
+                lines = stdout.splitlines()
+                for state in lines[1:]:
+                    if state.split()[-1].strip() != "active":
+                        status = state.split()[-1].strip()
+                        break
+                else:
+                    status = "active"
+
+                # status is one of: active, inoperative
+                return status
+        else:
+            lines = stdout.rstrip("\n").split("\n")
+            status = lines[-1].split(" ")[-1]
+
+            # status is one of: active, inoperative
+            return status
+
+    def service_control(self):
+
+        # Check if service name is a subsystem of a group subsystem
+        rc, stdout, stderr = self.execute_command("%s -a" % (self.lssrc_cmd))
         if rc == 1:
             if stderr:
                 self.module.fail_json(msg=stderr)
             else:
                 self.module.fail_json(msg=stdout)
+        else:
+            lines = stdout.splitlines()
+            subsystems = []
+            groups = []
+            for line in lines[1:]:
+                subsystem = line.split()[0].strip()
+                group = line.split()[1].strip()
+                subsystems.append(subsystem)
+                if group:
+                    groups.append(group)
 
-        lines = stdout.rstrip("\n").split("\n")
-        status = lines[-1].split(" ")[-1]
-        # status is one of: active, inoperative
-        return status
+            # Define if service name parameter:
+            # -s subsystem or -g group subsystem
+            if self.name in subsystems:
+                srccmd_parameter = "-s"
+            elif self.name in groups:
+                srccmd_parameter = "-g"
 
-    def service_control(self):
         if self.action == 'start':
             srccmd = self.startsrc_cmd
         elif self.action == 'stop':
@@ -1504,13 +1562,13 @@ class AIX(Service):
         elif self.action == 'reload':
             srccmd = self.refresh_cmd
         elif self.action == 'restart':
-            self.execute_command("%s -s %s" % (self.stopsrc_cmd, self.name))
+            self.execute_command("%s %s %s" % (self.stopsrc_cmd, srccmd_parameter, self.name))
             srccmd = self.startsrc_cmd
 
         if self.arguments and self.action == 'start':
-            return self.execute_command("%s -a \"%s\" -s %s" % (srccmd, self.arguments, self.name))
+            return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, self.arguments, srccmd_parameter, self.name))
         else:
-            return self.execute_command("%s -s %s" % (srccmd, self.name))
+            return self.execute_command("%s %s %s" % (srccmd, srccmd_parameter, self.name))
 
 
 # ===========================================

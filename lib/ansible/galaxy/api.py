@@ -24,6 +24,7 @@ __metaclass__ = type
 
 import json
 
+from ansible import context
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.token import GalaxyToken
@@ -63,7 +64,7 @@ class GalaxyAPI(object):
         self.galaxy = galaxy
         self.token = GalaxyToken()
         self._api_server = C.GALAXY_SERVER
-        self._validate_certs = not galaxy.options.ignore_certs
+        self._validate_certs = not context.CLIARGS['ignore_certs']
         self.baseurl = None
         self.version = None
         self.initialized = False
@@ -71,8 +72,8 @@ class GalaxyAPI(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
-        if galaxy.options.api_server != C.GALAXY_SERVER:
-            self._api_server = galaxy.options.api_server
+        if context.CLIARGS['api_server'] != C.GALAXY_SERVER:
+            self._api_server = context.CLIARGS['api_server']
 
     def __auth_header(self):
         token = self.token.get()

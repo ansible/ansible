@@ -45,7 +45,7 @@ development.
 
 Even for non developers, helping to test pull requests for bug fixes and features is still
 immensely valuable.  Ansible users who understand writing playbooks and roles should be
-able to add integration tests and so Github pull requests with integration tests that show
+able to add integration tests and so GitHub pull requests with integration tests that show
 bugs in action will also be a great way to help.
 
 

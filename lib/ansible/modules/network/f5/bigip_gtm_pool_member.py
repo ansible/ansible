@@ -29,14 +29,17 @@ options:
     description:
       - Specifies the name of the GTM virtual server which is assigned to the specified
         C(server).
+    type: str
     required: True
   server_name:
     description:
       - Specifies the GTM server which contains the C(virtual_server).
+    type: str
     required: True
   type:
     description:
       - The type of GTM pool that the member is in.
+    type: str
     choices:
       - a
       - aaaa
@@ -48,10 +51,14 @@ options:
   pool:
     description:
       - Name of the GTM pool.
+      - For pools created on different partitions, you must specify partition of the pool in the full path format,
+        for example, C(/FooBar/pool_name).
+    type: str
     required: True
   partition:
     description:
       - Device partition to manage resources on.
+    type: str
     default: Common
   member_order:
     description:
@@ -60,6 +67,7 @@ options:
         pool members, such as the Ratio load balancing method.
       - When creating a new member using this module, if the C(member_order) parameter
         is not specified, it will default to C(0) (first member in the pool).
+    type: int
   monitor:
     description:
       - Specifies the monitor assigned to this pool member.
@@ -71,12 +79,32 @@ options:
       - To remove the monitor from the pool member, use the value C(none).
       - For pool members created on different partitions, you can also specify the full
         path to the Common monitor. For example, C(/Common/tcp).
+    type: str
   ratio:
     description:
       - Specifies the weight of the pool member for load balancing purposes.
+    type: int
   description:
     description:
       - The description of the pool member.
+    type: str
+  aggregate:
+    description:
+      - List of GTM pool member definitions to be created, modified or removed.
+    type: list
+    aliases:
+      - members
+    version_added: 2.8
+  replace_all_with:
+    description:
+      - Remove members not defined in the C(aggregate) parameter.
+      - This operation is all or none, meaning that it will stop if there are some pool members
+        that cannot be removed.
+    default: no
+    type: bool
+    aliases:
+      - purge
+    version_added: 2.8
   limits:
     description:
       - Specifies resource thresholds or limit requirements at the pool member level.
@@ -107,18 +135,22 @@ options:
             for the member.
           - If the network traffic volume exceeds this limit, the system marks the
             member as unavailable.
+        type: int
       packets_limit:
         description:
           - Specifies the maximum allowable data transfer rate, in packets per second,
             for the member.
           - If the network traffic volume exceeds this limit, the system marks the
             member as unavailable.
+        type: int
       connections_limit:
         description:
           - Specifies the maximum number of concurrent connections, combined, for all of
             the member.
           - If the connections exceed this limit, the system marks the server as
             unavailable.
+        type: int
+    type: dict
   state:
     description:
       - Pool member state. When C(present), ensures that the pool member is
@@ -133,12 +165,13 @@ options:
       - Remember that the order of the members will be affected if you add or remove them
         using this method. To some extent, this can be controlled using the C(member_order)
         parameter.
-    default: present
+    type: str
     choices:
       - present
       - absent
       - enabled
       - disabled
+    default: present
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -156,6 +189,72 @@ EXAMPLES = r'''
       password: secret
       server: lb.mydomain.com
       user: admin
+  delegate_to: localhost
+
+- name: Create a GTM pool member different partition
+  bigip_gtm_pool_member:
+    server_name: /Common/foo_name
+    virtual_server: GTMVSName
+    type: a
+    pool: /FooBar/foo-pool
+    partition: Common
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
+  delegate_to: localhost
+
+- name: Add GTM pool members aggregate
+  bigip_gtm_pool_member:
+    pool: pool1
+    type: a
+    aggregate:
+      - server_name: server1
+        virtual_server: vs1
+        partition: Common
+        description: web server1
+        member_order: 0
+      - server_name: server2
+        virtual_server: vs2
+        partition: Common
+        description: web server2
+        member_order: 1
+      - server_name: server3
+        virtual_server: vs3
+        partition: Common
+        description: web server3
+        member_order: 2
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Add GTM pool members aggregate, remove non aggregates
+  bigip_gtm_pool_member:
+    pool: pool1
+    type: a
+    aggregate:
+      - server_name: server1
+        virtual_server: vs1
+        partition: Common
+        description: web server1
+        member_order: 0
+      - server_name: server2
+        virtual_server: vs2
+        partition: Common
+        description: web server2
+        member_order: 1
+      - server_name: server3
+        virtual_server: vs3
+        partition: Common
+        description: web server3
+        member_order: 2
+    replace_all_with: yes
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -220,37 +319,43 @@ description:
   returned: changed
   type: str
   sample: My description
+replace_all_with:
+  description: Purges all non-aggregate pool members from device
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
+from copy import deepcopy
+
+from ansible.module_utils.urls import urlparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import remove_default_spec
 
 try:
     from library.module_utils.compat.ipaddress import ip_address
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.icontrol import module_provisioned
+    from library.module_utils.network.f5.icontrol import TransactionContextManager
 except ImportError:
     from ansible.module_utils.compat.ipaddress import ip_address
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.icontrol import module_provisioned
+    from ansible.module_utils.network.f5.icontrol import TransactionContextManager
 
 
 class Parameters(AnsibleF5Parameters):
@@ -316,6 +421,14 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
+    def name(self):
+        # We need to do this because BIGIP allows / in names of GTM VS, allowing and users create such names incorrectly
+        # Despite the fact that GTM server and GTM Virtual Server cannot be created outside the Common partition
+        if self._values['subPath'] is None:
+            return self._values['name']
+        result = self._values['subPath'] + self._values['name']
+        return result
+
     @property
     def enabled(self):
         if 'enabled' in self._values:
@@ -489,10 +602,12 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
-        self.want = ModuleParameters(params=self.module.params)
-        self.have = ApiParameters()
-        self.changes = UsableChanges()
+        self.client = F5RestClient(**self.module.params)
+        self.want = None
+        self.have = None
+        self.changes = None
+        self.replace_all_with = None
+        self.purge_links = list()
 
     def _set_changed_options(self):
         changed = {}
@@ -520,20 +635,91 @@ class ModuleManager(object):
             return True
         return False
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
     def exec_module(self):
         if not module_provisioned(self.client, 'gtm'):
             raise F5ModuleError(
                 "GTM must be provisioned to use this module."
             )
+        wants = None
+        if self.module.params['replace_all_with']:
+            self.replace_all_with = True
+
+        if self.module.params['aggregate']:
+            wants = self.merge_defaults_for_aggregate(self.module.params)
+
+        result = dict()
+        changed = False
+
+        if self.replace_all_with and self.purge_links:
+            self.purge()
+            changed = True
+
+        if self.module.params['aggregate']:
+            result['aggregate'] = list()
+            for want in wants:
+                output = self.execute(want)
+                if output['changed']:
+                    changed = output['changed']
+                result['aggregate'].append(output)
+        else:
+            output = self.execute(self.module.params)
+            if output['changed']:
+                changed = output['changed']
+            result.update(output)
+        if changed:
+            result['changed'] = True
+        return result
+
+    def merge_defaults_for_aggregate(self, params):
+        defaults = deepcopy(params)
+        aggregate = defaults.pop('aggregate')
+
+        for i, j in enumerate(aggregate):
+            for k, v in iteritems(defaults):
+                if k != 'replace_all_with':
+                    if j.get(k, None) is None and v is not None:
+                        aggregate[i][k] = v
+
+        if self.replace_all_with:
+            self.compare_aggregate_names(aggregate)
+
+        return aggregate
+
+    def _combine_names(self, item):
+        server_name = transform_name(item['partition'], item['server_name'])
+        virtual_server = transform_name(name=item['virtual_server'])
+        result = '{0}:{1}'.format(server_name, virtual_server)
+        return result
+
+    def _transform_api_names(self, item):
+        if 'subPath' in item and item['subPath'] is None:
+            return item['name']
+        result = transform_name(item['fullPath'])
+        return result
+
+    def compare_aggregate_names(self, items):
+        on_device = self._read_purge_collection()
+
+        if not on_device:
+            return False
+
+        aggregates = [self._combine_names(item) for item in items]
+        collection = [self._transform_api_names(item) for item in on_device]
+
+        diff = set(collection) - set(aggregates)
+
+        if diff:
+            to_purge = [item['selfLink'] for item in on_device if self._transform_api_names(item) in diff]
+            self.purge_links.extend(to_purge)
+
+    def execute(self, params=None):
+        self.want = ModuleParameters(params=params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
         changed = False
         result = dict()
-        state = self.want.state
+        state = params['state']
 
         if state in ['present', 'enabled', 'disabled']:
             changed = self.present()
@@ -561,21 +747,15 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            self.want.type,
-            transform_name(self.want.partition, self.want.pool),
-            transform_name(self.want.partition, self.want.name),
-        )
-        resp = self.client.api.get(uri)
-        try:
-            response = resp.json()
-        except ValueError:
-            return False
-        if resp.status == 404 or 'code' in response and response['code'] == 404:
-            return False
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def purge(self):
+        if self.module.check_mode:
+            return True
+        self.purge_from_device()
         return True
 
     def update(self):
@@ -586,6 +766,12 @@ class ModuleManager(object):
             return True
         self.update_on_device()
         return True
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
     def remove(self):
         if self.module.check_mode:
@@ -606,6 +792,78 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def exists(self):
+        if not self.pool_exist():
+            raise F5ModuleError('The specified GTM pool does not exist')
+
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.type,
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
+            transform_name(self.want.partition, self.want.name),
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def pool_exist(self):
+        if self.replace_all_with:
+            type = self.module.params['type']
+            pool_name = transform_name(name=fq_name(self.module.params['partition'], self.module.params['pool']))
+        else:
+            pool_name = transform_name(name=fq_name(self.want.partition, self.want.pool))
+            type = self.want.type
+
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            type,
+            pool_name
+
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def _read_purge_collection(self):
+        type = self.module.params['type']
+        pool_name = transform_name(name=fq_name(self.module.params['partition'], self.module.params['pool']))
+
+        uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            type,
+            pool_name
+        )
+
+        query = '?$select=name,selfLink,fullPath,subPath'
+        resp = self.client.api.get(uri + query)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'items' in response:
+            return response['items']
+        return []
+
     def create_on_device(self):
         params = self.changes.api_params()
         params['name'] = self.want.name
@@ -614,7 +872,7 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
             self.want.type,
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
         )
         resp = self.client.api.post(uri, json=params)
         try:
@@ -635,7 +893,7 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
             self.want.type,
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.name),
         )
         resp = self.client.api.patch(uri, json=params)
@@ -650,17 +908,12 @@ class ModuleManager(object):
             else:
                 raise F5ModuleError(resp.content)
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
-
     def remove_from_device(self):
         uri = "https://{0}:{1}/mgmt/tm/gtm/pool/{2}/{3}/members/{4}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
             self.want.type,
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.name),
         )
         response = self.client.api.delete(uri)
@@ -673,7 +926,7 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
             self.want.type,
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.name),
         )
         resp = self.client.api.get(uri)
@@ -689,6 +942,40 @@ class ModuleManager(object):
                 raise F5ModuleError(resp.content)
         return ApiParameters(params=response)
 
+    def _prepare_links(self, collection):
+        # this is to ensure no duplicates are in the provided collection
+        no_dupes = list(set(collection))
+        links = list()
+        purge_paths = [urlparse(link).path for link in no_dupes]
+
+        for path in purge_paths:
+            link = "https://{0}:{1}{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                path
+            )
+            links.append(link)
+        return links
+
+    def purge_from_device(self):
+        links = self._prepare_links(self.purge_links)
+
+        with TransactionContextManager(self.client) as transact:
+            for link in links:
+                resp = transact.api.delete(link)
+
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+        return True
+
 
 class ArgumentSpec(object):
     def __init__(self):
@@ -696,14 +983,9 @@ class ArgumentSpec(object):
         self.types = [
             'a', 'aaaa', 'cname', 'mx', 'naptr', 'srv'
         ]
-        argument_spec = dict(
-            pool=dict(required=True),
-            server_name=dict(required=True),
-            virtual_server=dict(required=True),
-            type=dict(
-                choices=self.types,
-                required=True
-            ),
+        element_spec = dict(
+            server_name=dict(),
+            virtual_server=dict(),
             member_order=dict(type='int'),
             monitor=dict(),
             ratio=dict(type='int'),
@@ -726,11 +1008,57 @@ class ArgumentSpec(object):
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
-            )
+            ),
+
         )
-        self.argument_spec = {}
+
+        aggregate_spec = deepcopy(element_spec)
+
+        # remove default in aggregate spec, to handle common arguments
+        remove_default_spec(aggregate_spec)
+
+        self.argument_spec = dict(
+            aggregate=dict(
+                type='list',
+                elements='dict',
+                options=aggregate_spec,
+                aliases=['members'],
+                required_one_of=[
+                    ['server_name', 'virtual_server']
+                ],
+                required_together=[
+                    ['server_name', 'virtual_server']
+                ]
+
+            ),
+            pool=dict(required=True),
+            type=dict(
+                choices=self.types,
+                required=True
+            ),
+            replace_all_with=dict(
+                type='bool',
+                aliases=['purge'],
+                default='no'
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
+
+        )
+        self.argument_spec.update(element_spec)
         self.argument_spec.update(f5_argument_spec)
-        self.argument_spec.update(argument_spec)
+        self.required_together = [
+            ['server_name', 'virtual_server']
+        ]
+        self.mutually_exclusive = [
+            ['server_name', 'aggregate'],
+            ['virtual_server', 'aggregate']
+        ]
+        self.required_one_of = [
+            ['server_name', 'virtual_server', 'aggregate']
+        ]
 
 
 def main():
@@ -739,18 +1067,17 @@ def main():
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive,
+        required_one_of=spec.required_one_of,
+        required_together=spec.required_together,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

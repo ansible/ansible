@@ -17,12 +17,6 @@ module: aci_access_port_to_interface_policy_leaf_profile
 short_description: Manage Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   leaf_interface_profile:
@@ -108,7 +102,7 @@ options:
     description:
     - The type of interface for the static EPG deployement.
     type: str
-    choices: [ fex, port_channel, switch_port, vpc ]
+    choices: [ breakout, fex, port_channel, switch_port, vpc ]
     default: switch_port
     version_added: '2.6'
   state:
@@ -119,6 +113,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -276,10 +276,11 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 INTERFACE_TYPE_MAPPING = dict(
+    breakout='uni/infra/funcprof/brkoutportgrp-{0}',
     fex='uni/infra/funcprof/accportgrp-{0}',
     port_channel='uni/infra/funcprof/accbundle-{0}',
     switch_port='uni/infra/funcprof/accportgrp-{0}',
@@ -300,7 +301,7 @@ def main():
         from_card=dict(type='str', aliases=['from_card_range']),
         to_card=dict(type='str', aliases=['to_card_range']),
         policy_group=dict(type='str', aliases=['policy_group_name']),
-        interface_type=dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
+        interface_type=dict(type='str', default='switch_port', choices=['breakout', 'fex', 'port_channel', 'switch_port', 'vpc']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

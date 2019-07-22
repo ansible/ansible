@@ -15,11 +15,13 @@ DOCUMENTATION = '''
 ---
 module: rds
 version_added: "1.3"
-short_description: create, delete, or modify an Amazon rds instance
+short_description: create, delete, or modify Amazon rds instances, rds snapshots, and related facts
 description:
-     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing
-       instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely
-       on boto.rds2 (boto >= 2.26.0)
+    - Creates, deletes, or modifies rds resources.
+    - When creating an instance it can be either a new instance or a read-only replica of an existing instance.
+    - This module has a dependency on python-boto >= 2.5 and will soon be deprecated.
+    - The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely on boto.rds2 (boto >= 2.26.0).
+    - Please use boto3 based M(rds_instance) instead.
 options:
   command:
     description:
@@ -1320,7 +1322,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
+        module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
 
     # set port to per db defaults if not specified
     if module.params['port'] is None and module.params['db_engine'] is not None and module.params['command'] == 'create':

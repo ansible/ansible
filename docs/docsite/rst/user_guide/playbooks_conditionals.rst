@@ -29,7 +29,7 @@ It's actually pretty simple::
       - name: "shut down Debian flavored systems"
         command: /sbin/shutdown -t now
         when: ansible_facts['os_family'] == "Debian"
-        # note that all variables can be directly in conditionals without double curly braces
+        # note that all variables can be used directly in conditionals without double curly braces
 
 You can also use parentheses to group conditions::
 
@@ -84,16 +84,17 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
 
 .. note:: the above example requires the lsb_release package on the target host in order to return the 'lsb major_release' fact.
 
-Variables defined in the playbooks or inventory can also be used.  An example may be the execution of a task based on a variable's boolean value::
+Variables defined in the playbooks or inventory can also be used, just make sure to apply the `|bool` filter to non boolean variables (ex: string variables with content like 'yes', 'on', '1', 'true').  An example may be the execution of a task based on a variable's boolean value::
 
     vars:
       epic: true
+      monumental: "yes"
 
 Then a conditional execution might look like::
 
     tasks:
         - shell: echo "This certainly is epic!"
-          when: epic
+          when: epic or monumental|bool
 
 or::
 
@@ -278,6 +279,8 @@ Often in a playbook it may be useful to store the result of a given command in a
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existence of a particular program.
 
+.. note:: Registration happens even when a task is skipped due to the conditional. This way you can query the variable for `` is skipped`` to know if task was attempted or not.
+
 The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
     - name: test play
@@ -393,8 +396,9 @@ Possible values (sample, not complete list)::
     Slackware
     Solaris
     Suse
+    Windows
 
-.. See `OS_FAMILY_MAP`
+.. Ansible checks `OS_FAMILY_MAP`; if there's no match, it returns the value of `platform.system()`.
 
 .. seealso::
 

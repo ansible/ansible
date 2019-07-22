@@ -1,0 +1,374 @@
+---
+- name: create profile (check mode)
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: present
+  register: create_profile_check
+  check_mode: True
+
+- name: check if profile was created (check mode)
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: create_profile_actual_check
+
+- name: assert create profile (check mode)
+  assert:
+    that:
+    - create_profile_check is changed
+    - create_profile_check.path|lower == "c:\\users\\" + test_username
+    - not create_profile_actual_check.stat.exists
+
+- name: create profile
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: present
+  register: create_profile
+
+- name: check if profile was created
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: create_profile_actual
+
+- name: assert create profile
+  assert:
+    that:
+    - create_profile is changed
+    - create_profile.path|lower == "c:\\users\\" + test_username
+    - create_profile_actual.stat.exists
+
+- name: create profile (idempotent)
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: present
+  register: create_profile_again
+
+- name: assert create profile (idempotent)
+  assert:
+    that:
+    - not create_profile_again is changed
+    - create_profile_again.path|lower == "c:\\users\\" + test_username
+
+- name: remove profile (check mode)
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: absent
+  register: remove_profile_check
+  check_mode: True
+
+- name: check if profile was removed (check mode)
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: remove_profile_actual_check
+
+- name: assert remove profile (check mode)
+  assert:
+    that:
+    - remove_profile_check is changed
+    - remove_profile_check.path|lower == "c:\\users\\" + test_username
+    - remove_profile_actual_check.stat.exists
+
+- name: remove profile
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: absent
+  register: remove_profile
+
+- name: check if profile was removed
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: remove_profile_actual
+
+- name: assert remove profile
+  assert:
+    that:
+    - remove_profile is changed
+    - remove_profile.path|lower == "c:\\users\\" + test_username
+    - not remove_profile_actual.stat.exists
+
+- name: remove profile (idempotent)
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: absent
+  register: remove_profile_again
+
+- name: assert remove profile (idempotent)
+  assert:
+    that:
+    - not remove_profile_again is changed
+    - remove_profile_again.path == None
+
+- name: create profile with specific base path
+  win_user_profile:
+    username: '{{ test_username }}'
+    name: test_username_profile
+    state: present
+  register: create_profile_basename
+
+- name: check if profile with specific base path was created
+  win_stat:
+    path: C:\Users\test_username_profile
+  register: create_profile_basename_actual
+
+- name: assert create profile with specific base path
+  assert:
+    that:
+    - create_profile_basename is changed
+    - create_profile_basename.path|lower == "c:\\users\\test_username_profile"
+    - create_profile_basename_actual.stat.exists
+
+- name: remove profile with specific base path
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: absent
+  register: remove_profile_basename
+
+- name: check if profile with specific base path was removed
+  win_stat:
+    path: C:\Users\test_username_profile
+  register: remove_profile_basename_actual
+
+- name: assert remove profile with specific base path
+  assert:
+    that:
+    - remove_profile_basename is changed
+    - remove_profile_basename.path|lower == "c:\\users\\test_username_profile"
+    - not remove_profile_basename_actual.stat.exists
+
+- name: create dummy profile folder
+  win_file:
+    path: C:\Users\{{ test_username }}
+    state: directory
+
+- block:
+  - name: create profile folder with conflict (check mode)
+    win_user_profile:
+      username: '{{ test_username }}'
+      state: present
+    register: create_profile_conflict_check
+    check_mode: True
+
+  - name: get result of create profile folder with conflict (check mode)
+    win_stat:
+      path: C:\Users\{{ test_username }}.000
+    register: create_profile_conflict_actual_check
+
+  - name: assert create profile folder with conflict (check mode)
+    assert:
+      that:
+      - create_profile_conflict_check is changed
+      # The check mode path calc is dumb, doesn't check for conflicts
+      - create_profile_conflict_check.path|lower == "c:\\users\\" + test_username
+      - not create_profile_conflict_actual_check.stat.exists
+
+  - name: create profile folder with conflict
+    win_user_profile:
+      username: '{{ test_username }}'
+      state: present
+    register: create_profile_conflict
+
+  - name: get result of create profile with conflict
+    win_stat:
+      path: C:\Users\{{ test_username }}.000
+    register: create_profile_conflict_actual
+
+  - name: assert create profile folder with conflict
+    assert:
+      that:
+      - create_profile_conflict is changed
+      - create_profile_conflict.path|lower == "c:\\users\\" + test_username + ".000"
+      - create_profile_conflict_actual.stat.exists
+
+  - name: remove profile with conflict
+    win_user_profile:
+      username: '{{ test_username }}'
+      state: absent
+    register: remove_profile_conflict
+
+  - name: get result of profile folder after remove
+    win_stat:
+      path: C:\Users\{{ test_username }}.000
+    register: remove_profile_conflict_actual
+
+  - name: get result of dummy folder after remove
+    win_stat:
+      path: C:\Users\{{ test_username }}
+    register: remove_profile_conflict_dummy
+
+  - name: assert remove profile with conflict
+    assert:
+      that:
+      - remove_profile_conflict is changed
+      - remove_profile_conflict.path|lower == "c:\\users\\" + test_username + ".000"
+      - not remove_profile_conflict_actual.stat.exists
+      - remove_profile_conflict_dummy.stat.exists
+
+  always:
+  - name: remove dummy profile folder
+    win_file:
+      path: C:\Users\{{ test_username }}
+      state: absent
+
+- name: create profile for deleted user by sid test
+  win_user_profile:
+    username: '{{ test_username_info.sid }}'
+    state: present
+
+- name: delete user for deleted user with sid test
+  win_user:
+    name: '{{ test_username }}'
+    state: absent
+
+- name: remove profile for remove profile by sid test
+  win_user_profile:
+    username: '{{ test_username_info.sid }}'
+    state: absent
+  register: remove_profile_deleted_sid
+
+- name: check if profile was deleted for deleted user using a SID
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: remove_profile_deleted_sid_actual
+
+- name: assert remove profile for deleted user using a SID
+  assert:
+    that:
+    - remove_profile_deleted_sid is changed
+    - remove_profile_deleted_sid.path|lower == "c:\\users\\" + test_username
+    - not remove_profile_deleted_sid_actual.stat.exists
+
+- name: recreate user for deleted user by name test
+  win_user:
+    name: '{{ test_username }}'
+    password: '{{ test_password }}'
+    state: present
+  register: test_orphan_user1
+
+- name: create profile for deleted user by name test
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: present
+
+- name: delete user for remove profile by name test
+  win_user:
+    name: '{{ test_username }}'
+    state: absent
+
+- name: remove profile for deleted user using a name
+  win_user_profile:
+    name: '{{ test_username }}'
+    state: absent
+  register: remove_profile_deleted_name
+
+- name: check if profile was deleted for deleted user using a name
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: remove_profile_deleted_name_actual
+
+- name: assert remove profile for deleted user using a name
+  assert:
+    that:
+    - remove_profile_deleted_name is changed
+    - remove_profile_deleted_name.path|lower == "c:\\users\\" + test_username
+    - not remove_profile_deleted_name_actual.stat.exists
+
+- name: remove profile for deleted user using a name (idempotent)
+  win_user_profile:
+    name: '{{ test_username }}'
+    state: absent
+  register: remove_profile_deleted_name_again
+
+- name: assert remove profile for deleted user using a name (idempotent)
+  assert:
+    that:
+    - not remove_profile_deleted_name_again is changed
+
+- name: recreate user for remove multiple user test
+  win_user:
+    name: '{{ test_username }}'
+    password: '{{ test_password }}'
+    state: present
+  register: test_orphan_user1
+
+- name: create new profile for remove multiple user test
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: present
+  register: orphan_user1_profile
+
+- name: remove user 1 for remove multiple user test
+  win_user:
+    name: '{{ test_username }}'
+    state: absent
+
+# win_file has issues with paths exceeding MAX_PATH, need to use rmdir instead
+- name: remove profile folder for user 1
+  win_shell: rmdir /S /Q {{ orphan_user1_profile.path}}
+  args:
+    executable: cmd.exe
+
+- name: create user 2 for remove multiple user test
+  win_user:
+    name: '{{ test_username }}'
+    password: '{{ test_password }}'
+    state: present
+  register: test_orphan_user2
+
+- name: create new profile for orphan user 2
+  win_user_profile:
+    username: '{{ test_username }}'
+    state: present
+  register: orphan_user2_profile
+
+- name: remove orphan user 2 for remove multiple user test
+  win_user:
+    name: '{{ test_username }}'
+    state: present
+
+- name: fail to remove multiple profiles without flag
+  win_user_profile:
+    name: '{{ test_username }}'
+    state: absent
+  register: fail_remove_multiple
+  ignore_errors: True
+
+- name: check if profile was removed
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: fail_remove_multiple_actual
+
+- name: assert that profile was not actually deleted
+  assert:
+    that:
+    - fail_remove_multiple.msg == "Found multiple profiles matching the path 'C:\\Users\\" + test_username + "', set 'remove_multiple=True' to remove all the profiles for this match"
+    - fail_remove_multiple_actual.stat.exists
+
+- name: remove multiple profiles
+  win_user_profile:
+    name: '{{ test_username }}'
+    state: absent
+    remove_multiple: True
+  register: remove_multiple
+
+- name: get result of remove multiple profiles
+  win_stat:
+    path: C:\Users\{{ test_username }}
+  register: remove_multiple_actual
+
+- name: check that orphan user 1 reg profile has been removed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{{ test_orphan_user1.sid }}
+  register: remove_orphan1_actual
+
+- name: check that orphan user 2 reg profile has been removed
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\{{ test_orphan_user2.sid }}
+  register: remove_orphan2_actual
+
+- name: assert remove multiple profiles
+  assert:
+    that:
+    - remove_multiple is changed
+    - remove_multiple.path|lower == "c:\\users\\" + test_username
+    - not remove_multiple_actual.stat.exists
+    - not remove_orphan1_actual.exists
+    - not remove_orphan2_actual.exists

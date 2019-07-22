@@ -91,7 +91,8 @@ class TestNsoShow(nso_module.TestNsoModule):
             'username': 'user', 'password': 'password',
             'url': 'http://localhost:8080/jsonrpc',
             'path': path,
-            'operational': True
+            'operational': True,
+            'validate_certs': False
         })
         self.execute_module(changed=False, output={"data": {}})
 

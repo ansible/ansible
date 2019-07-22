@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import optparse
+import argparse
 import os
 import sys
 
@@ -11,15 +11,14 @@ from ansible.utils._build_helpers import update_file_if_different
 
 
 def generate_parser():
-    p = optparse.OptionParser(
-        version='%prog 1.0',
-        usage='usage: %prog [options]',
+    p = argparse.ArgumentParser(
         description='Generate cli documentation from cli docstrings',
     )
 
-    p.add_option("-t", "--template-file", action="store", dest="template_file", default="../templates/man.j2", help="path to jinja2 template")
-    p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
-    p.add_option("-f", "--output-format", action="store", dest="output_format", default='man', help="Output format for docs (the default 'man' or 'rst')")
+    p.add_argument("-t", "--template-file", action="store", dest="template_file", default="../templates/man.j2", help="path to jinja2 template")
+    p.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
+    p.add_argument("-f", "--output-format", action="store", dest="output_format", default='man', help="Output format for docs (the default 'man' or 'rst')")
+    p.add_argument('args', help='CLI module(s)', metavar='module', nargs='*')
     return p
 
 
@@ -57,34 +56,49 @@ def get_options(optlist):
     for opt in optlist:
         res = {
             'desc': opt.help,
-            'options': opt._short_opts + opt._long_opts
+            'options': opt.option_strings
         }
-        if opt.action == 'store':
+        if isinstance(opt, argparse._StoreAction):
             res['arg'] = opt.dest.upper()
+        elif not res['options']:
+            continue
         opts.append(res)
 
     return opts
 
 
+def dedupe_groups(parser):
+    action_groups = []
+    for action_group in parser._action_groups:
+        found = False
+        for a in action_groups:
+            if a._actions == action_group._actions:
+                found = True
+                break
+        if not found:
+            action_groups.append(action_group)
+    return action_groups
+
+
 def get_option_groups(option_parser):
     groups = []
-    for option_group in option_parser.option_groups:
+    for action_group in dedupe_groups(option_parser)[1:]:
         group_info = {}
-        group_info['desc'] = option_group.get_description()
-        group_info['options'] = option_group.option_list
-        group_info['group_obj'] = option_group
+        group_info['desc'] = action_group.description
+        group_info['options'] = action_group._actions
+        group_info['group_obj'] = action_group
         groups.append(group_info)
     return groups
 
 
-def opt_doc_list(cli):
+def opt_doc_list(parser):
     ''' iterate over options lists '''
 
     results = []
-    for option_group in cli.parser.option_groups:
-        results.extend(get_options(option_group.option_list))
+    for option_group in dedupe_groups(parser)[1:]:
+        results.extend(get_options(option_group._actions))
 
-    results.extend(get_options(cli.parser.option_list))
+    results.extend(get_options(parser._actions))
 
     return results
 
@@ -102,11 +116,11 @@ def opts_docs(cli_class_name, cli_module_name):
     # instantiate each cli and ask its options
     cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
                                    fromlist=[cli_class_name]), cli_class_name)
-    cli = cli_klass([])
+    cli = cli_klass([cli_name])
 
     # parse the common options
     try:
-        cli.parse()
+        cli.init_parser()
     except Exception:
         pass
 
@@ -114,7 +128,7 @@ def opts_docs(cli_class_name, cli_module_name):
     docs = {
         'cli': cli_module_name,
         'cli_name': cli_name,
-        'usage': cli.parser.usage,
+        'usage': cli.parser.format_usage(),
         'short_desc': cli.parser.description,
         'long_desc': trim_docstring(cli.__doc__),
         'actions': {},
@@ -127,7 +141,7 @@ def opts_docs(cli_class_name, cli_module_name):
         if hasattr(cli, extras):
             docs[extras.lower()] = getattr(cli, extras)
 
-    common_opts = opt_doc_list(cli)
+    common_opts = opt_doc_list(cli.parser)
     groups_info = get_option_groups(cli.parser)
     shared_opt_names = []
     for opt in common_opts:
@@ -144,25 +158,11 @@ def opts_docs(cli_class_name, cli_module_name):
     # force populate parser with per action options
 
     # use class attrs not the attrs on a instance (not that it matters here...)
-    for action in getattr(cli_klass, 'VALID_ACTIONS', ()):
-        # instantiate each cli and ask its options
-        action_cli_klass = getattr(__import__("ansible.cli.%s" % cli_module_name,
-                                              fromlist=[cli_class_name]), cli_class_name)
-        # init with args with action added?
-        cli = action_cli_klass([])
-        cli.args.append(action)
-
-        try:
-            cli.parse()
-        except Exception:
-            pass
-
-        # FIXME/TODO: needed?
-        # avoid dupe errors
-        cli.parser.set_conflict_handler('resolve')
-
-        cli.set_action()
-
+    try:
+        subparser = cli.parser._subparsers._group_actions[0].choices
+    except AttributeError:
+        subparser = {}
+    for action, parser in subparser.items():
         action_info = {'option_names': [],
                        'options': []}
         # docs['actions'][action] = {}
@@ -171,7 +171,7 @@ def opts_docs(cli_class_name, cli_module_name):
         action_info['desc'] = trim_docstring(getattr(cli, 'execute_%s' % action).__doc__)
 
         # docs['actions'][action]['desc'] = getattr(cli, 'execute_%s' % action).__doc__.strip()
-        action_doc_list = opt_doc_list(cli)
+        action_doc_list = opt_doc_list(parser)
 
         uncommon_options = []
         for action_doc in action_doc_list:
@@ -196,7 +196,7 @@ def opts_docs(cli_class_name, cli_module_name):
 
         docs['actions'][action] = action_info
 
-    docs['options'] = opt_doc_list(cli)
+    docs['options'] = opt_doc_list(cli.parser)
     return docs
 
 
@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
     parser = generate_parser()
 
-    options, args = parser.parse_args()
+    options = parser.parse_args()
 
     template_file = options.template_file
     template_path = os.path.expanduser(template_file)
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     output_dir = os.path.abspath(options.output_dir)
     output_format = options.output_format
 
-    cli_modules = args
+    cli_modules = options.args
 
     # various cli parsing things checks sys.argv if the 'args' that are passed in are []
     # so just remove any args so the cli modules dont try to parse them resulting in warnings

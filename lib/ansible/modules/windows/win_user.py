@@ -109,6 +109,7 @@ seealso:
 - module: win_domain_user
 - module: win_group
 - module: win_group_membership
+- module: win_user_profile
 author:
     - Paul Durivage (@angstwad)
     - Chris Church (@cchurch)

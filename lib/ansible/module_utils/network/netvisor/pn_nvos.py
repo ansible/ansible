@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import shlex
+from ansible.module_utils.network.netvisor.netvisor import run_commands
 
 
 def pn_cli(module, switch=None, username=None, password=None, switch_local=None):
@@ -16,7 +16,7 @@ def pn_cli(module, switch=None, username=None, password=None, switch_local=None)
     :return: The cli string for further processing.
     """
 
-    cli = '/usr/bin/cli --quiet -e --no-login-prompt '
+    cli = ''
 
     if username and password:
         cli += '--user "%s":"%s" ' % (username, password)
@@ -48,25 +48,19 @@ def run_cli(module, cli, state_map):
     state = module.params['state']
     command = state_map[state]
 
-    cmd = shlex.split(cli)
-    result, out, err = module.run_command(cmd)
-
-    remove_cmd = '/usr/bin/cli --quiet -e --no-login-prompt'
+    result, out, err = run_commands(module, cli)
 
     results = dict(
-        command=' '.join(cmd).replace(remove_cmd, ''),
-        msg="%s operation completed" % command,
+        command=cli,
+        msg="%s operation completed" % cli,
         changed=True
     )
     # Response in JSON format
     if result != 0:
         module.exit_json(
-            command=' '.join(cmd).replace(remove_cmd, ''),
-            stderr=err.strip(),
-            msg="%s operation failed" % command,
+            command=cli,
+            msg="%s operation failed" % cli,
             changed=False
         )
 
-    if out:
-        results['stdout'] = out.strip()
     module.exit_json(**results)

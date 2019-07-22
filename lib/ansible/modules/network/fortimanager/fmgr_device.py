@@ -17,6 +17,7 @@
 #
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -29,11 +30,13 @@ DOCUMENTATION = '''
 ---
 module: fmgr_device
 version_added: "2.8"
+notes:
+    - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
-short_description: Add or remove device
+short_description: Add or remove device from FortiManager.
 description:
   - Add or remove a device or list of devices from FortiManager Device Manager using JSON RPC API.
 
@@ -43,76 +46,69 @@ options:
       - The ADOM the configuration should belong to.
     required: true
     default: root
-  host:
+
+  mode:
     description:
-      - The FortiManager's address.
-    required: true
-  username:
-    description:
-      - The username used to authenticate with the FortiManager.
+      - The desired mode of the specified object.
     required: false
-  password:
+    default: add
+    choices: ["add", "delete"]
+
+  blind_add:
     description:
-      - The password associated with the username account.
+      - When adding a device, module will check if it exists, and skip if it does.
+      - If enabled, this option will stop the module from checking if it already exists, and blindly add the device.
     required: false
-  state:
-    description:
-      - The desired state of the specified object.
-      - absent will delete the object if it exists.
-      - present will create the configuration if needed.
-    required: false
-    default: present
-    choices: ["absent", "present"]
+    default: "disable"
+    choices: ["enable", "disable"]
 
   device_username:
     description:
       - The username of the device being added to FortiManager.
     required: false
+
   device_password:
     description:
       - The password of the device being added to FortiManager.
     required: false
+
   device_ip:
     description:
       - The IP of the device being added to FortiManager. Supports both IPv4 and IPv6.
     required: false
+
   device_unique_name:
     description:
       - The desired "friendly" name of the device being added to FortiManager.
     required: false
+
   device_serial:
     description:
       - The serial number of the device being added to FortiManager.
     required: false
 '''
 
-
 EXAMPLES = '''
 - name: DISCOVER AND ADD DEVICE FGT1
   fmgr_device:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     adom: "root"
     device_username: "admin"
     device_password: "admin"
     device_ip: "10.10.24.201"
     device_unique_name: "FGT1"
     device_serial: "FGVM000000117994"
-    state: "present"
+    mode: "add"
+    blind_add: "enable"
 
 - name: DISCOVER AND ADD DEVICE FGT2
   fmgr_device:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     adom: "root"
     device_username: "admin"
     device_password: "admin"
     device_ip: "10.10.24.202"
     device_unique_name: "FGT2"
     device_serial: "FGVM000000117992"
-    state: "absent"
+    mode: "delete"
 '''
 
 RETURN = """
@@ -122,20 +118,27 @@ api_result:
   type: str
 """
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
+from ansible.module_utils.network.fortimanager.common import FMGBaseException
+from ansible.module_utils.network.fortimanager.common import FMGRCommon
+from ansible.module_utils.network.fortimanager.common import FMGRMethods
+from ansible.module_utils.network.fortimanager.common import DEFAULT_RESULT_OBJ
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-# check for pyFMG lib
-try:
-    from pyFMG.fortimgr import FortiManager
-    HAS_PYFMGR = True
-except ImportError:
-    HAS_PYFMGR = False
 
-
-def discover_device(fmg, paramgram):
+def discover_device(fmgr, paramgram):
     """
     This method is used to discover devices before adding them to FMGR
+
+    :param fmgr: The fmgr object instance from fmgr_utils.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+
+    :return: The response from the FortiManager
+    :rtype: dict
     """
 
     datagram = {
@@ -146,13 +149,22 @@ def discover_device(fmg, paramgram):
     }
 
     url = '/dvm/cmd/discover/device/'
-    response = fmg.execute(url, datagram)
+
+    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
     return response
 
 
-def add_device(fmg, paramgram):
+def add_device(fmgr, paramgram):
     """
     This method is used to add devices to the FMGR
+
+    :param fmgr: The fmgr object instance from fmgr_utils.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+
+    :return: The response from the FortiManager
+    :rtype: dict
     """
 
     datagram = {
@@ -165,72 +177,61 @@ def add_device(fmg, paramgram):
     }
 
     url = '/dvm/cmd/add/device/'
-    response = fmg.execute(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
     return response
 
 
-def delete_device(fmg, paramgram):
+def delete_device(fmgr, paramgram):
     """
     This method deletes a device from the FMGR
+
+    :param fmgr: The fmgr object instance from fmgr_utils.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+
+    :return: The response from the FortiManager
+    :rtype: dict
     """
     datagram = {
         "adom": paramgram["adom"],
         "flags": ["create_task", "nonblocking"],
-        "odd_request_form": "True",
         "device": paramgram["device_unique_name"],
     }
 
     url = '/dvm/cmd/del/device/'
-    response = fmg.execute(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
     return response
 
 
-# FUNCTION/METHOD FOR LOGGING OUT AND ANALYZING ERROR CODES
-def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
+def get_device(fmgr, paramgram):
     """
-    THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
+    This method attempts to find the firewall on FortiManager to see if it already exists.
+
+    :param fmgr: The fmgr object instance from fmgr_utils.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+
+    :return: The response from the FortiManager
+    :rtype: dict
     """
+    datagram = {
+        "adom": paramgram["adom"],
+        "filter": ["name", "==", paramgram["device_unique_name"]],
+    }
 
-    # VALIDATION ERROR (NO RESULTS, JUST AN EXIT)
-    if msg != "NULL" and len(results) == 0:
-        try:
-            fmg.logout()
-        except Exception:
-            pass
-        module.fail_json(msg=msg)
-
-    # SUBMISSION ERROR
-    if len(results) > 0:
-        if msg == "NULL":
-            try:
-                msg = results[1]['status']['message']
-            except Exception:
-                msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
-
-            if results[0] not in good_codes:
-                if logout_on_fail:
-                    fmg.logout()
-                    module.fail_json(msg=msg, **results[1])
-                else:
-                    return_msg = msg + " -- LOGOUT ON FAIL IS OFF, MOVING ON"
-                    return return_msg
-            else:
-                if logout_on_success:
-                    fmg.logout()
-                    module.exit_json(msg=msg, **results[1])
-                else:
-                    return_msg = msg + " -- LOGOUT ON SUCCESS IS OFF, MOVING ON TO REST OF CODE"
-                    return return_msg
+    url = '/dvmdb/adom/{adom}/device/{name}'.format(adom=paramgram["adom"],
+                                                    name=paramgram["device_unique_name"])
+    response = fmgr.process_request(url, datagram, FMGRMethods.GET)
+    return response
 
 
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str", default="root"),
-        host=dict(required=True, type="str"),
-        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
-        password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        state=dict(choices=["absent", "present"], type="str", default="present"),
-
+        mode=dict(choices=["add", "delete"], type="str", default="add"),
+        blind_add=dict(choices=["enable", "disable"], type="str", default="disable"),
         device_ip=dict(required=False, type="str"),
         device_username=dict(required=False, type="str"),
         device_password=dict(required=False, type="str", no_log=True),
@@ -238,9 +239,10 @@ def main():
         device_serial=dict(required=False, type="str")
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True,)
+    # BUILD MODULE OBJECT SO WE CAN BUILD THE PARAMGRAM
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
 
-    # handle params passed via provider and insure they are represented as the data type expected by fortimanagerd
+    # BUILD THE PARAMGRAM
     paramgram = {
         "device_ip": module.params["device_ip"],
         "device_username": module.params["device_username"],
@@ -248,44 +250,52 @@ def main():
         "device_unique_name": module.params["device_unique_name"],
         "device_serial": module.params["device_serial"],
         "adom": module.params["adom"],
-        "state": module.params["state"]
+        "mode": module.params["mode"]
     }
 
-    # validate required arguments are passed; not used in argument_spec to allow params to be called from provider
-    # check if params are set
-    if module.params["host"] is None or module.params["username"] is None or module.params["password"] is None:
-        module.fail_json(msg="Host and username are required for connection")
+    # INSERT THE PARAMGRAM INTO THE MODULE SO WHEN WE PASS IT TO MOD_UTILS.FortiManagerHandler IT HAS THAT INFO
+    module.paramgram = paramgram
 
-    # CHECK IF LOGIN FAILED
-    fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
-    response = fmg.login()
-
-    if response[1]['status']['code'] != 0:
-        module.fail_json(msg="Connection to FortiManager Failed")
+    # TRY TO INIT THE CONNECTION SOCKET PATH AND FortiManagerHandler OBJECT AND TOOLS
+    fmgr = None
+    if module._socket_path:
+        connection = Connection(module._socket_path)
+        fmgr = FortiManagerHandler(connection, module)
+        fmgr.tools = FMGRCommon()
     else:
-        # START SESSION LOGIC
-        results = (-100000, {"msg": "Nothing Happened."})
-        if paramgram["state"] == "present":
-            # add device
-            results = discover_device(fmg, paramgram)
-            if results[0] != 0:
-                if results[0] == -20042:
-                    fmgr_logout(fmg, module, msg="Couldn't contact device on network", results=results, good_codes=[0])
-                else:
-                    fmgr_logout(fmg, module, msg="Discovering Device Failed", results=results, good_codes=[0])
+        module.fail_json(**FAIL_SOCKET_MSG)
 
-            if results[0] == 0:
-                results = add_device(fmg, paramgram)
-                if results[0] != 0 and results[0] != -20010:
-                    fmgr_logout(fmg, module, msg="Adding Device Failed", results=results, good_codes=[0])
+    # BEGIN MODULE-SPECIFIC LOGIC -- THINGS NEED TO HAPPEN DEPENDING ON THE ENDPOINT AND OPERATION
+    results = DEFAULT_RESULT_OBJ
+    try:
+        if paramgram["mode"] == "add":
+            # CHECK IF DEVICE EXISTS
+            if module.params["blind_add"] == "disable":
+                exists_results = get_device(fmgr, paramgram)
+                fmgr.govern_response(module=module, results=exists_results, good_codes=(0, -3), changed=False,
+                                     ansible_facts=fmgr.construct_ansible_facts(exists_results,
+                                                                                module.params, paramgram))
 
-        if paramgram["state"] == "absent":
-            # remove device
-            results = delete_device(fmg, paramgram)
-            if results[0] != 0:
-                fmgr_logout(fmg, module, msg="Deleting Device Failed", results=results, good_codes=[0])
+            discover_results = discover_device(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=discover_results, stop_on_success=False,
+                                 ansible_facts=fmgr.construct_ansible_facts(discover_results,
+                                                                            module.params, paramgram))
 
-    fmg.logout()
+            if discover_results[0] == 0:
+                results = add_device(fmgr, paramgram)
+                fmgr.govern_response(module=module, results=discover_results, stop_on_success=True,
+                                     changed_if_success=True,
+                                     ansible_facts=fmgr.construct_ansible_facts(discover_results,
+                                                                                module.params, paramgram))
+
+        if paramgram["mode"] == "delete":
+            results = delete_device(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results,
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
+
+    except Exception as err:
+        raise FMGBaseException(err)
+
     return module.exit_json(**results[1])
 
 

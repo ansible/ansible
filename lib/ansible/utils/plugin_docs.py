@@ -4,11 +4,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import constants as C
+from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
-from ansible.parsing.plugin_docs import read_docstring, read_docstub
+from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
 
@@ -48,14 +50,20 @@ def add_fragments(doc, filename, fragment_loader):
     # Allow the module to specify a var other than DOCUMENTATION
     # to pull the fragment from, using dot notation as a separator
     for fragment_slug in fragments:
+        fallback_name = None
         fragment_slug = fragment_slug.lower()
         if '.' in fragment_slug:
-            fragment_name, fragment_var = fragment_slug.split('.', 1)
+            fallback_name = fragment_slug
+            fragment_name, fragment_var = fragment_slug.rsplit('.', 1)
             fragment_var = fragment_var.upper()
         else:
             fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
         fragment_class = fragment_loader.get(fragment_name)
+        if fragment_class is None and fallback_name:
+            fragment_class = fragment_loader.get(fallback_name)
+            fragment_var = 'DOCUMENTATION'
+
         if fragment_class is None:
             raise AnsibleAssertionError('fragment_class is None')
 
@@ -97,7 +105,7 @@ def add_fragments(doc, filename, fragment_loader):
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
     """
-    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
+    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
@@ -107,3 +115,37 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False)
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
+
+
+def get_versioned_doclink(path):
+    """
+    returns a versioned documentation link for the current Ansible major.minor version; used to generate
+    in-product warning/error links to the configured DOCSITE_ROOT_URL
+    (eg, https://docs.ansible.com/ansible/2.8/somepath/doc.html)
+
+    :param path: relative path to a document under docs/docsite/rst;
+    :return: absolute URL to the specified doc for the current version of Ansible
+    """
+    path = to_native(path)
+    try:
+        base_url = C.config.get_config_value('DOCSITE_ROOT_URL')
+        if not base_url.endswith('/'):
+            base_url += '/'
+        if path.startswith('/'):
+            path = path[1:]
+        split_ver = ansible_version.split('.')
+        if len(split_ver) < 3:
+            raise RuntimeError('invalid version ({0})'.format(ansible_version))
+
+        doc_version = '{0}.{1}'.format(split_ver[0], split_ver[1])
+
+        # check to see if it's a X.Y.0 non-rc prerelease or dev release, if so, assume devel (since the X.Y doctree
+        # isn't published until beta-ish)
+        if split_ver[2].startswith('0'):
+            # exclude rc; we should have the X.Y doctree live by rc1
+            if any((pre in split_ver[2]) for pre in ['a', 'b']) or len(split_ver) > 3 and 'dev' in split_ver[3]:
+                doc_version = 'devel'
+
+        return '{0}{1}/{2}'.format(base_url, doc_version, path)
+    except Exception as ex:
+        return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))

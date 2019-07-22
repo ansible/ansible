@@ -3,7 +3,6 @@
 from __future__ import absolute_import, print_function
 
 import os
-import pipes
 import tempfile
 import time
 
@@ -14,6 +13,7 @@ from lib.util import (
     ApplicationError,
     run_command,
     intercept_command,
+    cmd_quote,
 )
 
 from lib.core_ci import (
@@ -49,8 +49,10 @@ class ManageWindowsCI(object):
         for ssh_option in sorted(ssh_options):
             self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
 
-    def setup(self):
-        """Used in delegate_remote to setup the host, no action is required for Windows."""
+    def setup(self, python_version):
+        """Used in delegate_remote to setup the host, no action is required for Windows.
+        :type python_version: str
+        """
         pass
 
     def wait(self):
@@ -105,7 +107,7 @@ class ManageWindowsCI(object):
             options.append('-tt')
 
         if isinstance(command, list):
-            command = ' '.join(pipes.quote(c) for c in command)
+            command = ' '.join(cmd_quote(c) for c in command)
 
         run_command(self.core_ci.args,
                     ['ssh', '-q'] + self.ssh_args +
@@ -204,15 +206,17 @@ class ManagePosixCI(object):
         elif self.core_ci.platform == 'rhel':
             self.become = ['sudo', '-in', 'bash', '-c']
 
-    def setup(self):
-        """Start instance and wait for it to become ready and respond to an ansible ping."""
+    def setup(self, python_version):
+        """Start instance and wait for it to become ready and respond to an ansible ping.
+        :type python_version: str
+        """
         self.wait()
 
         if isinstance(self.core_ci.args, ShellConfig):
             if self.core_ci.args.raw:
                 return
 
-        self.configure()
+        self.configure(python_version)
         self.upload_source()
 
     def wait(self):
@@ -227,10 +231,12 @@ class ManagePosixCI(object):
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
 
-    def configure(self):
-        """Configure remote host for testing."""
+    def configure(self, python_version):
+        """Configure remote host for testing.
+        :type python_version: str
+        """
         self.upload('test/runner/setup/remote.sh', '/tmp')
-        self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s' % self.core_ci.platform)
+        self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
 
     def upload_source(self):
         """Upload and extract source."""
@@ -267,14 +273,14 @@ class ManagePosixCI(object):
             options = []
 
         if isinstance(command, list):
-            command = ' '.join(pipes.quote(c) for c in command)
+            command = ' '.join(cmd_quote(c) for c in command)
 
         run_command(self.core_ci.args,
                     ['ssh', '-tt', '-q'] + self.ssh_args +
                     options +
                     ['-p', str(self.core_ci.connection.port),
                      '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                    self.become + [pipes.quote(command)])
+                    self.become + [cmd_quote(command)])
 
     def scp(self, src, dst):
         """

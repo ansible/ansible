@@ -29,13 +29,14 @@ This example is a simple demonstration that shows how to minimally run a couple 
 
     import json
     import shutil
-    from collections import namedtuple
+    from ansible.module_utils.common.collections import ImmutableDict
     from ansible.parsing.dataloader import DataLoader
     from ansible.vars.manager import VariableManager
     from ansible.inventory.manager import InventoryManager
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
     from ansible.plugins.callback import CallbackBase
+    from ansible import context
     import ansible.constants as C
 
     class ResultCallback(CallbackBase):
@@ -53,9 +54,9 @@ This example is a simple demonstration that shows how to minimally run a couple 
             host = result._host
             print(json.dumps({host.name: result._result}, indent=4))
 
-    # since API is constructed for CLI it expects certain options to always be set, named tuple 'fakes' the args parsing options object
-    Options = namedtuple('Options', ['connection', 'module_path', 'forks', 'become', 'become_method', 'become_user', 'check', 'diff'])
-    options = Options(connection='local', module_path=['/to/mymodules'], forks=10, become=None, become_method=None, become_user=None, check=False, diff=False)
+    # since the API is constructed for CLI it expects certain options to always be set in the context object
+    context.CLIARGS = ImmutableDict(connection='local', module_path=['/to/mymodules'], forks=10, become=None,
+                                    become_method=None, become_user=None, check=False, diff=False)
 
     # initialize needed objects
     loader = DataLoader() # Takes care of finding and reading yaml, json and ini files
@@ -92,7 +93,6 @@ This example is a simple demonstration that shows how to minimally run a couple 
                   inventory=inventory,
                   variable_manager=variable_manager,
                   loader=loader,
-                  options=options,
                   passwords=passwords,
                   stdout_callback=results_callback,  # Use our custom callback instead of the ``default`` callback plugin, which prints to stdout
               )
@@ -109,7 +109,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
 
 The source code for the ``ansible``
-command line tools (``lib/ansible/cli/``) is `available on Github <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
+command line tools (``lib/ansible/cli/``) is `available on GitHub <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
 
 .. seealso::
 

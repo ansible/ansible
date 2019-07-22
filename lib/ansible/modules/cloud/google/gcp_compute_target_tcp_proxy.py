@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -66,76 +65,74 @@ options:
     description:
     - Specifies the type of proxy header to append before sending data to the backend,
       either NONE or PROXY_V1. The default is NONE.
+    - 'Some valid choices include: "NONE", "PROXY_V1"'
     required: false
-    choices:
-    - NONE
-    - PROXY_V1
   service:
     description:
     - A reference to the BackendService resource.
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this service field to "{{ name-of-resource }}" Alternatively,
-      you can set this service to a dictionary with the selfLink key where the value
-      is the selfLink of your BackendService'
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_backend_service task and then set this service
+      field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetTcpProxies)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/targetTcpProxies)'
 - 'Setting Up TCP proxy for Google Cloud Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/tcp-ssl/tcp-proxy)'
 '''
 
 EXAMPLES = '''
 - name: create a instance group
   gcp_compute_instance_group:
-      name: "instancegroup-targettcpproxy"
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: instancegroup-targettcpproxy
+    zone: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: instancegroup
 
 - name: create a health check
   gcp_compute_health_check:
-      name: "healthcheck-targettcpproxy"
-      type: TCP
-      tcp_health_check:
-        port_name: service-health
-        request: ping
-        response: pong
-      healthy_threshold: 10
-      timeout_sec: 2
-      unhealthy_threshold: 5
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: healthcheck-targettcpproxy
+    type: TCP
+    tcp_health_check:
+      port_name: service-health
+      request: ping
+      response: pong
+    healthy_threshold: 10
+    timeout_sec: 2
+    unhealthy_threshold: 5
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: healthcheck
 
 - name: create a backend service
   gcp_compute_backend_service:
-      name: "backendservice-targettcpproxy"
-      backends:
-      - group: "{{ instancegroup }}"
-      health_checks:
-      - "{{ healthcheck.selfLink }}"
-      protocol: TCP
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: backendservice-targettcpproxy
+    backends:
+    - group: "{{ instancegroup }}"
+    health_checks:
+    - "{{ healthcheck.selfLink }}"
+    protocol: TCP
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: backendservice
 
 - name: create a target tcp proxy
   gcp_compute_target_tcp_proxy:
-      name: "test_object"
-      proxy_header: PROXY_V1
-      service: "{{ backendservice }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    proxy_header: PROXY_V1
+    service: "{{ backendservice }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -198,8 +195,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
-            service=dict(required=True, type='dict')
+            proxy_header=dict(type='str'),
+            service=dict(required=True, type='dict'),
         )
     )
 
@@ -240,8 +237,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -255,26 +251,16 @@ def update_fields(module, request, response):
 def proxy_header_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetTcpProxies/{name}/setProxyHeader"
-        ]).format(**module.params),
-        {
-            u'proxyHeader': module.params.get('proxy_header')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetTcpProxies/{name}/setProxyHeader"]).format(**module.params),
+        {u'proxyHeader': module.params.get('proxy_header')},
     )
 
 
 def service_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetTcpProxies/{name}/setBackendService"
-        ]).format(**module.params),
-        {
-            u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetTcpProxies/{name}/setBackendService"]).format(**module.params),
+        {u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')},
     )
 
 
@@ -289,7 +275,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'proxyHeader': module.params.get('proxy_header'),
-        u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
+        u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -324,8 +310,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -360,7 +346,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'name': module.params.get('name'),
         u'proxyHeader': response.get(u'proxyHeader'),
-        u'service': response.get(u'service')
+        u'service': response.get(u'service'),
     }
 
 
@@ -386,9 +372,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

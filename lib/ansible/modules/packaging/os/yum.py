@@ -187,8 +187,21 @@ options:
     description:
       - Amount of time to wait for the yum lockfile to be freed.
     required: false
-    default: 0
+    default: 30
     type: int
+    version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+      - "NOTE: This feature requires yum >= 4 (RHEL/CentOS 8+)"
+    type: bool
+    default: "yes"
+    version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
     version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
@@ -208,7 +221,7 @@ notes:
     of packages in a single transaction and yum requires groups to be specified
     in different ways when used in that way.  Package groups are specified as
     "@development-tools" and environment groups are "@^gnome-desktop-environment".
-    Use the "yum group list" command to see which category of group the group
+    Use the "yum group list hidden ids" command to see which category of group the group
     you want to install falls into.'
   - 'The yum module does not support clearing yum cache in an idempotent way, so it
     was decided not to implement it, the only method is to use shell and call the yum
@@ -319,7 +332,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
@@ -376,6 +389,26 @@ class YumModule(YumDnf):
 
         self.pkg_mgr_name = "yum"
         self.lockfile = '/var/run/yum.pid'
+
+    def _enablerepos_with_error_checking(self, yumbase):
+        # NOTE: This seems unintuitive, but it mirrors yum's CLI bahavior
+        if len(self.enablerepo) == 1:
+            try:
+                yumbase.repos.enableRepo(self.enablerepo[0])
+            except yum.Errors.YumBaseError as e:
+                if u'repository not found' in to_text(e):
+                    self.module.fail_json(msg="Repository %s not found." % self.enablerepo[0])
+                else:
+                    raise e
+        else:
+            for rid in self.enablerepo:
+                try:
+                    yumbase.repos.enableRepo(rid)
+                except yum.Errors.YumBaseError as e:
+                    if u'repository not found' in to_text(e):
+                        self.module.warn("Repository %s not found." % rid)
+                    else:
+                        raise e
 
     def yum_base(self):
         my = yum.YumBase()
@@ -446,8 +479,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 e, m, _ = my.rpmdb.matchPackageNames([pkgspec])
                 pkgs = e + m
@@ -501,8 +533,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 e, m, _ = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
@@ -541,8 +572,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 pkgs = my.returnPackagesByDep(pkgspec) + my.returnInstalledPackagesByDep(pkgspec)
                 if not pkgs:
@@ -582,8 +612,7 @@ class YumModule(YumDnf):
                 my = self.yum_base()
                 for rid in self.disablerepo:
                     my.repos.disableRepo(rid)
-                for rid in self.enablerepo:
-                    my.repos.enableRepo(rid)
+                self._enablerepos_with_error_checking(my)
 
                 try:
                     pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
@@ -696,11 +725,11 @@ class YumModule(YumDnf):
         # setting system proxy environment and saving old, if exists
         my = self.yum_base()
         namepass = ""
-        proxy_url = ""
         scheme = ["http", "https"]
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
-            if my.conf.proxy:
+            # "_none_" is a special value to disable proxy in yum.conf/*.repo
+            if my.conf.proxy and my.conf.proxy not in ("_none_",):
                 if my.conf.proxy_username:
                     namepass = namepass + my.conf.proxy_username
                     proxy_url = my.conf.proxy
@@ -717,6 +746,9 @@ class YumModule(YumDnf):
                             r"(http://)",
                             r"\g<1>" + namepass, proxy_url
                         )
+                else:
+                    for item in scheme:
+                        os.environ[item + "_proxy"] = my.conf.proxy
             yield
         except yum.Errors.YumBaseError:
             raise
@@ -799,6 +831,8 @@ class YumModule(YumDnf):
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
+        else:
+            res['changes'] = dict(installed=pkgs)
 
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
@@ -1034,6 +1068,8 @@ class YumModule(YumDnf):
         if pkgs:
             if self.module.check_mode:
                 self.module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
+            else:
+                res['changes'] = dict(removed=pkgs)
 
             # run an actual yum transaction
             if self.autoremove:
@@ -1048,9 +1084,8 @@ class YumModule(YumDnf):
             res['msg'] = err
 
             if rc != 0:
-                if self.autoremove:
-                    if 'No such command' not in out:
-                        self.module.fail_json(msg='Version of YUM too old for autoremove: Requires yum 3.4.3 (RHEL/CentOS 7+)')
+                if self.autoremove and 'No such command' in out:
+                    self.module.fail_json(msg='Version of YUM too old for autoremove: Requires yum 3.4.3 (RHEL/CentOS 7+)')
                 else:
                     self.module.fail_json(**res)
 
@@ -1264,38 +1299,38 @@ class YumModule(YumDnf):
                     self.module.fail_json(**res)
 
         # check_mode output
-        if self.module.check_mode:
-            to_update = []
-            for w in will_update:
-                if w.startswith('@'):
-                    to_update.append((w, None))
-                elif w not in updates:
-                    other_pkg = will_update_from_other_package[w]
-                    to_update.append(
-                        (
-                            w,
-                            'because of (at least) %s-%s.%s from %s' % (
-                                other_pkg,
-                                updates[other_pkg]['version'],
-                                updates[other_pkg]['dist'],
-                                updates[other_pkg]['repo']
-                            )
+        to_update = []
+        for w in will_update:
+            if w.startswith('@'):
+                to_update.append((w, None))
+            elif w not in updates:
+                other_pkg = will_update_from_other_package[w]
+                to_update.append(
+                    (
+                        w,
+                        'because of (at least) %s-%s.%s from %s' % (
+                            other_pkg,
+                            updates[other_pkg]['version'],
+                            updates[other_pkg]['dist'],
+                            updates[other_pkg]['repo']
                         )
                     )
-                else:
-                    to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
-
-            if self.update_only:
-                res['changes'] = dict(installed=[], updated=to_update)
+                )
             else:
-                res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+                to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
+        if self.update_only:
+            res['changes'] = dict(installed=[], updated=to_update)
+        else:
+            res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+
+        if obsoletes:
+            res['obsoletes'] = obsoletes
+
+        # return results before we actually execute stuff
+        if self.module.check_mode:
             if will_update or pkgs['install']:
                 res['changed'] = True
-
-            if obsoletes:
-                res['obsoletes'] = obsoletes
-
             return res
 
         # run commands
@@ -1330,9 +1365,6 @@ class YumModule(YumDnf):
 
         if rc:
             res['failed'] = True
-
-        if obsoletes:
-            res['obsoletes'] = obsoletes
 
         return res
 
@@ -1374,6 +1406,9 @@ class YumModule(YumDnf):
 
         if self.download_only:
             self.yum_basecmd.extend(['--downloadonly'])
+
+            if self.download_dir:
+                self.yum_basecmd.extend(['--downloaddir=%s' % self.download_dir])
 
         if self.installroot != '/':
             # do not setup installroot by default, because of error
@@ -1419,8 +1454,7 @@ class YumModule(YumDnf):
                 current_repos = my.repos.repos.keys()
                 if self.enablerepo:
                     try:
-                        for rid in self.enablerepo:
-                            my.repos.enableRepo(rid)
+                        self._enablerepos_with_error_checking(my)
                         new_repos = my.repos.repos.keys()
                         for i in new_repos:
                             if i not in current_repos:
@@ -1472,11 +1506,19 @@ class YumModule(YumDnf):
 
         self.wait_for_lock()
 
-        if self.disable_excludes and yum.__version_info__ < (3, 4):
-            self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
-
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))
+
+        # fedora will redirect yum to dnf, which has incompatibilities
+        # with how this module expects yum to operate. If yum-deprecated
+        # is available, use that instead to emulate the old behaviors.
+        if self.module.get_bin_path('yum-deprecated'):
+            yumbin = self.module.get_bin_path('yum-deprecated')
+        else:
+            yumbin = self.module.get_bin_path('yum')
+
+        # need debug level 2 to get 'Nothing to do' for groupinstall.
+        self.yum_basecmd = [yumbin, '-d', '2', '-y']
 
         if self.update_cache and not self.names and not self.list:
             rc, stdout, stderr = self.module.run_command(self.yum_basecmd + ['clean', 'expire-cache'])
@@ -1494,17 +1536,6 @@ class YumModule(YumDnf):
                     rc=rc,
                     results=[stderr],
                 )
-
-        # fedora will redirect yum to dnf, which has incompatibilities
-        # with how this module expects yum to operate. If yum-deprecated
-        # is available, use that instead to emulate the old behaviors.
-        if self.module.get_bin_path('yum-deprecated'):
-            yumbin = self.module.get_bin_path('yum-deprecated')
-        else:
-            yumbin = self.module.get_bin_path('yum')
-
-        # need debug level 2 to get 'Nothing to do' for groupinstall.
-        self.yum_basecmd = [yumbin, '-d', '2', '-y']
 
         repoquerybin = self.module.get_bin_path('repoquery', required=False)
 
@@ -1538,6 +1569,23 @@ class YumModule(YumDnf):
                         repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
                         if self.installroot != '/':
                             repoquery.extend(['--installroot', self.installroot])
+
+                        if self.disable_excludes:
+                            # repoquery does not support --disableexcludes,
+                            # so make a temp copy of yum.conf and get rid of the 'exclude=' line there
+                            try:
+                                with open('/etc/yum.conf', 'r') as f:
+                                    content = f.readlines()
+
+                                tmp_conf_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, delete=False)
+                                self.module.add_cleanup_file(tmp_conf_file.name)
+
+                                tmp_conf_file.writelines([c for c in content if not c.startswith("exclude=")])
+                                tmp_conf_file.close()
+                            except Exception as e:
+                                self.module.fail_json(msg="Failure setting up repoquery: %s" % to_native(e))
+
+                            repoquery.extend(['-c', tmp_conf_file.name])
 
             results = self.ensure(repoquery)
             if repoquery:

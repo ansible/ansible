@@ -12,7 +12,7 @@ DOCUMENTATION = '''
 module: zabbix_map
 author:
     - "Antony Alekseyev (@Akint)"
-short_description: Zabbix map creates/updates/deletes
+short_description: Create/update/delete Zabbix maps
 description:
     - "This module allows you to create, modify and delete Zabbix map entries,
       using Graphviz binaries and text description written in DOT language.
@@ -172,34 +172,41 @@ ANSIBLE_METADATA = {
     'status': ['preview']
 }
 
+
 import base64
+import traceback
+
 from io import BytesIO
 from operator import itemgetter
 from distutils.version import StrictVersion
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
     import pydotplus
     HAS_PYDOTPLUS = True
 except ImportError:
+    PYDOT_IMP_ERR = traceback.format_exc()
     HAS_PYDOTPLUS = False
 
 try:
     import webcolors
     HAS_WEBCOLORS = True
 except ImportError:
+    WEBCOLORS_IMP_ERR = traceback.format_exc()
     HAS_WEBCOLORS = False
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 try:
     from PIL import Image
     HAS_PIL = True
 except ImportError:
+    PIL_IMP_ERR = traceback.format_exc()
     HAS_PIL = False
 
 
@@ -761,13 +768,13 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
     if not HAS_PYDOTPLUS:
-        module.fail_json(msg="Missing required pydotplus module (check docs or install with: pip install pydotplus)")
+        module.fail_json(msg=missing_required_lib('pydotplus', url='https://pypi.org/project/pydotplus/'), exception=PYDOT_IMP_ERR)
     if not HAS_WEBCOLORS:
-        module.fail_json(msg="Missing required webcolors module (check docs or install with: pip install webcolors)")
+        module.fail_json(msg=missing_required_lib('webcolors', url='https://pypi.org/project/webcolors/'), exception=WEBCOLORS_IMP_ERR)
     if not HAS_PIL:
-        module.fail_json(msg="Missing required Pillow module (check docs or install with: pip install Pillow)")
+        module.fail_json(msg=missing_required_lib('Pillow', url='https://pypi.org/project/Pillow/'), exception=PIL_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']

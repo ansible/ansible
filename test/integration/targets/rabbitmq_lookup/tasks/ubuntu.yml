@@ -10,7 +10,7 @@
 
 - name: Install pika and requests
   pip:
-    name: pika,requests
+    name: pika<1.0.0,requests
     state: latest
 
 - name: Test that giving an incorrect amqp protocol in URL will error
@@ -29,29 +29,29 @@
     rabbitmq_test_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@xxxxx192.112312368.250.1:5672/%2F', queue='hello', count=3) }}"
   ignore_errors: yes
   register: rabbitmq_ip_error
- 
+
 - assert:
     that:
       - "rabbitmq_ip_error is failed"
       - "'Connection issue' in rabbitmq_ip_error.msg"
- 
+
 - name: Test missing parameters will error
   set_fact:
     rabbitmq_test_protocol: "{{ lookup('rabbitmq') }}"
   ignore_errors: yes
   register: rabbitmq_params_error
- 
+
 - assert:
     that:
       - "rabbitmq_params_error is failed"
       - "'URL is required for rabbitmq lookup.' in rabbitmq_params_error.msg"
- 
+
 - name: Test missing queue will error
   set_fact:
     rabbitmq_queue_protocol: "{{ lookup('rabbitmq', url='amqp://guest:guest@192.168.250.1:5672/%2F') }}"
   ignore_errors: yes
   register: rabbitmq_queue_error
- 
+
 - assert:
     that:
       - "rabbitmq_queue_error is failed"
@@ -75,9 +75,9 @@
     password: guest
     force_basic_auth: yes
     return_content: yes
-    register: post_data
     headers:
       Content-Type: "application/json"
+  register: post_data
 
 
 - name: Post test message to the exchange (json)
@@ -89,9 +89,9 @@
     password: guest
     force_basic_auth: yes
     return_content: yes
-    register: post_data_json
     headers:
       Content-Type: "application/json"
+  register: post_data_json
 
 - name: Test retrieve messages
   set_fact:

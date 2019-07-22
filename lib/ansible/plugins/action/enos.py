@@ -21,7 +21,7 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.enos.enos import enos_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.connection import Connection
@@ -31,11 +31,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'enos_config' else False
         socket_path = None
         if self._play_context.connection == 'local':
             provider = load_provider(enos_provider_spec, self._task.args)

@@ -22,9 +22,9 @@ version_added: 2.8
 options:
   name:
     description:
-      - Specifies the name of the signature sets to apply/remove to the ASM policy.
-      - Apart from built-in signature sets that ship with the device, users can create and use
-        their own signature sets.
+      - Specifies the name of the signature sets to apply on or remove from the ASM policy.
+      - Apart from built-in signature sets that ship with the device, users can use user created
+        signature sets.
       - When C(All Response Signatures), configures all signatures in the attack signature
         pool that can review responses.
       - When C(All Signatures), configures all attack signatures in the attack signature pool.
@@ -60,9 +60,9 @@ options:
         that attempt to run system level commands through a vulnerable application.
       - When C(OWA Signatures), configures signatures that target attacks against
         the Microsoft Outlook Web Access (OWA) application.
-      - When C(Other Application Attacks Signatures), configures signatures targeting miscellaneous attacks
-        including session fixation, local file access, injection attempts, header tampering,
-        and so on that could affect many applications.
+      - When C(Other Application Attacks Signatures), configures signatures targeting miscellaneous attacks,
+        including session fixation, local file access, injection attempts, header tampering
+        and so on, affecting many applications.
       - When C(Path Traversal Signatures), configures signatures targeting attacks that attempt to access files
         and directories that are stored outside the web root folder.
       - When C(Predictable Resource Location Signatures), configures signatures targeting attacks that attempt
@@ -78,21 +78,23 @@ options:
         that are integrated using WebSphere including general database, Microsoft Windows, IIS,
         Microsoft SQL Server, Apache, Oracle, Unix/Linux, IBM DB2, PostgreSQL, and XML.
       - When C(XPath Injection Signatures), configures signatures targeting attacks that attempt to gain access
-        to data structures or bypass permissions or access when a web site uses user-supplied information
+        to data structures or bypass permissions when a web site uses user-supplied information
         to construct XPath queries for XML data.
+    type: str
     required: True
   policy_name:
     description:
       - Specifies the name of an existing ASM policy to add or remove signature sets.
+    type: str
     required: True
   alarm:
     description:
-      - Specifies whether the security policy logs the request data in the Statistics screen,
-        if a request matches a signature that is included in the signature set.
+      - Specifies if the security policy logs the request data in the Statistics screen,
+        when a request matches a signature that is included in the signature set.
     type: bool
   block:
     description:
-      - Effective when the security policy's enforcement mode is Blocking.
+      - Effective when the security policy`s enforcement mode is Blocking.
       - Determines how the system treats requests that match a signature included in the signature set.
       - When C(yes) the system blocks all requests that match a signature,
         and provides the client with a support ID number.
@@ -107,6 +109,7 @@ options:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
+    type: str
     default: present
     choices:
       - present
@@ -114,6 +117,7 @@ options:
   partition:
     description:
       - This parameter is only used when identifying ASM policy.
+    type: str
     default: Common
 notes:
   - This module is primarily used as a component of configuring ASM policy in Ansible Galaxy ASM Policy Role.
@@ -180,12 +184,9 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.icontrol import tmos_version
     from library.module_utils.network.f5.icontrol import module_provisioned
@@ -193,12 +194,9 @@ except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.icontrol import tmos_version
     from ansible.module_utils.network.f5.icontrol import module_provisioned
@@ -351,7 +349,7 @@ class ModuleParameters(Parameters):
             return self._values['name']
 
         if self._signature_set_exists_on_device(self._values['name']):
-                return self._values['name']
+            return self._values['name']
 
         raise F5ModuleError(
             "The specified signature {0} set does not exist.".format(
@@ -415,7 +413,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params, client=self.client)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -711,16 +709,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

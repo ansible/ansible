@@ -45,7 +45,7 @@ def unfrackpath(path, follow=True, basedir=None):
 
     if basedir is None:
         basedir = os.getcwd()
-    elif os.path.isfile(basedir):
+    elif os.path.isfile(to_bytes(basedir, errors='surrogate_or_strict')):
         basedir = os.path.dirname(basedir)
 
     final_path = os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))
@@ -60,11 +60,17 @@ def unfrackpath(path, follow=True, basedir=None):
 
 
 def makedirs_safe(path, mode=None):
-    '''Safe way to create dirs in muliprocess/thread environments.
+    '''
+    A *potentially insecure* way to ensure the existence of a directory chain. The "safe" in this function's name
+    refers only to its ability to ignore `EEXIST` in the case of multiple callers operating on the same part of
+    the directory chain. This function is not safe to use under world-writable locations when the first level of the
+    path to be created contains a predictable component. Always create a randomly-named element first if there is any
+    chance the parent directory might be world-writable (eg, /tmp) to prevent symlink hijacking and potential
+    disclosure or modification of sensitive file contents.
 
-    :arg path: A byte or text string representing a directory to be created
+    :arg path: A byte or text string representing a directory chain to be created
     :kwarg mode: If given, the mode to set the directory to
-    :raises AnsibleError: If the directory cannot be created and does not already exists.
+    :raises AnsibleError: If the directory cannot be created and does not already exist.
     :raises UnicodeDecodeError: if the path is not decodable in the utf-8 encoding.
     '''
 

@@ -16,11 +16,11 @@ from units.compat.mock import patch
 from ansible.module_utils.six.moves import builtins
 
 # Functions being tested
-from ansible.module_utils.common.sys_info import get_all_subclasses
-from ansible.module_utils.common.sys_info import get_distribution
-from ansible.module_utils.common.sys_info import get_distribution_version
-from ansible.module_utils.common.sys_info import get_platform
-from ansible.module_utils.common.sys_info import load_platform_subclass
+from ansible.module_utils.basic import get_platform
+from ansible.module_utils.basic import get_all_subclasses
+from ansible.module_utils.basic import get_distribution
+from ansible.module_utils.basic import get_distribution_version
+from ansible.module_utils.basic import load_platform_subclass
 
 
 realimport = builtins.__import__
@@ -52,21 +52,60 @@ def test_get_distribution_not_linux():
 
 @pytest.mark.usefixtures("platform_linux")
 class TestGetDistribution:
-    """ Tests for get_distribution that have to find somethine"""
+    """Tests for get_distribution that have to find something"""
     def test_distro_known(self):
-        with patch('ansible.module_utils.distro.name', return_value="foo"):
+        with patch('ansible.module_utils.distro.id', return_value="alpine"):
+            assert get_distribution() == "Alpine"
+
+        with patch('ansible.module_utils.distro.id', return_value="arch"):
+            assert get_distribution() == "Arch"
+
+        with patch('ansible.module_utils.distro.id', return_value="centos"):
+            assert get_distribution() == "Centos"
+
+        with patch('ansible.module_utils.distro.id', return_value="clear-linux-os"):
+            assert get_distribution() == "Clear-linux-os"
+
+        with patch('ansible.module_utils.distro.id', return_value="coreos"):
+            assert get_distribution() == "Coreos"
+
+        with patch('ansible.module_utils.distro.id', return_value="debian"):
+            assert get_distribution() == "Debian"
+
+        with patch('ansible.module_utils.distro.id', return_value="linuxmint"):
+            assert get_distribution() == "Linuxmint"
+
+        with patch('ansible.module_utils.distro.id', return_value="opensuse"):
+            assert get_distribution() == "Opensuse"
+
+        with patch('ansible.module_utils.distro.id', return_value="oracle"):
+            assert get_distribution() == "Oracle"
+
+        with patch('ansible.module_utils.distro.id', return_value="raspian"):
+            assert get_distribution() == "Raspian"
+
+        with patch('ansible.module_utils.distro.id', return_value="rhel"):
+            assert get_distribution() == "Redhat"
+
+        with patch('ansible.module_utils.distro.id', return_value="ubuntu"):
+            assert get_distribution() == "Ubuntu"
+
+        with patch('ansible.module_utils.distro.id', return_value="virtuozzo"):
+            assert get_distribution() == "Virtuozzo"
+
+        with patch('ansible.module_utils.distro.id', return_value="foo"):
             assert get_distribution() == "Foo"
 
     def test_distro_unknown(self):
-        with patch('ansible.module_utils.distro.name', return_value=""):
+        with patch('ansible.module_utils.distro.id', return_value=""):
             assert get_distribution() == "OtherLinux"
 
-    def test_distro_amazon_part_of_another_name(self):
-        with patch('ansible.module_utils.distro.name', return_value="AmazonFooBar"):
-            assert get_distribution() == "Amazonfoobar"
+    def test_distro_amazon_linux_short(self):
+        with patch('ansible.module_utils.distro.id', return_value="amzn"):
+            assert get_distribution() == "Amazon"
 
-    def test_distro_amazon_linux(self):
-        with patch('ansible.module_utils.distro.name', return_value="Amazon Linux AMI"):
+    def test_distro_amazon_linux_long(self):
+        with patch('ansible.module_utils.distro.id', return_value="amazon"):
             assert get_distribution() == "Amazon"
 
 
@@ -104,7 +143,7 @@ class TestLoadPlatformSubclass:
 
     def test_not_linux(self):
         # if neither match, the fallback should be the top-level class
-        with patch('ansible.module_utils.common.sys_info.get_platform', return_value="Foo"):
+        with patch('platform.system', return_value="Foo"):
             with patch('ansible.module_utils.common.sys_info.get_distribution', return_value=None):
                 assert isinstance(load_platform_subclass(self.LinuxTest), self.LinuxTest)
 

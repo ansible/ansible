@@ -89,14 +89,18 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             name='ike1',
             version=['v1'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if,
+            required_together=self.spec.required_together
         )
 
         # Override methods to force specific logic in the module to happen

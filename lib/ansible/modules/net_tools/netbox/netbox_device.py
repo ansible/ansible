@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: netbox_device
-short_description: Create or delete devices within Netbox
+short_description: Create, update or delete devices within Netbox
 description:
-  - Creates or removes devices from Netbox
+  - Creates, updates or removes devices from Netbox
 notes:
   - Tags should be defined as a YAML list
   - This should be ran with connection C(local) and hosts C(localhost)
@@ -42,12 +42,13 @@ options:
       name:
         description:
           - The name of the device
+        required: true
       device_type:
         description:
-          - Required if I(state=present)
+          - Required if I(state=present) and the device does not exist yet
       device_role:
         description:
-          - Required if I(state=present)
+          - Required if I(state=present) and the device does not exist yet
       tenant:
         description:
           - The tenant that the device will be assigned to
@@ -62,7 +63,7 @@ options:
           - Asset tag that is associated to the device
       site:
         description:
-          - Required if I(state=present)
+          - Required if I(state=present) and the device does not exist yet
       rack:
         description:
           - The name of the rack to assign the device to
@@ -119,7 +120,7 @@ EXAMPLES = r'''
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test (not really required, but helpful)
+          name: Test Device
           device_type: C9410R
           device_role: Core Switch
           site: Main
@@ -130,7 +131,7 @@ EXAMPLES = r'''
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test
+          name: Test Device
         state: absent
 
     - name: Create device with tags
@@ -138,7 +139,7 @@ EXAMPLES = r'''
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test
+          name: Another Test Device
           device_type: C9410R
           device_role: Core Switch
           site: Main
@@ -146,60 +147,50 @@ EXAMPLES = r'''
             - Schnozzberry
         state: present
 
-    - name: Create device and assign to rack and position
+    - name: Update the rack and position of an existing device
       netbox_device:
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test
-          device_type: C9410R
-          device_role: Core Switch
-          site: Main
+          name: Test Device
           rack: Test Rack
           position: 10
           face: Front
+        state: present
 '''
 
 RETURN = r'''
-meta:
-  description: Message indicating failure or returns results with the object created within Netbox
+device:
+  description: Serialized object as created or already existent within Netbox
+  returned: success (when I(state=present))
+  type: dict
+msg:
+  description: Message indicating failure or info about what has been achieved
   returned: always
-  type: list
+  type: str
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
 import json
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    find_ids,
+    normalize_data,
+    create_netbox_object,
+    delete_netbox_object,
+    update_netbox_object,
+    DEVICE_STATUS,
+    FACE_ID
+)
+
+PYNETBOX_IMP_ERR = None
 try:
     import pynetbox
     HAS_PYNETBOX = True
 except ImportError:
+    PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
-
-
-def netbox_create_device(nb, nb_endpoint, data):
-    norm_data = normalize_data(data)
-    if norm_data.get("status"):
-            norm_data["status"] = DEVICE_STATUS.get(norm_data["status"].lower(), 0)
-    if norm_data.get("face"):
-        norm_data["face"] = FACE_ID.get(norm_data["face"].lower(), 0)
-    data = find_ids(nb, norm_data)
-    try:
-        return nb_endpoint.create([norm_data])
-    except pynetbox.RequestError as e:
-        return json.loads(e.error)
-
-
-def netbox_delete_device(nb_endpoint, data):
-    norm_data = normalize_data(data)
-    endpoint = nb_endpoint.get(name=norm_data["name"])
-    result = []
-    try:
-        if endpoint.delete():
-            result.append({'success': '%s deleted from Netbox' % (norm_data["name"])})
-    except AttributeError:
-        result.append({'failed': '%s not found' % (norm_data["name"])})
-    return result
 
 
 def main():
@@ -214,15 +205,19 @@ def main():
         validate_certs=dict(type="bool", default=True)
     )
 
+    global module
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
 
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
-        module.fail_json(msg='pynetbox is required for this module')
+        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
+
+    # Fail if device name is not given
+    if not module.params["data"].get("name"):
+        module.fail_json(msg="missing device name")
 
     # Assign variables to be used with module
-    changed = False
     app = 'dcim'
     endpoint = 'devices'
     url = module.params["netbox_url"]
@@ -242,15 +237,75 @@ def main():
         module.fail_json(msg="Incorrect application specified: %s" % (app))
 
     nb_endpoint = getattr(nb_app, endpoint)
-    if 'present' in state:
-        response = netbox_create_device(nb, nb_endpoint, data)
-        if response[0].get('created'):
-            changed = True
+    norm_data = normalize_data(data)
+    try:
+        if 'present' in state:
+            result = ensure_device_present(nb, nb_endpoint, norm_data)
+        else:
+            result = ensure_device_absent(nb_endpoint, norm_data)
+        return module.exit_json(**result)
+    except pynetbox.RequestError as e:
+        return module.fail_json(msg=json.loads(e.error))
+    except ValueError as e:
+        return module.fail_json(msg=str(e))
+
+
+def _find_ids(nb, data):
+    if data.get("status"):
+        data["status"] = DEVICE_STATUS.get(data["status"].lower())
+    if data.get("face"):
+        data["face"] = FACE_ID.get(data["face"].lower())
+    return find_ids(nb, data)
+
+
+def ensure_device_present(nb, nb_endpoint, normalized_data):
+    '''
+    :returns dict(device, msg, changed, diff): dictionary resulting of the request,
+        where `device` is the serialized device fetched or newly created in
+        Netbox
+    '''
+    data = _find_ids(nb, normalized_data)
+    nb_device = nb_endpoint.get(name=data["name"])
+    result = {}
+    if not nb_device:
+        device, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
+        msg = "Device %s created" % (data["name"])
+        changed = True
+        result["diff"] = diff
     else:
-        response = netbox_delete_device(nb_endpoint, data)
-        if 'success' in response[0]:
+        device, diff = update_netbox_object(nb_device, data, module.check_mode)
+        if device is False:
+            module.fail_json(
+                msg="Request failed, couldn't update device: %s" % data["name"]
+            )
+        if diff:
+            msg = "Device %s updated" % (data["name"])
             changed = True
-    module.exit_json(changed=changed, meta=response)
+            result["diff"] = diff
+        else:
+            msg = "Device %s already exists" % (data["name"])
+            changed = False
+    result.update({"device": device, "changed": changed, "msg": msg})
+    return result
+
+
+def ensure_device_absent(nb_endpoint, data):
+    '''
+    :returns dict(msg, changed, diff)
+    '''
+    nb_device = nb_endpoint.get(name=data["name"])
+    result = {}
+    if nb_device:
+        dummy, diff = delete_netbox_object(nb_device, module.check_mode)
+        msg = 'Device %s deleted' % (data["name"])
+        changed = True
+        result["diff"] = diff
+    else:
+        msg = 'Device %s already absent' % (data["name"])
+        changed = False
+
+    result.update({"changed": changed, "msg": msg})
+    return result
 
 
 if __name__ == "__main__":

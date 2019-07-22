@@ -25,6 +25,7 @@ options:
   device_group:
     description:
       - The device group that you want to perform config-sync actions on.
+    type: str
     required: True
   sync_device_to_group:
     description:
@@ -44,8 +45,8 @@ options:
     description:
       - Indicates that the sync operation overwrites the configuration on
         the target.
-    default: no
     type: bool
+    default: no
 notes:
   - Requires the objectpath Python package on the host. This is as easy as
     C(pip install objectpath).
@@ -101,18 +102,12 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
 
 try:
     from objectpath import Tree
@@ -196,7 +191,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
 
@@ -408,9 +403,6 @@ class ArgumentSpec(object):
         self.mutually_exclusive = [
             ['sync_device_to_group', 'sync_most_recent_to_device']
         ]
-        self.required_one_of = [
-            ['sync_device_to_group', 'sync_most_recent_to_device']
-        ]
 
 
 def main():
@@ -423,16 +415,12 @@ def main():
         required_one_of=spec.required_one_of
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

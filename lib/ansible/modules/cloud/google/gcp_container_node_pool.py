@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -136,15 +135,64 @@ options:
       preemptible:
         description:
         - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-          for more inforamtion about preemptible VM instances.'
+          for more information about preemptible VM instances.'
         required: false
         type: bool
+      accelerators:
+        description:
+        - A list of hardware accelerators to be attached to each node.
+        required: false
+        version_added: 2.9
+        suboptions:
+          accelerator_count:
+            description:
+            - The number of the accelerator cards exposed to an instance.
+            required: false
+          accelerator_type:
+            description:
+            - The accelerator type resource name.
+            required: false
+      disk_type:
+        description:
+        - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
+          If unspecified, the default disk type is 'pd-standard' .
+        required: false
+        version_added: 2.9
+      min_cpu_platform:
+        description:
+        - Minimum CPU platform to be used by this instance. The instance may be scheduled
+          on the specified or newer CPU platform .
+        required: false
+        version_added: 2.9
+      taints:
+        description:
+        - List of kubernetes taints to be applied to each node.
+        required: false
+        version_added: 2.9
+        suboptions:
+          key:
+            description:
+            - Key for taint.
+            required: false
+          value:
+            description:
+            - Value for taint.
+            required: false
+          effect:
+            description:
+            - Effect for taint.
+            required: false
   initial_node_count:
     description:
     - The initial node count for the pool. You must ensure that your Compute Engine
       resource quota is sufficient for this number of instances. You must also have
       available firewall and routes quota.
     required: true
+  version:
+    description:
+    - The version of the Kubernetes of this node.
+    required: false
+    version_added: 2.8
   autoscaling:
     description:
     - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a
@@ -189,55 +237,72 @@ options:
         description:
         - Specifies the Auto Upgrade knobs for the node pool.
         required: false
-        suboptions:
-          auto_upgrade_start_time:
-            description:
-            - This field is set when upgrades are about to commence with the approximate
-              start time for the upgrades, in RFC3339 text format.
-            required: false
-          description:
-            description:
-            - This field is set when upgrades are about to commence with the description
-              of the upgrade.
-            required: false
+        suboptions: {}
+  max_pods_constraint:
+    description:
+    - The constraint on the maximum number of pods that can be run simultaneously
+      on a node in the node pool.
+    required: false
+    version_added: 2.9
+    suboptions:
+      max_pods_per_node:
+        description:
+        - Constraint enforced on the max num of pods per node.
+        required: false
+  conditions:
+    description:
+    - Which conditions caused the current node pool state.
+    required: false
+    version_added: 2.9
+    suboptions:
+      code:
+        description:
+        - Machine-friendly representation of the condition.
+        - 'Some valid choices include: "UNKNOWN", "GCE_STOCKOUT", "GKE_SERVICE_ACCOUNT_DELETED",
+          "GCE_QUOTA_EXCEEDED", "SET_BY_OPERATOR"'
+        required: false
   cluster:
     description:
     - The cluster this node pool belongs to.
     - 'This field represents a link to a Cluster resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
-      task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
-      you can set this cluster to a dictionary with the name key where the value is
-      the name of your Cluster'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_container_cluster task and then set this cluster field to "{{ name-of-resource
+      }}"'
     required: true
-  zone:
+  location:
     description:
-    - The zone where the node pool is deployed.
+    - The location where the node pool is deployed.
     required: true
+    aliases:
+    - region
+    - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name: create a cluster
   gcp_container_cluster:
-      name: "cluster-nodepool"
-      initial_node_count: 4
-      zone: us-central1-a
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: cluster-nodepool
+    initial_node_count: 4
+    location: us-central1-a
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: cluster
 
 - name: create a node pool
   gcp_container_node_pool:
-      name: my-pool
-      initial_node_count: 4
-      cluster: "{{ cluster }}"
-      zone: us-central1-a
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: my-pool
+    initial_node_count: 4
+    cluster: "{{ cluster }}"
+    location: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -336,9 +401,58 @@ config:
     preemptible:
       description:
       - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-        for more inforamtion about preemptible VM instances.'
+        for more information about preemptible VM instances.'
       returned: success
       type: bool
+    accelerators:
+      description:
+      - A list of hardware accelerators to be attached to each node.
+      returned: success
+      type: complex
+      contains:
+        acceleratorCount:
+          description:
+          - The number of the accelerator cards exposed to an instance.
+          returned: success
+          type: int
+        acceleratorType:
+          description:
+          - The accelerator type resource name.
+          returned: success
+          type: str
+    diskType:
+      description:
+      - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd') If
+        unspecified, the default disk type is 'pd-standard' .
+      returned: success
+      type: str
+    minCpuPlatform:
+      description:
+      - Minimum CPU platform to be used by this instance. The instance may be scheduled
+        on the specified or newer CPU platform .
+      returned: success
+      type: str
+    taints:
+      description:
+      - List of kubernetes taints to be applied to each node.
+      returned: success
+      type: complex
+      contains:
+        key:
+          description:
+          - Key for taint.
+          returned: success
+          type: str
+        value:
+          description:
+          - Value for taint.
+          returned: success
+          type: str
+        effect:
+          description:
+          - Effect for taint.
+          returned: success
+          type: str
 initialNodeCount:
   description:
   - The initial node count for the pool. You must ensure that your Compute Engine
@@ -346,6 +460,16 @@ initialNodeCount:
     available firewall and routes quota.
   returned: success
   type: int
+status:
+  description:
+  - Status of nodes in this pool instance.
+  returned: success
+  type: str
+statusMessage:
+  description:
+  - Additional information about the current status of this node pool instance.
+  returned: success
+  type: str
 version:
   description:
   - The version of the Kubernetes of this node.
@@ -412,14 +536,42 @@ management:
             of the upgrade.
           returned: success
           type: str
+maxPodsConstraint:
+  description:
+  - The constraint on the maximum number of pods that can be run simultaneously on
+    a node in the node pool.
+  returned: success
+  type: complex
+  contains:
+    maxPodsPerNode:
+      description:
+      - Constraint enforced on the max num of pods per node.
+      returned: success
+      type: int
+conditions:
+  description:
+  - Which conditions caused the current node pool state.
+  returned: success
+  type: complex
+  contains:
+    code:
+      description:
+      - Machine-friendly representation of the condition.
+      returned: success
+      type: str
+podIpv4CidrSize:
+  description:
+  - The pod CIDR block size per node in this node pool.
+  returned: success
+  type: int
 cluster:
   description:
   - The cluster this node pool belongs to.
   returned: success
   type: dict
-zone:
+location:
   description:
-  - The zone where the node pool is deployed.
+  - The location where the node pool is deployed.
   returned: success
   type: str
 '''
@@ -444,34 +596,35 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
-            config=dict(type='dict', options=dict(
-                machine_type=dict(type='str'),
-                disk_size_gb=dict(type='int'),
-                oauth_scopes=dict(type='list', elements='str'),
-                service_account=dict(type='str'),
-                metadata=dict(type='dict'),
-                image_type=dict(type='str'),
-                labels=dict(type='dict'),
-                local_ssd_count=dict(type='int'),
-                tags=dict(type='list', elements='str'),
-                preemptible=dict(type='bool')
-            )),
+            config=dict(
+                type='dict',
+                options=dict(
+                    machine_type=dict(type='str'),
+                    disk_size_gb=dict(type='int'),
+                    oauth_scopes=dict(type='list', elements='str'),
+                    service_account=dict(type='str'),
+                    metadata=dict(type='dict'),
+                    image_type=dict(type='str'),
+                    labels=dict(type='dict'),
+                    local_ssd_count=dict(type='int'),
+                    tags=dict(type='list', elements='str'),
+                    preemptible=dict(type='bool'),
+                    accelerators=dict(type='list', elements='dict', options=dict(accelerator_count=dict(type='int'), accelerator_type=dict(type='str'))),
+                    disk_type=dict(type='str'),
+                    min_cpu_platform=dict(type='str'),
+                    taints=dict(type='list', elements='dict', options=dict(key=dict(type='str'), value=dict(type='str'), effect=dict(type='str'))),
+                ),
+            ),
             initial_node_count=dict(required=True, type='int'),
-            autoscaling=dict(type='dict', options=dict(
-                enabled=dict(type='bool'),
-                min_node_count=dict(type='int'),
-                max_node_count=dict(type='int')
-            )),
-            management=dict(type='dict', options=dict(
-                auto_upgrade=dict(type='bool'),
-                auto_repair=dict(type='bool'),
-                upgrade_options=dict(type='dict', options=dict(
-                    auto_upgrade_start_time=dict(type='str'),
-                    description=dict(type='str')
-                ))
-            )),
+            version=dict(type='str'),
+            autoscaling=dict(type='dict', options=dict(enabled=dict(type='bool'), min_node_count=dict(type='int'), max_node_count=dict(type='int'))),
+            management=dict(
+                type='dict', options=dict(auto_upgrade=dict(type='bool'), auto_repair=dict(type='bool'), upgrade_options=dict(type='dict', options=dict()))
+            ),
+            max_pods_constraint=dict(type='dict', options=dict(max_pods_per_node=dict(type='int'))),
+            conditions=dict(type='list', elements='dict', options=dict(code=dict(type='str'))),
             cluster=dict(required=True, type='dict'),
-            zone=dict(required=True, type='str')
+            location=dict(required=True, type='str', aliases=['region', 'zone']),
         )
     )
 
@@ -525,8 +678,11 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'config': NodePoolConfig(module.params.get('config', {}), module).to_request(),
         u'initialNodeCount': module.params.get('initial_node_count'),
+        u'version': module.params.get('version'),
         u'autoscaling': NodePoolAutoscaling(module.params.get('autoscaling', {}), module).to_request(),
-        u'management': NodePoolManagement(module.params.get('management', {}), module).to_request()
+        u'management': NodePoolManagement(module.params.get('management', {}), module).to_request(),
+        u'maxPodsConstraint': NodePoolMaxpodsconstraint(module.params.get('max_pods_constraint', {}), module).to_request(),
+        u'conditions': NodePoolConditionsArray(module.params.get('conditions', []), module).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -545,20 +701,16 @@ def fetch_resource(module, link, allow_not_found=True):
 def self_link(module):
     res = {
         'project': module.params['project'],
-        'zone': module.params['zone'],
+        'location': module.params['location'],
         'cluster': replace_resource_dict(module.params['cluster'], 'name'),
-        'name': module.params['name']
+        'name': module.params['name'],
     }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools/{name}".format(**res)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters/{cluster}/nodePools/{name}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'zone': module.params['zone'],
-        'cluster': replace_resource_dict(module.params['cluster'], 'name')
-    }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
+    res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters/{cluster}/nodePools".format(**res)
 
 
 def return_if_object(module, response, allow_not_found=False):
@@ -573,8 +725,8 @@ def return_if_object(module, response, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -607,16 +759,21 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'config': NodePoolConfig(response.get(u'config', {}), module).from_response(),
         u'initialNodeCount': module.params.get('initial_node_count'),
-        u'version': response.get(u'version'),
+        u'status': response.get(u'status'),
+        u'statusMessage': response.get(u'statusMessage'),
+        u'version': module.params.get('version'),
         u'autoscaling': NodePoolAutoscaling(response.get(u'autoscaling', {}), module).from_response(),
-        u'management': NodePoolManagement(response.get(u'management', {}), module).from_response()
+        u'management': NodePoolManagement(response.get(u'management', {}), module).from_response(),
+        u'maxPodsConstraint': NodePoolMaxpodsconstraint(response.get(u'maxPodsConstraint', {}), module).from_response(),
+        u'conditions': NodePoolConditionsArray(response.get(u'conditions', []), module).from_response(),
+        u'podIpv4CidrSize': response.get(u'podIpv4CidrSize'),
     }
 
 
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/operations/{op_id}"
+    url = "https://container.googleapis.com/v1/projects/{project}/locations/{location}/operations/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)
@@ -635,9 +792,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri)
+        op_result = fetch_resource(module, op_uri, False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -659,9 +816,7 @@ def raise_if_errors(response, err_path, module):
 #
 # Format the request to match the expected input by the API
 def encode_request(resource_request, module):
-    return {
-        'nodePool': resource_request
-    }
+    return {'nodePool': resource_request}
 
 
 class NodePoolConfig(object):
@@ -673,32 +828,98 @@ class NodePoolConfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'machineType': self.request.get('machine_type'),
-            u'diskSizeGb': self.request.get('disk_size_gb'),
-            u'oauthScopes': self.request.get('oauth_scopes'),
-            u'serviceAccount': self.request.get('service_account'),
-            u'metadata': self.request.get('metadata'),
-            u'imageType': self.request.get('image_type'),
-            u'labels': self.request.get('labels'),
-            u'localSsdCount': self.request.get('local_ssd_count'),
-            u'tags': self.request.get('tags'),
-            u'preemptible': self.request.get('preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'machineType': self.request.get('machine_type'),
+                u'diskSizeGb': self.request.get('disk_size_gb'),
+                u'oauthScopes': self.request.get('oauth_scopes'),
+                u'serviceAccount': self.request.get('service_account'),
+                u'metadata': self.request.get('metadata'),
+                u'imageType': self.request.get('image_type'),
+                u'labels': self.request.get('labels'),
+                u'localSsdCount': self.request.get('local_ssd_count'),
+                u'tags': self.request.get('tags'),
+                u'preemptible': self.request.get('preemptible'),
+                u'accelerators': NodePoolAcceleratorsArray(self.request.get('accelerators', []), self.module).to_request(),
+                u'diskType': self.request.get('disk_type'),
+                u'minCpuPlatform': self.request.get('min_cpu_platform'),
+                u'taints': NodePoolTaintsArray(self.request.get('taints', []), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'machineType': self.request.get(u'machineType'),
-            u'diskSizeGb': self.request.get(u'diskSizeGb'),
-            u'oauthScopes': self.request.get(u'oauthScopes'),
-            u'serviceAccount': self.request.get(u'serviceAccount'),
-            u'metadata': self.request.get(u'metadata'),
-            u'imageType': self.request.get(u'imageType'),
-            u'labels': self.request.get(u'labels'),
-            u'localSsdCount': self.request.get(u'localSsdCount'),
-            u'tags': self.request.get(u'tags'),
-            u'preemptible': self.request.get(u'preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'machineType': self.request.get(u'machineType'),
+                u'diskSizeGb': self.request.get(u'diskSizeGb'),
+                u'oauthScopes': self.request.get(u'oauthScopes'),
+                u'serviceAccount': self.request.get(u'serviceAccount'),
+                u'metadata': self.request.get(u'metadata'),
+                u'imageType': self.request.get(u'imageType'),
+                u'labels': self.request.get(u'labels'),
+                u'localSsdCount': self.request.get(u'localSsdCount'),
+                u'tags': self.request.get(u'tags'),
+                u'preemptible': self.request.get(u'preemptible'),
+                u'accelerators': NodePoolAcceleratorsArray(self.request.get(u'accelerators', []), self.module).from_response(),
+                u'diskType': self.request.get(u'diskType'),
+                u'minCpuPlatform': self.request.get(u'minCpuPlatform'),
+                u'taints': NodePoolTaintsArray(self.request.get(u'taints', []), self.module).from_response(),
+            }
+        )
+
+
+class NodePoolAcceleratorsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'acceleratorCount': item.get('accelerator_count'), u'acceleratorType': item.get('accelerator_type')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'acceleratorCount': item.get(u'acceleratorCount'), u'acceleratorType': item.get(u'acceleratorType')})
+
+
+class NodePoolTaintsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'key': item.get('key'), u'value': item.get('value'), u'effect': item.get('effect')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'key': item.get(u'key'), u'value': item.get(u'value'), u'effect': item.get(u'effect')})
 
 
 class NodePoolAutoscaling(object):
@@ -710,18 +931,14 @@ class NodePoolAutoscaling(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get('enabled'),
-            u'minNodeCount': self.request.get('min_node_count'),
-            u'maxNodeCount': self.request.get('max_node_count')
-        })
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'minNodeCount': self.request.get('min_node_count'), u'maxNodeCount': self.request.get('max_node_count')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get(u'enabled'),
-            u'minNodeCount': self.request.get(u'minNodeCount'),
-            u'maxNodeCount': self.request.get(u'maxNodeCount')
-        })
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'minNodeCount': self.request.get(u'minNodeCount'), u'maxNodeCount': self.request.get(u'maxNodeCount')}
+        )
 
 
 class NodePoolManagement(object):
@@ -733,18 +950,22 @@ class NodePoolManagement(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'autoUpgrade': self.request.get('auto_upgrade'),
-            u'autoRepair': self.request.get('auto_repair'),
-            u'upgradeOptions': NodePoolUpgradeoptions(self.request.get('upgrade_options', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'autoUpgrade': self.request.get('auto_upgrade'),
+                u'autoRepair': self.request.get('auto_repair'),
+                u'upgradeOptions': NodePoolUpgradeoptions(self.request.get('upgrade_options', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'autoUpgrade': self.request.get(u'autoUpgrade'),
-            u'autoRepair': self.request.get(u'autoRepair'),
-            u'upgradeOptions': NodePoolUpgradeoptions(self.request.get(u'upgradeOptions', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'autoUpgrade': self.request.get(u'autoUpgrade'),
+                u'autoRepair': self.request.get(u'autoRepair'),
+                u'upgradeOptions': NodePoolUpgradeoptions(self.request.get(u'upgradeOptions', {}), self.module).from_response(),
+            }
+        )
 
 
 class NodePoolUpgradeoptions(object):
@@ -756,16 +977,52 @@ class NodePoolUpgradeoptions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'autoUpgradeStartTime': self.request.get('auto_upgrade_start_time'),
-            u'description': self.request.get('description')
-        })
+        return remove_nones_from_dict({})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'autoUpgradeStartTime': self.request.get(u'autoUpgradeStartTime'),
-            u'description': self.request.get(u'description')
-        })
+        return remove_nones_from_dict({})
+
+
+class NodePoolMaxpodsconstraint(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'maxPodsPerNode': self.request.get('max_pods_per_node')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'maxPodsPerNode': self.request.get(u'maxPodsPerNode')})
+
+
+class NodePoolConditionsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'code': item.get('code')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'code': item.get(u'code')})
 
 
 if __name__ == '__main__':

@@ -61,7 +61,7 @@ options:
         retained message immediately.
     type: bool
     default: 'no'
-  ca_certs:
+  ca_cert:
     description:
       - The path to the Certificate Authority certificate files that are to be
         treated as trusted by this client. If this is the only option given
@@ -72,18 +72,21 @@ options:
         network encryption but may not be sufficient depending on how the broker
         is configured.
     version_added: 2.3
-  certfile:
+    aliases: [ ca_certs ]
+  client_cert:
     description:
       - The path pointing to the PEM encoded client certificate. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
     version_added: 2.3
-  keyfile:
+    aliases: [ certfile ]
+  client_key:
     description:
       - The path pointing to the PEM encoded client private key. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
     version_added: 2.3
+    aliases: [ keyfile ]
 
 
 # informational: requirements for nodes
@@ -112,13 +115,15 @@ import os
 import traceback
 
 HAS_PAHOMQTT = True
+PAHOMQTT_IMP_ERR = None
 try:
     import socket
     import paho.mqtt.publish as mqtt
 except ImportError:
+    PAHOMQTT_IMP_ERR = traceback.format_exc()
     HAS_PAHOMQTT = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -139,15 +144,15 @@ def main():
             retain=dict(default=False, type='bool'),
             username=dict(default=None),
             password=dict(default=None, no_log=True),
-            ca_certs=dict(default=None, type='path'),
-            certfile=dict(default=None, type='path'),
-            keyfile=dict(default=None, type='path'),
+            ca_cert=dict(default=None, type='path', aliases=['ca_certs']),
+            client_cert=dict(default=None, type='path', aliases=['certfile']),
+            client_key=dict(default=None, type='path', aliases=['keyfile']),
         ),
         supports_check_mode=True
     )
 
     if not HAS_PAHOMQTT:
-        module.fail_json(msg="Paho MQTT is not installed")
+        module.fail_json(msg=missing_required_lib('paho-mqtt'), exception=PAHOMQTT_IMP_ERR)
 
     server = module.params.get("server", 'localhost')
     port = module.params.get("port", 1883)
@@ -158,9 +163,9 @@ def main():
     retain = module.params.get("retain")
     username = module.params.get("username", None)
     password = module.params.get("password", None)
-    ca_certs = module.params.get("ca_certs", None)
-    certfile = module.params.get("certfile", None)
-    keyfile = module.params.get("keyfile", None)
+    ca_certs = module.params.get("ca_cert", None)
+    certfile = module.params.get("client_cert", None)
+    keyfile = module.params.get("client_key", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())

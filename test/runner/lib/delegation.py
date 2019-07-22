@@ -16,6 +16,10 @@ from lib.executor import (
     create_shell_command,
     run_httptester,
     start_httptester,
+    get_python_interpreter,
+    get_python_version,
+    get_docker_completion,
+    get_remote_completion,
 )
 
 from lib.config import (
@@ -63,6 +67,19 @@ from lib.cloud import (
 from lib.target import (
     IntegrationTarget,
 )
+
+
+def check_delegation_args(args):
+    """
+    :type args: CommonConfig
+    """
+    if not isinstance(args, EnvironmentConfig):
+        return
+
+    if args.docker:
+        get_python_version(args, get_docker_completion(), args.docker_raw)
+    elif args.remote:
+        get_python_version(args, get_remote_completion(), args.remote)
 
 
 def delegate(args, exclude, require, integration_targets):
@@ -143,10 +160,18 @@ def delegate_tox(args, exclude, require, integration_targets):
 
         tox.append('--')
 
-        cmd = generate_command(args, os.path.abspath('bin/ansible-test'), options, exclude, require)
+        cmd = generate_command(args, None, os.path.abspath('bin/ansible-test'), options, exclude, require)
 
         if not args.python:
             cmd += ['--python', version]
+
+        # newer versions of tox do not support older python versions and will silently fall back to a different version
+        # passing this option will allow the delegated ansible-test to verify it is running under the expected python version
+        # tox 3.0.0 dropped official python 2.6 support: https://tox.readthedocs.io/en/latest/changelog.html#v3-0-0-2018-04-02
+        # tox 3.1.3 is the first version to support python 3.8 and later: https://tox.readthedocs.io/en/latest/changelog.html#v3-1-3-2018-08-03
+        # tox 3.1.3 appears to still work with python 2.6, making it a good version to use when supporting all python versions we use
+        # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
+        cmd += ['--check-python', version]
 
         if isinstance(args, TestConfig):
             if args.coverage and not args.coverage_label:
@@ -195,7 +220,8 @@ def delegate_docker(args, exclude, require, integration_targets):
         '--docker-util': 1,
     }
 
-    cmd = generate_command(args, '/root/ansible/bin/ansible-test', options, exclude, require)
+    python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
+    cmd = generate_command(args, python_interpreter, '/root/ansible/bin/ansible-test', options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -369,7 +395,8 @@ def delegate_remote(args, exclude, require, integration_targets):
                 '--remote': 1,
             }
 
-            cmd = generate_command(args, 'ansible/bin/ansible-test', options, exclude, require)
+            python_interpreter = get_python_interpreter(args, get_remote_completion(), args.remote)
+            cmd = generate_command(args, python_interpreter, 'ansible/bin/ansible-test', options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
@@ -388,7 +415,8 @@ def delegate_remote(args, exclude, require, integration_targets):
 
             manage = ManagePosixCI(core_ci)
 
-        manage.setup()
+        python_version = get_python_version(args, get_remote_completion(), args.remote)
+        manage.setup(python_version)
 
         if isinstance(args, IntegrationConfig):
             cloud_platforms = get_cloud_providers(args)
@@ -420,9 +448,10 @@ def delegate_remote(args, exclude, require, integration_targets):
             docker_rm(args, httptester_id)
 
 
-def generate_command(args, path, options, exclude, require):
+def generate_command(args, python_interpreter, path, options, exclude, require):
     """
     :type args: EnvironmentConfig
+    :type python_interpreter: str | None
     :type path: str
     :type options: dict[str, int]
     :type exclude: list[str]
@@ -432,6 +461,16 @@ def generate_command(args, path, options, exclude, require):
     options['--color'] = 1
 
     cmd = [path]
+
+    if python_interpreter:
+        cmd = [python_interpreter] + cmd
+
+    # Force the encoding used during delegation.
+    # This is only needed because ansible-test relies on Python's file system encoding.
+    # Environments that do not have the locale configured are thus unable to work with unicode file paths.
+    # Examples include FreeBSD and some Linux containers.
+    cmd = ['/usr/bin/env', 'LC_ALL=en_US.UTF-8'] + cmd
+
     cmd += list(filter_options(args, sys.argv[1:], options, exclude, require))
     cmd += ['--color', 'yes' if args.color else 'no']
 

@@ -89,9 +89,11 @@ class TestUntypedManager(unittest.TestCase):
         set_module_args(dict(
             kern_from='emerg',
             kern_to='debug',
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

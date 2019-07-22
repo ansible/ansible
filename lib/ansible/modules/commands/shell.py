@@ -34,53 +34,60 @@ options:
       - There is no actual parameter named 'free form'.
       - See the examples on how to use this module.
     required: yes
+    type: str
   creates:
     description:
       - A filename, when it already exists, this step will B(not) be run.
+    type: path
   removes:
     description:
       - A filename, when it does not exist, this step will B(not) be run.
+    type: path
     version_added: "0.8"
   chdir:
     description:
       - Change into this directory before running the command.
+    type: path
     version_added: "0.6"
   executable:
     description:
       - Change the shell used to execute the command.
       - This expects an absolute path to the executable.
+    type: path
     version_added: "0.9"
   warn:
     description:
-      - Enable or disable task warnings.
+      - Whether to enable task warnings.
     type: bool
     default: yes
     version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
+    type: str
     version_added: "2.4"
   stdin_add_newline:
+    description:
+      - Whether to append a newline to stdin data.
     type: bool
     default: yes
-    description:
-      - If set to C(yes), append a newline to stdin data.
     version_added: "2.8"
 notes:
-  -  If you want to execute a command securely and predictably, it may be
-     better to use the M(command) module instead. Best practices when writing
-     playbooks will follow the trend of using M(command) unless the C(shell)
-     module is explicitly required. When running ad-hoc commands, use your best
-     judgement.
-  -  Check mode is supported when passing C(creates) or C(removes). If running
-     in check mode and either of these are specified, the module will check for
-     the existence of the file and report the correct changed status. If these
-     are not supplied, the task will be skipped.
-  -  To sanitize any variables passed to the shell module, you should use
-     "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
+  - If you want to execute a command securely and predictably, it may be
+    better to use the M(command) module instead. Best practices when writing
+    playbooks will follow the trend of using M(command) unless the C(shell)
+    module is explicitly required. When running ad-hoc commands, use your best
+    judgement.
+  - Check mode is supported when passing C(creates) or C(removes). If running
+    in check mode and either of these are specified, the module will check for
+    the existence of the file and report the correct changed status. If these
+    are not supplied, the task will be skipped.
+  - To sanitize any variables passed to the shell module, you should use
+    C({{ var | quote }}) instead of just C({{ var }}) to make sure they
+    do not include evil things like semicolons.
   - An alternative to using inline shell scripts with this module is to use
     the M(script) module possibly together with the M(template) module.
-  - For Windows targets, use the M(win_shell) module instead.
+  - For rebooting systems, use the M(reboot) or M(win_reboot) module.
 seealso:
 - module: command
 - module: raw

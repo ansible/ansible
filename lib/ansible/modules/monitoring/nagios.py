@@ -260,7 +260,7 @@ def main():
             comment=dict(default='Scheduling downtime'),
             host=dict(required=False, default=None),
             servicegroup=dict(required=False, default=None),
-            minutes=dict(default=30),
+            minutes=dict(default=30, type='int'),
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
             command=dict(required=False, default=None),

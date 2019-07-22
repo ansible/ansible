@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_template
-short_description: create/delete/dump zabbix template
+short_description: Create/delete/dump Zabbix template
 description:
-    - create/delete/dump zabbix template
+    - Create/delete/dump Zabbix template.
 version_added: "2.5"
 author:
     - "sookido (@sookido)"
@@ -29,15 +29,17 @@ requirements:
 options:
     template_name:
         description:
-            - Name of zabbix template
-        required: true
+            - Name of Zabbix template.
+            - Required when I(template_json) is not used.
+        required: false
     template_json:
         description:
-            - JSON dump of template to import
+            - JSON dump of template to import.
         required: false
     template_groups:
         description:
             - List of template groups to create or delete.
+            - Required when I(template_name) is used and C(state=present).
         required: false
     link_templates:
         description:
@@ -46,15 +48,15 @@ options:
     clear_templates:
         description:
             - List of templates cleared from the template.
-            - see templates_clear in https://www.zabbix.com/documentation/3.0/manual/api/reference/template/update
+            - See templates_clear in https://www.zabbix.com/documentation/3.0/manual/api/reference/template/update
         required: false
     macros:
         description:
-            - List of templates macro
+            - List of template macros.
         required: false
     state:
         description:
-            - state present create/update template, absent delete template
+            - 'State: present - create/update template; absent - delete template'
         required: false
         choices: [present, absent, dump]
         default: "present"
@@ -65,7 +67,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 ---
-# Creates a new zabbix template from linked template
+# Creates a new Zabbix template from linked template
 - name: Create Zabbix template using linked template
   local_action:
     module: zabbix_template
@@ -92,8 +94,8 @@ EXAMPLES = '''
         value: 'Example'
     state: present
 
-# Create a new template from a json config definition
-- name: Import Zabbix json template configuration
+# Create a new template from a JSON config definition
+- name: Import Zabbix JSON template configuration
   local_action:
     module: zabbix_template
     server_url: http://127.0.0.1
@@ -106,7 +108,7 @@ EXAMPLES = '''
     state: present
 
 # Import a template from Ansible variable dict
-- name: Import Zabbix Template
+- name: Import Zabbix template
   zabbix_template:
     login_user: username
     login_password: password
@@ -149,7 +151,7 @@ EXAMPLES = '''
     template_name: Template
     state: absent
 
-# Export template json definition
+# Export template JSON definition
 - name: Dump Zabbix template
   local_action:
     module: zabbix_template
@@ -192,7 +194,7 @@ template_json:
 '''
 
 from distutils.version import LooseVersion
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 import json
 import traceback
@@ -203,6 +205,7 @@ try:
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 
@@ -253,12 +256,14 @@ class Template(object):
                      child_template_ids, macros):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
-        self._zapi.template.create({'host': template_name,
-                                    'groups': group_ids,
-                                    'templates': child_template_ids,
-                                    'macros': macros})
+
         if template_json:
             self.import_template(template_json, template_name)
+        else:
+            self._zapi.template.create({'host': template_name,
+                                        'groups': group_ids,
+                                        'templates': child_template_ids,
+                                        'macros': macros})
 
     def update_template(self, templateids, template_json,
                         group_ids, child_template_ids,
@@ -448,7 +453,7 @@ def main():
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            template_name=dict(type='str', required=True),
+            template_name=dict(type='str', required=False),
             template_json=dict(type='json', required=False),
             template_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
@@ -458,13 +463,12 @@ def main():
                                                    'dump']),
             timeout=dict(type='int', default=10)
         ),
+        required_one_of=[['template_name', 'template_json']],
         supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module " +
-                             "(check docs or install with: " +
-                             "pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -492,6 +496,13 @@ def main():
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     template = Template(module, zbx)
+    if template_json and not template_name:
+        # Ensure template_name is not empty for safety check in import_template
+        template_loaded = template.load_json_template(template_json)
+        template_name = template_loaded['zabbix_export']['templates'][0]['template']
+    elif template_name and not template_groups and state == 'present':
+        module.fail_json(msg="Option template_groups is required when template_json is not used")
+
     template_ids = template.get_template_ids([template_name])
     existing_template_json = None
     if template_ids:

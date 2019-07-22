@@ -43,11 +43,11 @@
       # We got the expected error message
       - "'Failed to get cert from port with error: timed out' == result.msg or 'Connection refused' in result.msg"
 
-- name: Test failure if ca_certs is not a valid file
+- name: Test failure if ca_cert is not a valid file
   get_certificate:
     host: "{{ httpbin_host }}"
     port: 443
-    ca_certs: dn.e
+    ca_cert: dn.e
   register: result
   ignore_errors: true
 
@@ -56,7 +56,7 @@
       - result is not changed
       - result is failed
       # We got the correct response from the module
-      - "'ca_certs file does not exist' == result.msg"
+      - "'ca_cert file does not exist' == result.msg"
 
 - name: Download CA Cert as pem from server
   get_url:
@@ -65,7 +65,7 @@
 
 - name: Get servers certificate comparing it to its own ca_cert file
   get_certificate:
-    ca_certs: '{{ output_dir }}/temp.pem'
+    ca_cert: '{{ output_dir }}/temp.pem'
     host: "{{ httpbin_host }}"
     port: 443
   register: result
@@ -87,7 +87,7 @@
 
 - name: Get servers certificate comparing it to an invalid ca_cert file
   get_certificate:
-    ca_certs: '{{ my_temp_dir.path }}/bogus_ca.pem'
+    ca_cert: '{{ my_temp_dir.path }}/bogus_ca.pem'
     host: "{{ httpbin_host }}"
     port: 443
   register: result

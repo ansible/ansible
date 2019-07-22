@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (C) 2017 Red Hat Inc.
-# Copyright (C) 2017 Lenovo.
+# (C) 2019 Red Hat Inc.
+# Copyright (C) 2019 Lenovo.
 #
 # GNU General Public License v3.0+
 #
@@ -55,50 +55,6 @@ options:
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-  provider:
-    version_added: "2.6"
-    description:
-      - A dict object containing connection details.
-    suboptions:
-      host:
-        description:
-          - Specifies the DNS host name or address for connecting to the remote
-            device over the specified transport.  The value of host is used as
-            the destination address for the transport.
-        required: true
-      port:
-        description:
-          - Specifies the port to use when building the connection to the
-            remote device.
-        default: 22
-      username:
-        description:
-          - Configures the username to use to authenticate the connection to
-            the remote device.  This value is used to authenticate
-            the SSH session. If the value is not specified in the task, the
-            value of environment variable C(ANSIBLE_NET_USERNAME) will be used
-            instead.
-      password:
-        description:
-          - Specifies the password to use to authenticate the connection to
-            the remote device.   This value is used to authenticate
-            the SSH session. If the value is not specified in the task, the
-            value of environment variable C(ANSIBLE_NET_PASSWORD) will be used
-            instead.
-      timeout:
-        description:
-          - Specifies the timeout in seconds for communicating with the network
-            device for either connecting or sending commands.  If the timeout
-            is exceeded before the operation is completed, the module will
-            error.
-        default: 10
-      ssh_keyfile:
-        description:
-          - Specifies the SSH key to use to authenticate the connection to
-            the remote device.   This value is the path to the
-            key used to authenticate the SSH session. If the value is not
-            specified in the task, the value of environment variable
-            C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
   gather_subset:
     version_added: "2.6"
     description:
@@ -116,36 +72,21 @@ Tasks: The following are examples of using the module cnos_facts.
 ---
 - name: Test cnos Facts
   cnos_facts:
-    provider={{ cli }}
-
-  vars:
-    cli:
-      host: "{{ inventory_hostname }}"
-      port: 22
-      username: admin
-      password: admin
-      transport: cli
-      timeout: 30
-      authorize: True
-      auth_pass:
 
 ---
 # Collect all facts from the device
 - cnos_facts:
     gather_subset: all
-    provider: "{{ cli }}"
 
 # Collect only the config and default facts
 - cnos_facts:
     gather_subset:
       - config
-    provider: "{{ cli }}"
 
 # Do not collect hardware facts
 - cnos_facts:
     gather_subset:
       - "!hardware"
-    provider: "{{ cli }}"
 '''
 RETURN = '''
   ansible_net_gather_subset:
@@ -207,7 +148,6 @@ RETURN = '''
 import re
 
 from ansible.module_utils.network.cnos.cnos import run_commands
-from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
 from ansible.module_utils.network.cnos.cnos import check_args
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -452,10 +392,6 @@ class Interfaces(FactsBase):
                 if match:
                     key = match.group(1)
                     parsed.append(line)
-                # match = re.match(r'^(loopback+)', line)
-                # if match:
-                #    key = match.group(1)
-                #    parsed.append(line)
         return parsed
 
     def set_ip_interfaces(self, line4):
@@ -544,8 +480,6 @@ def main():
     argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
-
-    argument_spec.update(cnos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

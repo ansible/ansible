@@ -16,19 +16,6 @@ module: aci_contract_subject_to_filter
 short_description: Bind Contract Subjects to Filters (vz:RsSubjFiltAtt)
 description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
-notes:
-- The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
-seealso:
-- module: aci_tenant
-- module: aci_contract
-- module: aci_contract_subject
-- module: aci_filter
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:RsSubjFiltAtt).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   contract:
@@ -67,6 +54,17 @@ options:
     required: yes
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
+  The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
+seealso:
+- module: aci_contract_subject
+- module: aci_filter
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:RsSubjFiltAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -227,8 +225,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -236,9 +234,9 @@ def main():
     argument_spec.update(
         contract=dict(type='str', aliases=['contract_name']),  # Not required for querying all objects
         filter=dict(type='str', aliases=['filter_name']),  # Not required for querying all objects
-        log=dict(tyep='str', choices=['log', 'none'], aliases=['directive']),
         subject=dict(type='str', aliases=['contract_subject', 'subject_name']),  # Not required for querying all objects
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        log=dict(tyep='str', choices=['log', 'none'], aliases=['directive']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

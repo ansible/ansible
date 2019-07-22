@@ -43,8 +43,18 @@ options:
       with "/" or "\", or C(src) is a directory.
     - If C(src) and C(dest) are files and if the parent directory of C(dest)
       doesn't exist, then the task will fail.
-    required: yes
     type: path
+    required: yes
+  backup:
+    description:
+    - Determine whether a backup should be created.
+    - When set to C(yes), create a backup file including the timestamp information
+      so you can get the original file back if you somehow clobbered it incorrectly.
+    - No backup is taken when C(remote_src=False) and multiple files are being
+      copied.
+    type: bool
+    default: no
+    version_added: '2.8'
   force:
     description:
     - If set to C(yes), the file will only be transferred if the content
@@ -81,8 +91,8 @@ options:
       end with "/", the directory itself with all contents is copied.
     - If path is a file and dest ends with "\", the file is copied to the
       folder with the same filename.
+    - Required unless using C(content).
     type: path
-    required: yes
 notes:
 - Currently win_copy does not support copying symbolic links from both local to
   remote and remote to remote.
@@ -106,6 +116,12 @@ EXAMPLES = r'''
   win_copy:
     src: /srv/myfiles/foo.conf
     dest: C:\Temp\renamed-foo.conf
+
+- name: Copy a single file, but keep a backup
+  win_copy:
+    src: /srv/myfiles/foo.conf
+    dest: C:\Temp\renamed-foo.conf
+    backup: yes
 
 - name: Copy a single file keeping the filename
   win_copy:
@@ -138,9 +154,26 @@ EXAMPLES = r'''
   win_copy:
     content: abc123
     dest: C:\Temp\foo.txt
+
+- name: Copy a single file as another user
+  win_copy:
+    src: NuGet.config
+    dest: '%AppData%\NuGet\NuGet.config'
+  vars:
+    ansible_become_user: user
+    ansible_become_password: pass
+    # The tmp dir must be set when using win_copy as another user
+    # This ensures the become user will have permissions for the operation
+    # Make sure to specify a folder both the ansible_user and the become_user have access to (i.e not %TEMP% which is user specific and requires Admin)
+    ansible_remote_tmp: 'c:\tmp'
 '''
 
 RETURN = r'''
+backup_file:
+    description: Name of the backup file that was created.
+    returned: if backup=yes
+    type: str
+    sample: C:\Path\To\File.txt.11540.20150212-220915.bak
 dest:
     description: Destination file/path.
     returned: changed

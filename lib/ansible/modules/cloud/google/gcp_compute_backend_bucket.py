@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -56,6 +55,23 @@ options:
     description:
     - Cloud Storage bucket name.
     required: true
+  cdn_policy:
+    description:
+    - Cloud CDN configuration for this Backend Bucket.
+    required: false
+    version_added: 2.8
+    suboptions:
+      signed_url_cache_max_age_sec:
+        description:
+        - Maximum number of seconds the response to a signed URL request will be considered
+          fresh. Defaults to 1hr (3600s). After this time period, the response will
+          be revalidated before being served.
+        - 'When serving responses to signed URL requests, Cloud CDN will internally
+          behave as though all responses from this backend had a "Cache-Control: public,
+          max-age=[TTL]" header, regardless of any existing Cache-Control header.
+          The actual headers served in responses will not be altered.'
+        required: false
+        default: '3600'
   description:
     description:
     - An optional textual description of the resource; provided by the client when
@@ -77,30 +93,30 @@ options:
     required: true
 extends_documentation_fragment: gcp
 notes:
-- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/backendBuckets)'
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/backendBuckets)'
 - 'Using a Cloud Storage bucket as a load balancer backend: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)'
 '''
 
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: "bucket-backendbucket"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: bucket-backendbucket
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: bucket
 
 - name: create a backend bucket
   gcp_compute_backend_bucket:
-      name: "test_object"
-      bucket_name: "{{ bucket.name }}"
-      description: A BackendBucket to connect LNB w/ Storage Bucket
-      enable_cdn: true
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    bucket_name: "{{ bucket.name }}"
+    description: A BackendBucket to connect LNB w/ Storage Bucket
+    enable_cdn: 'true'
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -109,6 +125,23 @@ bucketName:
   - Cloud Storage bucket name.
   returned: success
   type: str
+cdnPolicy:
+  description:
+  - Cloud CDN configuration for this Backend Bucket.
+  returned: success
+  type: complex
+  contains:
+    signedUrlCacheMaxAgeSec:
+      description:
+      - Maximum number of seconds the response to a signed URL request will be considered
+        fresh. Defaults to 1hr (3600s). After this time period, the response will
+        be revalidated before being served.
+      - 'When serving responses to signed URL requests, Cloud CDN will internally
+        behave as though all responses from this backend had a "Cache-Control: public,
+        max-age=[TTL]" header, regardless of any existing Cache-Control header. The
+        actual headers served in responses will not be altered.'
+      returned: success
+      type: int
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -146,7 +179,7 @@ name:
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
 import time
 
@@ -162,9 +195,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             bucket_name=dict(required=True, type='str'),
+            cdn_policy=dict(type='dict', options=dict(signed_url_cache_max_age_sec=dict(default=3600, type='int'))),
             description=dict(type='str'),
             enable_cdn=dict(type='bool'),
-            name=dict(required=True, type='str')
+            name=dict(required=True, type='str'),
         )
     )
 
@@ -218,9 +252,10 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#backendBucket',
         u'bucketName': module.params.get('bucket_name'),
+        u'cdnPolicy': BackendBucketCdnpolicy(module.params.get('cdn_policy', {}), module).to_request(),
         u'description': module.params.get('description'),
         u'enableCdn': module.params.get('enable_cdn'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -255,8 +290,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -287,11 +322,12 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'bucketName': response.get(u'bucketName'),
+        u'cdnPolicy': BackendBucketCdnpolicy(response.get(u'cdnPolicy', {}), module).from_response(),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'enableCdn': response.get(u'enableCdn'),
         u'id': response.get(u'id'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
     }
 
 
@@ -317,9 +353,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -328,6 +364,21 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class BackendBucketCdnpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'signedUrlCacheMaxAgeSec': self.request.get('signed_url_cache_max_age_sec')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'signedUrlCacheMaxAgeSec': self.request.get(u'signedUrlCacheMaxAgeSec')})
 
 
 if __name__ == '__main__':

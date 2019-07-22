@@ -1,0 +1,76 @@
+- name: delete a smn topic
+  hwc_smn_topic:
+      identity_endpoint: "{{ identity_endpoint }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
+      region: "{{ region }}"
+      name: "ansible_smn_topic_test"
+      state: absent
+#----------------------------------------------------------
+- name: create a smn topic
+  hwc_smn_topic:
+      identity_endpoint: "{{ identity_endpoint }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
+      region: "{{ region }}"
+      name: "ansible_smn_topic_test"
+      state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+# ----------------------------------------------------------------------------
+- name: create a smn topic that already exists
+  hwc_smn_topic:
+      identity_endpoint: "{{ identity_endpoint }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
+      region: "{{ region }}"
+      name: "ansible_smn_topic_test"
+      state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a smn topic
+  hwc_smn_topic:
+      identity_endpoint: "{{ identity_endpoint }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
+      region: "{{ region }}"
+      name: "ansible_smn_topic_test"
+      state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+# ----------------------------------------------------------------------------
+- name: delete a smn topic that does not exist
+  hwc_smn_topic:
+      identity_endpoint: "{{ identity_endpoint }}"
+      user: "{{ user }}"
+      password: "{{ password }}"
+      domain: "{{ domain }}"
+      project: "{{ project }}"
+      region: "{{ region }}"
+      name: "ansible_smn_topic_test"
+      state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false

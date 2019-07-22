@@ -101,9 +101,11 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -124,9 +126,11 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current1 = Parameters(params=load_fixture('load_sys_application_template_w_new_checksum.json'))
@@ -153,10 +157,12 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin',
-            state='absent'
+            state='absent',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -176,10 +182,12 @@ class TestManager(unittest.TestCase):
     def test_delete_iapp_template_idempotent(self, *args):
         set_module_args(dict(
             content=load_fixture('basic-iapp.tmpl'),
-            password='password',
-            server='localhost',
-            user='admin',
-            state='absent'
+            state='absent',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

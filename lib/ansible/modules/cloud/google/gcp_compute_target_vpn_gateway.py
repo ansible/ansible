@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -66,10 +65,10 @@ options:
     description:
     - The network this VPN gateway is accepting traffic for.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
   region:
     description:
@@ -83,32 +82,32 @@ notes:
 EXAMPLES = '''
 - name: create a address
   gcp_compute_address:
-      name: "address-vpngateway"
-      region: us-west1
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: address-vpngateway
+    region: us-west1
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: address
 
 - name: create a network
   gcp_compute_network:
-      name: "network-vpngateway"
-      project: "{{ gcp_project }}"
-      auth_kind: "{{ gcp_cred_kind }}"
-      service_account_file: "{{ gcp_cred_file }}"
-      state: present
+    name: network-vpngateway
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_cred_file }}"
+    state: present
   register: network
 
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "test_object"
-      region: us-west1
-      network: "{{ network }}"
-      project: "test_project"
-      auth_kind: "serviceaccount"
-      service_account_file: "/tmp/auth.pem"
-      state: present
+    name: test_object
+    region: us-west1
+    network: "{{ network }}"
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: present
 '''
 
 RETURN = '''
@@ -144,12 +143,13 @@ network:
   type: dict
 tunnels:
   description:
-  - A list of references to VpnTunnel resources associated to this VPN gateway.
+  - A list of references to VpnTunnel resources associated with this VPN gateway.
   returned: success
   type: list
 forwardingRules:
   description:
-  - A list of references to the ForwardingRule resources associated to this VPN gateway.
+  - A list of references to the ForwardingRule resources associated with this VPN
+    gateway.
   returned: success
   type: list
 region:
@@ -181,7 +181,7 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             network=dict(required=True, type='dict'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -222,7 +222,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="TargetVpnGateway cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):
@@ -235,7 +236,7 @@ def resource_to_request(module):
         u'kind': 'compute#targetVpnGateway',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
-        u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink')
+        u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -270,8 +271,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -307,7 +308,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'tunnels': response.get(u'tunnels'),
-        u'forwardingRules': response.get(u'forwardingRules')
+        u'forwardingRules': response.get(u'forwardingRules'),
     }
 
 
@@ -333,9 +334,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

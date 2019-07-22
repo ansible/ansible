@@ -77,17 +77,17 @@ def ensure_type(value, value_type, origin=None):
     '''
 
     basedir = None
-    if origin and os.path.isabs(origin) and os.path.exists(origin):
+    if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
         basedir = origin
 
     if value_type:
         value_type = value_type.lower()
 
-    if value_type in ('boolean', 'bool'):
-        value = boolean(value, strict=False)
+    if value is not None:
+        if value_type in ('boolean', 'bool'):
+            value = boolean(value, strict=False)
 
-    elif value is not None:
-        if value_type in ('integer', 'int'):
+        elif value_type in ('integer', 'int'):
             value = int(value)
 
         elif value_type == 'float':
@@ -186,7 +186,7 @@ def find_ini_config_file(warnings=None):
     path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
     if path_from_env is not SENTINEL:
         path_from_env = unfrackpath(path_from_env, follow=False)
-        if os.path.isdir(path_from_env):
+        if os.path.isdir(to_bytes(path_from_env)):
             path_from_env = os.path.join(path_from_env, "ansible.cfg")
         potential_paths.append(path_from_env)
 
@@ -214,7 +214,7 @@ def find_ini_config_file(warnings=None):
     potential_paths.append("/etc/ansible/ansible.cfg")
 
     for path in potential_paths:
-        if os.path.exists(path):
+        if os.path.exists(to_bytes(path)):
             break
     else:
         path = None
@@ -254,7 +254,7 @@ class ConfigManager(object):
 
         # consume configuration
         if self._config_file:
-            if os.path.exists(self._config_file):
+            if os.path.exists(to_bytes(self._config_file)):
                 # initialize parser and read config
                 self._parse_config_file()
 
@@ -288,7 +288,7 @@ class ConfigManager(object):
         if cfile is not None:
             if ftype == 'ini':
                 self._parsers[cfile] = configparser.ConfigParser()
-                with open(cfile, 'rb') as f:
+                with open(to_bytes(cfile), 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
                     except UnicodeError as e:
@@ -330,6 +330,18 @@ class ConfigManager(object):
                     pvars.append(var_entry['name'])
         return pvars
 
+    def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
+
+        ret = {}
+        if plugin_type is None:
+            ret = self._base_defs.get(name, None)
+        elif plugin_name is None:
+            ret = self._plugins.get(plugin_type, {}).get(name, None)
+        else:
+            ret = self._plugins.get(plugin_type, {}).get(plugin_name, {}).get(name, None)
+
+        return ret
+
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
@@ -370,7 +382,7 @@ class ConfigManager(object):
         except AnsibleError:
             raise
         except Exception as e:
-            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config), orig_exc=e)
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
@@ -387,8 +399,14 @@ class ConfigManager(object):
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
+            direct_aliases = []
+            if direct:
+                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
             if direct and config in direct:
                 value = direct[config]
+                origin = 'Direct'
+            elif direct and direct_aliases:
+                value = direct_aliases[0]
                 origin = 'Direct'
 
             else:
@@ -398,8 +416,8 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and defs[config].get('keywords'):
-                    value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                if value is None and keys and config in keys:
+                    value, origin = keys[config], 'keyword'
                     origin = 'keyword: %s' % origin
 
                 # env vars are next precedence

@@ -23,12 +23,15 @@ version_added: '2.8'
 author:
 - Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
 notes:
-- Minimal supported version of XenServer is 5.6
-- Module was tested with XenServer 6.5, 7.1 and 7.2
+- Minimal supported version of XenServer is 5.6.
+- Module was tested with XenServer 6.5, 7.1 and 7.2.
+- 'XenAPI Python library can be acquired from XenServer SDK (downloadable from Citrix website) or by running C(pip install XenAPI) (possibly very old
+   version, not compatible with Python 3.x). Latest version can also be acquired from GitHub:
+   https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py'
 - 'If no scheme is specified in C(hostname), module defaults to C(http://) because C(https://) is problematic in most setups. Make sure you are
    accessing XenServer host in trusted environment or use C(https://) scheme explicitly.'
 - 'To use C(https://) scheme for C(hostname) you have to either import host certificate to your OS certificate store or use C(validate_certs: no)
-   which requires XenAPI.py from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
+   which requires XenAPI library from XenServer 7.2 SDK or newer and Python 2.7.9 or newer.'
 - 'Network configuration inside a guest OS, by using C(networks.type), C(networks.ip), C(networks.gateway) etc. parameters, is supported on
   XenServer 7.0 or newer for Windows guests by using official XenServer Guest agent support for network configuration. The module will try to
   detect if such support is available and utilize it, else it will use a custom method of configuration via xenstore. Since XenServer Guest
@@ -52,8 +55,9 @@ options:
     - Specify the state VM should be in.
     - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to given parameters.
     - If C(state) is set to C(present) and VM does not exist, then VM is deployed with given parameters.
-    - If C(state) is set to C(absent) and virtual machine exists, then VM is removed with its associated components.
+    - If C(state) is set to C(absent) and VM exists, then VM is removed with its associated components.
     - If C(state) is set to C(poweredon) and VM does not exist, then VM is deployed with given parameters and powered on automatically.
+    type: str
     default: present
     choices: [ present, absent, poweredon ]
   name:
@@ -62,16 +66,19 @@ options:
     - VMs running on XenServer do not necessarily have unique names. The module will fail if multiple VMs with same name are found.
     - In case of multiple VMs with same name, use C(uuid) to uniquely specify VM to manage.
     - This parameter is case sensitive.
+    type: str
     required: yes
-    aliases: [ 'name_label' ]
+    aliases: [ name_label ]
   name_desc:
     description:
     - VM description.
+    type: str
   uuid:
     description:
-    - UUID of the VM to manage if known, this is XenServer's unique identifier.
+    - UUID of the VM to manage if known. This is XenServer's unique identifier.
     - It is required if name is not unique.
     - Please note that a supplied UUID will be ignored on VM creation, as XenServer creates the UUID internally.
+    type: str
   template:
     description:
     - Name of a template, an existing VM (must be shut down) or a snapshot that should be used to create VM.
@@ -79,22 +86,25 @@ options:
     - In case of multiple templates/VMs/snapshots with same name, use C(template_uuid) to uniquely specify source template.
     - If VM already exists, this setting will be ignored.
     - This parameter is case sensitive.
-    aliases: [ 'template_src' ]
+    type: str
+    aliases: [ template_src ]
   template_uuid:
     description:
     - UUID of a template, an existing VM or a snapshot that should be used to create VM.
     - It is required if template name is not unique.
+    type: str
   is_template:
     description:
     - Convert VM to template.
-    default: 'no'
     type: bool
+    default: no
   folder:
     description:
     - Destination folder for VM.
     - This parameter is case sensitive.
     - 'Example:'
-    - '   folder: /folder1/folder2'
+    - '  folder: /folder1/folder2'
+    type: str
   hardware:
     description:
     - Manage VM's hardware parameters. VM needs to be shut down to reconfigure these parameters.
@@ -102,6 +112,7 @@ options:
     - ' - C(num_cpus) (integer): Number of CPUs.'
     - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. C(num_cpus) has to be a multiple of C(num_cpu_cores_per_socket).'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
+    type: dict
   disks:
     description:
     - A list of disks to add to VM.
@@ -114,15 +125,17 @@ options:
     - ' - C(name_desc) (string): Disk description.'
     - ' - C(sr) (string): Storage Repository to create disk on. If not specified, will use default SR. Cannot be used for moving disk to other SR.'
     - ' - C(sr_uuid) (string): UUID of a SR to create disk on. Use if SR name is not unique.'
-    aliases: [ 'disk' ]
+    type: list
+    aliases: [ disk ]
   cdrom:
     description:
     - A CD-ROM configuration for the VM.
-    - All parameters case sensitive.
+    - All parameters are case sensitive.
     - 'Valid parameters are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none) or C(iso). With C(none) the CD-ROM device will be present but empty.'
     - ' - C(iso_name) (string): The file name of an ISO image from one of the XenServer ISO Libraries (implies C(type: iso)).
           Required if C(type) is set to C(iso).'
+    type: dict
   networks:
     description:
     - A list of networks (in the order of the NICs).
@@ -141,47 +154,53 @@ options:
           On some operating systems it could be DHCP configured (e.g. Windows) or unconfigured interface (e.g. Linux).'
     - ' - C(ip6) (string): Static IPv6 address (implies C(type6: static)) with prefix in format <IPv6 address>/<prefix>.'
     - ' - C(gateway6) (string): Static IPv6 gateway.'
-    aliases: [ 'network' ]
+    type: list
+    aliases: [ network ]
   home_server:
     description:
     - Name of a XenServer host that will be a Home Server for the VM.
     - This parameter is case sensitive.
+    type: str
   custom_params:
     description:
     - Define a list of custom VM params to set on VM.
-    - A custom value object takes two fields C(key) and C(value).
+    - Useful for advanced users familiar with managing VM params trough xe CLI.
+    - A custom value object takes two fields C(key) and C(value) (see example below).
+    type: list
   wait_for_ip_address:
     description:
-    - Wait until XenServer detects an IP address for the VM.
-    - This requires XenServer Tools preinstaled on VM to properly work.
-    default: 'no'
+    - Wait until XenServer detects an IP address for the VM. If C(state) is set to C(absent), this parameter is ignored.
+    - This requires XenServer Tools to be preinstalled on the VM to work properly.
     type: bool
+    default: no
   state_change_timeout:
     description:
     - 'By default, module will wait indefinitely for VM to accquire an IP address if C(wait_for_ip_address: yes).'
     - If this parameter is set to positive value, the module will instead wait specified number of seconds for the state change.
     - In case of timeout, module will generate an error message.
+    type: int
     default: 0
   linked_clone:
     description:
     - Whether to create a Linked Clone from the template, existing VM or snapshot. If no, will create a full copy.
-    default: 'no'
+    - This is equivalent to C(Use storage-level fast disk clone) option in XenCenter.
     type: bool
+    default: no
   force:
     description:
     - Ignore warnings and complete the actions.
     - This parameter is useful for removing VM in running state or reconfiguring VM params that require VM to be shut down.
-    default: 'no'
     type: bool
+    default: no
 extends_documentation_fragment: xenserver.documentation
 '''
 
 EXAMPLES = r'''
 - name: Create a VM from a template
   xenserver_guest:
-    hostname: 192.0.2.44
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     validate_certs: no
     folder: /testvms
     name: testvm_2
@@ -206,9 +225,9 @@ EXAMPLES = r'''
 
 - name: Create a VM template
   xenserver_guest:
-    hostname: 192.0.2.88
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     validate_certs: no
     folder: /testvms
     name: testvm_6
@@ -224,9 +243,9 @@ EXAMPLES = r'''
 
 - name: Rename a VM (requires the VM's UUID)
   xenserver_guest:
-    hostname: 192.168.1.209
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     name: new_name
     state: present
@@ -234,18 +253,18 @@ EXAMPLES = r'''
 
 - name: Remove a VM by UUID
   xenserver_guest:
-    hostname: 192.168.1.209
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     state: absent
   delegate_to: localhost
 
-- name: Modify custom params
+- name: Modify custom params (boot order)
   xenserver_guest:
-    hostname: 192.168.1.210
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     name: testvm_8
     state: present
     custom_params:
@@ -255,9 +274,9 @@ EXAMPLES = r'''
 
 - name: Customize network parameters
   xenserver_guest:
-    hostname: 192.168.1.209
-    username: root
-    password: xenserver
+    hostname: "{{ xenserver_hostname }}"
+    username: "{{ xenserver_username }}"
+    password: "{{ xenserver_password }}"
     name: testvm_10
     networks:
     - name: VM Network
@@ -419,7 +438,6 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils import six
 from ansible.module_utils.xenserver import (xenserver_common_argument_spec, XAPI, XenServerObject, get_object_ref,
                                             gather_vm_params, gather_vm_facts, set_vm_power_state, wait_for_vm_ip_address,
@@ -508,15 +526,15 @@ class XenServerVM(XenServerObject):
                 if self.default_sr_ref != "OpaqueRef:NULL":
                     sr_ref = self.default_sr_ref
                 else:
-                    self.module.fail_json(msg="VM deploy disks[0]: no default SR found! You must specify SR explicitely.")
-
-            # Support for Ansible check mode.
-            if self.module.check_mode:
-                return
+                    self.module.fail_json(msg="VM deploy disks[0]: no default SR found! You must specify SR explicitly.")
 
             # VM name could be an empty string which is bad.
             if self.module.params['name'] is not None and not self.module.params['name']:
                 self.module.fail_json(msg="VM deploy: VM name must not be an empty string!")
+
+            # Support for Ansible check mode.
+            if self.module.check_mode:
+                return
 
             # Now we can instantiate VM. We use VM.clone for linked_clone and
             # VM.copy for non linked_clone.
@@ -579,15 +597,15 @@ class XenServerVM(XenServerObject):
 
         vm_power_state_save = self.vm_params['power_state'].lower()
 
-        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("shutdownguest")
-            else:
-                self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM reconfigure: VM has to be in powered off state to reconfigure but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return config_changes
+
+        if "need_poweredoff" in config_changes and vm_power_state_save != 'halted' and self.module.params['force']:
+            self.set_power_state("shutdownguest")
 
         try:
             for change in config_changes:
@@ -1012,15 +1030,15 @@ class XenServerVM(XenServerObject):
         if not self.exists():
             self.module.fail_json(msg="Called destroy on non existing VM!")
 
-        if self.vm_params['power_state'].lower() != 'halted':
-            if self.module.params['force']:
-                self.set_power_state("poweredoff")
-            else:
-                self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
+        if self.vm_params['power_state'].lower() != 'halted' and not self.module.params['force']:
+            self.module.fail_json(msg="VM destroy: VM has to be in powered off state to destroy but force was not specified!")
 
         # Support for Ansible check mode.
         if self.module.check_mode:
             return
+
+        # Make sure that VM is poweredoff before we can destroy it.
+        self.set_power_state("poweredoff")
 
         try:
             # Destroy VM!
@@ -1131,13 +1149,13 @@ class XenServerVM(XenServerObject):
                     try:
                         num_cpu_cores_per_socket = int(num_cpu_cores_per_socket)
                     except ValueError as e:
-                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value.")
+                        self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be an integer value!")
 
                     if num_cpu_cores_per_socket < 1:
                         self.module.fail_json(msg="VM check hardware.num_cpu_cores_per_socket: parameter should be greater than zero!")
 
                     if num_cpus and num_cpus % num_cpu_cores_per_socket != 0:
-                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket.")
+                        self.module.fail_json(msg="VM check hardware.num_cpus: parameter should be a multiple of hardware.num_cpu_cores_per_socket!")
 
                     vm_platform = self.vm_params['platform']
                     vm_cores_per_socket = int(vm_platform.get('cores-per-socket', 1))
@@ -1156,7 +1174,7 @@ class XenServerVM(XenServerObject):
                     try:
                         memory_mb = int(memory_mb)
                     except ValueError as e:
-                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value.")
+                        self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be an integer value!")
 
                     if memory_mb < 1:
                         self.module.fail_json(msg="VM check hardware.memory_mb: parameter should be greater than zero!")
@@ -1258,7 +1276,7 @@ class XenServerVM(XenServerObject):
                             get_object_ref(self.module, disk_sr, disk_sr_uuid, obj_type="SR", fail=True,
                                            msg_prefix="VM check disks[%s]: " % position)
                         elif self.default_sr_ref == 'OpaqueRef:NULL':
-                            self.module.fail_json(msg="VM check disks[%s]: no default SR found! You must specify SR explicitely." % position)
+                            self.module.fail_json(msg="VM check disks[%s]: no default SR found! You must specify SR explicitly." % position)
 
                         if not vbd_userdevices_allowed:
                             self.module.fail_json(msg="VM check disks[%s]: maximum number of devices reached!" % position)
@@ -1277,8 +1295,12 @@ class XenServerVM(XenServerObject):
                                 vm_disk_userdevice_highest = userdevice
                                 break
 
+                        # If no place was found.
                         if disk_userdevice is None:
-                            disk_userdevice = str(int(vm_disk_userdevice_highest) + 1)
+                            # Highest occupied place could be a CD-ROM device
+                            # so we have to include all devices regardless of
+                            # type when calculating out-of-bound position.
+                            disk_userdevice = str(int(self.vm_params['VBDs'][-1]['userdevice']) + 1)
                             self.module.fail_json(msg="VM check disks[%s]: new disk position %s is out of bounds!" % (position, disk_userdevice))
 
                         # For new disks we only track their position.
@@ -1540,7 +1562,7 @@ class XenServerVM(XenServerObject):
                         elif self.vm_params['customization_agent'] == "custom":
                             vm_xenstore_data = self.vm_params['xenstore_data']
 
-                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], ""):
+                            if network_type and network_type != vm_xenstore_data.get('vm-data/networks/%s/type' % vm_vif_params['device'], "none"):
                                 network_changes.append('type')
                                 need_poweredoff = True
 
@@ -1559,7 +1581,7 @@ class XenServerVM(XenServerObject):
                                     network_changes.append('gateway')
                                     need_poweredoff = True
 
-                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], ""):
+                            if network_type6 and network_type6 != vm_xenstore_data.get('vm-data/networks/%s/type6' % vm_vif_params['device'], "none"):
                                 network_changes.append('type6')
                                 need_poweredoff = True
 
@@ -1598,6 +1620,9 @@ class XenServerVM(XenServerObject):
                                     need_poweredoff = True
                                     break
 
+                        if not vif_devices_allowed:
+                            self.module.fail_json(msg="VM check networks[%s]: maximum number of network interfaces reached!" % position)
+
                         # We need to place a new network interface right above the
                         # highest placed existing interface to maintain relative
                         # positions pairable with network interface specifications
@@ -1607,6 +1632,7 @@ class XenServerVM(XenServerObject):
                         if vif_device not in vif_devices_allowed:
                             self.module.fail_json(msg="VM check networks[%s]: new network interface position %s is out of bounds!" % (position, vif_device))
 
+                        vif_devices_allowed.remove(vif_device)
                         vif_device_highest = vif_device
 
                         # For new VIFs we only track their position.
@@ -1703,19 +1729,19 @@ class XenServerVM(XenServerObject):
                     # We found int value in string, let's typecast it.
                     size = int(size)
 
-                if not size:
+                if not size or size < 0:
                     raise ValueError
 
             except (TypeError, ValueError, NameError):
                 # Common failure
-                self.module.fail_json(msg="%sfailed to parse disk size. Please review value provided using documentation." % msg_prefix)
+                self.module.fail_json(msg="%sfailed to parse disk size! Please review value provided using documentation." % msg_prefix)
 
             disk_units = dict(tb=4, gb=3, mb=2, kb=1, b=0)
 
             if unit in disk_units:
                 return int(size * (1024 ** disk_units[unit]))
             else:
-                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size. Supported units are ['%s']." %
+                self.module.fail_json(msg="%s'%s' is not a supported unit for disk size! Supported units are ['%s']." %
                                       (msg_prefix, unit, "', '".join(sorted(disk_units.keys(), key=lambda key: disk_units[key]))))
         else:
             return None
@@ -1886,7 +1912,7 @@ def main():
         vm.deploy()
         result['changed'] = True
 
-    if module.params['wait_for_ip_address']:
+    if module.params['wait_for_ip_address'] and module.params['state'] != "absent":
         vm.wait_for_ip_address()
 
     result['instance'] = vm.gather_facts()

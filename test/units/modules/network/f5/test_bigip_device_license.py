@@ -94,15 +94,18 @@ class TestModuleManager(unittest.TestCase):
                 license_key='xxxx-yyyy-zzzz',
                 license_server='foo-license.f5.com',
                 accept_eula=True,
-                server='localhost',
-                user='admin',
-                password='password'
+                provider=dict(
+                    server='localhost',
+                    password='password',
+                    user='admin'
+                )
             )
         )
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         mm = ModuleManager(module=module)
 

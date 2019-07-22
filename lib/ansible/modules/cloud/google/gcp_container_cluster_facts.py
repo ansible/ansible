@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -41,32 +40,37 @@ requirements:
 - requests >= 2.18.4
 - google-auth >= 1.3.0
 options:
-  zone:
+  location:
     description:
-    - The zone where the cluster is deployed.
+    - The location where the cluster is deployed.
     required: true
+    aliases:
+    - region
+    - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a cluster facts
+- name: " a cluster facts"
   gcp_container_cluster_facts:
-      zone: us-central1-a
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    location: us-central1-a
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
     name:
       description:
       - The name of this cluster. The name must be unique within this project and
-        zone, and can be up to 40 characters. Must be Lowercase letters, numbers,
+        location, and can be up to 40 characters. Must be Lowercase letters, numbers,
         and hyphens only. Must start with a letter. Must end with a number or a letter.
       returned: success
       type: str
@@ -83,6 +87,7 @@ items:
         only be used in lieu of a "nodePool" object, since this configuration (along
         with the "nodeConfig") will be used to create a "NodePool" object with an
         auto-generated name. Do not use this and a nodePool at the same time.
+      - This field has been deprecated. Please use nodePool.initial_node_count instead.
       returned: success
       type: int
     nodeConfig:
@@ -181,9 +186,61 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
+        accelerators:
+          description:
+          - A list of hardware accelerators to be attached to each node. See U(https://cloud.google.com/compute/docs/gpus)
+            for more information about support for GPUs.
+          returned: success
+          type: complex
+          contains:
+            acceleratorCount:
+              description:
+              - The number of accelerator cards exposed to an instance.
+              returned: success
+              type: str
+            acceleratorType:
+              description:
+              - The accelerator type resource name.
+              returned: success
+              type: str
+        diskType:
+          description:
+          - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
+            If unspecified, the default disk type is 'pd-standard' .
+          returned: success
+          type: str
+        minCpuPlatform:
+          description:
+          - Minimum CPU platform to be used by this instance. The instance may be
+            scheduled on the specified or newer CPU platform.
+          returned: success
+          type: str
+        taints:
+          description:
+          - List of kubernetes taints to be applied to each node.
+          - 'For more information, including usage and the valid values, see: U(https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
+            .'
+          returned: success
+          type: complex
+          contains:
+            key:
+              description:
+              - Key for taint.
+              returned: success
+              type: str
+            value:
+              description:
+              - Value for taint.
+              returned: success
+              type: str
+            effect:
+              description:
+              - Effect for taint.
+              returned: success
+              type: str
     masterAuth:
       description:
       - The authentication information for accessing the master endpoint.
@@ -202,6 +259,19 @@ items:
             a strong password.
           returned: success
           type: str
+        clientCertificateConfig:
+          description:
+          - Configuration for client certificate authentication on the cluster. For
+            clusters before v1.12, if no configuration is specified, a client certificate
+            is issued.
+          returned: success
+          type: complex
+          contains:
+            issueClientCertificate:
+              description:
+              - Issue a client certificate.
+              returned: success
+              type: bool
         clusterCaCertificate:
           description:
           - Base64-encoded public certificate that is the root of trust for the cluster.
@@ -240,10 +310,44 @@ items:
       description:
       - The name of the Google Compute Engine network to which the cluster is connected.
         If left unspecified, the default network will be used.
-      - To ensure it exists and it is operations, configure the network using 'gcompute_network'
-        resource.
       returned: success
       type: str
+    privateClusterConfig:
+      description:
+      - Configuration for a private cluster.
+      returned: success
+      type: complex
+      contains:
+        enablePrivateNodes:
+          description:
+          - Whether nodes have internal IP addresses only. If enabled, all nodes are
+            given only RFC 1918 private addresses and communicate with the master
+            via private networking.
+          returned: success
+          type: bool
+        enablePrivateEndpoint:
+          description:
+          - Whether the master's internal IP address is used as the cluster endpoint.
+          returned: success
+          type: bool
+        masterIpv4CidrBlock:
+          description:
+          - The IP range in CIDR notation to use for the hosted master network. This
+            range will be used for assigning internal IP addresses to the master or
+            set of masters, as well as the ILB VIP. This range must not overlap with
+            any other ranges in use within the cluster's network.
+          returned: success
+          type: str
+        privateEndpoint:
+          description:
+          - The internal IP address of this cluster's master endpoint.
+          returned: success
+          type: str
+        publicEndpoint:
+          description:
+          - The external IP address of this cluster's master endpoint.
+          returned: success
+          type: str
     clusterIpv4Cidr:
       description:
       - The IP address range of the container pods in this cluster, in CIDR notation
@@ -286,17 +390,84 @@ items:
                 which is also used by the Cloud Monitoring service.
               returned: success
               type: bool
+        networkPolicyConfig:
+          description:
+          - Configuration for NetworkPolicy. This only tracks whether the addon is
+            enabled or not on the Master, it does not track whether network policy
+            is enabled for the nodes.
+          returned: success
+          type: complex
+          contains:
+            disabled:
+              description:
+              - Whether NetworkPolicy is enabled for this cluster.
+              returned: success
+              type: bool
     subnetwork:
       description:
       - The name of the Google Compute Engine subnetwork to which the cluster is connected.
       returned: success
       type: str
-    location:
+    locations:
       description:
-      - The list of Google Compute Engine locations in which the cluster's nodes should
+      - The list of Google Compute Engine zones in which the cluster's nodes should
         be located.
       returned: success
       type: list
+    resourceLabels:
+      description:
+      - The resource labels for the cluster to use to annotate any related Google
+        Compute Engine resources.
+      returned: success
+      type: dict
+    labelFingerprint:
+      description:
+      - The fingerprint of the set of labels for this cluster.
+      returned: success
+      type: str
+    legacyAbac:
+      description:
+      - Configuration for the legacy ABAC authorization mode.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Whether the ABAC authorizer is enabled for this cluster. When enabled,
+            identities in the system, including service accounts, nodes, and controllers,
+            will have statically granted permissions beyond those provided by the
+            RBAC configuration or IAM.
+          returned: success
+          type: bool
+    networkPolicy:
+      description:
+      - Configuration options for the NetworkPolicy feature.
+      returned: success
+      type: complex
+      contains:
+        provider:
+          description:
+          - The selected network policy provider.
+          returned: success
+          type: str
+        enabled:
+          description:
+          - Whether network policy is enabled on the cluster.
+          returned: success
+          type: bool
+    defaultMaxPodsConstraint:
+      description:
+      - The default constraint on the maximum number of pods that can be run simultaneously
+        on a node in the node pool of this cluster.
+      - Only honored if cluster created with IP Alias support.
+      returned: success
+      type: complex
+      contains:
+        maxPodsPerNode:
+          description:
+          - Constraint enforced on the max num of pods per node.
+          returned: success
+          type: str
     endpoint:
       description:
       - The IP address of this cluster's master endpoint.
@@ -327,6 +498,16 @@ items:
       - The time the cluster was created, in RFC3339 text format.
       returned: success
       type: str
+    status:
+      description:
+      - The current status of this cluster.
+      returned: success
+      type: str
+    statusMessage:
+      description:
+      - Additional information about the current status of this cluster, if available.
+      returned: success
+      type: str
     nodeIpv4CidrSize:
       description:
       - The size of the address space on each node for hosting containers.
@@ -350,9 +531,35 @@ items:
       - The time the cluster will be automatically deleted in RFC3339 text format.
       returned: success
       type: str
-    zone:
+    enableTpu:
       description:
-      - The zone where the cluster is deployed.
+      - Enable the ability to use Cloud TPUs in this cluster.
+      returned: success
+      type: bool
+    tpuIpv4CidrBlock:
+      description:
+      - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
+      returned: success
+      type: str
+    conditions:
+      description:
+      - Which conditions caused the current cluster state.
+      returned: success
+      type: complex
+      contains:
+        code:
+          description:
+          - Machine-friendly representation of the condition.
+          returned: success
+          type: str
+        message:
+          description:
+          - Human-friendly representation of the condition.
+          returned: success
+          type: str
+    location:
+      description:
+      - The location where the cluster is deployed.
       returned: success
       type: str
 '''
@@ -369,11 +576,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            zone=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone'])))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -383,14 +586,12 @@ def main():
         items = items.get('clusters')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters".format(**module.params)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters".format(**module.params)
 
 
 def fetch_list(module, link):

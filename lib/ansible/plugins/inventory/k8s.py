@@ -57,23 +57,27 @@ DOCUMENTATION = '''
               description:
               - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD
                 environment variable.
-          cert_file:
+          client_cert:
               description:
               - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE
                 environment variable.
-          key_file:
+              aliases: [ cert_file ]
+          client_key:
               description:
               - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE
                 environment variable.
-          ssl_ca_cert:
+              aliases: [ key_file ]
+          ca_cert:
               description:
               - Path to a CA certificate used to authenticate with the API. Can also be specified via
                 K8S_AUTH_SSL_CA_CERT environment variable.
-          verify_ssl:
+              aliases: [ ssl_ca_cert ]
+          validate_certs:
               description:
               - "Whether or not to verify the API server's SSL certificates. Can also be specified via
                 K8S_AUTH_VERIFY_SSL environment variable."
               type: bool
+              aliases: [ verify_ssl ]
           namespaces:
               description:
               - List of namespaces. If not specified, will fetch all containers for all namespaces user is authorized
@@ -91,14 +95,14 @@ EXAMPLES = '''
 # Authenticate with token, and return all pods and services for all namespaces
 plugin: k8s
 connections:
-    host: https://192.168.64.4:8443
+  - host: https://192.168.64.4:8443
     token: xxxxxxxxxxxxxxxx
-    ssl_verify: false
+    validate_certs: false
 
 # Use default config (~/.kube/config) file and active context, and return objects for a specific namespace
 plugin: k8s
 connections:
-    namespaces:
+  - namespaces:
     - testing
 
 # Use a custom config file, and a specific context.
@@ -111,7 +115,7 @@ connections:
 import json
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER
+from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER, k8s_import_exception
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
@@ -151,7 +155,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
 
         if not HAS_K8S_MODULE_HELPER:
             raise K8sInventoryException(
-                "This module requires the OpenShift Python client. Try `pip install openshift`"
+                "This module requires the OpenShift Python client. Try `pip install openshift`. Detail: {0}".format(k8s_import_exception)
             )
 
         source_data = None
@@ -165,7 +169,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
             self.fetch_objects(connections)
 
     def fetch_objects(self, connections):
-        client = self.get_api_client()
 
         if connections:
             if not isinstance(connections, list):
@@ -184,6 +187,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
                     self.get_pods_for_namespace(client, name, namespace)
                     self.get_services_for_namespace(client, name, namespace)
         else:
+            client = self.get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
             for namespace in namespaces:

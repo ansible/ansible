@@ -14,9 +14,12 @@ This section covers the various types of plugins that are included with Ansible:
    :maxdepth: 1
 
    action
+   become
    cache
    callback
+   cliconf
    connection
+   httpapi
    inventory
    lookup
    shell

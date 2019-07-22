@@ -1,0 +1,8 @@
+# this test specifically avoids testhost because we need to know about the controller's Python
+- hosts: localhost
+  gather_facts: yes
+  gather_subset: min
+  tasks:
+  - debug:
+      msg: UNSUPPORTEDPYTHON {{ ansible_python_version }}
+    when: ansible_python_version is version('2.7', '<')

@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-- name: get the jinja2 version
-  shell: python -c 'import jinja2; print(jinja2.__version__)'
-  register: jinja2_version
-  delegate_to: localhost
-  changed_when: no
-
-- debug:
-    msg: "Jinja version: {{ jinja2_version.stdout }}, Python version: {{ ansible_facts.python_version }}"
-
 
 ## user add
 
@@ -183,14 +174,7 @@
       - user_test1.results is defined
       - user_test1.results | length == 5
 
-- name: validate changed results for testcase 1 (jinja >= 2.6)
-  assert:
-    that:
-      - user_test1.results | map(attribute='changed') | unique | list == [False]
-      - user_test1.results | map(attribute='state') | unique | list == ['present']
-  when: jinja2_version.stdout is version('2.6', '>=')
-
-- name: validate changed results for testcase 1 (jinja < 2.6)
+- name: validate changed results for testcase 1
   assert:
     that:
       - "user_test1.results[0] is not changed"
@@ -203,7 +187,6 @@
       - "user_test1.results[2]['state'] == 'present'"
       - "user_test1.results[3]['state'] == 'present'"
       - "user_test1.results[4]['state'] == 'present'"
-  when: jinja2_version.stdout is version('2.6', '<')
 
 
 ## user remove
@@ -228,6 +211,62 @@
     that:
       - '"ansibulluser" not in user_names2.stdout_lines'
 
+
+## create user without home and test fallback home dir create
+
+- block:
+    - name: create the user
+      user:
+        name: ansibulluser
+
+    - name: delete the user and home dir
+      user:
+        name: ansibulluser
+        state: absent
+        force: true
+        remove: true
+
+    - name: create the user without home
+      user:
+        name: ansibulluser
+        create_home: no
+
+    - name: create the user home dir
+      user:
+        name: ansibulluser
+      register: user_create_home_fallback
+
+    - name: stat home dir
+      stat:
+        path: '{{ user_create_home_fallback.home }}'
+      register: user_create_home_fallback_dir
+
+    - name: read UMASK from /etc/login.defs and return mode
+      shell: |
+        import re
+        import os
+        try:
+            for line in open('/etc/login.defs').readlines():
+                m = re.match(r'^UMASK\s+(\d+)$', line)
+                if m:
+                    umask = int(m.group(1), 8)
+        except:
+            umask = os.umask(0)
+        mode = oct(0o777 & ~umask)
+        print(str(mode).replace('o', ''))
+      args:
+        executable: "{{ ansible_python_interpreter }}"
+      register: user_login_defs_umask
+
+    - name: validate that user home dir is created
+      assert:
+        that:
+          - user_create_home_fallback is changed
+          - user_create_home_fallback_dir.stat.exists
+          - user_create_home_fallback_dir.stat.isdir
+          - user_create_home_fallback_dir.stat.pw_name == 'ansibulluser'
+          - user_create_home_fallback_dir.stat.mode == user_login_defs_umask.stdout
+  when: ansible_facts.system != 'Darwin'
 
 - block:
     - name: create non-system user on macOS to test the shell is set to /bin/bash
@@ -287,6 +326,8 @@
     state: present
     expires: 2529881062
   register: user_test_expires1
+  tags:
+    - timezone
 
 - name: Set user expiration again to ensure no change is made
   user:
@@ -294,6 +335,8 @@
     state: present
     expires: 2529881062
   register: user_test_expires2
+  tags:
+    - timezone
 
 - name: Ensure that account with expiration was created and did not change on subsequent run
   assert:
@@ -325,7 +368,7 @@
     - name: BSD | Ensure proper expiration date was set
       assert:
         that:
-          - bsd_account_expiration.stdout == '2529878400'
+          - bsd_account_expiration.stdout == '2529881062'
   when: ansible_facts.os_family == 'FreeBSD'
 
 - name: Change timezone
@@ -343,16 +386,31 @@
         state: present
         expires: 2529881062
       register: user_test_different_tz
+      tags:
+        - timezone
 
     - name: Ensure that no change was reported
       assert:
         that:
           - user_test_different_tz is not changed
+      tags:
+        - timezone
 
   always:
     - name: Restore original timezone - {{ original_timezone.diff.before.name }}
       timezone:
         name: "{{ original_timezone.diff.before.name }}"
+      when: original_timezone.diff.before.name != "n/a"
+      tags:
+        - timezone
+
+    - name: Restore original timezone when n/a
+      file:
+        path: /etc/sysconfig/clock
+        state: absent
+      when:
+        - original_timezone.diff.before.name == "n/a"
+        - "'/etc/sysconfig/clock' in original_timezone.msg"
       tags:
         - timezone
 
@@ -736,3 +794,85 @@
         password_lock: no
 
   when: ansible_facts['system'] in ['FreeBSD', 'OpenBSD', 'Linux']
+
+
+  ## Check local mode
+  # Even if we don't have a system that is bound to a directory, it's useful
+  # to run with local: true to exercise the code path that reads through the local
+  # user database file.
+  # https://github.com/ansible/ansible/issues/50947
+
+- name: Create /etc/gshadow
+  file:
+    path: /etc/gshadow
+    state: touch
+  when: ansible_facts.os_family == 'Suse'
+  tags:
+    - user_test_local_mode
+
+- name: Create /etc/libuser.conf
+  file:
+    path: /etc/libuser.conf
+    state: touch
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - ansible_facts.distribution_major_version is version_compare('16', '==')
+  tags:
+    - user_test_local_mode
+
+- name: Ensure luseradd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_1
+  tags:
+    - user_test_local_mode
+
+- name: Create local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_2
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_3
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_4
+  tags:
+    - user_test_local_mode
+
+- name: Ensure local user accounts were created
+  assert:
+    that:
+      - local_user_test_1 is changed
+      - local_user_test_2 is not changed
+      - local_user_test_3 is changed
+      - local_user_test_4 is not changed
+  tags:
+    - user_test_local_mode

@@ -1,0 +1,53 @@
+---
+- name: Create two volumes with the same name
+  uri:
+    url: 'https://api.cloudscale.ch/v1/volumes'
+    method: POST
+    headers:
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
+    body:
+      name: '{{ cloudscale_resource_prefix }}-duplicate'
+      size_gb: 50
+    body_format: json
+    status_code: 201
+  register: duplicate
+  with_sequence: count=2
+
+- name: Try access to duplicate name
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-duplicate'
+    size_gb: 10
+  register: vol
+  ignore_errors: True
+- name: 'VERIFY: Try access to duplicate name'
+  assert:
+    that:
+      - vol is failed
+
+- name: Fail volume creation with UUID
+  cloudscale_volume:
+    uuid: ea3b39a3-77a8-4d0b-881d-0bb00a1e7f48
+    size_gb: 10
+  register: vol
+  ignore_errors: True
+- name: 'VERIFY: Fail volume creation with UUID'
+  assert:
+    that:
+      - vol is failed
+
+- name: Create volume
+  cloudscale_volume:
+    name: '{{ cloudscale_resource_prefix }}-name-UUID'
+    size_gb: 50
+  register: vol
+- name: Fail name and UUID
+  cloudscale_volume:
+    name: '{{ vol.name }}'
+    uuid: '{{ vol.uuid }}'
+    size_gb: 100
+  register: vol
+  ignore_errors: True
+- name: 'VERIFY: Fail name and UUID'
+  assert:
+    that:
+      - vol is failed

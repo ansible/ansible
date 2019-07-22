@@ -36,8 +36,14 @@ options:
      - This is required if C(uuid) parameter is not supplied.
    uuid:
      description:
-     - UUID of the instance to manage if known, this is VMware's BIOS UUID.
+     - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) parameter is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    boot_order:
      description:
      - List of the boot devices.
@@ -152,13 +158,17 @@ class VmBootManager(PyVmomi):
         super(VmBootManager, self).__init__(module)
         self.name = self.params['name']
         self.uuid = self.params['uuid']
+        self.use_instance_uuid = self.params['use_instance_uuid']
         self.vm = None
 
     def _get_vm(self):
         vms = []
 
         if self.uuid:
-            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
+            if self.use_instance_uuid:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="instance_uuid")
+            else:
+                vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
             if vm_obj is None:
                 self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
             vms = [vm_obj]
@@ -263,7 +273,7 @@ class VmBootManager(PyVmomi):
             if self.params.get('secure_boot_enabled') and \
                self.params.get('boot_firmware') is None and \
                self.vm.config.firmware == 'bios':
-                    self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
+                self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
 
             kwargs.update({'efiSecureBootEnabled': self.params.get('secure_boot_enabled')})
             change_needed = True
@@ -314,6 +324,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         boot_order=dict(
             type='list',
             default=[],

@@ -55,7 +55,7 @@
 - name: Install 7zip package if we are on Ubuntu
   apt:
     name: p7zip-full
-    state: installed
+    state: present
     update_cache: yes
   become: yes
   when: ansible_distribution in ['Ubuntu']

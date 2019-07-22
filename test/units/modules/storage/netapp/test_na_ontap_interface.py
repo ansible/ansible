@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_interface \
     import NetAppOntapInterface as interface_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
@@ -84,7 +84,8 @@ class MockONTAPConnection(object):
                     'home-port': data['home_port'],
                     'address': data['address'],
                     'netmask': data['netmask'],
-                    'role': data['role']
+                    'role': data['role'],
+                    'protocols': data['protocols'] if data.get('protocols') else None
                 }
             }
         }
@@ -180,6 +181,43 @@ class TestMyModule(unittest.TestCase):
         with pytest.raises(AnsibleExitJson) as exc:
             self.get_interface_mock_object().apply()
         assert exc.value.args[0]['changed']
+
+    def test_successful_create_for_NVMe(self):
+        ''' Test successful create for NVMe protocol'''
+        data = self.mock_args()
+        data['protocols'] = 'fc-nvme'
+        del data['address']
+        del data['netmask']
+        del data['home_port']
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_interface_mock_object().apply()
+        assert exc.value.args[0]['changed']
+
+    def test_create_idempotency_for_NVMe(self):
+        ''' Test create idempotency for NVMe protocol '''
+        data = self.mock_args()
+        data['protocols'] = 'fc-nvme'
+        del data['address']
+        del data['netmask']
+        del data['home_port']
+        set_module_args(data)
+        with pytest.raises(AnsibleExitJson) as exc:
+            self.get_interface_mock_object('interface').apply()
+        assert not exc.value.args[0]['changed']
+
+    def test_create_error_for_NVMe(self):
+        ''' Test if create throws an error if required param 'protocols' uses NVMe'''
+        data = self.mock_args()
+        data['protocols'] = 'fc-nvme'
+        set_module_args(data)
+        with pytest.raises(AnsibleFailJson) as exc:
+            self.get_interface_mock_object('interface').create_interface()
+        msg = 'Error: Following parameters for creating interface are not supported for data-protocol fc-nvme: ' \
+              'netmask, firewall_policy, address'
+        expected = sorted(','.split(msg))
+        received = sorted(','.split(exc.value.args[0]['msg']))
+        assert expected == received
 
     def test_create_idempotency(self):
         ''' Test create idempotency '''

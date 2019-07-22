@@ -196,7 +196,7 @@ def _choose_id_value(module):
 
 
 def _choose_if_password_only(module, patch):
-    if len(patch) is 1:
+    if len(patch) == 1:
         if 'password' in patch[0]['path'] and module.params['skip_update_of_masked_password']:
             # Return false to abort update as the password appears
             # to be the only element in the patch.

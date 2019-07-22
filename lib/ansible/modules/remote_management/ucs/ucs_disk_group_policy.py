@@ -334,19 +334,19 @@ def _configure_virtual_drive(module, mo):
 
 def _virtual_drive_argument_spec():
     return dict(
-        access_policy=dict(type=str, default='platform-default',
+        access_policy=dict(type='str', default='platform-default',
                            choices=["blocked", "hidden", "platform-default", "read-only", "read-write",
                                     "transport-ready"]),
-        drive_cache=dict(type=str, default='platform-default',
+        drive_cache=dict(type='str', default='platform-default',
                          choices=["disable", "enable", "no-change", "platform-default"]),
-        io_policy=dict(type=str, default='platform-default',
+        io_policy=dict(type='str', default='platform-default',
                        choices=["cached", "direct", "platform-default"]),
-        read_policy=dict(type=str, default='platform-default',
+        read_policy=dict(type='str', default='platform-default',
                          choices=["normal", "platform-default", "read-ahead"]),
-        strip_size=dict(type=str, default='platform-default',
+        strip_size=dict(type='str', default='platform-default',
                         choices=["1024KB", "128KB", "16KB", "256KB", "32KB", "512KB", "64KB", "8KB",
                                  "platform-default"]),
-        write_cache_policy=dict(type=str, default='platform-default',
+        write_cache_policy=dict(type='str', default='platform-default',
                                 choices=["always-write-back", "platform-default", "write-back-good-bbu",
                                          "write-through"]),
     )
@@ -387,7 +387,7 @@ def main():
         min_drive_size=dict(type='str', default='unspecified'),
         manual_disks=dict(type='list', elements='dict', options=manual_disk),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        virtual_drive=dict(type='dict', elements='dict', options=_virtual_drive_argument_spec()),
+        virtual_drive=dict(type='dict', options=_virtual_drive_argument_spec()),
     )
     module = AnsibleModule(
         argument_spec,

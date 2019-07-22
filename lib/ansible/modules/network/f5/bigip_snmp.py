@@ -29,16 +29,19 @@ options:
         to the system's default of C(127.0.0.0/8).
       - You can remove all allowed addresses by either providing the word C(none), or
         by providing the empty string C("").
+    type: raw
     version_added: 2.6
   contact:
     description:
       - Specifies the name of the person who administers the SNMP
         service for this system.
+    type: str
   agent_status_traps:
     description:
       - When C(enabled), ensures that the system sends a trap whenever the
         SNMP agent starts running or stops running. This is usually enabled
         by default on a BIG-IP.
+    type: str
     choices:
       - enabled
       - disabled
@@ -47,6 +50,7 @@ options:
       - When C(enabled), ensures that the system sends authentication warning
         traps to the trap destinations. This is usually disabled by default on
         a BIG-IP.
+    type: str
     choices:
       - enabled
       - disabled
@@ -55,12 +59,14 @@ options:
       - When C(enabled), ensures that the system sends device warning traps
         to the trap destinations. This is usually enabled by default on a
         BIG-IP.
+    type: str
     choices:
       - enabled
       - disabled
   location:
     description:
       - Specifies the description of this system's physical location.
+    type: str
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -127,22 +133,16 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.compat.ipaddress import ip_network
     from library.module_utils.network.f5.common import is_valid_hostname
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.compat.ipaddress import ip_network
     from ansible.module_utils.network.f5.common import is_valid_hostname
 
@@ -287,7 +287,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.have = ApiParameters()
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
@@ -413,16 +413,12 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

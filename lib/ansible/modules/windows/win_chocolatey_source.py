@@ -60,7 +60,8 @@ options:
   source:
     description:
     - The file/folder/url of the source.
-    - Required when I(state) is C(present) or C(disabled).
+    - Required when I(state) is C(present) or C(disabled) and the source does
+      not already exist.
   source_username:
     description:
     - The username used to access I(source).

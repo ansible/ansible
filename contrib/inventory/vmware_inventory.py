@@ -39,8 +39,9 @@ import uuid
 from time import time
 
 from jinja2 import Environment
-from six import integer_types, PY3
-from six.moves import configparser
+
+from ansible.module_utils.six import integer_types, PY3
+from ansible.module_utils.six.moves import configparser
 
 try:
     import argparse
@@ -614,7 +615,14 @@ class VMWareInventory(object):
                         lastref = lastref[x]
                     else:
                         lastref[x] = val
-
+        if self.args.debug:
+            self.debugl("For %s" % vm.name)
+            for key in list(rdata.keys()):
+                if isinstance(rdata[key], dict):
+                    for ikey in list(rdata[key].keys()):
+                        self.debugl("Property '%s.%s' has value '%s'" % (key, ikey, rdata[key][ikey]))
+                else:
+                    self.debugl("Property '%s' has value '%s'" % (key, rdata[key]))
         return rdata
 
     def facts_from_vobj(self, vobj, level=0):

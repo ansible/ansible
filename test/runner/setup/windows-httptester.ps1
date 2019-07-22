@@ -9,13 +9,14 @@ Run this with SSH with the -R arguments to foward ports 8080 and 8443 to the
 httptester container.
 
 .PARAMETER Hosts
-A list of hostnames to add to the Windows hosts file for the httptester
-container.
+A list of hostnames, delimited by '|', to add to the Windows hosts file for the
+httptester container, e.g. 'ansible.host.com|secondary.host.test'.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true, Position=0)][String[]]$Hosts
+    [Parameter(Mandatory=$true, Position=0)][String]$Hosts
 )
+$Hosts = $Hosts.Split('|')
 
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
@@ -112,7 +113,7 @@ if ($os_version -ge [Version]"6.2") {
     # versions of Windows. Use custom application Port Mapper to acheive the
     # same outcome
     # http://www.analogx.com/contents/download/Network/pmapper/Freeware.htm
-    $s3_url = "https://s3.amazonaws.com/ansible-ci-files/ansible-test/pmapper-1.04.exe"
+    $s3_url = "https://ansible-ci-files.s3.amazonaws.com/ansible-test/pmapper-1.04.exe"
 
     # download the Port Mapper executable to a temporary directory
     $pmapper_folder = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())

@@ -48,6 +48,12 @@ options:
      description:
      - UUID of the virtual machine to manage if known. This is VMware's unique identifier.
      - This is required parameter, if C(name) is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    folder:
      description:
      - Absolute path to find an existing guest.
@@ -133,7 +139,6 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 class VmAttributeManager(PyVmomi):
     def __init__(self, module):
         super(VmAttributeManager, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def set_custom_field(self, vm, user_fields):
         result_fields = dict()
@@ -180,6 +185,7 @@ def main():
         name=dict(required=True, type='str'),
         folder=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         state=dict(type='str', default='present',
                    choices=['absent', 'present']),
         attributes=dict(

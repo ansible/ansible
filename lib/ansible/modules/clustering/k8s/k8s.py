@@ -30,7 +30,7 @@ description:
   - Pass the object definition from a source file or inline. See examples for reading
     files and using Jinja templates or vault-encrypted files.
   - Access to the full range of K8s APIs.
-  - Use the M(k8s_facts) module to obtain a list of items about an object of type C(kind)
+  - Use the M(k8s_info) module to obtain a list of items about an object of type C(kind)
   - Authenticate using either a config file, certificates, password or token.
   - Supports check mode.
 
@@ -64,7 +64,7 @@ options:
     - Whether to wait for certain resource kinds to end up in the desired state. By default the module exits once Kubernetes has
       received the request
     - Implemented for C(state=present) for C(Deployment), C(DaemonSet) and C(Pod), and for C(state=absent) for all resource kinds.
-    - For resource kinds without an implementation, C(wait) returns immediately.
+    - For resource kinds without an implementation, C(wait) returns immediately unless C(wait_condition) is set.
     default: no
     type: bool
     version_added: "2.8"
@@ -72,6 +72,31 @@ options:
     description:
     - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
     default: 120
+    version_added: "2.8"
+  wait_condition:
+    description:
+    - Specifies a custom condition on the status to wait for. Ignored if C(wait) is not set or is set to False.
+    suboptions:
+      type:
+        description:
+        - The type of condition to wait for. For example, the C(Pod) resource will set the C(Ready) condition (among others)
+        - Required if you are specifying a C(wait_condition). If left empty, the C(wait_condition) field will be ignored.
+        - The possible types for a condition are specific to each resource type in Kubernetes. See the API documentation of the status field
+          for a given resource to see possible choices.
+      status:
+        description:
+        - The value of the status field in your desired condition.
+        - For example, if a C(Deployment) is paused, the C(Progressing) C(type) will have the C(Unknown) status.
+        choices:
+        - True
+        - False
+        - Unknown
+      reason:
+        description:
+        - The value of the reason field in your desired condition
+        - For example, if a C(Deployment) is paused, The C(Progressing) c(type) will have the C(DeploymentPaused) reason.
+        - The possible reasons in a condition are specific to each resource type in Kubernetes. See the API documentation of the status field
+          for a given resource to see possible choices.
     version_added: "2.8"
   validate:
     description:

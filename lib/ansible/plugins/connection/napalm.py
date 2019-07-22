@@ -66,6 +66,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
+      - name: ansible_ssh_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -112,6 +113,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -119,7 +122,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -153,10 +156,8 @@ class Connection(NetworkConnectionBase):
 
     def _connect(self):
         if not HAS_NAPALM:
-            raise AnsibleError(
-                'Napalm is required to use the napalm connection type.\n'
-                'Please run pip install napalm'
-            )
+            raise AnsibleError('The "napalm" python library is required to use the napalm connection type.\n')
+
         super(Connection, self)._connect()
 
         if not self.connected:

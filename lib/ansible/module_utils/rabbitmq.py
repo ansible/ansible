@@ -8,32 +8,34 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import missing_required_lib
 from mimetypes import MimeTypes
 
-import json
 import os
+import traceback
 
+PIKA_IMP_ERR = None
 try:
     import pika
     from pika import spec
     HAS_PIKA = True
 except ImportError:
+    PIKA_IMP_ERR = traceback.format_exc()
     HAS_PIKA = False
 
 
 def rabbitmq_argument_spec():
     return dict(
-        login_user=dict(default='guest', type='str'),
-        login_password=dict(default='guest', type='str', no_log=True),
-        login_host=dict(default='localhost', type='str'),
-        login_port=dict(default='15672', type='str'),
-        login_protocol=dict(default='http', choices=['http', 'https'], type='str'),
-        cacert=dict(required=False, type='path', default=None),
-        cert=dict(required=False, type='path', default=None),
-        key=dict(required=False, type='path', default=None),
-        vhost=dict(default='/', type='str'),
+        login_user=dict(type='str', default='guest'),
+        login_password=dict(type='str', default='guest', no_log=True),
+        login_host=dict(type='str', default='localhost'),
+        login_port=dict(type='str', default='15672'),
+        login_protocol=dict(type='str', default='http', choices=['http', 'https']),
+        ca_cert=dict(type='path', aliases=['cacert']),
+        client_cert=dict(type='path', aliases=['cert']),
+        client_key=dict(type='path', aliases=['key']),
+        vhost=dict(type='str', default='/'),
     )
 
 
@@ -61,7 +63,7 @@ class RabbitClient():
 
     def check_required_library(self):
         if not HAS_PIKA:
-            self.module.fail_json(msg="Unable to find 'pika' Python library which is required.")
+            self.module.fail_json(msg=missing_required_lib("pika"), exception=PIKA_IMP_ERR)
 
     def check_host_params(self):
         # Fail if url is specified and other conflicting parameters have been specified
@@ -75,24 +77,23 @@ class RabbitClient():
     @staticmethod
     def rabbitmq_argument_spec():
         return dict(
-            url=dict(default=None, type='str'),
-            proto=dict(default=None, type='str', choices=['amqps', 'amqp']),
-            host=dict(default=None, type='str'),
-            port=dict(default=None, type='int'),
-            username=dict(default=None, type='str'),
-            password=dict(default=None, type='str', no_log=True),
-            vhost=dict(default=None, type='str'),
-            queue=dict(default=None, type='str')
+            url=dict(type='str'),
+            proto=dict(type='str', choices=['amqp', 'amqps']),
+            host=dict(type='str'),
+            port=dict(type='int'),
+            username=dict(type='str'),
+            password=dict(type='str', no_log=True),
+            vhost=dict(type='str'),
+            queue=dict(type='str')
         )
 
     ''' Consider some file size limits here '''
     def _read_file(self, path):
         try:
-            fh = open(path, "rb").read()
+            with open(path, "rb") as file_handle:
+                return file_handle.read()
         except IOError as e:
             self.module.fail_json(msg="Unable to open file %s: %s" % (path, to_native(e)))
-
-        return fh
 
     @staticmethod
     def _check_file_mime_type(path):

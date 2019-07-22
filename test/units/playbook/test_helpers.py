@@ -43,6 +43,8 @@ class MixinForMocks(object):
         self.mock_tqm = MagicMock(name='MockTaskQueueManager')
 
         self.mock_play = MagicMock(name='MockPlay')
+        self.mock_play._attributes = []
+        self.mock_play.collections = None
 
         self.mock_iterator = MagicMock(name='MockIterator')
         self.mock_iterator._play = self.mock_play
@@ -94,6 +96,11 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_ds_not_list(self):
         ds = {}
+        self.assertRaises(AssertionError, helpers.load_list_of_tasks,
+                          ds, self.mock_play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
+
+    def test_ds_not_dict(self):
+        ds = [[]]
         self.assertRaises(AssertionError, helpers.load_list_of_tasks,
                           ds, self.mock_play, block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
 

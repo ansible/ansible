@@ -1,0 +1,113 @@
+---
+- name: Create server group in check mode
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp'
+  register: grp
+  check_mode: yes
+- name: 'VERIFY: Create server group in check mode'
+  assert:
+    that:
+      - grp is changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp'
+      - not grp.uuid
+
+- name: Create server group
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp'
+  register: grp
+- name: 'VERIFY: Create server group'
+  assert:
+    that:
+      - grp is changed
+      - grp.type == 'anti-affinity'
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp'
+      - grp.uuid
+
+- name: Remember uuid
+  set_fact:
+    server_group_uuid: '{{ grp.uuid }}'
+
+- name: Create server group idempotence
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp'
+  register: grp
+- name: 'VERIFY: Create server group idempotence'
+  assert:
+    that:
+      - grp is not changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp'
+      - grp.uuid == server_group_uuid
+
+- name: Update server group in check mode
+  cloudscale_server_group:
+    uuid: '{{ server_group_uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-grp2'
+  register: grp
+  check_mode: yes
+- name: 'VERIFY: Update server group in check mode'
+  assert:
+    that:
+      - grp is changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp'
+      - grp.uuid == server_group_uuid
+
+- name: Update server group
+  cloudscale_server_group:
+    uuid: '{{ server_group_uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-grp2'
+  register: grp
+- name: 'VERIFY: Update server group'
+  assert:
+    that:
+      - grp is changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
+      - grp.uuid == server_group_uuid
+
+- name: Update server group idempotence
+  cloudscale_server_group:
+    uuid: '{{ server_group_uuid }}'
+    name: '{{ cloudscale_resource_prefix }}-grp2'
+  register: grp
+- name: 'VERIFY: Update server group idempotence'
+  assert:
+    that:
+      - grp is not changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
+      - grp.uuid == server_group_uuid
+
+- name: Delete server group in check mode
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp2'
+    state: absent
+  register: grp
+  check_mode: yes
+- name: 'VERIFY: Delete server group in check mode'
+  assert:
+    that:
+      - grp is changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
+      - grp.uuid == server_group_uuid
+
+- name: Delete server group
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp2'
+    state: absent
+  register: grp
+- name: 'VERIFY: Delete server group'
+  assert:
+    that:
+      - grp is changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
+      - grp.uuid == server_group_uuid
+
+- name: Delete server group idempotence
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-grp2'
+    state: absent
+  register: grp
+- name: 'VERIFY: Delete server group idempotence'
+  assert:
+    that:
+      - grp is not changed
+      - grp.name == '{{ cloudscale_resource_prefix }}-grp2'
+      - not grp.uuid

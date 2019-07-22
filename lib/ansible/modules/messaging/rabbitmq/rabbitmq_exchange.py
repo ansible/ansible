@@ -81,14 +81,17 @@ EXAMPLES = '''
 '''
 
 import json
+import traceback
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
 
@@ -118,13 +121,13 @@ def main():
     )
 
     if not HAS_REQUESTS:
-        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
+        module.fail_json(msg=missing_required_lib("requests"), exception=REQUESTS_IMP_ERR)
 
     result = dict(changed=False, name=module.params['name'])
 
     # Check if exchange already exists
     r = requests.get(url, auth=(module.params['login_user'], module.params['login_password']),
-                     verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
+                     verify=module.params['ca_cert'], cert=(module.params['client_cert'], module.params['client_key']))
 
     if r.status_code == 200:
         exchange_exists = True
@@ -176,12 +179,12 @@ def main():
                     "type": module.params['exchange_type'],
                     "arguments": module.params['arguments']
                 }),
-                verify=module.params['cacert'],
-                cert=(module.params['cert'], module.params['key'])
+                verify=module.params['ca_cert'],
+                cert=(module.params['client_cert'], module.params['client_key'])
             )
         elif module.params['state'] == 'absent':
             r = requests.delete(url, auth=(module.params['login_user'], module.params['login_password']),
-                                verify=module.params['cacert'], cert=(module.params['cert'], module.params['key']))
+                                verify=module.params['ca_cert'], cert=(module.params['client_cert'], module.params['client_key']))
 
         # RabbitMQ 3.6.7 changed this response code from 204 to 201
         if r.status_code == 204 or r.status_code == 201:

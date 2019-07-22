@@ -18,43 +18,54 @@ module: cs_vpn_connection
 short_description: Manages site-to-site VPN connections on Apache CloudStack based clouds.
 description:
     - Create and remove VPN connections.
-version_added: "2.5"
-author: "René Moser (@resmo)"
+version_added: '2.5'
+author: René Moser (@resmo)
 options:
   vpc:
     description:
       - Name of the VPC the VPN connection is related to.
+    type: str
     required: true
   vpn_customer_gateway:
     description:
       - Name of the VPN customer gateway.
+    type: str
     required: true
   passive:
     description:
       - State of the VPN connection.
-      - Only considered when C(state=present).
+      - Only considered when I(state=present).
     default: no
     type: bool
   force:
     description:
-      - Activate the VPN gateway if not already activated on C(state=present).
+      - Activate the VPN gateway if not already activated on I(state=present).
       - Also see M(cs_vpn_gateway).
     default: no
     type: bool
   state:
     description:
       - State of the VPN connection.
+    type: str
     default: present
     choices: [ present, absent ]
+  zone:
+    description:
+      - Name of the zone the VPC is related to.
+      - If not set, default zone is used.
+    type: str
   domain:
     description:
       - Domain the VPN connection is related to.
+    type: str
   account:
     description:
       - Account the VPN connection is related to.
+    type: str
   project:
     description:
       - Name of the project the VPN connection is related to.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -65,24 +76,24 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = r'''
 - name: Create a VPN connection with activated VPN gateway
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my vpn connection
     vpc: my vpc
+  delegate_to: localhost
 
 - name: Create a VPN connection and force VPN gateway activation
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my vpn connection
     vpc: my vpc
     force: yes
+  delegate_to: localhost
 
 - name: Remove a vpn connection
-  local_action:
-    module: cs_vpn_connection
+  cs_vpn_connection:
     vpn_customer_gateway: my vpn connection
     vpc: my vpc
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''

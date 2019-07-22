@@ -44,7 +44,9 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
-        configured, then the default netconf plugin will be used.
+        configured (or set to C(auto)), then Ansible will attempt to guess the
+        correct network_os to use.
+        If it can not guess a network_os correctly it will use C(default).
     vars:
       - name: ansible_network_os
   remote_user:
@@ -67,6 +69,8 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
+      - name: ansible_ssh_password
+      - name: ansible_netconf_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -86,20 +90,6 @@ options:
         awaiting a response after issuing a call to a RPC.  If the RPC
         does not return in timeout seconds, an error is generated.
     default: 120
-  host_key_auto_add:
-    type: boolean
-    description:
-      - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file. By enabling this option, unknown host keys will
-        automatically be added to the known hosts file.
-      - Be sure to fully understand the security implications of enabling this
-        option on production systems as it could create a security vulnerability.
-    default: False
-    ini:
-      - section: paramiko_connection
-        key: host_key_auto_add
-    env:
-      - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
     description:
@@ -140,6 +130,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -147,7 +139,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -204,8 +196,10 @@ try:
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml
     HAS_NCCLIENT = True
-except ImportError:
+    NCCLIENT_IMP_ERR = None
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
     HAS_NCCLIENT = False
+    NCCLIENT_IMP_ERR = err
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
@@ -227,7 +221,9 @@ class Connection(NetworkConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self._network_os = self._network_os or 'default'
+        # If network_os is not specified then set the network os to auto
+        # This will be used to trigger the the use of guess_network_os when connecting.
+        self._network_os = self._network_os or 'auto'
 
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
@@ -241,6 +237,7 @@ class Connection(NetworkConnectionBase):
 
         self._manager = None
         self.key_filename = None
+        self._ssh_config = None
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -268,8 +265,8 @@ class Connection(NetworkConnectionBase):
     def _connect(self):
         if not HAS_NCCLIENT:
             raise AnsibleError(
-                'ncclient is required to use the netconf connection type.\n'
-                'Please run pip install ncclient'
+                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
+                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
             )
 
         self.queue_message('log', 'ssh connection done, starting ncclient')
@@ -283,25 +280,34 @@ class Connection(NetworkConnectionBase):
         if self.key_filename:
             self.key_filename = str(os.path.expanduser(self.key_filename))
 
-        if self._network_os == 'default':
+        self._ssh_config = self.get_option('netconf_ssh_config')
+        if self._ssh_config in BOOLEANS_TRUE:
+            self._ssh_config = True
+        elif self._ssh_config in BOOLEANS_FALSE:
+            self._ssh_config = None
+
+        # Try to guess the network_os if the network_os is set to auto
+        if self._network_os == 'auto':
             for cls in netconf_loader.all(class_only=True):
                 network_os = cls.guess_network_os(self)
                 if network_os:
-                    self.queue_message('log', 'discovered network_os %s' % network_os)
+                    self.queue_message('vvv', 'discovered network_os %s' % network_os)
                     self._network_os = network_os
+
+        # If we have tried to detect the network_os but were unable to i.e. network_os is still 'auto'
+        # then use default as the network_os
+
+        if self._network_os == 'auto':
+            # Network os not discovered. Set it to default
+            self.queue_message('vvv', 'Unable to discover network_os. Falling back to default.')
+            self._network_os = 'default'
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
 
-        ssh_config = self.get_option('netconf_ssh_config')
-        if ssh_config in BOOLEANS_TRUE:
-            ssh_config = True
-        elif ssh_config in BOOLEANS_FALSE:
-            ssh_config = None
-
         try:
             port = self._play_context.port or 830
-            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s" %
-                               (self._play_context.remote_user, port, self._play_context.remote_addr))
+            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s WITH SSH_CONFIG = %s" %
+                               (self._play_context.remote_user, port, self._play_context.remote_addr, self._ssh_config))
             self._manager = manager.connect(
                 host=self._play_context.remote_addr,
                 port=port,
@@ -312,8 +318,8 @@ class Connection(NetworkConnectionBase):
                 look_for_keys=self.get_option('look_for_keys'),
                 device_params=device_params,
                 allow_agent=self._play_context.allow_agent,
-                timeout=self._play_context.timeout,
-                ssh_config=ssh_config
+                timeout=self.get_option('persistent_connect_timeout'),
+                ssh_config=self._ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))

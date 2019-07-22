@@ -223,28 +223,31 @@ def _system_state_change(module, subnet, cloud, filters=None):
 def main():
     ipv6_mode_choices = ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
     argument_spec = openstack_full_argument_spec(
-        name=dict(required=True),
-        network_name=dict(default=None),
-        cidr=dict(default=None),
-        ip_version=dict(default='4', choices=['4', '6']),
-        enable_dhcp=dict(default='true', type='bool'),
-        gateway_ip=dict(default=None),
-        no_gateway_ip=dict(default=False, type='bool'),
-        dns_nameservers=dict(default=None, type='list'),
-        allocation_pool_start=dict(default=None),
-        allocation_pool_end=dict(default=None),
-        host_routes=dict(default=None, type='list'),
-        ipv6_ra_mode=dict(default=None, choice=ipv6_mode_choices),
-        ipv6_address_mode=dict(default=None, choice=ipv6_mode_choices),
-        use_default_subnetpool=dict(default=False, type='bool'),
-        extra_specs=dict(required=False, default=dict(), type='dict'),
-        state=dict(default='present', choices=['absent', 'present']),
-        project=dict(default=None)
+        name=dict(type='str', required=True),
+        network_name=dict(type='str'),
+        cidr=dict(type='str'),
+        ip_version=dict(type='str', default='4', choices=['4', '6']),
+        enable_dhcp=dict(type='bool', default=True),
+        gateway_ip=dict(type='str'),
+        no_gateway_ip=dict(type='bool', default=False),
+        dns_nameservers=dict(type='list', default=None),
+        allocation_pool_start=dict(type='str'),
+        allocation_pool_end=dict(type='str'),
+        host_routes=dict(type='list', default=None),
+        ipv6_ra_mode=dict(type='str', choice=ipv6_mode_choices),
+        ipv6_address_mode=dict(type='str', choice=ipv6_mode_choices),
+        use_default_subnetpool=dict(type='bool', default=False),
+        extra_specs=dict(type='dict', default=dict()),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        project=dict(type='str'),
     )
 
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
+                           required_together=[
+                               ['allocation_pool_end', 'allocation_pool_start'],
+                           ],
                            **module_kwargs)
 
     state = module.params['state']
@@ -275,8 +278,6 @@ def main():
 
     if pool_start and pool_end:
         pool = [dict(start=pool_start, end=pool_end)]
-    elif pool_start or pool_end:
-        module.fail_json(msg='allocation pool requires start and end values')
     else:
         pool = None
 

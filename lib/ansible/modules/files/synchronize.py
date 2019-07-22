@@ -12,152 +12,172 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: synchronize
 version_added: "1.4"
-short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy.
+short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy
 description:
-    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy. It is run and originates on the local host where
-      Ansible is being run. Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
-      boilerplate options and host facts. C(synchronize) is not intended to provide access to the full power of rsync, but does make the most common
+    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy.
+    - It is run and originates on the local host where Ansible is being run.
+    - Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
+      boilerplate options and host facts.
+    - This module is not intended to provide access to the full power of rsync, but does make the most common
       invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
 options:
   src:
     description:
-      - Path on the source host that will be synchronized to the destination; The path can be absolute or relative.
+      - Path on the source host that will be synchronized to the destination.
+      - The path can be absolute or relative.
+    type: str
     required: true
   dest:
     description:
-      - Path on the destination host that will be synchronized from the source; The path can be absolute or relative.
+      - Path on the destination host that will be synchronized from the source.
+      - The path can be absolute or relative.
+    type: str
     required: true
   dest_port:
     description:
-      - Port number for ssh on the destination host. Prior to ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
-    default: Value of ansible_ssh_port for this host, remote_port config setting, or the value from ssh client configuration if none of those are set
+      - Port number for ssh on the destination host.
+      - Prior to Ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
+      - This parameter defaults to the value of C(ansible_ssh_port) or C(ansible_port),
+        the C(remote_port) config setting or the value from ssh client configuration
+        if none of the former have been set.
+    type: int
     version_added: "1.5"
   mode:
     description:
-      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context
-        is the source.
+      - Specify the direction of the synchronization.
+      - In push mode the localhost or delegate is the source.
+      - In pull mode the remote host in context is the source.
+    type: str
     choices: [ pull, push ]
     default: push
   archive:
     description:
       - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
     type: bool
-    default: 'yes'
+    default: yes
   checksum:
     description:
       - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
         not disable it.
     type: bool
-    default: 'no'
+    default: no
     version_added: "1.6"
   compress:
     description:
-      - Compress file data during the transfer. In most cases, leave this enabled unless it causes problems.
+      - Compress file data during the transfer.
+      - In most cases, leave this enabled unless it causes problems.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "1.7"
   existing_only:
     description:
       - Skip creating new files on receiver.
     type: bool
-    default: 'no'
+    default: no
     version_added: "1.5"
   delete:
     description:
-      - Delete files in C(dest) that don't exist (after transfer, not before) in the C(src) path. This option requires C(recursive=yes).
+      - Delete files in C(dest) that don't exist (after transfer, not before) in the C(src) path.
+      - This option requires C(recursive=yes).
     type: bool
-    default: 'no'
+    default: no
   dirs:
     description:
-      - Transfer directories without recursing
+      - Transfer directories without recursing.
     type: bool
-    default: 'no'
+    default: no
   recursive:
     description:
       - Recurse into directories.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   links:
     description:
       - Copy symlinks as symlinks.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   copy_links:
     description:
       - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
     type: bool
-    default: 'no'
+    default: no
   perms:
     description:
       - Preserve permissions.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   times:
     description:
-      - Preserve modification times
+      - Preserve modification times.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   owner:
     description:
-      - Preserve owner (super user only)
+      - Preserve owner (super user only).
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   group:
     description:
-      - Preserve group
+      - Preserve group.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   rsync_path:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
       - To specify the rsync command to run on the local host, you need to set this your task var C(ansible_rsync_path).
+    type: str
   rsync_timeout:
     description:
       - Specify a C(--timeout) for the rsync command in seconds.
+    type: int
     default: 0
   set_remote_user:
     description:
-      - put user@ for the remote paths. If you have a custom ssh config to define the remote user for a host
-        that does not match the inventory user, you should set this parameter to "no".
+      - Put user@ for the remote paths.
+      - If you have a custom ssh config to define the remote user for a host
+        that does not match the inventory user, you should set this parameter to C(no).
+    type: bool
     default: yes
   use_ssh_args:
     description:
-      - Use the ssh_args specified in ansible.cfg
+      - Use the ssh_args specified in ansible.cfg.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   rsync_opts:
     description:
-      - Specify additional rsync options by passing in an array.  Note that an empty string in
-        C(rsync_opts) will end up transfer the current working directory.
+      - Specify additional rsync options by passing in an array.
+      - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
+    type: list
     default:
     version_added: "1.6"
   partial:
     description:
       - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   verify_host:
     description:
       - Verify destination host key.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   private_key:
     description:
-      - Specify the private key to use for SSH-based rsync connections (e.g. C(~/.ssh/id_rsa))
+      - Specify the private key to use for SSH-based rsync connections (e.g. C(~/.ssh/id_rsa)).
+    type: path
     version_added: "1.6"
   link_dest:
     description:
-      - add a destination to hard link against during the rsync.
+      - Add a destination to hard link against during the rsync.
+    type: list
     default:
     version_added: "2.5"
-
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
@@ -168,19 +188,16 @@ notes:
      The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a
      delegate_to host when delegate_to is used).
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
-   - In 2.0.0.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in 2.0.1.
+   - In Ansible 2.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in Ansible 2.0.1.
    - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
      and rsync doesn't give us a way to pass sudo credentials in.
    - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
      determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
      rsync does not provide us a way to pass a password to the connection.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
-   - Inspect the verbose output to validate the destination user/host/path
-     are what was expected.
-   - To exclude files and directories from being synchronized, you may add
-     C(.rsync-filter) files to the source directory.
-   - rsync daemon must be up and running with correct permission when using
-     rsync protocol in source or destination path.
+   - Inspect the verbose output to validate the destination user/host/path are what was expected.
+   - To exclude files and directories from being synchronized, you may add C(.rsync-filter) files to the source directory.
+   - rsync daemon must be up and running with correct permission when using rsync protocol in source or destination path.
    - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
    - link_destination is subject to the same limitations as the underlaying rsync daemon. Hard links are only preserved if the relative subtrees
@@ -284,7 +301,7 @@ EXAMPLES = '''
   synchronize:
     src: some/relative/path
     dest: /some/absolute/path
-    rsync_path: "su -c rsync"
+    rsync_path: su -c rsync
 
 # Example .rsync-filter file in the source directory
 # - var       # exclude any path whose last part is 'var'
@@ -309,15 +326,14 @@ EXAMPLES = '''
 # Specify the rsync binary to use on remote host and on local host
 - hosts: groupofhosts
   vars:
-        ansible_rsync_path: "/usr/gnu/bin/rsync"
+        ansible_rsync_path: /usr/gnu/bin/rsync
 
   tasks:
     - name: copy /tmp/localpath/ to remote location /tmp/remotepath
       synchronize:
-        src: "/tmp/localpath/"
-        dest: "/tmp/remotepath"
-        rsync_path: "/usr/gnu/bin/rsync"
-
+        src: /tmp/localpath/
+        dest: /tmp/remotepath
+        rsync_path: /usr/gnu/bin/rsync
 '''
 
 
@@ -370,7 +386,7 @@ def main():
             private_key=dict(type='path'),
             rsync_path=dict(type='str'),
             _local_rsync_path=dict(type='path', default='rsync'),
-            _local_rsync_password=dict(default=None, no_log=True),
+            _local_rsync_password=dict(type='str', no_log=True),
             _substitute_controller=dict(type='bool', default=False),
             archive=dict(type='bool', default=True),
             checksum=dict(type='bool', default=False),

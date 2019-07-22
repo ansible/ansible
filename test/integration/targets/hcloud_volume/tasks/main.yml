@@ -1,0 +1,186 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup server
+  hcloud_server:
+    name: "{{hcloud_server_name}}"
+    server_type: cx11
+    image: ubuntu-18.04
+    state: started
+    location: "fsn1"
+  register: vol_server
+- name: verify setup server
+  assert:
+    that:
+      - vol_server is changed
+
+- name: test missing size parameter on create Volume
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    server: "{{hcloud_server_name}}"
+  register: result
+  ignore_errors: yes
+- name: verify fail test missing size parameter on create Volume
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: size"'
+
+- name: test create volume with check mode
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+    location: "fsn1"
+  register: result
+  check_mode: yes
+- name: verify create volume with check mode result
+  assert:
+    that:
+      - result is changed
+
+- name: test create volume
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+    location: "fsn1"
+  register: volume
+- name: verify test create volume
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.name == "{{hcloud_volume_name}}"
+      - volume.hcloud_volume.location == "fsn1"
+      - volume.hcloud_volume.size == 10
+      - volume.hcloud_volume.server != "{{hcloud_server_name}}"
+
+- name: test create volume idempotence
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+    location: "fsn1"
+  register: volume
+- name: verify test create volume
+  assert:
+    that:
+      - volume is not changed
+
+- name: test attach volume with checkmode
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    server: "{{hcloud_server_name}}"
+  check_mode: yes
+  register: volume
+- name: verify test attach volume with checkmode
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.server != "{{hcloud_server_name}}"
+
+- name: test attach volume
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    server: "{{hcloud_server_name}}"
+  register: volume
+- name: verify attach volume
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.server == "{{hcloud_server_name}}"
+
+- name: test attach volume idempotence
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    server: "{{hcloud_server_name}}"
+  register: volume
+- name: verify attach volume idempotence
+  assert:
+    that:
+      - volume is not changed
+      - volume.hcloud_volume.server == "{{hcloud_server_name}}"
+
+- name: test detach volume with checkmode
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+  check_mode: yes
+  register: volume
+- name: verify detach volume with checkmode
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.server == "{{hcloud_server_name}}"
+
+- name: test detach volume
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+  register: volume
+- name: verify detach volume
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.location == "fsn1"
+      - volume.hcloud_volume.server != "{{hcloud_server_name}}"
+
+- name: test update volume label
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    labels:
+      key: value
+  register: volume
+- name: verify test update volume lable
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.labels.key == "value"
+
+- name: test update volume label with the same label
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    labels:
+      key: value
+  register: volume
+- name: verify test update volume lable with the same label
+  assert:
+    that:
+      - volume is not changed
+
+- name: test increase volume size
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 11
+  register: volume
+- name: verify test increase volume size
+  assert:
+    that:
+      - volume is changed
+      - volume.hcloud_volume.size == 11
+
+- name: test decreace volume size
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    size: 10
+  register: volume
+- name: verify test decreace volume size
+  assert:
+    that:
+      - volume is not changed
+      - volume.hcloud_volume.size == 11
+
+- name: test delete volume
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    state: absent
+  register: result
+- name: verify delete volume
+  assert:
+    that:
+      - result is success
+
+- name: cleanup
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+    - result is success

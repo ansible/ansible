@@ -1,0 +1,369 @@
+---
+
+- name: Registering container name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-configs' }}"
+    config_name_1: "{{ name_prefix ~ '-configs-1' }}"
+    config_name_2: "{{ name_prefix ~ '-configs-2' }}"
+
+- name: Registering container name
+  set_fact:
+    config_names: "{{ config_names + [config_name_1, config_name_2] }}"
+
+- docker_config:
+    name: "{{ config_name_1 }}"
+    data: "hello"
+    state: present
+  register: "config_result_1"
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
+
+- docker_config:
+    name: "{{ config_name_2 }}"
+    data: "test"
+    state: present
+  register: "config_result_2"
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
+
+####################################################################
+## configs #########################################################
+####################################################################
+
+- name: configs
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+  register: configs_1
+  ignore_errors: yes
+
+- name: configs (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+  register: configs_2
+  ignore_errors: yes
+
+- name: configs (add)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+      - config_id: "{{ config_result_2.config_id|default('') }}"
+        config_name: "{{ config_name_2 }}"
+        filename: "/tmp/{{ config_name_2 }}.txt"
+  register: configs_3
+  ignore_errors: yes
+
+- name: configs (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs: []
+  register: configs_4
+  ignore_errors: yes
+
+- name: configs (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs: []
+  register: configs_5
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - configs_1 is changed
+    - configs_2 is not changed
+    - configs_3 is changed
+    - configs_4 is changed
+    - configs_5 is not changed
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
+
+- assert:
+    that:
+    - configs_1 is failed
+    - "'Minimum version required' in configs_1.msg"
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## configs (uid) ###################################################
+####################################################################
+
+- name: configs (uid int)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        uid: 1000        
+  register: configs_1
+  ignore_errors: yes
+  
+- name: configs (uid int idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        uid: 1000        
+  register: configs_2
+  ignore_errors: yes
+
+- name: configs (uid int change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        uid: 1002      
+  register: configs_3
+  ignore_errors: yes
+  
+- name: configs (uid str)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        uid: "1001"
+  register: configs_4
+  ignore_errors: yes
+
+- name: configs (uid str idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        uid: "1001"
+  register: configs_5
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+- assert:
+    that:
+    - configs_1 is changed
+    - configs_2 is not changed
+    - configs_3 is changed
+    - configs_4 is changed
+    - configs_5 is not changed
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
+
+- assert:
+    that:
+    - configs_1 is failed
+    - "'Minimum version required' in configs_1.msg"
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.6.0', '<')
+
+
+####################################################################
+## configs (gid) ###################################################
+####################################################################
+
+- name: configs (gid int)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        gid: 1000        
+  register: configs_1
+  ignore_errors: yes
+  
+- name: configs (gid int idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        gid: 1000        
+  register: configs_2
+  ignore_errors: yes
+
+- name: configs (gid int change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        gid: 1002      
+  register: configs_3
+  ignore_errors: yes
+  
+- name: configs (gid str)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        gid: "1001"
+  register: configs_4
+  ignore_errors: yes
+
+- name: configs (gid str idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        gid: "1001"
+  register: configs_5
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+- assert:
+    that:
+    - configs_1 is changed
+    - configs_2 is not changed
+    - configs_3 is changed
+    - configs_4 is changed
+    - configs_5 is not changed
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
+
+- assert:
+    that:
+    - configs_1 is failed
+    - "'Minimum version required' in configs_1.msg"
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.6.0', '<')
+
+####################################################################
+## configs (mode) ##################################################
+####################################################################
+
+- name: configs (mode)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        mode: 0600
+  register: configs_1
+  ignore_errors: yes
+
+- name: configs (mode idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        mode: 0600
+  register: configs_2
+  ignore_errors: yes
+
+- name: configs (mode change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs:
+      - config_id: "{{ config_result_1.config_id|default('') }}"
+        config_name: "{{ config_name_1 }}"
+        mode: 0777
+  register: configs_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+- assert:
+    that:
+    - configs_1 is changed
+    - configs_2 is not changed
+    - configs_3 is changed
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
+
+- assert:
+    that:
+    - configs_1 is failed
+    - "'Minimum version required' in configs_1.msg"
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.6.0', '<')
+
+####################################################################
+####################################################################
+####################################################################
+
+- name: Delete configs
+  docker_config:
+    name: "{{ config_name }}"
+    state: absent
+    force: yes
+  loop:
+    - "{{ config_name_1 }}"
+    - "{{ config_name_2 }}"
+  loop_control:
+    loop_var: config_name
+  ignore_errors: yes
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')

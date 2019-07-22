@@ -77,7 +77,7 @@ $env:TMP = $original_tmp
 Function Get-PropertyValue($task_property, $com, $property) {
     $raw_value = $com.$property
 
-    if ($raw_value -eq $null) {
+    if ($null -eq $raw_value) {
         return $null
     } elseif ($raw_value.GetType().Name -eq "__ComObject") {
         $com_values = @{}
@@ -267,15 +267,15 @@ for ($i = 1; $i -le $folder_tasks.Count; $i++) {
     $folder_task_names += $task_name
     $folder_task_count += 1
 
-    if ($name -ne $null -and $task_name -eq $name) {
+    if ($null -ne $name -and $task_name -eq $name) {
         $task = $folder_tasks.Item($i)
     }
 }
 $result.folder_task_names = $folder_task_names
 $result.folder_task_count = $folder_task_count
 
-if ($name -ne $null) {
-    if ($task -ne $null) {
+if ($null -ne $name) {
+    if ($null -ne $task) {
         $result.task_exists = $true
 
         # task state

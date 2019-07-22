@@ -26,6 +26,7 @@ options:
               back slashes are accepted.
         type: path
         required: yes
+        aliases: [ dest, name ]
     get_md5:
         description:
             - Whether to return the checksum sum of the file. Between Ansible 1.9
@@ -52,9 +53,19 @@ options:
         default: sha1
         choices: [ md5, sha1, sha256, sha384, sha512 ]
         version_added: "2.3"
+    follow:
+        description:
+            - Whether to follow symlinks or junction points.
+            - In the case of C(path) pointing to another link, then that will
+              be followed until no more links are found.
+        type: bool
+        default: no
+        version_added: "2.8"
 seealso:
 - module: stat
+- module: win_acl
 - module: win_file
+- module: win_owner
 author:
 - Chris Church (@cchurch)
 '''

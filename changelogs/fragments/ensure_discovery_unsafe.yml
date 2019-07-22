@@ -1,0 +1,3 @@
+bugfixes:
+    - SECURITY Fixed the python interpreter detection, added in 2.8.0alpha1, to properly mark the returned data as untemplatable.
+      This prevents a malicious managed machine from running code on the controller via templating.

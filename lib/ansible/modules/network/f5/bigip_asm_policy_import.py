@@ -23,11 +23,13 @@ options:
   name:
     description:
       - The ASM policy to create or override.
+    type: str
     required: True
   inline:
     description:
       - When specified the ASM policy is created from a provided string.
       - Content needs to be provided in a valid XML format otherwise the operation will fail.
+    type: str
   source:
     description:
       - Full path to a policy file to be imported into the BIG-IP ASM.
@@ -35,15 +37,17 @@ options:
         versions of BIG-IP. The opposite, however, is true; you can import older into
         newer.
       - The file format can be binary of XML.
+    type: path
   force:
     description:
       - When set to C(yes) any existing policy with the same name will be overwritten by the new import.
-      - Works in both inline and file imports, if policy does not exist this setting is ignored.
+      - Works for both inline and file imports, if the policy does not exist this setting is ignored.
     default: no
     type: bool
   partition:
     description:
-      - Device partition to manage resources on.
+      - Device partition to create policy on.
+    type: str
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -84,8 +88,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-file:
-  description: Local path to ASM policy file.
+source:
+  description: Local path to an ASM policy file.
   returned: changed
   type: str
   sample: /root/some_policy.xml
@@ -115,24 +119,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import upload_file
     from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import upload_file
     from ansible.module_utils.network.f5.icontrol import module_provisioned
 
@@ -211,7 +209,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.changes = UsableChanges()
 
@@ -365,10 +363,10 @@ class ModuleManager(object):
 
         if response['status'] == 'FAILURE':
             raise F5ModuleError(
-                'Failed to export ASM policy.'
+                'Failed to import ASM policy.'
             )
         if response['status'] == 'COMPLETED':
-                return True
+            return True
 
     def import_file_to_device(self):
         name = os.path.split(self.want.source)[1]
@@ -465,16 +463,12 @@ def main():
         mutually_exclusive=spec.mutually_exclusive
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

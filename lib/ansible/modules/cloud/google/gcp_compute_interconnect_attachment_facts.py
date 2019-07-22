@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -43,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
   region:
@@ -54,19 +53,20 @@ extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
-- name:  a interconnect attachment facts
+- name: " a interconnect attachment facts"
   gcp_compute_interconnect_attachment_facts:
-      region: us-central1
-      filters:
-      - name = test_object
-      project: test_project
-      auth_kind: serviceaccount
-      service_account_file: "/tmp/auth.pem"
+    region: us-central1
+    filters:
+    - name = test_object
+    project: test_project
+    auth_kind: serviceaccount
+    service_account_file: "/tmp/auth.pem"
+    state: facts
 '''
 
 RETURN = '''
-items:
-  description: List of items
+resources:
+  description: List of resources
   returned: always
   type: complex
   contains:
@@ -85,12 +85,37 @@ items:
     interconnect:
       description:
       - URL of the underlying Interconnect object that this attachment's traffic will
-        traverse through.
+        traverse through. Required if type is DEDICATED, must not be set if type is
+        PARTNER.
       returned: success
       type: str
     description:
       description:
-      - An optional description of this resource. .
+      - An optional description of this resource.
+      returned: success
+      type: str
+    edgeAvailabilityDomain:
+      description:
+      - Desired availability domain for the attachment. Only available for type PARTNER,
+        at creation time. For improved reliability, customers should configure a pair
+        of attachments with one per availability domain. The selected availability
+        domain will be provided to the Partner via the pairing key so that the provisioned
+        circuit will lie in the specified domain. If not specified, the value will
+        default to AVAILABILITY_DOMAIN_ANY.
+      returned: success
+      type: str
+    pairingKey:
+      description:
+      - '[Output only for type PARTNER. Not present for DEDICATED]. The opaque identifier
+        of an PARTNER attachment used to initiate provisioning with a selected partner.
+        Of the form "XXXXX/region/domain" .'
+      returned: success
+      type: str
+    partnerAsn:
+      description:
+      - "[Output only for type PARTNER. Not present for DEDICATED]. Optional BGP ASN
+        for the router that should be supplied by a layer 3 Partner if they configured
+        BGP on behalf of the customer."
       returned: success
       type: str
     privateInterconnectInfo:
@@ -106,6 +131,16 @@ items:
             customer, going to and from this network and region.
           returned: success
           type: int
+    type:
+      description:
+      - The type of InterconnectAttachment you wish to create. Defaults to DEDICATED.
+      returned: success
+      type: str
+    state:
+      description:
+      - "[Output Only] The current state of this attachment's functionality."
+      returned: success
+      type: str
     googleReferenceId:
       description:
       - Google reference ID, to be used when raising support tickets with Google or
@@ -141,6 +176,23 @@ items:
         which cannot be a dash.
       returned: success
       type: str
+    candidateSubnets:
+      description:
+      - Up to 16 candidate prefixes that can be used to restrict the allocation of
+        cloudRouterIpAddress and customerRouterIpAddress for this attachment.
+      - All prefixes must be within link-local address space (169.254.0.0/16) and
+        must be /29 or shorter (/28, /27, etc). Google will attempt to select an unused
+        /29 from the supplied candidate prefix(es). The request will fail if all possible
+        /29s are in use on Google's edge. If not supplied, Google will randomly select
+        an unused /29 from all of link-local space.
+      returned: success
+      type: list
+    vlanTag8021q:
+      description:
+      - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094. When using
+        PARTNER type this will be managed upstream.
+      returned: success
+      type: int
     region:
       description:
       - Region where the regional interconnect attachment resides.
@@ -160,12 +212,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str'),
-            region=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -175,9 +222,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'resources': items}
     module.exit_json(**return_value)
 
 

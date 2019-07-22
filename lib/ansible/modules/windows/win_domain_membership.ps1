@@ -9,8 +9,6 @@ Set-StrictMode -Version 2
 
 $ErrorActionPreference = "Stop"
 
-$log_path = $null
-
 Function Write-DebugLog {
     Param(
     [string]$msg
@@ -213,9 +211,6 @@ Else { # workgroup
     }
 }
 
-
-$global:log_path = $log_path
-
 Try {
 
     $hostname_match = If($hostname) { Get-HostnameMatch $hostname } Else { $true }
@@ -247,7 +242,7 @@ Try {
                         Write-DebugLog "adding hostname change to domain-join args"
                         $join_args.new_hostname = $hostname
                     }
-                    If($domain_ou_path -ne $null){ # If OU Path is not empty
+                    If($null -ne $domain_ou_path){ # If OU Path is not empty
                         Write-DebugLog "adding domain_ou_path to domain-join args"
                         $join_args.domain_ou_path = $domain_ou_path
                     }

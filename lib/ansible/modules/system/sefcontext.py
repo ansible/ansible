@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -38,10 +39,12 @@ options:
     - C(p) for named pipes,
     - C(s) for socket files.
     type: str
+    choices: [ a, b, c, d, f, l, p, s ]
     default: a
   setype:
     description:
     - SELinux type for the specified target.
+    type: str
     required: yes
   seuser:
     description:
@@ -63,7 +66,13 @@ options:
     - Reload SELinux policy after commit.
     - Note that this does not apply SELinux file contexts to existing files.
     type: bool
-    default: 'yes'
+    default: yes
+  ignore_selinux_state:
+    description:
+    - Useful for scenarios (chrooted environment) that you can't get the real SELinux state.
+    type: bool
+    default: no
+    version_added: '2.8'
 notes:
 - The changes are persistent across reboots.
 - The M(sefcontext) module does not modify existing files to the new
@@ -96,24 +105,30 @@ RETURN = r'''
 # Default return values
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
     HAVE_SELINUX = True
 except ImportError:
+    SELINUX_IMP_ERR = traceback.format_exc()
     HAVE_SELINUX = False
 
+SEOBJECT_IMP_ERR = None
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
+    SEOBJECT_IMP_ERR = traceback.format_exc()
     HAVE_SEOBJECT = False
 
 # Add missing entries (backward compatible)
 if HAVE_SEOBJECT:
-    seobject.file_types.update(dict(
+    seobject.file_types.update(
         a=seobject.SEMANAGE_FCONTEXT_ALL,
         b=seobject.SEMANAGE_FCONTEXT_BLOCK,
         c=seobject.SEMANAGE_FCONTEXT_CHAR,
@@ -122,7 +137,7 @@ if HAVE_SEOBJECT:
         l=seobject.SEMANAGE_FCONTEXT_LINK,
         p=seobject.SEMANAGE_FCONTEXT_PIPE,
         s=seobject.SEMANAGE_FCONTEXT_SOCK,
-    ))
+    )
 
 # Make backward compatible
 option_to_file_type_str = dict(
@@ -135,6 +150,10 @@ option_to_file_type_str = dict(
     p='named pipe',
     s='socket file',
 )
+
+
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
@@ -235,7 +254,8 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            target=dict(required=True, aliases=['path']),
+            ignore_selinux_state=dict(type='bool', default=False),
+            target=dict(type='str', required=True, aliases=['path']),
             ftype=dict(type='str', default='a', choices=option_to_file_type_str.keys()),
             setype=dict(type='str', required=True),
             seuser=dict(type='str'),
@@ -246,12 +266,14 @@ def main():
         supports_check_mode=True,
     )
     if not HAVE_SELINUX:
-        module.fail_json(msg="This module requires libselinux-python")
+        module.fail_json(msg=missing_required_lib("libselinux-python"), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEOBJECT:
-        module.fail_json(msg="This module requires policycoreutils-python")
+        module.fail_json(msg=missing_required_lib("policycoreutils-python"), exception=SEOBJECT_IMP_ERR)
 
-    if not selinux.is_selinux_enabled():
+    ignore_selinux_state = module.params['ignore_selinux_state']
+
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     target = module.params['target']

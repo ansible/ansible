@@ -101,14 +101,17 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='fake_policy',
             source=self.policy,
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive,
         )
 
         # Override methods to force specific logic in the module to happen

@@ -1,0 +1,187 @@
+ {
+    "uuid": "4dd9f559-c1b9-4e05-8d17-2345a6a3d459",
+    "deviceUri": "https://10.144.74.229:443",
+    "machineId": "4dd9f559-c1b9-4e05-8d17-2345a6a3d459",
+    "state": "ACTIVE",
+    "address": "10.144.74.229",
+    "httpsPort": 443,
+    "hostname": "ansible_test_lab12.lab.local",
+    "version": "12.1.3",
+    "product": "BIG-IP",
+    "edition": "Final",
+    "build": "0.0.378",
+    "restFrameworkVersion": "12.1.3-0.0.378",
+    "managementAddress": "10.144.74.229",
+    "mcpDeviceName": "/Common/ansible_test_lab12.lab.local",
+    "trustDomainGuid": "44135337-f809-480d-ab6ffa163edc9ff6",
+    "properties": {
+      "cm:gui:module": [
+        "asmsecurity",
+        "adc",
+        "BigIPDevice",
+        "sharedsecurity"
+      ],
+      "modules": [
+        "Web Application Security Group",
+        "Security"
+      ],
+      "cm-bigip-allBigIpDevices": {
+        "cm:gui:module": [
+          "asmsecurity",
+          "adc",
+          "BigIPDevice",
+          "sharedsecurity"
+        ],
+        "shared:resolver:device-groups:discoverer": "13446925-efb3-47f4-b32c-ed705d29e878",
+        "modules": [
+          "Web Application Security Group",
+          "Security"
+        ]
+      },
+      "cm-asm-allDevices": {
+        "cm:gui:module": [],
+        "modules": []
+      },
+      "cm-bigip-allDevices": {
+        "shared:resolver:device-groups:discoverer": "13446925-efb3-47f4-b32c-ed705d29e878",
+        "cm:gui:module": [],
+        "modules": []
+      },
+      "cm-adccore-allDevices": {
+        "cm:gui:module": [],
+        "modules": []
+      },
+      "cm-security-shared-allSharedDevices": {
+        "discovered": true,
+        "imported": true,
+        "supportsAlpineDosDeviceConfig": true,
+        "supports_14_0_Enhs": false,
+        "supportsRest": true,
+        "supportsAlpineDosProfileEnhs": true,
+        "requiresDhcpProfileInDhcpVirtualServer": true,
+        "supportsAfmSubscribers": false,
+        "supportsAlpineEnhs": true,
+        "supports_13_0_Enhs": false,
+        "supportsFirewallRuleIdentifiers": false,
+        "supportsBadgerEnhs": true,
+        "supportsAlpineDosDeviceWhitelistIpProcotol": true,
+        "supportsSshProfile": true,
+        "supportsPortMisusePolicy": true,
+        "supportsAlpineLogProfileEnhs": true,
+        "supportsCascadeEnhs": true,
+        "supportUdpPortList": true,
+        "supports_13_1_Enhs": false,
+        "supportsIncrementalDiscovery": false,
+        "lastDiscoveredDateTime": "2019-02-12T13:53:06.541Z",
+        "lastUserDiscoveredDateTime": "2019-02-12T13:53:06.541Z",
+        "importedDateTime": "2019-02-12T13:53:24.885Z",
+        "discoveryStatus": "FINISHED",
+        "importStatus": "FINISHED",
+        "cm:gui:module": [
+          "sharedsecurity"
+        ],
+        "modules": [
+          "Security"
+        ]
+      },
+      "cm-adccore-allbigipDevices": {
+        "discovered": true,
+        "imported": true,
+        "supportsRest": true,
+        "requiresDhcpProfileInDhcpVirtualServer": true,
+        "supportsAlpineEnhs": true,
+        "supports_13_0_Enhs": false,
+        "supportsFirewallRuleIdentifiers": false,
+        "supportsBadgerEnhs": true,
+        "restrictsPortTranslationStatelessVirtual": true,
+        "supportsClassification": true,
+        "supports_13_1_Enhs": false,
+        "supportsIncrementalDiscovery": false,
+        "supports_12_1_2_Enhs": true,
+        "lastDiscoveredDateTime": "2019-02-12T13:53:03.963Z",
+        "lastUserDiscoveredDateTime": "2019-02-12T13:53:03.963Z",
+        "importedDateTime": "2019-02-12T13:53:18.975Z",
+        "discoveryStatus": "FINISHED",
+        "importStatus": "FINISHED",
+        "cm:gui:module": [
+          "adc"
+        ],
+        "modules": []
+      },
+      "cm-security-shared-allDevices": {
+        "cm:gui:module": [],
+        "modules": []
+      },
+      "cm-asm-allAsmDevices": {
+        "discovered": true,
+        "imported": true,
+        "supportsHostNameEnforcementMode": false,
+        "supportsRest": true,
+        "supportsServerTechnologies": false,
+        "supportsCpb": false,
+        "supportsUrlCascadeFeatures": true,
+        "supportsSessionTrackingAllLoginPagesUsernameSource": true,
+        "supportsLoginEnforcementCascadeFeatures": true,
+        "suppportsXmlValidationFiles": true,
+        "supportsExtractions": true,
+        "supportsWebSocketSecurity": true,
+        "supportsWhitelistIpBlockRequestAlways": false,
+        "supportsSessionTrackingSessionHijackingByDeviceId": true,
+        "supportsLoginPagesHeaderOmits": false,
+        "supportsBruteForceAttackPreventionsCascadeFeatures": true,
+        "supportsPlainTextProfile": true,
+        "supportsIncrementalDiscovery": false,
+        "supportsRedirectionProtection": true,
+        "supportsHeaderSignaturesOverride": false,
+        "supportsIpIntelligence": true,
+        "supports_13_0_Enhs": false,
+        "supportsFirewallRuleIdentifiers": false,
+        "supportsSessionTrackingDeviceIdThresholds": true,
+        "supportsLoginEnforcement": true,
+        "supportsCsrfProtection": true,
+        "supportsSessionTracking": true,
+        "supportsJsonProfiles": true,
+        "supportsBruteForceAttackPreventions": true,
+        "supportsWebScraping": true,
+        "supportsLoginPagesCascadeFeatures": true,
+        "supportsGwtProfiles": true,
+        "supportsXmlProfiles": true,
+        "supportsAsmDisallowedGeolocation": true,
+        "supportsCsrfUrls": false,
+        "supportsDataProtection": false,
+        "supportsLoginPages": true,
+        "supportsBruteForceAttackPreventionsBadgerFeatures": true,
+        "supportsUrlSignaturesOverride": false,
+        "signatureAutoUpdateState": true,
+        "signatureFileVersion": 1.450112674E12,
+        "signatureFilename": "Attack Signature Database packaged with version 12.1.3",
+        "lastDiscoveredDateTime": "2019-02-12T13:53:09.188Z",
+        "lastUserDiscoveredDateTime": "2019-02-12T13:53:09.188Z",
+        "importedDateTime": "2019-02-12T13:53:29.730Z",
+        "discoveryStatus": "FINISHED",
+        "importStatus": "FINISHED",
+        "cm:gui:module": [
+          "asmsecurity"
+        ],
+        "modules": [
+          "Web Application Security Group"
+        ]
+      }
+    },
+    "isClustered": false,
+    "isVirtual": true,
+    "isLicenseExpired": false,
+    "slots": [
+      {
+        "volume": "HD1.1",
+        "product": "BIG-IP",
+        "version": "12.1.3",
+        "build": "0.0.378",
+        "isActive": true
+      }
+    ],
+    "generation": 4,
+    "lastUpdateMicros": 1549979318078796,
+    "kind": "shared:resolver:device-groups:restdeviceresolverdevicestate",
+    "selfLink": "https://localhost/mgmt/cm/system/machineid-resolver/4dd9f559-c1b9-4e05-8d17-2345a6a3d459"
+  }

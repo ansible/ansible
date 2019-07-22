@@ -116,9 +116,10 @@ class ImportTest(SanityMultipleVersion):
 
         results = []
 
+        virtualenv_python = os.path.join(virtual_environment_bin, 'python')
+
         try:
-            stdout, stderr = intercept_command(args, cmd, data=data, target_name=self.name, env=env, capture=True, python_version=python_version,
-                                               path=env['PATH'])
+            stdout, stderr = intercept_command(args, cmd, self.name, env, capture=True, data=data, python_version=python_version, virtualenv=virtualenv_python)
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)

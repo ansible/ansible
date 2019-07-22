@@ -52,6 +52,7 @@ EXAMPLES = '''
     params: 'numdummies=2'
 '''
 
+import os.path
 import shlex
 import traceback
 
@@ -94,7 +95,9 @@ def main():
             command = [module.get_bin_path('uname', True), '-r']
             rc, uname_kernel_release, err = module.run_command(command)
             module_file = '/' + name + '.ko'
-            with open('/lib/modules/' + uname_kernel_release + '/modules.builtin') as builtins:
+            builtin_path = os.path.join('/lib/modules/', uname_kernel_release.strip(),
+                                        'modules.builtin')
+            with open(builtin_path) as builtins:
                 for line in builtins:
                     if line.endswith(module_file):
                         present = True

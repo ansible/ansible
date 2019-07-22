@@ -27,7 +27,7 @@ author:
 - Ludovic Rivallain (@lrivallain) <ludovic.rivallain@gmail.com>
 - Christian Kotte (@ckotte) <christian.kotte@gmx.de>
 notes:
-- Tested on vSphere 6.0 and 6.5
+- Tested on vSphere 6.0, 6.5 and ESXi 6.7
 - NFS v4.1 tested on vSphere 6.5
 - Kerberos authentication with NFS v4.1 isn't implemented
 requirements:
@@ -75,7 +75,8 @@ options:
   esxi_hostname:
     description:
     - ESXi hostname to manage the datastore.
-    required: true
+    - Required when used with a vcenter
+    required: false
   state:
     description:
     - "present: Mount datastore on host if datastore is absent else do nothing."
@@ -133,13 +134,12 @@ EXAMPLES = r'''
       - { 'name': 'NasDS_vol03', 'server': 'nas01,nas02', 'path': '/mnt/vol01', 'type': 'nfs41'}
       - { 'name': 'NasDS_vol04', 'server': 'nas01,nas02', 'path': '/mnt/vol02', 'type': 'nfs41'}
 
-- name: Remove/Umount Datastores from ESXi
+- name: Remove/Umount Datastores from a ESXi
   vmware_host_datastore:
-      hostname: '{{ vcenter_hostname }}'
-      username: '{{ vcenter_username }}'
-      password: '{{ vcenter_password }}'
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       datastore_name: NasDS_vol01
-      esxi_hostname: '{{ inventory_hostname }}'
       state: absent
   delegate_to: localhost
 '''
@@ -153,7 +153,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, find_datastore_by_name
+from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, find_datastore_by_name, find_obj
 from ansible.module_utils._text import to_native
 
 
@@ -173,9 +173,14 @@ class VMwareHostDatastore(PyVmomi):
         self.esxi_hostname = module.params['esxi_hostname']
         self.state = module.params['state']
 
-        self.esxi = self.find_hostsystem_by_name(self.esxi_hostname)
-        if self.esxi is None:
-            self.module.fail_json(msg="Failed to find ESXi hostname %s " % self.esxi_hostname)
+        if self.is_vcenter():
+            if not self.esxi_hostname:
+                self.module.fail_json(msg="esxi_hostname is mandatory with a vcenter")
+            self.esxi = self.find_hostsystem_by_name(self.esxi_hostname)
+            if self.esxi is None:
+                self.module.fail_json(msg="Failed to find ESXi hostname %s" % self.esxi_hostname)
+        else:
+            self.esxi = find_obj(self.content, [vim.HostSystem], None)
 
     def process_state(self):
         ds_states = {
@@ -206,19 +211,28 @@ class VMwareHostDatastore(PyVmomi):
                 return 'present'
         return 'absent'
 
+    def get_used_disks_names(self):
+        used_disks = []
+        storage_system = self.esxi.configManager.storageSystem
+        for each_vol_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
+            if hasattr(each_vol_mount_info.volume, 'extent'):
+                for each_partition in each_vol_mount_info.volume.extent:
+                    used_disks.append(each_partition.diskName)
+        return used_disks
+
     def umount_datastore_host(self):
         ds = find_datastore_by_name(self.content, self.datastore_name)
         if not ds:
             self.module.fail_json(msg="No datastore found with name %s" % self.datastore_name)
         if self.module.check_mode is False:
-            error_message_umount = "Cannot umount datastore %s from host %s" % (self.datastore_name, self.esxi_hostname)
+            error_message_umount = "Cannot umount datastore %s from host %s" % (self.datastore_name, self.esxi.name)
             try:
                 self.esxi.configManager.datastoreSystem.RemoveDatastore(ds)
             except (vim.fault.NotFound, vim.fault.HostConfigFault, vim.fault.ResourceInUse) as fault:
                 self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(fault.msg)))
             except Exception as e:
                 self.module.fail_json(msg="%s: %s" % (error_message_umount, to_native(e)))
-        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
+        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi.name))
 
     def mount_datastore_host(self):
         if self.datastore_type == 'nfs' or self.datastore_type == 'nfs41':
@@ -245,7 +259,7 @@ class VMwareHostDatastore(PyVmomi):
                 mnt_specs.accessMode = "readOnly"
             else:
                 mnt_specs.accessMode = "readWrite"
-            error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
+            error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi.name)
             try:
                 ds = self.esxi.configManager.datastoreSystem.CreateNasDatastore(mnt_specs)
                 if not ds:
@@ -257,14 +271,17 @@ class VMwareHostDatastore(PyVmomi):
                 self.module.fail_json(msg="%s: %s" % (error_message_mount, to_native(fault.msg)))
             except Exception as e:
                 self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
-        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
+        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi.name))
 
     def mount_vmfs_datastore_host(self):
         if self.module.check_mode is False:
             ds_path = "/vmfs/devices/disks/" + str(self.vmfs_device_name)
             host_ds_system = self.esxi.configManager.datastoreSystem
             ds_system = vim.host.DatastoreSystem
-            error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi_hostname)
+            if self.vmfs_device_name in self.get_used_disks_names():
+                error_message_used_disk = "VMFS disk %s already in use" % self.vmfs_device_name
+                self.module.fail_json(msg="%s" % error_message_used_disk)
+            error_message_mount = "Cannot mount datastore %s on host %s" % (self.datastore_name, self.esxi.name)
             try:
                 vmfs_ds_options = ds_system.QueryVmfsDatastoreCreateOptions(host_ds_system,
                                                                             ds_path,
@@ -277,7 +294,7 @@ class VMwareHostDatastore(PyVmomi):
                 self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(fault.msg)))
             except Exception as e:
                 self.module.fail_json(msg="%s : %s" % (error_message_mount, to_native(e)))
-        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi_hostname))
+        self.module.exit_json(changed=True, result="Datastore %s on host %s" % (self.datastore_name, self.esxi.name))
 
 
 def main():
@@ -291,7 +308,7 @@ def main():
         nfs_ro=dict(type='bool', default=False),
         vmfs_device_name=dict(type='str'),
         vmfs_version=dict(type='int'),
-        esxi_hostname=dict(type='str', required=True),
+        esxi_hostname=dict(type='str', required=False),
         state=dict(type='str', default='present', choices=['absent', 'present'])
     )
 

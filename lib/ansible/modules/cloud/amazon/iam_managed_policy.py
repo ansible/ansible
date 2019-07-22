@@ -24,7 +24,7 @@ options:
     required: True
   policy_description:
     description:
-      - A helpful description of this policy, this value is immuteable and only set when creating a new policy.
+      - A helpful description of this policy, this value is immutable and only set when creating a new policy.
     default: ''
   policy:
     description:

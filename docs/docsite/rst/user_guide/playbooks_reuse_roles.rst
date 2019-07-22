@@ -70,8 +70,8 @@ The classic (original) way to use roles is via the ``roles:`` option for a given
     ---
     - hosts: webservers
       roles:
-         - common
-         - webservers
+        - common
+        - webservers
 
 This designates the following behaviors, for each role 'x':
 
@@ -149,13 +149,13 @@ Or, using the newer syntax::
     - hosts: webservers
       tasks:
       - include_role:
-           name: foo_app_instance
+          name: foo_app_instance
         vars:
           dir: '/opt/a'
           app_port: 5000
       ...
 
-You can conditionally import a role and execute it's tasks::
+You can conditionally import a role and execute its tasks::
 
     ---
 

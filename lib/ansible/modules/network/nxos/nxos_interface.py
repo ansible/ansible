@@ -573,6 +573,11 @@ def map_config_to_obj(want, module):
                 elif intf_type in ('loopback', 'management', 'nve'):
                     obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
+                    if obj['admin_state'] is None and intf_type == 'loopback':
+                        # Some platforms don't have the 'admin_state' key.
+                        # For loopback interfaces it's safe to use the
+                        # 'state' key instead.
+                        obj['admin_state'] = interface_table.get('state')
                     obj['description'] = interface_table.get('desc')
 
                 elif intf_type == 'portchannel':
@@ -580,6 +585,16 @@ def map_config_to_obj(want, module):
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
                     obj['mtu'] = interface_table.get('eth_mtu')
+
+                if obj['admin_state'] is None:
+                    # Some nxos platforms do not have the 'admin_state' key.
+                    # Use the 'state_rsn_desc' key instead to determine the
+                    # admin state of the interface.
+                    state_description = interface_table.get('state_rsn_desc')
+                    if state_description == 'Administratively down':
+                        obj['admin_state'] = 'down'
+                    elif state_description is not None:
+                        obj['admin_state'] = 'up'
 
         objs.append(obj)
 
@@ -590,14 +605,15 @@ def check_declarative_intent_params(module, want):
     failed_conditions = []
     have_neighbors = None
     for w in want:
+        if w['interface_type']:
+            continue
         want_tx_rate = w.get('tx_rate')
         want_rx_rate = w.get('rx_rate')
         want_neighbors = w.get('neighbors')
+        if not (want_tx_rate or want_rx_rate or want_neighbors):
+            continue
 
         time.sleep(module.params['delay'])
-
-        if w['interface_type']:
-            return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
 

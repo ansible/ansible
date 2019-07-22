@@ -29,6 +29,12 @@ options:
     - The location of the PsExec utility (in case it is not located in your PATH).
     type: path
     default: psexec.exe
+  extra_opts:
+    description:
+    - Specify additional options to add onto the PsExec invocation.
+    - This module was undocumented in older releases and will be removed in
+      Ansible 2.10.
+    type: list
   hostnames:
     description:
     - The hostnames to run the command.
@@ -149,6 +155,11 @@ cmd:
     returned: always
     type: str
     sample: psexec.exe -nobanner \\remote_server -u "DOMAIN\Administrator" -p "some_password" -accepteula E:\setup.exe
+pid:
+    description: The PID of the async process created by PsExec.
+    returned: when C(wait=False)
+    type: int
+    sample: 1532
 rc:
     description: The return code for the command.
     returned: always

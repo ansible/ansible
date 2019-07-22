@@ -20,15 +20,17 @@ author: "Nikhil Jain (@jainnikhil30)"
 version_added: "2.7"
 short_description: Modify Ansible Tower settings.
 description:
-    - Get, Modify Ansible Tower settings. See
+    - Modify Ansible Tower settings. See
       U(https://www.ansible.com/tower) for an overview.
 options:
     name:
       description:
-        - Name of setting to get/modify
+        - Name of setting to modify
+      required: True
     value:
       description:
         - Value to be modified for given setting.
+      required: True
 extends_documentation_fragment: tower
 '''
 
@@ -58,7 +60,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -67,8 +69,8 @@ except ImportError:
 
 def main():
     argument_spec = dict(
-        name=dict(Required=True),
-        value=dict(Required=True),
+        name=dict(required=True),
+        value=dict(required=True),
     )
 
     module = TowerModule(
@@ -91,7 +93,7 @@ def main():
             json_output['id'] = result['id']
             json_output['value'] = result['value']
 
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to modify the setting: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

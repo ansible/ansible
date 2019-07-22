@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2017, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,50 +15,56 @@ module: cs_vpn_gateway
 short_description: Manages site-to-site VPN gateways on Apache CloudStack based clouds.
 description:
     - Creates and removes VPN site-to-site gateways.
-version_added: "2.4"
-author: "René Moser (@resmo)"
+version_added: '2.4'
+author: René Moser (@resmo)
 options:
   vpc:
     description:
       - Name of the VPC.
+    type: str
     required: true
   state:
     description:
       - State of the VPN gateway.
-    default: "present"
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   domain:
     description:
       - Domain the VPN gateway is related to.
+    type: str
   account:
     description:
       - Account the VPN gateway is related to.
+    type: str
   project:
     description:
       - Name of the project the VPN gateway is related to.
+    type: str
   zone:
     description:
       - Name of the zone the VPC is related to.
       - If not set, default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
     type: bool
-    default: 'yes'
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a vpn gateway is present
-- local_action:
-    module: cs_vpn_gateway
+- name: Ensure a vpn gateway is present
+  cs_vpn_gateway:
     vpc: my VPC
+  delegate_to: localhost
 
-# Ensure a vpn gateway is absent
-- local_action:
-    module: cs_vpn_gateway
+- name: Ensure a vpn gateway is absent
+  cs_vpn_gateway:
     vpc: my VPC
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

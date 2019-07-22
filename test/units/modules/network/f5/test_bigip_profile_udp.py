@@ -98,9 +98,11 @@ class TestManager(unittest.TestCase):
             parent='bar',
             idle_timeout=500,
             datagram_load_balancing=True,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

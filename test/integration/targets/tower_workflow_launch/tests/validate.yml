@@ -1,0 +1,99 @@
+- name: Run a workflow with no parameters
+  tower_workflow_launch:
+    validate_certs: False
+  ignore_errors: true
+  register: result1
+
+- assert:
+    that:
+      - result1.failed
+      - "'missing required arguments' in result1.msg"
+
+- name: Fail no connect to Tower server
+  tower_workflow_launch:
+    tower_host: 127.0.0.1:22
+    validate_certs: False
+    workflow_template: "Here"
+  ignore_errors: True
+  register: result2
+
+- assert:
+    that:
+      - result2.failed
+      - "'Failed to reach Tower' in result2.msg"
+
+- name: Connect to Tower server but request an invalid workflow
+  tower_workflow_launch:
+    validate_certs: False
+    workflow_template: "Does Not Exist"
+  ignore_errors: true
+  register: result3
+
+- assert:
+    that:
+      - result3.failed
+      - "'The requested object could not be found' in result3.msg"
+
+- name: Connect to Tower in check_mode with a valid workflow name
+  tower_workflow_launch:
+    validate_certs: False
+    workflow_template: "Success Workflow"
+  check_mode: True
+  ignore_errors: true
+  register: result4
+
+- assert:
+    that:
+      - not result4.failed
+      - "'Check mode passed' in result4.msg"
+
+- name: Connect to Tower in check_mode with a valid workflow id
+  tower_workflow_launch:
+    validate_certs: False
+    workflow_template: 9999999
+  check_mode: True
+  ignore_errors: true
+  register: result5
+
+- assert:
+    that:
+      - result5.failed
+      - "'The requested object could not be found' in result5.msg"
+
+- name: Run the workflow without waiting (this should just give us back a job ID)
+  tower_workflow_launch:
+    validate_certs: False
+    workflow_template: "Success Workflow"
+    wait: False
+  ignore_errors: True
+  register: result6
+
+- assert:
+    that:
+      - not result6.failed
+      - "'id' in result6['job_info']"
+
+- name: Kick off a workflow and wait for it
+  tower_workflow_launch:
+    validate_certs: False
+    workflow_template: "Success Workflow"
+  ignore_errors: True
+  register: result7
+
+- assert:
+    that:
+      - not result7.failed
+      - "'id' in result7['job_info']"
+
+- name: Kick off a workflow and wait for it, but only for a second
+  tower_workflow_launch:
+    validate_certs: False
+    workflow_template: "Success Workflow"
+    timeout: 1
+  ignore_errors: True
+  register: result8
+
+- assert:
+    that:
+      - result8.failed
+      - "'Monitoring aborted due to timeout' in result8.msg"

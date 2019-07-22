@@ -25,6 +25,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 __all__ = ['TaskInclude']
 
@@ -68,7 +69,7 @@ class TaskInclude(Task):
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
-            task.args['_raw_params'] = task.args.pop('file')
+            task.args['_raw_params'] = task.args.pop('file', None)
 
         apply_attrs = task.args.get('apply', {})
         if apply_attrs and task.action != 'include_tasks':
@@ -81,10 +82,10 @@ class TaskInclude(Task):
     def preprocess_data(self, ds):
         ds = super(TaskInclude, self).preprocess_data(ds)
 
-        diff = set(ds.keys()).difference(TaskInclude.VALID_INCLUDE_KEYWORDS)
+        diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
             # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
-            if ds[k] is not None and ds['action'] in ('include_tasks', 'include_role'):
+            if ds[k] is not Sentinel and ds['action'] in ('include_tasks', 'include_role'):
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
                 else:

@@ -578,7 +578,7 @@ def core(module):
 
         res['changed'] = False
         if state in ['active']:
-            if v.status(name) is not 'active':
+            if v.status(name) != 'active':
                 res['changed'] = True
                 res['msg'] = v.start(name)
         elif state in ['present']:
@@ -592,20 +592,20 @@ def core(module):
         elif state in ['inactive']:
             entries = v.list_pools()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     res['changed'] = True
                     res['msg'] = v.destroy(name)
         elif state in ['undefined', 'absent']:
             entries = v.list_pools()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     v.destroy(name)
                 res['changed'] = True
                 res['msg'] = v.undefine(name)
         elif state in ['deleted']:
             entries = v.list_pools()
             if name in entries:
-                if v.status(name) is not 'inactive':
+                if v.status(name) != 'inactive':
                     v.destroy(name)
                 v.delete(name, mode)
                 res['changed'] = True

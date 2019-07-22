@@ -25,19 +25,23 @@ options:
       - Specifies the LDAP servers that the system must use to obtain
         authentication information. You must specify a server when you
         create an LDAP configuration object.
+    type: list
   port:
     description:
       - Specifies the port that the system uses for access to the remote host server.
       - When configuring LDAP device authentication for the first time, if this parameter
         is not specified, the default port is C(389).
+    type: int
   remote_directory_tree:
     description:
       - Specifies the file location (tree) of the user authentication database on the
         server.
+    type: str
   scope:
     description:
       - Specifies the level of the remote Active Directory or LDAP directory that the
         system should search for the user authentication.
+    type: str
     choices:
       - sub
       - one
@@ -52,9 +56,11 @@ options:
       - Therefore, if you plan to use Active Directory or LDAP as your authentication
         source and want to use referred accounts, make sure your servers perform bind
         referral.
+    type: str
   bind_password:
     description:
       - Specifies a password for the Active Directory or LDAP server user ID.
+    type: str
   user_template:
     description:
       - Specifies the distinguished name of the user who is logging on.
@@ -68,6 +74,7 @@ options:
       - The system passes the associated password as the password for the bind operation.
       - This field can contain only one C(%s) and cannot contain any other format
         specifiers.
+    type: str
   check_member_attr:
     description:
       - Checks the user's member attribute in the remote LDAP or AD group.
@@ -75,33 +82,42 @@ options:
   ssl:
     description:
       - Specifies whether the system uses an SSL port to communicate with the LDAP server.
+    type: str
     choices:
       - "yes"
       - "no"
       - start-tls
-  ssl_ca_cert:
+  ca_cert:
     description:
       - Specifies the name of an SSL certificate from a certificate authority (CA).
       - To remove this value, use the reserved value C(none).
-  ssl_client_key:
+    type: str
+    aliases: [ ssl_ca_cert ]
+  client_key:
     description:
       - Specifies the name of an SSL client key.
       - To remove this value, use the reserved value C(none).
-  ssl_client_cert:
+    type: str
+    aliases: [ ssl_client_key ]
+  client_cert:
     description:
       - Specifies the name of an SSL client certificate.
       - To remove this value, use the reserved value C(none).
-  ssl_check_peer:
+    type: str
+    aliases: [ ssl_client_cert ]
+  validate_certs:
     description:
       - Specifies whether the system checks an SSL peer, as a result of which the
         system requires and verifies the server certificate.
     type: bool
+    aliases: [ ssl_check_peer ]
   login_ldap_attr:
     description:
       - Specifies the LDAP directory attribute containing the local user name that is
         associated with the selected directory entry.
       - When configuring LDAP device authentication for the first time, if this parameter
         is not specified, the default port is C(samaccountname).
+    type: str
   fallback_to_local:
     description:
       - Specifies that the system uses the Local authentication method if the remote
@@ -111,22 +127,25 @@ options:
     description:
       - When C(present), ensures the device authentication method exists.
       - When C(absent), ensures the device authentication method does not exist.
-    default: present
+    type: str
     choices:
       - present
       - absent
+    default: present
   update_password:
     description:
       - C(always) will always update the C(bind_password).
       - C(on_create) will only set the C(bind_password) for newly created authentication
         mechanisms.
-    default: always
+    type: str
     choices:
       - always
       - on_create
+    default: always
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -141,16 +160,76 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-param1:
-  description: The new param1 value of the resource.
+servers:
+  description: LDAP servers used by the system to obtain authentication information.
   returned: changed
-  type: bool
-  sample: true
-param2:
-  description: The new param2 value of the resource.
+  type: list
+  sample: ['192.168.1.1', '192.168.1.2']
+port:
+  description: The port that the system uses for access to the remote LDAP server.
+  returned: changed
+  type: int
+  sample: 389
+remote_directory_tree:
+  description: File location (tree) of the user authentication database on the server.
   returned: changed
   type: str
-  sample: Foo is bar
+  sample: "CN=Users,DC=FOOBAR,DC=LOCAL"
+scope:
+  description: The level of the remote Active Directory or LDAP directory searched for user authentication.
+  returned: changed
+  type: str
+  sample: base
+bind_dn:
+  description: The distinguished name for the Active Directory or LDAP server user ID.
+  returned: changed
+  type: str
+  sample: "user@foobar.local"
+user_template:
+  description: The distinguished name of the user who is logging on.
+  returned: changed
+  type: str
+  sample: "uid=%s,ou=people,dc=foobar,dc=local"
+check_member_attr:
+  description: The user's member attribute in the remote LDAP or AD group.
+  returned: changed
+  type: bool
+  sample: yes
+ssl:
+  description: Specifies whether the system uses an SSL port to communicate with the LDAP server.
+  returned: changed
+  type: str
+  sample: start-tls
+ca_cert:
+  description: The name of an SSL certificate from a certificate authority.
+  returned: changed
+  type: str
+  sample: My-Trusted-CA-Bundle.crt
+client_key:
+  description: The name of an SSL client key.
+  returned: changed
+  type: str
+  sample: MyKey.key
+client_cert:
+  description: The name of an SSL client certificate.
+  returned: changed
+  type: str
+  sample: MyCert.crt
+validate_certs:
+  description: Indicates if the system checks an SSL peer.
+  returned: changed
+  type: bool
+  sample: yes
+login_ldap_attr:
+  description: The LDAP directory attribute containing the local user name associated with the selected directory entry.
+  returned: changed
+  type: str
+  sample: samaccountname
+fallback_to_local:
+  description: Specifies that the system uses the Local authentication method as fallback
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -159,24 +238,18 @@ try:
     from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
-    from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.common import exit_json
-    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
-    from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.common import exit_json
-    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
@@ -188,10 +261,10 @@ class Parameters(AnsibleF5Parameters):
         'userTemplate': 'user_template',
         'fallback': 'fallback_to_local',
         'loginAttribute': 'login_ldap_attr',
-        'sslCheckPeer': 'ssl_check_peer',
-        'sslClientCert': 'ssl_client_cert',
-        'sslClientKey': 'ssl_client_key',
-        'sslCaCertFile': 'ssl_ca_cert',
+        'sslCheckPeer': 'validate_certs',
+        'sslClientCert': 'client_cert',
+        'sslClientKey': 'client_key',
+        'sslCaCertFile': 'ca_cert',
         'checkRolesGroup': 'check_member_attr',
         'searchBaseDn': 'remote_directory_tree',
     }
@@ -224,10 +297,10 @@ class Parameters(AnsibleF5Parameters):
         'scope',
         'servers',
         'ssl',
-        'ssl_ca_cert',
-        'ssl_check_peer',
-        'ssl_client_cert',
-        'ssl_client_key',
+        'ca_cert',
+        'validate_certs',
+        'client_cert',
+        'client_key',
         'user_template',
     ]
 
@@ -438,7 +511,7 @@ class Difference(object):
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
-        self.client = kwargs.get('client', None)
+        self.client = F5RestClient(**self.module.params)
         self.want = ModuleParameters(params=self.module.params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
@@ -734,10 +807,10 @@ class ArgumentSpec(object):
             ssl=dict(
                 choices=['yes', 'no', 'start-tls']
             ),
-            ssl_ca_cert=dict(),
-            ssl_client_key=dict(),
-            ssl_client_cert=dict(),
-            ssl_check_peer=dict(type='bool'),
+            ca_cert=dict(aliases=['ssl_ca_cert']),
+            client_key=dict(aliases=['ssl_client_key']),
+            client_cert=dict(aliases=['ssl_client_cert']),
+            validate_certs=dict(type='bool', aliases=['ssl_check_peer']),
             login_ldap_attr=dict(),
             fallback_to_local=dict(type='bool'),
             update_password=dict(
@@ -759,16 +832,12 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
-    client = F5RestClient(**module.params)
-
     try:
-        mm = ModuleManager(module=module, client=client)
+        mm = ModuleManager(module=module)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        exit_json(module, results, client)
+        module.exit_json(**results)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        fail_json(module, ex, client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

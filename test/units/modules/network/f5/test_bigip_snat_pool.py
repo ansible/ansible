@@ -70,11 +70,13 @@ class TestParameters(unittest.TestCase):
             name='my-snat-pool',
             state='present',
             members=['10.10.10.10', '20.20.20.20'],
+            description='A SNAT pool description',
             partition='Common'
         )
         p = ModuleParameters(params=args)
         assert p.name == 'my-snat-pool'
         assert p.state == 'present'
+        assert p.description == 'A SNAT pool description'
         assert len(p.members) == 2
         assert '/Common/10.10.10.10' in p.members
         assert '/Common/20.20.20.20' in p.members
@@ -99,14 +101,17 @@ class TestManager(unittest.TestCase):
             name='my-snat-pool',
             state='present',
             members=['10.10.10.10', '20.20.20.20'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         mm = ModuleManager(module=module)
 
@@ -126,16 +131,19 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['1.1.1.1', '2.2.2.2'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_ltm_snatpool.json'))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         mm = ModuleManager(module=module)
 
@@ -152,16 +160,19 @@ class TestManager(unittest.TestCase):
             name='asdasd',
             state='present',
             members=['30.30.30.30'],
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         current = ApiParameters(params=load_fixture('load_ltm_snatpool.json'))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
         )
         mm = ModuleManager(module=module)
 

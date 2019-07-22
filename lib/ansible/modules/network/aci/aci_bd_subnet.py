@@ -16,19 +16,6 @@ module: aci_bd_subnet
 short_description: Manage Subnets (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-notes:
-- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
-  is required when the state is C(absent) or C(present).
-- The C(tenant) and C(bd) used must exist before using this module in your playbook.
-  The M(aci_tenant) module and M(aci_bd) can be used for these.
-seealso:
-- module: aci_bd
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:Subnet).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   bd:
@@ -118,6 +105,19 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
+  is required when the state is C(absent) or C(present).
+- The C(tenant) and C(bd) used must exist before using this module in your playbook.
+  The M(aci_tenant) module and M(aci_bd) can be used for these.
+seealso:
+- module: aci_bd
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Subnet).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -333,11 +333,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
-
-
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+
+SUBNET_CONTROL_MAPPING = dict(
+    nd_ra='nd',
+    no_gw='no-default-gateway',
+    querier_ip='querier',
+    unspecified='',
+)
 
 
 def main():

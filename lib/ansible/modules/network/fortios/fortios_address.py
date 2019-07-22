@@ -97,7 +97,7 @@ EXAMPLES = """
 
 RETURN = """
 firewall_address_config:
-  description: full firewall adresses config string.
+  description: full firewall addresses config string.
   returned: always
   type: str
 change_string:

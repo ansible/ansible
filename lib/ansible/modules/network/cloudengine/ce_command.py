@@ -27,7 +27,7 @@ DOCUMENTATION = """
 
 module: ce_command
 version_added: "2.3"
-author: "JackyGao2016 (@JackyGao2016)"
+author: "JackyGao2016 (@CloudEngine-Ansible)"
 short_description: Run arbitrary command on HUAWEI CloudEngine devices.
 description:
   - Sends an arbitrary command to an HUAWEI CloudEngine node and returns
@@ -168,7 +168,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     ), module)
 
     commands = transform(module.params['commands'])

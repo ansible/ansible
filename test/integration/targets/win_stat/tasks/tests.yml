@@ -140,6 +140,7 @@
 - name: test win_stat on hard link file
   win_stat:
     path: '{{win_stat_dir}}\nested\hard-link.ps1'
+    follow: True  # just verifies we don't do any weird follow logic for hard links
   register: stat_hard_link
 
 - name: check actual for hard link file
@@ -386,6 +387,37 @@
     - stat_file_symlink.stat.owner == 'BUILTIN\\Administrators'
     - stat_file_symlink.stat.path == win_stat_dir + '\\file-link.txt'
 
+- name: test win_stat of file symlink with follow
+  win_stat:
+    path: '{{win_stat_dir}}\file-link.txt'
+    follow: True
+  register: stat_file_symlink_follow
+
+- name: assert file system with follow actual
+  assert:
+    that:
+    - stat_file_symlink_follow.stat.attributes == 'Archive'
+    - stat_file_symlink_follow.stat.checksum == 'a9993e364706816aba3e25717850c26c9cd0d89d'
+    - stat_file_symlink_follow.stat.creationtime is defined
+    - stat_file_symlink_follow.stat.exists == True
+    - stat_file_symlink_follow.stat.extension == '.ps1'
+    - stat_file_symlink_follow.stat.filename == 'file.ps1'
+    - stat_file_symlink_follow.stat.hlnk_targets == []
+    - stat_file_symlink_follow.stat.isarchive == True
+    - stat_file_symlink_follow.stat.isdir == False
+    - stat_file_symlink_follow.stat.ishidden == False
+    - stat_file_symlink_follow.stat.isjunction == False
+    - stat_file_symlink_follow.stat.islnk == False
+    - stat_file_symlink_follow.stat.isreadonly == False
+    - stat_file_symlink_follow.stat.isreg == True
+    - stat_file_symlink_follow.stat.isshared == False
+    - stat_file_symlink_follow.stat.lastaccesstime is defined
+    - stat_file_symlink_follow.stat.lastwritetime is defined
+    - stat_file_symlink_follow.stat.md5 is not defined
+    - stat_file_symlink_follow.stat.nlink == 1
+    - stat_file_symlink_follow.stat.owner == 'BUILTIN\\Administrators'
+    - stat_file_symlink_follow.stat.path == win_stat_dir + '\\nested\\file.ps1'
+
 - name: test win_stat on relative symlink
   win_stat:
     path: '{{win_stat_dir}}\nested\nested\link-rel'
@@ -417,6 +449,36 @@
     - stat_rel_symlink.stat.checksum is not defined
     - stat_rel_symlink.stat.md5 is not defined
 
+- name: test win_stat on relative multiple symlink with follow
+  win_stat:
+    path: '{{win_stat_dir}}\outer-link'
+    follow: True
+  register: stat_symlink_follow
+
+- name: assert directory relative symlink actual
+  assert:
+    that:
+    - stat_symlink_follow.stat.attributes == 'Directory'
+    - stat_symlink_follow.stat.creationtime is defined
+    - stat_symlink_follow.stat.exists == True
+    - stat_symlink_follow.stat.filename == 'link-dest'
+    - stat_symlink_follow.stat.hlnk_targets == []
+    - stat_symlink_follow.stat.isarchive == False
+    - stat_symlink_follow.stat.isdir == True
+    - stat_symlink_follow.stat.ishidden == False
+    - stat_symlink_follow.stat.isjunction == False
+    - stat_symlink_follow.stat.islnk == False
+    - stat_symlink_follow.stat.isreadonly == False
+    - stat_symlink_follow.stat.isreg == False
+    - stat_symlink_follow.stat.isshared == False
+    - stat_symlink_follow.stat.lastaccesstime is defined
+    - stat_symlink_follow.stat.lastwritetime is defined
+    - stat_symlink_follow.stat.nlink == 1
+    - stat_symlink_follow.stat.owner == 'BUILTIN\\Administrators'
+    - stat_symlink_follow.stat.path == win_stat_dir + '\\link-dest'
+    - stat_symlink_follow.stat.checksum is not defined
+    - stat_symlink_follow.stat.md5 is not defined
+
 - name: test win_stat on junction
   win_stat:
     path: '{{win_stat_dir}}\junction-link'
@@ -447,6 +509,35 @@
     - stat_junction_point.stat.path == win_stat_dir + '\\junction-link'
     - stat_junction_point.stat.size == 0
 
+- name: test win_stat on junction with follow
+  win_stat:
+    path: '{{win_stat_dir}}\junction-link'
+    follow: True
+  register: stat_junction_point_follow
+
+- name: assert junction with follow actual
+  assert:
+    that:
+    - stat_junction_point_follow.stat.attributes == 'Directory'
+    - stat_junction_point_follow.stat.creationtime is defined
+    - stat_junction_point_follow.stat.exists == True
+    - stat_junction_point_follow.stat.filename == 'junction-dest'
+    - stat_junction_point_follow.stat.hlnk_targets == []
+    - stat_junction_point_follow.stat.isarchive == False
+    - stat_junction_point_follow.stat.isdir == True
+    - stat_junction_point_follow.stat.ishidden == False
+    - stat_junction_point_follow.stat.isjunction == False
+    - stat_junction_point_follow.stat.islnk == False
+    - stat_junction_point_follow.stat.isreadonly == False
+    - stat_junction_point_follow.stat.isreg == False
+    - stat_junction_point_follow.stat.isshared == False
+    - stat_junction_point_follow.stat.lastaccesstime is defined
+    - stat_junction_point_follow.stat.lastwritetime is defined
+    - stat_junction_point_follow.stat.nlink == 1
+    - stat_junction_point_follow.stat.owner == 'BUILTIN\\Administrators'
+    - stat_junction_point_follow.stat.path == win_stat_dir + '\\junction-dest'
+    - stat_junction_point_follow.stat.size == 0
+
 - name: test win_stat module non-existent path
   win_stat:
     path: '{{win_stat_dir}}\this_file_should_not_exist'
@@ -462,7 +553,7 @@
 - name: test win_stat module without path argument
   win_stat:
   register: win_stat_no_args
-  failed_when: "win_stat_no_args.msg != 'Get-AnsibleParam: Missing required argument: path'"
+  failed_when: "win_stat_no_args.msg != 'missing required arguments: path'"
 
 # https://github.com/ansible/ansible/issues/30258
 - name: get path of pagefile

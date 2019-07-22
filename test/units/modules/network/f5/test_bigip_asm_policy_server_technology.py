@@ -99,9 +99,11 @@ class TestManager(unittest.TestCase):
             policy_name='fake_policy',
             state='present',
             name='IIS',
-            server='localhost',
-            password='password',
-            user='admin',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            ),
         ))
 
         module = AnsibleModule(

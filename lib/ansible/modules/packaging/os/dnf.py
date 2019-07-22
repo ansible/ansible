@@ -181,8 +181,20 @@ options:
     description:
       - Amount of time to wait for the dnf lockfile to be freed.
     required: false
-    default: 0
+    default: 30
     type: int
+    version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+    type: bool
+    default: "yes"
+    version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
     version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -273,6 +285,7 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -371,7 +384,7 @@ class DnfModule(YumDnf):
         ]
 
         rpm_arch_re = re.compile(r'(.*)\.(.*)')
-        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.]*)')
+        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
         try:
             arch = None
             rpm_arch_match = rpm_arch_re.match(packagename)
@@ -476,7 +489,7 @@ class DnfModule(YumDnf):
                     results=[],
                 )
 
-            self.module.run_command(['dnf', 'install', '-y', package], check_rc=True)
+            rc, stdout, stderr = self.module.run_command(['dnf', 'install', '-y', package])
             global dnf
             try:
                 import dnf
@@ -487,15 +500,32 @@ class DnfModule(YumDnf):
                 import dnf.util
             except ImportError:
                 self.module.fail_json(
-                    msg="Could not import the dnf python module. "
-                    "Please install `{0}` package.".format(package),
+                    msg="Could not import the dnf python module using {0} ({1}). "
+                        "Please install `{2}` package or ensure you have specified the "
+                        "correct ansible_python_interpreter.".format(sys.executable, sys.version.replace('\n', ''),
+                                                                     package),
                     results=[],
+                    cmd='dnf install -y {0}'.format(package),
+                    rc=rc,
+                    stdout=stdout,
+                    stderr=stderr,
                 )
 
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
         """Configure the dnf Base object."""
 
         conf = base.conf
+
+        # Change the configuration file path if provided, this must be done before conf.read() is called
+        if conf_file:
+            # Fail if we can't read the configuration file.
+            if not os.access(conf_file, os.R_OK):
+                self.module.fail_json(
+                    msg="cannot read configuration file", conf_file=conf_file,
+                    results=[],
+                )
+            else:
+                conf.config_file_path = conf_file
 
         # Read the configuration file
         conf.read()
@@ -512,6 +542,9 @@ class DnfModule(YumDnf):
 
         # Set installroot
         conf.installroot = installroot
+
+        # Load substitutions from the filesystem
+        conf.substitutions.update_from_etc(installroot)
 
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3
@@ -544,20 +577,14 @@ class DnfModule(YumDnf):
 
         if self.download_only:
             conf.downloadonly = True
-
-        # Change the configuration file path if provided
-        if conf_file:
-            # Fail if we can't read the configuration file.
-            if not os.access(conf_file, os.R_OK):
-                self.module.fail_json(
-                    msg="cannot read configuration file", conf_file=conf_file,
-                    results=[],
-                )
-            else:
-                conf.config_file_path = conf_file
+            if self.download_dir:
+                conf.destdir = self.download_dir
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
+
+        # Default in dnf (and module default) is True
+        conf.install_weak_deps = self.install_weak_deps
 
     def _specify_repositories(self, base, disablerepo, enablerepo):
         """Enable and disable repositories matching the provided patterns."""
@@ -580,13 +607,17 @@ class DnfModule(YumDnf):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
-        self._specify_repositories(base, disablerepo, enablerepo)
         try:
             base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
             base.pre_configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
+        self._specify_repositories(base, disablerepo, enablerepo)
+        try:
             base.configure_plugins()
         except AttributeError:
             pass  # older versions of dnf didn't require this and don't have these methods
+
         try:
             if self.update_cache:
                 try:
@@ -738,6 +769,13 @@ class DnfModule(YumDnf):
                     "results": []
                 }
 
+    def _whatprovides(self, filepath):
+        available = self.base.sack.query().available()
+        pkg_spec = available.filter(provides=filepath).run()
+
+        if pkg_spec:
+            return pkg_spec[0].name
+
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
         already_loaded_comps = False  # Only load this if necessary, it's slow
@@ -749,6 +787,13 @@ class DnfModule(YumDnf):
             elif name.endswith(".rpm"):
                 filenames.append(name)
             elif name.startswith("@") or ('/' in name):
+                # like "dnf install /usr/bin/vi"
+                if '/' in name:
+                    pkg_spec = self._whatprovides(name)
+                    if pkg_spec:
+                        pkg_specs.append(pkg_spec)
+                        continue
+
                 if not already_loaded_comps:
                     self.base.read_comps()
                     already_loaded_comps = True
@@ -811,7 +856,7 @@ class DnfModule(YumDnf):
                         if self.allow_downgrade:
                             self.base.package_install(pkg)
                     else:
-                            self.base.package_install(pkg)
+                        self.base.package_install(pkg)
                 except Exception as e:
                     self.module.fail_json(
                         msg="Error occured attempting remote rpm operation: {0}".format(to_native(e)),
@@ -894,6 +939,7 @@ class DnfModule(YumDnf):
                             if not self._is_module_installed(module):
                                 response['results'].append("Module {0} installed.".format(module))
                             self.module_base.install([module])
+                            self.module_base.enable([module])
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(
                                 " ".join(
@@ -1032,8 +1078,9 @@ class DnfModule(YumDnf):
                         try:
                             if self._is_module_installed(module):
                                 response['results'].append("Module {0} removed.".format(module))
-                            self.module_base.disable([module])
                             self.module_base.remove([module])
+                            self.module_base.disable([module])
+                            self.module_base.reset([module])
                         except dnf.exceptions.MarkingErrors as e:
                             failure_response['failures'].append(
                                 " ".join(
@@ -1068,8 +1115,29 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                    if ("*" in pkg_spec) or installed.filter(name=pkg_spec):
-                        self.base.remove(pkg_spec)
+                    # short-circuit installed check for wildcard matching
+                    if '*' in pkg_spec:
+                        try:
+                            self.base.remove(pkg_spec)
+                        except dnf.exceptions.MarkingError as e:
+                            failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                        continue
+
+                    installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
+                    if installed_pkg:
+                        candidate_pkg = self._packagename_dict(installed_pkg[0])
+                        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
+                    else:
+                        candidate_pkg = self._packagename_dict(pkg_spec)
+                        installed_pkg = installed.filter(nevra=pkg_spec).run()
+                    if installed_pkg:
+                        installed_pkg = installed_pkg[0]
+                        evr_cmp = self._compare_evr(
+                            installed_pkg.epoch, installed_pkg.version, installed_pkg.release,
+                            candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
+                        )
+                        if evr_cmp == 0:
+                            self.base.remove(pkg_spec)
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
@@ -1096,6 +1164,10 @@ class DnfModule(YumDnf):
                     self.module.exit_json(**response)
 
                 try:
+                    if self.download_only and self.download_dir and self.base.conf.destdir:
+                        dnf.util.ensure_dir(self.base.conf.destdir)
+                        self.base.repos.all().pkgdir = self.base.conf.destdir
+
                     self.base.download_packages(self.base.transaction.install_set)
                 except dnf.exceptions.DownloadError as e:
                     self.module.fail_json(
@@ -1142,6 +1214,14 @@ class DnfModule(YumDnf):
             if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
                 self.module.fail_json(
                     msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__,
+                    results=[],
+                )
+
+        # Check if download_dir is called correctly
+        if self.download_dir:
+            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
+                self.module.fail_json(
+                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
                     results=[],
                 )
 

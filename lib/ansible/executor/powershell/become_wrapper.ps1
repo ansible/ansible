@@ -27,7 +27,7 @@ Function Get-BecomeFlags($flags) {
     $logon_type = [Ansible.Become.LogonType]::LOGON32_LOGON_INTERACTIVE
     $logon_flags = [Ansible.Become.LogonFlags]::LOGON_WITH_PROFILE
 
-    if ($flags -eq $null -or $flags -eq "") {
+    if ($null -eq $flags -or $flags -eq "") {
         $flag_split = @()
     } elseif ($flags -is [string]) {
         $flag_split = $flags.Split(" ")

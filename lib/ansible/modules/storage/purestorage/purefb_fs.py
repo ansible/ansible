@@ -20,17 +20,19 @@ version_added: "2.6"
 short_description:  Manage filesystemon Pure Storage FlashBlade`
 description:
     - This module manages filesystems on Pure Storage FlashBlade.
-author: Simon Dodsley (@sdodsley)
+author: Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
   name:
     description:
       - Filesystem Name.
     required: true
+    type: str
   state:
     description:
       - Create, delete or modifies a filesystem.
     required: false
     default: present
+    type: str
     choices: [ "present", "absent" ]
   eradicate:
     description:
@@ -41,6 +43,7 @@ options:
   size:
     description:
       - Volume size in M, G, T or P units. See examples.
+    type: str
     required: false
     default: 32G
   nfs:
@@ -54,6 +57,7 @@ options:
       - Define the NFS rules in operation.
     required: false
     default: '*(rw,no_root_squash)'
+    type: str
   smb:
     description:
       - Define whether to SMB protocol is enabled for the filesystem.

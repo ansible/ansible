@@ -80,15 +80,12 @@ class TestStrategyLinear(unittest.TestCase):
             all_vars=dict(),
         )
 
-        mock_options = MagicMock()
-        mock_options.module_path = None
-
         tqm = TaskQueueManager(
             inventory=inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
-            options=mock_options,
             passwords=None,
+            forks=5,
         )
         tqm._initialize_processes(3)
         strategy = StrategyModule(tqm)

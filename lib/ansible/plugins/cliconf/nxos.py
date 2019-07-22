@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: nxos
+short_description: Use nxos cliconf to run command on Cisco NX-OS platform
+description:
+  - This nxos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Cicso NX-OS network devices.
+version_added: "2.4"
+"""
+
 import json
 import re
 
@@ -68,9 +79,9 @@ class Cliconf(CliconfBase):
             if match_sys_ver:
                 device_info['network_os_version'] = match_sys_ver.group(1)
 
-        match_chassis_id = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', reply, re.M)
+        match_chassis_id = re.search(r'Hardware\n\s+cisco(.+)$', reply, re.M)
         if match_chassis_id:
-            device_info['network_os_model'] = match_chassis_id.group(1)
+            device_info['network_os_model'] = match_chassis_id.group(1).strip()
 
         match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
         if match_host_name:
@@ -135,7 +146,7 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show {0} '.format(lookup[source])
-        if format and format is not 'text':
+        if format and format != 'text':
             cmd += '| %s ' % format
 
         if flags:
@@ -177,10 +188,10 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:
@@ -240,12 +251,10 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc() + ['get_diff', 'run_commands']
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['get_diff', 'run_commands']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
-        result['network_api'] = 'cliconf'
 
         return json.dumps(result)
 

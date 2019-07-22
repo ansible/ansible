@@ -116,9 +116,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -150,9 +152,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -185,9 +189,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -217,9 +223,11 @@ class TestManager(unittest.TestCase):
             internal=False,
             state='absent',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -249,9 +257,11 @@ class TestManager(unittest.TestCase):
             internal=False,
             state='absent',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -284,9 +294,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -318,9 +330,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -353,9 +367,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -387,9 +403,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -442,9 +460,11 @@ class TestManager(unittest.TestCase):
             separator=':=',
             state='present',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

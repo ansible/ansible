@@ -17,42 +17,50 @@ short_description: Manages public IP address associations on Apache CloudStack b
 description:
     - Acquires and associates a public IP to an account or project.
     - Due to API limitations this is not an idempotent call, so be sure to only
-      conditionally call this when C(state=present).
+      conditionally call this when I(state=present).
     - Tagging the IP address can also make the call idempotent.
 version_added: '2.0'
 author:
-    - "Darren Worrall (@dazworrall)"
-    - "René Moser (@resmo)"
+    - Darren Worrall (@dazworrall)
+    - René Moser (@resmo)
 options:
   ip_address:
     description:
       - Public IP address.
       - Required if I(state=absent) and I(tags) is not set.
+    type: str
   domain:
     description:
       - Domain the IP address is related to.
+    type: str
   network:
     description:
       - Network the IP address is related to.
       - Mutually exclusive with I(vpc).
+    type: str
   vpc:
     description:
       - VPC the IP address is related to.
       - Mutually exclusive with I(network).
-    version_added: "2.2"
+    type: str
+    version_added: '2.2'
   account:
     description:
       - Account the IP address is related to.
+    type: str
   project:
     description:
       - Name of the project the IP address is related to.
+    type: str
   zone:
     description:
       - Name of the zone in which the IP address is in.
       - If not set, default zone is used.
+    type: str
   state:
     description:
       - State of the IP address.
+    type: str
     default: present
     choices: [ present, absent ]
   tags:
@@ -60,46 +68,47 @@ options:
       - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - Tags can be used as an unique identifier for the IP Addresses.
       - In this case, at least one of them must be unique to ensure idempontency.
-    aliases: [ 'tag' ]
-    version_added: "2.6"
+    type: list
+    aliases: [ tag ]
+    version_added: '2.6'
   poll_async:
     description:
       - Poll async jobs until job has finished.
     type: bool
-    default: 'yes'
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Associate an IP address conditonally
-  local_action:
-    module: cs_ip_address
+  cs_ip_address:
     network: My Network
   register: ip_address
   when: instance.public_ip is undefined
+  delegate_to: localhost
 
 - name: Disassociate an IP address
-  local_action:
-    module: cs_ip_address
+  cs_ip_address:
     ip_address: 1.2.3.4
     state: absent
+  delegate_to: localhost
 
 - name: Associate an IP address with tags
-  local_action:
-    module: cs_ip_address
+  cs_ip_address:
     network: My Network
     tags:
       - key: myCustomID
       - value: 5510c31a-416e-11e8-9013-02000a6b00bf
   register: ip_address
+  delegate_to: localhost
 
 - name: Disassociate an IP address with tags
-  local_action:
-    module: cs_ip_address
+  cs_ip_address:
     state: absent
     tags:
       - key: myCustomID
       - value: 5510c31a-416e-11e8-9013-02000a6b00bf
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -139,7 +148,7 @@ tags:
   returned: success
   type: dict
   sample: '[ { "key": "myCustomID", "value": "5510c31a-416e-11e8-9013-02000a6b00bf" } ]'
-  version_added: "2.6"
+  version_added: '2.6'
 '''
 
 from ansible.module_utils.basic import AnsibleModule

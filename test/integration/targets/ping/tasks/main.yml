@@ -50,4 +50,4 @@
     that:
     - result is failed
     - result is not changed
-    - "'Exception: boom' in result.module_stderr"
+    - "'Exception: boom' in result.module_stdout + result.module_stderr"

@@ -96,6 +96,13 @@ With earlier versions of Ansible, it was necessary to configure a
 suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
 or globally by setting `ssh_args` in `ansible.cfg`.
 
+.. _ssh_serveraliveinterval:
+
+How do I get Ansible to notice a dead target in a timely manner?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+You can add ``-o ServerAliveInterval=NumberOfSeconds`` in ``ssh_args`` from ``ansible.cfg``. Without this option, SSH and therefore Ansible will wait until the TCP connection times out. Another solution is to add ``ServerAliveInterval`` into your global SSH configuration. A good value for ``ServerAliveInterval`` is up to you to decide; keep in mind that ``ServerAliveCountMax=3`` is the SSH default so any value you set will be tripled before terminating the SSH session.
+
 .. _ec2_cloud_performance:
 
 How do I speed up management inside EC2?
@@ -229,19 +236,30 @@ There are a few common errors that one might run into when trying to execute Ans
 
 * Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
 
-To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ascii.  Version 2.7.13 is verified to work.
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
 
-.. error::
-  /usr/bin/python: EDC5129I No such file or directory
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
-To fix this set the path to the python installation in your inventory like so::
+  .. error::
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+
+  To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
+
+* Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
+
+  .. error::
+      /usr/bin/python: EDC5129I No such file or directory
+
+  To fix this set the path to the python installation in your inventory like so::
 
     zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
 
-.. error::
+* Start of python fails with ``The module libpython2.7.so was not found.``
+
+  .. error::
     EE3501S The module libpython2.7.so was not found.
 
-On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
 
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
@@ -631,6 +649,32 @@ but you can still access the original via ``hostvars``::
 
 This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
+
+.. _scp_protocol_error_filename:
+
+How do I fix 'protocol error: filename does not match request' when fetching a file?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Newer releases of OpenSSH have a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_ in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
+
+    failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
+
+In these releases, SCP tries to validate that the path of the file to fetch matches the requested path.
+The validation
+fails if the remote filename requires quotes to escape spaces or non-ascii characters in its path. To avoid this error:
+
+* Use SFTP instead of SCP by setting ``scp_if_ssh`` to ``smart`` (which tries SFTP first) or to ``False``. You can do this in one of four ways:
+    * Rely on the default setting, which is ``smart`` - this works if ``scp_if_ssh`` is not explicitly set anywhere
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>` in inventory: ``ansible_scp_if_ssh: False``
+    * Set an environment variable on your control node: ``export ANSIBLE_SCP_IF_SSH=False``
+    * Pass an environment variable when you run Ansible: ``ANSIBLE_SCP_IF_SSH=smart ansible-playbook``
+    * Modify your ``ansible.cfg`` file: add ``scp_if_ssh=False`` to the ``[ssh_connection]`` section
+* If you must use SCP, set the ``-T`` arg to tell the SCP client to ignore path validation. You can do this in one of three ways:
+    * Set a :ref:`host variable <host_variables>` or :ref:`group variable <group_variables>`: ``ansible_scp_extra_args=-T``,
+    * Export or pass an environment variable: ``ANSIBLE_SCP_EXTRA_ARGS=-T``
+    * Modify your ``ansible.cfg`` file: add ``scp_extra_args=-T`` to the ``[ssh_connection]`` section
+
+.. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
 
 .. _i_dont_see_my_question:
 

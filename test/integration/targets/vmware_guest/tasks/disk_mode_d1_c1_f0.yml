@@ -2,43 +2,15 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
 - name: create new VMs with invalid disk mode
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ 'newvm_' + item|basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: disk_mode_d1_c1_f0
     guest_id: centos64Guest
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
         memory_mb: 512
@@ -48,8 +20,7 @@
           autoselect_datastore: True
           disk_mode: 'invalid_disk_mode'
     state: poweredoff
-    folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
+    folder: "{{ f0 }}"
   register: disk_mode_d1_c1_f0
   ignore_errors: True
 
@@ -58,17 +29,17 @@
 - name: assert that changes were not made
   assert:
     that:
-        - "disk_mode_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"
+        - not(disk_mode_d1_c1_f0 is changed)
 
 - name: create new VMs with valid disk mode
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ 'newvm_' + item|basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: disk_mode_d1_c1_f0
     guest_id: centos64Guest
-    datacenter: "{{ (item|basename).split('_')[0] }}"
+    datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
         memory_mb: 512
@@ -78,8 +49,7 @@
           autoselect_datastore: True
           disk_mode: 'independent_persistent'
     state: poweredoff
-    folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
+    folder: "{{ f0 }}"
   register: disk_mode_d1_c1_f0_2
 
 - debug: var=disk_mode_d1_c1_f0_2
@@ -87,34 +57,33 @@
 - name: assert that changes were made
   assert:
     that:
-        - "disk_mode_d1_c1_f0_2.results|map(attribute='changed')|unique|list == [true]"
+        - disk_mode_d1_c1_f0_2 is changed
 
-# TODO: vcsim does not support reconfiguration of disk mode, fails with types.InvalidDeviceSpec
-#- name: create new VMs with valid disk mode again
-#  vmware_guest:
-#    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    name: "{{ 'newvm_' + item|basename }}"
-#    guest_id: centos64Guest
-#    datacenter: "{{ (item|basename).split('_')[0] }}"
-#    hardware:
-#        num_cpus: 1
-#        memory_mb: 512
-#    disk:
-#        - size: 1gb
-#          type: eagerzeroedthick
-#          autoselect_datastore: True
-#          disk_mode: 'independent_persistent'
-#    state: poweredoff
-#    folder: "{{ item|dirname }}"
-#  with_items: "{{ vmlist['json'] }}"
-#  register: disk_mode_d1_c1_f0_2
-
-#- debug: var=disk_mode_d1_c1_f0_2
-
-#- name: assert that changes were not made
-#  assert:
-#    that:
-#        - "disk_mode_d1_c1_f0_2.results|map(attribute='changed')|unique|list == [false]"
+#TODO: vcsim does not support reconfiguration of disk mode, fails with types.InvalidDeviceSpec
+- when: vcsim is not defined
+  block:
+  - name: create new VMs with valid disk mode again
+    vmware_guest:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: disk_mode_d1_c1_f0
+      guest_id: centos64Guest
+      datacenter: "{{ dc1 }}"
+      hardware:
+        num_cpus: 1
+        memory_mb: 512
+      disk:
+        - size: 1gb
+          type: eagerzeroedthick
+          autoselect_datastore: True
+          disk_mode: 'independent_persistent'
+      state: poweredoff
+      folder: "{{ f0 }}"
+    register: disk_mode_d1_c1_f0_2
+  - debug: var=disk_mode_d1_c1_f0_2
+  - name: assert that changes were not made
+    assert:
+      that:
+        - not (disk_mode_d1_c1_f0_2 is changed)

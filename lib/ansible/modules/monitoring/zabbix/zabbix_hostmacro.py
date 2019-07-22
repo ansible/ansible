@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_hostmacro
-short_description: Zabbix host macro creates/updates/deletes
+short_description: Create/update/delete Zabbix host macros
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
@@ -33,7 +33,7 @@ options:
         required: true
     macro_name:
         description:
-            - Name of the host macro.
+            - Name of the host macro without the enclosing curly braces and the leading dollar sign.
         required: true
     macro_value:
         description:
@@ -66,10 +66,13 @@ EXAMPLES = '''
     login_user: username
     login_password: password
     host_name: ExampleHost
-    macro_name: Example macro
+    macro_name: EXAMPLE.MACRO
     macro_value: Example value
     state: present
 '''
+
+
+import traceback
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -82,9 +85,10 @@ try:
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class HostMacro(object):
@@ -170,7 +174,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -186,7 +190,7 @@ def main():
     force = module.params['force']
 
     if ':' in macro_name:
-        macro_name = ':'.join([macro_name.split(':')[0].upper(), macro_name.split(':')[1]])
+        macro_name = ':'.join([macro_name.split(':')[0].upper(), ':'.join(macro_name.split(':')[1:])])
     else:
         macro_name = macro_name.upper()
 

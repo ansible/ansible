@@ -12,6 +12,7 @@ from lib.util import (
     find_python,
     generate_pip_command,
     get_docker_completion,
+    ApplicationError,
 )
 
 from lib.metadata import (
@@ -67,7 +68,10 @@ class EnvironmentConfig(CommonConfig):
         if self.python == 'default':
             self.python = None
 
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
+        actual_major_minor = '.'.join(str(i) for i in sys.version_info[:2])
+
+        self.python_version = self.python or actual_major_minor
+        self.python_interpreter = args.python_interpreter
 
         self.delegate = self.tox or self.docker or self.remote
         self.delegate_args = []  # type: list[str]
@@ -77,6 +81,9 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+
+        if args.check_python and args.check_python != actual_major_minor:
+            raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
 
     @property
     def python_executable(self):
@@ -104,6 +111,7 @@ class TestConfig(EnvironmentConfig):
 
         self.coverage = args.coverage  # type: bool
         self.coverage_label = args.coverage_label  # type: str
+        self.coverage_check = args.coverage_check  # type: bool
         self.include = args.include or []  # type: list [str]
         self.exclude = args.exclude or []  # type: list [str]
         self.require = args.require or []  # type: list [str]
@@ -123,6 +131,9 @@ class TestConfig(EnvironmentConfig):
 
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
         self.metadata_path = None
+
+        if self.coverage_check:
+            self.coverage = True
 
 
 class ShellConfig(EnvironmentConfig):
@@ -189,6 +200,8 @@ class IntegrationConfig(TestConfig):
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
+        self.no_temp_workdir = args.no_temp_workdir
+        self.no_temp_unicode = args.no_temp_unicode
 
         if self.list_targets:
             self.explain = True

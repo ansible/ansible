@@ -17,6 +17,12 @@
         - 'default{{ python_suffix }}.yml'
       paths: '../vars'
 
+- name: make sure the dbus service is started under systemd
+  systemd:
+    name: dbus
+    state: started
+  when: ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora'
+
 # Make sure we start fresh
 - name: stop postgresql service
   service: name={{ postgresql_service }} state=stopped
@@ -96,6 +102,12 @@
 # instLangs parameter).
 
 - block:
+  - name: Install langpacks (rhel8 beta)
+    yum:
+      name: glibc-all-langpacks
+      state: present
+    when: ansible_distribution_major_version|int >= 8
+
   - name: Check if locales need to be generated (RedHat)
     shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
     register: locale_present

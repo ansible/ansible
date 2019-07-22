@@ -65,7 +65,7 @@ options:
       - URL of the Update Centre.
       - Used as the base URL to download the plugins and the
         I(update-center.json) JSON file.
-    default: https://updates.jenkins-ci.org
+    default: https://updates.jenkins.io
   url:
     description:
       - URL of the Jenkins server.
@@ -430,8 +430,9 @@ class JenkinsPlugin(object):
             md5sum_old = None
             if os.path.isfile(plugin_file):
                 # Make the checksum of the currently installed plugin
-                md5sum_old = hashlib.md5(
-                    open(plugin_file, 'rb').read()).hexdigest()
+                with open(plugin_file, 'rb') as md5_plugin_fh:
+                    md5_plugin_content = md5_plugin_fh.read()
+                md5sum_old = hashlib.md5(md5_plugin_content).hexdigest()
 
             if self.params['version'] in [None, 'latest']:
                 # Take latest version
@@ -477,12 +478,14 @@ class JenkinsPlugin(object):
                             self._write_file(plugin_file, data)
 
                         changed = True
-            else:
+            elif self.params['version'] == 'latest':
                 # Check for update from the updates JSON file
                 plugin_data = self._download_updates()
 
                 try:
-                    sha1_old = hashlib.sha1(open(plugin_file, 'rb').read())
+                    with open(plugin_file, 'rb') as sha1_plugin_fh:
+                        sha1_plugin_content = sha1_plugin_fh.read()
+                    sha1_old = hashlib.sha1(sha1_plugin_content)
                 except Exception as e:
                     self.module.fail_json(
                         msg="Cannot calculate SHA1 of the old plugin.",
@@ -718,7 +721,7 @@ def main():
             default='present'),
         timeout=dict(default=30, type="int"),
         updates_expiration=dict(default=86400, type="int"),
-        updates_url=dict(default='https://updates.jenkins-ci.org'),
+        updates_url=dict(default='https://updates.jenkins.io'),
         url=dict(default='http://localhost:8080'),
         url_password=dict(no_log=True),
         version=dict(),

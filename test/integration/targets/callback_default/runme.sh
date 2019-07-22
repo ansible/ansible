@@ -18,9 +18,12 @@ run_test() {
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
-	{ ansible-playbook -i ../../inventory test.yml \
+	{ ansible-playbook -i inventory test.yml \
 		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
+	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
+	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
+
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
 }
@@ -36,6 +39,15 @@ cleanup() {
 	if [[ $INIT = 0 ]]; then
 		rm -rf "${OUTFILE}.*"
 	fi
+
+	if [[ -f "${BASEFILE}.unreachable.stdout" ]]; then
+	    rm -rf "${BASEFILE}.unreachable.stdout"
+	fi
+
+	if [[ -f "${BASEFILE}.unreachable.stderr" ]]; then
+	    rm -rf "${BASEFILE}.unreachable.stderr"
+	fi
+
 	# Restore TTY cols
 	if [[ -n ${TTY_COLS:-} ]]; then
 		stty cols "${TTY_COLS}"
@@ -76,32 +88,46 @@ export ANSIBLE_FORCE_COLOR=0
 export ANSIBLE_NOCOLOR=1
 
 # Default settings
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
 
 run_test default
 
 # Hide skipped
-export DISPLAY_SKIPPED_HOSTS=0
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 
 run_test hide_skipped
 
 # Hide skipped/ok
-export DISPLAY_SKIPPED_HOSTS=0
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 export ANSIBLE_DISPLAY_OK_HOSTS=0
 
 run_test hide_skipped_ok
 
 # Hide ok
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=0
 
 run_test hide_ok
 
 # Failed to stderr
-export DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
 run_test failed_to_stderr
+
+# Default settings with unreachable tasks
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_FAILED_STDERR=1
+
+# Check if UNREACHBLE is available in stderr
+set +e
+ansible-playbook -i inventory test_2.yml > >(set +x; tee "${BASEFILE}.unreachable.stdout";) 2> >(set +x; tee "${BASEFILE}.unreachable.stderr" >&2) || true
+set -e
+if test "$(grep -c 'UNREACHABLE' "${BASEFILE}.unreachable.stderr")" -ne 1; then
+    echo "Test failed"
+    exit 1
+fi

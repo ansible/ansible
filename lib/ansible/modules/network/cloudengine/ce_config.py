@@ -92,9 +92,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(current-configuration) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
     default: 'no'
   config:
@@ -125,6 +125,28 @@ options:
         return changed.
     type: bool
     default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -174,6 +196,15 @@ EXAMPLES = """
       before: undo acl 2000
       replace: block
       provider: "{{ cli }}"
+
+  - name: configurable backup path
+    ce_config:
+      lines: sysname {{ inventory_hostname }}
+      provider: "{{ cli }}"
+      backup: yes
+      backup_options:
+        filename: backup.cfg
+        dir_path: /home/user
 """
 
 RETURN = """
@@ -193,6 +224,7 @@ from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.cloudengine.ce import get_config, load_config, run_commands
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 from ansible.module_utils.network.cloudengine.ce import check_args as ce_check_args
+import re
 
 
 def check_args(module, warnings):
@@ -209,10 +241,45 @@ def get_running_config(module):
     return NetworkConfig(indent=1, contents=contents)
 
 
+def conversion_src(module):
+    src_list = module.params['src'].split('\n')
+    src_list_organize = []
+    exit_list = [' return', ' system-view']
+    if src_list[0].strip() == '#':
+        src_list.pop(0)
+    for per_config in src_list:
+        if per_config.strip() == '#':
+            if per_config.rstrip() == '#':
+                src_list_organize.extend(exit_list)
+            else:
+                src_list_organize.append('quit')
+        else:
+            src_list_organize.append(per_config)
+    src_str = '\n'.join(src_list_organize)
+    return src_str
+
+
+def conversion_lines(commands):
+    all_config = []
+    exit_list = [' return', ' system-view']
+    for per_command in commands:
+        if re.search(r',', per_command):
+            all_config.extend(exit_list)
+            per_config = per_command.split(',')
+            for config in per_config:
+                if config:
+                    all_config.append(config)
+            all_config.extend(exit_list)
+        else:
+            all_config.append(per_command)
+    return all_config
+
+
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        candidate.load(module.params['src'])
+        config = conversion_src(module)
+        candidate.load(config)
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -222,7 +289,6 @@ def get_candidate(module):
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
-
     candidate = get_candidate(module)
 
     if match != 'none':
@@ -234,26 +300,36 @@ def run(module, result):
 
     if configobjs:
         commands = dumps(configobjs, 'commands').split('\n')
-
         if module.params['lines']:
+
+            commands = conversion_lines(commands)
+
             if module.params['before']:
                 commands[:0] = module.params['before']
 
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-        result['commands'] = commands
-        result['updates'] = commands
+        command_display = []
+        for per_command in commands:
+            if per_command.strip() not in ['quit', 'return', 'system-view']:
+                command_display.append(per_command)
 
+        result['commands'] = command_display
+        result['updates'] = command_display
         if not module.check_mode:
             load_config(module, commands)
-
-        result['changed'] = True
+        if result['commands']:
+            result['changed'] = True
 
 
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -269,6 +345,7 @@ def main():
         defaults=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 

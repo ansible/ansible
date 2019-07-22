@@ -95,7 +95,7 @@
   when: "challenge_data is changed and challenge == 'tls-alpn-01' and (challenge_alpn_tls is defined and challenge_alpn_tls == 'acme_challenge_cert_helper')"
 - name: ({{ certgen_title }}) Set TLS ALPN challenges (acm_challenge_cert_helper)
   uri:
-    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.domain }}/certificate-and-key"
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.domain }}/{{ item.identifier }}/certificate-and-key"
     method: PUT
     body_format: raw
     body: "{{ item.challenge_certificate }}\n{{ lookup('file', output_dir ~ '/' ~ certificate_name ~ '.key') }}"
@@ -105,7 +105,7 @@
   when: "challenge_data is changed and challenge == 'tls-alpn-01' and (challenge_alpn_tls is defined and challenge_alpn_tls == 'acme_challenge_cert_helper')"
 - name: ({{ certgen_title }}) Create TLS ALPN challenges (der-value-b64)
   uri:
-    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}/der-value-b64"
+    url: "http://{{ acme_host }}:5000/tls-alpn/{{ item.value['tls-alpn-01'].resource }}/{{ item.value['tls-alpn-01'].resource_original }}/der-value-b64"
     method: PUT
     body_format: raw
     body: "{{ item.value['tls-alpn-01'].resource_value }}"

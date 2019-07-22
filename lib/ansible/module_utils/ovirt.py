@@ -34,7 +34,7 @@ try:
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
     import ovirtsdk4.types as otypes
-    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
+    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.3.0')
 except ImportError:
     HAS_SDK = False
 
@@ -51,7 +51,7 @@ BYTES_MAP = {
 def check_sdk(module):
     if not HAS_SDK:
         module.fail_json(
-            msg='ovirtsdk4 version 4.2.4 or higher is required for this module'
+            msg='ovirtsdk4 version 4.3.0 or higher is required for this module'
         )
 
 
@@ -60,6 +60,20 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
     Convert SDK Struct type into dictionary.
     """
     res = {}
+
+    def resolve_href(value):
+        # Fetch nested values of struct:
+        try:
+            value = connection.follow_link(value)
+        except sdk.Error:
+            value = None
+        nested_obj = dict(
+            (attr, convert_value(getattr(value, attr)))
+            for attr in attributes if getattr(value, attr, None)
+        )
+        nested_obj['id'] = getattr(value, 'id', None)
+        nested_obj['href'] = getattr(value, 'href', None)
+        return nested_obj
 
     def remove_underscore(val):
         if val.startswith('_'):
@@ -73,19 +87,8 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
         if isinstance(value, sdk.Struct):
             if not fetch_nested or not value.href:
                 return get_dict_of_struct(value)
+            return resolve_href(value)
 
-            # Fetch nested values of struct:
-            try:
-                value = connection.follow_link(value)
-            except sdk.Error:
-                value = None
-            nested_obj = dict(
-                (attr, convert_value(getattr(value, attr)))
-                for attr in attributes if getattr(value, attr, None)
-            )
-            nested_obj['id'] = getattr(value, 'id', None)
-            nested_obj['href'] = getattr(value, 'href', None)
-            return nested_obj
         elif isinstance(value, Enum) or isinstance(value, datetime):
             return str(value)
         elif isinstance(value, list) or isinstance(value, sdk.List):
@@ -99,7 +102,9 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
             ret = []
             for i in value:
                 if isinstance(i, sdk.Struct):
-                    if not nested:
+                    if fetch_nested and i.href:
+                        ret.append(resolve_href(i))
+                    elif not nested:
                         ret.append(get_dict_of_struct(i))
                     else:
                         nested_obj = dict(
@@ -181,7 +186,7 @@ def convert_to_bytes(param):
     param = ''.join(param.split())
 
     # Convert to bytes:
-    if param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
+    if len(param) > 3 and param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
         return int(param[:-3]) * BYTES_MAP.get(param[-3:].lower(), 1)
     elif param.isdigit():
         return int(param) * 2**10
@@ -541,6 +546,8 @@ class BaseModule(object):
         fail_condition=lambda e: False,
         search_params=None,
         update_params=None,
+        _wait=None,
+        force_create=False,
         **kwargs
     ):
         """
@@ -562,7 +569,7 @@ class BaseModule(object):
         :param kwargs: Additional parameters passed when creating entity.
         :return: Dictionary with values returned by Ansible module.
         """
-        if entity is None:
+        if entity is None and not force_create:
             entity = self.search_entity(search_params)
 
         self.pre_create(entity)
@@ -621,7 +628,7 @@ class BaseModule(object):
                 service=entity_service,
                 condition=state_condition,
                 fail_condition=fail_condition,
-                wait=self._module.params['wait'],
+                wait=_wait if _wait is not None else self._module.params['wait'],
                 timeout=self._module.params['timeout'],
                 poll_interval=self._module.params['poll_interval'],
             )

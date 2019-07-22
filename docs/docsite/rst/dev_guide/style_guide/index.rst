@@ -63,34 +63,46 @@ Sphinx will 'learn on the fly' when creating a hierarchy of headers.
 To make our documents easy to read and to edit, we follow a standard set of header notations.
 We use:
 
-* ``###`` with overline, for parts::
+* ``###`` with overline, for parts:
+
+.. code-block:: rst
 
       ###############
       Developer guide
       ###############
 
-* ``***`` with overline, for chapters::
+* ``***`` with overline, for chapters:
+
+.. code-block:: rst
 
       *******************
       Ansible style guide
       *******************
 
-* ``===`` for sections::
+* ``===`` for sections:
+
+.. code-block:: rst
 
       Mechanical guidelines
       =====================
 
-* ``---`` for subsections::
+* ``---`` for subsections:
+
+.. code-block:: rst
 
       Internal navigation
       -------------------
 
-* ``^^^`` for sub-subsections::
+* ``^^^`` for sub-subsections:
+
+.. code-block:: rst
 
       Adding anchors
       ^^^^^^^^^^^^^^
 
-* ``"""`` for paragraphs::
+* ``"""`` for paragraphs:
+
+.. code-block:: rst
 
       Paragraph that needs a title
       """"""""""""""""""""""""""""
@@ -120,12 +132,25 @@ Adding anchors
 Adding internal links
 ^^^^^^^^^^^^^^^^^^^^^
 
-* All internal links must use ``:ref:`` syntax. These links both point to the anchor defined above::
+* All internal links must use ``:ref:`` syntax. These links both point to the anchor defined above:
+
+.. code-block:: rst
 
    :ref:`unique_page`
    :ref:`this page <unique_page>`
 
 The second example adds custom text for the link.
+
+Adding links to modules and plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Module links use the module name followed by ``_module`` for the anchor.
+* Plugin links use the plugin name followed by the plugin type. For example, :ref:`enable become plugin <enable_become>`).
+
+.. code-block:: rst
+
+   :ref:`this module <this_module>``
+   :ref:`that connection plugin <that_connection>`
 
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
@@ -137,7 +162,9 @@ If you include a local TOC:
 * use the ``:local:`` directive so the page's main header is not included
 * do not include a title
 
-The syntax is::
+The syntax is:
+
+.. code-block:: rst
 
    .. contents::
       :local:

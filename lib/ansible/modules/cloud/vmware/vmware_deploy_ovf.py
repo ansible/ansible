@@ -65,6 +65,21 @@ options:
         description:
         - Absolute path of folder to place the virtual machine.
         - If not specified, defaults to the value of C(datacenter.vmFolder).
+        - 'Examples:'
+        - '   folder: /ha-datacenter/vm'
+        - '   folder: ha-datacenter/vm'
+        - '   folder: /datacenter1/vm'
+        - '   folder: datacenter1/vm'
+        - '   folder: /datacenter1/vm/folder1'
+        - '   folder: datacenter1/vm/folder1'
+        - '   folder: /folder1/datacenter1/vm'
+        - '   folder: folder1/datacenter1/vm'
+        - '   folder: /folder1/datacenter1/vm/folder2'
+    inject_ovf_env:
+        description:
+        - Force the given properties to be inserted into an OVF Environment and injected through VMware Tools.
+        version_added: "2.8"
+        type: bool
     name:
         description:
         - Name of the VM to work with.
@@ -148,6 +163,8 @@ import sys
 import tarfile
 import time
 import traceback
+
+import xml.etree.ElementTree as ET
 
 from threading import Thread
 
@@ -363,6 +380,8 @@ class VMwareDeployOvf:
 
         if self.params['folder']:
             folder = self.si.searchIndex.FindByInventoryPath(self.params['folder'])
+            if not folder:
+                self.module.fail_json(msg="Unable to find the specified folder %(folder)s" % self.params)
         else:
             folder = datacenter.vmFolder
 
@@ -509,8 +528,47 @@ class VMwareDeployOvf:
     def complete(self):
         self.lease.HttpNfcLeaseComplete()
 
-    def power_on(self):
+    def inject_ovf_env(self):
+        attrib = {
+            'xmlns': 'http://schemas.dmtf.org/ovf/environment/1',
+            'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xmlns:oe': 'http://schemas.dmtf.org/ovf/environment/1',
+            'xmlns:ve': 'http://www.vmware.com/schema/ovfenv',
+            'oe:id': '',
+            've:esxId': self.entity._moId
+        }
+        env = ET.Element('Environment', **attrib)
+
+        platform = ET.SubElement(env, 'PlatformSection')
+        ET.SubElement(platform, 'Kind').text = self.si.about.name
+        ET.SubElement(platform, 'Version').text = self.si.about.version
+        ET.SubElement(platform, 'Vendor').text = self.si.about.vendor
+        ET.SubElement(platform, 'Locale').text = 'US'
+
+        prop_section = ET.SubElement(env, 'PropertySection')
+        for key, value in self.params['properties'].items():
+            params = {
+                'oe:key': key,
+                'oe:value': str(value) if isinstance(value, bool) else value
+            }
+            ET.SubElement(prop_section, 'Property', **params)
+
+        opt = vim.option.OptionValue()
+        opt.key = 'guestinfo.ovfEnv'
+        opt.value = '<?xml version="1.0" encoding="UTF-8"?>' + to_native(ET.tostring(env))
+
+        config_spec = vim.vm.ConfigSpec()
+        config_spec.extraConfig = [opt]
+
+        task = self.entity.ReconfigVM_Task(config_spec)
+        wait_for_task(task)
+
+    def deploy(self):
         facts = {}
+
+        if self.params['inject_ovf_env']:
+            self.inject_ovf_env()
+
         if self.params['power_on']:
             task = self.entity.PowerOn()
             if self.params['wait']:
@@ -545,6 +603,10 @@ def main():
         },
         'folder': {
             'default': None,
+        },
+        'inject_ovf_env': {
+            'default': False,
+            'type': 'bool',
         },
         'resource_pool': {
             'default': 'Resources',
@@ -609,7 +671,7 @@ def main():
     deploy_ovf = VMwareDeployOvf(module)
     deploy_ovf.upload()
     deploy_ovf.complete()
-    facts = deploy_ovf.power_on()
+    facts = deploy_ovf.deploy()
 
     module.exit_json(instance=facts, changed=True)
 

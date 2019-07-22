@@ -1,0 +1,187 @@
+---
+- name: Create (check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  check_mode: yes
+  become: yes
+  register: create_check
+- name: Create
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  register: create
+- name: Create (idempotent)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  register: create_idem
+- name: Create (idempotent, check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: present
+    keyfile: "{{ role_path }}/files/keyfile1"
+  check_mode: yes
+  become: yes
+  register: create_idem_check
+- assert:
+    that:
+    - create_check is changed
+    - create is changed
+    - create_idem is not changed
+    - create_idem_check is not changed
+
+- name: Open (check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  check_mode: yes
+  become: yes
+  register: open_check
+- name: Open
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  register: open
+- name: Open (idempotent)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+  register: open_idem
+- name: Open (idempotent, check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  check_mode: yes
+  become: yes
+  register: open_idem_check
+- assert:
+    that:
+    - open_check is changed
+    - open is changed
+    - open_idem is not changed
+    - open_idem_check is not changed
+
+- name: Closed (via name, check)
+  luks_device:
+    name: "{{ open.name }}"
+    state: closed
+  check_mode: yes
+  become: yes
+  register: close_check
+- name: Closed (via name)
+  luks_device:
+    name: "{{ open.name }}"
+    state: closed
+  become: yes
+  register: close
+- name: Closed (via name, idempotent)
+  luks_device:
+    name: "{{ open.name }}"
+    state: closed
+  become: yes
+  register: close_idem
+- name: Closed (via name, idempotent, check)
+  luks_device:
+    name: "{{ open.name }}"
+    state: closed
+  check_mode: yes
+  become: yes
+  register: close_idem_check
+- assert:
+    that:
+    - close_check is changed
+    - close is changed
+    - close_idem is not changed
+    - close_idem_check is not changed
+
+- name: Re-open
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+
+- name: Closed (via device, check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  check_mode: yes
+  become: yes
+  register: close_check
+- name: Closed (via device)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  become: yes
+  register: close
+- name: Closed (via device, idempotent)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  become: yes
+  register: close_idem
+- name: Closed (via device, idempotent, check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: closed
+  check_mode: yes
+  become: yes
+  register: close_idem_check
+- assert:
+    that:
+    - close_check is changed
+    - close is changed
+    - close_idem is not changed
+    - close_idem_check is not changed
+
+- name: Re-opened
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: opened
+    keyfile: "{{ role_path }}/files/keyfile1"
+  become: yes
+
+- name: Absent (check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: absent
+  check_mode: yes
+  become: yes
+  register: absent_check
+- name: Absent
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: absent
+  become: yes
+  register: absent
+- name: Absent (idempotence)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: absent
+  become: yes
+  register: absent_idem
+- name: Absent (idempotence, check)
+  luks_device:
+    device: "{{ cryptfile_device }}"
+    state: absent
+  check_mode: yes
+  become: yes
+  register: absent_idem_check
+- assert:
+    that:
+    - absent_check is changed
+    - absent is changed
+    - absent_idem is not changed
+    - absent_idem_check is not changed

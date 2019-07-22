@@ -132,28 +132,33 @@ from ansible.module_utils.network.onyx.onyx import get_interfaces_config
 
 
 class OnyxInterfaceModule(BaseOnyxModule):
-    IF_ETH_REGEX = re.compile(r"^Eth(\d+\/\d+|Eth\d+\/\d+\d+)$")
+    IF_ETH_REGEX = re.compile(r"^Eth(\d+\/\d+|\d+\/\d+\/\d+)$")
     IF_VLAN_REGEX = re.compile(r"^Vlan (\d+)$")
     IF_LOOPBACK_REGEX = re.compile(r"^Loopback (\d+)$")
+    IF_PO_REGEX = re.compile(r"^Po(\d+)$")
 
     IF_TYPE_ETH = "ethernet"
     IF_TYPE_LOOPBACK = "loopback"
     IF_TYPE_VLAN = "vlan"
+    IF_TYPE_PO = "port-channel"
 
     IF_TYPE_MAP = {
         IF_TYPE_ETH: IF_ETH_REGEX,
         IF_TYPE_VLAN: IF_VLAN_REGEX,
         IF_TYPE_LOOPBACK: IF_LOOPBACK_REGEX,
+        IF_TYPE_PO: IF_PO_REGEX
     }
     UNSUPPORTED_ATTRS = {
         IF_TYPE_ETH: (),
         IF_TYPE_VLAN: ('speed', 'rx_rate', 'tx_rate'),
         IF_TYPE_LOOPBACK: ('speed', 'mtu', 'rx_rate', 'tx_rate'),
+        IF_TYPE_PO: ('speed', 'rx_rate', 'tx_rate'),
     }
     UNSUPPORTED_STATES = {
         IF_TYPE_ETH: ('absent',),
         IF_TYPE_VLAN: (),
         IF_TYPE_LOOPBACK: ('up', 'down'),
+        IF_TYPE_PO: ('absent'),
     }
 
     IF_MODIFIABLE_ATTRS = ('speed', 'description', 'mtu')

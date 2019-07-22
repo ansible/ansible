@@ -106,14 +106,18 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='foo',
             clock_skew=100,
-            password='password',
-            server='localhost',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
+            supports_check_mode=self.spec.supports_check_mode,
+            mutually_exclusive=self.spec.mutually_exclusive,
+            required_together=self.spec.required_together
         )
         mm = ModuleManager(module=module)
 

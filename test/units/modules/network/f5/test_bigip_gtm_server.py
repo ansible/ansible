@@ -164,9 +164,6 @@ class TestV1Manager(unittest.TestCase):
 
     def test_create(self, *args):
         set_module_args(dict(
-            server='lb.mydomain.com',
-            user='admin',
-            password='secret',
             name='GTM_Server',
             datacenter='/Common/New York',
             server_type='bigip',
@@ -209,7 +206,12 @@ class TestV1Manager(unittest.TestCase):
                         )
                     ]
                 )
-            ]
+            ],
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -265,9 +267,6 @@ class TestV2Manager(unittest.TestCase):
 
     def test_create(self, *args):
         set_module_args(dict(
-            server='lb.mydomain.com',
-            user='admin',
-            password='secret',
             name='GTM_Server',
             datacenter='/Common/New York',
             server_type='bigip',
@@ -310,7 +309,12 @@ class TestV2Manager(unittest.TestCase):
                         )
                     ]
                 )
-            ]
+            ],
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(

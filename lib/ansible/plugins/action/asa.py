@@ -24,7 +24,7 @@ import copy
 import json
 
 from ansible import constants as C
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.asa.asa import asa_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.utils.display import Display
@@ -32,10 +32,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
+
+        self._config_module = True if self._task.action == 'asa_config' else False
 
         if self._play_context.connection == 'local':
             provider = load_provider(asa_provider_spec, self._task.args)

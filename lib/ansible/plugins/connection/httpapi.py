@@ -61,6 +61,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_httpapi_pass
+      - name: ansible_httpapi_password
   use_ssl:
     type: boolean
     description:
@@ -128,6 +129,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -135,7 +138,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -229,6 +232,8 @@ class Connection(NetworkConnectionBase):
             port = self.get_option('port') or (443 if protocol == 'https' else 80)
             self._url = '%s://%s:%s' % (protocol, host, port)
 
+            self.queue_message('vvv', "ESTABLISH HTTP(S) CONNECTFOR USER: %s TO %s" %
+                               (self._play_context.remote_user, self._url))
             self.httpapi.set_become(self._play_context)
             self.httpapi.login(self.get_option('remote_user'), self.get_option('password'))
 
@@ -272,9 +277,9 @@ class Connection(NetworkConnectionBase):
             if is_handled is True:
                 return self.send(path, data, **kwargs)
             elif is_handled is False:
-                raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
-            else:
                 raise
+            else:
+                response = is_handled
         except URLError as exc:
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
@@ -285,5 +290,7 @@ class Connection(NetworkConnectionBase):
 
         # Try to assign a new auth token if one is given
         self._auth = self.update_auth(response, response_buffer) or self._auth
+
+        response_buffer.seek(0)
 
         return response, response_buffer

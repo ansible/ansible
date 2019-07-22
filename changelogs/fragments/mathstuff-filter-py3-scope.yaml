@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "mattstuff filter - fix py3 scope for unique filter errors"

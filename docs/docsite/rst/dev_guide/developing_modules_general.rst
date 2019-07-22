@@ -56,7 +56,7 @@ To create a new module:
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean, concise module code.
 
-.. code:: python
+.. code-block:: python
 
     #!/usr/bin/python
 
@@ -119,8 +119,11 @@ To create a new module:
     original_message:
         description: The original name param that was passed in
         type: str
+        returned: always
     message:
         description: The output message that the sample module generates
+        type: str
+        returned: always
     '''
 
     from ansible.module_utils.basic import AnsibleModule
@@ -156,7 +159,7 @@ To create a new module:
         # want to make any changes to the environment, just return the current
         # state with no modifications
         if module.check_mode:
-            return result
+            module.exit_json(**result)
 
         # manipulate or modify the state as needed (this is going to be the
         # part where your module will do what it needs to do)
@@ -304,5 +307,5 @@ use the ``#ansible`` channel.
 Credit
 ======
 
-Thank you to Thomas Stringer (`@tstringer <https://github.com/tstringer>`_) for contributing source
+Thank you to Thomas Stringer (`@trstringer <https://github.com/trstringer>`_) for contributing source
 material for this topic.

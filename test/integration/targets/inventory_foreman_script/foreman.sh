@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Wrapper to use the correct Python interpreter and support code coverage.
 
 REL_SCRIPT="../../../../contrib/inventory/foreman.py"

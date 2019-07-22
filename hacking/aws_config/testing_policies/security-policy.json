@@ -5,6 +5,7 @@
             "Action": [
                 "iam:GetGroup",
                 "iam:GetInstanceProfile",
+                "iam:CreateInstanceProfile",
                 "iam:GetPolicy",
                 "iam:GetPolicyVersion",
                 "iam:GetRole",
@@ -25,6 +26,42 @@
             "Resource": "*",
             "Effect": "Allow",
             "Sid": "AllowReadOnlyIAMUse"
+        },
+        {
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:DetachRolePolicy",
+                "iam:PassRole"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowUpdateOfSpecificRoles"
+        },
+        {
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:instance-profile/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowUpdateOfSpecificInstanceProfiles"
+        },
+        {
+            "Action": [
+                "ec2:ReplaceIamInstanceProfileAssociation"
+             ],
+            "Resource": "*",
+            "Condition": {
+              "ArnEquals": {
+                "ec2:InstanceProfile": "arn:aws:iam::{{ aws_account }}:instance-profile/ansible-test-*"
+              }
+            },
+            "Effect": "Allow",
+            "Sid": "AllowReplacementOfSpecificInstanceProfiles"
         },
         {
             "Sid": "AllowWAFusage",
@@ -53,6 +90,68 @@
             "Resource": [
                 "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-testing*"
             ]
+        },
+        {
+            "Sid": "AllowSTSAnsibleTests",
+            "Action": [
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:DetachRolePolicy",
+                "sts:AssumeRole",
+                "iam:AttachRolePolicy",
+                "iam:CreateInstanceProfile"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:iam::{{aws_account}}:role/ansible-test-sts-*",
+                "arn:aws:iam::{{aws_account}}:instance-profile/ansible-test-sts-*"
+            ]
+        },
+        {
+            "Sid": "AllowAccessToUnspecifiedKMSResources",
+            "Effect": "Allow",
+            "Action": [
+                "kms:CancelKeyDeletion",
+                "kms:CreateAlias",
+                "kms:CreateGrant",
+                "kms:CreateKey",
+                "kms:DeleteAlias",
+                "kms:Describe*",
+                "kms:DisableKey",
+                "kms:EnableKey",
+                "kms:GenerateRandom",
+                "kms:Get*",
+                "kms:List*",
+                "kms:RetireGrant",
+                "kms:ScheduleKeyDeletion",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:UpdateGrant",
+                "kms:UpdateKeyDescription"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToSpecifiedIAMResources",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:GetRole",
+                "iam:PassRole",
+                "iam:UpdateAssumeRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::{{aws_account}}:role/ansible-test-*"
+        },
+        {
+            "Sid": "AllowInstanceProfileCreation",
+            "Effect": "Allow",
+            "Action": [
+                "iam:AddRoleToInstanceProfile",
+                "iam:CreateInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+            ],
+            "Resource": "arn:aws:iam::{{aws_account}}:instance-profile/ansible-test-*"
         }
     ]
 }

@@ -153,7 +153,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     try:
                         got = data_from_meta.get(host, {})
                     except AttributeError as e:
-                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)))
+                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)), orig_exc=e)
 
                 self._populate_host_vars([host], got)
 
@@ -162,7 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _parse_group(self, group, data):
 
-        self.inventory.add_group(group)
+        group = self.inventory.add_group(group)
 
         if not isinstance(data, dict):
             data = {'hosts': data}
@@ -187,7 +187,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         if group != '_meta' and isinstance(data, dict) and 'children' in data:
             for child_name in data['children']:
-                self.inventory.add_group(child_name)
+                child_name = self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)
 
     def get_host_variables(self, path, host):

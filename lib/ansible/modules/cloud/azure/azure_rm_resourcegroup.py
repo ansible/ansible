@@ -18,31 +18,30 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_resourcegroup
 version_added: "2.1"
-short_description: Manage Azure resource groups.
+short_description: Manage Azure resource groups
 description:
     - Create, update and delete a resource group.
 options:
     force_delete_nonempty:
         description:
-            - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
-              group that contains resources.
+            - Remove a resource group and all associated resources.
+            - Use with I(state=absent) to delete a resource group that contains resources.
         type: bool
         aliases:
             - force
         default: 'no'
     location:
         description:
-            - Azure location for the resource group. Required when creating a new resource group. Cannot
-              be changed once resource group is created.
+            - Azure location for the resource group. Required when creating a new resource group.
+            - Cannot be changed once resource group is created.
     name:
         description:
             - Name of the resource group.
         required: true
     state:
         description:
-            - Assert the state of the resource group. Use 'present' to create or update and
-              'absent' to delete. When 'absent' a resource group containing resources will not be removed unless the
-              force option is used.
+            - Assert the state of the resource group. Use C(present) to create or update and C(absent) to delete.
+            - When C(absent) a resource group containing resources will not be removed unless the I(force) option is used.
         default: present
         choices:
             - absent
@@ -52,15 +51,15 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
 EXAMPLES = '''
     - name: Create a resource group
       azure_rm_resourcegroup:
-        name: Testing
+        name: myResourceGroup
         location: westus
         tags:
             testing: testing
@@ -68,29 +67,61 @@ EXAMPLES = '''
 
     - name: Delete a resource group
       azure_rm_resourcegroup:
-        name: Testing
+        name: myResourceGroup
+        state: absent
+
+    - name: Delete a resource group including resources it contains
+      azure_rm_resourcegroup:
+        name: myResourceGroup
+        force_delete_nonempty: yes
         state: absent
 '''
 RETURN = '''
 contains_resources:
-    description: Whether or not the resource group contains associated resources.
+    description:
+        - Whether or not the resource group contains associated resources.
     returned: always
     type: bool
     sample: True
 state:
-    description: Current state of the resource group.
+    description:
+        - Current state of the resource group.
     returned: always
-    type: dict
-    sample: {
-        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing",
-        "location": "westus",
-        "name": "Testing",
-        "provisioning_state": "Succeeded",
-        "tags": {
-            "delete": "on-exit",
-            "testing": "no"
-        }
-    }
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup"
+        location:
+            description:
+                - Azure location for the resource group.
+            returned: always
+            type: str
+            sample: westus
+        name:
+            description:
+                - The resource group name.
+            returned: always
+            type: str
+            sample: Testing
+        provisioning_state:
+            description:
+                - Provisioning state of the resource group.
+            returned: always
+            type: str
+            sample: Succeeded
+        tags:
+            description:
+                - The resource group's tags.
+            returned: always
+            type: dict
+            sample: {
+                    "delete": "on-exit",
+                    "testing": "no"
+                    }
 '''
 
 try:
@@ -205,7 +236,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             elif self.state == 'absent':
                 if contains_resources and not self.force_delete_nonempty:
                     self.fail("Error removing resource group {0}. Resources exist within the group. "
-                              "Use `force_delete_nonempty` to force delete.".format(self.name))
+                              "Use `force_delete_nonempty` to force delete. "
+                              "To list resources under {0}, use `azure_rm_resourcegroup_facts` module with `list_resources` option.".format(self.name))
                 self.delete_resource_group()
 
         return self.results

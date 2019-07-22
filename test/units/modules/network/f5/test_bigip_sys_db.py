@@ -67,9 +67,6 @@ class TestParameters(unittest.TestCase):
         args = dict(
             key='foo',
             value='bar',
-            password='password',
-            server='localhost',
-            user='admin'
         )
         p = Parameters(params=args)
         assert p.key == 'foo'
@@ -79,10 +76,7 @@ class TestParameters(unittest.TestCase):
         args = dict(
             key='foo',
             value='bar',
-            password='password',
-            server='localhost',
             defaultValue='baz',
-            user='admin'
 
         )
         p = Parameters(params=args)
@@ -99,10 +93,12 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             key='provision.cpu.afm',
             value='1',
-            password='admin',
-            server='localhost',
-            user='admin',
-            state='present'
+            state='present',
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         # Configure the parameters that would be returned by querying the

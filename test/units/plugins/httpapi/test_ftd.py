@@ -1,4 +1,5 @@
 # Copyright (c) 2018 Cisco and/or its affiliates.
+# Copyright (c) 2018 Cisco and/or its affiliates.
 #
 # This file is part of Ansible
 #
@@ -21,20 +22,20 @@ import json
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from units.compat import mock
 from units.compat import unittest
-from units.compat.builtins import BUILTINS
 from units.compat.mock import mock_open, patch
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.ftd.common import HTTPMethod, ResponseParams
 from ansible.module_utils.network.ftd.fdm_swagger_client import SpecProp, FdmSwaggerParser
-from ansible.module_utils.six import BytesIO, StringIO
-from ansible.plugins.httpapi.ftd import HttpApi
+from ansible.module_utils.six import BytesIO, PY3, StringIO
+from ansible.plugins.httpapi.ftd import HttpApi, BASE_HEADERS, TOKEN_PATH_TEMPLATE, DEFAULT_API_VERSIONS
 
-EXPECTED_BASE_HEADERS = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-}
+
+if PY3:
+    BUILTINS_NAME = 'builtins'
+else:
+    BUILTINS_NAME = '__builtin__'
 
 
 class FakeFtdHttpApiPlugin(HttpApi):
@@ -47,6 +48,9 @@ class FakeFtdHttpApiPlugin(HttpApi):
 
     def get_option(self, var):
         return self.hostvars[var]
+
+    def set_option(self, var, val):
+        self.hostvars[var] = val
 
 
 class TestFtdHttpApi(unittest.TestCase):
@@ -84,7 +88,7 @@ class TestFtdHttpApi(unittest.TestCase):
         expected_body = json.dumps({'grant_type': 'refresh_token', 'refresh_token': 'REFRESH_TOKEN'})
         self.connection_mock.send.assert_called_once_with(mock.ANY, expected_body, headers=mock.ANY, method=mock.ANY)
 
-    def test_login_should_use_host_variable_when_set(self):
+    def test_login_should_use_env_variable_when_set(self):
         temp_token_path = self.ftd_plugin.hostvars['token_path']
         self.ftd_plugin.hostvars['token_path'] = '/testFakeLoginUrl'
         self.connection_mock.send.return_value = self._connection_response(
@@ -146,7 +150,7 @@ class TestFtdHttpApi(unittest.TestCase):
         assert {ResponseParams.SUCCESS: True, ResponseParams.STATUS_CODE: 200,
                 ResponseParams.RESPONSE: exp_resp} == resp
         self.connection_mock.send.assert_called_once_with('/test/123?at=0', '{"name": "foo"}', method=HTTPMethod.PUT,
-                                                          headers=EXPECTED_BASE_HEADERS)
+                                                          headers=BASE_HEADERS)
 
     def test_send_request_should_return_empty_dict_when_no_response_data(self):
         self.connection_mock.send.return_value = self._connection_response(None)
@@ -155,7 +159,7 @@ class TestFtdHttpApi(unittest.TestCase):
 
         assert {ResponseParams.SUCCESS: True, ResponseParams.STATUS_CODE: 200, ResponseParams.RESPONSE: {}} == resp
         self.connection_mock.send.assert_called_once_with('/test', None, method=HTTPMethod.GET,
-                                                          headers=EXPECTED_BASE_HEADERS)
+                                                          headers=BASE_HEADERS)
 
     def test_send_request_should_return_error_info_when_http_error_raises(self):
         self.connection_mock.send.side_effect = HTTPError('http://testhost.com', 500, '', {},
@@ -198,7 +202,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response('File content')
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS, open_mock):
+        with patch('%s.open' % BUILTINS_NAME, open_mock):
             self.ftd_plugin.download_file('/files/1', '/tmp/test.txt')
 
         open_mock.assert_called_once_with('/tmp/test.txt', 'wb')
@@ -213,7 +217,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = response, response_data
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS, open_mock):
+        with patch('%s.open' % BUILTINS_NAME, open_mock):
             self.ftd_plugin.download_file('/files/1', '/tmp/')
 
         open_mock.assert_called_once_with('/tmp/%s' % filename, 'wb')
@@ -226,11 +230,11 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response({'id': '123'})
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS, open_mock):
+        with patch('%s.open' % BUILTINS_NAME, open_mock):
             resp = self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 
         assert {'id': '123'} == resp
-        exp_headers = dict(EXPECTED_BASE_HEADERS)
+        exp_headers = dict(BASE_HEADERS)
         exp_headers['Content-Length'] = len('--Encoded data--')
         exp_headers['Content-Type'] = 'multipart/form-data'
         self.connection_mock.send.assert_called_once_with('/files', data='--Encoded data--',
@@ -244,7 +248,7 @@ class TestFtdHttpApi(unittest.TestCase):
         self.connection_mock.send.return_value = self._connection_response('invalidJsonResponse')
 
         open_mock = mock_open()
-        with patch('%s.open' % BUILTINS, open_mock):
+        with patch('%s.open' % BUILTINS_NAME, open_mock):
             with self.assertRaises(ConnectionError) as res:
                 self.ftd_plugin.upload_file('/tmp/test.txt', '/files')
 
@@ -271,7 +275,7 @@ class TestFtdHttpApi(unittest.TestCase):
         assert self.ftd_plugin.get_model_spec('NonExistingTestModel') is None
 
     @patch.object(FdmSwaggerParser, 'parse_spec')
-    def test_get_model_spec(self, parse_spec_mock):
+    def test_get_operation_spec_by_model_name(self, parse_spec_mock):
         self.connection_mock.send.return_value = self._connection_response(None)
         operation1 = {'modelName': 'TestModel'}
         op_model_name_is_none = {'modelName': None}
@@ -315,3 +319,96 @@ class TestFtdHttpApi(unittest.TestCase):
         response_text = json.dumps(response) if type(response) is dict else response
         response_data = BytesIO(response_text.encode() if response_text else ''.encode())
         return response_mock, response_data
+
+    def test_get_list_of_supported_api_versions_with_failed_http_request(self):
+        error_msg = "Invalid Credentials"
+        fp = mock.MagicMock()
+        fp.read.return_value = '{{"error-msg": "{0}"}}'.format(error_msg)
+        send_mock = mock.MagicMock(side_effect=HTTPError('url', 400, 'msg', 'hdrs', fp))
+        with mock.patch.object(self.ftd_plugin.connection, 'send', send_mock):
+            with self.assertRaises(ConnectionError) as res:
+                self.ftd_plugin._get_supported_api_versions()
+
+        assert error_msg in str(res.exception)
+
+    def test_get_list_of_supported_api_versions_with_buggy_response(self):
+        error_msg = "Non JSON value"
+        http_response_mock = mock.MagicMock()
+        http_response_mock.getvalue.return_value = error_msg
+
+        send_mock = mock.MagicMock(return_value=(None, http_response_mock))
+
+        with mock.patch.object(self.ftd_plugin.connection, 'send', send_mock):
+            with self.assertRaises(ConnectionError) as res:
+                self.ftd_plugin._get_supported_api_versions()
+        assert error_msg in str(res.exception)
+
+    def test_get_list_of_supported_api_versions_with_positive_response(self):
+        http_response_mock = mock.MagicMock()
+        http_response_mock.getvalue.return_value = '{"supportedVersions": ["v1"]}'
+
+        send_mock = mock.MagicMock(return_value=(None, http_response_mock))
+        with mock.patch.object(self.ftd_plugin.connection, 'send', send_mock):
+            supported_versions = self.ftd_plugin._get_supported_api_versions()
+            assert supported_versions == ['v1']
+
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_api_token_path', mock.MagicMock(return_value=None))
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_known_token_paths')
+    def test_lookup_login_url_with_empty_response(self, get_known_token_paths_mock):
+        payload = mock.MagicMock()
+        get_known_token_paths_mock.return_value = []
+        self.assertRaises(
+            ConnectionError,
+            self.ftd_plugin._lookup_login_url,
+            payload
+        )
+
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_known_token_paths')
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._send_login_request')
+    def test_lookup_login_url_with_failed_request(self, api_request_mock, get_known_token_paths_mock):
+        payload = mock.MagicMock()
+        url = mock.MagicMock()
+        get_known_token_paths_mock.return_value = [url]
+        api_request_mock.side_effect = ConnectionError('Error message')
+        with mock.patch.object(self.ftd_plugin.connection, 'queue_message') as display_mock:
+            self.assertRaises(
+                ConnectionError,
+                self.ftd_plugin._lookup_login_url,
+                payload
+            )
+            assert display_mock.called
+
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_api_token_path', mock.MagicMock(return_value=None))
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_known_token_paths')
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._send_login_request')
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._set_api_token_path')
+    def test_lookup_login_url_with_positive_result(self, set_api_token_mock, api_request_mock,
+                                                   get_known_token_paths_mock):
+        payload = mock.MagicMock()
+        url = mock.MagicMock()
+        get_known_token_paths_mock.return_value = [url]
+        response_mock = mock.MagicMock()
+        api_request_mock.return_value = response_mock
+
+        resp = self.ftd_plugin._lookup_login_url(payload)
+
+        set_api_token_mock.assert_called_once_with(url)
+        assert resp == response_mock
+
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_supported_api_versions')
+    def test_get_known_token_paths_with_positive_response(self, get_list_of_supported_api_versions_mock):
+        test_versions = ['v1', 'v2']
+        get_list_of_supported_api_versions_mock.return_value = test_versions
+        result = self.ftd_plugin._get_known_token_paths()
+        assert result == [TOKEN_PATH_TEMPLATE.format(version) for version in test_versions]
+
+    @patch('ansible.plugins.httpapi.ftd.HttpApi._get_supported_api_versions')
+    def test_get_known_token_paths_with_failed_api_call(self, get_list_of_supported_api_versions_mock):
+        get_list_of_supported_api_versions_mock.side_effect = ConnectionError('test error message')
+        result = self.ftd_plugin._get_known_token_paths()
+        assert result == [TOKEN_PATH_TEMPLATE.format(version) for version in DEFAULT_API_VERSIONS]
+
+    def test_set_api_token_path(self):
+        url = mock.MagicMock()
+        self.ftd_plugin._set_api_token_path(url)
+        assert self.ftd_plugin._get_api_token_path() == url

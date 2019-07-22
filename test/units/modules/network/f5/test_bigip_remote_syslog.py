@@ -90,9 +90,11 @@ class TestManager(unittest.TestCase):
     def test_create_remote_syslog(self, *args):
         set_module_args(dict(
             remote_host='1.1.1.1',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         fixture = load_fixture('load_tm_sys_syslog_1.json')
@@ -117,9 +119,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             name='remotesyslog1',
             remote_host='10.10.10.10',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         fixture = load_fixture('load_tm_sys_syslog_1.json')
@@ -143,9 +147,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             remote_host='10.10.10.10',
             remote_port=800,
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         fixture = load_fixture('load_tm_sys_syslog_1.json')
@@ -171,9 +177,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             remote_host='10.10.10.10',
             local_ip='2.2.2.2',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         fixture = load_fixture('load_tm_sys_syslog_1.json')
@@ -199,9 +207,11 @@ class TestManager(unittest.TestCase):
         set_module_args(dict(
             remote_host='10.10.10.10',
             local_ip='2.2.2.2',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         fixture = load_fixture('load_tm_sys_syslog_2.json')

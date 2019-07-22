@@ -26,7 +26,7 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create"
 $groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","remove","replace"
 $domain_username = Get-AnsibleParam -obj $params -name "domain_username" -type "str"
-$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($domain_username -ne $null)
+$domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "str" -failifempty ($null -ne $domain_username)
 $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 # User account parameters
@@ -59,20 +59,20 @@ $user_info = @{
 $attributes = Get-AnsibleParam -obj $params -name "attributes"
 
 # Parameter validation
-If ($account_locked -ne $null -and $account_locked) {
+If ($null -ne $account_locked -and $account_locked) {
     Fail-Json $result "account_locked must be set to 'no' if provided"
 }
-If (($password_expired -ne $null) -and ($password_never_expires -ne $null)) {
+If (($null -ne $password_expired) -and ($null -ne $password_never_expires)) {
     Fail-Json $result "password_expired and password_never_expires are mutually exclusive but have both been set"
 }
 
 $extra_args = @{}
-if ($domain_username -ne $null) {
+if ($null -ne $domain_username) {
     $domain_password = ConvertTo-SecureString $domain_password -AsPlainText -Force
     $credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $domain_username, $domain_password
     $extra_args.Credential = $credential
 }
-if ($domain_server -ne $null) {
+if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
@@ -90,7 +90,7 @@ If ($state -eq 'present') {
 
         # If the account does not exist, create it
         If (-not $user_obj) {
-            If ($path -ne $null){
+            If ($null -ne $path){
                 New-ADUser -Name $username -Path $path -WhatIf:$check_mode @extra_args
             }
             Else {
@@ -114,29 +114,29 @@ If ($state -eq 'present') {
         }
 
         # Configure password policies
-        If (($password_never_expires -ne $null) -and ($password_never_expires -ne $user_obj.PasswordNeverExpires)) {
+        If (($null -ne $password_never_expires) -and ($password_never_expires -ne $user_obj.PasswordNeverExpires)) {
             Set-ADUser -Identity $username -PasswordNeverExpires $password_never_expires -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
             $result.changed = $true
         }
-        If (($password_expired -ne $null) -and ($password_expired -ne $user_obj.PasswordExpired)) {
+        If (($null -ne $password_expired) -and ($password_expired -ne $user_obj.PasswordExpired)) {
             Set-ADUser -Identity $username -ChangePasswordAtLogon $password_expired -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
             $result.changed = $true
         }
-        If (($user_cannot_change_password -ne $null) -and ($user_cannot_change_password -ne $user_obj.CannotChangePassword)) {
+        If (($null -ne $user_cannot_change_password) -and ($user_cannot_change_password -ne $user_obj.CannotChangePassword)) {
             Set-ADUser -Identity $username -CannotChangePassword $user_cannot_change_password -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
             $result.changed = $true
         }
 
         # Assign other account settings
-        If (($upn -ne $null) -and ($upn -ne $user_obj.UserPrincipalName)) {
+        If (($null -ne $upn) -and ($upn -ne $user_obj.UserPrincipalName)) {
             Set-ADUser -Identity $username -UserPrincipalName $upn -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
             $result.changed = $true
         }
-        If (($description -ne $null) -and ($description -ne $user_obj.Description)) {
+        If (($null -ne $description) -and ($description -ne $user_obj.Description)) {
             Set-ADUser -Identity $username -description $description -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
             $result.changed = $true
@@ -154,7 +154,7 @@ If ($state -eq 'present') {
 
         # Set user information
         Foreach ($key in $user_info.Keys) {
-            If ($user_info[$key] -eq $null) {
+            If ($null -eq $user_info[$key]) {
                 continue
             }
             $value = $user_info[$key]
@@ -170,7 +170,7 @@ If ($state -eq 'present') {
         # Set additional attributes
         $set_args = $extra_args.Clone()
         $run_change = $false
-        if ($attributes -ne $null) {
+        if ($null -ne $attributes) {
             $add_attributes = @{}
             $replace_attributes = @{}
             foreach ($attribute in $attributes.GetEnumerator()) {
@@ -208,7 +208,7 @@ If ($state -eq 'present') {
 
 
         # Configure group assignment
-        If ($groups -ne $null) {
+        If ($null -ne $groups) {
             $group_list = $groups
 
             $groups = @()

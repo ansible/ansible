@@ -100,52 +100,35 @@ from ansible.module_utils.network.common.config import CustomNetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
 
 
-def reconcile_candidate(module, candidate, prefix, w):
-    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
-    state = w['state']
-
-    set_command = set_route_command(prefix, w, module)
-    remove_command = remove_route_command(prefix, w)
-
-    parents = []
-    commands = []
-    yrc = remove_command.replace('no ', '')
-    if w['vrf'] == 'default':
-        netcfg = str(netcfg).split('\n')
-        ncfg = []
-        for line in netcfg:
-            # remove ip route commands of non-default vrfs from
-            # the running config just in case the same commands
-            # exist in default and non-default vrfs
-            if '  ip route' not in line:
-                ncfg.append(line)
-        if any(yrc in s for s in ncfg) and state == 'absent':
-            commands = [remove_command]
-        elif set_command not in ncfg and state == 'present':
-            if any(yrc in s for s in ncfg):
-                commands = [remove_command, set_command]
-            else:
-                commands = [set_command]
+def reconcile_candidate(module, candidate, prefix, want):
+    state, vrf = want['state'], want['vrf']
+    if vrf == 'default':
+        parents = []
+        flags = " | include '^ip route'"
     else:
-        parents = ['vrf context {0}'.format(w['vrf'])]
-        config = netcfg.get_section(parents)
-        if not isinstance(config, list):
-            config = config.split('\n')
-        config = [line.strip() for line in config]
-        if any(yrc in s for s in config) and state == 'absent':
-            commands = [remove_command]
-        elif set_command not in config and state == 'present':
-            if any(yrc in s for s in config):
-                commands = [remove_command, set_command]
-            else:
-                commands = [set_command]
+        parents = ['vrf context {0}'.format(vrf)]
+        flags = " | section '{0}' | include '^  ip route'".format(parents[0])
+
+    # Find existing routes in this vrf/default
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module, flags=[flags]))
+    routes = str(netcfg).split('\n')
+    # strip whitespace from route strings
+    routes = [i.strip() for i in routes]
+
+    prefix_and_nh = 'ip route {0} {1}'.format(prefix, want['next_hop'])
+    existing = [i for i in routes if i.startswith(prefix_and_nh)]
+    proposed = set_route_command(prefix, want, module)
+
+    commands = []
+    if state == 'absent' and existing:
+        commands = ['no ' + existing[0]]
+    elif state == 'present' and proposed not in routes:
+        if existing:
+            commands = ['no ' + existing[0]]
+        commands.append(proposed)
 
     if commands:
         candidate.add(commands, parents=parents)
-
-
-def remove_route_command(prefix, w):
-    return 'no ip route {0} {1}'.format(prefix, w['next_hop'])
 
 
 def get_configured_track(module, ctrack):

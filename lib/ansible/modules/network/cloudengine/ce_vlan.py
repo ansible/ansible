@@ -384,13 +384,17 @@ class Vlan(object):
         if "<data/>" in xml_str:
             return attr
         else:
-            re_find = re.findall(r'.*<vlanId>(.*)</vlanId>.*\s*'
-                                 r'<vlanName>(.*)</vlanName>.*\s*'
-                                 r'<vlanDesc>(.*)</vlanDesc>.*', xml_str)
-            if re_find:
-                attr = dict(vlan_id=re_find[0][0], name=re_find[0][1],
-                            description=re_find[0][2])
+            re_find_id = re.findall(r'.*<vlanId>(.*)</vlanId>.*\s*', xml_str)
+            re_find_name = re.findall(r'.*<vlanName>(.*)</vlanName>.*\s*', xml_str)
+            re_find_desc = re.findall(r'.*<vlanDesc>(.*)</vlanDesc>.*\s*', xml_str)
 
+            if re_find_id:
+                if re_find_name:
+                    attr = dict(vlan_id=re_find_id[0], name=re_find_name[0],
+                                description=re_find_desc[0])
+                else:
+                    attr = dict(vlan_id=re_find_id[0], name=None,
+                                description=re_find_desc[0])
             return attr
 
     def get_vlans_name(self):
@@ -477,7 +481,7 @@ class Vlan(object):
             if tagged_vlans <= 0 or tagged_vlans > 4094:
                 self.module.fail_json(
                     msg='Error: Vlan id is not in the range from 1 to 4094.')
-            j = tagged_vlans / 4
+            j = tagged_vlans // 4
             bit_int[j] |= 0x8 >> (tagged_vlans % 4)
             vlan_bit[j] = hex(bit_int[j])[2]
 

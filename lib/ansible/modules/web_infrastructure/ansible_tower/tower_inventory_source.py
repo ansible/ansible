@@ -138,10 +138,11 @@ options:
         - Desired state of the resource.
       default: "present"
       choices: ["present", "absent"]
-    tower_verify_ssl:
+    validate_certs:
       description:
         - Tower option to avoid certificates check.
       type: bool
+      aliases: [ tower_verify_ssl ]
 extends_documentation_fragment: tower
 '''
 
@@ -158,7 +159,7 @@ EXAMPLES = '''
     overwrite: true
     source_vars: '{ private: false }'
     state: present
-    tower_verify_ssl: false
+    validate_certs: false
 '''
 
 
@@ -302,7 +303,7 @@ def main():
                 params['fail_on_missing'] = False
                 result = inventory_source.delete(**params)
 
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update inventory source: \
                     {0}'.format(excinfo), changed=False)
 

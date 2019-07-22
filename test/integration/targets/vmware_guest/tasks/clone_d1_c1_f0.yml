@@ -2,56 +2,100 @@
 # Copyright: (c) 2017, James Tanner <tanner.jc@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim   
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
-- name: set state to poweroff on all VMs
+- name: create new linked clone without specifying snapshot_src
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ 'newvm_' + item|basename }}"
-    template: "{{ item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-    disk:
-        - size: 1gb
-          type: thin
-          autoselect_datastore: True
-    state: poweredoff
-    folder: "{{ item|dirname }}"
-    convert: thin
-  with_items: "{{ vmlist['json'] }}"
-  register: clone_d1_c1_f0
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: new_vm_1
+    template: "{{ infra.vm_list[0] }}"
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    folder: D1/C1/F0
+    linked_clone: True
+  register: linked_clone_d1_c1_f0
+  ignore_errors: True
 
-- debug: var=clone_d1_c1_f0
+- debug:
+    var: linked_clone_d1_c1_f0
 
-- name: assert that changes were made
+- name: assert that changes were not made
   assert:
     that:
-        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+        - not (linked_clone_d1_c1_f0 is changed)
+
+- name: create new linked clone without specifying linked_clone
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: new_vm_2
+    template: "{{ infra.vm_list[0] }}"
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    folder: D1/C1/F0
+    snapshot_src: "snap_shot1"
+  register: linked_clone_d1_c1_f0
+  ignore_errors: True
+
+- debug:
+    var: linked_clone_d1_c1_f0
+
+- name: assert that changes were not made
+  assert:
+    that:
+        - not (linked_clone_d1_c1_f0 is changed)
+
+# TODO: VCSIM: snapshot is not supported in current vcsim
+#
+#- name: create new linked clone with linked_clone and snapshot_src
+#  vmware_guest:
+#    validate_certs: False
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    name: "{{ 'new_vm_' + item|basename }}"
+#    template: "{{ item|basename }}"
+#    guest_id: centos64Guest
+#    datacenter: "{{ (item|basename).split('_')[0] }}"
+#    folder: "{{ item|dirname }}"
+#    snapshot_src: "snap_shot1"
+#    linked_clone: True
+#  with_items: "{{ vmlist['json'] }}"
+#  register: linked_clone_d1_c1_f0
+#  ignore_errors: True
+
+#- debug: var=linked_clone_d1_c1_f0
+
+#- name: assert that changes were made
+#  assert:
+#    that:
+#        - "linked_clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+# TODO: VCSIM: snapshot is not supported in current vcsim
+#
+#- name: create new linked clone with linked_clone and snapshot_src again
+#  vmware_guest:
+#    validate_certs: False
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    name: "{{ 'new_vm_' + item|basename }}"
+#    template: "{{ item|basename }}"
+#    guest_id: centos64Guest
+#    datacenter: "{{ (item|basename).split('_')[0] }}"
+#    folder: "{{ item|dirname }}"
+#    snapshot_src: "snap_shot1"
+#    linked_clone: True
+#  with_items: "{{ vmlist['json'] }}"
+#  register: linked_clone_d1_c1_f0
+#  ignore_errors: True
+
+#- debug: var=linked_clone_d1_c1_f0
+
+#- name: assert that changes were not made
+#  assert:
+#    that:
+#        - "linked_clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [false]"

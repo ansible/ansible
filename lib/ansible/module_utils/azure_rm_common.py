@@ -13,8 +13,11 @@ import json
 
 from os.path import expanduser
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+try:
+    from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+except Exception:
+    ANSIBLE_VERSION = 'unknown'
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
@@ -24,7 +27,7 @@ AZURE_COMMON_ARGS = dict(
         choices=['auto', 'cli', 'env', 'credential_file', 'msi']
     ),
     profile=dict(type='str'),
-    subscription_id=dict(type='str', no_log=True),
+    subscription_id=dict(type='str'),
     client_id=dict(type='str', no_log=True),
     secret=dict(type='str', no_log=True),
     tenant=dict(type='str', no_log=True),
@@ -57,16 +60,17 @@ AZURE_API_PROFILES = {
         'ComputeManagementClient': dict(
             default_api_version='2018-10-01',
             resource_skus='2018-10-01',
-            disks='2018-10-01',
+            disks='2018-06-01',
             snapshots='2018-10-01',
             virtual_machine_run_commands='2018-10-01'
         ),
         'NetworkManagementClient': '2018-08-01',
         'ResourceManagementClient': '2017-05-10',
         'StorageManagementClient': '2017-10-01',
-        'WebsiteManagementClient': '2016-08-01',
+        'WebSiteManagementClient': '2018-02-01',
         'PostgreSQLManagementClient': '2017-12-01',
-        'MySQLManagementClient': '2017-12-01'
+        'MySQLManagementClient': '2017-12-01',
+        'MariaDBManagementClient': '2019-03-01'
     },
 
     '2017-03-09-profile': {
@@ -99,6 +103,7 @@ AZURE_FAILED_STATE = "Failed"
 HAS_AZURE = True
 HAS_AZURE_EXC = None
 HAS_AZURE_CLI_CORE = True
+HAS_AZURE_CLI_CORE_EXC = None
 
 HAS_MSRESTAZURE = True
 HAS_MSRESTAZURE_EXC = None
@@ -114,16 +119,16 @@ try:
     from packaging.version import Version
     HAS_PACKAGING_VERSION = True
     HAS_PACKAGING_VERSION_EXC = None
-except ImportError as exc:
+except ImportError:
     Version = None
     HAS_PACKAGING_VERSION = False
-    HAS_PACKAGING_VERSION_EXC = exc
+    HAS_PACKAGING_VERSION_EXC = traceback.format_exc()
 
 # NB: packaging issue sometimes cause msrestazure not to be installed, check it separately
 try:
     from msrest.serialization import Serializer
-except ImportError as exc:
-    HAS_MSRESTAZURE_EXC = exc
+except ImportError:
+    HAS_MSRESTAZURE_EXC = traceback.format_exc()
     HAS_MSRESTAZURE = False
 
 try:
@@ -156,12 +161,17 @@ try:
     from azure.storage.blob import PageBlobService, BlockBlobService
     from adal.authentication_context import AuthenticationContext
     from azure.mgmt.sql import SqlManagementClient
+    from azure.mgmt.servicebus import ServiceBusManagementClient
+    import azure.mgmt.servicebus.models as ServicebusModel
     from azure.mgmt.rdbms.postgresql import PostgreSQLManagementClient
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
+    from azure.mgmt.rdbms.mariadb import MariaDBManagementClient
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
+    from azure.mgmt.loganalytics import LogAnalyticsManagementClient
+    import azure.mgmt.loganalytics.models as LogAnalyticsModels
 except ImportError as exc:
-    HAS_AZURE_EXC = exc
+    HAS_AZURE_EXC = traceback.format_exc()
     HAS_AZURE = False
 
 try:
@@ -170,6 +180,7 @@ try:
     from azure.common.cloud import get_cli_active_cloud
 except ImportError:
     HAS_AZURE_CLI_CORE = False
+    HAS_AZURE_CLI_CORE_EXC = None
     CLIError = Exception
 
 
@@ -200,11 +211,11 @@ def normalize_location_name(name):
 AZURE_PKG_VERSIONS = {
     'StorageManagementClient': {
         'package_name': 'storage',
-        'expected_version': '1.5.0'
+        'expected_version': '3.1.0'
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '4.3.1'
+        'expected_version': '4.4.0'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
@@ -216,15 +227,15 @@ AZURE_PKG_VERSIONS = {
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
-        'expected_version': '1.2.2'
+        'expected_version': '2.1.0'
     },
     'DnsManagementClient': {
         'package_name': 'dns',
-        'expected_version': '1.2.0'
+        'expected_version': '2.1.0'
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
-        'expected_version': '0.32.0'
+        'expected_version': '0.41.0'
     },
     'TrafficManagerManagementClient': {
         'package_name': 'trafficmanager',
@@ -266,16 +277,16 @@ class AzureRMModuleBase(object):
                                     required_if=merged_required_if)
 
         if not HAS_PACKAGING_VERSION:
-            self.fail("Do you have packaging installed? Try `pip install packaging`"
-                      "- {0}".format(HAS_PACKAGING_VERSION_EXC))
+            self.fail(msg=missing_required_lib('packaging'),
+                      exception=HAS_PACKAGING_VERSION_EXC)
 
         if not HAS_MSRESTAZURE:
-            self.fail("Do you have msrestazure installed? Try `pip install msrestazure`"
-                      "- {0}".format(HAS_MSRESTAZURE_EXC))
+            self.fail(msg=missing_required_lib('msrestazure'),
+                      exception=HAS_MSRESTAZURE_EXC)
 
         if not HAS_AZURE:
-            self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure]`"
-                      "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
+            self.fail(msg=missing_required_lib('ansible[azure] (azure >= {0})'.format(AZURE_MIN_RELEASE)),
+                      exception=HAS_AZURE_EXC)
 
         self._network_client = None
         self._storage_client = None
@@ -286,13 +297,17 @@ class AzureRMModuleBase(object):
         self._marketplace_client = None
         self._sql_client = None
         self._mysql_client = None
+        self._mariadb_client = None
         self._postgresql_client = None
         self._containerregistry_client = None
         self._containerinstance_client = None
         self._containerservice_client = None
+        self._managedcluster_client = None
         self._traffic_manager_management_client = None
         self._monitor_client = None
         self._resource = None
+        self._log_analytics_client = None
+        self._servicebus_client = None
 
         self.check_mode = self.module.check_mode
         self.api_profile = self.module.params.get('api_profile')
@@ -374,6 +389,7 @@ class AzureRMModuleBase(object):
         :param tags: metadata tags from the object
         :return: bool, dict
         '''
+        tags = tags or dict()
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
         append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
@@ -546,7 +562,7 @@ class AzureRMModuleBase(object):
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))
 
-    def create_default_pip(self, resource_group, location, public_ip_name, allocation_method='Dynamic'):
+    def create_default_pip(self, resource_group, location, public_ip_name, allocation_method='Dynamic', sku=None):
         '''
         Create a default public IP address <public_ip_name> to associate with a network interface.
         If a PIP address matching <public_ip_name> exists, return it. Otherwise, create one.
@@ -555,6 +571,7 @@ class AzureRMModuleBase(object):
         :param location: a valid azure location
         :param public_ip_name: base name to assign the public IP address
         :param allocation_method: one of 'Static' or 'Dynamic'
+        :param sku: sku
         :return: PIP object
         '''
         pip = None
@@ -574,6 +591,7 @@ class AzureRMModuleBase(object):
         params = self.network_models.PublicIPAddress(
             location=location,
             public_ip_allocation_method=allocation_method,
+            sku=sku
         )
         self.log('Creating default public IP {0}'.format(public_ip_name))
         try:
@@ -783,12 +801,12 @@ class AzureRMModuleBase(object):
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
+                                                            api_version='2018-07-01')
         return self._storage_client
 
     @property
     def storage_models(self):
-        return StorageManagementClient.models("2017-10-01")
+        return StorageManagementClient.models("2018-07-01")
 
     @property
     def network_client(self):
@@ -824,21 +842,27 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-03-30')
+                                                            api_version='2018-06-01')
         return self._compute_client
 
     @property
     def compute_models(self):
         self.log("Getting compute models")
-        return ComputeManagementClient.models("2017-03-30")
+        return ComputeManagementClient.models("2018-06-01")
 
     @property
     def dns_client(self):
         self.log('Getting dns client')
         if not self._dns_client:
             self._dns_client = self.get_mgmt_svc_client(DnsManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2018-05-01')
         return self._dns_client
+
+    @property
+    def dns_models(self):
+        self.log("Getting dns models...")
+        return DnsManagementClient.models('2018-05-01')
 
     @property
     def web_client(self):
@@ -846,7 +870,7 @@ class AzureRMModuleBase(object):
         if not self._web_client:
             self._web_client = self.get_mgmt_svc_client(WebSiteManagementClient,
                                                         base_url=self._cloud_environment.endpoints.resource_manager,
-                                                        api_version='2016-08-01')
+                                                        api_version='2018-02-01')
         return self._web_client
 
     @property
@@ -854,8 +878,23 @@ class AzureRMModuleBase(object):
         self.log('Getting container service client')
         if not self._containerservice_client:
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
-                                                                     base_url=self._cloud_environment.endpoints.resource_manager)
+                                                                     base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                     api_version='2017-07-01')
         return self._containerservice_client
+
+    @property
+    def managedcluster_models(self):
+        self.log("Getting container service models")
+        return ContainerServiceClient.models('2018-03-31')
+
+    @property
+    def managedcluster_client(self):
+        self.log('Getting container service client')
+        if not self._managedcluster_client:
+            self._managedcluster_client = self.get_mgmt_svc_client(ContainerServiceClient,
+                                                                   base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                   api_version='2018-03-31')
+        return self._managedcluster_client
 
     @property
     def sql_client(self):
@@ -880,6 +919,14 @@ class AzureRMModuleBase(object):
             self._mysql_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                           base_url=self._cloud_environment.endpoints.resource_manager)
         return self._mysql_client
+
+    @property
+    def mariadb_client(self):
+        self.log('Getting MariaDB client')
+        if not self._mariadb_client:
+            self._mariadb_client = self.get_mgmt_svc_client(MariaDBManagementClient,
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._mariadb_client
 
     @property
     def sql_client(self):
@@ -932,6 +979,31 @@ class AzureRMModuleBase(object):
             self._monitor_client = self.get_mgmt_svc_client(MonitorManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager)
         return self._monitor_client
+
+    @property
+    def log_analytics_client(self):
+        self.log('Getting log analytics client')
+        if not self._log_analytics_client:
+            self._log_analytics_client = self.get_mgmt_svc_client(LogAnalyticsManagementClient,
+                                                                  base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._log_analytics_client
+
+    @property
+    def log_analytics_models(self):
+        self.log('Getting log analytics models')
+        return LogAnalyticsModels
+
+    @property
+    def servicebus_client(self):
+        self.log('Getting servicebus client')
+        if not self._servicebus_client:
+            self._servicebus_client = self.get_mgmt_svc_client(ServiceBusManagementClient,
+                                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        return self._servicebus_client
+
+    @property
+    def servicebus_models(self):
+        return ServicebusModel
 
 
 class AzureRMAuthException(Exception):
@@ -1016,24 +1088,24 @@ class AzureRMAuth(object):
         elif self.credentials.get('client_id') is not None and \
                 self.credentials.get('secret') is not None and \
                 self.credentials.get('tenant') is not None:
-                self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                                                     secret=self.credentials['secret'],
-                                                                     tenant=self.credentials['tenant'],
-                                                                     cloud_environment=self._cloud_environment,
-                                                                     verify=self._cert_validation_mode == 'validate')
+            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                 secret=self.credentials['secret'],
+                                                                 tenant=self.credentials['tenant'],
+                                                                 cloud_environment=self._cloud_environment,
+                                                                 verify=self._cert_validation_mode == 'validate')
 
         elif self.credentials.get('ad_user') is not None and \
                 self.credentials.get('password') is not None and \
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(
-                    self._adfs_authority_url,
-                    self._resource,
-                    self.credentials['ad_user'],
-                    self.credentials['password'],
-                    self.credentials['client_id'],
-                    self.credentials['tenant'])
+            self.azure_credentials = self.acquire_token_with_username_password(
+                self._adfs_authority_url,
+                self._resource,
+                self.credentials['ad_user'],
+                self.credentials['password'],
+                self.credentials['client_id'],
+                self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -1077,8 +1149,9 @@ class AzureRMAuth(object):
 
         return None
 
-    def _get_msi_credentials(self, subscription_id_param=None):
-        credentials = MSIAuthentication()
+    def _get_msi_credentials(self, subscription_id_param=None, **kwargs):
+        client_id = kwargs.get('client_id', None)
+        credentials = MSIAuthentication(client_id=client_id)
         subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             try:
@@ -1134,11 +1207,12 @@ class AzureRMAuth(object):
 
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
-            return self._get_msi_credentials(arg_credentials['subscription_id'])
+            return self._get_msi_credentials(arg_credentials['subscription_id'], client_id=params.get('client_id', None))
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
-                self.fail("Azure auth_source is `cli`, but azure-cli package is not available. Try `pip install azure-cli --upgrade`")
+                self.fail(msg=missing_required_lib('azure-cli', reason='for `cli` auth_source'),
+                          exception=HAS_AZURE_CLI_CORE_EXC)
             try:
                 self.log('Retrieving credentials from Azure CLI profile')
                 cli_credentials = self._get_azure_cli_credentials()
@@ -1153,7 +1227,7 @@ class AzureRMAuth(object):
 
         if auth_source == 'credential_file':
             self.log("Retrieving credentials from credential file")
-            profile = params.get('profile', 'default')
+            profile = params.get('profile') or 'default'
             default_credentials = self._get_profile(profile)
             return default_credentials
 

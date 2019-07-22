@@ -28,7 +28,6 @@ options:
     description:
     - The HTTP Method of the request or response.
     type: str
-    choices: [ CONNECT, DELETE, GET, HEAD, MERGE, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
     default: GET
   content_type:
     description:
@@ -92,7 +91,7 @@ options:
     - A valid, numeric, HTTP status code that signifies success of the request.
     - Can also be comma separated list of status codes.
     type: list
-    default: 200
+    default: [ 200 ]
     version_added: '2.4'
   timeout:
     description:
@@ -124,7 +123,7 @@ options:
       or C(follow_redirects) is set to C(none),
       or set to C(safe) when not doing C(GET) or C(HEAD) it prevents all redirection.
     type: int
-    default: 5
+    default: 50
     version_added: '2.4'
   validate_certs:
     description:

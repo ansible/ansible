@@ -34,7 +34,7 @@ class TestUnitInformationModule(TestIngateModule):
         self.mock_make_request.stop()
         self.mock_is_ingatesdk_installed.stop()
 
-    def load_fixtures(self, fixture=None):
+    def load_fixtures(self, fixture=None, command=None, changed=False):
         self.make_request.side_effect = [load_fixture(fixture)]
         self.is_ingatesdk_installed.return_value = True
 

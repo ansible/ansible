@@ -109,27 +109,44 @@ As originally designed, Ansible modules are shipped to and run on the remote tar
 For this very reason, the modules need to run on the local Ansible controller (or are delegated to another system that *can* connect to the APIC).
 
 
+Gathering facts
+```````````````
+Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play.
+
+.. code-block:: yaml
+   :emphasize-lines: 3
+
+    - name: Another play in my playbook
+      hosts: my-apic-1
+      gather_facts: no
+      tasks:
+      - name: Create a tenant
+        aci_tenant:
+          ...
+
 Delegating to localhost
 ```````````````````````
 So let us assume we have our target configured in the inventory using the FQDN name as the ``ansible_host`` value, as shown below.
 
 .. code-block:: yaml
+   :emphasize-lines: 3
 
     apics:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
 
 One way to set this up is to add to every task the directive: ``delegate_to: localhost``.
 
 .. code-block:: yaml
+   :emphasize-lines: 8
 
     - name: Query all tenants
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       delegate_to: localhost
@@ -145,12 +162,13 @@ Another option frequently used, is to tie the ``local`` connection method to thi
 In this case the inventory may look like this:
 
 .. code-block:: yaml
+   :emphasize-lines: 6
 
     apics:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
         ansible_connection: local
 
 But used tasks do not need anything special added.
@@ -161,7 +179,7 @@ But used tasks do not need anything special added.
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       register: all_tenants
@@ -186,10 +204,14 @@ Every Ansible ACI module accepts the following parameters that influence the mod
         Password for ``username`` to log on to the APIC, using password-based authentication.
 
     private_key
-        Private key for ``username`` to log on to APIC, using signature-based authentication. *New in version 2.5*
+        Private key for ``username`` to log on to APIC, using signature-based authentication.
+        This could either be the raw private key content (include header/footer) or a file that stores the key content.
+        *New in version 2.5*
 
     certificate_name
-        Name of the certificate in the ACI Web GUI. (Defaults to ``private_key`` file base name) *New in version 2.5*
+        Name of the certificate in the ACI Web GUI.
+        This defaults to either the ``username`` value or the ``private_key`` file base name).
+        *New in version 2.5*
 
     timeout
         Timeout value for socket-level communication.
@@ -343,16 +365,76 @@ Use signature-based authentication with Ansible
 You need the following parameters with your ACI module(s) for it to work:
 
 .. code-block:: yaml
+   :emphasize-lines: 2,3
 
     username: admin
     private_key: pki/admin.key
     certificate_name: admin  # This could be left out !
 
+or you can use the private key content:
+
+.. code-block:: yaml
+   :emphasize-lines: 2,3
+
+    username: admin
+    private_key: |
+        -----BEGIN PRIVATE KEY-----
+        <<your private key content>>
+        -----END PRIVATE KEY-----
+    certificate_name: admin  # This could be left out !
+
+
 .. hint:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
+
+
+Using Ansible Vault to encrypt the private key
+``````````````````````````````````````````````
+.. versionadded:: 2.8
+
+To start, encrypt the private key and give it a strong password.
+
+.. code-block:: bash
+
+    ansible-vault encrypt admin.key
+
+Use a text editor to open the private-key. You should have an encrypted cert now.
+
+.. code-block:: bash
+
+    $ANSIBLE_VAULT;1.1;AES256
+    56484318584354658465121889743213151843149454864654151618131547984132165489484654
+    45641818198456456489479874513215489484843614848456466655432455488484654848489498
+    ....
+
+Copy and paste the new encrypted cert into your playbook as a new variable. 
+
+.. code-block:: yaml
+
+    private_key: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          56484318584354658465121889743213151843149454864654151618131547984132165489484654
+          45641818198456456489479874513215489484843614848456466655432455488484654848489498
+          ....
+
+Use the new variable for the private_key:
+
+.. code-block:: yaml
+
+    username: admin
+    private_key: "{{ private_key }}"
+    certificate_name: admin  # This could be left out !
+
+When running the playbook, use "--ask-vault-pass" to decrypt the private key.
+
+.. code-block:: bash
+
+    ansible-playbook site.yaml --ask-vault-pass
+
 
 More information
 ````````````````
-Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
+- Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
+- More information on Ansible Vault can be found on the :ref:`Ansible Vault <vault>` page.
 
 
 .. _aci_guide_rest:
@@ -498,7 +580,6 @@ The below example waits until the cluster is fully-fit. In this example you know
         infrawinode.imdata[0].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[1].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[2].infraWiNode.attributes.health == 'fully-fit'
-    #    all(apic.infraWiNode.attributes.health == 'fully-fit' for apic in infrawinode.imdata)
       retries: 30
       delay: 30
 

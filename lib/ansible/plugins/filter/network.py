@@ -93,7 +93,10 @@ def parse_cli(output, tmpl):
     except ImportError as exc:
         raise AnsibleError(to_native(exc))
 
-    spec = yaml.safe_load(open(tmpl).read())
+    with open(tmpl) as tmpl_fh:
+        tmpl_content = tmpl_fh.read()
+
+    spec = yaml.safe_load(tmpl_content)
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):
@@ -330,7 +333,10 @@ def parse_xml(output, tmpl):
     except ImportError as exc:
         raise AnsibleError(to_native(exc))
 
-    spec = yaml.safe_load(open(tmpl).read())
+    with open(tmpl) as tmpl_fh:
+        tmpl_content = tmpl_fh.read()
+
+    spec = yaml.safe_load(tmpl_content)
     obj = {}
 
     for name, attrs in iteritems(spec['keys']):

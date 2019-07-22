@@ -1,0 +1,11 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - name: Setup docker
+      include_role:
+        name: setup_docker
+    - name: Create a Swarm cluster
+      docker_swarm:
+        state: present
+        advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"

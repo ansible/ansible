@@ -15,65 +15,66 @@ short_description: Manages vpc offerings on Apache CloudStack based clouds.
 description:
     - Create, update, enable, disable and remove CloudStack VPC offerings.
 version_added: '2.5'
-author: "David Passante (@dpassante)"
+author: David Passante (@dpassante)
 options:
   name:
     description:
       - The name of the vpc offering
+    type: str
     required: true
   state:
     description:
       - State of the vpc offering.
+    type: str
     choices: [ enabled, present, disabled, absent ]
-    required: false
     default: present
   display_text:
     description:
       - Display text of the vpc offerings
-    required: false
+    type: str
   service_capabilities:
     description:
       - Desired service capabilities as part of vpc offering.
+    type: list
     aliases: [ service_capability ]
   service_offering:
     description:
       - The name or ID of the service offering for the VPC router appliance.
-    required: false
+    type: str
   supported_services:
     description:
       - Services supported by the vpc offering
+    type: list
     aliases: [ supported_service ]
-    required: false
   service_providers:
     description:
       - provider to service mapping. If not specified, the provider for the service will be mapped to the default provider on the physical network
+    type: list
     aliases: [ service_provider ]
-    required: false
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    default: yes
     type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a vpc offering and enable it
-- local_action:
-    module: cs_vpc_offering
-    name: "my_vpc_offering"
-    display_text: "vpc offering description"
+- name: Create a vpc offering and enable it
+  cs_vpc_offering:
+    name: my_vpc_offering
+    display_text: vpc offering description
     state: enabled
     supported_services: [ Dns, Dhcp ]
     service_providers:
       - {service: 'dns', provider: 'VpcVirtualRouter'}
       - {service: 'dhcp', provider: 'VpcVirtualRouter'}
+  delegate_to: localhost
 
-# Create a vpc offering with redundant router
-- local_action:
-    module: cs_vpc_offering
-    name: "my_vpc_offering"
-    display_text: "vpc offering description"
+- name: Create a vpc offering with redundant router
+  cs_vpc_offering:
+    name: my_vpc_offering
+    display_text: vpc offering description
     supported_services: [ Dns, Dhcp, SourceNat ]
     service_providers:
       - {service: 'dns', provider: 'VpcVirtualRouter'}
@@ -81,12 +82,12 @@ EXAMPLES = '''
       - {service: 'SourceNat', provider: 'VpcVirtualRouter'}
     service_capabilities:
       - {service: 'SourceNat', capabilitytype: 'RedundantRouter', capabilityvalue: true}
+  delegate_to: localhost
 
-# Create a region level vpc offering with distributed router
-- local_action:
-    module: cs_vpc_offering
-    name: "my_vpc_offering"
-    display_text: "vpc offering description"
+- name: Create a region level vpc offering with distributed router
+  cs_vpc_offering:
+    name: my_vpc_offering
+    display_text: vpc offering description
     state: present
     supported_services: [ Dns, Dhcp, SourceNat ]
     service_providers:
@@ -96,12 +97,13 @@ EXAMPLES = '''
     service_capabilities:
       - {service: 'Connectivity', capabilitytype: 'DistributedRouter', capabilityvalue: true}
       - {service: 'Connectivity', capabilitytype: 'RegionLevelVPC', capabilityvalue: true}
+  delegate_to: localhost
 
-# Remove a vpc offering
-- local_action:
-    module: cs_vpc_offering
-    name: "my_vpc_offering"
+- name: Remove a vpc offering
+  cs_vpc_offering:
+    name: my_vpc_offering
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

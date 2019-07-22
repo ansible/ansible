@@ -23,9 +23,10 @@ import os
 import json
 
 from units.compat.mock import patch
-from ansible.modules.network.exos import exos_facts
 from units.modules.utils import set_module_args
-from .exos_module import TestExosModule, load_fixture
+from ansible.module_utils.common._collections_compat import Mapping
+from ansible.modules.network.exos import exos_facts
+from .exos_module import TestExosModule
 
 
 class TestExosFactsModule(TestExosModule):
@@ -50,10 +51,18 @@ class TestExosFactsModule(TestExosModule):
             fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 
             for command in commands:
+                if isinstance(command, Mapping):
+                    command = command['command']
                 filename = str(command).replace(' ', '_')
                 filename = os.path.join(fixture_path, filename)
                 with open(filename) as f:
                     data = f.read()
+
+                try:
+                    data = json.loads(data)
+                except Exception:
+                    pass
+
                 output.append(data)
             return output
 

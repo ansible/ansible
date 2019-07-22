@@ -9,26 +9,19 @@ __metaclass__ = type
 import os
 import sys
 import time
+import traceback
 
 from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.basic import missing_required_lib
 
+CS_IMP_ERR = None
 try:
     from cs import CloudStack, CloudStackException, read_config
     HAS_LIB_CS = True
 except ImportError:
+    CS_IMP_ERR = traceback.format_exc()
     HAS_LIB_CS = False
 
-CS_HYPERVISORS = [
-    'KVM', 'kvm',
-    'VMware', 'vmware',
-    'BareMetal', 'baremetal',
-    'XenServer', 'xenserver',
-    'LXC', 'lxc',
-    'HyperV', 'hyperv',
-    'UCS', 'ucs',
-    'OVM', 'ovm',
-    'Simulator', 'simulator',
-]
 
 if sys.version_info > (3,):
     long = int
@@ -53,7 +46,7 @@ class AnsibleCloudStack:
 
     def __init__(self, module):
         if not HAS_LIB_CS:
-            module.fail_json(msg="python library cs required: pip install cs")
+            module.fail_json(msg=missing_required_lib('cs'), exception=CS_IMP_ERR)
 
         self.result = {
             'changed': False,
@@ -102,6 +95,7 @@ class AnsibleCloudStack:
         self.project = None
         self.ip_address = None
         self.network = None
+        self.physical_network = None
         self.vpc = None
         self.zone = None
         self.vm = None
@@ -136,7 +130,7 @@ class AnsibleCloudStack:
             'api_region': api_region,
             'api_url': api_config['endpoint'],
             'api_key': api_config['key'],
-            'api_timeout': api_config['timeout'],
+            'api_timeout': int(api_config['timeout']),
             'api_http_method': api_config['method'],
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
@@ -296,6 +290,24 @@ class AnsibleCloudStack:
                     for n in vpc.get('network', []):
                         self._vpc_networks_ids.append(n['id'])
         return network_id in self._vpc_networks_ids
+
+    def get_physical_network(self, key=None):
+        if self.physical_network:
+            return self._get_by_key(key, self.physical_network)
+        physical_network = self.module.params.get('physical_network')
+        args = {
+            'zoneid': self.get_zone(key='id')
+        }
+        physical_networks = self.query_api('listPhysicalNetworks', **args)
+        if not physical_networks:
+            self.fail_json(msg="No physical networks available.")
+
+        for net in physical_networks['physicalnetwork']:
+            if physical_network in [net['name'], net['id']]:
+                self.physical_network = net
+                self.result['physical_network'] = net['name']
+                return self._get_by_key(key, self.physical_network)
+        self.fail_json(msg="Physical Network '%s' not found" % physical_network)
 
     def get_network(self, key=None):
         """Return a network dictionary or the value of given key of."""

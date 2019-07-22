@@ -140,9 +140,11 @@ class TestManager(unittest.TestCase):
             module='ltm',
             content='this is my content',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -171,9 +173,11 @@ class TestManager(unittest.TestCase):
             module='gtm',
             content='this is my content',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -202,9 +206,11 @@ class TestManager(unittest.TestCase):
             module='gtm',
             src='{0}/create_ltm_irule.tcl'.format(fixture_path),
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         module = AnsibleModule(
@@ -244,9 +250,11 @@ class TestManager(unittest.TestCase):
             state='present',
             src='/path/to/irules/foo.tcl',
             partition='Common',
-            server='localhost',
-            password='password',
-            user='admin'
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
         ))
 
         with patch('ansible.module_utils.basic.AnsibleModule.fail_json', unsafe=True) as mo:

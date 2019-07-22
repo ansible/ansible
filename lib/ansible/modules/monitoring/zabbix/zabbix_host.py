@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Zabbix host creates/updates/deletes
+short_description: Create/update/delete Zabbix hosts
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
@@ -112,11 +112,12 @@ options:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
-    tls_issuer:
+    ca_cert:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        aliases: [ tls_issuer ]
     tls_subject:
         description:
             - Required certificate subject.
@@ -222,7 +223,9 @@ EXAMPLES = '''
     tls_psk: 123456789abcdef123456789abcdef12
 '''
 
+
 import copy
+import traceback
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -240,9 +243,10 @@ try:
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Host(object):
@@ -642,7 +646,7 @@ def main():
             tls_accept=dict(type='int', default=1),
             tls_psk_identity=dict(type='str', required=False),
             tls_psk=dict(type='str', required=False),
-            tls_issuer=dict(type='str', required=False),
+            ca_cert=dict(type='str', required=False, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False),
             inventory_zabbix=dict(required=False, type='dict'),
             timeout=dict(type='int', default=10),
@@ -656,7 +660,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -678,7 +682,7 @@ def main():
     tls_accept = module.params['tls_accept']
     tls_psk_identity = module.params['tls_psk_identity']
     tls_psk = module.params['tls_psk']
-    tls_issuer = module.params['tls_issuer']
+    tls_issuer = module.params['ca_cert']
     tls_subject = module.params['tls_subject']
     inventory_zabbix = module.params['inventory_zabbix']
     status = module.params['status']

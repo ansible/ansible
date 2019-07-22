@@ -11,12 +11,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: debconf
 short_description: Configure a .deb package
 description:
-     - Configure a .deb package using debconf-set-selections. Or just query existing selections.
+     - Configure a .deb package using debconf-set-selections.
+     - Or just query existing selections.
 version_added: "1.6"
 notes:
     - This module requires the command line debconf tools.
@@ -24,37 +25,42 @@ notes:
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
-requirements: [ debconf, debconf-utils ]
+requirements:
+- debconf
+- debconf-utils
 options:
   name:
     description:
       - Name of package to configure.
+    type: str
     required: true
     aliases: [ pkg ]
   question:
     description:
       - A debconf configuration setting.
+    type: str
     aliases: [ selection, setting ]
   vtype:
     description:
       - The type of the value supplied.
-      - C(seen) was added in 2.2.
-    choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title, text ]
+      - C(seen) was added in Ansible 2.2.
+    type: str
+    choices: [ boolean, error, multiselect, note, password, seen, select, string, text, title ]
   value:
     description:
       -  Value to set the configuration to.
+    type: str
     aliases: [ answer ]
   unseen:
     description:
       - Do not set 'seen' flag when pre-seeding.
     type: bool
-    default: False
+    default: no
 author:
 - Brian Coca (@bcoca)
-
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set default locale to fr_FR.UTF-8
   debconf:
     name: locales
@@ -81,6 +87,7 @@ EXAMPLES = '''
     name: tzdata
 '''
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -145,8 +152,20 @@ def main():
         if vtype is None or value is None:
             module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
-        if question not in prev or prev[question] != value:
+        # if question doesn't exist, value cannot match
+        if question not in prev:
             changed = True
+        else:
+
+            existing = prev[question]
+
+            # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
+            if vtype == 'boolean':
+                value = to_text(value).lower()
+                existing = to_text(prev[question]).lower()
+
+            if value != existing:
+                changed = True
 
     if changed:
         if not module.check_mode:

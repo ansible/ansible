@@ -91,13 +91,12 @@ except ImportError:
 class VmAttributeDefManager(PyVmomi):
     def __init__(self, module):
         super(VmAttributeDefManager, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
     def remove_custom_def(self, field):
         changed = False
         f = dict()
         for x in self.custom_field_mgr:
-            if x.name == field:
+            if x.name == field and x.managedObjectType == vim.VirtualMachine:
                 changed = True
                 if not self.module.check_mode:
                     self.content.customFieldsManager.RemoveCustomFieldDef(key=x.key)

@@ -1,31 +1,21 @@
-# (c) 2017, Brian Coca <bcoca@ansible.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2017, Brian Coca <bcoca@ansible.com>
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import optparse
+import argparse
 from operator import attrgetter
 
 from ansible import constants as C
+from ansible import context
 from ansible.cli import CLI
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import vars_loader
-from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 
@@ -64,54 +54,55 @@ class InventoryCLI(CLI):
         self.loader = None
         self.inventory = None
 
-        self._new_api = True
-
-    def parse(self):
-
-        self.parser = CLI.base_parser(
+    def init_parser(self):
+        super(InventoryCLI, self).init_parser(
             usage='usage: %prog [options] [host|group]',
-            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format',
-            inventory_opts=True,
-            vault_opts=True,
-            basedir_opts=True,
-        )
+            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format')
+
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         # remove unused default options
-        self.parser.remove_option('--limit')
-        self.parser.remove_option('--list-hosts')
+        self.parser.add_argument('--limit', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
+        self.parser.add_argument('--list-hosts', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --list-hosts'))
+
+        self.parser.add_argument('args', metavar='host|group', nargs='?')
 
         # Actions
-        action_group = optparse.OptionGroup(self.parser, "Actions", "One of following must be used on invocation, ONLY ONE!")
-        action_group.add_option("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
-        action_group.add_option("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
-        action_group.add_option("--graph", action="store_true", default=False, dest='graph',
-                                help='create inventory graph, if supplying pattern it must be a valid group name')
-        self.parser.add_option_group(action_group)
+        action_group = self.parser.add_argument_group("Actions", "One of following must be used on invocation, ONLY ONE!")
+        action_group.add_argument("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
+        action_group.add_argument("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
+        action_group.add_argument("--graph", action="store_true", default=False, dest='graph',
+                                  help='create inventory graph, if supplying pattern it must be a valid group name')
+        self.parser.add_argument_group(action_group)
 
         # graph
-        self.parser.add_option("-y", "--yaml", action="store_true", default=False, dest='yaml',
-                               help='Use YAML format instead of default JSON, ignored for --graph')
-        self.parser.add_option('--toml', action='store_true', default=False, dest='toml',
-                               help='Use TOML format instead of default JSON, ignored for --graph')
-        self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
-                               help='Add vars to graph display, ignored unless used with --graph')
+        self.parser.add_argument("-y", "--yaml", action="store_true", default=False, dest='yaml',
+                                 help='Use YAML format instead of default JSON, ignored for --graph')
+        self.parser.add_argument('--toml', action='store_true', default=False, dest='toml',
+                                 help='Use TOML format instead of default JSON, ignored for --graph')
+        self.parser.add_argument("--vars", action="store_true", default=False, dest='show_vars',
+                                 help='Add vars to graph display, ignored unless used with --graph')
 
         # list
-        self.parser.add_option("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
-                               help="When doing an --list, represent in a way that is optimized for export,"
-                                    "not as an accurate representation of how Ansible has processed it")
-        # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
-        #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
+        self.parser.add_argument("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
+                                 help="When doing an --list, represent in a way that is optimized for export,"
+                                      "not as an accurate representation of how Ansible has processed it")
+        self.parser.add_argument('--output', default=None, dest='output_file',
+                                 help="When doing --list, send the inventory to a file instead of to the screen")
+        # self.parser.add_argument("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
+        #                          help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
-        super(InventoryCLI, self).parse()
+    def post_process_args(self, options):
+        options = super(InventoryCLI, self).post_process_args(options)
 
-        display.verbosity = self.options.verbosity
-
-        self.validate_conflicts(vault_opts=True)
+        display.verbosity = options.verbosity
+        self.validate_conflicts(options)
 
         # there can be only one! and, at least, one!
         used = 0
-        for opt in (self.options.list, self.options.host, self.options.graph):
+        for opt in (options.list, options.host, options.graph):
             if opt:
                 used += 1
         if used == 0:
@@ -120,57 +111,66 @@ class InventoryCLI(CLI):
             raise AnsibleOptionsError("Conflicting options used, only one of --host, --graph or --list can be used at the same time.")
 
         # set host pattern to default if not supplied
-        if len(self.args) > 0:
-            self.options.pattern = self.args[0]
+        if options.args:
+            options.pattern = options.args[0]
         else:
-            self.options.pattern = 'all'
+            options.pattern = 'all'
+
+        return options
 
     def run(self):
 
         super(InventoryCLI, self).run()
 
-        results = None
-
         # Initialize needed objects
-        self.loader, self.inventory, self.vm = self._play_prereqs(self.options)
+        self.loader, self.inventory, self.vm = self._play_prereqs()
 
-        if self.options.host:
-            hosts = self.inventory.get_hosts(self.options.host)
+        results = None
+        if context.CLIARGS['host']:
+            hosts = self.inventory.get_hosts(context.CLIARGS['host'])
             if len(hosts) != 1:
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
 
             myvars = self._get_host_variables(host=hosts[0])
-            self._remove_internal(myvars)
 
             # FIXME: should we template first?
             results = self.dump(myvars)
 
-        elif self.options.graph:
+        elif context.CLIARGS['graph']:
             results = self.inventory_graph()
-        elif self.options.list:
+        elif context.CLIARGS['list']:
             top = self._get_group('all')
-            if self.options.yaml:
+            if context.CLIARGS['yaml']:
                 results = self.yaml_inventory(top)
-            elif self.options.toml:
+            elif context.CLIARGS['toml']:
                 results = self.toml_inventory(top)
             else:
                 results = self.json_inventory(top)
             results = self.dump(results)
 
         if results:
-            # FIXME: pager?
-            display.display(results)
+            outfile = context.CLIARGS['output_file']
+            if outfile is None:
+                # FIXME: pager?
+                display.display(results)
+            else:
+                try:
+                    with open(to_bytes(outfile), 'wt') as f:
+                        f.write(results)
+                except (OSError, IOError) as e:
+                    raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
             exit(0)
 
         exit(1)
 
-    def dump(self, stuff):
+    @staticmethod
+    def dump(stuff):
 
-        if self.options.yaml:
+        if context.CLIARGS['yaml']:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
-        elif self.options.toml:
+        elif context.CLIARGS['toml']:
             from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
             if not HAS_TOML:
                 raise AnsibleError(
@@ -223,53 +223,53 @@ class InventoryCLI(CLI):
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
 
-        return res
+        return self._remove_internal(res)
 
     def _get_host_variables(self, host):
 
-        if self.options.export:
+        if context.CLIARGS['export']:
+            # only get vars defined directly host
             hostvars = host.get_vars()
 
-            # FIXME: add switch to skip vars plugins
-            # add vars plugin info
+            # FIXME: add switch to skip vars plugins, add vars plugin info
             for inventory_dir in self.inventory._sources:
                 hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
         else:
-            if self._new_api:
-                hostvars = self.vm.get_vars(host=host, include_hostvars=False)
-            else:
-                hostvars = self.vm.get_vars(self.loader, host=host, include_hostvars=False)
+            # get all vars flattened by host, but skip magic hostvars
+            hostvars = self.vm.get_vars(host=host, include_hostvars=False)
 
-        return hostvars
+        return self._remove_internal(hostvars)
 
     def _get_group(self, gname):
-        if self._new_api:
-            group = self.inventory.groups.get(gname)
-        else:
-            group = self.inventory.get_group(gname)
+        group = self.inventory.groups.get(gname)
         return group
 
-    def _remove_internal(self, dump):
+    @staticmethod
+    def _remove_internal(dump):
 
         for internal in INTERNAL_VARS:
             if internal in dump:
                 del dump[internal]
 
-    def _remove_empty(self, dump):
+        return dump
+
+    @staticmethod
+    def _remove_empty(dump):
         # remove empty keys
         for x in ('hosts', 'vars', 'children'):
             if x in dump and not dump[x]:
                 del dump[x]
 
-    def _show_vars(self, dump, depth):
+    @staticmethod
+    def _show_vars(dump, depth):
         result = []
-        self._remove_internal(dump)
-        if self.options.show_vars:
+        if context.CLIARGS['show_vars']:
             for (name, val) in sorted(dump.items()):
-                result.append(self._graph_name('{%s = %s}' % (name, val), depth))
+                result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
         return result
 
-    def _graph_name(self, name, depth=0):
+    @staticmethod
+    def _graph_name(name, depth=0):
         if depth:
             name = "  |" * (depth) + "--%s" % name
         return name
@@ -284,7 +284,7 @@ class InventoryCLI(CLI):
         if group.name != 'all':
             for host in sorted(group.hosts, key=attrgetter('name')):
                 result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(host.get_vars(), depth + 1))
+                result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
 
         result.extend(self._show_vars(self._get_group_variables(group), depth))
 
@@ -292,7 +292,7 @@ class InventoryCLI(CLI):
 
     def inventory_graph(self):
 
-        start_at = self._get_group(self.options.pattern)
+        start_at = self._get_group(context.CLIARGS['pattern'])
         if start_at:
             return '\n'.join(self._graph_group(start_at))
         else:
@@ -313,7 +313,7 @@ class InventoryCLI(CLI):
                 if subgroup.name not in seen:
                     results.update(format_group(subgroup))
                     seen.add(subgroup.name)
-            if self.options.export:
+            if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
@@ -330,7 +330,6 @@ class InventoryCLI(CLI):
         for host in hosts:
             hvars = self._get_host_variables(host)
             if hvars:
-                self._remove_internal(hvars)
                 results['_meta']['hostvars'][host.name] = hvars
 
         return results
@@ -359,11 +358,9 @@ class InventoryCLI(CLI):
                     if h.name not in seen:  # avoid defining host vars more than once
                         seen.append(h.name)
                         myvars = self._get_host_variables(host=h)
-                        self._remove_internal(myvars)
                     results[group.name]['hosts'][h.name] = myvars
 
-            if self.options.export:
-
+            if context.CLIARGS['export']:
                 gvars = self._get_group_variables(group)
                 if gvars:
                     results[group.name]['vars'] = gvars
@@ -395,7 +392,6 @@ class InventoryCLI(CLI):
                     if host.name not in seen:
                         seen.add(host.name)
                         host_vars = self._get_host_variables(host=host)
-                        self._remove_internal(host_vars)
                     else:
                         host_vars = {}
                     try:
@@ -403,7 +399,7 @@ class InventoryCLI(CLI):
                     except KeyError:
                         results[group.name]['hosts'] = {host.name: host_vars}
 
-            if self.options.export:
+            if context.CLIARGS['export']:
                 results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])

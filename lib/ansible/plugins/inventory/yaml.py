@@ -45,7 +45,14 @@ all: # keys must be unique, i.e. only one 'hosts' per group
             children:
                 group_x:
                     hosts:
-                        test5
+                        test5   # Note that one machine will work without a colon
+                #group_x:
+                #    hosts:
+                #        test5  # But this won't
+                #        test7  #
+                group_y:
+                    hosts:
+                        test6:  # So always use a colon
             vars:
                 g2_var2: value3
             hosts:
@@ -117,7 +124,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         if isinstance(group_data, (MutableMapping, NoneType)):
 
             try:
-                self.inventory.add_group(group)
+                group = self.inventory.add_group(group)
             except AnsibleError as e:
                 raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
 
@@ -146,7 +153,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                             self.inventory.set_variable(group, var, group_data[key][var])
                     elif key == 'children':
                         for subgroup in group_data[key]:
-                            self._parse_group(subgroup, group_data[key][subgroup])
+                            subgroup = self._parse_group(subgroup, group_data[key][subgroup])
                             self.inventory.add_child(group, subgroup)
 
                     elif key == 'hosts':
@@ -158,6 +165,8 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         else:
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
+
+        return group
 
     def _parse_host(self, host_pattern):
         '''

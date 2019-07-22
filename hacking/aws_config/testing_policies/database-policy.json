@@ -63,6 +63,21 @@
             "Resource": [
                 "arn:aws:rds:{{aws_region}}:{{aws_account}}:pg:*"
             ]
+        },
+        {
+          "Sid": "AllowRedshiftManagment",
+          "Action": [
+              "redshift:CreateCluster",
+              "redshift:CreateTags",
+              "redshift:DeleteCluster",
+              "redshift:DeleteTags",
+              "redshift:DescribeClusters",
+              "redshift:DescribeTags",
+              "redshift:ModifyCluster",
+              "redshift:RebootCluster"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
         }
     ]
 }

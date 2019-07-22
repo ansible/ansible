@@ -28,11 +28,16 @@
 
 
 import os
+import traceback
 
+from ansible.module_utils.basic import missing_required_lib
+
+CLIENT_IMP_ERR = None
 try:
     from manageiq_client.api import ManageIQClient
     HAS_CLIENT = True
 except ImportError:
+    CLIENT_IMP_ERR = traceback.format_exc()
     HAS_CLIENT = False
 
 
@@ -42,8 +47,8 @@ def manageiq_argument_spec():
         username=dict(default=os.environ.get('MIQ_USERNAME', None)),
         password=dict(default=os.environ.get('MIQ_PASSWORD', None), no_log=True),
         token=dict(default=os.environ.get('MIQ_TOKEN', None), no_log=True),
-        verify_ssl=dict(default=True, type='bool'),
-        ca_bundle_path=dict(required=False, default=None),
+        validate_certs=dict(default=True, type='bool', aliases=['verify_ssl']),
+        ca_cert=dict(required=False, default=None, aliases=['ca_bundle_path']),
     )
 
     return dict(
@@ -55,7 +60,7 @@ def manageiq_argument_spec():
 
 def check_client(module):
     if not HAS_CLIENT:
-        module.fail_json(msg='manageiq_client.api is required for this module')
+        module.fail_json(msg=missing_required_lib('manageiq-client'), exception=CLIENT_IMP_ERR)
 
 
 def validate_connection_params(module):
@@ -98,8 +103,8 @@ class ManageIQ(object):
         username = params['username']
         password = params['password']
         token = params['token']
-        verify_ssl = params['verify_ssl']
-        ca_bundle_path = params['ca_bundle_path']
+        verify_ssl = params['validate_certs']
+        ca_bundle_path = params['ca_cert']
 
         self._module = module
         self._api_url = url + '/api'

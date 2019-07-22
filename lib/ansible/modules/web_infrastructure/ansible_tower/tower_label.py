@@ -53,7 +53,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -91,7 +91,7 @@ def main():
                 result = label.delete(name=name, organization=org['id'])
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update label, organization not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest, exc.NotFound) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.NotFound, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update label: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
