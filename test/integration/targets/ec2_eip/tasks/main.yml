@@ -119,7 +119,6 @@
               - pool_eip.allocation_id is defined and pool_eip.allocation_id != ""
 
       always:
-
         - debug: msg="{{ item }}"
           when: item is defined and item.public_ip is defined and item.allocation_id is defined
           loop:
