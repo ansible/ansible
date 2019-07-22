@@ -45,16 +45,28 @@ options:
     mode:
         description:
             - The link type of an interface.
-        choices: ['access','trunk']
-    access_vlan:
+        choices: ['access','trunk', 'hybrid', 'dot1qtunnel']
+    default_vlan:
+        version_added: 2.9
         description:
-            - If C(mode=access), used as the access VLAN ID, in the range from 1 to 4094.
-    native_vlan:
+            - If C(mode=access, or mode=dot1qtunnel), used as the access VLAN ID, in the range from 1 to 4094.
+    pvid_vlan:
+        version_added: 2.9
         description:
-            - If C(mode=trunk), used as the trunk native VLAN ID, in the range from 1 to 4094.
+            - If C(mode=trunk, or mode=hybrid), used as the trunk native VLAN ID, in the range from 1 to 4094.
     trunk_vlans:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
+              from the trunk, such as 2-10 or 2,5,10-15, etc.
+    untagged_vlans:
+        version_added: 2.9
+        description:
+            - If C(mode=hybrid), used as the VLAN range to ADD or REMOVE
+              from the trunk, such as 2-10 or 2,5,10-15, etc.
+    tagged_vlans:
+        version_added: 2.9
+        description:
+            - If C(mode=hybrid), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
     state:
         description:
@@ -87,14 +99,14 @@ EXAMPLES = '''
     ce_switchport:
       interface: 10GE1/0/22
       mode: access
-      access_vlan: 20
+      default_vlan: 20
       provider: '{{ cli }}'
 
   - name: Ensure 10GE1/0/22 only has vlans 5-10 as trunk vlans
     ce_switchport:
       interface: 10GE1/0/22
       mode: trunk
-      native_vlan: 10
+      pvid_vlan: 10
       trunk_vlans: 5-10
       provider: '{{ cli }}'
 
@@ -102,7 +114,7 @@ EXAMPLES = '''
     ce_switchport:
       interface: 10GE1/0/22
       mode: trunk
-      native_vlan: 10
+      pvid_vlan: 10
       trunk_vlans: 2-50
       provider: '{{ cli }}'
 
@@ -120,18 +132,18 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"access_vlan": "20", "interface": "10GE1/0/22", "mode": "access"}
+    sample: {"default_vlan": "20", "interface": "10GE1/0/22", "mode": "access"}
 existing:
     description: k/v pairs of existing switchport
     returned: always
     type: dict
-    sample: {"access_vlan": "10", "interface": "10GE1/0/22",
+    sample: {"default_vlan": "10", "interface": "10GE1/0/22",
              "mode": "access", "switchport": "enable"}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
     type: dict
-    sample: {"access_vlan": "20", "interface": "10GE1/0/22",
+    sample: {"default_vlan": "20", "interface": "10GE1/0/22",
              "mode": "access", "switchport": "enable"}
 updates:
     description: command string sent to the device
@@ -146,21 +158,10 @@ changed:
 '''
 
 import re
+from xml.etree import ElementTree as ET
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
-CE_NC_GET_INTF = """
-<filter type="subtree">
-  <ifm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <interfaces>
-      <interface>
-        <ifName>%s</ifName>
-        <isL2SwitchPort></isL2SwitchPort>
-      </interface>
-    </interfaces>
-  </ifm>
-</filter>
-"""
 
 CE_NC_GET_PORT_ATTR = """
 <filter type="subtree">
@@ -173,6 +174,7 @@ CE_NC_GET_PORT_ATTR = """
           <linkType></linkType>
           <pvid></pvid>
           <trunkVlans></trunkVlans>
+          <untagVlans></untagVlans>
         </l2Attribute>
       </ethernetIf>
     </ethernetIfs>
@@ -180,61 +182,29 @@ CE_NC_GET_PORT_ATTR = """
 </filter>
 """
 
-CE_NC_SET_ACCESS_PORT = """
-<config>
-   <ethernet xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <ethernetIfs>
-        <ethernetIf operation="merge">
-            <ifName>%s</ifName>
-            <l2Attribute>
-                <linkType>access</linkType>
-                <pvid>%s</pvid>
-                <trunkVlans></trunkVlans>
-                <untagVlans></untagVlans>
-            </l2Attribute>
-        </ethernetIf>
-    </ethernetIfs>
-  </ethernet>
-</config>
-"""
-
-CE_NC_SET_TRUNK_PORT_MODE = """
+CE_NC_SET_PORT = """
 <ethernet xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
 <ethernetIfs>
     <ethernetIf operation="merge">
         <ifName>%s</ifName>
         <l2Attribute>
-            <linkType>trunk</linkType>
-        </l2Attribute>
-    </ethernetIf>
-</ethernetIfs>
-</ethernet>
-"""
-
-CE_NC_SET_TRUNK_PORT_PVID = """
-<ethernet xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-<ethernetIfs>
-    <ethernetIf operation="merge">
-        <ifName>%s</ifName>
-        <l2Attribute>
-            <linkType>trunk</linkType>
+            <linkType>%s</linkType>
             <pvid>%s</pvid>
-            <untagVlans></untagVlans>
+            <trunkVlans>%s</trunkVlans>
+            <untagVlans>%s</untagVlans>
         </l2Attribute>
     </ethernetIf>
 </ethernetIfs>
 </ethernet>
 """
 
-CE_NC_SET_TRUNK_PORT_VLANS = """
+CE_NC_SET_PORT_MODE = """
 <ethernet xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
 <ethernetIfs>
     <ethernetIf operation="merge">
         <ifName>%s</ifName>
         <l2Attribute>
-            <linkType>trunk</linkType>
-            <trunkVlans>%s:%s</trunkVlans>
-            <untagVlans></untagVlans>
+            <linkType>%s</linkType>
         </l2Attribute>
     </ethernetIf>
 </ethernetIfs>
@@ -364,9 +334,11 @@ class SwitchPort(object):
         self.interface = self.module.params['interface']
         self.mode = self.module.params['mode']
         self.state = self.module.params['state']
-        self.access_vlan = self.module.params['access_vlan']
-        self.native_vlan = self.module.params['native_vlan']
+        self.default_vlan = self.module.params['default_vlan']
+        self.pvid_vlan = self.module.params['pvid_vlan']
         self.trunk_vlans = self.module.params['trunk_vlans']
+        self.untagged_vlans = self.module.params['untagged_vlans']
+        self.tagged_vlans = self.module.params['tagged_vlans']
 
         # host info
         self.host = self.module.params['host']
@@ -387,8 +359,15 @@ class SwitchPort(object):
         """ init module """
 
         required_if = [('state', 'absent', ['mode']), ('state', 'present', ['mode'])]
+        mutually_exclusive = [['default_vlan', 'trunk_vlans'],
+                              ['default_vlan', 'pvid_vlan'],
+                              ['default_vlan', 'untagged_vlans'],
+                              ['trunk_vlans', 'untagged_vlans'],
+                              ['trunk_vlans', 'tagged_vlans'],
+                              ['default_vlan', 'tagged_vlans']]
+
         self.module = AnsibleModule(
-            argument_spec=self.spec, required_if=required_if, supports_check_mode=True)
+            argument_spec=self.spec, required_if=required_if, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
@@ -401,27 +380,23 @@ class SwitchPort(object):
 
         intf_info = dict()
         conf_str = CE_NC_GET_PORT_ATTR % ifname
-        rcv_xml = get_nc_config(self.module, conf_str)
-        if "<data/>" in rcv_xml:
+        xml_str = get_nc_config(self.module, conf_str)
+        if "<data/>" in xml_str:
             return intf_info
-
-        intf = re.findall(
-            r'.*<ifName>(.*)</ifName>.*\s*<l2Enable>(.*)</l2Enable>.*', rcv_xml)
-        if intf:
-            intf_info = dict(ifName=intf[0][0],
-                             l2Enable=intf[0][1],
-                             linkType="",
-                             pvid="",
-                             trunkVlans="")
-            if intf_info["l2Enable"] == "enable":
-                attr = re.findall(
-                    r'.*<linkType>(.*)</linkType>.*.*\s*<pvid>(.*)'
-                    r'</pvid>.*\s*<trunkVlans>(.*)</trunkVlans>.*', rcv_xml)
-                if attr:
-                    intf_info["linkType"] = attr[0][0]
-                    intf_info["pvid"] = attr[0][1]
-                    intf_info["trunkVlans"] = attr[0][2]
-
+        xml_str = xml_str.replace('\r', '').replace('\n', '').\
+            replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
+            replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
+        tree = ET.fromstring(xml_str)
+        l2Enable = tree.find('ethernet/ethernetIfs/ethernetIf/l2Enable')
+        intf_info["l2Enable"] = l2Enable.text
+        port_type = tree.find('ethernet/ethernetIfs/ethernetIf/l2Attribute')
+        for pre in port_type:
+            intf_info[pre.tag] = pre.text
+        intf_info["ifName"] = ifname
+        if intf_info["trunkVlans"] is None:
+            intf_info["trunkVlans"] = ""
+        if intf_info["untagVlans"] is None:
+            intf_info["untagVlans"] = ""
         return intf_info
 
     def is_l2switchport(self):
@@ -429,65 +404,64 @@ class SwitchPort(object):
 
         return bool(self.intf_info["l2Enable"] == "enable")
 
-    def merge_access_vlan(self, ifname, access_vlan):
+    def merge_access_vlan(self, ifname, default_vlan):
         """Merge access interface vlan"""
 
         change = False
         conf_str = ""
+
         self.updates_cmd.append("interface %s" % ifname)
         if self.state == "present":
             if self.intf_info["linkType"] == "access":
-                if access_vlan and self.intf_info["pvid"] != access_vlan:
+                if default_vlan and self.intf_info["pvid"] != default_vlan:
                     self.updates_cmd.append(
-                        "port default vlan %s" % access_vlan)
-                    conf_str = CE_NC_SET_ACCESS_PORT % (ifname, access_vlan)
+                        "port default vlan %s" % default_vlan)
+                    conf_str = CE_NC_SET_PORT % (ifname, "access", default_vlan, "", "")
                     change = True
             else:  # not access
                 self.updates_cmd.append("port link-type access")
-                if access_vlan:
+                if default_vlan:
                     self.updates_cmd.append(
-                        "port default vlan %s" % access_vlan)
-                    conf_str = CE_NC_SET_ACCESS_PORT % (ifname, access_vlan)
+                        "port default vlan %s" % default_vlan)
+                    conf_str = CE_NC_SET_PORT % (ifname, "access", default_vlan, "", "")
                 else:
-                    conf_str = CE_NC_SET_ACCESS_PORT % (ifname, "1")
+                    conf_str = CE_NC_SET_PORT % (ifname, "access", "1", "", "")
                 change = True
         elif self.state == "absent":
             if self.intf_info["linkType"] == "access":
-                if access_vlan and self.intf_info["pvid"] == access_vlan and access_vlan != "1":
+                if default_vlan and self.intf_info["pvid"] == default_vlan and default_vlan != "1":
                     self.updates_cmd.append(
-                        "undo port default vlan %s" % access_vlan)
-                    conf_str = CE_NC_SET_ACCESS_PORT % (ifname, "1")
+                        "undo port default vlan %s" % default_vlan)
+                    conf_str = CE_NC_SET_PORT % (ifname, "access", "1", "", "")
                     change = True
-            else:  # not access
-                self.updates_cmd.append("port link-type access")
-                conf_str = CE_NC_SET_ACCESS_PORT % (ifname, "1")
-                change = True
 
         if not change:
             self.updates_cmd.pop()   # remove interface
             return
-
+        conf_str = "<config>" + conf_str + "</config>"
         rcv_xml = set_nc_config(self.module, conf_str)
         self.check_response(rcv_xml, "MERGE_ACCESS_PORT")
         self.changed = True
 
-    def merge_trunk_vlan(self, ifname, native_vlan, trunk_vlans):
+    def merge_trunk_vlan(self, ifname, pvid_vlan, trunk_vlans):
         """Merge trunk interface vlan"""
 
         change = False
         xmlstr = ""
+        pvid = ""
+        trunk = ""
         self.updates_cmd.append("interface %s" % ifname)
         if trunk_vlans:
             vlan_list = self.vlan_range_to_list(trunk_vlans)
             vlan_map = self.vlan_list_to_bitmap(vlan_list)
-
         if self.state == "present":
             if self.intf_info["linkType"] == "trunk":
-                if native_vlan and self.intf_info["pvid"] != native_vlan:
+                if pvid_vlan and self.intf_info["pvid"] != pvid_vlan:
                     self.updates_cmd.append(
-                        "port trunk pvid vlan %s" % native_vlan)
-                    xmlstr += CE_NC_SET_TRUNK_PORT_PVID % (ifname, native_vlan)
+                        "port trunk pvid vlan %s" % pvid_vlan)
+                    pvid = pvid_vlan
                     change = True
+
                 if trunk_vlans:
                     add_vlans = self.vlan_bitmap_add(
                         self.intf_info["trunkVlans"], vlan_map)
@@ -495,32 +469,44 @@ class SwitchPort(object):
                         self.updates_cmd.append(
                             "port trunk allow-pass %s"
                             % trunk_vlans.replace(',', ' ').replace('-', ' to '))
-                        xmlstr += CE_NC_SET_TRUNK_PORT_VLANS % (
-                            ifname, add_vlans, add_vlans)
+                        trunk = "%s:%s" % (add_vlans, add_vlans)
                         change = True
+                if pvid or trunk:
+                    xmlstr += CE_NC_SET_PORT % (ifname, "trunk", pvid, trunk, "")
+                    if not pvid:
+                        xmlstr = xmlstr.replace("<pvid></pvid>", "")
+                    if not trunk:
+                        xmlstr = xmlstr.replace("<trunkVlans></trunkVlans>", "")
+
             else:   # not trunk
                 self.updates_cmd.append("port link-type trunk")
                 change = True
-                if native_vlan:
+                if pvid_vlan:
                     self.updates_cmd.append(
-                        "port trunk pvid vlan %s" % native_vlan)
-                    xmlstr += CE_NC_SET_TRUNK_PORT_PVID % (ifname, native_vlan)
+                        "port trunk pvid vlan %s" % pvid_vlan)
+                    pvid = pvid_vlan
                 if trunk_vlans:
                     self.updates_cmd.append(
                         "port trunk allow-pass %s"
                         % trunk_vlans.replace(',', ' ').replace('-', ' to '))
-                    xmlstr += CE_NC_SET_TRUNK_PORT_VLANS % (
-                        ifname, vlan_map, vlan_map)
-                if not native_vlan and not trunk_vlans:
-                    xmlstr += CE_NC_SET_TRUNK_PORT_MODE % ifname
+                    trunk = "%s:%s" % (vlan_map, vlan_map)
+                if pvid or trunk:
+                    xmlstr += CE_NC_SET_PORT % (ifname, "trunk", pvid, trunk, "")
+                    if not pvid:
+                        xmlstr = xmlstr.replace("<pvid></pvid>", "")
+                    if not trunk:
+                        xmlstr = xmlstr.replace("<trunkVlans></trunkVlans>", "")
+
+                if not pvid_vlan and not trunk_vlans:
+                    xmlstr += CE_NC_SET_PORT_MODE % (ifname, "trunk")
                     self.updates_cmd.append(
                         "undo port trunk allow-pass vlan 1")
         elif self.state == "absent":
             if self.intf_info["linkType"] == "trunk":
-                if native_vlan and self.intf_info["pvid"] == native_vlan and native_vlan != '1':
+                if pvid_vlan and self.intf_info["pvid"] == pvid_vlan and pvid_vlan != '1':
                     self.updates_cmd.append(
-                        "undo port trunk pvid vlan %s" % native_vlan)
-                    xmlstr += CE_NC_SET_TRUNK_PORT_PVID % (ifname, 1)
+                        "undo port trunk pvid vlan %s" % pvid_vlan)
+                    pvid = "1"
                     change = True
                 if trunk_vlans:
                     del_vlans = self.vlan_bitmap_del(
@@ -530,14 +516,135 @@ class SwitchPort(object):
                             "undo port trunk allow-pass %s"
                             % trunk_vlans.replace(',', ' ').replace('-', ' to '))
                         undo_map = vlan_bitmap_undo(del_vlans)
-                        xmlstr += CE_NC_SET_TRUNK_PORT_VLANS % (
-                            ifname, undo_map, del_vlans)
+                        trunk = "%s:%s" % (undo_map, del_vlans)
                         change = True
-            else:   # not trunk
-                self.updates_cmd.append("port link-type trunk")
-                self.updates_cmd.append("undo port trunk allow-pass vlan 1")
-                xmlstr += CE_NC_SET_TRUNK_PORT_MODE % ifname
+                if pvid or trunk:
+                    xmlstr += CE_NC_SET_PORT % (ifname, "trunk", pvid, trunk, "")
+                    if not pvid:
+                        xmlstr = xmlstr.replace("<pvid></pvid>", "")
+                    if not trunk:
+                        xmlstr = xmlstr.replace("<trunkVlans></trunkVlans>", "")
+
+        if not change:
+            self.updates_cmd.pop()
+            return
+        conf_str = "<config>" + xmlstr + "</config>"
+        rcv_xml = set_nc_config(self.module, conf_str)
+        self.check_response(rcv_xml, "MERGE_TRUNK_PORT")
+        self.changed = True
+
+    def merge_hybrid_vlan(self, ifname, pvid_vlan, tagged_vlans, untagged_vlans):
+        """Merge hybrid interface vlan"""
+
+        change = False
+        xmlstr = ""
+        pvid = ""
+        tagged = ""
+        untagged = ""
+        self.updates_cmd.append("interface %s" % ifname)
+        if tagged_vlans:
+            vlan_targed_list = self.vlan_range_to_list(tagged_vlans)
+            vlan_targed_map = self.vlan_list_to_bitmap(vlan_targed_list)
+        if untagged_vlans:
+            vlan_untarged_list = self.vlan_range_to_list(untagged_vlans)
+            vlan_untarged_map = self.vlan_list_to_bitmap(vlan_untarged_list)
+        if self.state == "present":
+            if self.intf_info["linkType"] == "hybrid":
+                if pvid_vlan and self.intf_info["pvid"] != pvid_vlan:
+                    self.updates_cmd.append(
+                        "port hybrid pvid vlan %s" % pvid_vlan)
+                    pvid = pvid_vlan
+                    change = True
+                if tagged_vlans:
+                    add_vlans = self.vlan_bitmap_add(
+                        self.intf_info["trunkVlans"], vlan_targed_map)
+                    if not is_vlan_bitmap_empty(add_vlans):
+                        self.updates_cmd.append(
+                            "port hybrid tagged vlan %s"
+                            % tagged_vlans.replace(',', ' ').replace('-', ' to '))
+                        tagged = "%s:%s" % (add_vlans, add_vlans)
+                        change = True
+                if untagged_vlans:
+                    add_vlans = self.vlan_bitmap_add(
+                        self.intf_info["untagVlans"], vlan_untarged_map)
+                    if not is_vlan_bitmap_empty(add_vlans):
+                        self.updates_cmd.append(
+                            "port hybrid untagged vlan %s"
+                            % untagged_vlans.replace(',', ' ').replace('-', ' to '))
+                        untagged = "%s:%s" % (add_vlans, add_vlans)
+                        change = True
+                if pvid or tagged or untagged:
+                    xmlstr += CE_NC_SET_PORT % (ifname, "hybrid", pvid, tagged, untagged)
+                    if not pvid:
+                        xmlstr = xmlstr.replace("<pvid></pvid>", "")
+                    if not tagged:
+                        xmlstr = xmlstr.replace("<trunkVlans></trunkVlans>", "")
+                    if not untagged:
+                        xmlstr = xmlstr.replace("<untagVlans></untagVlans>", "")
+            else:
+                self.updates_cmd.append("port link-type hybrid")
                 change = True
+                if pvid_vlan:
+                    self.updates_cmd.append(
+                        "port hybrid pvid vlan %s" % pvid_vlan)
+                    pvid = pvid_vlan
+                if tagged_vlans:
+                    self.updates_cmd.append(
+                        "port hybrid tagged vlan %s"
+                        % tagged_vlans.replace(',', ' ').replace('-', ' to '))
+                    tagged = "%s:%s" % (vlan_targed_map, vlan_targed_map)
+                if untagged_vlans:
+                    self.updates_cmd.append(
+                        "port hybrid untagged vlan %s"
+                        % untagged_vlans.replace(',', ' ').replace('-', ' to '))
+                    untagged = "%s:%s" % (vlan_untarged_map, vlan_untarged_map)
+                if pvid or tagged or untagged:
+                    xmlstr += CE_NC_SET_PORT % (ifname, "hybrid", pvid, tagged, untagged)
+                    if not pvid:
+                        xmlstr = xmlstr.replace("<pvid></pvid>", "")
+                    if not tagged:
+                        xmlstr = xmlstr.replace("<trunkVlans></trunkVlans>", "")
+                    if not untagged:
+                        xmlstr = xmlstr.replace("<untagVlans></untagVlans>", "")
+                if not pvid_vlan and not tagged_vlans and not untagged_vlans:
+                    xmlstr += CE_NC_SET_PORT_MODE % (ifname, "hybrid")
+                    self.updates_cmd.append(
+                        "undo port hybrid untagged vlan 1")
+        elif self.state == "absent":
+            if self.intf_info["linkType"] == "hybrid":
+                if pvid_vlan and self.intf_info["pvid"] == pvid_vlan and pvid_vlan != '1':
+                    self.updates_cmd.append(
+                        "undo port hybrid pvid vlan %s" % pvid_vlan)
+                    pvid = "1"
+                    change = True
+                if tagged_vlans:
+                    del_vlans = self.vlan_bitmap_del(
+                        self.intf_info["trunkVlans"], vlan_targed_map)
+                    if not is_vlan_bitmap_empty(del_vlans):
+                        self.updates_cmd.append(
+                            "undo port hybrid tagged vlan %s"
+                            % tagged_vlans.replace(',', ' ').replace('-', ' to '))
+                        undo_map = vlan_bitmap_undo(del_vlans)
+                        tagged = "%s:%s" % (undo_map, del_vlans)
+                        change = True
+                if untagged_vlans:
+                    del_vlans = self.vlan_bitmap_del(
+                        self.intf_info["untagVlans"], vlan_untarged_map)
+                    if not is_vlan_bitmap_empty(del_vlans):
+                        self.updates_cmd.append(
+                            "undo port hybrid untagged vlan %s"
+                            % untagged_vlans.replace(',', ' ').replace('-', ' to '))
+                        undo_map = vlan_bitmap_undo(del_vlans)
+                        untagged = "%s:%s" % (undo_map, del_vlans)
+                        change = True
+                if pvid or tagged or untagged:
+                    xmlstr += CE_NC_SET_PORT % (ifname, "hybrid", pvid, tagged, untagged)
+                    if not pvid:
+                        xmlstr = xmlstr.replace("<pvid></pvid>", "")
+                    if not tagged:
+                        xmlstr = xmlstr.replace("<trunkVlans></trunkVlans>", "")
+                    if not untagged:
+                        xmlstr = xmlstr.replace("<untagVlans></untagVlans>", "")
 
         if not change:
             self.updates_cmd.pop()
@@ -545,7 +652,45 @@ class SwitchPort(object):
 
         conf_str = "<config>" + xmlstr + "</config>"
         rcv_xml = set_nc_config(self.module, conf_str)
-        self.check_response(rcv_xml, "MERGE_TRUNK_PORT")
+        self.check_response(rcv_xml, "MERGE_HYBRID_PORT")
+        self.changed = True
+
+    def merge_dot1qtunnel_vlan(self, ifname, default_vlan):
+        """Merge dot1qtunnel"""
+
+        change = False
+        conf_str = ""
+
+        self.updates_cmd.append("interface %s" % ifname)
+        if self.state == "present":
+            if self.intf_info["linkType"] == "dot1qtunnel":
+                if default_vlan and self.intf_info["pvid"] != default_vlan:
+                    self.updates_cmd.append(
+                        "port default vlan %s" % default_vlan)
+                    conf_str = CE_NC_SET_PORT % (ifname, "dot1qtunnel", default_vlan, "", "")
+                    change = True
+            else:
+                self.updates_cmd.append("port link-type dot1qtunnel")
+                if default_vlan:
+                    self.updates_cmd.append(
+                        "port default vlan %s" % default_vlan)
+                    conf_str = CE_NC_SET_PORT % (ifname, "dot1qtunnel", default_vlan, "", "")
+                else:
+                    conf_str = CE_NC_SET_PORT % (ifname, "dot1qtunnel", "1", "", "")
+                change = True
+        elif self.state == "absent":
+            if self.intf_info["linkType"] == "dot1qtunnel":
+                if default_vlan and self.intf_info["pvid"] == default_vlan and default_vlan != "1":
+                    self.updates_cmd.append(
+                        "undo port default vlan %s" % default_vlan)
+                    conf_str = CE_NC_SET_PORT % (ifname, "dot1qtunnel", "1", "", "")
+                    change = True
+        if not change:
+            self.updates_cmd.pop()   # remove interface
+            return
+        conf_str = "<config>" + conf_str + "</config>"
+        rcv_xml = set_nc_config(self.module, conf_str)
+        self.check_response(rcv_xml, "MERGE_DOT1QTUNNEL_PORT")
         self.changed = True
 
     def default_switchport(self, ifname):
@@ -626,7 +771,7 @@ class SwitchPort(object):
             if tagged_vlans <= 0 or tagged_vlans > 4094:
                 self.module.fail_json(
                     msg='Error: Vlan id is not in the range from 1 to 4094.')
-            j = tagged_vlans / 4
+            j = tagged_vlans // 4
             bit_int[j] |= 0x8 >> (tagged_vlans % 4)
             vlan_bit[j] = hex(bit_int[j])[2]
 
@@ -690,21 +835,21 @@ class SwitchPort(object):
         if not self.intf_type or not is_portswitch_enalbed(self.intf_type):
             self.module.fail_json(msg='Error: Interface %s is error.')
 
-        # check access_vlan
-        if self.access_vlan:
-            if not self.access_vlan.isdigit():
+        # check default_vlan
+        if self.default_vlan:
+            if not self.default_vlan.isdigit():
                 self.module.fail_json(msg='Error: Access vlan id is invalid.')
-            if int(self.access_vlan) <= 0 or int(self.access_vlan) > 4094:
+            if int(self.default_vlan) <= 0 or int(self.default_vlan) > 4094:
                 self.module.fail_json(
                     msg='Error: Access vlan id is not in the range from 1 to 4094.')
 
-        # check native_vlan
-        if self.native_vlan:
-            if not self.native_vlan.isdigit():
-                self.module.fail_json(msg='Error: Native vlan id is invalid.')
-            if int(self.native_vlan) <= 0 or int(self.native_vlan) > 4094:
+        # check pvid_vlan
+        if self.pvid_vlan:
+            if not self.pvid_vlan.isdigit():
+                self.module.fail_json(msg='Error: Pvid vlan id is invalid.')
+            if int(self.pvid_vlan) <= 0 or int(self.pvid_vlan) > 4094:
                 self.module.fail_json(
-                    msg='Error: Native vlan id is not in the range from 1 to 4094.')
+                    msg='Error: Pvid vlan id is not in the range from 1 to 4094.')
 
         # get interface info
         self.intf_info = self.get_interface_dict(self.interface)
@@ -714,6 +859,27 @@ class SwitchPort(object):
         if not self.is_l2switchport():
             self.module.fail_json(
                 msg='Error: Interface is not layer2 swtich port.')
+        if self.state == "unconfigured":
+            if any([self.mode, self.default_vlan, self.pvid_vlan, self.trunk_vlans, self.untagged_vlans, self.tagged_vlans]):
+                self.module.fail_json(
+                    msg='Error: When state is unconfigured, only interface name exists.')
+        else:
+            if self.mode == "access":
+                if any([self.pvid_vlan, self.trunk_vlans, self.untagged_vlans, self.tagged_vlans]):
+                    self.module.fail_json(
+                        msg='Error: When mode is access, only default_vlan can be supported.')
+            elif self.mode == "trunk":
+                if any([self.default_vlan, self.untagged_vlans, self.tagged_vlans]):
+                    self.module.fail_json(
+                        msg='Error: When mode is trunk, only pvid_vlan and trunk_vlans can exist.')
+            elif self.mode == "hybrid":
+                if any([self.default_vlan, self.trunk_vlans]):
+                    self.module.fail_json(
+                        msg='Error: When mode is hybrid, default_vlan and trunk_vlans cannot exist')
+            else:
+                if any([self.pvid_vlan, self.trunk_vlans, self.untagged_vlans, self.tagged_vlans]):
+                    self.module.fail_json(
+                        msg='Error: When mode is dot1qtunnel, only default_vlan can be supported.')
 
     def get_proposed(self):
         """get proposed info"""
@@ -721,33 +887,59 @@ class SwitchPort(object):
         self.proposed['state'] = self.state
         self.proposed['interface'] = self.interface
         self.proposed['mode'] = self.mode
-        self.proposed['access_vlan'] = self.access_vlan
-        self.proposed['native_vlan'] = self.native_vlan
-        self.proposed['trunk_vlans'] = self.trunk_vlans
+        if self.mode:
+            if self.mode == "access":
+                self.proposed['access_pvid'] = self.default_vlan
+            elif self.mode == "trunk":
+                self.proposed['pvid_vlan'] = self.pvid_vlan
+                self.proposed['trunk_vlans'] = self.trunk_vlans
+            elif self.mode == "hybrid":
+                self.proposed['pvid_vlan'] = self.pvid_vlan
+                self.proposed['untagged_vlans'] = self.untagged_vlans
+                self.proposed['tagged_vlans'] = self.tagged_vlans
+            else:
+                self.proposed['dot1qtunnel_pvid'] = self.default_vlan
 
     def get_existing(self):
         """get existing info"""
 
         if self.intf_info:
             self.existing["interface"] = self.intf_info["ifName"]
-            self.existing["mode"] = self.intf_info["linkType"]
             self.existing["switchport"] = self.intf_info["l2Enable"]
-            self.existing['access_vlan'] = self.intf_info["pvid"]
-            self.existing['native_vlan'] = self.intf_info["pvid"]
-            self.existing['trunk_vlans'] = self.intf_info["trunkVlans"]
+            self.existing["mode"] = self.intf_info["linkType"]
+            if self.intf_info["linkType"] == "access":
+                self.existing['access_pvid'] = self.intf_info["pvid"]
+            elif self.intf_info["linkType"] == "trunk":
+                self.existing['trunk_pvid'] = self.intf_info["pvid"]
+                self.existing['trunk_vlans'] = self.intf_info["trunkVlans"]
+            elif self.intf_info["linkType"] == "hybrid":
+                self.existing['hybrid_pvid'] = self.intf_info["pvid"]
+                self.existing['hybrid_untagged_vlans'] = self.intf_info["untagVlans"]
+                self.existing['hybrid_tagged_vlans'] = self.intf_info["trunkVlans"]
+            else:
+                self.existing['dot1qtunnel_pvid'] = self.intf_info["pvid"]
 
     def get_end_state(self):
         """get end state info"""
 
-        if self.intf_info:
-            end_info = self.get_interface_dict(self.interface)
-            if end_info:
-                self.end_state["interface"] = end_info["ifName"]
-                self.end_state["mode"] = end_info["linkType"]
-                self.end_state["switchport"] = end_info["l2Enable"]
-                self.end_state['access_vlan'] = end_info["pvid"]
-                self.end_state['native_vlan'] = end_info["pvid"]
+        end_info = self.get_interface_dict(self.interface)
+        if end_info:
+            self.end_state["interface"] = end_info["ifName"]
+            self.end_state["switchport"] = end_info["l2Enable"]
+            self.end_state["mode"] = end_info["linkType"]
+            if end_info["linkType"] == "access":
+                self.end_state['access_pvid'] = end_info["pvid"]
+            elif end_info["linkType"] == "trunk":
+                self.end_state['trunk_pvid'] = end_info["pvid"]
                 self.end_state['trunk_vlans'] = end_info["trunkVlans"]
+            elif end_info["linkType"] == "hybrid":
+                self.end_state['hybrid_pvid'] = end_info["pvid"]
+                self.end_state['hybrid_untagged_vlans'] = end_info["untagVlans"]
+                self.end_state['hybrid_tagged_vlans'] = end_info["trunkVlans"]
+            else:
+                self.end_state['dot1qtunnel_pvid'] = end_info["pvid"]
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""
@@ -755,17 +947,21 @@ class SwitchPort(object):
         self.check_params()
         if not self.intf_info:
             self.module.fail_json(msg='Error: interface does not exist.')
-
         self.get_existing()
         self.get_proposed()
 
         # present or absent
         if self.state == "present" or self.state == "absent":
             if self.mode == "access":
-                self.merge_access_vlan(self.interface, self.access_vlan)
+                self.merge_access_vlan(self.interface, self.default_vlan)
             elif self.mode == "trunk":
                 self.merge_trunk_vlan(
-                    self.interface, self.native_vlan, self.trunk_vlans)
+                    self.interface, self.pvid_vlan, self.trunk_vlans)
+            elif self.mode == "hybrid":
+                self.merge_hybrid_vlan(self.interface, self.pvid_vlan, self.tagged_vlans, self.untagged_vlans)
+            else:
+                self.merge_dot1qtunnel_vlan(self.interface, self.default_vlan)
+
         # unconfigured
         else:
             self.default_switchport(self.interface)
@@ -788,10 +984,12 @@ def main():
 
     argument_spec = dict(
         interface=dict(required=True, type='str'),
-        mode=dict(choices=['access', 'trunk'], required=False),
-        access_vlan=dict(type='str', required=False),
-        native_vlan=dict(type='str', required=False),
+        mode=dict(choices=['access', 'trunk', 'dot1qtunnel', 'hybrid'], required=False),
+        default_vlan=dict(type='str', required=False),
+        pvid_vlan=dict(type='str', required=False),
         trunk_vlans=dict(type='str', required=False),
+        untagged_vlans=dict(type='str', required=False),
+        tagged_vlans=dict(type='str', required=False),
         state=dict(choices=['absent', 'present', 'unconfigured'],
                    default='present')
     )
