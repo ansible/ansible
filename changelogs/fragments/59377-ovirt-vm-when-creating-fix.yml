@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix the issue when creating vm the module always fails (https://github.com/ansible/ansible/issues/59385)
