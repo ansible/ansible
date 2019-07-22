@@ -48,7 +48,7 @@ options:
       default: 'no'
     vsan_auto_claim_storage:
       description:
-      - Determines whether the VSAN service is configured to automatically claim local storage
+      - Whether the VSAN service is configured to automatically claim local storage
         on VSAN-enabled hosts in the cluster.
       type: bool
       default: False
