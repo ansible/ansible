@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_schema - Parameter ensure replaced by state in the drop schema example (https://github.com/ansible/ansible/pull/59342)
