@@ -43,7 +43,7 @@ options:
       aliases: [ datacenter_name ]
     enable_drs:
       description:
-      - If set to C(yes), will enable DRS when the cluster is created.
+      - Whether to enable DRS when the cluster is created.
       type: bool
       default: 'no'
     drs_enable_vm_behavior_overrides:
