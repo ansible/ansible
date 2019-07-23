@@ -1135,8 +1135,9 @@ def is_text(cmd):
 
 
 def is_local_nxapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
+    transport = module.params.get('transport')
+    provider = module.params.get('provider')
+    provider_transport = provider['transport'] if provider else None
     return 'nxapi' in (transport, provider_transport)
 
 
