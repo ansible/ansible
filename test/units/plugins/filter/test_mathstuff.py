@@ -115,9 +115,9 @@ class TestInversePower:
     def test_root_non_number(self):
         # Messages differed in python-2.6, python-2.7-3.5, and python-3.6+
         with pytest.raises(AnsibleFilterError, match="root\\(\\) can only be used on numbers:"
-                           " (invalid literal for float(): a)"
+                           " (invalid literal for float\\(\\): a"
                            "|could not convert string to float: a"
-                           "|could not convert string to float: 'a'"):
+                           "|could not convert string to float: 'a')"):
             ms.inversepower(10, 'a')
 
         with pytest.raises(AnsibleFilterError, match="root\\(\\) can only be used on numbers: (a float is required|must be real number, not str)"):
