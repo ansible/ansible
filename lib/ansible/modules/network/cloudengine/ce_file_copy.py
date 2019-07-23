@@ -100,6 +100,8 @@ import time
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.common.utils import validate_ip_v6_address
 
 try:
     import paramiko
@@ -142,7 +144,7 @@ CE_NC_GET_FILE_INFO = """
 </filter>
 """
 
-CE_NC_GET_SCP_ENABLE = """
+CE_NC_GET_SCP_ENABLE_R19 = """
 <filter type="subtree">
       <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
         <sshServerEnable>
@@ -153,6 +155,15 @@ CE_NC_GET_SCP_ENABLE = """
     </filter>
 """
 
+CE_NC_GET_SCP_ENABLE_R3 = """
+<filter type="subtree">
+  <sshs xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+    <sshServer>
+      <scpEnable></scpEnable>
+    </sshServer>
+  </sshs>
+</filter>
+"""
 
 def get_cli_exception(exc=None):
     """Get cli exception message"""
@@ -202,6 +213,7 @@ class FileCopy(object):
         self.local_file = self.module.params['local_file']
         self.remote_file = self.module.params['remote_file']
         self.file_system = self.module.params['file_system']
+        self.host_is_ipv6 = validate_ip_v6_address(self.module.params['provider']['host'])
 
         # state
         self.transfer_result = None
@@ -309,11 +321,17 @@ class FileCopy(object):
     def get_scp_enable(self):
         """Get scp enable state"""
 
-        xml_str = CE_NC_GET_SCP_ENABLE
-        scp_enable = dict()
-        ret_xml = get_nc_config(self.module, xml_str)
+        ret_xml = ''
+        try:
+            ret_xml = get_nc_config(self.module, CE_NC_GET_SCP_ENABLE_R3)
+        except ConnectionError:
+            try:
+                ret_xml = get_nc_config(self.module, CE_NC_GET_SCP_ENABLE_R19)
+            except ConnectionError:
+                self.module.fail_json(msg='Error: The NETCONF API of scp_enable is not supported.')
+
         if "<data/>" in ret_xml:
-            return scp_enable
+            return False
 
         xml_str = ret_xml.replace('\r', '').replace('\n', '').\
             replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
@@ -321,14 +339,16 @@ class FileCopy(object):
 
         # get file info
         root = ElementTree.fromstring(xml_str)
-        topo = root.find("sshs/sshServerEnable")
-        if topo is None:
-            return scp_enable
-
-        for eles in topo:
-            scp_enable[eles.tag] = eles.text
-
-        return scp_enable
+        topo1 = root.find("sshs/sshServer/scpEnable")
+        topo2 = root.find("sshs/sshServerEnable/scpIpv4Enable")
+        topo3 = root.find("sshs/sshServerEnable/scpIpv6Enable")
+        if topo1 is not None:
+            return str(topo1.tag).strip().lower() == 'enable'
+        elif self.is_ipv6 and topo3 is not None:
+            return str(topo3.tag).strip().lower() == 'enable'
+        elif topo2 is not None:
+            return str(topo2.tag).strip().lower() == 'enable'
+        return False
 
     def work(self):
         """Excute task """
@@ -349,13 +369,14 @@ class FileCopy(object):
             self.module.fail_json(
                 msg="'Error: The maximum length of remote_file is 4096.'")
 
-        cur_state = self.get_scp_enable()
-        if len(cur_state) > 0 and (cur_state.get('scpIpv4Enable').lower() == 'disable' or cur_state.get('scpIpv6Enable').lower() == 'disable'):
-            self.module.fail_json(
-                msg="'Error: Please ensure ipv4 and ipv6 SCP server are enabled.'")
-        elif len(cur_state) == 0:
-            self.module.fail_json(
-                msg="'Error: Please ensure ipv4 and ipv6 SCP server are enabled.'")
+        scp_enable = self.get_scp_enable()
+        if not scp_enable:
+            if self.host_is_ipv6:
+                self.module.fail_json(
+                    msg="'Error: Please ensure ipv6 SCP server are enabled.'")
+            else:
+                self.module.fail_json(
+                    msg="'Error: Please ensure ipv4 SCP server are enabled.'")
 
         if not os.path.isfile(self.local_file):
             self.module.fail_json(
