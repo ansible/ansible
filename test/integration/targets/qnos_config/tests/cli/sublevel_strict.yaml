@@ -1,0 +1,87 @@
+---
+- debug: msg="START cli/sublevel_strict.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  qnos_config:
+    lines:
+      - permit ip host 192.0.2.1 any log
+      - permit ip host 192.0.2.2 any log
+      - permit ip host 192.0.2.3 any log
+      - permit ip host 192.0.2.4 any log
+      - permit ip host 192.0.2.5 any log
+    parents: ip access-list test
+    before: no ip access-list test
+    match: none
+
+- name: configure sub level command using strict match
+  qnos_config:
+    lines:
+      - 1 permit ip host 192.0.2.1 any log
+      - 2 permit ip host 192.0.2.2 any log
+      - 3 permit ip host 192.0.2.3 any log
+      - 4 permit ip host 192.0.2.4 any log
+    parents: ip access-list test
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: setup
+  qnos_config:
+    lines:
+      - ip address 1.2.3.4 255.255.255.0
+      - description 'test interface'
+      - no shutdown
+    parents: interface 0/1
+    match: none
+
+- name: configure shutdown
+  qnos_config:
+    lines:
+      - description 'test interface'
+      - ip address 1.2.3.4 255.255.255.0
+      - shutdown
+    parents: interface 0/1
+    match: strict
+  register: result
+ 
+- debug: msg="previous result {{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+
+
+- name: check sub level command using strict match
+  qnos_config:
+    lines:
+      - 1 permit ip host 192.0.2.1 any log
+      - no rule 2
+      - no rule 3
+      - 2 permit ip host 192.0.2.3 any log
+      - 3 permit ip host 192.0.2.2 any log      
+    parents: ip access-list test
+    after: exit
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+
+      - "'ip access-list test' in result.updates"
+      - "'1 permit ip host 192.0.2.1 any log' not in result.updates"
+      - "'3 permit ip host 192.0.2.2 any log' in result.updates"
+      - "'2 permit ip host 192.0.2.3 any log' in result.updates"
+      - "'4 permit ip host 192.0.2.4 any log' not in result.updates"
+      - "'5 permit ip host 192.0.2.5 any log' not in result.updates"
+
+- name: teardown
+  qnos_config:
+    lines: no ip access-list test
+    match: none
+
+- debug: msg="END cli/sublevel_strict.yaml on connection={{ ansible_connection }}"

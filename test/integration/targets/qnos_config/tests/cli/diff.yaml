@@ -1,0 +1,46 @@
+---
+- debug: msg="START cli/diff.yaml on connection={{ ansible_connection }}"
+
+#- name: Ensure hostname is preset
+#  qnos_system:
+#    hostname: "{{ shorter_hostname }}"
+
+- name: qnos_config diff against running configuration
+  qnos_config:
+    commands:
+      - hostname an-qnos-03.ansible.com
+    diff_against: running
+  diff: true
+  register: result
+
+#- assert:
+#    that:
+#      - "'hostname \"an-qnos-03.ansible.com\"' in result['diff']['after']"
+#      - "'hostname \"{{ shorter_hostname }}\"' in result['diff']['before']"
+
+- name: qnos_config diff against retrieved config
+  qnos_config:
+    diff_against: intended
+    intended_config: "{{ lookup('file', '{{ role_path }}/templates/basic/intended_running_config') }}"
+  diff: true
+  register: result
+
+- assert:
+    that:
+      - "'hostname \"an-qnos-02.ansible.com\"' in result['diff']['after']"
+      - "'hostname \"an-qnos-03.ansible.com\"' in result['diff']['before']"
+
+- name: qnos_config diff against provided running_config
+  qnos_config:
+    diff_against: intended
+    intended_config: "{{ lookup('file', '{{ role_path }}/templates/basic/intended_running_config') }}"
+    running_config: "{{ lookup('file', '{{ role_path }}/templates/basic/base_running_config') }}"
+  diff: true
+  register: result
+
+- assert:
+    that:
+      - "'hostname \"an-qnos-02.ansible.com\"' in result['diff']['after']"
+      - "'hostname \"an-qnos-01.ansible.com\"' in result['diff']['before']"
+
+- debug: msg="END cli/diff.yaml on connection={{ ansible_connection }}"
