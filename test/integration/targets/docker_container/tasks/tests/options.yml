@@ -1822,6 +1822,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
+    ipc_mode: shareable
   loop:
   - "{{ cname_h1 }}"
   loop_control:
