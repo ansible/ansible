@@ -1,0 +1,2 @@
+minor_changes
+  - Correct the return values of "matched" and "examined" from string to int
