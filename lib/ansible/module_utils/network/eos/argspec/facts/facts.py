@@ -5,19 +5,20 @@
 """
 The arg spec for the eos facts module.
 """
+CHOICES = [
+    'all',
+    'interfaces',
+]
 
-class FactsArgs(object): #pylint: disable=R0903
+
+class FactsArgs(object):
     """ The arg spec for the eos facts module
     """
 
     def __init__(self, **kwargs):
         pass
 
-    choices = [
-        'all',
-        'net_configuration_interfaces',
-    ]
-
     argument_spec = {
-        'gather_subset': dict(default=['all'], choices=choices, type='list')
+        'gather_subset': dict(default=['!config'], type='list'),
+        'gather_network_resources': dict(choices=CHOICES, type='list'),
     }

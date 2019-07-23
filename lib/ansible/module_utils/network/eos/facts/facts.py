@@ -8,69 +8,49 @@ this file validates each subset of facts and selectively
 calls the appropriate facts gathering function
 """
 
+from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.eos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.eos.argspec.interfaces.interfaces import InterfacesArgs
-from ansible.module_utils.network.eos.facts.base import FactsBase
 from ansible.module_utils.network.eos.facts.interfaces.interfaces import InterfacesFacts
+from ansible.module_utils.network.eos.facts.legacy.base import Default, Hardware, Config, Interfaces
 
-class Facts(FactsArgs, FactsBase): #pylint: disable=R0903
+
+FACT_LEGACY_SUBSETS = dict(
+    default=Default,
+    hardware=Hardware,
+    interfaces=Interfaces,
+    config=Config,
+)
+FACT_RESOURCE_SUBSETS = dict(
+    interfaces=InterfacesFacts,
+)
+
+
+class Facts(FactsBase):
     """ The fact class for eos
     """
 
-    def get_facts(self, module, connection, gather_subset=None):
+    VALID_LEGACY_GATHER_SUBSETS = frozenset(FACT_LEGACY_SUBSETS.keys())
+    VALID_RESOURCE_SUBSETS = frozenset(FACT_RESOURCE_SUBSETS.keys())
+
+    def get_facts(self, legacy_facts_type=None, resource_facts_type=None, data=None):
         """ Collect the facts for eos
-
-        :param module: The module instance
-        :param connection: The device connection
-        :param gather_subset: The facts subset to collect
+        :param legacy_facts_type: List of legacy facts types
+        :param resource_facts_type: List of resource fact types
+        :param data: previously collected conf
         :rtype: dict
-        :returns: the facts gathered
+        :return: the facts gathered
         """
-        if gather_subset is None:
-            gather_subset = ["all"]
+        netres_choices = FactsArgs.argument_spec['gather_network_resources'].get('choices', [])
+        if self.VALID_RESOURCE_SUBSETS:
+            self.get_network_resources_facts(netres_choices, FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
-        valid_subsets = self.argument_spec['gather_subset'].get('choices', [])
-        if valid_subsets and 'all' in valid_subsets:
-            valid_subsets.remove('all')
+        if self.VALID_LEGACY_GATHER_SUBSETS:
+            self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
 
-        runable_subsets = set()
-        exclude_subsets = set()
-        if not gather_subset:
-            gather_subset = ['all']
-
-        for subset in gather_subset:
-            if subset == 'all':
-                runable_subsets.update(valid_subsets)
-                continue
-            if subset.startswith('!'):
-                subset = subset[1:]
-                if subset == 'all':
-                    exclude_subsets.update(valid_subsets)
-                    continue
-                exclude = True
-            else:
-                exclude = False
-
-            if subset not in valid_subsets:
-                module.fail_json(msg='Bad subset')
-
-            if exclude:
-                exclude_subsets.add(subset)
-            else:
-                runable_subsets.add(subset)
-
-        if not runable_subsets:
-            runable_subsets.update(valid_subsets)
-
-        runable_subsets.difference_update(exclude_subsets)
-        self.ansible_facts['gather_subset'] = list(runable_subsets)
-
-        for attr in runable_subsets:
-            getattr(self, '_get_%s' % attr, {})(module, connection)
-
-        return self.ansible_facts
+        return self.ansible_facts, self._warnings
 
     @staticmethod
-    def _get_net_configuration_interfaces(module, connection):
-        return InterfacesFacts(InterfacesArgs. \
-               argument_spec, 'config', 'options').populate_facts(module, connection)
+    def _get_interfaces(module, connection):
+        return InterfacesFacts(InterfacesArgs.argument_spec, 'config', 'options') \
+                              .populate_facts(module, connection)

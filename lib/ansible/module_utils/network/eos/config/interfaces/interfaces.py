@@ -23,7 +23,12 @@ class Interfaces(ConfigBase, InterfacesArgs):
     """
 
     gather_subset = [
-        'net_configuration_interfaces',
+        '!all',
+        '!min',
+    ]
+
+    gather_network_resources = [
+        'interfaces',
     ]
 
     def get_interfaces_facts(self):
@@ -32,8 +37,8 @@ class Interfaces(ConfigBase, InterfacesArgs):
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts = Facts().get_facts(self._module, self._connection, self.gather_subset)
-        interfaces_facts = facts['net_configuration'].get('interfaces')
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        interfaces_facts = facts['ansible_network_resources'].get('interfaces')
         if not interfaces_facts:
             return []
         return interfaces_facts
@@ -161,6 +166,7 @@ class Interfaces(ConfigBase, InterfacesArgs):
 def _param_list_to_dict(param_list):
     param_dict = {}
     for params in param_list:
+        params = params.copy()
         name = params.pop('name')
         param_dict[name] = params
 
@@ -200,12 +206,12 @@ def _remove_config(params):
     for interface, config in params.items():
         interface_commands = []
         for param in config:
-            if param == 'enable':
-                interface_commands.append('   no shutdown')
+            if param == 'enabled':
+                interface_commands.append('no shutdown')
             elif param in ('description', 'mtu'):
-                interface_commands.append('   no {0}'.format(param))
+                interface_commands.append('no {0}'.format(param))
             elif param == 'speed':
-                interface_commands.append('   speed auto')
+                interface_commands.append('speed auto')
         if interface_commands:
             commands[interface] = interface_commands
 
@@ -221,13 +227,13 @@ def _replace_config(params):
         interface_commands = []
         for param, state in config.items():
             if param == 'description':
-                interface_commands.append('   description "{0}"'.format(state))
-            elif param == 'enable':
-                interface_commands.append('   {0}shutdown'.format('no ' if state else ''))
+                interface_commands.append('description "{0}"'.format(state))
+            elif param == 'enabled':
+                interface_commands.append('{0}shutdown'.format('no ' if state else ''))
             elif param == 'mtu':
-                interface_commands.append('   mtu {0}'.format(state))
+                interface_commands.append('mtu {0}'.format(state))
         if 'speed' in config:
-            interface_commands.append('   speed {0}{1}'.format(config['speed'], config['duplex']))
+            interface_commands.append('speed {0}{1}'.format(config['speed'], config['duplex']))
         if interface_commands:
             commands[interface] = interface_commands
 

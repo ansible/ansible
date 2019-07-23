@@ -11,14 +11,30 @@ based on the configuration.
 from copy import deepcopy
 import re
 
-from ansible.module_utils.network.eos.facts.base import FactsBase
+from ansible.module_utils.network.common import utils
+from ansible.module_utils.network.eos.argspec.interfaces.interfaces import InterfacesArgs
 
 
-class InterfacesFacts(FactsBase):
+class InterfacesFacts(object):
     """ The eos interfaces fact class
     """
 
-    def populate_facts(self, module, connection, data=None):
+
+    def __init__(self, module, subspec='config', options='options'):
+        self._module = module
+        self.argument_spec = InterfacesArgs.argument_spec
+        spec = deepcopy(self.argument_spec)
+        if subspec:
+            if options:
+                facts_argument_spec = spec[subspec][options]
+            else:
+                facts_argument_spec = spec[subspec]
+        else:
+            facts_argument_spec = spec
+
+        self.generated_spec = utils.generate_dict(facts_argument_spec)
+
+    def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for interfaces
 
         :param module: the module instance
@@ -41,8 +57,8 @@ class InterfacesFacts(FactsBase):
         facts = {}
         if objs:
             facts['interfaces'] = objs
-        self.ansible_facts['net_configuration'].update(facts)
-        return self.ansible_facts
+        ansible_facts['ansible_network_resources'].update(facts)
+        return ansible_facts
 
     def render_config(self, spec, conf):
         """
@@ -57,14 +73,14 @@ class InterfacesFacts(FactsBase):
 
         # populate the facts from the configuration
         config['name'] = re.match(r'(\S+)', conf).group(1).replace('"', '')
-        description = self.parse_conf_arg(conf, 'description')
+        description = utils.parse_conf_arg(conf, 'description')
         if description is not None:
             config['description'] = description.replace('"', '')
-        shutdown = self.parse_conf_cmd_arg(conf, 'shutdown', False)
-        config['enable'] = shutdown if shutdown is False else True
-        config['mtu'] = self.parse_conf_arg(conf, 'mtu')
+        shutdown = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
+        config['enabled'] = shutdown if shutdown is False else True
+        config['mtu'] = utils.parse_conf_arg(conf, 'mtu')
 
-        speed_pair = self.parse_conf_arg(conf, 'speed')
+        speed_pair = utils.parse_conf_arg(conf, 'speed')
         if speed_pair:
             state = speed_pair.split()
             if state[0] == 'forced':
@@ -79,4 +95,4 @@ class InterfacesFacts(FactsBase):
                 config['speed'] = state[:-4]
                 config['duplex'] = state[-4:]
 
-        return self.generate_final_config(config)
+        return utils.remove_empties(config)

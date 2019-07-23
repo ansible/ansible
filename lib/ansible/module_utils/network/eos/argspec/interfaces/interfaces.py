@@ -33,4 +33,16 @@ class InterfacesArgs(object): #pylint: disable=R0903
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'options': {'name': {'required': False, 'type': 'str'}, 'description': {'required': False, 'type': 'str'}, 'enable': {'default': True, 'required': False, 'type': 'bool'}, 'mtu': {'required': False, 'type': 'str'}, 'speed': {'required': False, 'type': 'str'}, 'duplex': {'default': 'auto', 'required': False, 'type': 'str'}}, 'type': 'list'}, 'state': {'default': 'merged', 'choices': ['merged', 'replaced', 'overridden', 'deleted'], 'required': False, 'type': 'str'}} #pylint: disable=C0301
+    argument_spec = {
+        'config': {
+            'options': {
+                'name': {'required': False, 'type': 'str'},
+                'description': {'required': False, 'type': 'str'},
+                'enabled': {'default': True, 'required': False, 'type': 'bool'},
+                'mtu': {'required': False, 'type': 'str'},
+                'speed': {'required': False, 'type': 'str'},
+                'duplex': {'required': False, 'type': 'str'}
+            },
+            'type': 'list'},
+        'state': {'default': 'merged', 'choices': ['merged', 'replaced', 'overridden', 'deleted'], 'required': False, 'type': 'str'}
+    }

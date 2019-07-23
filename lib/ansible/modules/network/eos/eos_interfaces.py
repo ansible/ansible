@@ -29,8 +29,7 @@ The module file for eos_interfaces
 
 from __future__ import absolute_import, division, print_function
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils. \
-     eos.config.interfaces.interfaces import Interfaces
+from ansible.module_utils.network.eos.config.interfaces.interfaces import Interfaces
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
