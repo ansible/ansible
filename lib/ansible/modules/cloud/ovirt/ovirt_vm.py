@@ -831,6 +831,11 @@ options:
             - "VM should have snapshot specified by C(snapshot)."
             - "If C(snapshot_name) specified C(snapshot_vm) is required."
         version_added: "2.9"
+    template_cluster:
+        description:
+            - "Template cluster name. When not defined C(cluster) is used."
+            - "Allows you to create virtual machine in diffrent cluster than template cluster name."
+        version_added: "2.9"
 
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -1265,9 +1270,14 @@ class VmsModule(BaseModule):
         template = None
         templates_service = self._connection.system_service().templates_service()
         if self.param('template'):
+            cluster = self.param('template_cluster') if self.param('template_cluster') else self.param('cluster')
             templates = templates_service.list(
-                search='name=%s and cluster=%s' % (self.param('template'), self.param('cluster'))
+                search='name=%s and cluster=%s' % (self.param('template'), cluster)
             )
+            if not templates:
+                templates = templates_service.list(
+                    search='name=%s' % self.param('template')
+                )
             if self.param('template_version'):
                 templates = [
                     t for t in templates
@@ -1278,7 +1288,7 @@ class VmsModule(BaseModule):
                     "Template with name '%s' and version '%s' in cluster '%s' was not found'" % (
                         self.param('template'),
                         self.param('template_version'),
-                        self.param('cluster')
+                        cluster
                     )
                 )
             template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
@@ -2298,6 +2308,7 @@ def main():
         cluster=dict(type='str'),
         allow_partial_import=dict(type='bool'),
         template=dict(type='str'),
+        template_cluster=dict(type='str'),
         template_version=dict(type='int'),
         use_latest_template_version=dict(type='bool'),
         storage_domain=dict(type='str'),
