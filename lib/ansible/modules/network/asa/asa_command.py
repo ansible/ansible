@@ -36,12 +36,12 @@ options:
         a dict containing I(command), I(answer) and I(prompt).
         Common answers are 'y' or "\\r" (carriage return, must be
         double quotes). See examples.
-        In the dictionary, you can also pass the keys:
-        I(sendonly) - when set to true will send I(command) to the
+      - "In the dictionary, you can also pass the keys:"
+      - I(sendonly) - when set to true will send I(command) to the
         device but not wait for a result.
-        I(newline) - when set to false will send I(answer) to the
+      - I(newline) - when set to false will send I(answer) to the
         device without a trailing newline.
-        I(check_all) - By default if any one of the prompts
+      - I(check_all) - By default if any one of the prompts
         mentioned in C(prompt) option is matched it won't
         check for other prompts. This boolean flag, that when
         set to I(True) will check for all the prompts mentioned
