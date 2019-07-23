@@ -3456,7 +3456,6 @@ lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E324
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E326
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E335
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E337
-lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E338
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E324
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E327
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E337
