@@ -24,7 +24,8 @@ options:
     state:
         description:
         - Create or modify an organization.
-        choices: ['present', 'query']
+        - C(org_id) must be specified if multiple organizations of the same name exist.
+        choices: ['absent', 'present', 'query']
         default: present
     clone:
         description:
@@ -50,6 +51,13 @@ EXAMPLES = r'''
     auth_key: abc12345
     org_name: YourOrg
     state: present
+  delegate_to: localhost
+
+- name: Delete an organization named YourOrg
+  meraki_organization:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: absent
   delegate_to: localhost
 
 - name: Query information about all organizations associated to the user
@@ -216,9 +224,7 @@ def main():
             org_id = meraki.get_org_id(meraki.params['org_name'])
         elif meraki.params['org_id'] is not None:
             org_id = meraki.params['org_id']
-        meraki.fail_json(meraki.check_mode)
         if meraki.check_mode is True:
-            meraki.fail_json("HEREs")
             meraki.result['data'] = {}
             meraki.result['changed'] = True
             meraki.exit_json(**meraki.result)
