@@ -49,6 +49,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   backend_type:
     description:
     - "* FIRST_GEN: First Generation instance. MySQL only."
