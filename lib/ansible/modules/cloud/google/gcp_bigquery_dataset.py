@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Dataset name.

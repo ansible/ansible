@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   id:
     description:
     - The unique identifier for the trigger.

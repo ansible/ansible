@@ -51,6 +51,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   bucket_name:
     description:
     - Cloud Storage bucket name.
