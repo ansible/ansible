@@ -833,8 +833,8 @@ options:
         version_added: "2.9"
     template_cluster:
         description:
-            - "Name of cluster in which is template. When not defined C(cluster) is used."
-            - "Allows you to create virtual machine in diffrent cluster than where is the template."
+            - "Template cluster name. When not defined C(cluster) is used."
+            - "Allows you to create virtual machine in diffrent cluster than template cluster name."
         version_added: "2.9"
 
 notes:
