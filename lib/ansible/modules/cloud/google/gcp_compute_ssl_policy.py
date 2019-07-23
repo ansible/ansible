@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,6 +63,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   profile:
     description:
     - Profile specifies the set of SSL features that can be used by the load balancer
@@ -69,6 +72,7 @@ options:
       must be specified in the `customFeatures` field.
     - 'Some valid choices include: "COMPATIBLE", "MODERN", "RESTRICTED", "CUSTOM"'
     required: false
+    type: str
   min_tls_version:
     description:
     - The minimum version of SSL protocol that can be used by the clients to establish
@@ -76,12 +80,14 @@ options:
       `TLS_1_2`.
     - 'Some valid choices include: "TLS_1_0", "TLS_1_1", "TLS_1_2"'
     required: false
+    type: str
   custom_features:
     description:
     - A list of features enabled when the selected profile is CUSTOM. The method returns
       the set of features that can be specified in this list. This field must be empty
       if the profile is not CUSTOM.
     required: false
+    type: list
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)'

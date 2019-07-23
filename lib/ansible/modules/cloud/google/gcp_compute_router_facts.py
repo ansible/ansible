@@ -49,6 +49,7 @@ options:
     description:
     - Region where the router resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   backup_pool:
     description:
     - This field is applicable only when the containing target pool is serving a forwarding
@@ -66,10 +67,12 @@ options:
       to a gcp_compute_target_pool task and then set this backup_pool field to "{{
       name-of-resource }}"'
     required: false
+    type: dict
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   failover_ratio:
     description:
     - This field is applicable only when the containing target pool is serving a forwarding
@@ -84,6 +87,7 @@ options:
       "force" mode, where traffic will be spread to the healthy instances with the
       best effort, or to all instances when no instance is healthy.
     required: false
+    type: str
   health_check:
     description:
     - A reference to a HttpHealthCheck resource.
@@ -96,11 +100,13 @@ options:
       name-of-resource` to a gcp_compute_http_health_check task and then set this
       health_check field to "{{ name-of-resource }}"'
     required: false
+    type: dict
   instances:
     description:
     - A list of virtual machine instances serving this pool.
     - They must live in zones contained in the same region as this pool.
     required: false
+    type: list
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -110,6 +116,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   session_affinity:
     description:
     - 'Session affinity option. Must be one of these values: - NONE: Connections from
@@ -120,10 +127,12 @@ options:
       will go to the same instance in the pool while that instance remains healthy."
     - 'Some valid choices include: "NONE", "CLIENT_IP", "CLIENT_IP_PROTO"'
     required: false
+    type: str
   region:
     description:
     - The region where the target pool resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/targetPools)'
@@ -352,7 +361,7 @@ def return_if_object(module, response, kind, allow_not_found=False):
     except getattr(json.decoder, 'JSONDecodeError', ValueError):
         module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
-    result = decode_request(result, module)
+    result = decode_response(result, module)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -363,7 +372,7 @@ def return_if_object(module, response, kind, allow_not_found=False):
 def is_different(module, response):
     request = resource_to_request(module)
     response = response_to_hash(module, response)
-    request = decode_request(request, module)
+    request = decode_response(request, module)
 
     # Remove all output-only from response.
     response_vals = {}
@@ -410,7 +419,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#targetPool')
+    return decode_response(fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#targetPool'), module)
 
 
 def wait_for_completion(status, op_result, module):
@@ -445,7 +454,7 @@ def encode_request(request, module):
 
 # Mask healthChecks into a single element.
 # @see encode_request for details
-def decode_request(response, module):
+def decode_response(response, module):
     if response['kind'] != 'compute#targetPool':
         return response
 

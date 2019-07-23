@@ -49,16 +49,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   certificate:
     description:
     - The certificate in PEM format.
     - The certificate chain must be no greater than 5 certs long.
     - The chain must include at least one intermediate cert.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -68,10 +71,12 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: false
+    type: str
   private_key:
     description:
     - The write-only private key in PEM format.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslCertificates)'
