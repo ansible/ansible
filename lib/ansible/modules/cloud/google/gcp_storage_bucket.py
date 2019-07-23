@@ -52,6 +52,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   acl:
     description:
     - Access controls on the bucket.

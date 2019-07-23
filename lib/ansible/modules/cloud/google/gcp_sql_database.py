@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   charset:
     description:
     - The MySQL charset value.
