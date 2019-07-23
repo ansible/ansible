@@ -572,7 +572,8 @@ class GalaxyCLI(CLI):
 
     def execute_install(self):
         """
-        Install one or more roles, or one or more collections. You can pass in a list of roles or collections, or use the file
+        Install one or more roles(``ansible-galaxy role install``), or one or more collections(``ansible galaxy collection install``).
+        You can pass in a list (roles or collections) or use the file
         option listed below (these are mutually exclusive). If you pass in a list, it
         can be a name (which will be downloaded via the galaxy API and github), or it can be a local tar archive file.
         """
