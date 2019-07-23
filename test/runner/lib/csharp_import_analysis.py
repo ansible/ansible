@@ -9,6 +9,10 @@ from lib.util import (
     display,
 )
 
+from lib.data import (
+    data_context,
+)
+
 
 def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
     """Return a dictionary of module_utils names mapped to sets of powershell file paths.
@@ -40,11 +44,27 @@ def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
     return imports
 
 
+def get_csharp_module_utils_name(path):  # type: (str) -> str
+    """Return a namespace and name from the given module_utils path."""
+    base_path = data_context().content.module_utils_csharp_path
+
+    if data_context().content.collection:
+        prefix = 'AnsibleCollections.' + data_context().content.collection.prefix
+    else:
+        prefix = ''
+
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+
+    return name
+
+
 def enumerate_module_utils():
     """Return a list of available module_utils imports.
     :rtype: set[str]
     """
-    return set(os.path.splitext(p)[0] for p in os.listdir('lib/ansible/module_utils/csharp') if os.path.splitext(p)[1] == '.cs')
+    return set(get_csharp_module_utils_name(p)
+               for p in data_context().content.walk_files(data_context().content.module_utils_csharp_path)
+               if os.path.splitext(p)[1] == '.cs')
 
 
 def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
@@ -56,9 +76,9 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
     """
     imports = set()
     if is_pure_csharp:
-        pattern = re.compile(r'(?i)^using\s(Ansible\..+);$')
+        pattern = re.compile(r'(?i)^using\s((?:Ansible|AnsibleCollections)\..+);$')
     else:
-        pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+(Ansible\..+)')
+        pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((?:Ansible|AnsibleCollections)\..+)')
 
     with open(path, 'r') as module_file:
         for line_number, line in enumerate(module_file, 1):

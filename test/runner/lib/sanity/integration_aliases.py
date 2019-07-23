@@ -80,6 +80,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
     Consider adding integration tests before or alongside changes.
     """
 
+    ansible_only = True
+
     def __init__(self):
         super(IntegrationAliasesTest, self).__init__()
 
