@@ -159,7 +159,7 @@ Function Test-DnsClientMatch {
             return $false
         }
     }
-    Write-DebugLog ("Current DNS settings match ({0})." -f ($dns_servers.IPAddressToString -join ", "))
+    Write-DebugLog ("Current DNS settings match ({0})." -f ([string[]]$dns_servers -join ", "))
     return $true
 }
 
@@ -178,7 +178,7 @@ Function Set-DnsClientAddresses
         [System.Net.IPAddress[]] $dns_servers
     )
 
-    Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($dns_servers.IPAddressToString -join ", "))
+    Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ([string[]]$dns_servers -join ", "))
 
     If ($dns_servers) {
         Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $dns_servers
@@ -194,12 +194,12 @@ if($dns_servers -is [string]) {
         $dns_servers = @()
     }
 }
+# Using object equals here, to check for exact match (without implicit type conversion)
+if([System.Object]::Equals($adapter_names, "*")) {
+    $adapter_names = Get-NetAdapter | Select-Object -ExpandProperty Name
+}
 if($adapter_names -is [string]) {
-    if($adapter_names -eq "*") {
-        $adapter_names = Get-NetAdapter | Select-Object -ExpandProperty Name
-    } else {
-        $adapter_names = @($adapter_names)
-    }
+    $adapter_names = @($adapter_names)
 }
 
 
