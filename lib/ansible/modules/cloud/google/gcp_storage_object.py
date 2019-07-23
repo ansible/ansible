@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   action:
     description:
     - Upload or download from the bucket.

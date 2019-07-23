@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Resource name of the repository, of the form projects/{{project}}/repos/{{repo}}.

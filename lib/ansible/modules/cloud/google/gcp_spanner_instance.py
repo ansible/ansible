@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - A unique identifier for the instance, which cannot be changed after the instance

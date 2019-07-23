@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   host:
     description:
     - The host name from which the user can connect. For insert operations, host defaults

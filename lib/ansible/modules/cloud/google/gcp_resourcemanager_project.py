@@ -48,6 +48,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - 'The user-assigned display name of the Project. It must be 4 to 30 characters.

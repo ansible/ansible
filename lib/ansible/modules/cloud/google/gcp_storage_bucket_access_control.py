@@ -56,6 +56,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   bucket:
     description:
     - The name of the bucket.

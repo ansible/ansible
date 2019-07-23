@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   alternative_location_id:
     description:
     - Only applicable to STANDARD_HA tier which protects the instance against zonal
