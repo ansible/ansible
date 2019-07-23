@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 DOCUMENTATION = """
@@ -21,6 +21,10 @@ short_description: Manage link aggregation groups on Cisco NXOS devices.
 description:
   - This module provides declarative management of link aggregation groups
     on Cisco NXOS devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: nxos_lag_interfaces
+  why: Updated modules released with more functionality.
 author:
   - Trishna Guha (@trishnaguha)
 notes:
@@ -42,13 +46,16 @@ options:
       - Mode for the link aggregation group.
     choices: [ active, 'on', passive ]
     default: 'on'
+    type: str
   min_links:
     description:
       - Minimum number of ports required up
         before bringing up the link aggregation group.
+    type: int
   members:
     description:
       - List of interfaces that will be managed in the link aggregation group.
+    type: list
   force:
     description:
       - When true it forces link aggregation group members to match what
@@ -57,11 +64,13 @@ options:
     default: 'no'
   aggregate:
     description: List of link aggregation definitions.
+    type: list
   state:
     description:
       - State of the link aggregation group.
     default: present
     choices: ['present','absent']
+    type: str
   purge:
     description:
       - Purge links not defined in the I(aggregate) parameter.
