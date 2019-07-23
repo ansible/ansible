@@ -96,6 +96,15 @@ EXAMPLES = '''
         value: 9bd9bde9-39da-44a8-9541-aa39e1a81c9d
     network_filter: allow-dhcp
 
+- name: Remove vNICs network_filter, custom_properties, qos
+  ovirt_vnic_profile:
+    name: myvnic
+    network: mynetwork
+    data_center: datacenter
+    qos: ""
+    custom_properties: ""
+    network_filter: ""
+
 - name: Dont use migratable
   ovirt_vnic_profile:
     name: myvnic
