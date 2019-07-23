@@ -102,7 +102,7 @@ EXAMPLES = r'''
 - name: Drop schema "acme" with cascade
   postgresql_schema:
     name: acme
-    ensure: absent
+    state: absent
     cascade_drop: yes
 '''
 
