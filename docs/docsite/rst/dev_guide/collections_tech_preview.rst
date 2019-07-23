@@ -105,7 +105,7 @@ TBD.
 tests directory
 ----------------
 
-TBD. Expect tests for the collection itself, including Molecule files, to reside here.
+TBD. Expect tests for the collection itself to reside here.
 
 
 .. _creating_collections:
@@ -124,8 +124,6 @@ We are working on integrating this into Ansible itself for 2.9. Currently we hav
 
 .. Note::
     Any references to ``ansible-galaxy`` below will be of a 'working version' either in this PR or subsequently in development. As such, the command and this documentation section is subject to frequent change.
-
-We also plan to update `Ansible Molecule <https://github.com/ansible/molecule>`_, for a full developer toolkit with integrated testing.
 
 In the end, to get started with authoring a new collection it should be as simple as:
 
