@@ -60,7 +60,9 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-No notable changes
+The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
+
+* nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
 
 
 Noteworthy module changes

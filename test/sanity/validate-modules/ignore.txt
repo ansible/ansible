@@ -2649,8 +2649,6 @@ lib/ansible/modules/network/nxos/nxos_l2_interface.py E337
 lib/ansible/modules/network/nxos/nxos_l2_interface.py E338
 lib/ansible/modules/network/nxos/nxos_l3_interface.py E337
 lib/ansible/modules/network/nxos/nxos_l3_interface.py E338
-lib/ansible/modules/network/nxos/nxos_linkagg.py E337
-lib/ansible/modules/network/nxos/nxos_linkagg.py E338
 lib/ansible/modules/network/nxos/nxos_lldp.py E326
 lib/ansible/modules/network/nxos/nxos_lldp.py E338
 lib/ansible/modules/network/nxos/nxos_logging.py E337
