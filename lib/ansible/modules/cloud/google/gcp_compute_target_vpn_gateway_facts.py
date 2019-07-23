@@ -49,6 +49,7 @@ options:
     description:
     - The region this gateway should sit in.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

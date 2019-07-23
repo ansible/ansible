@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,6 +63,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   quic_override:
     description:
     - Specifies the QUIC override policy for this resource. This determines whether
@@ -70,6 +73,7 @@ options:
       field is equivalent to specifying NONE.
     - 'Some valid choices include: "NONE", "ENABLE", "DISABLE"'
     required: false
+    type: str
     version_added: 2.7
   ssl_certificates:
     description:
@@ -77,6 +81,7 @@ options:
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
     required: true
+    type: list
   ssl_policy:
     description:
     - A reference to the SslPolicy resource that will be associated with the TargetHttpsProxy
@@ -88,6 +93,7 @@ options:
       to a gcp_compute_ssl_policy task and then set this ssl_policy field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
     version_added: 2.8
   url_map:
     description:
@@ -99,6 +105,7 @@ options:
       to a gcp_compute_url_map task and then set this url_map field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/targetHttpsProxies)'

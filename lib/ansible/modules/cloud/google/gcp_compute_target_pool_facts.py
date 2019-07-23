@@ -49,6 +49,7 @@ options:
     description:
     - The region where the target pool resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 
