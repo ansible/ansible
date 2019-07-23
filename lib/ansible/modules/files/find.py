@@ -197,12 +197,12 @@ files:
 matched:
     description: Number of matches
     returned: success
-    type: str
+    type: int
     sample: 14
 examined:
     description: Number of filesystem objects looked at
     returned: success
-    type: str
+    type: int
     sample: 34
 '''
 
