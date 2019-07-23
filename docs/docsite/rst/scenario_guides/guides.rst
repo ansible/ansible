@@ -39,5 +39,6 @@ platforms, products, and technologies. They explore particular use cases in grea
 
    guide_docker
    guide_kubernetes
+   guide_ovirt
    guide_vagrant
    guide_vmware
