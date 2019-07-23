@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -22,6 +22,10 @@ short_description: Manage Interface on Arista EOS network devices
 description:
   - This module provides declarative management of Interfaces
     on Arista EOS network devices.
+deprecated:
+  removed_in: "2.13"
+  alternative: eos_interfaces
+  why: Updated modules released with more functionality
 notes:
     - Tested against EOS 4.15
 options:
