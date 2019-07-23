@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   can_ip_forward:
     description:
     - Allows this instance to send and receive packets with non-matching destination
