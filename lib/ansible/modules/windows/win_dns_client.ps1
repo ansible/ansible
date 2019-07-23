@@ -42,7 +42,7 @@ Function Get-NetAdapterLegacy {
         $wmiargs.Filter = "NetConnectionID LIKE '$($Name.Replace("*","%"))'"
     }
     Else {
-        $wmiargs.Filter = "NetConnectionID = '$Name' and NetConnectionStatus = 2" # only change connected interfaces as in 2012+ 
+        $wmiargs.Filter = "NetConnectionID = '$Name' and NetConnectionStatus = 2" # only change connected interfaces as in 2012+
     }
 
     $wmiprop = @(
