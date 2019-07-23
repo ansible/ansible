@@ -1,0 +1,58 @@
+---
+- debug: msg="START cli/defaults.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  qnos_config:
+    commands:
+      - no description
+      - shutdown
+    parents:
+      - interface loopback 0
+    match: none
+
+- name: configure device with defaults included
+  qnos_config:
+    src: defaults/config.j2
+    defaults: yes
+  register: result
+
+- debug: var=result.commands[0]
+
+- assert:
+    that:
+      - "result.changed == true"
+# FIXME Bug https://github.com/ansible/ansible/issues/19382
+#    - "result.updates is not defined"
+
+- name: check device with defaults included
+  qnos_config:
+    src: defaults/config.j2
+    defaults: yes
+  register: result
+
+- debug: var=result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.updates is not defined"
+
+- name: Check device is in proper prompt after error
+  qnos_config:
+    lines:
+        - mac-addr-table aging-time 500
+  ignore_errors: yes
+
+- name: show interfaces brief to ensure deivce goes to valid prompt
+  qnos_command:
+    commands:
+      - show interface status
+      - exit
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END cli/defaults.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,5 @@
+service prohibit access telnet
+service prohibit access snmp
+!
+hostname "an-qnos-01.ansible.com"
+!

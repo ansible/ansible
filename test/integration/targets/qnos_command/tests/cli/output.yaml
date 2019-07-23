@@ -1,0 +1,28 @@
+---
+- debug: msg="START cli/output.yaml on connection={{ ansible_connection }}"
+
+- name: get output for single command
+  qnos_command:
+    commands:
+      - show version
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- name: get output for multiple commands
+  qnos_command:
+    commands:
+      - show version
+      - show interface status
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout | length == 2"
+
+- debug: msg="END cli/output.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,19 @@
+---
+- debug: msg="START cli/contains.yaml on connection={{ ansible_connection }}"
+
+- name: test contains operator
+  qnos_command:
+    commands:
+      - show version
+      - show interface status loopback 0
+    wait_for:
+      - "result[0] contains QUANTA"
+      - "result[1] contains lb0"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END cli/contains.yaml on connection={{ ansible_connection }}"

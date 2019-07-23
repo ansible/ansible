@@ -1,0 +1,49 @@
+---
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  qnos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface loopback 0
+    match: none
+    save_when: modified
+
+- name: save should always run
+  qnos_config:
+    save_when: always
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: delete config (setup)
+  qnos_config:
+    replace: line
+    lines:
+      - ip load-sharing 1 inner
+    save_when: modified
+  register: result
+
+- name: save should run when changed
+  qnos_config:
+    replace: line
+    lines:
+      - no ip load-sharing
+    save_when: modified
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: teardown
+  qnos_config:
+    lines:
+      - no ip load-sharing
+  register: result
+
+- debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"
