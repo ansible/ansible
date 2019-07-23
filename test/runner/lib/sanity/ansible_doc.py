@@ -7,7 +7,7 @@ import os
 import re
 
 from lib.sanity import (
-    SanityMultipleVersion,
+    SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
@@ -17,7 +17,6 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    read_lines_without_comments,
 )
 
 from lib.util_common import (
@@ -41,19 +40,20 @@ from lib.coverage_util import (
 )
 
 
-class AnsibleDocTest(SanityMultipleVersion):
+class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
-    def test(self, args, targets, python_version):
+    def test(self, args, targets):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :type python_version: str
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/ansible-doc/skip.txt'
-        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+        settings = self.load_settings(args, None)
 
-        targets_include = [target for target in targets.include if target.path not in skip_paths and os.path.splitext(target.path)[1] == '.py']
+        targets_include = [target for target in targets.include if os.path.splitext(target.path)[1] == '.py']
+        targets_include = settings.filter_skipped_targets(targets_include)
+
+        paths = [target.path for target in targets_include]
 
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([
@@ -87,7 +87,7 @@ class AnsibleDocTest(SanityMultipleVersion):
             target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_path
 
         if not doc_targets:
-            return SanitySkipped(self.name, python_version=python_version)
+            return SanitySkipped(self.name)
 
         target_paths['module'] = dict((data_context().content.prefix + t.module, t.path) for t in targets.targets if t.module)
 
@@ -99,7 +99,7 @@ class AnsibleDocTest(SanityMultipleVersion):
 
             try:
                 with coverage_context(args):
-                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
+                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True)
 
                 status = 0
             except SubprocessError as ex:
@@ -117,19 +117,21 @@ class AnsibleDocTest(SanityMultipleVersion):
 
             if status:
                 summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
-                return SanityFailure(self.name, summary=summary, python_version=python_version)
+                return SanityFailure(self.name, summary=summary)
 
             if stdout:
                 display.info(stdout.strip(), verbosity=3)
 
             if stderr:
                 summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
-                return SanityFailure(self.name, summary=summary, python_version=python_version)
+                return SanityFailure(self.name, summary=summary)
+
+        error_messages = settings.process_errors(error_messages, paths)
 
         if error_messages:
-            return SanityFailure(self.name, messages=error_messages, python_version=python_version)
+            return SanityFailure(self.name, messages=error_messages)
 
-        return SanitySuccess(self.name, python_version=python_version)
+        return SanitySuccess(self.name)
 
     @staticmethod
     def parse_error(error, target_paths):

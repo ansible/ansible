@@ -48,7 +48,10 @@ class RstcheckTest(SanitySingleVersion):
         ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/rstcheck/ignore-substitutions.txt')
         ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
 
+        settings = self.load_settings(args, None)
+
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name)
@@ -85,6 +88,8 @@ class RstcheckTest(SanitySingleVersion):
             column=0,
             level=r['level'],
         ) for r in results]
+
+        settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)
