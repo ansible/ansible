@@ -11,5 +11,6 @@ The guides in this section cover integrating Ansible with popular tools for crea
 
    guide_docker
    guide_kubernetes
+   guide_ovirt
    guide_vagrant
    guide_vmware
