@@ -101,7 +101,6 @@ lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingEmptyCatchBlock # Keep
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock # Keep
 lib/ansible/modules/windows/win_region.ps1 PSAvoidUsingEmptyCatchBlock # Keep
 lib/ansible/modules/windows/win_uri.ps1 PSAvoidUsingEmptyCatchBlock # Keep
-lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock # Keep for now
 lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidGlobalVars # New PR
 lib/ansible/modules/windows/win_domain_controller.ps1 PSAvoidGlobalVars # New PR
 lib/ansible/modules/windows/win_pagefile.ps1 PSUseDeclaredVarsMoreThanAssignments # New PR - bug test_path should be testPath
