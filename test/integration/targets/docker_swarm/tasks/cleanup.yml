@@ -1,0 +1,36 @@
+- block:
+    - name: CLEANUP | Leave Docker Swarm
+      docker_swarm:
+        state: absent
+        force: true
+      diff: no
+      retries: 5
+
+    - name: CLEANUP | Restart docker daemon
+      service:
+        name: docker
+        state: restarted
+      become: yes
+
+  rescue:
+    - name: CLEANUP | Kill docker daemon
+      command: systemctl kill -s 9 docker
+      become: yes
+
+    - name: CLEANUP | Restart docker daemon
+      service:
+        name: docker
+        state: restarted
+      become: yes
+
+    - name: CLEANUP | Wait for docker daemon to be fully restarted
+      command: docker ps
+      register: result
+      until: result is success
+      retries: 10
+
+    - name: CLEANUP | Leave Docker Swarm
+      docker_swarm:
+        state: absent
+        force: true
+      diff: no

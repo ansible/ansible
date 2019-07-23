@@ -1,5 +1,3 @@
----
-
 - name: Remove Swarm cluster
   docker_swarm:
     state: absent
@@ -79,15 +77,11 @@
        - 'output_2.swarm_facts.SubnetSize == 26'
   when: docker_api_version is version('1.39', '>=') and docker_py_version is version('4.0.0', '>=')
 
-- name: cleanup
-  docker_swarm:
-    state: absent
-    force: true
-  diff: no
-
 - name: assert subnet_size failed when unsupported
   assert:
     that:
     - output_1 is failed
     - "'Minimum version required' in output_1.msg"
   when: docker_api_version is version('1.39', '<') or docker_py_version is version('4.0.0', '<')
+
+- include_tasks: cleanup.yml
