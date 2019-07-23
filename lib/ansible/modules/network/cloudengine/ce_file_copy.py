@@ -165,6 +165,7 @@ CE_NC_GET_SCP_ENABLE_R3 = """
 </filter>
 """
 
+
 def get_cli_exception(exc=None):
     """Get cli exception message"""
 
