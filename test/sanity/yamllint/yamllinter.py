@@ -53,10 +53,10 @@ class YamlChecker:
             if extension in ('.yml', '.yaml'):
                 self.check_yaml(yaml_conf, path, contents)
             elif extension == '.py':
-                if path.startswith('lib/ansible/plugins/'):
-                    conf = plugin_conf
-                else:
+                if path.startswith('lib/ansible/modules/') or path.startswith('plugins/modules/'):
                     conf = module_conf
+                else:
+                    conf = plugin_conf
 
                 self.check_module(conf, path, contents)
             else:
@@ -145,11 +145,14 @@ class YamlChecker:
         if not module_ast:
             return {}
 
-        if path.startswith('lib/ansible/modules/') or path.startswith('lib/ansible/plugins/'):
+        is_plugin = path.startswith('lib/ansible/modules/') or path.startswith('lib/ansible/plugins/') or path.startswith('plugins/')
+        is_doc_fragment = path.startswith('lib/ansible/plugins/doc_fragments/') or path.startswith('plugins/doc_fragments/')
+
+        if is_plugin and not is_doc_fragment:
             for body_statement in module_ast.body:
                 if isinstance(body_statement, ast.Assign):
                     check_assignment(body_statement, module_doc_types)
-        elif path.startswith('lib/ansible/plugins/doc_fragments/'):
+        elif is_doc_fragment:
             for body_statement in module_ast.body:
                 if isinstance(body_statement, ast.ClassDef):
                     for class_statement in body_statement.body:

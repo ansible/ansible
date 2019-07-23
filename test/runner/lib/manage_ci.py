@@ -10,12 +10,13 @@ from lib.util import (
     SubprocessError,
     ApplicationError,
     cmd_quote,
+    display,
 )
 
 from lib.util_common import (
     intercept_command,
     run_command,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.core_ci import (
@@ -214,22 +215,36 @@ class ManagePosixCI:
     def setup(self, python_version):
         """Start instance and wait for it to become ready and respond to an ansible ping.
         :type python_version: str
+        :rtype: str
         """
-        self.wait()
+        pwd = self.wait()
+
+        display.info('Remote working directory: %s' % pwd, verbosity=1)
 
         if isinstance(self.core_ci.args, ShellConfig):
             if self.core_ci.args.raw:
-                return
+                return pwd
 
         self.configure(python_version)
         self.upload_source()
 
-    def wait(self):
+        return pwd
+
+    def wait(self):  # type: () -> str
         """Wait for instance to respond to SSH."""
         for dummy in range(1, 90):
             try:
-                self.ssh('id')
-                return
+                stdout = self.ssh('pwd', capture=True)[0]
+
+                if self.core_ci.args.explain:
+                    return '/pwd'
+
+                pwd = stdout.strip().splitlines()[-1]
+
+                if not pwd.startswith('/'):
+                    raise Exception('Unexpected current working directory "%s" from "pwd" command output:\n%s' % (pwd, stdout))
+
+                return pwd
             except SubprocessError:
                 time.sleep(10)
 
@@ -240,7 +255,7 @@ class ManagePosixCI:
         """Configure remote host for testing.
         :type python_version: str
         """
-        self.upload(os.path.join(INSTALL_ROOT, 'test/runner/setup/remote.sh'), '/tmp')
+        self.upload(os.path.join(ANSIBLE_ROOT, 'test/runner/setup/remote.sh'), '/tmp')
         self.ssh('chmod +x /tmp/remote.sh && /tmp/remote.sh %s %s' % (self.core_ci.platform, python_version))
 
     def upload_source(self):
@@ -268,10 +283,12 @@ class ManagePosixCI:
         """
         self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
 
-    def ssh(self, command, options=None):
+    def ssh(self, command, options=None, capture=False):
         """
         :type command: str | list[str]
         :type options: list[str] | None
+        :type capture: bool
+        :rtype: str | None, str | None
         """
         if not options:
             options = []
@@ -279,12 +296,12 @@ class ManagePosixCI:
         if isinstance(command, list):
             command = ' '.join(cmd_quote(c) for c in command)
 
-        run_command(self.core_ci.args,
-                    ['ssh', '-tt', '-q'] + self.ssh_args +
-                    options +
-                    ['-p', str(self.core_ci.connection.port),
-                     '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
-                    self.become + [cmd_quote(command)])
+        return run_command(self.core_ci.args,
+                           ['ssh', '-tt', '-q'] + self.ssh_args +
+                           options +
+                           ['-p', str(self.core_ci.connection.port),
+                            '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
+                           self.become + [cmd_quote(command)], capture=capture)
 
     def scp(self, src, dst):
         """

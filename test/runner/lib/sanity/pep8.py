@@ -17,7 +17,7 @@ from lib.util import (
     display,
     read_lines_without_comments,
     parse_to_list_of_dict,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.util_common import (
@@ -47,10 +47,10 @@ class Pep8Test(SanitySingleVersion):
         skip_paths = read_lines_without_comments(PEP8_SKIP_PATH, optional=True)
         legacy_paths = read_lines_without_comments(PEP8_LEGACY_PATH, optional=True)
 
-        legacy_ignore_file = os.path.join(INSTALL_ROOT, 'test/sanity/pep8/legacy-ignore.txt')
+        legacy_ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/pep8/legacy-ignore.txt')
         legacy_ignore = set(read_lines_without_comments(legacy_ignore_file, remove_blank_lines=True))
 
-        current_ignore_file = os.path.join(INSTALL_ROOT, 'test/sanity/pep8/current-ignore.txt')
+        current_ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/pep8/current-ignore.txt')
         current_ignore = sorted(read_lines_without_comments(current_ignore_file, remove_blank_lines=True))
 
         skip_paths_set = set(skip_paths)

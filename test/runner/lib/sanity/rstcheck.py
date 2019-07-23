@@ -17,7 +17,7 @@ from lib.util import (
     parse_to_list_of_dict,
     display,
     read_lines_without_comments,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.util_common import (
@@ -45,7 +45,7 @@ class RstcheckTest(SanitySingleVersion):
             display.warning('Skipping rstcheck on unsupported Python version %s.' % args.python_version)
             return SanitySkipped(self.name)
 
-        ignore_file = os.path.join(INSTALL_ROOT, 'test/sanity/rstcheck/ignore-substitutions.txt')
+        ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/rstcheck/ignore-substitutions.txt')
         ignore_substitutions = sorted(set(read_lines_without_comments(ignore_file, remove_blank_lines=True)))
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))

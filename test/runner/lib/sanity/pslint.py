@@ -25,7 +25,7 @@ from lib.util import (
 
 from lib.util_common import (
     run_command,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.config import (
@@ -35,6 +35,10 @@ from lib.config import (
 from lib.test import (
     calculate_confidence,
     calculate_best_confidence,
+)
+
+from lib.data import (
+    data_context,
 )
 
 PSLINT_SKIP_PATH = 'test/sanity/pslint/skip.txt'
@@ -85,8 +89,8 @@ class PslintTest(SanitySingleVersion):
 
         # Make sure requirements are installed before running sanity checks
         cmds = [
-            [os.path.join(INSTALL_ROOT, 'test/runner/requirements/sanity.ps1')],
-            [os.path.join(INSTALL_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths
+            [os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/sanity.ps1')],
+            [os.path.join(ANSIBLE_ROOT, 'test/sanity/pslint/pslint.ps1')] + paths
         ]
 
         stdout = ''
@@ -113,7 +117,7 @@ class PslintTest(SanitySingleVersion):
             'ParseError',
         ]
 
-        cwd = os.getcwd() + '/'
+        cwd = data_context().content.root + '/'
 
         # replace unicode smart quotes and ellipsis with ascii versions
         stdout = re.sub(u'[\u2018\u2019]', "'", stdout)

@@ -24,6 +24,10 @@ from lib.metadata import (
     Metadata,
 )
 
+from lib.data import (
+    data_context,
+)
+
 
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
@@ -90,6 +94,15 @@ class EnvironmentConfig(CommonConfig):
         if args.check_python and args.check_python != actual_major_minor:
             raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
 
+        if self.docker_keep_git:
+            def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+                """Add files from the content root .git directory to the payload file list."""
+                for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
+                    paths = [os.path.join(dirpath, filename) for filename in filenames]
+                    files.extend((path, os.path.relpath(path, data_context().content.root)) for path in paths)
+
+            data_context().register_payload_callback(git_callback)
+
     @property
     def python_executable(self):
         """
@@ -140,6 +153,20 @@ class TestConfig(EnvironmentConfig):
 
         if self.coverage_check:
             self.coverage = True
+
+        def metadata_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """Add the metadata file to the payload file list."""
+            config = self
+
+            if data_context().content.collection:
+                working_path = data_context().content.collection.directory
+            else:
+                working_path = ''
+
+            if self.metadata_path:
+                files.append((os.path.abspath(config.metadata_path), os.path.join(working_path, config.metadata_path)))
+
+        data_context().register_payload_callback(metadata_callback)
 
 
 class ShellConfig(EnvironmentConfig):

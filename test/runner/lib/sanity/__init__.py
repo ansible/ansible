@@ -7,7 +7,6 @@ import glob
 import json
 import os
 import re
-import sys
 
 import lib.types as t
 
@@ -19,7 +18,7 @@ from lib.util import (
     load_plugins,
     parse_to_list_of_dict,
     ABC,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
     is_binary_file,
     read_lines_without_comments,
 )
@@ -55,6 +54,10 @@ from lib.test import (
     TestFailure,
     TestSkipped,
     TestMessage,
+)
+
+from lib.data import (
+    data_context,
 )
 
 COMMAND = 'sanity'
@@ -145,9 +148,14 @@ def collect_code_smell_tests():
     :rtype: tuple[SanityFunc]
     """
     skip_file = 'test/sanity/code-smell/skip.txt'
+    ansible_only_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/ansible-only.txt')
+
     skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
 
-    paths = glob.glob(os.path.join(INSTALL_ROOT, 'test/sanity/code-smell/*'))
+    if not data_context().content.is_ansible:
+        skip_tests += read_lines_without_comments(ansible_only_file, remove_blank_lines=True)
+
+    paths = glob.glob(os.path.join(ANSIBLE_ROOT, 'test/sanity/code-smell/*'))
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityCodeSmellTest(p) for p in paths)
@@ -214,6 +222,8 @@ class SanityTargets:
 class SanityTest(ABC):
     """Sanity test base class."""
     __metaclass__ = abc.ABCMeta
+
+    ansible_only = False
 
     def __init__(self, name):
         self.name = name
@@ -287,10 +297,6 @@ class SanityCodeSmellTest(SanityTest):
 
             if always:
                 paths = []
-
-            # short-term work-around for paths being str instead of unicode on python 2.x
-            if sys.version_info[0] == 2:
-                paths = [p.decode('utf-8') for p in paths]
 
             if text is not None:
                 if text:
@@ -385,6 +391,6 @@ def sanity_init():
     import_plugins('sanity')
     sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityFunc]]
     load_plugins(SanityFunc, sanity_plugins)
-    sanity_tests = tuple([plugin() for plugin in sanity_plugins.values()])
+    sanity_tests = tuple([plugin() for plugin in sanity_plugins.values() if data_context().content.is_ansible or not plugin.ansible_only])
     global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
     SANITY_TESTS = tuple(sorted(sanity_tests + collect_code_smell_tests(), key=lambda k: k.name))

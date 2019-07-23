@@ -58,7 +58,7 @@ from lib.util import (
     get_remote_completion,
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.util_common import (
@@ -125,6 +125,14 @@ from lib.integration import (
     setup_common_temp_dir,
 )
 
+from lib.coverage_util import (
+    coverage_context,
+)
+
+from lib.data import (
+    data_context,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
@@ -179,6 +187,10 @@ def install_command_requirements(args, python_version=None):
     :type args: EnvironmentConfig
     :type python_version: str | None
     """
+    if not args.explain:
+        make_dirs('test/results/coverage')
+        make_dirs('test/results/data')
+
     if isinstance(args, ShellConfig):
         if args.raw:
             return
@@ -278,13 +290,13 @@ def generate_egg_info(args):
     """
     :type args: EnvironmentConfig
     """
-    if not os.path.exists(os.path.join(INSTALL_ROOT, 'setup.py')):
+    if not os.path.exists(os.path.join(ANSIBLE_ROOT, 'setup.py')):
         return
 
-    if os.path.isdir(os.path.join(INSTALL_ROOT, 'lib/ansible.egg-info')):
+    if os.path.isdir(os.path.join(ANSIBLE_ROOT, 'lib/ansible.egg-info')):
         return
 
-    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], cwd=INSTALL_ROOT, capture=args.verbosity < 3)
+    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], cwd=ANSIBLE_ROOT, capture=args.verbosity < 3)
 
 
 def generate_pip_install(pip, command, packages=None):
@@ -294,8 +306,8 @@ def generate_pip_install(pip, command, packages=None):
     :type packages: list[str] | None
     :rtype: list[str] | None
     """
-    constraints = os.path.join(INSTALL_ROOT, 'test/runner/requirements/constraints.txt')
-    requirements = os.path.join(INSTALL_ROOT, 'test/runner/requirements/%s.txt' % command)
+    constraints = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/constraints.txt')
+    requirements = os.path.join(ANSIBLE_ROOT, 'test/runner/requirements/%s.txt' % command)
 
     options = []
 
@@ -1345,8 +1357,11 @@ def command_units(args):
         if args.coverage:
             plugins.append('ansible_pytest_coverage')
 
+        if data_context().content.collection:
+            plugins.append('ansible_pytest_collections')
+
         if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(INSTALL_ROOT, 'test/units/pytest/plugins')
+            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_ROOT, 'test/units/pytest/plugins')
 
             for plugin in plugins:
                 cmd.extend(['-p', plugin])
@@ -1370,7 +1385,8 @@ def command_units(args):
         display.info('Unit test with Python %s' % version)
 
         try:
-            intercept_command(args, command, target_name='units', env=env, python_version=version)
+            with coverage_context(args):
+                intercept_command(args, command, target_name='units', env=env, python_version=version)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
@@ -1815,7 +1831,7 @@ class EnvironmentDescription:
         versions += SUPPORTED_PYTHON_VERSIONS
         versions += list(set(v.split('.')[0] for v in SUPPORTED_PYTHON_VERSIONS))
 
-        version_check = os.path.join(INSTALL_ROOT, 'test/runner/versions.py')
+        version_check = os.path.join(ANSIBLE_ROOT, 'test/runner/versions.py')
         python_paths = dict((v, find_executable('python%s' % v, required=False)) for v in sorted(versions))
         pip_paths = dict((v, find_executable('pip%s' % v, required=False)) for v in sorted(versions))
         program_versions = dict((v, self.get_version([python_paths[v], version_check], warnings)) for v in sorted(python_paths) if python_paths[v])

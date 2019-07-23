@@ -62,7 +62,7 @@ except AttributeError:
 COVERAGE_CONFIG_PATH = '.coveragerc'
 COVERAGE_OUTPUT_PATH = 'coverage'
 
-INSTALL_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+ANSIBLE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -77,6 +77,42 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
+
+ENCODING = 'utf-8'
+
+Text = type(u'')
+
+
+def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
+    """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
+    return None if value is None else to_bytes(value, errors)
+
+
+def to_optional_text(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
+    """Return the given value as text decoded using UTF-8 if not already text, or None if the value is None."""
+    return None if value is None else to_text(value, errors)
+
+
+def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
+    """Return the given value as bytes encoded using UTF-8 if not already bytes."""
+    if isinstance(value, bytes):
+        return value
+
+    if isinstance(value, Text):
+        return value.encode(ENCODING, errors)
+
+    raise Exception('value is not bytes or text: %s' % type(value))
+
+
+def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
+    """Return the given value as text decoded using UTF-8 if not already text."""
+    if isinstance(value, bytes):
+        return value.decode(ENCODING, errors)
+
+    if isinstance(value, Text):
+        return value
+
+    raise Exception('value is not bytes or text: %s' % type(value))
 
 
 def get_docker_completion():
@@ -100,7 +136,7 @@ def get_parameterized_completion(cache, name):
     :rtype: dict[str, dict[str, str]]
     """
     if not cache:
-        images = read_lines_without_comments(os.path.join(INSTALL_ROOT, 'test/runner/completion/%s.txt' % name), remove_blank_lines=True)
+        images = read_lines_without_comments(os.path.join(ANSIBLE_ROOT, 'test/runner/completion/%s.txt' % name), remove_blank_lines=True)
 
         cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
 
@@ -297,21 +333,19 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     try:
         try:
-            process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
+            cmd_bytes = [to_bytes(c) for c in cmd]
+            env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
+            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
         except OSError as ex:
             if ex.errno == errno.ENOENT:
                 raise ApplicationError('Required program "%s" not found.' % cmd[0])
             raise
 
         if communicate:
-            encoding = 'utf-8'
-            if data is None or isinstance(data, bytes):
-                data_bytes = data
-            else:
-                data_bytes = data.encode(encoding, 'surrogateescape')
+            data_bytes = to_optional_bytes(data)
             stdout_bytes, stderr_bytes = process.communicate(data_bytes)
-            stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
-            stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
+            stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
+            stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
         else:
             process.wait()
             stdout_text, stderr_text = None, None
@@ -418,7 +452,7 @@ def remove_tree(path):
     :type path: str
     """
     try:
-        shutil.rmtree(path)
+        shutil.rmtree(to_bytes(path))
     except OSError as ex:
         if ex.errno != errno.ENOENT:
             raise
@@ -429,7 +463,7 @@ def make_dirs(path):
     :type path: str
     """
     try:
-        os.makedirs(path)
+        os.makedirs(to_bytes(path))
     except OSError as ex:
         if ex.errno != errno.EEXIST:
             raise
@@ -532,7 +566,7 @@ class Display:
 
     def __init__(self):
         self.verbosity = 0
-        self.color = True
+        self.color = sys.stdout.isatty()
         self.warnings = []
         self.warnings_unique = set()
         self.info_stderr = False
@@ -617,8 +651,8 @@ class Display:
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
-        if sys.version_info[0] == 2 and isinstance(message, type(u'')):
-            message = message.encode('utf-8')
+        if sys.version_info[0] == 2:
+            message = to_bytes(message)
 
         print(message, file=fd)
         fd.flush()

@@ -4,10 +4,6 @@ __metaclass__ = type
 
 import os
 
-from lib.util import (
-    INSTALL_ROOT,
-)
-
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -20,9 +16,15 @@ from lib.config import (
     SanityConfig,
 )
 
+from lib.data import (
+    data_context,
+)
+
 
 class SanityDocsTest(SanitySingleVersion):
     """Sanity test for documentation of sanity tests."""
+    ansible_only = True
+
     # noinspection PyUnusedLocal
     def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
         """
@@ -30,8 +32,9 @@ class SanityDocsTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        sanity_dir = os.path.join(INSTALL_ROOT, 'docs/docsite/rst/dev_guide/testing/sanity')
-        sanity_docs = set(part[0] for part in (os.path.splitext(name) for name in os.listdir(sanity_dir)) if part[1] == '.rst')
+        sanity_dir = 'docs/docsite/rst/dev_guide/testing/sanity'
+        sanity_docs = set(part[0] for part in (os.path.splitext(os.path.basename(path)) for path in data_context().content.get_files(sanity_dir))
+                          if part[1] == '.rst')
         sanity_tests = set(sanity_test.name for sanity_test in sanity_get_tests())
 
         missing = sanity_tests - sanity_docs
