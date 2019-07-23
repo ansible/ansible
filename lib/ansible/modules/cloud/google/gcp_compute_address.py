@@ -56,6 +56,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   address:
     description:
     - The static external IP address represented by this resource. Only IPv4 is supported.
