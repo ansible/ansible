@@ -23,7 +23,7 @@ description:
 version_added: "2.5"
 options:
   state:
-    choices: ['planned', 'present', 'absent']
+    choices: ['planned', 'present', 'absent', 'outputs']
     description:
       - Goal state of given stage/project
     required: false
@@ -125,6 +125,11 @@ EXAMPLES = """
       region: "eu-west-1"
       bucket: "some-bucket"
       key: "random.tfstate"
+
+# Gather only outputs of existing workspace
+- terraform:
+    project_path: '{{ project_dir }}'
+    state: outputs
 """
 
 RETURN = """
@@ -275,7 +280,7 @@ def main():
             binary_path=dict(type='path'),
             workspace=dict(required=False, type='str', default='default'),
             purge_workspace=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent', 'planned']),
+            state=dict(default='present', choices=['present', 'absent', 'planned', 'outputs']),
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
@@ -354,6 +359,8 @@ def main():
             command.append(plan_file)
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
+    elif state == 'outputs':
+        needs_application = False
     else:
         plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file,
                                                                      module.params.get('targets'), state, plan_file)
@@ -389,6 +396,8 @@ def main():
         select_workspace(command[0], project_path, workspace_ctx["current"])
     if state == 'absent' and workspace != 'default' and purge_workspace is True:
         remove_workspace(command[0], project_path, workspace)
+    if state == 'outputs':
+        command = outputs_command
 
     module.exit_json(changed=changed, state=state, workspace=workspace, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
