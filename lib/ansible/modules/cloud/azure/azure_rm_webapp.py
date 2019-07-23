@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_webapp
 version_added: "2.7"
-short_description: Manage Web App instance
+short_description: Manage Web App instances
 description:
     - Create, update and delete instance of Web App.
 
@@ -38,15 +38,15 @@ options:
     plan:
         description:
             - App service plan. Required for creation.
-            - It can be name of existing app service plan in same resource group as web app.
-            - It can be resource ID of existing app service plan. for example
+            - Can be name of existing app service plan in same resource group as web app.
+            - Can be the resource ID of an existing app service plan. For example
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>.
-            - It can be a dict which contains I(name), I(resource_group), I(sku), I(is_linux) and I(number_of_workers).
-            - I(name). Name of app service plan.
-            - I(resource_group). Resource group name of app service plan.
-            - I(sku). SKU of app service plan. For allowed sku, please refer to U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
-            - I(is_linux). Indicates Linux app service plan. type bool. default C(False).
-            - I(number_of_workers). Number of workers.
+            - Can be a dict containing five parameters, defined below.
+            - C(name), name of app service plan.
+            - C(resource_group), resource group of the app service plan.
+            - C(sku), SKU of app service plan, allowed values listed on U(https://azure.microsoft.com/en-us/pricing/details/app-service/linux/).
+            - C(is_linux), whether or not the app service plan is Linux. defaults to C(False).
+            - C(number_of_workers), number of workers for app service plan.
 
     frameworks:
         description:
@@ -57,9 +57,10 @@ options:
                 description:
                     - Name of the framework.
                     - Supported framework list for Windows web app and Linux web app is different.
-                    - For Windows web app, supported names(June 2018) C(java), C(net_framework), C(php), C(python), C(node).
-                      Multiple framework can be set at same time.
-                    - For Linux web app, supported names(June 2018) C(java), C(ruby), C(php), C(dotnetcore), C(node). Only one framework can be set.
+                    - Windows web apps support C(java), C(net_framework), C(php), C(python), and C(node).
+                    - Windows web apps support multiple framework at the same time.
+                    - Linux web apps support C(java), C(ruby), C(php), C(dotnetcore), and C(node).
+                    - Linux web apps support only on framework.
                     - Java framework is mutually exclusive with others.
                 choices:
                     - java
@@ -74,7 +75,7 @@ options:
                     - Version of the framework. For Linux web app supported value, see U(https://aka.ms/linux-stacks) for more info.
                     - C(net_framework) supported value sample, C(v4.0) for .NET 4.6 and C(v3.0) for .NET 3.5.
                     - C(php) supported value sample, C(5.5), C(5.6), C(7.0).
-                    - C(python) supported value sample, e.g., C(5.5), C(5.6), C(7.0).
+                    - C(python) supported value sample, C(5.5), C(5.6), C(7.0).
                     - C(node) supported value sample, C(6.6), C(6.9).
                     - C(dotnetcore) supported value sample, C(1.0), C(1.1), C(1.2).
                     - C(ruby) supported value sample, C(2.3).
@@ -86,12 +87,12 @@ options:
                     java_container:
                         description:
                             - Name of Java container.
-                            - This is supported by specific framework C(java) only. e.g. C(Tomcat), C(Jetty).
+                            - Supported only when I(frameworks=java). Sample values C(Tomcat), C(Jetty).
                     java_container_version:
                         description:
                             - Version of Java container.
-                            - This is supported by specific framework C(java) only.
-                            - For C(Tomcat), e.g. C(8.0), C(8.5), C(9.0). For C(Jetty,) e.g. C(9.1), C(9.3).
+                            - Supported only when I(frameworks=java).
+                            - Sample values for C(Tomcat), C(8.0), C(8.5), C(9.0). For C(Jetty,), C(9.1), C(9.3).
 
     container_settings:
         description:
@@ -99,10 +100,10 @@ options:
         suboptions:
             name:
                 description:
-                    - Name of container. eg. C(imagename:tag).
+                    - Name of container, for example C(imagename:tag).
             registry_server_url:
                 description:
-                    - Container registry server url. eg. C(mydockerregistry.io).
+                    - Container registry server URL, for example C(mydockerregistry.io).
             registry_server_user:
                 description:
                     - The container registry server user name.
@@ -112,8 +113,8 @@ options:
 
     scm_type:
         description:
-            - Repository type of deployment source. Eg. C(LocalGit), C(GitHub).
-            - Please see U(https://docs.microsoft.com/en-us/rest/api/appservice/webapps/createorupdate#scmtype) for more info.
+            - Repository type of deployment source, for example C(LocalGit), C(GitHub).
+            - List of supported values maintained at U(https://docs.microsoft.com/en-us/rest/api/appservice/webapps/createorupdate#scmtype).
 
     deployment_source:
         description:
@@ -129,12 +130,11 @@ options:
     startup_file:
         description:
             - The web's startup file.
-            - This only applies for Linux web app.
+            - Used only for Linux web apps.
 
     client_affinity_enabled:
         description:
-            - C(True) to enable client affinity.
-            - C(False) to stop sending session affinity cookies, which route client requests in the same session to the same instance.
+            - Whether or not to send session affinity cookies, which route client requests in the same session to the same instance.
         type: bool
         default: True
 
@@ -145,12 +145,12 @@ options:
 
     dns_registration:
         description:
-            - If set C(true) web app hostname is not registered with DNS on creation.
+            - Whether or not the web app hostname is registered with DNS on creation. Set to C(false) to register.
         type: bool
 
     skip_custom_domain_verification:
         description:
-            - If set C(true), custom (non *.azurewebsites.net) domains associated with web app are not verified.
+            - Whether or not custom (non *.azurewebsites.net) domains associated with web app are not verified. Set to C(true) to skip.
         type: bool
 
     ttl_in_seconds:

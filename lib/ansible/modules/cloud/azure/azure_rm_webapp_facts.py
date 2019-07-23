@@ -193,13 +193,13 @@ webapps:
             sample: "40.71.11.131,40.85.166.200,168.62.166.67,137.135.126.248,137.135.121.45"
         ftp_publish_url:
             description:
-                - Publishing url of the web app when deployment type is FTP.
+                - Publishing URL of the web app when deployment type is FTP.
             returned: always
             type: str
             sample: ftp://xxxx.ftp.azurewebsites.windows.net
         state:
             description:
-                - State of the web app. for example C(running).
+                - State of the web app.
             returned: always
             type: str
             sample: running
