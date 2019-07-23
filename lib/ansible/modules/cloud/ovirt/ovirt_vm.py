@@ -2404,6 +2404,8 @@ def main():
         )
         vm = vms_module.search_entity(list_params={'all_content': True})
 
+        # Boolean variable to mark if vm existed before module was executed
+        vm_existed = True if vm else False
         control_state(vm, vms_service, module)
         if state in ('present', 'running', 'next_run'):
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
@@ -2448,8 +2450,8 @@ def main():
                     ),
                     wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     # Start action kwargs:
-                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None else None,
-                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None else None,
+                    use_cloud_init=True if not module.params.get('cloud_init_persist') and module.params.get('cloud_init') else None,
+                    use_sysprep=True if not module.params.get('cloud_init_persist') and module.params.get('sysprep') else None,
                     vm=otypes.Vm(
                         placement_policy=otypes.VmPlacementPolicy(
                             hosts=[otypes.Host(name=module.params['host'])]
@@ -2488,7 +2490,8 @@ def main():
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
             # Allow migrate vm when state present.
-            vms_module._migrate_vm(vm)
+            if vm_existed:
+                vms_module._migrate_vm(vm)
             ret['changed'] = vms_module.changed
         elif state == 'stopped':
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:

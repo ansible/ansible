@@ -62,16 +62,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   dest_range:
     description:
     - The destination range of outgoing packets that this route applies to.
     - Only IPv4 is supported.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
     version_added: 2.7
   name:
     description:
@@ -82,6 +85,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - The network that this route applies to.
@@ -91,6 +95,7 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   priority:
     description:
     - The priority of this route. Priority is used to break ties in cases where there
@@ -99,10 +104,12 @@ options:
       priority value wins.
     - Default value is 1000. Valid range is 0 through 65535.
     required: false
+    type: int
   tags:
     description:
     - A list of instance tags to which this route applies.
     required: false
+    type: list
   next_hop_gateway:
     description:
     - URL to a gateway that should handle matching packets.
@@ -111,6 +118,7 @@ options:
       * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
       .'
     required: false
+    type: str
   next_hop_instance:
     description:
     - URL to an instance that should handle matching packets.
@@ -123,10 +131,12 @@ options:
       to a gcp_compute_instance task and then set this next_hop_instance field to
       "{{ name-of-resource }}"'
     required: false
+    type: dict
   next_hop_ip:
     description:
     - Network IP address of an instance that should handle matching packets.
     required: false
+    type: str
   next_hop_vpn_tunnel:
     description:
     - URL to a VpnTunnel that should handle matching packets.
@@ -136,6 +146,7 @@ options:
       to a gcp_compute_vpn_tunnel task and then set this next_hop_vpn_tunnel field
       to "{{ name-of-resource }}"'
     required: false
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)'

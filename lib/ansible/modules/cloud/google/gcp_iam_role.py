@@ -51,25 +51,30 @@ options:
     description:
     - The name of the role.
     required: true
+    type: str
   title:
     description:
     - A human-readable title for the role. Typically this is limited to 100 UTF-8
       bytes.
     required: false
+    type: str
   description:
     description:
     - Human-readable description for the role.
     required: false
+    type: str
   included_permissions:
     description:
     - Names of permissions this role grants when bound in an IAM policy.
     required: false
+    type: list
   stage:
     description:
     - The current launch stage of the role.
     - 'Some valid choices include: "ALPHA", "BETA", "GA", "DEPRECATED", "DISABLED",
       "EAP"'
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 

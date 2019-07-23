@@ -426,7 +426,7 @@ files:
     ignored: skvidal
   $modules/packaging/os/zypper.py:
     ignored: dirtyharrycallahan robinro
-  $modules/remote_management/foreman/: $team_foreman 
+  $modules/remote_management/foreman/: $team_foreman
   $modules/remote_management/hpilo/:
     ignored: dagwieers
     maintainers: haad
@@ -544,6 +544,8 @@ files:
     support: community
   contrib/inventory/digital_ocean.py: *digital_ocean
   contrib/inventory/docker: *docker
+  contrib/inventory/foreman.py:
+    maintainers: $team_foreman
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -1096,6 +1098,10 @@ files:
     support: network
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/kubectl.py:
+    support: community
+    maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
+    labels: k8s
   $plugins/connection/lxd.py:
     maintainers: mattclay
   $plugins/connection/netconf.py:
@@ -1498,8 +1504,6 @@ files:
   test/runner/lib/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
-  test/sanity/pep8/legacy-files.txt:
-    notified: mattclay
   test/units/module_utils/docker/:
     <<: *docker
     support: community
@@ -1544,7 +1548,7 @@ macros:
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone trstringer yuwzho yungezz zikalino
+  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino
   team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd

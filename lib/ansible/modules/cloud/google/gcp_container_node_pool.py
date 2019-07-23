@@ -55,21 +55,25 @@ options:
     description:
     - The name of the node pool.
     required: false
+    type: str
   config:
     description:
     - The node configuration of the pool.
     required: false
+    type: dict
     suboptions:
       machine_type:
         description:
         - The name of a Google Compute Engine machine type (e.g.
         - n1-standard-1). If unspecified, the default machine type is n1-standard-1.
         required: false
+        type: str
       disk_size_gb:
         description:
         - Size of the disk attached to each node, specified in GB. The smallest allowed
           disk size is 10GB. If unspecified, the default disk size is 100GB.
         required: false
+        type: int
       oauth_scopes:
         description:
         - The set of Google API scopes to be made available on all of the node VMs
@@ -82,11 +86,13 @@ options:
         - If unspecified, no scopes are added, unless Cloud Logging or Cloud Monitoring
           are enabled, in which case their required scopes will be added.
         required: false
+        type: list
       service_account:
         description:
         - The Google Cloud Platform Service Account to be used by the node VMs. If
           no Service Account is specified, the "default" service account is used.
         required: false
+        type: str
       metadata:
         description:
         - The metadata key/value pairs assigned to instances in the cluster.
@@ -102,11 +108,13 @@ options:
         - 'An object containing a list of "key": value pairs.'
         - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
         required: false
+        type: dict
       image_type:
         description:
         - The image type to use for this node. Note that for a given image type, the
           latest version of it will be used.
         required: false
+        type: str
       labels:
         description:
         - 'The map of Kubernetes labels (key/value pairs) to be applied to each node.
@@ -118,6 +126,7 @@ options:
           An object containing a list of "key": value pairs.'
         - 'Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.'
         required: false
+        type: dict
       local_ssd_count:
         description:
         - The number of local SSD disks to be attached to the node.
@@ -125,6 +134,7 @@ options:
           available on a machine per zone. See: U(https://cloud.google.com/compute/docs/disks/local-ssd#local_ssd_limits)
           for more information.'
         required: false
+        type: int
       tags:
         description:
         - The list of instance tags applied to all nodes. Tags are used to identify
@@ -132,6 +142,7 @@ options:
           client during cluster or node pool creation. Each tag within the list must
           comply with RFC1035.
         required: false
+        type: list
       preemptible:
         description:
         - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
@@ -142,62 +153,74 @@ options:
         description:
         - A list of hardware accelerators to be attached to each node.
         required: false
+        type: list
         version_added: 2.9
         suboptions:
           accelerator_count:
             description:
             - The number of the accelerator cards exposed to an instance.
             required: false
+            type: int
           accelerator_type:
             description:
             - The accelerator type resource name.
             required: false
+            type: str
       disk_type:
         description:
         - Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')
           If unspecified, the default disk type is 'pd-standard' .
         required: false
+        type: str
         version_added: 2.9
       min_cpu_platform:
         description:
         - Minimum CPU platform to be used by this instance. The instance may be scheduled
           on the specified or newer CPU platform .
         required: false
+        type: str
         version_added: 2.9
       taints:
         description:
         - List of kubernetes taints to be applied to each node.
         required: false
+        type: list
         version_added: 2.9
         suboptions:
           key:
             description:
             - Key for taint.
             required: false
+            type: str
           value:
             description:
             - Value for taint.
             required: false
+            type: str
           effect:
             description:
             - Effect for taint.
             required: false
+            type: str
   initial_node_count:
     description:
     - The initial node count for the pool. You must ensure that your Compute Engine
       resource quota is sufficient for this number of instances. You must also have
       available firewall and routes quota.
     required: true
+    type: int
   version:
     description:
     - The version of the Kubernetes of this node.
     required: false
+    type: str
     version_added: 2.8
   autoscaling:
     description:
     - Autoscaler configuration for this NodePool. Autoscaler is enabled only if a
       valid configuration is present.
     required: false
+    type: dict
     suboptions:
       enabled:
         description:
@@ -208,15 +231,18 @@ options:
         description:
         - Minimum number of nodes in the NodePool. Must be >= 1 and <= maxNodeCount.
         required: false
+        type: int
       max_node_count:
         description:
         - Maximum number of nodes in the NodePool. Must be >= minNodeCount.
         - There has to enough quota to scale up the cluster.
         required: false
+        type: int
   management:
     description:
     - Management configuration for this NodePool.
     required: false
+    type: dict
     suboptions:
       auto_upgrade:
         description:
@@ -237,22 +263,26 @@ options:
         description:
         - Specifies the Auto Upgrade knobs for the node pool.
         required: false
+        type: dict
         suboptions: {}
   max_pods_constraint:
     description:
     - The constraint on the maximum number of pods that can be run simultaneously
       on a node in the node pool.
     required: false
+    type: dict
     version_added: 2.9
     suboptions:
       max_pods_per_node:
         description:
         - Constraint enforced on the max num of pods per node.
         required: false
+        type: int
   conditions:
     description:
     - Which conditions caused the current node pool state.
     required: false
+    type: list
     version_added: 2.9
     suboptions:
       code:
@@ -261,6 +291,7 @@ options:
         - 'Some valid choices include: "UNKNOWN", "GCE_STOCKOUT", "GKE_SERVICE_ACCOUNT_DELETED",
           "GCE_QUOTA_EXCEEDED", "SET_BY_OPERATOR"'
         required: false
+        type: str
   cluster:
     description:
     - The cluster this node pool belongs to.
@@ -270,10 +301,12 @@ options:
       to a gcp_container_cluster task and then set this cluster field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   location:
     description:
     - The location where the node pool is deployed.
     required: true
+    type: str
     aliases:
     - region
     - zone

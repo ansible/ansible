@@ -10,6 +10,10 @@ from lib.util import (
     ApplicationError,
 )
 
+from lib.data import (
+    data_context,
+)
+
 VIRTUAL_PACKAGES = set([
     'ansible.module_utils.six',
 ])
@@ -22,6 +26,7 @@ def get_python_module_utils_imports(compile_targets):
     """
 
     module_utils = enumerate_module_utils()
+
     virtual_utils = set(m for m in module_utils if any(m.startswith('%s.' % v) for v in VIRTUAL_PACKAGES))
     module_utils -= virtual_utils
 
@@ -115,34 +120,39 @@ def get_python_module_utils_imports(compile_targets):
     return imports
 
 
+def get_python_module_utils_name(path):  # type: (str) -> str
+    """Return a namespace and name from the given module_utils path."""
+    base_path = data_context().content.module_utils_path
+
+    if data_context().content.collection:
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix
+    else:
+        prefix = 'ansible.module_utils.'
+
+    if path.endswith('/__init__.py'):
+        path = os.path.dirname(path)
+
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+
+    return name
+
+
 def enumerate_module_utils():
     """Return a list of available module_utils imports.
     :rtype: set[str]
     """
     module_utils = []
-    base_path = 'lib/ansible/module_utils'
 
-    paths = []
+    for path in data_context().content.walk_files(data_context().content.module_utils_path):
+        ext = os.path.splitext(path)[1]
 
-    for root, _dir_names, file_names in os.walk(base_path):
-        for file_name in file_names:
-            paths.append(os.path.join(root, file_name))
-
-    for path in paths:
-        name, ext = os.path.splitext(path)
-
-        if path == 'lib/ansible/module_utils/__init__.py':
+        if path == os.path.join(data_context().content.module_utils_path, '__init__.py'):
             continue
 
         if ext != '.py':
             continue
 
-        if name.endswith('/__init__'):
-            module_util = os.path.dirname(name)
-        else:
-            module_util = name
-
-        module_utils.append(module_util[4:].replace('/', '.'))
+        module_utils.append(get_python_module_utils_name(path))
 
     return set(module_utils)
 

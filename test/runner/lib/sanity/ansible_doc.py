@@ -32,6 +32,14 @@ from lib.config import (
     SanityConfig,
 )
 
+from lib.data import (
+    data_context,
+)
+
+from lib.coverage_util import (
+    coverage_context,
+)
+
 
 class AnsibleDocTest(SanityMultipleVersion):
     """Sanity test for ansible-doc."""
@@ -43,7 +51,9 @@ class AnsibleDocTest(SanityMultipleVersion):
         :rtype: TestResult
         """
         skip_file = 'test/sanity/ansible-doc/skip.txt'
-        skip_modules = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
+
+        targets_include = [target for target in targets.include if target.path not in skip_paths and os.path.splitext(target.path)[1] == '.py']
 
         # This should use documentable plugins from constants instead
         plugin_type_blacklist = set([
@@ -56,9 +66,9 @@ class AnsibleDocTest(SanityMultipleVersion):
             'test',
         ])
 
-        modules = sorted(set(m for i in targets.include for m in i.modules) - skip_modules)
+        modules = sorted(set(m for i in targets_include for m in i.modules))
 
-        plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
+        plugins = [os.path.splitext(i.path)[0].split('/')[-2:] + [i.path] for i in targets_include if
                    os.path.basename(i.path) != '__init__.py' and
                    re.search(r'^lib/ansible/plugins/[^/]+/', i.path)
                    and i.path != 'lib/ansible/plugins/cache/base.py']
@@ -67,19 +77,19 @@ class AnsibleDocTest(SanityMultipleVersion):
         target_paths = collections.defaultdict(dict)
 
         for module in modules:
-            doc_targets['module'].append(module)
+            doc_targets['module'].append(data_context().content.prefix + module)
 
         for plugin_type, plugin_name, plugin_path in plugins:
             if plugin_type in plugin_type_blacklist:
                 continue
 
-            doc_targets[plugin_type].append(plugin_name)
-            target_paths[plugin_type][plugin_name] = plugin_path
+            doc_targets[plugin_type].append(data_context().content.prefix + plugin_name)
+            target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_path
 
         if not doc_targets:
             return SanitySkipped(self.name, python_version=python_version)
 
-        target_paths['module'] = dict((t.module, t.path) for t in targets.targets if t.module)
+        target_paths['module'] = dict((data_context().content.prefix + t.module, t.path) for t in targets.targets if t.module)
 
         env = ansible_environment(args, color=False)
         error_messages = []
@@ -88,7 +98,9 @@ class AnsibleDocTest(SanityMultipleVersion):
             cmd = ['ansible-doc', '-t', doc_type] + sorted(doc_targets[doc_type])
 
             try:
-                stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
+                with coverage_context(args):
+                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
+
                 status = 0
             except SubprocessError as ex:
                 stdout = ex.stdout

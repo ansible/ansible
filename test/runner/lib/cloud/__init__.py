@@ -13,6 +13,8 @@ import random
 import re
 import tempfile
 
+import lib.types as t
+
 from lib.util import (
     ApplicationError,
     display,
@@ -20,6 +22,7 @@ from lib.util import (
     import_plugins,
     load_plugins,
     ABC,
+    to_bytes,
 )
 
 from lib.target import (
@@ -28,6 +31,10 @@ from lib.target import (
 
 from lib.config import (
     IntegrationConfig,
+)
+
+from lib.data import (
+    data_context,
 )
 
 PROVIDERS = {}
@@ -55,7 +62,7 @@ def get_cloud_platforms(args, targets=None):
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])
     else:
-        cloud_platforms = set(get_cloud_platform(t) for t in targets)
+        cloud_platforms = set(get_cloud_platform(target) for target in targets)
 
     cloud_platforms.discard(None)
 
@@ -145,7 +152,7 @@ def cloud_init(args, targets):
         results[provider.platform] = dict(
             platform=provider.platform,
             setup_seconds=int(end_time - start_time),
-            targets=[t.name for t in targets],
+            targets=[target.name for target in targets],
         )
 
     if not args.explain and results:
@@ -175,6 +182,17 @@ class CloudBase(ABC):
         self.args = args
         self.platform = self.__module__.split('.')[2]
 
+        def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            """Add the config file to the payload file list."""
+            if self._get_cloud_config(self._CONFIG_PATH, ''):
+                pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
+
+                if pair not in files:
+                    display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
+                    files.append(pair)
+
+        data_context().register_payload_callback(config_callback)
+
     @property
     def setup_executed(self):
         """
@@ -194,7 +212,7 @@ class CloudBase(ABC):
         """
         :rtype: str
         """
-        return os.path.join(os.getcwd(), self._get_cloud_config(self._CONFIG_PATH))
+        return os.path.join(data_context().content.root, self._get_cloud_config(self._CONFIG_PATH))
 
     @config_path.setter
     def config_path(self, value):
@@ -334,7 +352,7 @@ class CloudProvider(CloudBase):
 
             display.info('>>> Config: %s\n%s' % (filename, content.strip()), verbosity=3)
 
-            config_fd.write(content.encode('utf-8'))
+            config_fd.write(to_bytes(content))
             config_fd.flush()
 
     def _read_config_template(self):

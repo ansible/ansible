@@ -49,6 +49,7 @@ options:
     description:
     - The zone the managed instance group resides.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -47,12 +47,14 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Resource name of the repository, of the form projects/{{project}}/repos/{{repo}}.
     - The repo name may contain slashes. eg, projects/myproject/repos/name/with/slash
       .
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/source-repositories/docs/reference/rest/v1/projects.repos)'

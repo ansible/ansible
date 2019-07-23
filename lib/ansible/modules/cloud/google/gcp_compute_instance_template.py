@@ -53,19 +53,23 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. The name is 1-63 characters long and complies with RFC1035.
     required: true
+    type: str
   properties:
     description:
     - The instance properties for this instance template.
     required: false
+    type: dict
     suboptions:
       can_ip_forward:
         description:
@@ -81,11 +85,13 @@ options:
         - An optional text description for the instances that are created from this
           instance template.
         required: false
+        type: str
       disks:
         description:
         - An array of disks that are associated with the instances that are created
           from this template.
         required: false
+        type: list
         suboptions:
           auto_delete:
             description:
@@ -108,21 +114,25 @@ options:
               within the instance. This name can be used to reference the device for
               mounting, resizing, and so on, from within the instance.
             required: false
+            type: str
           disk_encryption_key:
             description:
             - Encrypts or decrypts a disk using a customer-supplied encryption key.
             required: false
+            type: dict
             suboptions:
               raw_key:
                 description:
                 - Specifies a 256-bit customer-supplied encryption key, encoded in
                   RFC 4648 base64 to either encrypt or decrypt this resource.
                 required: false
+                type: str
               rsa_encrypted_key:
                 description:
                 - Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied
                   encryption key to either encrypt or decrypt this resource.
                 required: false
+                type: str
           index:
             description:
             - Assigns a zero-based index to this disk, where 0 is reserved for the
@@ -130,28 +140,33 @@ options:
               each disk would have a unique index number. If not specified, the server
               will choose an appropriate value.
             required: false
+            type: int
           initialize_params:
             description:
             - Specifies the parameters for a new disk that will be created alongside
               the new instance. Use initialization parameters to create boot disks
               or local SSDs attached to the new instance.
             required: false
+            type: dict
             suboptions:
               disk_name:
                 description:
                 - Specifies the disk name. If not specified, the default is to use
                   the name of the instance.
                 required: false
+                type: str
               disk_size_gb:
                 description:
                 - Specifies the size of the disk in base-2 GB.
                 required: false
+                type: int
               disk_type:
                 description:
                 - Reference to a disk type.
                 - Specifies the disk type to use to create the instance.
                 - If not specified, the default is pd-standard.
                 required: false
+                type: str
               source_image:
                 description:
                 - The source image to create this disk. When creating a new instance,
@@ -159,6 +174,7 @@ options:
                   To create a disk with one of the public operating system images,
                   specify the image by its family name.
                 required: false
+                type: str
               source_image_encryption_key:
                 description:
                 - The customer-supplied encryption key of the source image. Required
@@ -168,12 +184,14 @@ options:
                   so you cannot create disks for instances in a managed instance group
                   if the source images are encrypted with your own keys.
                 required: false
+                type: dict
                 suboptions:
                   raw_key:
                     description:
                     - Specifies a 256-bit customer-supplied encryption key, encoded
                       in RFC 4648 base64 to either encrypt or decrypt this resource.
                     required: false
+                    type: str
           interface:
             description:
             - Specifies the disk interface to use for attaching this disk, which is
@@ -182,12 +200,14 @@ options:
               attempt to attach a persistent disk in any other format than SCSI.
             - 'Some valid choices include: "SCSI", "NVME"'
             required: false
+            type: str
           mode:
             description:
             - The mode in which to attach this disk, either READ_WRITE or READ_ONLY.
               If not specified, the default is to attach the disk in READ_WRITE mode.
             - 'Some valid choices include: "READ_WRITE", "READ_ONLY"'
             required: false
+            type: str
           source:
             description:
             - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
@@ -202,48 +222,57 @@ options:
               name-of-resource` to a gcp_compute_disk task and then set this source
               field to "{{ name-of-resource }}"'
             required: false
+            type: dict
           type:
             description:
             - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not
               specified, the default is PERSISTENT.
             - 'Some valid choices include: "SCRATCH", "PERSISTENT"'
             required: false
+            type: str
       machine_type:
         description:
         - The machine type to use in the VM instance template.
         required: true
+        type: str
       min_cpu_platform:
         description:
         - Specifies a minimum CPU platform for the VM instance. Applicable values
           are the friendly names of CPU platforms .
         required: false
+        type: str
       metadata:
         description:
         - The metadata key/value pairs to assign to instances that are created from
           this template. These pairs can consist of custom metadata or predefined
           keys.
         required: false
+        type: dict
       guest_accelerators:
         description:
         - List of the type and count of accelerator cards attached to the instance
           .
         required: false
+        type: list
         suboptions:
           accelerator_count:
             description:
             - The number of the guest accelerator cards exposed to this instance.
             required: false
+            type: int
           accelerator_type:
             description:
             - Full or partial URL of the accelerator type resource to expose to this
               instance.
             required: false
+            type: str
       network_interfaces:
         description:
         - An array of configurations for this interface. This specifies how this interface
           is configured to interact with other network services, such as connecting
           to the internet. Only one network interface is supported per instance.
         required: false
+        type: list
         suboptions:
           access_configs:
             description:
@@ -251,6 +280,7 @@ options:
               config, ONE_TO_ONE_NAT, is supported. If there are no accessConfigs
               specified, then this instance will have no external internet access.
             required: false
+            type: list
             suboptions:
               name:
                 description:
@@ -258,6 +288,7 @@ options:
                   name is External NAT but you can use any arbitrary string you would
                   like. For example, My external IP or Network Access.
                 required: true
+                type: str
               nat_ip:
                 description:
                 - Reference to an address.
@@ -272,16 +303,19 @@ options:
                   you can add `register: name-of-resource` to a gcp_compute_address
                   task and then set this nat_ip field to "{{ name-of-resource }}"'
                 required: false
+                type: dict
               type:
                 description:
                 - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
                 - 'Some valid choices include: "ONE_TO_ONE_NAT"'
                 required: true
+                type: str
           alias_ip_ranges:
             description:
             - An array of alias IP ranges for this network interface. Can only be
               specified for network interfaces on subnet-mode networks.
             required: false
+            type: list
             suboptions:
               ip_cidr_range:
                 description:
@@ -291,6 +325,7 @@ options:
                   interfaces. This range may be a single IP address (e.g. 10.2.3.4),
                   a netmask (e.g. /24) or a CIDR format string (e.g. 10.1.2.0/24).
                 required: false
+                type: str
               subnetwork_range_name:
                 description:
                 - Optional subnetwork secondary range name specifying the secondary
@@ -298,6 +333,7 @@ options:
                   range. If left unspecified, the primary range of the subnetwork
                   will be used.
                 required: false
+                type: str
           network:
             description:
             - Specifies the title of an existing network. When creating an instance,
@@ -310,12 +346,14 @@ options:
               name-of-resource` to a gcp_compute_network task and then set this network
               field to "{{ name-of-resource }}"'
             required: false
+            type: dict
           network_ip:
             description:
             - An IPv4 internal network address to assign to the instance for this
               network interface. If not specified by the user, an unused internal
               IP is assigned by the system.
             required: false
+            type: str
           subnetwork:
             description:
             - Reference to a VPC network.
@@ -328,10 +366,12 @@ options:
               can add `register: name-of-resource` to a gcp_compute_subnetwork task
               and then set this subnetwork field to "{{ name-of-resource }}"'
             required: false
+            type: dict
       scheduling:
         description:
         - Sets the scheduling options for this instance.
         required: false
+        type: dict
         suboptions:
           automatic_restart:
             description:
@@ -348,6 +388,7 @@ options:
               and only possible behavior is TERMINATE.
             - For more information, see Setting Instance Scheduling Options.
             required: false
+            type: str
           preemptible:
             description:
             - Defines whether the instance is preemptible. This can only be set during
@@ -360,15 +401,18 @@ options:
         - A list of service accounts, with their specified scopes, authorized for
           this instance. Only one service account per VM instance is supported.
         required: false
+        type: list
         suboptions:
           email:
             description:
             - Email address of the service account.
             required: false
+            type: str
           scopes:
             description:
             - The list of scopes to be made available for this service account.
             required: false
+            type: list
       tags:
         description:
         - A list of tags to apply to this instance. Tags are used to identify valid
@@ -376,6 +420,7 @@ options:
           during instance creation. The tags can be later modified by the setTags
           method. Each tag within the list must comply with RFC1035.
         required: false
+        type: dict
         suboptions:
           fingerprint:
             description:
@@ -385,11 +430,13 @@ options:
               after every request to modify or update metadata. You must always provide
               an up-to-date fingerprint hash in order to update or change metadata.
             required: false
+            type: str
           items:
             description:
             - An array of tags. Each tag must be 1-63 characters long, and comply
               with RFC1035.
             required: false
+            type: list
 extends_documentation_fragment: gcp
 '''
 
@@ -1058,7 +1105,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['status'])
     wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceTemplate')
+    return decode_response(fetch_resource(module, navigate_hash(wait_done, ['targetLink']), 'compute#instanceTemplate'), module)
 
 
 def wait_for_completion(status, op_result, module):

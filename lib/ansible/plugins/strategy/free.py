@@ -82,6 +82,8 @@ class StrategyModule(StrategyBase):
         # start with all workers being counted as being free
         workers_free = len(self._workers)
 
+        self._set_hosts_cache(iterator._play)
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
@@ -129,7 +131,9 @@ class StrategyModule(StrategyBase):
                             action = None
 
                         display.debug("getting variables", host=host_name)
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
+                                                                    _hosts=self._hosts_cache,
+                                                                    _hosts_all=self._hosts_cache_all)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables", host=host_name)
@@ -231,7 +235,9 @@ class StrategyModule(StrategyBase):
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent)
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent,
+                                                                    _hosts=self._hosts_cache,
+                                                                    _hosts_all=self._hosts_cache_all)
                         final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:

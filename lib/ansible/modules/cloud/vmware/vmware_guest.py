@@ -186,7 +186,7 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
           then will select the less used datastore whose name contains this "disk.datastore" string.'
-    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
           will not be used if C(datastore) is specified outside this C(disk) configuration.'
@@ -896,7 +896,9 @@ class PyVmomiHelper(PyVmomi):
                     rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
-                mem_reservation = self.params['hardware'].get('mem_reservation') or self.params['hardware'].get('memory_reservation') or None
+                mem_reservation = self.params['hardware'].get('mem_reservation')
+                if mem_reservation is None:
+                    mem_reservation = self.params['hardware'].get('memory_reservation')
                 try:
                     mem_reservation = int(mem_reservation)
                 except ValueError:
@@ -2212,7 +2214,7 @@ class PyVmomiHelper(PyVmomi):
                 # Convert disk present in template if is set
                 if self.params['convert']:
                     for device in vm_obj.config.hardware.device:
-                        if hasattr(device.backing, 'fileName'):
+                        if isinstance(device, vim.vm.device.VirtualDisk):
                             disk_locator = vim.vm.RelocateSpec.DiskLocator()
                             disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
                             if self.params['convert'] in ['thin']:
