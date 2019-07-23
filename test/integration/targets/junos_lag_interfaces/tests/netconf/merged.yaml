@@ -1,0 +1,62 @@
+---
+- debug:
+    msg: "START junos_lag_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_merged_output:
+      - name: ae1
+        members:
+          - member: ge-0/0/1
+          - member: ge-0/0/2
+        mode: active
+      - name: ae2
+        link_protection: True
+        members:
+          - member: ge-0/0/3
+            link_type: primary
+          - member: ge-0/0/4
+            link_type: backup
+        mode: passive
+
+- block:
+    - name: Merge the provided configuration with the exisiting running configuration
+      junos_lag_interfaces: &merged
+        config:
+          - name: ae1
+            members:
+              - member: ge-0/0/1
+              - member: ge-0/0/2
+            mode: active
+          - name: ae2
+            link_protection: True
+            members:
+              - member: ge-0/0/3
+                link_type: primary
+              - member: ge-0/0/4
+                link_type: backup
+            mode: passive
+        state: merged
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_merged_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_lag_interfaces: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lag_interfaces merged integration tests on connection={{ ansible_connection }}"

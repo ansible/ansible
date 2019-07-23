@@ -1,0 +1,16 @@
+---
+- debug:
+    msg: "Start junos_lag_interfaces teardown ansible_connection={{ ansible_connection }}"
+
+- name: Remove interface config
+  junos_config:
+    lines:
+      - delete interfaces ge-0/0/1
+      - delete interfaces ge-0/0/2
+      - delete interfaces ge-0/0/3
+      - delete interfaces ge-0/0/4
+      - delete interfaces ae1
+      - delete interfaces ae2
+
+- debug:
+    msg: "End junos_lag_interfaces teardown ansible_connection={{ ansible_connection }}"
