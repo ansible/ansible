@@ -71,6 +71,11 @@ options:
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
+  log_path:
+    description:
+    - The path to a log file of the installation.
+    type: path
+    version_added: '2.9'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer

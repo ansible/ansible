@@ -1,0 +1,2 @@
+minor_changes:
+  - "win_domain and win_domain_controller - add support for logpath parameter (https://github.com/ansible/ansible/issues/59348)"

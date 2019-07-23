@@ -196,6 +196,7 @@ Try {
                 $install_params = @{
                     DomainName = $dns_domain_name
                     Credential = $domain_admin_cred
+                    LogPath = $log_path
                     SafeModeAdministratorPassword = $safe_mode_secure
                 }
                 if ($database_path) {
@@ -257,7 +258,7 @@ Try {
             $local_admin_secure = $local_admin_password | ConvertTo-SecureString -AsPlainText -Force
 
             Write-DebugLog "Uninstalling domain controller..."
-            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred
+            Uninstall-ADDSDomainController -NoRebootOnCompletion -LocalAdministratorPassword $local_admin_secure -Credential $domain_admin_cred -LogPath $log_path
             Write-DebugLog "Uninstallation complete, needs reboot..."
         }
         default { throw ("invalid state {0}" -f $state) }
