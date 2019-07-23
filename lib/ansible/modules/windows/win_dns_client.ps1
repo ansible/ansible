@@ -135,7 +135,7 @@ Function Test-DnsClientMatch {
             (Assert-IPAddress $_) -and ($_.AddressFamily -in $AddressFamilies)
         }
     )
-    Write-DebugLog ("Current DNS settings: " + ($current_dns.IPAddressToString | Out-String))
+    Write-DebugLog ("Current DNS settings: {0}" -f ([string[]]$dns_servers -join ", "))
 
     if(($null -eq $current_dns) -and ($null -eq $dns_servers)) {
         Write-DebugLog "Neither are dns servers configured nor specified within the playbook."
