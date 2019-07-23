@@ -151,18 +151,11 @@ import re
 import time
 
 from ansible.module_utils.network.eric_eccli.eric_eccli import run_commands
-from ansible.module_utils.network.eric_eccli.eric_eccli import eric_eccli_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import transform_commands
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
-
-def to_lines(stdout):
-    for item in stdout:
-	if isinstance(item, string_types):
-	    item = str(item).split('\n')
-	yield item
 
 
 def parse_commands(module, warnings):
@@ -192,7 +185,6 @@ def main():
 	interval=dict(default=1, type='int')
     )
 
-    argument_spec.update(eric_eccli_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
 			   supports_check_mode=True)
@@ -234,7 +226,7 @@ def main():
     result.update({
 	'changed': False,
 	'stdout': responses,
-	'stdout_lines': list(to_lines(responses))
+	'stdout_lines': list()
     })
 
     module.exit_json(**result)
