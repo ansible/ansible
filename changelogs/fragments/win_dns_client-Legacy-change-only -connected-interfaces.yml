@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_dns_client-  Legacy change only connected interfaces like 2012+ (https://github.com/ansible/ansible/issues/58958)"
