@@ -41,28 +41,26 @@ class YamllintTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        paths = [
-            [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')],
-        ]
+        settings = self.load_settings(args, 'ansible-test')
+
+        paths = [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')]
 
         for plugin_type, plugin_path in sorted(data_context().content.plugin_paths.items()):
             if plugin_type == 'module_utils':
                 continue
 
-            paths.append([target.path for target in targets.include if
+            paths.extend([target.path for target in targets.include if
                           os.path.splitext(target.path)[1] == '.py' and
                           os.path.basename(target.path) != '__init__.py' and
                           is_subdir(target.path, plugin_path)])
 
-        paths = [sorted(p) for p in paths if p]
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name)
 
-        results = []
-
-        for test_paths in paths:
-            results += self.test_paths(args, test_paths)
+        results = self.test_paths(args, paths)
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)

@@ -2,11 +2,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import json
 import os
-
-import lib.types as t
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -19,7 +16,6 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    read_lines_without_comments,
     ANSIBLE_ROOT,
 )
 
@@ -35,17 +31,9 @@ from lib.config import (
     SanityConfig,
 )
 
-from lib.test import (
-    calculate_confidence,
-    calculate_best_confidence,
-)
-
 from lib.data import (
     data_context,
 )
-
-VALIDATE_SKIP_PATH = 'test/sanity/validate-modules/skip.txt'
-VALIDATE_IGNORE_PATH = 'test/sanity/validate-modules/ignore.txt'
 
 UNSUPPORTED_PYTHON_VERSIONS = (
     '2.6',
@@ -72,12 +60,12 @@ class ValidateModulesTest(SanitySingleVersion):
                 'E502',  # only ansible content requires __init__.py for module subdirectories
             ))
 
-        skip_paths = read_lines_without_comments(VALIDATE_SKIP_PATH, optional=True)
-        skip_paths_set = set(skip_paths)
-
         env = ansible_environment(args, color=False)
 
-        paths = sorted([i.path for i in targets.include if i.module and i.path not in skip_paths_set])
+        settings = self.load_settings(args, 'A100')
+
+        paths = sorted(i.path for i in targets.include if i.module)
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name)
@@ -88,26 +76,6 @@ class ValidateModulesTest(SanitySingleVersion):
             '--format', 'json',
             '--arg-spec',
         ] + paths
-
-        invalid_ignores = []
-
-        ignore_entries = read_lines_without_comments(VALIDATE_IGNORE_PATH, optional=True)
-        ignore = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
-        line = 0
-
-        for ignore_entry in ignore_entries:
-            line += 1
-
-            if not ignore_entry:
-                continue
-
-            if ' ' not in ignore_entry:
-                invalid_ignores.append((line, 'Invalid syntax'))
-                continue
-
-            path, code = ignore_entry.split(' ', 1)
-
-            ignore[path][code] = line
 
         if args.base_branch:
             cmd.extend([
@@ -147,80 +115,8 @@ class ValidateModulesTest(SanitySingleVersion):
                     message=item['msg'],
                 ))
 
-        filtered = []
-
         errors = [error for error in errors if error.code not in ignore_codes]
-
-        for error in errors:
-            if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = 0  # error ignored, clear line number of ignore entry to track usage
-            else:
-                filtered.append(error)  # error not ignored
-
-        errors = filtered
-
-        for invalid_ignore in invalid_ignores:
-            errors.append(SanityMessage(
-                code='A201',
-                message=invalid_ignore[1],
-                path=VALIDATE_IGNORE_PATH,
-                line=invalid_ignore[0],
-                column=1,
-                confidence=calculate_confidence(VALIDATE_IGNORE_PATH, line, args.metadata) if args.metadata.changes else None,
-            ))
-
-        line = 0
-
-        for path in skip_paths:
-            line += 1
-
-            if not path:
-                continue
-
-            if not os.path.exists(path):
-                # Keep files out of the list which no longer exist in the repo.
-                errors.append(SanityMessage(
-                    code='A101',
-                    message='Remove "%s" since it does not exist' % path,
-                    path=VALIDATE_SKIP_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((VALIDATE_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
-
-        for path in sorted(ignore.keys()):
-            if os.path.exists(path):
-                continue
-
-            for line in sorted(ignore[path].values()):
-                # Keep files out of the list which no longer exist in the repo.
-                errors.append(SanityMessage(
-                    code='A101',
-                    message='Remove "%s" since it does not exist' % path,
-                    path=VALIDATE_IGNORE_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((VALIDATE_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
-
-        for path in paths:
-            if path not in ignore:
-                continue
-
-            for code in ignore[path]:
-                line = ignore[path][code]
-
-                if not line:
-                    continue
-
-                errors.append(SanityMessage(
-                    code='A102',
-                    message='Remove since "%s" passes "%s" test' % (path, code),
-                    path=VALIDATE_IGNORE_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((VALIDATE_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
+        errors = settings.process_errors(errors, paths)
 
         if errors:
             return SanityFailure(self.name, messages=errors)

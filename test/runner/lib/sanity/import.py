@@ -17,7 +17,6 @@ from lib.util import (
     remove_tree,
     display,
     find_python,
-    read_lines_without_comments,
     parse_to_list_of_dict,
     make_dirs,
     is_subdir,
@@ -59,18 +58,16 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/import/skip.txt'
-        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
-
-        skip_paths_set = set(skip_paths)
+        settings = self.load_settings(args, None, python_version)
 
         paths = sorted(
             i.path
             for i in targets.include
             if os.path.splitext(i.path)[1] == '.py' and
-            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path)) and
-            i.path not in skip_paths_set
+            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path))
         )
+
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
@@ -156,7 +153,7 @@ class ImportTest(SanityMultipleVersion):
                 column=int(r['column']),
             ) for r in results]
 
-            results = [result for result in results if result.path not in skip_paths_set]
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)
