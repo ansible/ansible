@@ -152,7 +152,7 @@ If ($state -eq "absent") {
 
     # remove permissions
     $permissions = Get-SmbShareAccess -Name $name
-    if(-not $appendRules)
+    if(-not $appendRules) {
         ForEach ($permission in $permissions) {
             If ($permission.AccessControlType -eq "Deny") {
                 $cim_count = 0
