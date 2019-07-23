@@ -1,0 +1,2 @@
+bugfixes:
+- ce_ntp_auth - update to fix "state is present but all of the following are missing-password" bug(https://github.com/ansible/ansible/pull/59344)
