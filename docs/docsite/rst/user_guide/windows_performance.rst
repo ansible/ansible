@@ -12,9 +12,11 @@ To speed up the startup of PowerShell by around 10x, run the following
 PowerShell snippet in an Administrator session. Expect it to take tens of
 seconds.
 
-Note - if native images have already been created by the ngen task or service,
-you will observe no difference in performance (but this snippet will at that
-point execute faster than otherwise).
+.. note::
+
+    If native images have already been created by the ngen task or service, you
+    will observe no difference in performance (but this snippet will at that
+    point execute faster than otherwise).
 
 .. code-block:: powershell
 
@@ -38,7 +40,7 @@ point execute faster than otherwise).
     Optimize-PowershellAssemblies
 
 PowerShell is used by every Windows Ansible module. This optimisation reduces
-the time PowerShell takes to start up by around 10x.
+the time PowerShell takes to start up, removing that overhead from every invocation.
 
 This snippet uses `the native image generator, ngen <https://docs.microsoft.com/en-us/dotnet/framework/tools/ngen-exe-native-image-generator#WhenToUse>`_
 to pre-emptively create native images for the assemblies that PowerShell relies on.
@@ -55,5 +57,5 @@ Place the following near the end of your playbook, bearing in mind the factors t
 .. code-block:: yaml
 
     - name: generate native .NET images for CPU
-      win_dotnet_ngen: {}
+      win_dotnet_ngen:
 
