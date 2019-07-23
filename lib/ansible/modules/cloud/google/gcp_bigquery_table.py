@@ -47,6 +47,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   table_reference:
     description:
     - Reference describing the ID of this table.

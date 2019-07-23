@@ -54,6 +54,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   allowed:
     description:
     - The list of ALLOW rules specified by this firewall. Each rule specifies a protocol

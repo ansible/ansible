@@ -51,6 +51,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   affinity_cookie_ttl_sec:
     description:
     - Lifetime of cookies in seconds if session_affinity is GENERATED_COOKIE. If set
