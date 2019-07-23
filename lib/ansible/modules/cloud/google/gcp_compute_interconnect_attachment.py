@@ -48,6 +48,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   interconnect:
     description:
     - URL of the underlying Interconnect object that this attachment's traffic will

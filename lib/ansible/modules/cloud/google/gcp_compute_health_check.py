@@ -55,6 +55,7 @@ options:
     - present
     - absent
     default: present
+    type: str
   check_interval_sec:
     description:
     - How often (in seconds) to send a health check. The default value is 5 seconds.
@@ -156,6 +157,21 @@ options:
         required: false
         default: NONE
         type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, HTTP health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
   https_health_check:
     description:
     - A nested object resource.
@@ -203,6 +219,21 @@ options:
         required: false
         default: NONE
         type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, HTTPS health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
   tcp_health_check:
     description:
     - A nested object resource.
@@ -243,6 +274,21 @@ options:
         required: false
         default: NONE
         type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, TCP health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
   ssl_health_check:
     description:
     - A nested object resource.
@@ -283,6 +329,21 @@ options:
         required: false
         default: NONE
         type: str
+      port_specification:
+        description:
+        - 'Specifies how port is selected for health checking, can be one of the following
+          values: * `USE_FIXED_PORT`: The port number in `port` is used for health
+          checking.'
+        - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+        - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+          each network endpoint is used for health checking. For other backends, the
+          port or named port specified in the Backend Service is used for health checking."
+        - If not specified, SSL health check follows behavior specified in `port`
+          and `portName` fields.
+        - 'Some valid choices include: "USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT"'
+        required: false
+        type: str
+        version_added: 2.9
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/healthChecks)'
@@ -409,6 +470,18 @@ httpHealthCheck:
         either NONE or PROXY_V1. The default is NONE.
       returned: success
       type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, HTTP health check follows behavior specified in `port` and
+        `portName` fields.
+      returned: success
+      type: str
 httpsHealthCheck:
   description:
   - A nested object resource.
@@ -453,6 +526,18 @@ httpsHealthCheck:
         either NONE or PROXY_V1. The default is NONE.
       returned: success
       type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, HTTPS health check follows behavior specified in `port`
+        and `portName` fields.
+      returned: success
+      type: str
 tcpHealthCheck:
   description:
   - A nested object resource.
@@ -489,6 +574,18 @@ tcpHealthCheck:
       description:
       - Specifies the type of proxy header to append before sending data to the backend,
         either NONE or PROXY_V1. The default is NONE.
+      returned: success
+      type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, TCP health check follows behavior specified in `port` and
+        `portName` fields.
       returned: success
       type: str
 sslHealthCheck:
@@ -529,6 +626,18 @@ sslHealthCheck:
         either NONE or PROXY_V1. The default is NONE.
       returned: success
       type: str
+    portSpecification:
+      description:
+      - 'Specifies how port is selected for health checking, can be one of the following
+        values: * `USE_FIXED_PORT`: The port number in `port` is used for health checking.'
+      - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+      - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for each
+        network endpoint is used for health checking. For other backends, the port
+        or named port specified in the Backend Service is used for health checking."
+      - If not specified, SSL health check follows behavior specified in `port` and
+        `portName` fields.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -566,6 +675,7 @@ def main():
                     port=dict(type='int'),
                     port_name=dict(type='str'),
                     proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
                 ),
             ),
             https_health_check=dict(
@@ -577,6 +687,7 @@ def main():
                     port=dict(type='int'),
                     port_name=dict(type='str'),
                     proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
                 ),
             ),
             tcp_health_check=dict(
@@ -587,6 +698,7 @@ def main():
                     port=dict(type='int'),
                     port_name=dict(type='str'),
                     proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
                 ),
             ),
             ssl_health_check=dict(
@@ -597,6 +709,7 @@ def main():
                     port=dict(type='int'),
                     port_name=dict(type='str'),
                     proxy_header=dict(default='NONE', type='str'),
+                    port_specification=dict(type='str'),
                 ),
             ),
         ),
@@ -796,6 +909,7 @@ class HealthCheckHttphealthcheck(object):
                 u'port': self.request.get('port'),
                 u'portName': self.request.get('port_name'),
                 u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
             }
         )
 
@@ -808,6 +922,7 @@ class HealthCheckHttphealthcheck(object):
                 u'port': self.request.get(u'port'),
                 u'portName': self.request.get(u'portName'),
                 u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
             }
         )
 
@@ -829,6 +944,7 @@ class HealthCheckHttpshealthcheck(object):
                 u'port': self.request.get('port'),
                 u'portName': self.request.get('port_name'),
                 u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
             }
         )
 
@@ -841,6 +957,7 @@ class HealthCheckHttpshealthcheck(object):
                 u'port': self.request.get(u'port'),
                 u'portName': self.request.get(u'portName'),
                 u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
             }
         )
 
@@ -861,6 +978,7 @@ class HealthCheckTcphealthcheck(object):
                 u'port': self.request.get('port'),
                 u'portName': self.request.get('port_name'),
                 u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
             }
         )
 
@@ -872,6 +990,7 @@ class HealthCheckTcphealthcheck(object):
                 u'port': self.request.get(u'port'),
                 u'portName': self.request.get(u'portName'),
                 u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
             }
         )
 
@@ -892,6 +1011,7 @@ class HealthCheckSslhealthcheck(object):
                 u'port': self.request.get('port'),
                 u'portName': self.request.get('port_name'),
                 u'proxyHeader': self.request.get('proxy_header'),
+                u'portSpecification': self.request.get('port_specification'),
             }
         )
 
@@ -903,6 +1023,7 @@ class HealthCheckSslhealthcheck(object):
                 u'port': self.request.get(u'port'),
                 u'portName': self.request.get(u'portName'),
                 u'proxyHeader': self.request.get(u'proxyHeader'),
+                u'portSpecification': self.request.get(u'portSpecification'),
             }
         )
 
