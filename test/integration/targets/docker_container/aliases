@@ -2,4 +2,3 @@ shippable/posix/group4
 skip/osx
 skip/freebsd
 destructive
-disabled
