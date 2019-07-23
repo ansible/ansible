@@ -176,7 +176,10 @@ class PylintTest(SanitySingleVersion):
         rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
 
         if not os.path.exists(rcfile):
-            rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/default')
+            if data_context().content.collection:
+                rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/collection')
+            else:
+                rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/default')
 
         parser = ConfigParser()
         parser.read(rcfile)
