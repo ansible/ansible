@@ -67,8 +67,11 @@ asa_argument_spec.update(asa_top_spec)
 
 command_spec = {
     'command': dict(key=True),
-    'prompt': dict(),
-    'answer': dict()
+    'prompt': dict(type='list'),
+    'answer': dict(type='list'),
+    'newline': dict(type='bool', default=True),
+    'sendonly': dict(type='bool', default=False),
+    'check_all': dict(type='bool', default=False)
 }
 
 

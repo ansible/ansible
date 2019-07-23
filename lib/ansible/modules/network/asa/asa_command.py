@@ -31,7 +31,23 @@ options:
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retires as expired.
+        the number of retires as expired. If a command sent to the
+        device requires answering a prompt, it is possible to pass
+        a dict containing I(command), I(answer) and I(prompt).
+        Common answers are 'y' or "\\r" (carriage return, must be
+        double quotes). See examples.
+        In the dictionary, you can also pass the keys:
+        I(sendonly) - when set to true will send I(command) to the
+        device but not wait for a result.
+        I(newline) - when set to false will send I(answer) to the
+        device without a trailing newline.
+        I(check_all) - By default if any one of the prompts
+        mentioned in C(prompt) option is matched it won't
+        check for other prompts. This boolean flag, that when
+        set to I(True) will check for all the prompts mentioned
+        in C(prompt) option in the given order. If the option is set
+        to I(True) all the prompts should be received from remote
+        host if not it will result in timeout.
     required: true
   wait_for:
     description:
@@ -88,6 +104,15 @@ EXAMPLES = """
     wait_for:
       - result[0] contains 100
     retries: 2
+
+- name: "reset ospf"
+  asa_command:
+    commands:
+    - command: "clear ospf 1 process"
+      prompt:
+      - "Reset OSPF process"
+      answer:
+      - "yes"
 """
 
 RETURN = """
