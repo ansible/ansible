@@ -265,6 +265,7 @@ static_setup_params = dict(
             'module_utils/powershell/*/*.psm1',
             'modules/windows/*.ps1',
             'modules/windows/*/*.ps1',
+            'galaxy/data/*.*',
             'galaxy/data/*/*.*',
             'galaxy/data/*/.*',
             'galaxy/data/*/*/.*',
