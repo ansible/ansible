@@ -166,8 +166,13 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         return self._cache[self.cache_key][url]
 
-    def _get_hosts(self):
-        return self._get_json("%s/api/v2/hosts" % self.foreman_url)
+    def _get_hosts(self, want_params):
+        if want_params:
+            ret = self._get_json("%s/api/v2/hosts/?include=all_parameters" % self.foreman_url)
+        else:
+            ret = self._get_json("%s/api/v2/hosts" % self.foreman_url)
+
+        return ret
 
     def _get_all_params_by_id(self, hid):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
@@ -194,7 +199,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _populate(self):
 
-        for host in self._get_hosts():
+        for host in self._get_hosts(self.get_option('want_params')):
 
             if host.get('name'):
                 self.inventory.add_host(host['name'])
@@ -219,7 +224,14 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                 # set host vars from params
                 if self.get_option('want_params'):
-                    for p in self._get_all_params_by_id(host['id']):
+
+                    # handle legacy foreman which is missing all_parameters api option
+                    if host.get('all_parameters'):
+                        host_params = host.get('all_parameters')
+                    else:
+                        host_params = self._get_all_params_by_id(host['id'])
+
+                    for p in host_params:
                         try:
                             self.inventory.set_variable(host['name'], p['name'], p['value'])
                         except ValueError as e:
