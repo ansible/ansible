@@ -420,9 +420,12 @@ def remount(module, args):
 
     # Multiplatform remount opts
     if get_platform().lower().endswith('bsd'):
-        cmd += ['-u']
+        if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
+            cmd += ['-u', '-o', args['opts']]
+        else:
+            cmd += ['-u']
     else:
-        if args['opts'] != 'defaults':
+        if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
             cmd += ['-o', 'remount,' + args['opts']]
         else:
             cmd += ['-o', 'remount']
@@ -458,6 +461,16 @@ def remount(module, args):
 
     if rc != 0:
         msg = out + err
+
+        if module.params['state'] == 'remounted' and args['opts'] != 'defaults':
+            module.fail_json(
+                msg=(
+                    'Options were specified with remounted, but the remount '
+                    'command failed. Failing in order to prevent an '
+                    'unexpected mount result. Try replacing this command with '
+                    'a "state: unmounted" followed by a "state: mounted" '
+                    'using the full desired mount options instead.'))
+
         rc, msg = umount(module, args['name'])
 
         if rc == 0:
