@@ -421,7 +421,7 @@ class TaskExecutor:
 
                 for plugin_type, plugin_name in iteritems(clear_plugins):
                     for var in C.config.get_plugin_vars(plugin_type, plugin_name):
-                        if var in task_vars:
+                        if var in task_vars and var not in self._job_vars:
                             del task_vars[var]
 
         self._task.no_log = no_log
