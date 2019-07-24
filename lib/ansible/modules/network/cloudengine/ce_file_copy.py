@@ -188,7 +188,8 @@ def get_cli_exception(exc=None):
             if err[-1] == ".":
                 err = err[:-1]
             if err.replace(" ", "") == "":
-                continue3)
+                continue
+            msg.append(err)
     else:
         msg = ["Error: Fail to get cli exception message."]
 
