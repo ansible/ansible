@@ -214,7 +214,7 @@ Try {
                 }
                 try
                 {
-                    $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
+                    $null = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
                 } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
                     # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
                     # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
