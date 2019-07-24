@@ -77,6 +77,10 @@ options:
 	trying the command again.
     type: int
     default: 1
+
+notes:
+  - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
+  - For more information on using Ansible to manage Ericsson devices see the Ericsson documents.
 """
 
 EXAMPLES = r"""
