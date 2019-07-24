@@ -1,0 +1,4 @@
+bugfixes:
+- plugin loader - Move plugin loader playbook dir additions back to ``Playbook`` instead of ``PlaybookCLI``
+  to solve sub directory playbook relative plugins to be located
+  (https://github.com/ansible/ansible/issues/59548)
