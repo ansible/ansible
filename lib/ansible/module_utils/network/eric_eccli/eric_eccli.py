@@ -15,6 +15,7 @@ from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
+
 def get_connection(module):
     if hasattr(module, '_eric_eccli_connection'):
 	return module._eric_eccli_connection

@@ -25,7 +25,6 @@ description:
     before returning or timing out if the condition is not met.
   - This module also support running commands in configuration mode
     in raw command style.
-extends_documentation_fragment: eric_eccli
 notes:
   - Tested against IPOS 19.3
 options:
@@ -157,7 +156,6 @@ from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
 
-
 def parse_commands(module, warnings):
     commands = transform_commands(module)
 
@@ -184,7 +182,6 @@ def main():
 	retries=dict(default=10, type='int'),
 	interval=dict(default=1, type='int')
     )
-
 
     module = AnsibleModule(argument_spec=argument_spec,
 			   supports_check_mode=True)
