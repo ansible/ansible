@@ -848,7 +848,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             os_disk_name=dict(type='str'),
             os_disk_image=dict(type='dict'),
             os_disk_os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
-            os_disk_vhd=dict(type='str'),
+            os_disk_vhd=dict(type='dict'),
             os_disk_create_option=dict(type='str', choices=['Fromimage', 'Attach'], default='Fromimage'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
@@ -1316,7 +1316,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             os_disk=self.compute_models.OSDisk(
                                 name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
                                 image=self.os_disk_image if self.os_disk_image else None,
-                                os_type=self.os_disk_os_type if self.os_disk_image else None,
+                                os_type=self.os_disk_os_type if self.os_disk_os_type else None,
                                 vhd=self.os_disk_vhd if self.os_disk_vhd else vhd,
                                 managed_disk=managed_disk,
                                 create_option=self.os_disk_create_option,
