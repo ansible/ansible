@@ -3,14 +3,7 @@
       docker_swarm:
         state: absent
         force: true
-
-    - name: CLEANUP | Restart docker daemon
-      service:
-        name: docker
-        state: restarted
-      become: yes
       ignore_errors: yes
-      register: restart_docker
 
   rescue:
     - name: CLEANUP | Kill docker daemon
@@ -22,19 +15,13 @@
       args:
         warn: no
 
-    - name: CLEANUP | Force Docker service start when restart was attempted too often
-      command: systemctl reset-failed docker.service
-      when:
-        - ansible_facts.service_mgr == 'systemd'
-        - restart_docker.msg is search('start of the service was attempted too often')
-
-    - name: CLEANUP | Restart docker daemon
+    - name: CLEANUP | Start docker daemon
       service:
         name: docker
-        state: restarted
+        state: started
       become: yes
 
-    - name: CLEANUP | Wait for docker daemon to be fully restarted
+    - name: CLEANUP | Wait for docker daemon to be fully started
       command: docker ps
       register: result
       until: result is success
