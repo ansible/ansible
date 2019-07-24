@@ -126,6 +126,26 @@
       - "'1' in remount_options.stdout"
       - "1 == remount_options.stdout_lines | length"
   when: ansible_system in ('FreeBSD', 'Linux')
+  
+- name: Remount filesystem with different opts using new remounted option (Linux only)
+  mount:
+    src: "{{ output_dir }}/mount_source"
+    name: "{{ output_dir }}/mount_dest"
+    state: "remounted"
+    opts: "rw,noexec"
+  when: ansible_system == 'Linux'
+
+- name: Get remounted options (Linux only)
+  shell: mount | grep mount_dest | grep -E -w 'noexec' | wc -l
+  register: remounted_options
+  when: ansible_system == 'Linux'
+
+- name: Make sure the filesystem now has the new opts after using remounted (Linux only)
+  assert:
+    that:
+      - "'1' in remounted_options.stdout"
+      - "1 == remounted_options.stdout_lines | length"
+  when: ansible_system == 'Linux'
 
 - name: Unmount the bind mount
   mount:
