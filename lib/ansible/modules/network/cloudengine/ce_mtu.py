@@ -327,7 +327,7 @@ class Mtu(object):
         """ get_jumboframe_config"""
 
         flags = list()
-        exp = r"| ignore-case section include ^#\s+interface %s\s+" % self.interface.replace(" ","")
+        exp = r"| ignore-case section include ^#\s+interface %s\s+" % self.interface.replace(" ", "")
         flags.append(exp)
         output = self.get_config(flags)
         output = output.replace('*', '').lower()
