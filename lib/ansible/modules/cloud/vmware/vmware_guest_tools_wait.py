@@ -32,11 +32,13 @@ options:
      description:
      - Name of the VM for which to wait until the tools become available.
      - This is required if C(uuid) or C(moid) is not supplied.
+     type: str
    name_match:
      description:
      - If multiple VMs match the name, use the first or last found.
      default: 'first'
      choices: ['first', 'last']
+     type: str
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -52,10 +54,12 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    uuid:
      description:
      - UUID of the VM  for which to wait until the tools become available, if known. This is VMware's unique identifier.
      - This is required, if C(name) or C(moid) is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.

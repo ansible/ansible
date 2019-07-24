@@ -31,12 +31,14 @@ options:
       - "If set, facts of DRS groups belonging this cluster will be returned."
       - "Not needed if C(datacenter) is set."
     required: false
+    type: str
   datacenter:
     aliases:
       - datacenter_name
     description:
       - "Datacenter to search for DRS VM/Host groups."
     required: true
+    type: str
 requirements:
   - "python >= 2.6"
   - PyVmomi

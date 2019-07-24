@@ -35,17 +35,20 @@ options:
     - Name of the cluster.
     - Service settings are applied to every ESXi host system/s in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Service settings are applied to this ESXi host system.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
   state:
     description:
     - Desired state of service.
     - "State value 'start' and 'present' has same effect."
     - "State value 'stop' and 'absent' has same effect."
     choices: [ absent, present, restart, start, stop ]
+    type: str
     default: 'start'
   service_policy:
     description:
@@ -54,11 +57,13 @@ options:
     - If set C(automatic), then service should run if and only if it has open firewall ports.
     - If set C(off), then Service should not be started when the host starts up.
     choices: [ 'automatic', 'off', 'on' ]
+    type: str
   service_name:
     description:
-    - Name of Service to be managed. This is brief identifier for the service, for example, ntpd, vxsyslogd etc.
+    - Name of Service to be managed. This is a brief identifier for the service, for example, ntpd, vxsyslogd etc.
     - This value should be a valid ESXi service name.
     required: True
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

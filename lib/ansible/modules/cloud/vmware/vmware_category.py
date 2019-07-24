@@ -37,22 +37,26 @@ options:
       description:
       - The name of category to manage.
       required: True
+      type: str
     category_description:
       description:
       - The category description.
       - This is required only if C(state) is set to C(present).
       - This parameter is ignored, when C(state) is set to C(absent).
       default: ''
+      type: str
     category_cardinality:
       description:
       - The category cardinality.
       - This parameter is ignored, when updating existing category.
       choices: ['multiple', 'single']
       default: 'multiple'
+      type: str
     new_category_name:
       description:
       - The new name for an existing category.
       - This value is used while updating an existing category.
+      type: str
     state:
       description:
       - The state of category.
@@ -63,6 +67,7 @@ options:
       - Process of updating category only allows name, description change.
       default: 'present'
       choices: [ 'present', 'absent' ]
+      type: str
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
 

@@ -34,15 +34,18 @@ options:
       description:
       - Name of datastore to manage.
       - If C(datastore_cluster) or C(cluster_name) are not set, this parameter is required.
+      type: str
     datastore_cluster:
       description:
       - Name of the datastore cluster from all child datastores to be managed.
       - If C(datastore) or C(cluster_name) are not set, this parameter is required.
+      type: str
     cluster_name:
       description:
       - Name of the cluster where datastore is connected to.
       - If multiple datastores are connected to the given cluster, then all datastores will be managed by C(state).
       - If C(datastore) or C(datastore_cluster) are not set, this parameter is required.
+      type: str
     state:
       description:
       - If set to C(present), then enter datastore into maintenance mode.
@@ -52,6 +55,7 @@ options:
       choices: [ present, absent ]
       default: present
       required: False
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

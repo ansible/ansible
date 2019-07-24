@@ -43,10 +43,12 @@ options:
     - Name of the cluster.
     - Facts will be returned for all hostsystem belonging to this cluster name.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname to gather facts from.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

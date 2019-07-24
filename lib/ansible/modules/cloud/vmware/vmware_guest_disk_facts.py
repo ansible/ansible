@@ -37,10 +37,12 @@ options:
      description:
      - Name of the virtual machine.
      - This is required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
      - This is required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -68,10 +70,12 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
      required: True
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

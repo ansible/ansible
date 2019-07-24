@@ -34,11 +34,13 @@ options:
     - Name of the cluster.
     - SSL thumbprint information about all ESXi host system in the given cluster will be reported.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - SSL thumbprint information of this ESXi host system will be reported.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

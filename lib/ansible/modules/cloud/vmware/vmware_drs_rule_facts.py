@@ -34,11 +34,13 @@ options:
     - Name of the cluster.
     - DRS facts for the given cluster will be returned.
     - This is required parameter if C(datacenter) parameter is not provided.
+    type: str
   datacenter:
     description:
     - Name of the datacenter.
     - DRS facts for all the clusters from the given datacenter will be returned.
     - This is required parameter if C(cluster_name) parameter is not provided.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

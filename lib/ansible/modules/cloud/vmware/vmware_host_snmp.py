@@ -52,6 +52,7 @@ options:
         - A list of trap targets.
         - You need to use C(hostname), C(port), and C(community) for each trap target.
     default: []
+    type: list
   trap_filter:
     description:
         - A list of trap oids for traps not to be sent by agent,

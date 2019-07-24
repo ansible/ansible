@@ -38,6 +38,7 @@ options:
      - Name of the virtual machine to work with.
      - This is required parameter, if C(uuid) or C(moid) is not supplied.
      required: True
+     type: str
    state:
      description:
      - The action to take.
@@ -45,10 +46,12 @@ options:
      - If set to C(absent), then custom attribute is removed.
      default: 'present'
      choices: ['present', 'absent']
+     type: str
    uuid:
      description:
      - UUID of the virtual machine to manage if known. This is VMware's unique identifier.
      - This is required parameter, if C(name) or C(moid) is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -65,15 +68,18 @@ options:
      description:
      - Absolute path to find an existing guest.
      - This is required parameter, if C(name) is supplied and multiple virtual machines with same name are found.
+     type: str
    datacenter:
      description:
      - Datacenter name where the virtual machine is located in.
      required: True
+     type: str
    attributes:
      description:
      - A list of name and value of custom attributes that needs to be manage.
      - Value of custom attribute is not required and will be ignored, if C(state) is set to C(absent).
      default: []
+     type: list
 extends_documentation_fragment: vmware.documentation
 '''
 

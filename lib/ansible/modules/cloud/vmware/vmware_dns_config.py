@@ -30,14 +30,17 @@ options:
         description:
             - The hostname that an ESXi host should be changed to.
         required: True
+        type: str
     domainname:
         description:
             - The domain the ESXi host should be apart of.
         required: True
+        type: str
     dns_servers:
         description:
             - The DNS servers that the host should be configured to use.
         required: True
+        type: list
 extends_documentation_fragment: vmware.documentation
 '''
 

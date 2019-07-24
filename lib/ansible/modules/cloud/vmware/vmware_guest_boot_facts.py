@@ -34,10 +34,12 @@ options:
      description:
      - Name of the VM to work with.
      - This is required if C(uuid) or C(moid) parameter is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) or C(moid) parameter is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -55,6 +57,7 @@ options:
      - If multiple virtual machines matching the name, use the first or last found.
      default: 'first'
      choices: ['first', 'last']
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
