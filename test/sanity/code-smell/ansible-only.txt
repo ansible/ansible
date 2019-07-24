@@ -6,3 +6,4 @@ deprecated-config.py
 docs-build.py
 test-constraints.py
 update-bundled.py
+package-data.py
