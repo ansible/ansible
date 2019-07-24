@@ -588,6 +588,7 @@ For example:
 
 Suggestions to resolve:
 
+In Ansible prior to 2.5 :
 Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
@@ -613,6 +614,9 @@ Add ``authorize: yes`` to the task. For example:
       authorize: yes
       auth_pass: "{{ mypasswordvar }}"
   register: result
+
+
+.. note:: Starting with Ansible 2.5 we recommend using ``connection: network_cli`` and ``become: yes``
 
 
 Proxy Issues
