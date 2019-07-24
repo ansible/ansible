@@ -1195,7 +1195,7 @@ class PyVmomi(object):
             if len(temp_vm_object.propSet) != 1:
                 continue
             for temp_vm_object_property in temp_vm_object.propSet:
-                if temp_vm_object_property.val == self.params['name']:
+                if temp_vm_object_property.val == network_name:
                     networks.append(temp_vm_object.obj)
                     break
         return networks

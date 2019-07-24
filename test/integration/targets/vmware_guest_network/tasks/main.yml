@@ -17,7 +17,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       gather_network_facts: true
     register: netadapter_facts
 
@@ -33,7 +33,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - name: "VM Network"
           state: new
@@ -59,7 +59,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - state: absent
           mac: "00:50:56:58:59:60"
@@ -79,7 +79,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - state: present
           mac: "00:50:56:58:59:61"
@@ -100,7 +100,7 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ infra.vm_list[0] }}"
+      name: "{{ virtual_machines[0].name }}"
       networks:
         - name: non-existing-nw
           manual_mac: "00:50:56:11:22:33"
