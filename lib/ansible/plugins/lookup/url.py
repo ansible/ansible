@@ -54,7 +54,7 @@ EXAMPLES = """
   debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
 - name: url lookup with headers
-  debug: msg=""{{ lookup('url', 'https://some.private.site.com/file.txt', headers={'HeaderName':'HeaderValue'} ) }}"
+  debug: msg=""{{ lookup('url', 'https://some.private.site.com/api/service', headers={'HeaderName':'HeaderValue'} ) }}"
 """
 
 RETURN = """
