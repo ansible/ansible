@@ -25,3 +25,5 @@
       when: setup_category is defined
     - include_tasks: setup_tag.yml
       when: setup_tag is defined
+    - include_tasks: setup_content_library.yml
+      when: setup_content_library is defined

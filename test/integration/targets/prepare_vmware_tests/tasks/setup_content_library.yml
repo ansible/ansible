@@ -1,0 +1,11 @@
+- name: Create Content Library
+  vmware_content_library_manager:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    library_name: test-content-lib
+    library_description: 'Library created by the prepare_vmware_tests role'
+    library_type: local
+    datastore_name: '{{ ds2 }}'
+    validate_certs: False
+    state: present
