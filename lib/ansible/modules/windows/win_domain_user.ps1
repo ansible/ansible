@@ -20,7 +20,6 @@ Function Test-Credential {
     } else {
         # No domain provided, so maybe local user, or domain specified separately.
     }
-    $null = $Domain # Make CI-Check happy...
 
     # More information about LogonUser at https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-logonusera
     $platform_util = @'
@@ -44,31 +43,24 @@ namespace Ansible
             0x00000532   // ERROR_PASSWORD_EXPIRED - The password has exired
         };
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern bool LogonUser(String username, String domain, IntPtr password,
+        internal static extern bool LogonUser(String username, String domain, String password,
             int logonType, int logonProvider, out IntPtr token);
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern bool CloseHandle(
             IntPtr hObject);
-        public static bool TestCredential(string userName, SecureString password, string domainName = null)
+        public static bool TestCredential(string userName, string password, string domainName = null)
         {
             IntPtr tokenHandle = IntPtr.Zero;
-            IntPtr passwordPtr = IntPtr.Zero;
             bool returnValue   = false;
             int err_code = 0;
 
-            // Marshal the SecureString to unmanaged memory.
-            passwordPtr = Marshal.SecureStringToGlobalAllocUnicode(password);
-
             // Pass LogonUser the decrypted copy of the password.
-            returnValue = LogonUser(userName, domainName, passwordPtr,
+            returnValue = LogonUser(userName, domainName, password,
                                     3, // LOGON32_LOGON_NETWORK = 3
                                     0, // LOGON32_PROVIDER_DEFAULT = 0; Negotiate if (domain == null and username not upn) else NTLM
                                     out tokenHandle);
             error_code = Marshal.GetLastWin32Error();
 
-            // Perform cleanup whether or not the call succeeded.
-            // Secure delete the plaintext password from memory.
-            Marshal.ZeroFreeGlobalAllocUnicode(passwordPtr);
             // We don't need the token, so close it again.
             CloseHandle(tokenHandle);
 
@@ -95,7 +87,7 @@ namespace Ansible
 
         # Todo: Make sure $UserName is always in UPN format.
         # Than $Domain can be $null
-        $logon_res = [Ansible.WinUserPInvoke]::TestCredential($Username, (ConvertTo-SecureString $Password -AsPlainText -Force), $Domain)
+        $logon_res = [Ansible.WinUserPInvoke]::TestCredential($Username, $Password, $Domain)
         return $logon_res
     } else {
         return $false
@@ -201,24 +193,19 @@ If ($state -eq 'present') {
         $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
     }
 
-    # Set the password if required
-    If (
-        (
-            $password
-        ) -and (
-            (
-                $new_user -and $update_password -eq "on_create"
-            ) -or (
-                $update_password -in @("always"; "when_changed")
-            )
-        )
-    ) {
-        If (-not $new_user) { # Don't uncecessary check if the credentials works, if we know it doesn't.
-            $test_new_credentials = Test-Credential -Username $username -Password $password
+    If ($password) {
+        # Don't uncecessary check for working credentials.
+        # Set the password if we need to.
+        # For new_users there is also no difference between always and when_changed
+        # so we don't need to differentiate between this two states.
+        If ($new_user -or ($update_password -eq "always")) {
+            $set_new_credentials = $true
+        } elif ($update_password -eq "when_changed") {
+            $set_new_credentials = -not (Test-Credential -Username $username -Password $password)
         } else {
-            $test_new_credentials = $false
+            $set_net_credentials = $false
         }
-        If ((-not $test_new_credentials) -or ($update_password -eq "always")) {
+        If ($set_new_credentials) {
             $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
             Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
             $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
