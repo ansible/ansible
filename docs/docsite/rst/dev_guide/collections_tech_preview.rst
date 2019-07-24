@@ -120,7 +120,7 @@ command line tool that is included with Ansible.
     Any references to ``ansible-galaxy`` below will be of a 'working version' that is in development for the 2.9
     release. As such, the command and this documentation section is subject to frequent changes.
 
-Currently the ``ansible-galaxy collection`` implements the following sub commands:
+Currently the ``ansible-galaxy collection`` command implements the following sub commands:
 
 * ``init``: Create a basic collection skeleton based on the default template included with Ansible or your own
 * ``build``: Create a collection artifact that can be uploaded to Galaxy or your own repository
@@ -212,7 +212,7 @@ The recommended way to install a collection is:
 
 .. code-block:: bash
 
-   # Will install the collection to /path/ansible_collection/mynamespace/mycollection
+   # Will install the collection to /path/ansible_collections/mynamespace/mycollection
    ansible-galaxy collection install mynamespace.mycollection -p /path
 
 assuming the collection is hosted in Galaxy.
@@ -221,23 +221,23 @@ You can also use a tarball resulting from your build:
 
 .. code-block:: bash
 
-   # Will isntall the collection to ./collections/ansible_collection/mynamespace/mycollection
-   ansible-galaxy install mynamespace-mycollection-0.1.0.tar.gz -p ./collections/ansible_collection
+   # Will install the collection to ./collections/ansible_collections/mynamespace/mycollection
+   ansible-galaxy install mynamespace-mycollection-0.1.0.tar.gz -p ./collections/ansible_collections
 
 .. note::
-    The install command will automatically append the path ``ansible_collection`` to the one specified unless the
+    The install command will automatically append the path ``ansible_collections`` to the one specified unless the
     parent directory is already in a folder called ``ansible_collections``.
 
 
 As a path you should use one of the values configured in :ref:`COLLECTIONS_PATHS`. This is also where Ansible itself will expect to find collections when attempting to use them.
 
-You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collection/`` directory structure.
+You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure.
 
 ::
 
     play.yml
     ├── collections/
-    │   └── ansbile_collection/
+    │   └── ansbile_collections/
     │               └── myname/
     │                   └── mycol/<collection structure lives here>
 
@@ -288,8 +288,8 @@ You can also setup a ``requirements.yml`` file to install multiple collections i
 
    # With the collection name, version, and source options
    - name: namespace.collection
-     version: version range identifiers (default: ``*``)
-     source: The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)
+     version: 'version range identifiers (default: ``*``)'
+     source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
 The ``version`` key can take in the same range identifier format documented above.
 
