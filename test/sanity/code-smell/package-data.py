@@ -27,7 +27,7 @@ def main():
                     if fnmatch.fnmatch(path, ignore):
                         add = False
                 if add:
-                    non_py_files.append(path[12:])
+                    non_py_files.append(os.path.relpath(path, 'lib/ansible'))
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         stdout, _dummy = subprocess.Popen(
@@ -41,7 +41,7 @@ def main():
         for filename in non_py_files:
             path = os.path.join(match.group(1), filename)
             if not os.path.exists(path):
-                print('lib/ansible/%s: File not installed' % filename)
+                print('%s: File not installed' % os.path.join('lib', 'ansible', filename))
 
 
 if __name__ == '__main__':
