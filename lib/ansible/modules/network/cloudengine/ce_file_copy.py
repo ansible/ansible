@@ -188,8 +188,7 @@ def get_cli_exception(exc=None):
             if err[-1] == ".":
                 err = err[:-1]
             if err.replace(" ", "") == "":
-                continue
-            msg.append(err)
+                continue3)
     else:
         msg = ["Error: Fail to get cli exception message."]
 
@@ -344,11 +343,11 @@ class FileCopy(object):
         topo2 = root.find("sshs/sshServerEnable/scpIpv4Enable")
         topo3 = root.find("sshs/sshServerEnable/scpIpv6Enable")
         if topo1 is not None:
-            return str(topo1.tag).strip().lower() == 'enable'
-        elif self.is_ipv6 and topo3 is not None:
-            return str(topo3.tag).strip().lower() == 'enable'
+            return str(topo1.text).strip().lower() == 'enable'
+        elif self.host_is_ipv6 and topo3 is not None:
+            return str(topo3.text).strip().lower() == 'enable'
         elif topo2 is not None:
-            return str(topo2.tag).strip().lower() == 'enable'
+            return str(topo2.text).strip().lower() == 'enable'
         return False
 
     def work(self):
