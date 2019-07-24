@@ -76,7 +76,11 @@ options:
         point.
       - C(remounted) specifies that the device will be remounted for when you
         want to force a refresh on the mount itself (added in 2.9). This will
-        always return changed=true.
+        always return changed=true. If I(opts) is set, the options will be
+        applied to the remount, but will not change I(fstab).  Additionally,
+        if I(opts) is set, and the remount command fails, the module will
+        error to prevent unexpected mount changes.  Try using C(mounted)
+        instead to work around this issue.
     type: str
     required: true
     choices: [ absent, mounted, present, unmounted, remounted ]
@@ -137,6 +141,20 @@ EXAMPLES = r'''
   mount:
     path: /tmp/mnt-pnt
     state: unmounted
+
+- name: Remount a mounted volume
+  mount:
+    path: /tmp/mnt-pnt
+    state: remounted
+
+# The following will not save changes to fstab, and only be temporary until
+# a reboot, or until calling "state: unmounted" followed by "state: mounted"
+# on the same "path"
+- name: Remount a mounted volume with different options
+  mount:
+    path: /tmp
+    state: remounted
+    opts: exec
 
 - name: Mount and bind a volume
   mount:
