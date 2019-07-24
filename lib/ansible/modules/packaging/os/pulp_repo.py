@@ -48,13 +48,13 @@ options:
     type: bool
     default: 'no'
     version_added: "2.8"
-  ca_cert:
+  feed_ca_cert:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
         This can be the file content or the path to the file.
     type: str
     aliases: [ importer_ssl_ca_cert ]
-  client_cert:
+  feed_client_cert:
     description:
       - Certificate used as the client certificate when synchronizing the
         repository. This is used to communicate authentication information to
@@ -64,7 +64,7 @@ options:
         the file content or the path to the file.
     type: str
     aliases: [ importer_ssl_client_cert ]
-  client_key:
+  feed_client_key:
     description:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
         assuming it is not included in the certificate file itself. This can be
@@ -535,9 +535,9 @@ def main():
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
         generate_sqlite=dict(default=False, type='bool'),
-        ca_cert=dict(aliases=['importer_ssl_ca_cert']),
-        client_cert=dict(aliases=['importer_ssl_client_cert']),
-        client_key=dict(aliases=['importer_ssl_client_key']),
+        feed_ca_cert=dict(aliases=['importer_ssl_ca_cert']),
+        feed_client_cert=dict(aliases=['importer_ssl_client_cert']),
+        feed_client_key=dict(aliases=['importer_ssl_client_key']),
         name=dict(required=True, aliases=['repo']),
         proxy_host=dict(),
         proxy_port=dict(),
@@ -561,9 +561,9 @@ def main():
     add_export_distributor = module.params['add_export_distributor']
     feed = module.params['feed']
     generate_sqlite = module.params['generate_sqlite']
-    importer_ssl_ca_cert = module.params['ca_cert']
-    importer_ssl_client_cert = module.params['client_cert']
-    importer_ssl_client_key = module.params['client_key']
+    importer_ssl_ca_cert = module.params['feed_ca_cert']
+    importer_ssl_client_cert = module.params['feed_client_cert']
+    importer_ssl_client_key = module.params['feed_client_key']
     proxy_host = module.params['proxy_host']
     proxy_port = module.params['proxy_port']
     proxy_username = module.params['proxy_username']
