@@ -191,6 +191,65 @@ options:
       - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
     vars:
       - name: ansible_persistent_log_messages
+  terminal_initial_prompt:
+    type: list
+    description:
+      - A single regex pattern or a sequence of patterns to evaluate the expected
+        prompt at the time of initial login to the remote host.
+    ini:
+      - section: persistent_connection
+        key: terminal_initial_prompt
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_PROMPT
+    vars:
+      - name: ansible_terminal_initial_prompt
+    version_added: "2.9"
+  terminal_initial_answer:
+    type: list
+    description:
+      - The answer to reply with if the C(terminal_initial_prompt) is matched. The value can be a single answer
+        or a list of answer for multiple terminal_initial_prompt. In case the login menu has
+        multiple prompts the sequence of the prompt and excepted answer should be in same order and the value
+        of I(terminal_prompt_checkall) should be set to I(True) if all the values in C(terminal_initial_prompt) are
+        expected to be matched and set to I(False) if any one login prompt is to be matched.
+    ini:
+      - section: persistent_connection
+        key: terminal_initial_answer
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_ANSWER
+    vars:
+      - name: ansible_terminal_initial_answer
+    version_added: "2.9"
+  terminal_initial_prompt_checkall:
+    type: boolean
+    description:
+      - By default the value is set to I(False) and any one of the prompts mentioned in C(terminal_initial_prompt)
+        option is matched it won't check for other prompts. When set to I(True) it will check for all the prompts
+        mentioned in C(terminal_initial_prompt) option in the given order and all the prompts
+        should be received from remote host if not it will result in timeout.
+    default: False
+    ini:
+      - section: persistent_connection
+        key: terminal_inital_prompt_checkall
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_CHECKALL
+    vars:
+      - name: ansible_terminal_initial_prompt_checkall
+    version_added: "2.9"
+  terminal_inital_prompt_newline:
+    type: boolean
+    description:
+      - This boolean flag, that when set to I(True) will send newline in the response if any of values
+        in I(terminal_initial_prompt) is matched.
+    default: True
+    ini:
+      - section: persistent_connection
+        key: terminal_inital_prompt_newline
+    env:
+      - name: ANSIBLE_TERMINAL_INITIAL_PROMPT_NEWLINE
+    vars:
+      - name: ansible_terminal_initial_prompt_newline
+    version_added: "2.9"
 """
 
 import getpass
@@ -338,8 +397,12 @@ class Connection(NetworkConnectionBase):
 
             self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
 
-            self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
-                         newline=self._terminal.terminal_inital_prompt_newline)
+            terminal_initial_prompt = self.get_option('terminal_initial_prompt') or self._terminal.terminal_initial_prompt
+            terminal_initial_answer = self.get_option('terminal_initial_answer') or self._terminal.terminal_initial_answer
+            newline = self.get_option('terminal_inital_prompt_newline') or self._terminal.terminal_inital_prompt_newline
+            check_all = self.get_option('terminal_initial_prompt_checkall') or False
+
+            self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
             self.queue_message('vvvv', 'firing event: on_open_shell()')
             self._terminal.on_open_shell()
@@ -460,8 +523,10 @@ class Connection(NetworkConnectionBase):
             if prompt_len != answer_len:
                 raise AnsibleConnectionFailure("Number of prompts (%s) is not same as that of answers (%s)" % (prompt_len, answer_len))
         try:
-            self._history.append(command)
-            self._ssh_shell.sendall(b'%s\r' % command)
+            cmd = b'%s\r' % command
+            self._history.append(cmd)
+            self._ssh_shell.sendall(cmd)
+            self._log_messages('send command: %s' % cmd)
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
@@ -510,7 +575,8 @@ class Connection(NetworkConnectionBase):
             single_prompt = True
         if not isinstance(answer, list):
             answer = [answer]
-        prompts_regex = [re.compile(r, re.I) for r in prompts]
+        prompts_regex = [re.compile(to_bytes(r, errors='surrogate_or_strict'), re.I) for r in prompts]
+
         for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
