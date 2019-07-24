@@ -480,21 +480,17 @@ def main():
         module.warn("cascade=true is ignored when state=present")
 
     # Check mutual exclusive parameters:
-    if state == 'absent' and (truncate or newname or columns or tablespace or
-                              like or storage_params or unlogged or
-                              owner or including):
+    if state == 'absent' and (truncate or newname or columns or tablespace or like or storage_params or unlogged or owner or including):
         module.fail_json(msg="%s: state=absent is mutually exclusive with: "
                              "truncate, rename, columns, tablespace, "
                              "including, like, storage_params, unlogged, owner" % table)
 
-    if truncate and (newname or columns or like or unlogged or
-                     storage_params or owner or tablespace or including):
+    if truncate and (newname or columns or like or unlogged or storage_params or owner or tablespace or including):
         module.fail_json(msg="%s: truncate is mutually exclusive with: "
                              "rename, columns, like, unlogged, including, "
                              "storage_params, owner, tablespace" % table)
 
-    if newname and (columns or like or unlogged or
-                    storage_params or owner or tablespace or including):
+    if newname and (columns or like or unlogged or storage_params or owner or tablespace or including):
         module.fail_json(msg="%s: rename is mutually exclusive with: "
                              "columns, like, unlogged, including, "
                              "storage_params, owner, tablespace" % table)
