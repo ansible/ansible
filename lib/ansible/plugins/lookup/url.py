@@ -39,7 +39,7 @@ options:
   headers:
     description: HTTP request headers
     type: dictionary
-    default: None
+    default: {}
 """
 
 EXAMPLES = """
