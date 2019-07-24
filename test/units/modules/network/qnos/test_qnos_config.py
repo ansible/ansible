@@ -71,7 +71,7 @@ class TestQnosConfigModule(TestQnosModule):
         src = load_fixture('qnos_config_src.cfg')
         set_module_args(dict(src=src))
         self.conn.get_diff = MagicMock(return_value=self.cliconf_obj.get_diff(src, self.running_config))
-        commands = ['hostname foo', 'interface 0/1', 
+        commands = ['hostname foo', 'interface 0/1',
                     'no ip address', 'exit', 'interface 0/2', 'exit']
         self.execute_module(changed=True, commands=commands)
 
