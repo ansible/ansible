@@ -256,7 +256,12 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # we 'wrap' the passwords to prevent templating as
         # they can contain special chars and trigger it incorrectly
-        return (AnsibleUnsafeBytes(sshpass), AnsibleUnsafeBytes(becomepass))
+        if sshpass:
+            sshpass = AnsibleUnsafeBytes(sshpass)
+        if becomepass:
+            becomepass = AnsibleUnsafeBytes(becomepass)
+
+        return (sshpass, becomepass)
 
     def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
