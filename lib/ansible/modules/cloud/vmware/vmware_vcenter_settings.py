@@ -80,6 +80,10 @@ options:
             - '- C(server) (str): Mail server'
             - '- C(sender) (str): Mail sender address'
         type: dict
+        default: {
+            server: '',
+            sender: '',
+        }
     snmp_receivers:
         description:
             - SNMP trap destinations for vCenter server alerts.
@@ -153,7 +157,7 @@ EXAMPLES = r'''
       event_retention: 30
     runtime_settings:
       unique_id: 1
-      managed_address: "{{ ansible_default_ipv4.address }}"
+      managed_address: "{{ lookup('dig', inventory_hostname) }}"
       vcenter_server_name: "{{ inventory_hostname }}"
     user_directory:
       timeout: 60
