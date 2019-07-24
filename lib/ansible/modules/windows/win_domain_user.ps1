@@ -203,7 +203,7 @@ If ($state -eq 'present') {
         } elif ($update_password -eq "when_changed") {
             $set_new_credentials = -not (Test-Credential -Username $username -Password $password)
         } else {
-            $set_net_credentials = $false
+            $set_new_credentials = $false
         }
         If ($set_new_credentials) {
             $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
