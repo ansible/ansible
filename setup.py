@@ -270,7 +270,7 @@ static_setup_params = dict(
             'galaxy/data/*/.*',
             'galaxy/data/*/*/.*',
             'galaxy/data/*/*/*.*',
-            'galaxy/data/default/role/tests/inventory',
+            'galaxy/data/*/role/tests/inventory',
             'config/base.yml',
             'config/module_defaults.yml',
         ],
