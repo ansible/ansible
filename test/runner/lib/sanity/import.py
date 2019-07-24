@@ -110,6 +110,22 @@ class ImportTest(SanityMultipleVersion):
 
             os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/module_utils'), ansible_link)
 
+            if data_context().content.collection:
+                # inject just enough Ansible code for the collections loader to work on all supported Python versions
+                # the __init__.py files are needed only for Python 2.x
+                # the empty modules directory is required due to a bug in Ansible
+
+                make_dirs(os.path.join(ansible_path, 'utils'))
+                with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
+                    pass
+
+                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/collection_loader.py'), os.path.join(ansible_path, 'utils/collection_loader.py'))
+                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/singleton.py'), os.path.join(ansible_path, 'utils/singleton.py'))
+
+                make_dirs(os.path.join(ansible_path, 'modules'))
+                with open(os.path.join(ansible_path, 'modules/__init__.py'), 'w'):
+                    pass
+
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
         env['PYTHONPATH'] = python_path
