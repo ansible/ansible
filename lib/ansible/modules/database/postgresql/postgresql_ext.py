@@ -174,7 +174,6 @@ from ansible.module_utils.postgres import (
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_native
-from ansible.module_utils.database import pg_quote_identifier
 
 executed_queries = []
 

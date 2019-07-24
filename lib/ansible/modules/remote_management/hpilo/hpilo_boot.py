@@ -71,7 +71,7 @@ options:
     choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
     version_added: '2.4'
 requirements:
-- hpilo
+- python-hpilo
 notes:
 - To use a USB key image you need to specify floppy as boot media.
 - This module ought to be run from a system that can access the HP iLO

@@ -496,14 +496,13 @@ def test_collection_default(collection_skeleton):
     assert metadata['readme'] == 'README.md'
     assert metadata['version'] == '1.0.0'
     assert metadata['description'] == 'your description'
-    assert metadata['license'] == 'GPL-2.0-or-later'
+    assert metadata['license'] == ['GPL-2.0-or-later']
     assert metadata['tags'] == []
     assert metadata['dependencies'] == {}
     assert metadata['documentation'] == 'http://docs.example.com'
     assert metadata['repository'] == 'http://example.com/repository'
     assert metadata['homepage'] == 'http://example.com'
     assert metadata['issues'] == 'http://example.com/issue/tracker'
-    assert len(metadata) == 13
 
     for d in ['docs', 'plugins', 'roles']:
         assert os.path.isdir(os.path.join(collection_skeleton, d)), \

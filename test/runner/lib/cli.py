@@ -21,7 +21,6 @@ from lib.util import (
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
-    INSTALL_ROOT,
 )
 
 from lib.delegation import (
@@ -81,17 +80,25 @@ from lib.cloud import (
     initialize_cloud_plugins,
 )
 
+from lib.data import (
+    data_context,
+)
+
+from lib.util_common import (
+    CommonConfig,
+)
+
 import lib.cover
 
 
 def main():
     """Main program function."""
     try:
-        os.chdir(INSTALL_ROOT)
+        os.chdir(data_context().content.root)
         initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
-        config = args.config(args)
+        config = args.config(args)  # type: CommonConfig
         display.verbosity = config.verbosity
         display.truncate = config.truncate
         display.redact = config.redact
@@ -106,8 +113,13 @@ def main():
 
         try:
             args.func(config)
+            delegate_args = None
         except Delegate as ex:
-            delegate(config, ex.exclude, ex.require, ex.integration_targets)
+            # save delegation args for use once we exit the exception handler
+            delegate_args = (ex.exclude, ex.require, ex.integration_targets)
+
+        if delegate_args:
+            delegate(config, *delegate_args)
 
         display.review_warnings()
     except ApplicationWarning as ex:
@@ -614,24 +626,30 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from the local environment')
 
-    if tox_version:
-        environments.add_argument('--tox',
-                                  metavar='VERSION',
-                                  nargs='?',
-                                  default=None,
-                                  const='.'.join(str(i) for i in sys.version_info[:2]),
-                                  choices=SUPPORTED_PYTHON_VERSIONS,
-                                  help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+    if data_context().content.is_ansible:
+        if tox_version:
+            environments.add_argument('--tox',
+                                      metavar='VERSION',
+                                      nargs='?',
+                                      default=None,
+                                      const='.'.join(str(i) for i in sys.version_info[:2]),
+                                      choices=SUPPORTED_PYTHON_VERSIONS,
+                                      help='run from a tox virtualenv: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
+        else:
+            environments.add_argument('--tox',
+                                      action='store_true',
+                                      help='run from a tox virtualenv')
+
+        tox = parser.add_argument_group(title='tox arguments')
+
+        tox.add_argument('--tox-sitepackages',
+                         action='store_true',
+                         help='allow access to globally installed packages')
     else:
-        environments.add_argument('--tox',
-                                  action='store_true',
-                                  help='run from a tox virtualenv')
-
-    tox = parser.add_argument_group(title='tox arguments')
-
-    tox.add_argument('--tox-sitepackages',
-                     action='store_true',
-                     help='allow access to globally installed packages')
+        environments.set_defaults(
+            tox=None,
+            tox_sitepackages=False,
+        )
 
     if tox_only:
         environments.set_defaults(
@@ -739,9 +757,14 @@ def add_extra_docker_options(parser, integration=True):
                         dest='docker_pull',
                         help='do not explicitly pull the latest docker images')
 
-    docker.add_argument('--docker-keep-git',
-                        action='store_true',
-                        help='transfer git related files into the docker container')
+    if data_context().content.is_ansible:
+        docker.add_argument('--docker-keep-git',
+                            action='store_true',
+                            help='transfer git related files into the docker container')
+    else:
+        docker.set_defaults(
+            docker_keep_git=False,
+        )
 
     docker.add_argument('--docker-seccomp',
                         metavar='SC',
@@ -848,10 +871,10 @@ def complete_network_testcase(prefix, parsed_args, **_):
         return []
 
     test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
-    connection_dirs = [path for path in [os.path.join(test_dir, name) for name in os.listdir(test_dir)] if os.path.isdir(path)]
+    connection_dirs = data_context().content.get_dirs(test_dir)
 
     for connection_dir in connection_dirs:
-        for testcase in os.listdir(connection_dir):
+        for testcase in [os.path.basename(path) for path in data_context().content.get_files(connection_dir)]:
             if testcase.startswith(prefix):
                 testcases.append(testcase.split('.')[0])
 

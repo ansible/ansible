@@ -19,7 +19,7 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
+ * ``hash_behaviour`` now affects inventory sources. If you have it set to ``merge``, the data you get from inventory might change and you will have to update playbooks accordingly. If you're using the default setting (``overwrite``), you will see no changes. Inventory was ignoring this setting.
 
 
 Command Line
@@ -37,7 +37,7 @@ No notable changes
 Modules
 =======
 
-No notable changes
+* The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
 
 
 Modules removed
@@ -60,7 +60,9 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-No notable changes
+The following modules will be removed in Ansible 2.13. Please update update your playbooks accordingly.
+
+* nxos_linkagg use :ref:`nxos_lag_interfaces <nxos_lag_interfaces_module>` instead.
 
 
 Noteworthy module changes
@@ -68,7 +70,8 @@ Noteworthy module changes
 
 * `vmware_dvswitch <vmware_dvswitch_module>` accepts `folder` parameter to place dvswitch in user defined folder. This option makes `datacenter` as an optional parameter.
 * `vmware_datastore_cluster <vmware_datastore_cluster_module>` accepts `folder` parameter to place datastore cluster in user defined folder. This option makes `datacenter` as an optional parameter.
-
+* `mysql_db <mysql_db_module>` returns new `db_list` parameter in addition to `db` parameter. This `db_list` parameter refers to list of database names. `db` parameter will be deprecated in version `2.13`.
+* `snow_record <snow_record_module>` and `snow_record_find <snow_record_find_module>` now takes environment variables for `instance`, `username` and `password` parameters. This change marks these parameters as optional.
 * The ``python_requirements_facts`` module was renamed to :ref:`python_requirements_info <python_requirements_info_module>`.
 * The ``jenkins_job_facts`` module was renamed to :ref:`jenkins_job_info <jenkins_job_info_module>`.
 * The ``intersight_facts`` module was renamed to :ref:`intersight_info <intersight_info_module>`.
@@ -139,6 +142,7 @@ Noteworthy module changes
 * The ``rds_snapshot_facts`` module was renamed to :ref:`rds_snapshot_info <rds_snapshot_info_module>`.
 * The ``redshift_facts`` module was renamed to :ref:`redshift_info <redshift_info_module>`.
 * The ``route53_facts`` module was renamed to :ref:`route53_info <route53_info_module>`.
+* The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
 
 
 Plugins

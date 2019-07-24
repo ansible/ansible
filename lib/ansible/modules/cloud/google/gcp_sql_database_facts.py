@@ -44,6 +44,7 @@ options:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

@@ -44,6 +44,7 @@ options:
     description:
     - The location where the cluster is deployed.
     required: true
+    type: str
     aliases:
     - region
     - zone

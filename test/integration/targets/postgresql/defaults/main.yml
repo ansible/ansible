@@ -12,7 +12,7 @@ db_session_role2: 'session_role2'
 
 pg_hba_test_ips:
 - contype: local
-  users: 'all,postgres'
+  users: 'all,postgres,test'
 - source: '0000:ffff::'
   netmask: 'ffff:fff0::'
 - source: '192.168.0.0/24'

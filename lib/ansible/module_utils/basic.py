@@ -694,7 +694,7 @@ class AnsibleModule(object):
         self._set_cwd()
 
         # Do this at the end so that logging parameters have been set up
-        # This is to warn third party module authors that the functionatlity is going away.
+        # This is to warn third party module authors that the functionality is going away.
         # We exclude uri and zfs as they have their own deprecation warnings for users and we'll
         # make sure to update their code to stop using check_invalid_arguments when 2.9 rolls around
         if module_set_check_invalid_arguments and self._name not in ('uri', 'zfs'):
@@ -1413,14 +1413,17 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
                            to_native(e), exception=traceback.format_exc())
 
-    def _handle_aliases(self, spec=None, param=None):
+    def _handle_aliases(self, spec=None, param=None, option_prefix=''):
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
 
         # this uses exceptions as it happens before we can safely call fail_json
-        alias_results, self._legal_inputs = handle_aliases(spec, param)
+        alias_warnings = []
+        alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
+        for option, alias in alias_warnings:
+            self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1665,7 +1668,7 @@ class AnsibleModule(object):
     def _check_type_bits(self, value):
         return check_type_bits(value)
 
-    def _handle_options(self, argument_spec=None, params=None):
+    def _handle_options(self, argument_spec=None, params=None, prefix=''):
         ''' deal with options to create sub spec '''
         if argument_spec is None:
             argument_spec = self.argument_spec
@@ -1692,12 +1695,17 @@ class AnsibleModule(object):
                 else:
                     elements = params[k]
 
-                for param in elements:
+                for idx, param in enumerate(elements):
                     if not isinstance(param, dict):
                         self.fail_json(msg="value of %s must be of type dict or list of dict" % k)
 
+                    new_prefix = prefix + k
+                    if wanted == 'list':
+                        new_prefix += '[%d]' % idx
+                    new_prefix += '.'
+
                     self._set_fallbacks(spec, param)
-                    options_aliases = self._handle_aliases(spec, param)
+                    options_aliases = self._handle_aliases(spec, param, option_prefix=new_prefix)
 
                     self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
@@ -1723,7 +1731,7 @@ class AnsibleModule(object):
                     self._set_defaults(pre=False, spec=spec, param=param)
 
                     # handle multi level options (sub argspec)
-                    self._handle_options(spec, param)
+                    self._handle_options(spec, param, new_prefix)
                 self._options_context.pop()
 
     def _get_wanted_type(self, wanted, k):

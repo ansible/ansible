@@ -801,10 +801,10 @@ class Nmcli(object):
             cmd.append(self.conn_name)
 
         options = {
-            'ipv4.address': self.ip4,
-            'ipv4.gateway': self.gw4,
-            'ipv6.address': self.ip6,
-            'ipv6.gateway': self.gw6,
+            'ip4': self.ip4,
+            'gw4': self.gw4,
+            'ip6': self.ip6,
+            'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
@@ -877,10 +877,10 @@ class Nmcli(object):
             cmd.append(self.conn_name)
         options = {
             'mode': self.mode,
-            'ipv4.address': self.ip4,
-            'ipv4.gateway': self.gw4,
-            'ipv6.address': self.ip6,
-            'ipv6.gateway': self.gw6,
+            'ip4': self.ip4,
+            'gw4': self.gw4,
+            'ip6': self.ip6,
+            'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
@@ -970,10 +970,10 @@ class Nmcli(object):
             cmd.append(self.conn_name)
 
         options = {
-            'ipv4.address': self.ip4,
-            'ipv4.gateway': self.gw4,
-            'ipv6.address': self.ip6,
-            'ipv6.gateway': self.gw6,
+            'ip4': self.ip4,
+            'gw4': self.gw4,
+            'ip6': self.ip6,
+            'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
@@ -991,7 +991,7 @@ class Nmcli(object):
         # format for modifying ethernet interface
         # To modify an Ethernet connection with static IP configuration, issue a command as follows
         # - nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
-        # nmcli con mod con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
+        # nmcli con mod con-name my-eth1 ifname eth1 type ethernet ipv4.address 192.0.2.100/24 ipv4.gateway 192.0.2.1
         options = {
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
@@ -1059,10 +1059,10 @@ class Nmcli(object):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
 
         options = {
-            'ip4': self.ip4,
-            'gw4': self.gw4,
-            'ip6': self.ip6,
-            'gw6': self.gw6,
+            'ipv4.address': self.ip4,
+            'ipv4.gateway': self.gw4,
+            'ipv6.address': self.ip6,
+            'ipv6.gateway': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'bridge.ageing-time': self.ageingtime,
             'bridge.forward-delay': self.forwarddelay,

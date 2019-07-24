@@ -330,7 +330,7 @@ class ElementSWClusterSnmp(object):
                         result_message = "SNMP is enabled and configured"
 
                     elif update_required is True:
-                        # If snmp is already enabled, update the configuraiton if required
+                        # If snmp is already enabled, update the configuration if required
                         self.configure_snmp(networks, usm_users)
                         result_message = "SNMP is configured"
 

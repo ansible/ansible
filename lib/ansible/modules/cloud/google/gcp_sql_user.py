@@ -47,16 +47,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   host:
     description:
     - The host name from which the user can connect. For insert operations, host defaults
       to an empty string. For update operations, host is specified as part of the
       request URL. The host name cannot be updated after insertion.
     required: true
+    type: str
   name:
     description:
     - The name of the user in the Cloud SQL instance.
     required: true
+    type: str
   instance:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
@@ -66,10 +69,12 @@ options:
       to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   password:
     description:
     - The password for the user.
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 

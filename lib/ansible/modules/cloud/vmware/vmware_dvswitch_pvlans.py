@@ -48,7 +48,7 @@ options:
     secondary_pvlans:
         description:
             - A list of VLAN IDs that should be configured as Secondary PVLANs.
-            - 'C(primary_pvlans) need to be specified to create any Secodary PVLAN.'
+            - 'C(primary_pvlans) need to be specified to create any Secondary PVLAN.'
             - If C(primary_pvlans) isn't specified, all PVLANs will be deleted if present.
             - Each member of the list requires primary_pvlan_id (int), secondary_pvlan_id (int), and pvlan_type (str) to be set.
             - The type of the secondary PVLAN can be isolated or community. The secondary promiscuous PVLAN will be created automatically.
