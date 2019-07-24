@@ -207,7 +207,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_version'] = match.group(1).strip(',')
 
-        model_search_strs = [r'^Cisco (.+) \(revision', r'^[Cc]isco (\S+).+bytes of .*memory']
+        model_search_strs = [r'^[Cc]isco (.+) \(revision', r'^[Cc]isco (\S+).+bytes of .*memory']
         for item in model_search_strs:
             match = re.search(item, data, re.M)
             if match:
