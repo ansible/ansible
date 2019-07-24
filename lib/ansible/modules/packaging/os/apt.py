@@ -168,7 +168,7 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   apt:
-    packages:
+    pkg:
     - foo
     - foo-tools
 
