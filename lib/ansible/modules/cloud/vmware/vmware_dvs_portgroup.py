@@ -61,6 +61,7 @@ options:
             - If set to true, the the distributed vSwitch will ignore the limit on the c(num_ports) in the portgroup.
         default: True
         version_added: '2.9'
+        type: bool
     portgroup_type:
         description:
             - See VMware KB 1022312 regarding portgroup types.
