@@ -23,6 +23,7 @@ from lib.util import (
     load_plugins,
     ABC,
     to_bytes,
+    make_dirs,
 )
 
 from lib.target import (
@@ -161,6 +162,8 @@ def cloud_init(args, targets):
         data = dict(
             clouds=results,
         )
+
+        make_dirs(os.path.dirname(results_path))
 
         with open(results_path, 'w') as results_fd:
             results_fd.write(json.dumps(data, sort_keys=True, indent=4))
