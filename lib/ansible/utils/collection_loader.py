@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import os.path
 import pkgutil
 import re
@@ -11,7 +12,6 @@ import sys
 
 from types import ModuleType
 
-from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.utils.singleton import Singleton
@@ -36,8 +36,11 @@ _collection_qualified_re = re.compile(to_text(r'^(\w+)\.(\w+)\.(\w+)$'))
 
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
-    def __init__(self):
-        self._n_configured_paths = C.config.get_config_value('COLLECTIONS_PATHS')
+    def __init__(self, config=None):
+        if config:
+            self._n_configured_paths = config.get_config_value('COLLECTIONS_PATHS')
+        else:
+            self._n_configured_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
 
         if isinstance(self._n_configured_paths, string_types):
             self._n_configured_paths = [self._n_configured_paths]

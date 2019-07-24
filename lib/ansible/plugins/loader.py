@@ -818,7 +818,7 @@ def _load_plugin_filter():
 
 def _configure_collection_loader():
     if not any((isinstance(l, AnsibleCollectionLoader) for l in sys.meta_path)):
-        sys.meta_path.insert(0, AnsibleCollectionLoader())
+        sys.meta_path.insert(0, AnsibleCollectionLoader(C.config))
 
 
 # TODO: All of the following is initialization code   It should be moved inside of an initialization
