@@ -381,7 +381,7 @@ lib/ansible/modules/cloud/azure/azure_rm_aks_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_aks.py E337
 lib/ansible/modules/cloud/azure/azure_rm_aksversion_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_appgateway.py E337
-lib/ansible/modules/cloud/azure/azure_rm_applicationsecuritygroup_facts.py E337
+lib/ansible/modules/cloud/azure/azure_rm_applicationsecuritygroup_info.py E337
 lib/ansible/modules/cloud/azure/azure_rm_applicationsecuritygroup.py E337
 lib/ansible/modules/cloud/azure/azure_rm_appserviceplan_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_appserviceplan.py E337
@@ -524,10 +524,10 @@ lib/ansible/modules/cloud/azure/azure_rm_virtualmachinescaleset.py E337
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork_facts.py E337
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkgateway.py E337
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkgateway.py E338
-lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkpeering_facts.py E337
+lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkpeering_info.py E337
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetworkpeering.py E337
 lib/ansible/modules/cloud/azure/azure_rm_virtualnetwork.py E337
-lib/ansible/modules/cloud/azure/azure_rm_webapp_facts.py E337
+lib/ansible/modules/cloud/azure/azure_rm_webapp_info.py E337
 lib/ansible/modules/cloud/azure/azure_rm_webapp.py E337
 lib/ansible/modules/cloud/azure/azure_rm_webappslot.py E337
 lib/ansible/modules/cloud/centurylink/clc_aa_policy.py E335
