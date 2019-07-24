@@ -422,7 +422,10 @@ def remount(module, args):
     if get_platform().lower().endswith('bsd'):
         cmd += ['-u']
     else:
-        cmd += ['-o', 'remount']
+        if args['opts'] != 'defaults':
+            cmd += ['-o', 'remount,' + args['opts']]
+        else:
+            cmd += ['-o', 'remount']
 
     if get_platform().lower() == 'openbsd':
         # Use module.params['fstab'] here as args['fstab'] has been set to the
