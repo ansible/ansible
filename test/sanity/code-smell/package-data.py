@@ -21,7 +21,7 @@ def main():
     for root, _dummy, files in os.walk('lib/ansible/'):
         for filename in files:
             path = os.path.join(root, filename)
-            if os.path.splitext(path)[-1] not in ('.py', '.pyc', '.pyo'):
+            if os.path.splitext(path)[1] not in ('.py', '.pyc', '.pyo'):
                 add = True
                 for ignore in ignore_files:
                     if fnmatch.fnmatch(path, ignore):
