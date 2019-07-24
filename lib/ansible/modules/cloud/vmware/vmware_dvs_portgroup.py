@@ -186,7 +186,7 @@ options:
             - '- C(value) (str): Value of setting. (default: None)'
         required: False
         version_added: '2.9'
-        type: dict
+        type: list
 
 extends_documentation_fragment: vmware.documentation
 '''
