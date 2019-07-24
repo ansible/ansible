@@ -60,7 +60,7 @@ options:
                     - Windows web apps support C(java), C(net_framework), C(php), C(python), and C(node).
                     - Windows web apps support multiple framework at the same time.
                     - Linux web apps support C(java), C(ruby), C(php), C(dotnetcore), and C(node).
-                    - Linux web apps support only on framework.
+                    - Linux web apps support only one framework.
                     - Java framework is mutually exclusive with others.
                 choices:
                     - java
@@ -150,7 +150,7 @@ options:
 
     skip_custom_domain_verification:
         description:
-            - Whether or not custom (non *.azurewebsites.net) domains associated with web app are not verified. Set to C(true) to skip.
+            - Whether or not to skip verification of custom (non *.azurewebsites.net) domains associated with web app. Set to C(true) to skip.
         type: bool
 
     ttl_in_seconds:
