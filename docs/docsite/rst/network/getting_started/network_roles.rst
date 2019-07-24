@@ -270,7 +270,7 @@ For example, to use the ``config_manager`` role with Cisco IOS devices, you woul
 
 .. code-block:: bash
 
-   [user@ansible]$ ansible-galaxy install ansible-network.cisco_nxos
+   [user@ansible]$ ansible-galaxy install ansible-network.cisco_ios
    [user@ansible]$ ansible-galaxy install ansible-network.config_manager
 
 Roles are fully documented with examples in Ansible Galaxy on the **Read Me** tab for each role.
