@@ -48,6 +48,7 @@ options:
     description:
     - status of if NFSv4 clients see change in FSID as they traverse filesystems.
     choices: ['enabled', 'disabled']
+    version_added: '2.9'
   nfsv4:
     description:
     - status of NFSv4.
@@ -61,10 +62,12 @@ options:
     description:
     - status of NFSv41 pNFS.
     choices: ['enabled', 'disabled']
+    version_added: '2.9'
   nfsv4_numeric_ids:
     description:
     - status of NFSv4 numeric ID's.
     choices: ['enabled', 'disabled']
+    version_added: '2.9'
   vstorage_state:
     description:
     - status of vstorage_state.
@@ -106,10 +109,12 @@ options:
     description:
     - status for NFS v4.0 referrals.
     choices: ['enabled', 'disabled']
+    version_added: '2.9'
   nfsv41_referrals:
     description:
     - status for NFS v4.1 referrals.
     choices: ['enabled', 'disabled']
+    version_added: '2.9'
   tcp:
     description:
     - Enable TCP (support from ONTAP 9.3 onward).
