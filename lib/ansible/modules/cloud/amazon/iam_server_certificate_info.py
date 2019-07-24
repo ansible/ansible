@@ -16,7 +16,7 @@ module: iam_server_certificate_info
 short_description: Retrieve the facts of a server certificate either based on name or path
 description:
   - Retrieve the attributes of a server certificate
-version_added: "2.9"
+version_added: "2.2"
 author: "Vijayanand (@vijayanandsharma)"
 requirements: [boto3, botocore]
 options:
@@ -30,7 +30,7 @@ options:
       - The path to the server certificate you are retrieving attributes for. This argument is mutually exclusive with I(name)
     type: str
     required: false
-    version_added: '2.7'
+    version_added: '2.9'
 extends_documentation_fragment:
     - aws
     - ec2
