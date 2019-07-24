@@ -188,6 +188,10 @@ def command_coverage_combine(args):
 
         for filename in arc_data:
             if not os.path.isfile(filename):
+                if collection_search_re and collection_search_re.search(filename) and os.path.basename(filename) == '__init__.py':
+                    # the collection loader uses implicit namespace packages, so __init__.py does not need to exist on disk
+                    continue
+
                 invalid_path_count += 1
                 invalid_path_chars += len(filename)
 
