@@ -113,7 +113,7 @@ class ImportTest(SanityMultipleVersion):
             if data_context().content.collection:
                 # inject just enough Ansible code for the collections loader to work on all supported Python versions
                 # the __init__.py files are needed only for Python 2.x
-                # the empty modules directory is required due to a bug in Ansible
+                # the empty modules directory is required for the collection loader to generate the synthetic packages list
 
                 make_dirs(os.path.join(ansible_path, 'utils'))
                 with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
