@@ -55,7 +55,7 @@ def main():
     messages = set()
 
     if AnsibleCollectionLoader:
-        # allow unit tests to import code from collections
+        # allow importing code from collections
         sys.meta_path.insert(0, AnsibleCollectionLoader())
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
