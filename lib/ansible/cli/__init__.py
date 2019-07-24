@@ -42,6 +42,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 from ansible.utils.vars import load_extra_vars, load_options_vars
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes
 from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 
@@ -335,6 +336,13 @@ class CLI(with_metaclass(ABCMeta, object)):
                     becomepass = to_bytes(becomepass)
         except EOFError:
             pass
+
+        # we 'wrap' the passwords to prevent templating as
+        # they can contain special chars and trigger it incorrectly
+        if sshpass:
+            sshpass = AnsibleUnsafeBytes(sshpass)
+        if becomepass:
+            becomepass = AnsibleUnsafeBytes(becomepass)
 
         return (sshpass, becomepass)
 
