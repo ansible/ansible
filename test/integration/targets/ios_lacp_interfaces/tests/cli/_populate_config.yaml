@@ -4,7 +4,7 @@
     config: "{{ lines }}"
   vars:
     lines: |
-      - interface GigabitEthernet 0/1
-      - lacp port-priority 30
-      - interface GigabitEthernet 0/2
-      - lacp port-priority 20
+      interface GigabitEthernet 0/1
+      lacp port-priority 30
+      interface GigabitEthernet 0/2
+      lacp port-priority 20

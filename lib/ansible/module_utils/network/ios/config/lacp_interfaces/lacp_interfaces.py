@@ -100,21 +100,17 @@ class Lacp_Interfaces(ConfigBase):
         """
         state = self._module.params['state']
         if state == 'overridden':
-            kwargs = {'want': want, 'have': have}
-            commands = self._state_overridden(**kwargs)
+            commands = self._state_overridden(want, have)
         elif state == 'deleted':
-            kwargs = {'want': want, 'have': have}
-            commands = self._state_deleted(**kwargs)
+            commands = self._state_deleted(want, have)
         elif state == 'merged':
-            kwargs = {'want': want, 'have': have}
-            commands = self._state_merged(**kwargs)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
-            kwargs = {'want': want, 'have': have}
-            commands = self._state_replaced(**kwargs)
+            commands = self._state_replaced(want, have)
         return commands
 
     @staticmethod
-    def _state_replaced(**kwargs):
+    def _state_replaced(want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
@@ -122,8 +118,6 @@ class Lacp_Interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
 
         for interface in want:
             for each in have:
@@ -137,7 +131,7 @@ class Lacp_Interfaces(ConfigBase):
         return commands
 
     @staticmethod
-    def _state_overridden(**kwargs):
+    def _state_overridden(want, have):
         """ The command generator when state is overridden
 
         :rtype: A list
@@ -145,8 +139,6 @@ class Lacp_Interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
 
         for each in have:
             for interface in want:
@@ -165,7 +157,7 @@ class Lacp_Interfaces(ConfigBase):
         return commands
 
     @staticmethod
-    def _state_merged(**kwargs):
+    def _state_merged(want, have):
         """ The command generator when state is merged
 
         :rtype: A list
@@ -173,8 +165,6 @@ class Lacp_Interfaces(ConfigBase):
                   the current configuration
         """
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
 
         for interface in want:
             for each in have:
@@ -188,7 +178,7 @@ class Lacp_Interfaces(ConfigBase):
         return commands
 
     @staticmethod
-    def _state_deleted(**kwargs):
+    def _state_deleted(want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -196,8 +186,6 @@ class Lacp_Interfaces(ConfigBase):
                   of the provided objects
         """
         commands = []
-        want = kwargs['want']
-        have = kwargs['have']
 
         if want:
             for interface in want:

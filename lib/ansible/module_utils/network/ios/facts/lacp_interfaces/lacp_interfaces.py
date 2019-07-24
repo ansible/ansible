@@ -64,9 +64,7 @@ class Lacp_InterfacesFacts(object):
 
         if objs:
             facts['lacp_interfaces'] = []
-            # params = utils.validate_config(self.argument_spec, {'config': objs})
-
-            params = {'config': objs}
+            params = utils.validate_config(self.argument_spec, {'config': objs})
 
             for cfg in params['config']:
                 facts['lacp_interfaces'].append(cfg)

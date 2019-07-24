@@ -1,3 +1,4 @@
+#
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
@@ -96,7 +97,7 @@ EXAMPLES = """
 #  shutdown
 #  lacp port-priority 30
 
-- name: Delete LACP attributes of given interfaces (Note: This won't delete the interface itself)
+- name: "Delete LACP attributes of given interfaces (Note: This won't delete the interface itself)"
   ios_lacp_interfaces:
     config:
       - name: GigabitEthernet0/1
@@ -295,12 +296,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
@@ -308,7 +311,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['interface GigabitEthernet 0/1', 'lacp port-priority 30']
 """
 
 
