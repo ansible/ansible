@@ -37,8 +37,7 @@ def main():
             universal_newlines=True,
         )
         stdout, stderr = p.communicate()
-
-        match = re.search('^creating (%s/.+/site-packages/ansible)$' % tmp_dir, stdout, flags=re.M)
+        match = re.search('^creating (%s/.*?/(?:site|dist)-packages/ansible)$' % tmp_dir, stdout, flags=re.M)
 
         for filename in non_py_files:
             path = os.path.join(match.group(1), filename)
