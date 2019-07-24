@@ -36,19 +36,19 @@ requirements:
 options:
   capabilities:
     description:
-    - Gather facts about general capabilities (Auto negotioation, Wake On LAN, and Network I/O Control).
+    - Gather facts about general capabilities (Auto negotiation, Wake On LAN, and Network I/O Control).
     type: bool
     default: false
     version_added: 2.8
   directpath_io:
     description:
-    - Gather facts about DirectPath I/O capabilites and configuration.
+    - Gather facts about DirectPath I/O capabilities and configuration.
     type: bool
     default: false
     version_added: 2.8
   sriov:
     description:
-    - Gather facts about SR-IOV capabilites and configuration.
+    - Gather facts about SR-IOV capabilities and configuration.
     type: bool
     default: false
     version_added: 2.8

@@ -33,17 +33,20 @@ options:
     - Name of the cluster.
     - Settings are applied to every ESXi host in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Settings are applied to this ESXi host.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
   options:
     description:
     - A dictionary of advanced system settings.
     - Invalid options will cause module to error.
     - Note that the list of advanced options (with description and values) can be found by running `vim-cmd hostsvc/advopt/options`.
     default: {}
+    type: dict
 extends_documentation_fragment: vmware.documentation
 '''
 

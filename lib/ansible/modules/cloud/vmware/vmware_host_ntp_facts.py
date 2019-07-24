@@ -33,11 +33,13 @@ options:
     - Name of the cluster.
     - NTP config facts about each ESXi server will be returned for the given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - NTP config facts about this ESXi server will be returned.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -60,6 +60,7 @@ options:
       - The name of the port group for the VMKernel interface.
       required: True
       aliases: ['portgroup']
+      type: str
     network:
       description:
       - A dictionary of network details.
@@ -83,21 +84,25 @@ options:
       - The IP Address for the VMKernel interface.
       - Use C(network) parameter with C(ip_address) instead.
       - Deprecated option, will be removed in version 2.9.
+      type: str
     subnet_mask:
       description:
       - The Subnet Mask for the VMKernel interface.
       - Use C(network) parameter with C(subnet_mask) instead.
       - Deprecated option, will be removed in version 2.9.
+      type: str
     mtu:
       description:
       - The MTU for the VMKernel interface.
       - The default value of 1500 is valid from version 2.5 and onwards.
       default: 1500
+      type: int
     device:
       description:
       - Search VMkernel adapter by device name.
       - The parameter is required only in case of C(type) is set to C(dhcp).
       version_added: 2.8
+      type: str
     enable_vsan:
       description:
       - Enable VSAN traffic on the VMKernel adapter.
@@ -145,12 +150,14 @@ options:
       choices: [ present, absent ]
       default: present
       version_added: 2.5
+      type: str
     esxi_hostname:
       description:
       - Name of ESXi host to which VMKernel is to be managed.
       - "From version 2.5 onwards, this parameter is required."
       required: True
       version_added: 2.5
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -33,10 +33,12 @@ options:
         description:
             - Name of the existing virtual machine to move.
             - This is required if C(uuid) or C(moid) is not supplied.
+        type: str
    uuid:
         description:
             - UUID of the virtual machine to manage if known, this is VMware's unique identifier.
             - This is required if C(name) or C(moid) is not supplied.
+        type: str
    moid:
         description:
             - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -54,6 +56,7 @@ options:
             - If multiple virtual machines matching the name, use the first or last found.
         default: 'first'
         choices: [ first, last ]
+        type: str
    dest_folder:
         description:
             - Absolute path to move an existing guest
@@ -70,10 +73,12 @@ options:
             - '   dest_folder: folder1/datacenter1/vm'
             - '   dest_folder: /folder1/datacenter1/vm/folder2'
         required: True
+        type: str
    datacenter:
         description:
             - Destination datacenter for the move operation
         required: True
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

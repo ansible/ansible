@@ -37,17 +37,21 @@ options:
     description:
     - The role to be assigned permission.
     required: True
+    type: str
   principal:
     description:
     - The user to be assigned permission.
     - Required if C(group) is not specified.
+    type: str
   group:
     description:
     - The group to be assigned permission.
     - Required if C(principal) is not specified.
+    type: str
   object_name:
     description:
     - The object name to assigned permission.
+    type: str
     required: True
   object_type:
     description:
@@ -56,6 +60,7 @@ options:
     choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
               'Datastore', 'Network', 'HostSystem', 'ComputeResource',
               'ClusterComputeResource', 'DistributedVirtualSwitch']
+    type: str
   recursive:
     description:
     - Should the permissions be recursively applied.
@@ -68,6 +73,7 @@ options:
     - When C(state=absent), the permission is removed if it exists.
     choices: ['present', 'absent']
     default: present
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

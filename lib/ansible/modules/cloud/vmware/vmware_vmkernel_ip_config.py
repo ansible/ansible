@@ -31,14 +31,17 @@ options:
         description:
             - VMkernel interface name
         required: True
+        type: str
     ip_address:
         description:
             - IP address to assign to VMkernel interface
         required: True
+        type: str
     subnet_mask:
         description:
             - Subnet Mask to assign to VMkernel interface
         required: True
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

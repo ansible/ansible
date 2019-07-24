@@ -29,21 +29,25 @@ options:
     description:
       - "Cluster to create vm/host group."
     required: true
+    type: str
   datacenter:
     aliases:
       - datacenter_name
     description:
       - "Datacenter to search for given cluster. If not set, we use first cluster we encounter with C(cluster_name)."
     required: false
+    type: str
   group_name:
     description:
       - "The name of the group to create or remove."
     required: true
+    type: str
   hosts:
     description:
       - "List of hosts to create in group."
       - "Required only if C(vms) is not set."
     required: false
+    type: list
   state:
     choices:
       - present
@@ -53,11 +57,13 @@ options:
       - "If set to C(present) and the group doesn't exists then the group will be created."
       - "If set to C(absent) and the group exists then the group will be deleted."
     required: true
+    type: str
   vms:
     description:
       - "List of vms to create in group."
       - "Required only if C(hosts) is not set."
     required: false
+    type: list
 requirements:
   - "python >= 2.6"
   - PyVmomi
@@ -256,7 +262,7 @@ class VmwareDrsGroupManager(PyVmomi):
 
     def __set_vm_obj_list(self, vm_list=None, cluster_obj=None):
         """
-        Function pupulate vm object list from list of vms
+        Function populate vm object list from list of vms
         Args:
             vm_list: List of vm names
 
@@ -288,7 +294,7 @@ class VmwareDrsGroupManager(PyVmomi):
 
     def __set_host_obj_list(self, host_list=None):
         """
-        Function pupulate host object list from list of hostnames
+        Function populate host object list from list of hostnames
         Args:
             host_list: List of host names
 

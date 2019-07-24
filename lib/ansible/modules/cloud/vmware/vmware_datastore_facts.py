@@ -35,18 +35,21 @@ options:
      - Name of the datastore to match.
      - If set, facts of specific datastores are returned.
      required: False
+     type: str
    datacenter:
      description:
      - Datacenter to search for datastores.
      - This parameter is required, if C(cluster) is not supplied.
      required: False
      aliases: ['datacenter_name']
+     type: str
    cluster:
      description:
      - Cluster to search for datastores.
      - If set, facts of datastores belonging this clusters will be returned.
      - This parameter is required, if C(datacenter) is not supplied.
      required: False
+     type: str
    gather_nfs_mount_info:
     description:
     - Gather mount information of NFS datastores.

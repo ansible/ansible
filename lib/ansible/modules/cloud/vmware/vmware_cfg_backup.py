@@ -33,20 +33,24 @@ options:
         description:
             - Name of ESXi server. This is required only if authentication against a vCenter is done.
         required: False
+        type: str
     dest:
         description:
             - The destination where the ESXi configuration bundle will be saved. The I(dest) can be a folder or a file.
             - If I(dest) is a folder, the backup file will be saved in the folder with the default filename generated from the ESXi server.
             - If I(dest) is a file, the backup file will be saved with that filename. The file extension will always be .tgz.
+        type: path
     src:
         description:
             - The file containing the ESXi configuration that will be restored.
+        type: path
     state:
         description:
             - If C(saved), the .tgz backup bundle will be saved in I(dest).
             - If C(absent), the host configuration will be reset to default values.
             - If C(loaded), the backup file in I(src) will be loaded to the ESXi host rewriting the hosts settings.
         choices: [saved, absent, loaded]
+        type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

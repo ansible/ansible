@@ -34,6 +34,7 @@ options:
      description:
      - Name of customization specification to find.
      required: False
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

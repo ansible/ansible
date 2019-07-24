@@ -29,10 +29,12 @@ options:
     description:
     - Name of the virtual machine to export.
     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
+    type: str
   uuid:
     description:
     - Uuid of the virtual machine to export.
     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+    type: str
   moid:
     description:
     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -44,6 +46,7 @@ options:
     description:
     - Datacenter name of the virtual machine to export.
     - This parameter is case sensitive.
+    type: str
   folder:
     description:
     - Destination folder, absolute path to find the specified guest.
@@ -61,11 +64,13 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
+    type: str
   export_dir:
     description:
     - Absolute path to place the exported files on the server running this task, must have write permission.
     - If folder not exist will create it, also create a folder under this path named with VM name.
     required: yes
+    type: str
   export_with_images:
     default: false
     description:

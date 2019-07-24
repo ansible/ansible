@@ -37,10 +37,12 @@ options:
      description:
      - Name of the virtual machine.
      - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
      - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -62,10 +64,12 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
      required: True
+     type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -102,6 +106,7 @@ options:
      - '   If C(state) is set to C(present) and disk exists with different size, disk size is increased.'
      - '   Reducing disk size is not allowed.'
      default: []
+     type: list
 extends_documentation_fragment: vmware.documentation
 '''
 

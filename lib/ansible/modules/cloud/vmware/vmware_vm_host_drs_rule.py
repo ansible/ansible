@@ -37,14 +37,17 @@ options:
     description:
       - "Datacenter to search for given cluster. If not set, we use first cluster we encounter with C(cluster_name)."
     required: false
+    type: str
   cluster_name:
     description:
       - "Cluster to create VM-Host rule."
     required: true
+    type: str
   drs_rule_name:
     description:
       - "Name of rule to create or remove."
     required: true
+    type: str
   enabled:
     default: false
     description:
@@ -56,6 +59,7 @@ options:
       - "Name of Host group to use with rule."
       - "Effective only if C(state) is set to C(present)."
     required: true
+    type: str
   mandatory:
     default: false
     description:
@@ -71,11 +75,13 @@ options:
       - "If set to C(present) and the rule doesn't exists then the rule will be created."
       - "If set to C(absent) and the rule exists then the rule will be deleted."
     required: true
+    type: str
   vm_group_name:
     description:
       - "Name of VM group to use with rule."
       - "Effective only if C(state) is set to C(present)."
     required: true
+    type: str
 requirements:
   - "python >= 2.6"
   - PyVmomi
