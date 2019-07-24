@@ -108,7 +108,7 @@ class CyberarkPassword:
             # output 'keys' will be in lowercase.
             self.output = self.output.lower()
 
-        self.delimiter = "@#@"  # Known delimiter to split output results
+        self.delimiter = b"@#@"  # Known delimiter to split output results
 
     def get(self):
 
@@ -144,9 +144,9 @@ class CyberarkPassword:
                     if "passprops" not in result_dict:
                         result_dict["passprops"] = {}
                     output_prop_name = output_names[i][10:]
-                    result_dict["passprops"][output_prop_name] = output_values[i]
+                    result_dict["passprops"][output_prop_name] = output_values[i].decode("utf-8")
                 else:
-                    result_dict[output_names[i]] = output_values[i]
+                    result_dict[output_names[i]] = output_values[i].decode("utf-8")
 
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)
