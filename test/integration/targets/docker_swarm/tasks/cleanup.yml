@@ -17,6 +17,11 @@
       command: systemctl kill -s 9 docker
       become: yes
 
+    - name: CLEANUP | Clear out /var/lib/docker
+      shell: rm -rf  /var/lib/docker/*
+      args:
+        warn: no
+
     - name: CLEANUP | Force Docker service start when restart was attempted too often
       command: systemctl reset-failed docker.service
       when:
