@@ -576,11 +576,11 @@ def main():
         database=dict(
             type='dict',
             options=dict(
-                max_connections=dict(type='int'),
-                task_cleanup=dict(type='bool'),
-                task_retention=dict(type='int'),
-                event_cleanup=dict(type='bool'),
-                event_retention=dict(type='int'),
+                max_connections=dict(type='int', default=50),
+                task_cleanup=dict(type='bool', default=True),
+                task_retention=dict(type='int', default=30),
+                event_cleanup=dict(type='bool', default=True),
+                event_retention=dict(type='int', default=30),
             ),
             default=dict(
                 max_connections=50,
@@ -601,11 +601,11 @@ def main():
         user_directory=dict(
             type='dict',
             options=dict(
-                timeout=dict(type='int'),
-                query_limit=dict(type='bool'),
-                query_limit_size=dict(type='int'),
-                validation=dict(type='bool'),
-                validation_period=dict(type='int'),
+                timeout=dict(type='int', default=60),
+                query_limit=dict(type='bool', default=True),
+                query_limit_size=dict(type='int', default=5000),
+                validation=dict(type='bool', default=True),
+                validation_period=dict(type='int', default=1440),
             ),
             default=dict(
                 timeout=60,
@@ -620,6 +620,10 @@ def main():
             options=dict(
                 server=dict(type='str'),
                 sender=dict(type='str'),
+            ),
+            default=dict(
+                server='',
+                sender='',
             ),
         ),
         snmp_receivers=dict(
@@ -664,8 +668,8 @@ def main():
         timeout_settings=dict(
             type='dict',
             options=dict(
-                normal_operations=dict(type='int'),
-                long_operations=dict(type='int'),
+                normal_operations=dict(type='int', default=30),
+                long_operations=dict(type='int', default=120),
             ),
             default=dict(
                 normal_operations=30,
