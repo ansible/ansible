@@ -1,0 +1,10 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      - interface GigabitEthernet 0/1
+      - no lacp port-priority
+      - interface GigabitEthernet 0/2
+      - no lacp port-priority

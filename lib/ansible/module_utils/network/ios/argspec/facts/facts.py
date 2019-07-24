@@ -1,4 +1,3 @@
-#
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -31,6 +30,8 @@ class FactsArgs(object):
         '!lag_interfaces',
         'lacp',
         '!lacp',
+        'lacp_interfaces',
+        '!lacp_interfaces',
     ]
 
     argument_spec = {
