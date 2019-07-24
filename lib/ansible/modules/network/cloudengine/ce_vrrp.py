@@ -44,6 +44,7 @@ options:
     vrrp_type:
         description:
             - Type of a VRRP backup group.
+        type: str
         choices: ['normal', 'member', 'admin']
     admin_ignore_if_down:
         description:
@@ -68,6 +69,7 @@ options:
     version:
         description:
             - VRRP version. The default version is v2.
+        type: str
         choices: ['v2','v3']
     advertise_interval:
         description:
@@ -95,6 +97,7 @@ options:
             - Authentication type used for VRRP packet exchanges between virtual routers.
               The values are noAuthentication, simpleTextPassword, md5Authentication.
               The default value is noAuthentication.
+        type: str
         choices: ['simple','md5','none']
     is_plain:
         description:
@@ -111,10 +114,12 @@ options:
     fast_resume:
         description:
             - mVRRP's fast resume mode.
+        type: str
         choices: ['enable','disable']
     state:
         description:
             - Specify desired state of the resource.
+        type: str
         default: present
         choices: ['present','absent']
 '''
@@ -715,6 +720,7 @@ class Vrrp(object):
         if self.is_plain:
             if self.vrrp_group_info["isPlain"] != self.is_plain:
                 return True
+
         return False
 
     def is_vrrp_group_info_exist(self):
