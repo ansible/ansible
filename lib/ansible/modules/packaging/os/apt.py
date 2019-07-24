@@ -168,8 +168,6 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   apt:
-    name: "{{ packages }}"
-  vars:
     packages:
     - foo
     - foo-tools
