@@ -28,20 +28,24 @@ options:
     default: {
         'source': 'ansible'
     }
+    type: dict
   license:
     description:
     - The license key to manage in vSphere vCenter.
     required: yes
+    type: str
   state:
     description:
     -  Whether to add (C(present)) or remove (C(absent)) the license key.
     choices: [absent, present]
     default: present
+    type: str
   esxi_hostname:
     description:
     - The hostname of the ESXi server to which the specified license will be assigned.
     - This parameter is optional.
     version_added: '2.8'
+    type: str
   datacenter:
     description:
     - The datacenter name to use for the operation.

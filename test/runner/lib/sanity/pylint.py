@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import itertools
 import json
 import os
@@ -21,7 +20,6 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     display,
-    read_lines_without_comments,
     ConfigParser,
     ANSIBLE_ROOT,
     is_subdir,
@@ -29,10 +27,6 @@ from lib.util import (
 
 from lib.util_common import (
     run_command,
-)
-
-from lib.executor import (
-    SUPPORTED_PYTHON_VERSIONS,
 )
 
 from lib.ansible_util import (
@@ -43,18 +37,10 @@ from lib.config import (
     SanityConfig,
 )
 
-from lib.test import (
-    calculate_confidence,
-    calculate_best_confidence,
-)
-
 from lib.data import (
     data_context,
 )
 
-
-PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
-PYLINT_IGNORE_PATH = 'test/sanity/pylint/ignore.txt'
 
 UNSUPPORTED_PYTHON_VERSIONS = (
     '2.6',
@@ -78,48 +64,10 @@ class PylintTest(SanitySingleVersion):
         plugin_names = sorted(p[0] for p in [
             os.path.splitext(p) for p in os.listdir(plugin_dir)] if p[1] == '.py' and p[0] != '__init__')
 
-        skip_paths = read_lines_without_comments(PYLINT_SKIP_PATH, optional=True)
+        settings = self.load_settings(args, 'ansible-test')
 
-        invalid_ignores = []
-
-        supported_versions = set(SUPPORTED_PYTHON_VERSIONS) - set(UNSUPPORTED_PYTHON_VERSIONS)
-        supported_versions = set([v.split('.')[0] for v in supported_versions]) | supported_versions
-
-        ignore_entries = read_lines_without_comments(PYLINT_IGNORE_PATH, optional=True)
-        ignore = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
-        line = 0
-
-        for ignore_entry in ignore_entries:
-            line += 1
-
-            if not ignore_entry:
-                continue
-
-            if ' ' not in ignore_entry:
-                invalid_ignores.append((line, 'Invalid syntax'))
-                continue
-
-            path, code = ignore_entry.split(' ', 1)
-
-            if not os.path.exists(path):
-                invalid_ignores.append((line, 'Remove "%s" since it does not exist' % path))
-                continue
-
-            if ' ' in code:
-                code, version = code.split(' ', 1)
-
-                if version not in supported_versions:
-                    invalid_ignores.append((line, 'Invalid version: %s' % version))
-                    continue
-
-                if version not in (args.python_version, args.python_version.split('.')[0]):
-                    continue  # ignore version specific entries for other versions
-
-            ignore[path][code] = line
-
-        skip_paths_set = set(skip_paths)
-
-        paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/')) and i.path not in skip_paths_set)
+        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or is_subdir(i.path, 'bin/'))
+        paths = settings.filter_skipped_paths(paths)
 
         module_paths = [os.path.relpath(p, data_context().content.module_path).split(os.path.sep) for p in
                         paths if is_subdir(p, data_context().content.module_path)]
@@ -215,63 +163,7 @@ class PylintTest(SanitySingleVersion):
         if args.explain:
             return SanitySuccess(self.name)
 
-        line = 0
-
-        filtered = []
-
-        for error in errors:
-            if error.code in ignore[error.path]:
-                ignore[error.path][error.code] = 0  # error ignored, clear line number of ignore entry to track usage
-            else:
-                filtered.append(error)  # error not ignored
-
-        errors = filtered
-
-        for invalid_ignore in invalid_ignores:
-            errors.append(SanityMessage(
-                code='A201',
-                message=invalid_ignore[1],
-                path=PYLINT_IGNORE_PATH,
-                line=invalid_ignore[0],
-                column=1,
-                confidence=calculate_confidence(PYLINT_IGNORE_PATH, line, args.metadata) if args.metadata.changes else None,
-            ))
-
-        for path in skip_paths:
-            line += 1
-
-            if not path:
-                continue
-
-            if not os.path.exists(path):
-                # Keep files out of the list which no longer exist in the repo.
-                errors.append(SanityMessage(
-                    code='A101',
-                    message='Remove "%s" since it does not exist' % path,
-                    path=PYLINT_SKIP_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((PYLINT_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
-
-        for path in paths:
-            if path not in ignore:
-                continue
-
-            for code in ignore[path]:
-                line = ignore[path][code]
-
-                if not line:
-                    continue
-
-                errors.append(SanityMessage(
-                    code='A102',
-                    message='Remove since "%s" passes "%s" pylint test' % (path, code),
-                    path=PYLINT_IGNORE_PATH,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((PYLINT_IGNORE_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
+        errors = settings.process_errors(errors, paths)
 
         if errors:
             return SanityFailure(self.name, messages=errors)
@@ -284,7 +176,10 @@ class PylintTest(SanitySingleVersion):
         rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/%s' % context.split('/')[0])
 
         if not os.path.exists(rcfile):
-            rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/default')
+            if data_context().content.collection:
+                rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/collection')
+            else:
+                rcfile = os.path.join(ANSIBLE_ROOT, 'test/sanity/pylint/config/default')
 
         parser = ConfigParser()
         parser.read(rcfile)

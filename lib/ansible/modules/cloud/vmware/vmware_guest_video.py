@@ -33,10 +33,12 @@ options:
      description:
      - Name of the virtual machine.
      - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
+     type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
      - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -58,11 +60,13 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      default: ha-datacenter
      description:
      - The datacenter name to which virtual machine belongs to.
      - This parameter is case sensitive.
+     type: str
    gather_video_facts:
      description:
      - If set to True, return settings of the video card, other attributes are ignored.
@@ -77,11 +81,13 @@ options:
    display_number:
      description:
      - The number of display. Valid value from 1 to 10. The maximum display number is 4 on vCenter 6.0, 6.5 web UI.
+     type: int
    video_memory_mb:
      description:
      - 'Valid total MB of video memory range of virtual machine is from 1.172 MB to 256 MB on ESXi 6.7U1,
         from 1.172 MB to 128 MB on ESXi 6.7 and previous versions.'
      - For specific guest OS, supported minimum and maximum video memory are different, please be careful on setting this.
+     type: float
    enable_3D:
      description:
      - Enable 3D for guest operating systems on which VMware supports 3D.
@@ -92,9 +98,11 @@ options:
      - 'If set to C(software), uses normal CPU processing for 3D calculations.'
      - 'If set to C(hardware), requires graphics hardware (GPU) for faster 3D calculations.'
      choices: [ automatic, software, hardware ]
+     type: str
    memory_3D_mb:
      description:
      - The value of 3D Memory must be power of 2 and valid value is from 32 MB to 2048 MB.
+     type: int
 extends_documentation_fragment: vmware.documentation
 '''
 

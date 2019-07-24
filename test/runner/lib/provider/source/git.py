@@ -27,5 +27,7 @@ class GitSource(SourceProvider):
         git = Git(path)
 
         paths = git.get_file_names(['--cached', '--others', '--exclude-standard'])
+        deleted_paths = git.get_file_names(['--deleted'])
+        paths = sorted(set(paths) - set(deleted_paths))
 
         return paths

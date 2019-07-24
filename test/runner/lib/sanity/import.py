@@ -17,7 +17,6 @@ from lib.util import (
     remove_tree,
     display,
     find_python,
-    read_lines_without_comments,
     parse_to_list_of_dict,
     make_dirs,
     is_subdir,
@@ -59,18 +58,16 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/import/skip.txt'
-        skip_paths = read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True)
-
-        skip_paths_set = set(skip_paths)
+        settings = self.load_settings(args, None, python_version)
 
         paths = sorted(
             i.path
             for i in targets.include
             if os.path.splitext(i.path)[1] == '.py' and
-            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path)) and
-            i.path not in skip_paths_set
+            (is_subdir(i.path, data_context().content.module_path) or is_subdir(i.path, data_context().content.module_utils_path))
         )
+
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
@@ -112,6 +109,22 @@ class ImportTest(SanityMultipleVersion):
                 pass
 
             os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/module_utils'), ansible_link)
+
+            if data_context().content.collection:
+                # inject just enough Ansible code for the collections loader to work on all supported Python versions
+                # the __init__.py files are needed only for Python 2.x
+                # the empty modules directory is required for the collection loader to generate the synthetic packages list
+
+                make_dirs(os.path.join(ansible_path, 'utils'))
+                with open(os.path.join(ansible_path, 'utils/__init__.py'), 'w'):
+                    pass
+
+                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/collection_loader.py'), os.path.join(ansible_path, 'utils/collection_loader.py'))
+                os.symlink(os.path.join(ANSIBLE_ROOT, 'lib/ansible/utils/singleton.py'), os.path.join(ansible_path, 'utils/singleton.py'))
+
+                make_dirs(os.path.join(ansible_path, 'modules'))
+                with open(os.path.join(ansible_path, 'modules/__init__.py'), 'w'):
+                    pass
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
@@ -156,7 +169,7 @@ class ImportTest(SanityMultipleVersion):
                 column=int(r['column']),
             ) for r in results]
 
-            results = [result for result in results if result.path not in skip_paths_set]
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)

@@ -97,6 +97,7 @@ class TestLogarithm:
 
 class TestPower:
     def test_power_non_number(self):
+        # Message changed in python3.6
         with pytest.raises(AnsibleFilterError, match='pow\\(\\) can only be used on numbers: (a float is required|must be real number, not str)'):
             ms.power('a', 10)
 
@@ -112,9 +113,10 @@ class TestPower:
 
 class TestInversePower:
     def test_root_non_number(self):
-        # Message changed in python3.6
+        # Messages differed in python-2.6, python-2.7-3.5, and python-3.6+
         with pytest.raises(AnsibleFilterError, match="root\\(\\) can only be used on numbers:"
-                           " (could not convert string to float: a"
+                           " (invalid literal for float\\(\\): a"
+                           "|could not convert string to float: a"
                            "|could not convert string to float: 'a')"):
             ms.inversepower(10, 'a')
 
