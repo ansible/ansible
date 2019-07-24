@@ -71,7 +71,7 @@ class VcenterProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        if self.vmware_test_platform is None or 'govcsim':
+        if self.vmware_test_platform == 'govcsim':
             docker = find_executable('docker', required=False)
 
             if docker:
@@ -103,7 +103,9 @@ class VcenterProvider(CloudProvider):
         super(VcenterProvider, self).setup()
 
         self._set_cloud_config('vmware_test_platform', self.vmware_test_platform)
-        if self._use_static_config():
+        if self.vmware_test_platform == 'govcsim':
+            self._setup_dynamic_simulator()
+        elif self._use_static_config():
             self._set_cloud_config('vmware_test_platform', 'static')
             self._setup_static()
         elif self.vmware_test_platform == 'worldstream':
@@ -216,7 +218,7 @@ class VcenterProvider(CloudProvider):
         parser = ConfigParser({
             'vcenter_port': '443',
             'vmware_proxy_host': '',
-            'vmware_proxy_port': ''})
+            'vmware_proxy_port': '8080'})
         parser.read(self.config_static_path)
 
         self.endpoint = parser.get('DEFAULT', 'vcenter_hostname')
@@ -259,7 +261,10 @@ class VcenterEnvironment(CloudEnvironment):
         """
         :rtype: CloudEnvironmentConfig
         """
-        vmware_test_platform = self._get_cloud_config('vmware_test_platform')
+        vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM')
+        if not vmware_test_platform:
+            vmware_test_platform = self._get_cloud_config('vmware_test_platform')
+
         if vmware_test_platform in ('worldstream', 'static'):
             parser = ConfigParser()
             parser.read(self.config_path)
