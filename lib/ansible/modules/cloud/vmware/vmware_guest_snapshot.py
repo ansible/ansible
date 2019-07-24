@@ -41,19 +41,23 @@ options:
      required: True
      choices: ['present', 'absent', 'revert', 'remove_all']
      default: 'present'
+     type: str
    name:
      description:
      - Name of the virtual machine to work with.
      - This is required parameter, if C(uuid) or C(moid) is not supplied.
+     type: str
    name_match:
      description:
      - If multiple VMs matching the name, use the first or last found.
      default: 'first'
      choices: ['first', 'last']
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) or C(moid) parameter is not supplied.
+     type: str
    moid:
      description:
      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -81,18 +85,22 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      description:
      - Destination datacenter for the deploy operation.
      required: True
+     type: str
    snapshot_name:
      description:
      - Sets the snapshot name to manage.
      - This param is required only if state is not C(remove_all)
+     type: str
    description:
      description:
      - Define an arbitrary description to attach to snapshot.
      default: ''
+     type: str
    quiesce:
      description:
      - If set to C(true) and virtual machine is powered on, it will quiesce the file system in virtual machine.
@@ -123,10 +131,12 @@ options:
      description:
      - Value to rename the existing snapshot to.
      version_added: "2.5"
+     type: str
    new_description:
      description:
      - Value to change the description of an existing snapshot to.
      version_added: "2.5"
+     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -37,20 +37,24 @@ options:
         description:
         - The ESXi hostname.
         required: True
+        type: str
     switch_name:
         description:
         - The name of the Distributed vSwitch.
         required: True
+        type: str
     vmnics:
         description:
         - The ESXi hosts vmnics to use with the Distributed vSwitch.
         required: True
+        type: list
     state:
         description:
         - If the host should be present or absent attached to the vSwitch.
         choices: [ present, absent ]
         required: True
         default: 'present'
+        type: str
     vendor_specific_config:
         description:
             - List of key,value dictionaries for the Vendor Specific Configuration.
@@ -59,6 +63,7 @@ options:
             - '- C(value) (str): Value of setting. (default: None)'
         required: False
         version_added: '2.9'
+        type: list
 extends_documentation_fragment: vmware.documentation
 '''
 

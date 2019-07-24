@@ -31,15 +31,18 @@ options:
         description:
             - Name of the virtual machine to work with.
             - This is required if C(uuid) or C(moid) is not supplied.
+        type: str
    name_match:
         description:
             - If multiple virtual machines matching the name, use the first or last found.
         default: 'first'
         choices: ['first', 'last']
+        type: str
    uuid:
         description:
             - UUID of the instance to manage if known, this is VMware's unique identifier.
             - This is required if C(name) or C(moid) is not supplied.
+        type: str
    moid:
         description:
             - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -61,10 +64,12 @@ options:
             - '   folder: /folder1/datacenter1/vm'
             - '   folder: folder1/datacenter1/vm'
             - '   folder: /folder1/datacenter1/vm/folder2'
+        type: str
    datacenter:
         description:
             - Destination datacenter where the virtual machine exists.
         required: True
+        type: str
 extends_documentation_fragment: vmware.documentation
 author:
     - Mike Klebolt (@MikeKlebolt) <michael.klebolt@centurylink.com>

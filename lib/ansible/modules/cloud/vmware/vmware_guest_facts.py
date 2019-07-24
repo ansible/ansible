@@ -35,15 +35,18 @@ options:
      description:
      - Name of the VM to work with
      - This is required if C(uuid) or C(moid) is not supplied.
+     type: str
    name_match:
      description:
      - If multiple VMs matching the name, use the first or last found
      default: 'first'
      choices: ['first', 'last']
+     type: str
    uuid:
      description:
      - UUID of the instance to manage if known, this is VMware's unique identifier.
      - This is required if C(name) or C(moid) is not supplied.
+     type: str
    use_instance_uuid:
      description:
      - Whether to use the VMware instance UUID rather than the BIOS UUID.
@@ -71,10 +74,12 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
+     type: str
    datacenter:
      description:
      - Destination datacenter for the deploy operation
      required: True
+     type: str
    tags:
      description:
      - Whether to show tags or not.

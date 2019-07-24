@@ -41,12 +41,14 @@ options:
       - This is required parameter, if C(vm_uuid) is not set.
       - Version 2.6 onwards, this parameter is not a required parameter, unlike the previous versions.
       aliases: ['vm']
+      type: str
     vm_uuid:
       description:
       - UUID of the virtual machine to perform a vMotion operation on.
       - This is a required parameter, if C(vm_name) or C(moid) is not set.
       aliases: ['uuid']
       version_added: 2.7
+      type: str
     moid:
       description:
       - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
@@ -64,11 +66,13 @@ options:
       - Name of the destination host the virtual machine should be running on.
       - Version 2.6 onwards, this parameter is not a required parameter, unlike the previous versions.
       aliases: ['destination']
+      type: str
     destination_datastore:
       description:
       - "Name of the destination datastore the virtual machine's vmdk should be moved on."
       aliases: ['datastore']
       version_added: 2.7
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
