@@ -186,6 +186,18 @@ options:
             - Linux
         default: Linux
         version_added: "2.9"
+    os_disk_vhd:
+        description:
+            - The virtual hard disk.
+        version_added: "2.9"
+    os_disk_create_option:
+        description:
+            - Specifies how the virtual machine should be created.
+        choices:
+            - Fromimage
+            - Attach
+        default: Fromimage
+        version_added: "2.9"
     data_disks:
         description:
             - List of data disks.
@@ -836,6 +848,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             os_disk_name=dict(type='str'),
             os_disk_image=dict(type='dict'),
             os_disk_os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
+            os_disk_vhd=dict(type='str'),
+            os_disk_create_option=dict(type='str', choices=['Fromimage', 'Attach'], default='Fromimage'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
@@ -882,6 +896,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.os_disk_name = None
         self.os_disk_image = None
         self.os_disk_os_type = None
+        self.os_disk_vhd = None
+        self.os_disk_create_option = None
         self.network_interface_names = None
         self.remove_on_absent = set()
         self.tags = None
@@ -1301,9 +1317,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 name=self.os_disk_name if self.os_disk_name else self.storage_blob_name,
                                 image=self.os_disk_image if self.os_disk_image else None,
                                 os_type=self.os_disk_os_type if self.os_disk_image else None,
-                                vhd=vhd,
+                                vhd=self.os_disk_vhd if self.os_disk_vhd else vhd,
                                 managed_disk=managed_disk,
-                                create_option=self.compute_models.DiskCreateOptionTypes.from_image,
+                                create_option=self.os_disk_create_option,
                                 caching=self.os_disk_caching,
                                 disk_size_gb=self.os_disk_size_gb
                             ),
