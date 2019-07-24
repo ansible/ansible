@@ -110,7 +110,7 @@ Function Set-DnsClientServerAddressLegacy {
         $arguments = @{}
     }
     Else {
-        $arguments = @{ DNSServerSearchOrder = $ServerAddresses }
+        $arguments = @{ DNSServerSearchOrder = [string[]]$ServerAddresses }
     }
     $res = Invoke-CimMethod -InputObject $adapter_config -MethodName SetDNSServerSearchOrder -Arguments $arguments
 
