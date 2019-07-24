@@ -1,0 +1,2 @@
+minor_changes:
+  - vmware_cluster_facts now supports tag facts (https://github.com/ansible/ansible/issues/46458).
