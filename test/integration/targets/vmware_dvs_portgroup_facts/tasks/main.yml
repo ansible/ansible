@@ -4,6 +4,8 @@
 
 - import_role:
     name: prepare_vmware_tests
+  vars:
+    setup_dvswitch: true
 
 - when: vcsim is not defined
   block:
