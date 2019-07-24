@@ -53,7 +53,7 @@ EXAMPLES = """
 - name: url lookup using authentication
   debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
-- name: url lookup with headers
+- name: url lookup using headers
   debug: msg=""{{ lookup('url', 'https://some.private.site.com/api/service', headers={'HeaderName':'HeaderValue'} ) }}"
 """
 
