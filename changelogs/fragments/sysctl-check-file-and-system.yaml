@@ -1,0 +1,2 @@
+bugfixes:
+  - sysctl - check system values, not just sysctl.conf file, when determing state (https://github.com/ansible/ansible/pull/56153#issuecomment-514384922)
