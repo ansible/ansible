@@ -267,7 +267,7 @@ class Mtu(object):
         intf_info = dict()
 
         flags = list()
-        exp = r"| ignore-case section include ^#\s+interface %s\s+" % ifname
+        exp = r"| ignore-case section include ^#\s+interface %s\s+" % ifname.replace(" ", "")
         flags.append(exp)
         output = self.get_config(flags)
         output_list = output.split('\n')
@@ -462,7 +462,7 @@ class Mtu(object):
                 if not self.jbf_max:
                     self.module.fail_json(
                         msg='Error: please specify max jumboframe value.')
-                if (int(self.jbf_min) > self.jbf_max) or (int(self.jbf_min) < 1518):
+                if (int(self.jbf_min) > int(self.jbf_max)) or (int(self.jbf_min) < 1518):
                     self.module.fail_json(
                         msg='Error: Min jumboframe is between '
                             '1518 to jumboframe max value.')
