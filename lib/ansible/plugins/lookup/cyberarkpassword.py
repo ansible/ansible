@@ -72,7 +72,7 @@ from subprocess import Popen
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.parsing.splitter import parse_kv
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.utils.display import Display
 
 display = Display()
@@ -144,9 +144,9 @@ class CyberarkPassword:
                     if "passprops" not in result_dict:
                         result_dict["passprops"] = {}
                     output_prop_name = output_names[i][10:]
-                    result_dict["passprops"][output_prop_name] = output_values[i].decode("utf-8")
+                    result_dict["passprops"][output_prop_name] = to_native(output_values[i])
                 else:
-                    result_dict[output_names[i]] = output_values[i].decode("utf-8")
+                    result_dict[output_names[i]] = to_native(output_values[i])
 
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)
