@@ -73,6 +73,19 @@ DOCUMENTATION = '''
                        'customValue'
                        ]
             version_added: "2.9"
+        naming_schema:
+            description:
+                - select which naming schema for hosts added to the inventory
+                - smbios_uuid is *not* unique, in former versions of this module the only supported naming_schema was the vmname suffixed with the smbios uuid.
+                - instanceUUID is unique, and is guaranteed to not contain any unexpected special characters.
+                - full_name is unique and also expressive, special characters in vm and folder names are urlencoded.
+            type: str
+            choices:
+                - 'name_and_smbios_uuid'
+                - 'instanceUUID'
+                - 'full_name'
+            default: 'smbios_uuid
+            version_added: "2.9"
 '''
 
 EXAMPLES = '''
@@ -450,16 +463,24 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     cacheable_results[tag_obj.name] = {'hosts': []}
                     self.inventory.add_group(tag_obj.name)
 
+        naming_schema = self.get_option('naming_schema')
         for vm_obj in objects:
             for vm_obj_property in vm_obj.propSet:
                 if not vm_obj.obj.config:
                     # Sometime orphaned VMs return no configurations
                     continue
 
-                # VMware does not provide a way to uniquely identify a VM by its name
-                # i.e. there can be two virtual machines with same name
-                # The full name instead is unique and recognizable to users.
-                current_host = self._get_fullName(vm_obj.obj)
+                if (naming_schema == 'name_and_smbios_uuid'):
+                    # The uuid is actually the smbios uuid and is not unique suffixing it to the name could mitigate this in some situations.
+                    current_host = vm_obj_property.val + "_" + vm_obj.obj.config.uuid
+                elif (naming_schema == 'instanceUUID'):
+                    # The instanceUuid instead is unique is also garanteed to not contain special characters.
+                    current_host = vm_obj.obj.config.instanceUuid
+                else:
+                    # VMware does not provide a way to uniquely identify a VM by its name
+                    # i.e. there can be two virtual machines with the same name
+                    # The full name instead is unique and recognizable to users.
+                    current_host = self._get_fullName(vm_obj.obj)
 
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
