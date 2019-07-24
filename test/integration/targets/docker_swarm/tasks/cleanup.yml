@@ -11,11 +11,18 @@
         name: docker
         state: restarted
       become: yes
+      register: restart_docker
 
   rescue:
     - name: CLEANUP | Kill docker daemon
       command: systemctl kill -s 9 docker
       become: yes
+
+    - name: CLEANUP | Force Docker service start when restart was attempted too often
+      command: systemctl reset-failed docker.service
+      when:
+        - ansible_facts.service_mgr == 'systemd'
+        - restart_docker.msg is search('start of the service was attempted too often')
 
     - name: CLEANUP | Restart docker daemon
       service:
