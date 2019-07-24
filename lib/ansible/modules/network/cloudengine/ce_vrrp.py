@@ -119,6 +119,7 @@ options:
     state:
         description:
             - Specify desired state of the resource.
+        type: str
         default: present
         choices: ['present','absent']
 '''
