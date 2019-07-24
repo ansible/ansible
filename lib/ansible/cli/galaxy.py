@@ -118,7 +118,7 @@ class GalaxyCLI(CLI):
         cinstall_parser.add_argument('args', metavar='collection_name', nargs='*',
                                      help='The collection(s) name or path/url to a tar.gz collection artifact. This '
                                           'is mutually exclusive with --requirements-file.')
-        cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', default='./',
+        cinstall_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
                                      help='The path to the directory containing your collections.')
         cinstall_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                      help='Ignore errors during installation and continue with the next specified '
