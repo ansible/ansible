@@ -132,27 +132,8 @@ updates:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, ce_argument_spec, run_commands
-
-
-CE_NC_GET_STARTUP_INFO = """
-<filter type="subtree">
-  <cfg xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
-    <startupInfos>
-      <startupInfo>
-        <position></position>
-        <configedSysSoft></configedSysSoft>
-        <curSysSoft></curSysSoft>
-        <nextSysSoft></nextSysSoft>
-        <curStartupFile></curStartupFile>
-        <nextStartupFile></nextStartupFile>
-        <curPatchFile></curPatchFile>
-        <nextPatchFile></nextPatchFile>
-      </startupInfo>
-    </startupInfos>
-  </cfg>
-</filter>
-"""
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands
+from ansible.module_utils.connection import exec_command
 
 
 class StartUp(object):
@@ -196,28 +177,37 @@ class StartUp(object):
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
     def get_startup_dict(self):
-        """ get rollback attributes dict."""
+        """Retrieves the current config from the device or cache
+        """
+        cmd = 'display startup'
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
 
         startup_info = dict()
-        conf_str = CE_NC_GET_STARTUP_INFO
-        xml_str = get_nc_config(self.module, conf_str)
-
         startup_info["StartupInfos"] = list()
-        if "<data/>" in xml_str:
+        if not cfg:
             return startup_info
         else:
-            re_find = re.findall(r'.*<position>(.*)</position>.*\s*'
-                                 r'<nextStartupFile>(.*)</nextStartupFile>.*\s*'
-                                 r'<configedSysSoft>(.*)</configedSysSoft>.*\s*'
-                                 r'<curSysSoft>(.*)</curSysSoft>.*\s*'
-                                 r'<nextSysSoft>(.*)</nextSysSoft>.*\s*'
-                                 r'<curStartupFile>(.*)</curStartupFile>.*\s*'
-                                 r'<curPatchFile>(.*)</curPatchFile>.*\s*'
-                                 r'<nextPatchFile>(.*)</nextPatchFile>.*', xml_str)
-            for mem in re_find:
-                startup_info["StartupInfos"].append(
-                    dict(position=mem[0], nextStartupFile=mem[1], configSysSoft=mem[2], curentSysSoft=mem[3],
-                         nextSysSoft=mem[4], curentStartupFile=mem[5], curentPatchFile=mem[6], nextPatchFile=mem[7]))
+            re_find = re.findall(r'(.*)\s*'
+                                 r'\s*Configured\s*startup\s*system\s*software:\s*(.*)'
+                                 r'\s*Startup\s*system\s*software:\s*(.*)'
+                                 r'\s*Next\s*startup\s*system\s*software:\s*(.*)'
+                                 r'\s*Startup\s*saved-configuration\s*file:\s*(.*)'
+                                 r'\s*Next\s*startup\s*saved-configuration\s*file:\s*(.*)'
+                                 r'\s*Startup\s*paf\s*file:\s*(.*)'
+                                 r'\s*Next\s*startup\s*paf\s*file:\s*(.*)'
+                                 r'\s*Startup\s*patch\s*package:\s*(.*)'
+                                 r'\s*Next\s*startup\s*patch\s*package:\s*(.*)', cfg)
+
+            if re_find:
+                for mem in re_find:
+                    startup_info["StartupInfos"].append(
+                        dict(nextStartupFile=mem[5], configSysSoft=mem[1], curentSysSoft=mem[2],
+                             nextSysSoft=mem[3], curentStartupFile=mem[4], curentPatchFile=mem[8],
+                             nextPatchFile=mem[9], postion=mem[0]))
+                return startup_info
             return startup_info
 
     def get_cfg_filename_type(self, filename):
@@ -404,30 +394,45 @@ class StartUp(object):
         """get existing info"""
 
         if not self.startup_info:
-            return
-        self.existing["StartupInfos"] = self.startup_info["StartupInfos"]
+            self.existing["StartupInfos"] = None
+        else:
+            self.existing["StartupInfos"] = self.startup_info["StartupInfos"]
 
     def get_end_state(self):
         """get end state info"""
-        self.end_state["StartupInfos"] = None
+        if not self.startup_info:
+            self.end_state["StartupInfos"] = None
+        else:
+            self.end_state["StartupInfos"] = self.startup_info["StartupInfos"]
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""
 
         self.check_params()
         self.get_proposed()
+
         self.startup_info = self.get_startup_dict()
         self.get_existing()
+
+        startup_info = self.startup_info["StartupInfos"][0]
         if self.cfg_file:
-            self.startup_next_cfg_file()
+            if self.cfg_file != startup_info["nextStartupFile"]:
+                self.startup_next_cfg_file()
+
         if self.software_file:
-            self.startup_next_software_file()
+            if self.software_file != startup_info["nextSysSoft"]:
+                self.startup_next_software_file()
         if self.patch_file:
-            self.startup_next_pat_file()
+            if self.patch_file != startup_info["nextPatchFile"]:
+                self.startup_next_pat_file()
         if self.action == "display":
             self.startup_info = self.get_startup_dict()
 
+        self.startup_info = self.get_startup_dict()
         self.get_end_state()
+
         self.results['changed'] = self.changed
         self.results['proposed'] = self.proposed
         self.results['existing'] = self.existing
