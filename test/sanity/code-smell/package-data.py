@@ -18,7 +18,7 @@ def main():
     ))
 
     non_py_files = []
-    for root, dirs, files in os.walk('lib/ansible/'):
+    for root, _dummy, files in os.walk('lib/ansible/'):
         for filename in files:
             path = os.path.join(root, filename)
             if os.path.splitext(path)[-1] not in ('.py', '.pyc', '.pyo'):
@@ -30,13 +30,12 @@ def main():
                     non_py_files.append(path[12:])
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        p = subprocess.Popen(
+        stdout, _dummy = subprocess.Popen(
             ['python', 'setup.py', 'install', '--root=%s' % tmp_dir],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
-        )
-        stdout, stderr = p.communicate()
+        ).communicate()
         match = re.search('^creating (%s/.*?/(?:site|dist)-packages/ansible)$' % tmp_dir, stdout, flags=re.M)
 
         for filename in non_py_files:
