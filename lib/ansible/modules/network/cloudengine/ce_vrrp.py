@@ -720,7 +720,6 @@ class Vrrp(object):
         if self.is_plain:
             if self.vrrp_group_info["isPlain"] != self.is_plain:
                 return True
-
         return False
 
     def is_vrrp_group_info_exist(self):
