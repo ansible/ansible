@@ -61,6 +61,7 @@ notes:
   - For a general purpose network module, see the M(net_ping) module.
   - For Windows targets, use the M(win_ping) module instead.
   - For targets running Python, use the M(ping) module instead.
+  - This module works only with connection C(network_cli).
 extends_documentation_fragment: junos
 """
 
