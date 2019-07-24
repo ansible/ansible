@@ -1,3 +1,6 @@
+- debug:
+    msg: Running tests/remote-addr-pool.yml
+
 - name: Remove Swarm cluster
   docker_swarm:
     state: absent

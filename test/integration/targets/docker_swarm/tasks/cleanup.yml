@@ -3,14 +3,13 @@
       docker_swarm:
         state: absent
         force: true
-      diff: no
-      retries: 5
 
     - name: CLEANUP | Restart docker daemon
       service:
         name: docker
         state: restarted
       become: yes
+      ignore_errors: yes
       register: restart_docker
 
   rescue:
