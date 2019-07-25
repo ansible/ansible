@@ -2,26 +2,26 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-      lookup: 
-        author: Chris Mills <chris@discreet-its.co.uk>
-        version_added: 2.9
-        short_description: query (most) elements from Netbox
-        description:
-            - This lookup returns elements from Netbox via it's API.
-        options:
-          _terms:
-            description: The netbox object type to query
+    lookup: netbox
+    author: Chris Mills <chris@discreet-its.co.uk>
+    version_added: "2.9"
+    short_description: returns elements from Netbox
+    description:
+        - Queries Netbox via its API to return virtually any information capable of being held in Netbox.
+          While secrets can be queried, the plugin doesn't yet support decrypting them.
+    options:
+        _terms:
+            description:
+                - The Netbox object type to query
             required: True
-          api_endpoint:
-            description: The URL to the Netbox instance to query
+        api_endpoint:
+            description:
+                - The URL to the Netbox instance to query
             required: True
-          token:
-            description: The API token to use to query Netbox
+        token:
+            description:
+                - The API token created through Netbox
             required: True
-        notes:
-          - While the plugin can currently query secrets, it isn't very useful in this
-            area as it is unable to decode them. Some wizardry needs to happen with
-            private keys and session keys before that can happen.
 """
 
 EXAMPLES = """
@@ -30,14 +30,13 @@ tasks:
   - name: Obtain list of devices from Netbox
     debug:
       msg: "Device {{ item.value.display_name }} (ID: {{ item.key }}) was manufactured by {{ item.value.device_type.manufacturer.name }}"
-    loop: "{{ query('netbox', 'devices', api_endpoint='http://localhost/', token='8aba70dbb462b36d1bc972980be9e992059e821e', private_key_file='/home/cpmills/.ssh/id_rsa') }}"
-
+    loop: "{{ query('netbox', 'devices', api_endpoint='http://localhost/', token='<redacted>') }}"
 """
 
 RETURN = """
   _list:
     description:
-      - list of composed dictonaries of details extracted from netbox
+      - list of composed dictonaries with key and value
     type: list
 """
 
