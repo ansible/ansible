@@ -128,7 +128,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-	netbox_api_token = kwargs.get('token')
+        netbox_api_token = kwargs.get('token')
         netbox_api_endpoint = kwargs.get('api_endpoint')
         netbox_private_key_file = kwargs.get('key_file')
 
