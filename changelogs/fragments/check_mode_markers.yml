@@ -1,0 +1,2 @@
+minor_changes:
+  - Add new option to default standard out callback plugin, ``ANSIBLE_CHECK_MODE_MARKERS``, which adds check mode markers (``DRY RUN``, ``CHECK_MODE``) to the output when running in check mode. It is off by default.
