@@ -5,6 +5,84 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.3
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-07-25
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- In ec2_eip, device_id is required when private_ip_address is set, but the reverse is not true (https://github.com/ansible/ansible/pull/55194).
+- Typecast vlan id to string in nmcli module (https://github.com/ansible/ansible/issues/58949).
+- Warn user about Distributed vSwitch permission in vmware_object_role_permission (https://github.com/ansible/ansible/issues/55248).
+- When using `fetch_nested` fetch also list of href, instead only single object hrefs.
+- dnf - set lock_timeout to a sane default (30 seconds, as is the cli)
+- fix exception when tower_verify_ssl parameter is used in tower_role module (https://github.com/ansible/ansible/pull/57518).
+- vApp setting can be set while VM creation in vmware_guest (https://github.com/ansible/ansible/issues/50617).
+- yum - set lock_timeout to a sane default (30 seconds, as is the cli)
+
+Bugfixes
+--------
+
+- Check when user does pass empty dict to sysprep. Fixes https://github.com/oVirt/ovirt-ansible-vm-infra/issues/104
+- Do not assume None is equal as connection and become tools can have different unspecified defaults.
+- Fix broken slxos_config due to changed backup options (https://github.com/ansible/ansible/pull/58804).
+- Fix regression when including a role with a custom filter (https://github.com/ansible/ansible/issues/57351)
+- Fixed disk already exists issue while cloning guest in vmware_guest module (https://github.com/ansible/ansible/issues/56861).
+- Gather facts should use gather_subset config by default.
+- Make max_connections parameter work again in vmware_guest module (https://github.com/ansible/ansible/pull/58061).
+- To find specified interfaces, add a interface-type.
+- To resolve NoneType error as it was missing NoneType check for l3protocol param in aci_l3out. (https://github.com/ansible/ansible/pull/58618).
+- Use templated loop_var/index_var when looping include_* (https://github.com/ansible/ansible/issues/58820)
+- Using neconf API to send cli commands is a bug, now fix it(https://github.com/ansible/ansible/pull/59071)
+- aws_secret - Document region so the config manager can retrieve its value.
+- ce_bfd_global - line284, 'data' tag of xpath should be removed. line498, add "self.existing == self.end_state" to compare the status and get 'changed'.
+- ce_bfd_view - line287, line293, 'data' tag of a xpath should be removed to find a element.line500, running result judgment.
+- ce_evpn_bd_vni - modify xml function to find data.(https://github.com/ansible/ansible/pull/58227)
+- ce_evpn_bgp_rr - fix bugs,get wrong config, get wrong result.changed .(https://github.com/ansible/ansible/pull/58228)
+- ce_interface - It is not a good way to find data from a xml tree by regular. lin379 line405.
+- ce_interface - line 750,779 Some attributes of interfaces are missing, 'ifAdminStatus', 'ifDescr', 'isL2SwitchPort'.So add them when get interface status.
+- ce_interface_ospf - remove the 'data' tag to fix a bug,.(https://github.com/ansible/ansible/pull/58229)
+- ce_link_status - remove the 'data' tag to fix a bug,.(https://github.com/ansible/ansible/pull/58229)
+- ce_netstream_aging - line318, Redundant regular. line326,line33, there may be out of array rang,some time.(https://github.com/ansible/ansible/pull/58231)
+- ce_static_route The IPv6 binary system has a length of 128 bits and is grouped by 16 bits. Each group is separated by a colon ":" and can be divided into 8 groups, each group being represented by 4 hexadecimal. You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once. Divisible compatible with Python2 and Python3. To find all elements, Data root node that is taged 'data' should be removed.(https://github.com/ansible/ansible/pull/58251)
+- ce_vrrp - tag 'data' is the root node of data xml tree,remove 'data' tag to find all. line 700,747 "vrrp_group_info["adminIgnoreIfDown"]", value is string and lower case. line 1177,1240. Compare wrong! They should be same key of value to be compared.
+- ce_vxlan_gateway - update the regular expression to match the more.(https://github.com/ansible/ansible/pull/58226)
+- ce_vxlan_global - line 242 , bd_info is a string array,and it should be 'extend' operation. line 423, 'if' and 'else' should set a different value. if 'exist', that value is 'enable'. line 477, To get state of result, if it is changed or not.
+- docker_* modules - behave better when requests errors are not caught by docker-py.
+- docker_container - add support for ``nocopy`` mode for volumes.
+- docker_image - validate ``tag`` option value.
+- dzdo did not work with password authentication
+- facts - handle situation where ``ansible_architecture`` may not be defined (https://github.com/ansible/ansible/issues/55400)
+- fixed collection-based plugin loading in ansible-connection (eg networking plugins)
+- gather_facts now correctly passes back the full output of modules on error and skipped, fixes
+- group - properly detect duplicate GIDs when local=yes (https://github.com/ansible/ansible/issues/56481)
+- ios_config - fixed issue where the "no macro" command was erroneously handled by edit_macro(). https://github.com/ansible/ansible/issues/55212
+- machinectl become plugin - correct bugs which induced errors on plugin usage
+- nagios module - Fix nagios module to recognize if ``cmdfile`` exists and is fifo pipe.
+- nmcli - fixed regression caused by commit b7724fd, github issue
+- openssl_privatekey - ``secp256r1`` got accidentally forgotten in the curve list.
+- os_quota - fix failure to set compute or network quota when volume service is not available
+- ovirt add host retry example to documentation BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1719271)
+- ovirt migrate virtual machine with state present and not only running BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1722403)
+- ovirt update vm migration domunetation BZ(https://bugzilla.redhat.com/show_bug.cgi?id=1724535)
+- ovirt vnic profile: remove duplication in readme
+- ovirt_vm - fix for module failure on creation (https://github.com/ansible/ansible/issues/59385)
+- postgresql_schema - Parameter ensure replaced by state in the drop schema example (https://github.com/ansible/ansible/pull/59342)
+- setup (Windows) - prevent setup module failure if Get-MachineSid fails (https://github.com/ansible/ansible/issues/47813)
+- user - omit incompatible options when operating in local mode (https://github.com/ansible/ansible/issues/48722)
+- vmware_guest accepts 0 MB of memory reservation, fix regression introduced via 193f69064fb40a83e3e7d2112ef24868b45233b3 (https://github.com/ansible/ansible/issues/59190).
+- win_domain_user - Do not hide error and stacktrace on failures
+- win_get_url - Fix proxy_url not used correctly (https://github.com/ansible/ansible/issues/58691)
+- win_reg_stat - fix issue when trying to check keys in ``HKU:\`` - https://github.com/ansible/ansible/issues/59337
+- yum - handle stale/invalid yum.pid lock file (https://github.com/ansible/ansible/issues/57189)
+
 v2.8.2
 ======
 

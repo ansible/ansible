@@ -1730,3 +1730,65 @@ releases:
     - win_get_url-Fix-restricted-header-handling.yml
     - win_shell-arg-space.yaml
     release_date: '2019-07-03'
+  2.8.3:
+    codename: How Many More Times
+    fragments:
+    - 41240-fix-os_quota-without-cinder.yaml
+    - 50617-vmware_guest-vapp_settings.yml
+    - 54790-fix-region-aws_secret-lookup.yaml
+    - 55194-ec2_eip-required_together.yml
+    - 56376-bootproto_dhcp_regression.yaml
+    - 56481-group-detect-duplicate-gids-local.yaml
+    - 57298-ovirt_vnic_remove_duplication_readme.yml
+    - 57351-role-custom-filter.yaml
+    - 57518-tower_role-fix_validate_certs.yml
+    - 57711-To_resolve_NoneType_error_in_aci_l3out.yaml
+    - 57907-update-ce_interface-to-fix-bugs.yml
+    - 57947-update-ce_vxlan_global-to-fix-bugs.yml
+    - 58060-vmware_guest-make_max_connections_work.yml
+    - 58136-ovirt_vm_migrate_with_state_present.yml
+    - 58200-update-ce_bfd_global-to-fix-a-bug.yml
+    - 58207-update-ce_bfd_view-to-fix-a-bug.yml
+    - 58226-update-ce_vxlan_gateway-to-fix-a-bug.yml
+    - 58227-update-cce_evpn_bd_vni-to-fix-a-bug.yml
+    - 58229-update-ce_interface_ospf-to-fix-a-bug.yml
+    - 58483-win_setup_resilience.yml
+    - 58554-update-ce_vrrp-to-fix-a-bug.yml
+    - 58559-update-ce_evpn_bgp_rr-to-fix-a-bug.yml
+    - 58561-update-ce_link_status-to-fix-a-bug.yml
+    - 58563-update-ce_netstream_aging-to-fix-a-bug.yml
+    - 58565-update-ce_static_route-to-fix-a-bug.yml
+    - 58569-nagios-fifo-fix.yaml
+    - 58577-ovirt_update_vm_migration_domunetation.yml
+    - 58579-vmware_object_role_perm_fix.yml
+    - 58605-openssl_privatekey-secp256r1.yml
+    - 58625-ovirt_add_host_retry_doc.yml
+    - 58734-correct-machinectl-become-plugin.yaml
+    - 58737-vmware_guest-fix_clone_guest.yml
+    - 58791-docker-errors.yml
+    - 58820-use-templated-loop_var-in-include_tasks.yaml
+    - 58949-nmcli-vlanid-typecast.yml
+    - 59043-docker_container-nocopy.yml
+    - 59072-update-ce_interface-to-fix-a-bug.yml
+    - 59190-vmware_guest-mem_reservation.yml
+    - 59196-ovirt_use_sysprep_when_needed.yml
+    - 59243-update-ce_file_copy-to-fix-a-bug.yml
+    - 59342_postgresql_schema-fix-example.yml
+    - 59377-ovirt-vm-when-creating-fix.yml
+    - ac_collection_plugin_load.yml
+    - become_none.yml
+    - dzdo_password_prompt.yml
+    - facts-linux-cpu-arm-architecture.yml
+    - fix_gathering_reporting.yml
+    - gather_subset_defaults.yml
+    - ios_command_edit_macro_dont_handle_no_macro.yaml
+    - ovirt_fetch_also_list_of_hrefs.yaml
+    - slxos_config_fix.yaml
+    - user-local-mode-group-append.yaml
+    - v2.8.3_summary.yaml
+    - win_domain_user-error.yaml
+    - win_get_url-proxy-not-used.yml
+    - win_reg_stat-hku.yaml
+    - yum-handle-stale-lock-file.yaml
+    - yum-sane-default-lockfile-timeout.yml
+    release_date: '2019-07-25'
