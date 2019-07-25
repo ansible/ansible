@@ -14,7 +14,6 @@
           - name: bond1
             mode: "active-backup"
             members:
-                - member: eth1
                 - member: eth2
             primary: eth2
             hash-policy: layer2

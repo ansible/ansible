@@ -72,7 +72,6 @@ overridden:
     - "delete interfaces bonding bond0 mode"
     - "delete interfaces bonding bond0 primary"
     - "set interfaces bonding bond1 hash-policy 'layer2'"
-    - "set interfaces ethernet eth1 bond-group bond1"
 
   after:
     - name: "bond0"
