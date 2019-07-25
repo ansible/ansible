@@ -52,7 +52,6 @@ options:
         on VSAN-enabled hosts in the cluster.
       type: bool
       default: False
-      version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
