@@ -1293,7 +1293,7 @@ class ModuleValidator(Validator):
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
-                        msg = " defines type as %r but documentation doesn't define type" % (data['type'])
+                        msg += " defines type as %r but documentation doesn't define type" % (data['type'])
                         self.reporter.error(
                             path=self.object_path,
                             code=337,
