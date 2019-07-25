@@ -61,7 +61,6 @@ def ansible_environment(args, color=True, ansible_config=None):
     ansible = dict(
         ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE=str(SOFT_RLIMIT_NOFILE),
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color and color else 'false',
-        ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',
         ANSIBLE_RETRY_FILES_ENABLED='false',
         ANSIBLE_CONFIG=os.path.abspath(ansible_config),
