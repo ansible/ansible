@@ -8,9 +8,9 @@ DOCUMENTATION = """
 ---
 author: Ruckus Wireless (@Commscope)
 cliconf: icx
-short_description: Use icx cliconf to run command on Cisco ICX platform
+short_description: Use icx cliconf to run command on Ruckus ICX platform
 description:
-  - This icx plugin provides low level abstraction apis for
+  - This icx plugin provides low level abstraction APIs for
     sending and receiving CLI commands from Ruckus ICX network devices.
 version_added: "2.9"
 """
