@@ -162,8 +162,6 @@ EXAMPLES = '''
       register: result
 '''
 
-
-from __future__ import absolute_import, division, print_function
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
