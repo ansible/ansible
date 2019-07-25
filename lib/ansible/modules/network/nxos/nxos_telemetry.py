@@ -43,7 +43,7 @@ short_description: 'Telemetry Monitoring Service (TMS) configuration'
 description: 'Manages Telemetry Monitoring Service (TMS) configuration'
 author: Mike Wiebe (@mikewiebe)
 notes:
-  - 'Tested against N9k Version 7.0(3)I7(5) and later.'
+  - 'Supported on N9k Version 7.0(3)I7(5) and later.'
 options:
   config:
     description: The provided configuration

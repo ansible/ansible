@@ -53,27 +53,27 @@ def valiate_input(playvals, type, module):
     if type == 'destination_groups':
         if not playvals.get('id'):
             msg = "Invalid playbook value: {0}.".format(playvals)
-            msg = msg + " Parameter <id> under <destination_groups> is required"
+            msg += " Parameter <id> under <destination_groups> is required"
             module.fail_json(msg=msg)
         if playvals.get('destination') and not isinstance(playvals['destination'], dict):
             msg = "Invalid playbook value: {0}.".format(playvals)
-            msg = msg + " Parameter <destination> under <destination_groups> must be a dict"
+            msg += " Parameter <destination> under <destination_groups> must be a dict"
             module.fail_json(msg=msg)
         if not playvals.get('destination') and len(playvals) > 1:
             msg = "Invalid playbook value: {0}.".format(playvals)
-            msg = msg + " Playbook entry contains unrecongnized parameters."
-            msg = msg + " Make sure <destination> keys under <destination_groups> are specified as follows:"
-            msg = msg + " destination: {ip: <ip>, port: <port>, protocol: <prot>, encoding: <enc>}}"
+            msg += " Playbook entry contains unrecongnized parameters."
+            msg += " Make sure <destination> keys under <destination_groups> are specified as follows:"
+            msg += " destination: {ip: <ip>, port: <port>, protocol: <prot>, encoding: <enc>}}"
             module.fail_json(msg=msg)
 
     if type == 'sensor_groups':
         if not playvals.get('id'):
             msg = "Invalid playbook value: {0}.".format(playvals)
-            msg = msg + " Parameter <id> under <sensor_groups> is required"
+            msg += " Parameter <id> under <sensor_groups> is required"
             module.fail_json(msg=msg)
         if playvals.get('path') and 'name' not in playvals['path'].keys():
             msg = "Invalid playbook value: {0}.".format(playvals)
-            msg = msg + " Parameter <path> under <sensor_groups> requires <name> key"
+            msg += " Parameter <path> under <sensor_groups> requires <name> key"
             module.fail_json(msg=msg)
 
 
@@ -88,18 +88,13 @@ def get_instance_data(key, cr_key, cr, existing_key):
     else:
         instance = cr._ref[cr_key]['existing'][existing_key]
 
-    if key == 'destination_groups':
-        m = re.search(r"destination-group (\d+)", cr._ref['_resource_key'])
-        instance_key = m.group(1)
-        data = {'id': instance_key, cr_key: instance}
-
-    if key == 'sensor_groups':
-        m = re.search(r"sensor-group (\d+)", cr._ref['_resource_key'])
-        instance_key = m.group(1)
-        data = {'id': instance_key, cr_key: instance}
-
-    if key == 'subscriptions':
-        m = re.search(r"subscription (\d+)", cr._ref['_resource_key'])
+    patterns = {
+        'destination_groups': r"destination-group (\d+)",
+        'sensor_groups': r"sensor-group (\d+)",
+        'subscriptions': r"subscription (\d+)",
+    }
+    if key in patterns.keys():
+        m = re.search(patterns[key], cr._ref['_resource_key'])
         instance_key = m.group(1)
         data = {'id': instance_key, cr_key: instance}
 
@@ -110,7 +105,7 @@ def get_instance_data(key, cr_key, cr, existing_key):
 
 def cr_key_lookup(key, mo):
     """
-    Helper method to get instance key value for mo
+    Helper method to get instance key value for Managed Object (mo)
     """
     cr_keys = [key]
     if key == 'destination_groups' and mo == 'TMS_DESTGROUP':
@@ -145,18 +140,18 @@ def remove_duplicate_context(cmds):
     if not cmds:
         return cmds
     feature_indices = [i for i, x in enumerate(cmds) if x == "feature telemetry"]
-    telemetry_indeces = [i for i, x in enumerate(cmds) if x == "telemetry"]
-    if len(feature_indices) == 1 and len(telemetry_indeces) == 1:
+    telemetry_indices = [i for i, x in enumerate(cmds) if x == "telemetry"]
+    if len(feature_indices) == 1 and len(telemetry_indices) == 1:
         return cmds
-    if len(feature_indices) == 1 and not telemetry_indeces:
+    if len(feature_indices) == 1 and not telemetry_indices:
         return cmds
-    if len(telemetry_indeces) == 1 and not feature_indices:
+    if len(telemetry_indices) == 1 and not feature_indices:
         return cmds
     if feature_indices and feature_indices[-1] > 1:
         cmds.pop(feature_indices[-1])
         return remove_duplicate_context(cmds)
-    if telemetry_indeces and telemetry_indeces[-1] > 1:
-        cmds.pop(telemetry_indeces[-1])
+    if telemetry_indices and telemetry_indices[-1] > 1:
+        cmds.pop(telemetry_indices[-1])
         return remove_duplicate_context(cmds)
 
 

@@ -138,7 +138,6 @@ class TelemetryFacts(object):
 
         # Walk the argspec and cmd_ref objects and build out config dict.
         for key in config.keys():
-            cr_keys = [key]
             for mo in managed_objects:
                 for cr in cmd_ref[mo]['ref']:
                     cr_keys = cr_key_lookup(key, mo)

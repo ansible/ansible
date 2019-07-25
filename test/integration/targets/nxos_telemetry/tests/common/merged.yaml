@@ -1,7 +1,10 @@
 ---
-- debug: msg="START connection={{ ansible_connection }} nxos_telemetry subscription sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_telemetry merged sanity test"
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
+
+- set_fact: source_interface="Loopback55"
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
 
 - name: Setup
   nxos_feature: &setup_teardown
@@ -19,7 +22,7 @@
       gather_network_resources:
         - telemetry
 
-  - name: Telemetry subscription - merged
+  - name: Telemetry - merged
     nxos_telemetry: &merged
       state: 'merged'
       config:
@@ -27,7 +30,7 @@
           key: /bootflash/server.key
           hostname: localhost
         compression: gzip
-        source_interface: Loopback55
+        source_interface: "{{source_interface|default(omit)}}"
         vrf: management
         destination_groups:
           - id: 2
@@ -62,7 +65,7 @@
       that:
         - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.after|dict2items)|length == 0"
 
-  - name: Telemetry subscription - merged - idempotence
+  - name: Telemetry - merged - idempotence
     nxos_telemetry: *merged
     register: result
 
@@ -70,7 +73,7 @@
       that:
         - "result.changed == false"
 
-  - name: Telemetry subscription - change values
+  - name: Telemetry - change values
     nxos_telemetry: &merged_change
       state: 'merged'
       config:
@@ -78,7 +81,7 @@
           key: /bootflash/local_server.key
           hostname: localhost
         compression: gzip
-        source_interface: Loopback77
+        source_interface: "{{source_interface|default(omit)}}"
         vrf: management
         destination_groups:
           - id: 2
@@ -102,11 +105,27 @@
       provider: "{{ connection }}"
     register: result
 
+    # The step above should result in only the following changes:
+    # "commands": [
+    #     "telemetry",
+    #     "certificate /bootflash/local_server.key localhost",
+    #     "subscription 44",
+    #     "snsr-grp 8 sample-interval 1000"
+    # ],
+
+  - set_fact:
+      test_list:
+        - "telemetry"
+        - "certificate /bootflash/local_server.key localhost"
+        - "subscription 44"
+        - "snsr-grp 8 sample-interval 1000"
+
   - assert:
       that:
         - "result.changed == true"
+        - "test_list|symmetric_difference(result.commands)|length == 0"
 
-  - name: Telemetry subscription - change values - idempotent
+  - name: Telemetry - change values - idempotent
     nxos_telemetry: *merged_change
     register: result
 
@@ -119,4 +138,4 @@
     nxos_feature: *setup_teardown
     ignore_errors: yes
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_telemetry subscription sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_telemetry merged sanity test"

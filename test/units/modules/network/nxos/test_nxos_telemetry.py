@@ -1052,6 +1052,16 @@ class TestNxosTelemetryModule(TestNxosModule):
                      'path': {'name': 'sys/bgp', 'depth': 0, 'query_condition': 'query_condition_xyz', 'filter_condition': 'filter_condition_xyz'},
                      },
                 ],
+                'subscriptions': [
+                    {'id': 5,
+                     'destination_group': 55,
+                     'sensor_group': {'id': 1, 'sample_interval': 1000},
+                     },
+                    {'id': 88,
+                     'destination_group': 3,
+                     'sensor_group': {'id': 4, 'sample_interval': 2000},
+                     },
+                ],
             }
         }, ignore_provider_arg)
         self.execute_module(changed=True, commands=[
@@ -1074,6 +1084,12 @@ class TestNxosTelemetryModule(TestNxosModule):
             'sensor-group 99',
             'data-source DME',
             'path sys/bgp depth 0 query-condition query_condition_xyz filter-condition filter_condition_xyz',
+            'subscription 5',
+            'dst-grp 55',
+            'snsr-grp 1 sample-interval 1000',
+            'subscription 88',
+            'dst-grp 3',
+            'snsr-grp 4 sample-interval 2000'
         ])
 
 

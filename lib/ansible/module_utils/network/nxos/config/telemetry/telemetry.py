@@ -78,6 +78,10 @@ class Telemetry(ConfigBase):
         if commands:
             if not self._module.check_mode:
                 self.edit_config(commands)
+                # TODO: edit_config is only available for network_cli. Once we
+                # add support for httpapi, we will need to switch to load_config
+                # or add support to httpapi for edit_config
+                #
                 # self._connection.load_config(commands)
             result['changed'] = True
         result['commands'] = commands
@@ -153,6 +157,8 @@ class Telemetry(ConfigBase):
                     continue
                 saved_ids.append(playvals['id'])
                 resource_key = td['cmd'].format(playvals['id'])
+                # Only build the NxosCmdRef object for the destination group
+                # module parameters.
                 self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
                 cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
                 ref = cmd_ref[td['type']]['ref'][-1]
@@ -173,11 +179,16 @@ class Telemetry(ConfigBase):
                     continue
                 saved_ids.append(playvals['id'])
                 resource_key = td['cmd'].format(playvals['id'])
+                # Only build the NxosCmdRef object for the sensor group
+                # module parameters.
                 self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
                 cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
                 ref = cmd_ref[td['type']]['ref'][-1]
                 ref.set_context([resource_key])
                 if get_setval_path(self._module):
+                    # Sensor group path setting can contain optional values.
+                    # Call get_setval_path helper function to process any
+                    # optional setval keys.
                     ref._ref['path']['setval'] = get_setval_path(self._module)
                 ref.get_existing(device_cache)
                 ref.get_playvals()
@@ -194,6 +205,8 @@ class Telemetry(ConfigBase):
                     continue
                 saved_ids.append(playvals['id'])
                 resource_key = td['cmd'].format(playvals['id'])
+                # Only build the NxosCmdRef object for the subscription
+                # module parameters.
                 self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
                 cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
                 ref = cmd_ref[td['type']]['ref'][-1]
@@ -219,7 +232,7 @@ class Telemetry(ConfigBase):
 
     @staticmethod
     def _state_overridden(cmd_ref, want, have):
-        """ The command generator when state is replaced
+        """ The command generator when state is overridden
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
