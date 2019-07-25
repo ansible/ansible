@@ -120,22 +120,13 @@ class VMwareCluster(PyVmomi):
         self.datacenter = None
         self.cluster = None
 
-        try:
-            self.datacenter = find_datacenter_by_name(self.content, self.datacenter_name)
-            if self.datacenter is None:
-                self.module.fail_json(msg="Datacenter %s does not exist." % self.datacenter_name)
+        self.datacenter = find_datacenter_by_name(self.content, self.datacenter_name)
+        if self.datacenter is None:
+            self.module.fail_json(msg="Datacenter %s does not exist." % self.datacenter_name)
 
-            self.cluster = self.find_cluster_by_name(cluster_name=self.cluster_name)
-            if self.cluster is None:
-                self.module.fail_json(msg="Cluster %s does not exist." % self.cluster_name)
-
-        except vmodl.RuntimeFault as runtime_fault:
-            self.module.fail_json(msg=to_native(runtime_fault.msg))
-        except vmodl.MethodFault as method_fault:
-            self.module.fail_json(msg=to_native(method_fault.msg))
-        except Exception as generic_exc:
-            self.module.fail_json(msg="Failed to check configuration"
-                                      " due to generic exception %s" % to_native(generic_exc))
+        self.cluster = self.find_cluster_by_name(cluster_name=self.cluster_name)
+        if self.cluster is None:
+            self.module.fail_json(msg="Cluster %s does not exist." % self.cluster_name)
 
     def check_drs_config_diff(self):
         """
