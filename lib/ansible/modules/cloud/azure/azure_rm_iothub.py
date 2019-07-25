@@ -17,21 +17,24 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_iothub
 version_added: "2.9"
-short_description: Manage Azure IoT hub.
+short_description: Manage Azure IoT hub
 description:
     - Create, delete an Azure IoT hub.
 options:
     resource_group:
         description:
             - Name of resource group.
+        type: str
         required: true
     name:
         description:
             - Name of the IoT hub.
+        type: str
         required: true
     state:
         description:
-            - Assert the state of the IoT hub. Use C(present) to create or update an IoT hub and C(absent) to delete an IoT hub.
+            - State of the IoT hub. Use C(present) to create or update an IoT hub and C(absent) to delete an IoT hub.
+        type: str
         default: present
         choices:
             - absent
@@ -39,11 +42,13 @@ options:
     location:
         description:
             - Location of the IoT hub.
+        type: str
     sku:
         description:
             - Pricing tier for Azure IoT Hub.
             - Note that only one free IoT hub instance is allowed in each subscription. Exception will be thrown if free instances exceed one.
-            - Default is s1 when creation.
+            - Default is C(s1) when creation.
+        type: str
         choices:
             - b1
             - b2
@@ -55,7 +60,7 @@ options:
     unit:
         description:
             - Units in your IoT Hub.
-            - Default is 1
+            - Default is C(1).
         type: int
     event_endpoint:
         description:
@@ -64,14 +69,14 @@ options:
             partition_count:
                 description:
                     - The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
-                    - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
-                    - Default is 2.
+                    - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                    - Default is C(2).
                 type: int
             retention_time_in_days:
                 description:
                     - The retention time for device-to-cloud messages in days.
-                    - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
-                    - Default is 1.
+                    - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                    - Default is C(1).
                 type: int
     enable_file_upload_notifications:
         description:
@@ -84,14 +89,17 @@ options:
             name:
                 description:
                     - Name of the filter.
+                type: str
                 required: yes
             ip_mask:
                 description:
                     - A string that contains the IP address range in CIDR notation for the rule.
+                type: str
                 required: yes
             action:
                 description:
                     - The desired action for requests captured by this rule.
+                type: str
                 required: yes
                 choices:
                     - accept
@@ -103,18 +111,22 @@ options:
             name:
                 description:
                     - Name of the custom endpoint.
+                type: str
                 required: yes
             resource_group:
                 description:
                     - Resource group of the endpoint.
-                    - Default is the same as C(resource_group).
+                    - Default is the same as I(resource_group).
+                type: str
             subscription:
                 description:
                     - Subscription id of the endpoint.
-                    - Default is the same as C(subscription).
+                    - Default is the same as I(subscription).
+                type: str
             resource_type:
                 description:
                     - Resource type of the custom endpoint.
+                type: str
                 choices:
                     - eventhub
                     - queue
@@ -125,13 +137,16 @@ options:
                 description:
                     - Connection string of the custom endpoint.
                     - The connection string should have send priviledge.
+                type: str
                 required: yes
             container:
                 description:
-                    - Container name of the custom endpoint when C(resource_type) is C(storage).
+                    - Container name of the custom endpoint when I(resource_type=storage).
+                type: str
             encoding:
                 description:
-                    - Encoding of the message when C(resource_type) is C(storage).
+                    - Encoding of the message when I(resource_type=storage).
+                type: str
     routes:
         description:
             - Route device-to-cloud messages to service-facing endpoints.
@@ -139,10 +154,12 @@ options:
             name:
                 description:
                     - Name of the route.
+                type: str
                 required: yes
             source:
                 description:
                     - The origin of the data stream to be acted upon.
+                type: str
                 choices:
                     - device_messages
                     - twin_change_events
@@ -156,20 +173,22 @@ options:
                 required: yes
             endpoint_name:
                 description:
-                    - The name of the endpoint in C(routing_endpoints) where IoT Hub sends messages that match the query.
+                    - The name of the endpoint in I(routing_endpoints) where IoT Hub sends messages that match the query.
+                type: str
                 required: yes
             condition:
                 description:
                     - "The query expression for the routing query that is run against the message application properties,
                        system properties, message body, device twin tags, and device twin properties to determine if it is a match for the endpoint."
                     - "For more information about constructing a query,
-                       see I(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
+                       see U(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
+                type: str
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -238,12 +257,16 @@ cloud_to_device:
         max_delivery_count:
             description:
                 - The number of times the IoT hub attempts to deliver a message on the feedback queue.
-                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+                - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+            type: int
+            returned: success
             sample: 10
         ttl_as_iso8601:
             description:
                 - The period of time for which a message is available to consume before it is expired by the IoT hub.
-                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+                - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+            type: str
+            returned: success
             sample: "1:00:00"
     returned: success
     type: complex
@@ -260,26 +283,34 @@ event_endpoints:
         endpoint:
             description:
                 - The Event Hub-compatible endpoint.
+            type: str
+            returned: success
             sample: "sb://iothub-ns-testing-1478811-9bbc4a15f0.servicebus.windows.net/"
         partition_count:
             description:
                 - The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
-                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+            type: int
+            returned: success
             sample: 2
         retention_time_in_days:
             description:
                 - The retention time for device-to-cloud messages in days.
-                - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+            type: int
+            returned: success
             sample: 1
         partition_ids:
             description:
                 - List of the partition id for the event endpoint.
+            type: list
+            returned: success
             sample: ["0", "1"]
     returned: success
     type: complex
 host_name:
     description:
-        - Host of the IoT hub
+        - Host of the IoT hub.
     sample: "testing.azure-devices.net"
     returned: success
     type: str
@@ -290,14 +321,20 @@ ip_filters:
         name:
             description:
                 - Name of the filter.
+            type: str
+            returned: success
             sample: filter
         ip_mask:
             description:
                 - A string that contains the IP address range in CIDR notation for the rule.
+            type: str
+            returned: success
             sample: 40.54.7.3
         action:
             description:
                 - The desired action for requests captured by this rule.
+            type: str
+            returned: success
             sample: Reject
     returned: success
     type: complex
@@ -308,104 +345,154 @@ routing_endpoints:
         event_hubs:
             description:
                 - List of custom endpoints of event hubs.
+            type: complex
+            returned: success
             contains:
                 name:
                     description:
                         - Name of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: foo
                 resource_group:
                     description:
                         - Resource group of the endpoint.
+                    type: str
+                    returned: success
                     sample: bar
                 subscription:
                     description:
                         - Subscription id of the endpoint.
+                    type: str
+                    returned: success
                     sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                 connection_string:
                     description:
                         - Connection string of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
         service_bus_queues:
             description:
                 - List of custom endpoints of service bus queue.
+            type: complex
+            returned: always
             contains:
                 name:
                     description:
                         - Name of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: foo
                 resource_group:
                     description:
                         - Resource group of the endpoint.
+                    type: str
+                    returned: success
                     sample: bar
                 subscription:
                     description:
-                        - Subscription id of the endpoint.
+                        - Subscription ID of the endpoint.
+                    type: str
+                    returned: success
                     sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                 connection_string:
                     description:
                         - Connection string of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
         service_bus_topics:
             description:
                 - List of custom endpoints of service bus topic.
+            type: complex
+            returned: success
             contains:
                 name:
                     description:
                         - Name of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: foo
                 resource_group:
                     description:
                         - Resource group of the endpoint.
+                    type: str
+                    returned: success
                     sample: bar
                 subscription:
                     description:
-                        - Subscription id of the endpoint.
+                        - Subscription ID of the endpoint.
+                    type: str
+                    returned: success
                     sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                 connection_string:
                     description:
                         - Connection string of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
         storage_containers:
             description:
                 - List of custom endpoints of storage
+            type: complex
+            returned: success
             contains:
                 name:
                     description:
                         - Name of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: foo
                 resource_group:
                     description:
                         - Resource group of the endpoint.
+                    type: str
+                    returned: success
                     sample: bar
                 subscription:
                     description:
-                        - Subscription id of the endpoint.
+                        - Subscription ID of the endpoint.
+                    type: str
+                    returned: success
                     sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                 connection_string:
                     description:
                         - Connection string of the custom endpoint.
+                    type: str
+                    returned: success
                     sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
     returned: success
     type: complex
 routes:
     description:
         - Route device-to-cloud messages to service-facing endpoints.
+    type: complex
+    returned: success
     contains:
         name:
             description:
                 - Name of the route.
+            type: str
+            returned: success
             sample: route1
         source:
             description:
                 - The origin of the data stream to be acted upon.
+            type: str
+            returned: success
             sample: device_messages
         enabled:
             description:
                 - Whether to enable the route.
+            type: str
+            returned: success
             sample: true
         endpoint_name:
             description:
                 - The name of the endpoint in C(routing_endpoints) where IoT Hub sends messages that match the query.
+            type: str
+            returned: success
             sample: foo
         condition:
             description:
@@ -413,6 +500,8 @@ routes:
                     system properties, message body, device twin tags, and device twin properties to determine if it is a match for the endpoint."
                 - "For more information about constructing a query,
                     see I(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
+            type: bool
+            returned: success
             sample: "true"
     returned: success
     type: complex

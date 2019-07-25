@@ -17,21 +17,24 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_iothubconsumergroup
 version_added: "2.9"
-short_description: Manage Azure IoT hub.
+short_description: Manage Azure IoT hub
 description:
     - Create, delete an Azure IoT hub.
 options:
     resource_group:
         description:
             - Name of resource group.
+        type: str
         required: true
     hub:
         description:
             - Name of the IoT hub.
+        type: str
         required: true
     state:
         description:
-            - Assert the state of the IoT hub. Use C(present) to create or update an IoT hub and C(absent) to delete an IoT hub.
+            - State of the IoT hub. Use C(present) to create or update an IoT hub and C(absent) to delete an IoT hub.
+        type: str
         default: present
         choices:
             - absent
@@ -39,16 +42,18 @@ options:
     event_hub:
         description:
             - Event hub endpoint name.
+        type: str
         default: events
     name:
         description:
             - Name of the consumer group.
+        type: str
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -64,10 +69,10 @@ RETURN = '''
 id:
     description:
         - Resource ID of the consumer group.
-    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup
-             /providers/Microsoft.Devices/IotHubs/Testing/events/ConsumerGroups/%24Default"
     returned: success
     type: str
+    sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup
+             /providers/Microsoft.Devices/IotHubs/Testing/events/ConsumerGroups/%24Default"
 name:
     description:
         - Name of the consumer group.

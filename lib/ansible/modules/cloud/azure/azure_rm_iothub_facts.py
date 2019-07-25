@@ -19,7 +19,7 @@ module: azure_rm_iothub_facts
 
 version_added: "2.9"
 
-short_description: Get IoT Hub facts.
+short_description: Get IoT Hub facts
 
 description:
     - Get facts for a specific IoT Hub or all IoT Hubs.
@@ -28,12 +28,15 @@ options:
     name:
         description:
             - Limit results to a specific resource group.
+        type: str
     resource_group:
         description:
-            - The resource group to search for the desired IoT Hub
+            - The resource group to search for the desired IoT Hub.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: str
     show_stats:
         description:
             - Show the statistics for IoT Hub.
@@ -52,6 +55,7 @@ options:
     test_route_message:
         description:
             - Test routes message. It will be used to test all routes.
+        type: str
     list_consumer_groups:
         description:
             - List the consumer group of the built-in event hub.
@@ -65,7 +69,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 '''
 
 EXAMPLES = '''
@@ -89,208 +93,306 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_iothubs:
-    description: List of IoT Hub dicts.
+    description:
+        - List of IoT Hub dicts.
     returned: always
-    type: list
+    type: complex
     contains:
         id:
             description:
                 - Resource ID of the IoT hub.
+            type: str
+            returned: always
             sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.Devices/IotHubs/Testing"
         name:
             description:
                 - Name of the IoT hub.
+            type: str
+            returned: always
             sample: Testing
         resource_group:
             description:
                 - Resource group of the IoT hub.
+            type: str
+            returned: always
             sample: myResourceGroup.
         location:
             description:
                 - Location of the IoT hub.
+            type: str
+            returned: always
             sample: eastus
         unit:
             description:
                 - Units in the IoT Hub.
+            type: int
+            returned: always
             sample: 1
         sku:
             description:
                 - Pricing tier for Azure IoT Hub.
+            type: str
+            returned: always
             sample: f1
         cloud_to_device:
             description:
                 - Cloud to device message properties.
+            type: complex
+            returned: always
             contains:
                 max_delivery_count:
                     description:
                         - The number of times the IoT hub attempts to deliver a message on the feedback queue.
-                        - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+                        - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+                    type: int
+                    returned: always
                     sample: 10
                 ttl_as_iso8601:
                     description:
                         - The period of time for which a message is available to consume before it is expired by the IoT hub.
-                        - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+                        - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages)."
+                    type: str
+                    returned: always
                     sample: "1:00:00"
         enable_file_upload_notifications:
             description:
                 - Whether file upload notifications are enabled.
+            type: str
+            returned: always
             sample: True
         event_endpoints:
             description:
                 - Built-in endpoint where to deliver device message.
+            type: complex
+            returned: always
             contains:
                 endpoint:
                     description:
                         - The Event Hub-compatible endpoint.
+                    type: str
+                    returned: always
                     sample: "sb://iothub-ns-testing-1478811-9bbc4a15f0.servicebus.windows.net/"
                 partition_count:
                     description:
                         - The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
-                        - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                        - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                    type: int
+                    returned: always
                     sample: 2
                 retention_time_in_days:
                     description:
                         - The retention time for device-to-cloud messages in days.
-                        - "See I(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                        - "See U(https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages)."
+                    type: int
+                    returned: always
                     sample: 1
                 partition_ids:
                     description:
                         - List of the partition id for the event endpoint.
+                    type: list
+                    returned: always
                     sample: ["0", "1"]
         host_name:
             description:
-                - Host of the IoT hub
+                - Host of the IoT hub.
+            type: str
+            returned: always
             sample: "testing.azure-devices.net"
         ip_filters:
             description:
                 - Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
+            type: complex
+            returned: always
             contains:
                 name:
                     description:
                         - Name of the filter.
+                    type: str
+                    returned: always
                     sample: filter
                 ip_mask:
                     description:
                         - A string that contains the IP address range in CIDR notation for the rule.
+                    type: str
+                    returned: always
                     sample: 40.54.7.3
                 action:
                     description:
                         - The desired action for requests captured by this rule.
+                    type: str
+                    returned: always
                     sample: Reject
         routing_endpoints:
             description:
                 - Custom endpoints.
+            type: complex
+            returned: always
             contains:
                 event_hubs:
                     description:
                         - List of custom endpoints of event hubs.
+                    type: complex
+                    returned: always
                     contains:
                         name:
                             description:
                                 - Name of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: foo
                         resource_group:
                             description:
                                 - Resource group of the endpoint.
+                            type: str
+                            returned: always
                             sample: bar
                         subscription:
                             description:
-                                - Subscription id of the endpoint.
+                                - Subscription ID of the endpoint.
+                            type: str
+                            returned: always
                             sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                         connection_string:
                             description:
                                 - Connection string of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
                 service_bus_queues:
                     description:
                         - List of custom endpoints of service bus queue.
+                    type: complex
+                    returned: always
                     contains:
                         name:
                             description:
                                 - Name of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: foo
                         resource_group:
                             description:
                                 - Resource group of the endpoint.
+                            type: str
+                            returned: always
                             sample: bar
                         subscription:
                             description:
-                                - Subscription id of the endpoint.
+                                - Subscription ID of the endpoint.
+                            type: str
+                            returned: always
                             sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                         connection_string:
                             description:
                                 - Connection string of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
                 service_bus_topics:
                     description:
                         - List of custom endpoints of service bus topic.
+                    type: complex
+                    returned: always
                     contains:
                         name:
                             description:
                                 - Name of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: foo
                         resource_group:
                             description:
                                 - Resource group of the endpoint.
+                            type: str
+                            returned: always
                             sample: bar
                         subscription:
                             description:
-                                - Subscription id of the endpoint.
+                                - Subscription ID of the endpoint.
+                            type: str
+                            returned: always
                             sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                         connection_string:
                             description:
                                 - Connection string of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
                 storage_containers:
                     description:
-                        - List of custom endpoints of storage
+                        - List of custom endpoints of storage.
+                    type: complex
+                    returned: always
                     contains:
                         name:
                             description:
                                 - Name of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: foo
                         resource_group:
                             description:
                                 - Resource group of the endpoint.
+                            type: str
+                            returned: always
                             sample: bar
                         subscription:
                             description:
-                                - Subscription id of the endpoint.
+                                - Subscription ID of the endpoint.
+                            type: str
+                            returned: always
                             sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                         connection_string:
                             description:
                                 - Connection string of the custom endpoint.
+                            type: str
+                            returned: always
                             sample: "Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey=****;EntityPath=foo"
         routes:
             description:
                 - Route device-to-cloud messages to service-facing endpoints.
+            type: complex
+            returned: always
             contains:
                 name:
                     description:
                         - Name of the route.
+                    type: str
+                    returned: always
                     sample: route1
                 source:
                     description:
                         - The origin of the data stream to be acted upon.
+                    type: str
+                    returned: always
                     sample: device_messages
                 enabled:
                     description:
                         - Whether to enable the route.
+                    type: bool
+                    returned: always
                     sample: true
                 endpoint_name:
                     description:
-                        - The name of the endpoint in C(routing_endpoints) where IoT Hub sends messages that match the query.
+                        - The name of the endpoint in I(routing_endpoints) where IoT Hub sends messages that match the query.
+                    type: str
+                    returned: always
                     sample: foo
                 condition:
                     description:
                         - "The query expression for the routing query that is run against the message application properties,
                            system properties, message body, device twin tags, and device twin properties to determine if it is a match for the endpoint."
                         - "For more information about constructing a query,
-                           see I(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
+                           see U(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax)"
+                    type: bool
+                    returned: always
                     sample: "true"
         tags:
             description:
                 - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            type: dict
+            returned: always
+            sample: { 'key1': 'value1' }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

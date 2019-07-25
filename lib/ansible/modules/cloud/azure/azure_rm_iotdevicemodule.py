@@ -17,26 +17,30 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_iotdevicemodule
 version_added: "2.9"
-short_description: Manage Azure IoT hub device module.
+short_description: Manage Azure IoT hub device module
 description:
     - Create, delete an Azure IoT hub device module.
 options:
     hub:
         description:
             - Name of IoT Hub.
+        type: str
         required: true
     hub_policy_name:
         description:
             - Policy name of the IoT Hub which will be used to query from IoT hub.
             - This policy should have at least 'Registry Read' access.
+        type: str
         required: true
     hub_policy_key:
         description:
-            - Key of the C(hub_policy_name).
+            - Key of the I(hub_policy_name).
+        type: str
         required: true
     name:
         description:
             - Name of the IoT hub device identity.
+        type: str
         required: true
     device:
         description:
@@ -45,7 +49,8 @@ options:
         type: str
     state:
         description:
-            - Assert the state of the IoT hub. Use C(present) to create or update an IoT hub device and C(absent) to delete an IoT hub device.
+            - State of the IoT hub. Use C(present) to create or update an IoT hub device and C(absent) to delete an IoT hub device.
+        type: str
         default: present
         choices:
             - absent
@@ -53,6 +58,7 @@ options:
     auth_method:
         description:
             - The authorization type an entity is to be created with.
+        type: str
         choices:
             - sas
             - certificate_authority
@@ -62,12 +68,14 @@ options:
         description:
             - Explicit self-signed certificate thumbprint to use for primary key.
             - Explicit Shared Private Key to use for primary key.
+        type: str
         aliases:
             - primary_thumbprint
     secondary_key:
         description:
             - Explicit self-signed certificate thumbprint to use for secondary key.
             - Explicit Shared Private Key to use for secondary key.
+        type: str
         aliases:
             - secondary_thumbprint
     twin_tags:
@@ -88,7 +96,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -128,10 +136,11 @@ EXAMPLES = '''
 
 RETURN = '''
 module:
-    description: IoT Hub device.
+    description:
+        - IoT Hub device.
     returned: always
-    type: complex
-    contains: {
+    type: dict
+    sample: {
         "authentication": {
             "symmetricKey": {
                 "primaryKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
