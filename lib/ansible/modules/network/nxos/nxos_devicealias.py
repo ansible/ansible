@@ -2,15 +2,8 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
-import string
 
-__metaclass__ = type
-
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -18,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 module: nxos_devicealias
 extends_documentation_fragment: nxos
-version_added: "??"
+version_added: 2.9
 short_description: Configuration of device alias.
 description:
     - Configuration of device alias for Cisco MDS NXOS.
@@ -86,6 +79,14 @@ EXAMPLES = '''
       register: result
     - debug: var=result
 '''
+
+
+from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
+import string
+
+__metaclass__ = type
 
 
 class showDeviceAliasStatus(object):
@@ -383,7 +384,8 @@ def main():
                     messages.append(name + ' - This device alias name is not in switch device-alias database, hence cannot be removed.')
             else:
                 if shDADatabaseObj.isNamePwwnPresentInDatabase(name, pwwn):
-                    messages.append(name + ' : ' + pwwn + ' - This device alias name,pwwn is already in switch device-alias database, hence nothing to configure')
+                    messages.append(name + ' : ' + pwwn + ' - This device alias name,pwwn is already in switch device-alias database, \
+                        hence nothing to configure')
                 else:
                     if shDADatabaseObj.isNameInDaDatabase(name):
                         module.fail_json(
@@ -391,14 +393,14 @@ def main():
                             ' - This device alias name is already present in switch device-alias database but assigned to another pwwn (' +
                             shDADatabaseObj.getPwwnByName(name) +
                             ') hence cannot be added')
-                        # messages.append(name + ' - This device alias name is present in switch device-alias database, hence cannot be added.')
+
                     elif shDADatabaseObj.isPwwnInDaDatabase(pwwn):
                         module.fail_json(
                             msg=pwwn +
                             ' - This device alias pwwn is already present in switch device-alias database but assigned to another name (' +
                             shDADatabaseObj.getNameByPwwn(pwwn) +
                             ') hence cannot be added')
-                        # messages.append(pwwn + ' - This device alias pwwn is present in switch device-alias database, hence cannot be added.')
+
                     else:
                         commands.append("device-alias name " + name + " pwwn " + pwwn)
                         da_add_list.append(name)

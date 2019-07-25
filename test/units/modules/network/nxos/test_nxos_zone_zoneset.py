@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -204,7 +204,13 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 'zone name zoneBNew vsan 923', 'member pwwn 10:00:10:94:00:00:00:01', 'member device-alias somename', 'zone commit vsan 923', 'no terminal dont-ask'])
+        self.assertEqual(result['commands'],
+                         ['terminal dont-ask',
+                          'zone name zoneBNew vsan 923',
+                          'member pwwn 10:00:10:94:00:00:00:01',
+                          'member device-alias somename',
+                          'zone commit vsan 923',
+                          'no terminal dont-ask'])
 
     # Test zone mem add/removal
     def test_zonemem_add_rem_1(self):
@@ -222,7 +228,13 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 'zone name zoneA vsan 923', 'no member pwwn 11:11:11:11:11:11:11:11', 'no member device-alias test123', 'zone commit vsan 923', 'no terminal dont-ask'])
+        self.assertEqual(result['commands'],
+                         ['terminal dont-ask',
+                          'zone name zoneA vsan 923',
+                          'no member pwwn 11:11:11:11:11:11:11:11',
+                          'no member device-alias test123',
+                          'zone commit vsan 923',
+                          'no terminal dont-ask'])
 
     # Test zone mem add/removal
     def test_zonemem_add_rem_2(self):
@@ -262,8 +274,12 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_1.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'],
-                         ['terminal dont-ask', 'zone name zoneBNew vsan 922', 'member pwwn 10:00:10:94:00:00:00:01 initiator', 'member device-alias somename target', 'member device-alias somenameWithBoth both', 'no terminal dont-ask']
-                         )
+                         ['terminal dont-ask',
+                          'zone name zoneBNew vsan 922',
+                          'member pwwn 10:00:10:94:00:00:00:01 initiator',
+                          'member device-alias somename target',
+                          'member device-alias somenameWithBoth both',
+                          'no terminal dont-ask'])
 
     # Test zone mem add/removal with devtype
     def test_zonemem_add_rem_4(self):

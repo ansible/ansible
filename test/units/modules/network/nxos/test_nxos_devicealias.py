@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -88,7 +88,12 @@ class TestNxosDeviceAliasModule(TestNxosModule):
     def test_da_add_1(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
         # Switch has mode as enahnced, distrbute = True, switch doesnt have the new da being added
-        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='somename', pwwn='10:00:00:00:89:a1:01:03'), dict(name='somename1', pwwn='10:00:00:00:89:a1:02:03')]))
+        set_module_args(
+            dict(
+                distribute=True, mode='enhanced', da=[
+                    dict(
+                        name='somename', pwwn='10:00:00:00:89:a1:01:03'), dict(
+                        name='somename1', pwwn='10:00:00:00:89:a1:02:03')]))
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=True)

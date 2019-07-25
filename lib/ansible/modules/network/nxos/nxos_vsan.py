@@ -2,15 +2,7 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
-import re
-
-__metaclass__ = type
-
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
@@ -18,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 module: nxos_vsan
 extends_documentation_fragment: nxos
-version_added: "??"
+version_added: 2.9
 short_description: Configuration of vsan.
 description:
     - Configuration of vsan for Cisco MDS NXOS.
@@ -81,6 +73,14 @@ EXAMPLES = '''
              remove: True
       register: result
 '''
+
+
+from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
+import re
+
+__metaclass__ = type
 
 
 class Vsan(object):

@@ -2,14 +2,6 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-import re
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
-
-
-__metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -17,9 +9,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
+---
 module: nxos_zone_zoneset
 extends_documentation_fragment: nxos
-version_added: ??
+version_added: 2.9
 short_description: Configuration of zone/zoneset.
 description:
     - Configuration of zone/zoneset for Cisco MDS NXOS.
@@ -70,14 +63,14 @@ options:
                         suboptions:
                             pwwn:
                                 description:
-                                    - pwwn member of the zone, use alias 'device-alias' as option for device-alias member
-                                aliases=['device-alias']
-                                required=True
+                                   - pwwn member of the zone, use alias 'device-alias' as option for device-alias member
+                                aliases: [device-alias]
+                                required: true
                             remove:
                                 description:
                                     - Removes member from the zone if True
                                 type: bool
-                                    default: False
+                                default: false
                             devtype:
                                 description:
                                     - devtype of the zone member used along with Smart zoning config
@@ -110,14 +103,12 @@ options:
                             name:
                                 description:
                                     - name of the zone that needs to be added to the zoneset or removed from the zoneset
-                                required=True
+                                required: True
                             remove:
                                 description:
                                     - Removes zone member from the zoneset
                                 type: bool
-                                    default: False
-
----
+                                default: False
 '''
 
 EXAMPLES = '''
@@ -170,6 +161,15 @@ EXAMPLES = '''
                    action: activate
       register: result
 '''
+
+
+from __future__ import absolute_import, division, print_function
+import re
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
+
+
+__metaclass__ = type
 
 
 class ShowZonesetActive(object):
