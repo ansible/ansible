@@ -50,7 +50,7 @@
     - name: Ensure vSAN is disabled
       assert:
         that:
-            - "{{ cluster__result_0002.changed == true }}"
+            - "{{ cluster_result_0002.changed == true }}"
 
     # Delete test cluster
     - name: Delete test cluster
