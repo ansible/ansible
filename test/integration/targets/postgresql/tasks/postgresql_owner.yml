@@ -153,7 +153,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['REASSIGN OWNED BY "bob" TO "alice"']
 
 # Check, rowcount must be 0
@@ -184,7 +184,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['REASSIGN OWNED BY "bob" TO "alice"']
 
 # Check, rowcount must be 1
@@ -222,7 +222,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER DATABASE "acme" OWNER TO "bob"']
 
 # Check, rowcount must be 0
@@ -254,7 +254,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER DATABASE "acme" OWNER TO "bob"']
 
 # Check, rowcount must be 1
@@ -286,7 +286,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -320,7 +320,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER TABLE "my_table" OWNER TO "bob"']
 
 # Check, rowcount must be 0
@@ -352,7 +352,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER TABLE "my_table" OWNER TO "bob"']
 
 # Check, rowcount must be 1
@@ -384,7 +384,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -418,7 +418,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "bob"']
 
 # Check, rowcount must be 0
@@ -450,7 +450,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "bob"']
 
 # Check, rowcount must be 1
@@ -482,7 +482,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -518,7 +518,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER FUNCTION increment OWNER TO "bob"']
   when: postgres_version_resp.stdout is version('10', '>=')
 
@@ -554,7 +554,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER FUNCTION increment OWNER TO "bob"']
   when: postgres_version_resp.stdout is version('10', '>=')
 
@@ -590,7 +590,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('10', '>=')
 
@@ -627,7 +627,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "bob"']
 
 # Check, rowcount must be 0
@@ -659,7 +659,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "bob"']
 
 # Check, rowcount must be 1
@@ -691,7 +691,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -725,7 +725,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER VIEW "test_view" OWNER TO "bob"']
 
 # Check, rowcount must be 0
@@ -757,7 +757,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER VIEW "test_view" OWNER TO "bob"']
 
 # Check, rowcount must be 1
@@ -789,7 +789,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1
@@ -824,7 +824,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "bob"']
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
@@ -860,7 +860,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "bob"']
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
@@ -896,7 +896,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
   when: postgres_version_resp.stdout is version('9.4', '>=')
 
@@ -933,7 +933,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "bob"']
 
 # Check, rowcount must be 0
@@ -965,7 +965,7 @@
 
 - assert:
     that:
-    - result.changed == true
+    - result is changed
     - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "bob"']
 
 # Check, rowcount must be 1
@@ -997,7 +997,7 @@
 
 - assert:
     that:
-    - result.changed == false
+    - result is not changed
     - result.queries == []
 
 # Check, rowcount must be 1

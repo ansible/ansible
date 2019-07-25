@@ -32,7 +32,8 @@ options:
         description:
             - When supplied, this argument will restrict the facts collected
                 to a given subset.  Possible values for this argument include
-                "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_ifgrp_info",
+                "aggregate_info", "cluster_node_info", "igroup_info", "lun_info", "net_dns_info",
+                "net_ifgrp_info",
                 "net_interface_info", "net_port_info", "nvme_info", "nvme_interface_info",
                 "nvme_namespace_info", "nvme_subsystem_info", "ontap_version",
                 "qos_adaptive_policy_info", "qos_policy_info", "security_key_manager_key_info",
@@ -92,6 +93,7 @@ ontap_facts:
         "ontap_facts": {
             "aggregate_info": {...},
             "cluster_node_info": {...},
+            "net_dns_info": {...},
             "net_ifgrp_info": {...},
             "net_interface_info": {...},
             "net_port_info": {...},
@@ -143,6 +145,16 @@ class NetAppONTAPGatherFacts(object):
         # min_version identifies the ontapi version which supports this ZAPI
         # use 0 if it is supported since 9.1
         self.fact_subsets = {
+            'net_dns_info': {
+                'method': self.get_generic_get_iter,
+                'kwargs': {
+                    'call': 'net-dns-get-iter',
+                    'attribute': 'net-dns-info',
+                    'field': 'vserver-name',
+                    'query': {'max-records': '1024'},
+                },
+                'min_version': '0',
+            },
             'net_interface_info': {
                 'method': self.get_generic_get_iter,
                 'kwargs': {

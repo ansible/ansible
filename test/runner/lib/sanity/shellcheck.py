@@ -20,6 +20,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     read_lines_without_comments,
+    ANSIBLE_ROOT,
 )
 
 from lib.util_common import (
@@ -39,13 +40,13 @@ class ShellcheckTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/shellcheck/skip.txt'
-        skip_paths = set(read_lines_without_comments(skip_file, remove_blank_lines=True, optional=True))
-
-        exclude_file = 'test/sanity/shellcheck/exclude.txt'
+        exclude_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/shellcheck/exclude.txt')
         exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh' and i.path not in skip_paths)
+        settings = self.load_settings(args, 'AT1000')
+
+        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh')
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name)
@@ -85,6 +86,8 @@ class ShellcheckTest(SanitySingleVersion):
                     level=entry.attrib['severity'],
                     code=entry.attrib['source'].replace('ShellCheck.', ''),
                 ))
+
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results)

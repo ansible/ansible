@@ -29,6 +29,7 @@ from ansible.release import __version__
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes
 from ansible.vars.manager import VariableManager
 
 try:
@@ -252,6 +253,13 @@ class CLI(with_metaclass(ABCMeta, object)):
                     becomepass = to_bytes(becomepass)
         except EOFError:
             pass
+
+        # we 'wrap' the passwords to prevent templating as
+        # they can contain special chars and trigger it incorrectly
+        if sshpass:
+            sshpass = AnsibleUnsafeBytes(sshpass)
+        if becomepass:
+            becomepass = AnsibleUnsafeBytes(becomepass)
 
         return (sshpass, becomepass)
 

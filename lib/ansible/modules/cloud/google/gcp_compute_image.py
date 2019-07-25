@@ -57,15 +57,18 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   disk_size_gb:
     description:
     - Size of the image when restored onto a persistent disk (in GB).
     required: false
+    type: int
   family:
     description:
     - The name of the image family to which this image belongs. You can create disks
@@ -73,6 +76,7 @@ options:
       always returns its latest image that is not deprecated. The name of the image
       family must comply with RFC1035.
     required: false
+    type: str
   guest_os_features:
     description:
     - A list of features to enable on the guest OS. Applicable for bootable images
@@ -84,6 +88,7 @@ options:
       WINDOWS, to indicate that this is a Windows image.
     - This value is purely informational and does not enable or disable any features.
     required: false
+    type: list
     suboptions:
       type:
         description:
@@ -93,27 +98,32 @@ options:
           purely informational and does not enable or disable any features.
         - 'Some valid choices include: "VIRTIO_SCSI_MULTIQUEUE"'
         required: false
+        type: str
   image_encryption_key:
     description:
     - Encrypts the image using a customer-supplied encryption key.
     - After you encrypt an image with a customer-supplied key, you must provide the
       same key if you use the image later (e.g. to create a disk from the image) .
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
+        type: str
   labels:
     description:
     - Labels to apply to this Image.
     required: false
+    type: dict
     version_added: 2.8
   licenses:
     description:
     - Any applicable license URI.
     required: false
+    type: list
   name:
     description:
     - Name of the resource; provided by the client when the resource is created. The
@@ -123,10 +133,12 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   raw_disk:
     description:
     - The parameters of the raw disk image.
     required: false
+    type: dict
     suboptions:
       container_type:
         description:
@@ -135,16 +147,19 @@ options:
           format. Provided by the client when the disk image is created.
         - 'Some valid choices include: "TAR"'
         required: false
+        type: str
       sha1_checksum:
         description:
         - An optional SHA1 checksum of the disk image before unpackaging.
         - This is provided by the client when the disk image is created.
         required: false
+        type: str
       source:
         description:
         - The full Google Cloud Storage URL where disk storage is stored You must
           provide either this property or the sourceDisk property but not both.
         required: true
+        type: str
   source_disk:
     description:
     - The source disk to create this image based on.
@@ -156,29 +171,34 @@ options:
       to a gcp_compute_disk task and then set this source_disk field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   source_disk_encryption_key:
     description:
     - The customer-supplied encryption key of the source disk. Required if the source
       disk is protected by a customer-supplied encryption key.
     required: false
+    type: dict
     suboptions:
       raw_key:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
         required: false
+        type: str
   source_disk_id:
     description:
     - The ID value of the disk used to create this image. This value may be used to
       determine whether the image was taken from the current or a previous instance
       of a given disk name.
     required: false
+    type: str
   source_type:
     description:
     - The type of the image used to create this disk. The default and only value is
       RAW .
     - 'Some valid choices include: "RAW"'
     required: false
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/images)'

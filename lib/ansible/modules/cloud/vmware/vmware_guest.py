@@ -186,7 +186,7 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
           then will select the less used datastore whose name contains this "disk.datastore" string.'
-    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
           will not be used if C(datastore) is specified outside this C(disk) configuration.'
@@ -896,7 +896,9 @@ class PyVmomiHelper(PyVmomi):
                     rai_change_detected = True
 
             if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
-                mem_reservation = self.params['hardware'].get('mem_reservation') or self.params['hardware'].get('memory_reservation') or None
+                mem_reservation = self.params['hardware'].get('mem_reservation')
+                if mem_reservation is None:
+                    mem_reservation = self.params['hardware'].get('memory_reservation')
                 try:
                     mem_reservation = int(mem_reservation)
                 except ValueError:
@@ -1519,30 +1521,28 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
-    def customize_customvalues(self, vm_obj, config_spec):
+    def customize_customvalues(self, vm_obj):
         if len(self.params['customvalues']) == 0:
             return
 
-        vm_custom_spec = config_spec
-        vm_custom_spec.extraConfig = []
-
-        changed = False
         facts = self.gather_facts(vm_obj)
         for kv in self.params['customvalues']:
             if 'key' not in kv or 'value' not in kv:
-                self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
+                self.module.exit_json(msg="customvalues items required both 'key' and 'value' fields.")
+
+            key_id = None
+            for field in self.content.customFieldsManager.field:
+                if field.name == kv['key']:
+                    key_id = field.key
+                    break
+
+            if not key_id:
+                self.module.fail_json(msg="Unable to find custom value key %s" % kv['key'])
 
             # If kv is not kv fetched from facts, change it
             if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
-                option = vim.option.OptionValue()
-                option.key = kv['key']
-                option.value = kv['value']
-
-                vm_custom_spec.extraConfig.append(option)
-                changed = True
-
-        if changed:
-            self.change_detected = True
+                self.content.customFieldsManager.SetField(entity=vm_obj, key=key_id, value=kv['value'])
+                self.change_detected = True
 
     def customize_vm(self, vm_obj):
 
@@ -2212,7 +2212,7 @@ class PyVmomiHelper(PyVmomi):
                 # Convert disk present in template if is set
                 if self.params['convert']:
                     for device in vm_obj.config.hardware.device:
-                        if hasattr(device.backing, 'fileName'):
+                        if isinstance(device, vim.vm.device.VirtualDisk):
                             disk_locator = vim.vm.RelocateSpec.DiskLocator()
                             disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
                             if self.params['convert'] in ['thin']:
@@ -2314,12 +2314,7 @@ class PyVmomiHelper(PyVmomi):
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'annotation'}
 
             if self.params['customvalues']:
-                vm_custom_spec = vim.vm.ConfigSpec()
-                self.customize_customvalues(vm_obj=vm, config_spec=vm_custom_spec)
-                task = vm.ReconfigVM_Task(vm_custom_spec)
-                self.wait_for_task(task)
-                if task.info.state == 'error':
-                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customvalues'}
+                self.customize_customvalues(vm_obj=vm)
 
             if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
@@ -2357,7 +2352,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
-        self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
+        self.customize_customvalues(vm_obj=self.current_vm_obj)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
 

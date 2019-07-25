@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import traceback
-from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 # Pull in pysnow
 HAS_PYSNOW = False
@@ -50,14 +50,14 @@ class ServiceNowClient(object):
                                                instance=self.instance)
             except Exception as detail:
                 self.module.fail_json(msg='Could not connect to ServiceNow: {0}'.format(str(detail)), **result)
-        if not self.session['token']:
-            # No previous token exists, Generate new.
-            try:
-                self.session['token'] = self.conn.generate_token(self.username, self.password)
-            except pysnow.exceptions.TokenCreateError as detail:
-                self.module.fail_json(msg='Unable to generate a new token: {0}'.format(str(detail)), **result)
+            if not self.session['token']:
+                # No previous token exists, Generate new.
+                try:
+                    self.session['token'] = self.conn.generate_token(self.username, self.password)
+                except pysnow.exceptions.TokenCreateError as detail:
+                    self.module.fail_json(msg='Unable to generate a new token: {0}'.format(str(detail)), **result)
 
-            self.conn.set_token(self.session['token'])
+                self.conn.set_token(self.session['token'])
         elif self.username is not None:
             try:
                 self.conn = pysnow.Client(instance=self.instance,
@@ -66,7 +66,7 @@ class ServiceNowClient(object):
             except Exception as detail:
                 self.module.fail_json(msg='Could not connect to ServiceNow: {0}'.format(str(detail)), **result)
         else:
-            snow_error = "Must specify username/password or client_id/client_secret"
+            snow_error = "Must specify username/password. Also client_id/client_secret if using OAuth."
             self.module.fail_json(msg=snow_error, **result)
 
     def updater(self, new_token):
@@ -86,9 +86,9 @@ class ServiceNowClient(object):
     @staticmethod
     def snow_argument_spec():
         return dict(
-            instance=dict(type='str', required=True),
-            username=dict(type='str', required=True, no_log=True),
-            password=dict(type='str', required=True, no_log=True),
+            instance=dict(type='str', required=False, fallback=(env_fallback, ['SN_INSTANCE'])),
+            username=dict(type='str', required=False, fallback=(env_fallback, ['SN_USERNAME'])),
+            password=dict(type='str', required=False, no_log=True, fallback=(env_fallback, ['SN_PASSWORD'])),
             client_id=dict(type='str', no_log=True),
             client_secret=dict(type='str', no_log=True),
         )
