@@ -1,10 +1,13 @@
-- block:
-    - name: CLEANUP | Leave Docker Swarm
-      docker_swarm:
-        state: absent
-        force: true
+- name: CLEANUP | Leave Docker Swarm
+  docker_swarm:
+    state: absent
+    force: true
+  ignore_errors: yes
+  register: leave_swarm
 
-  rescue:
+- name: CLEANUP | Kill Docker and cleanup
+  when: leave_swarm is failed
+  block:
     - name: CLEANUP | Kill docker daemon
       command: systemctl kill -s 9 docker
       become: yes
@@ -30,4 +33,3 @@
       docker_swarm:
         state: absent
         force: true
-      diff: no
