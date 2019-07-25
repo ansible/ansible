@@ -1,0 +1,74 @@
+
+PLAY [A common play] ***********************************************************
+
+TASK [debug] *******************************************************************
+ok: [testhost] => {
+    "msg": "ansible_check_mode: False"
+}
+
+TASK [Command] *****************************************************************
+changed: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with check_mode: true (runs always in check_mode)] [CHECK MODE] *****
+
+TASK [debug] [CHECK MODE] ******************************************************
+ok: [testhost] => {
+    "msg": "ansible_check_mode: False"
+}
+
+TASK [Command] [CHECK MODE] ****************************************************
+skipping: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with check_mode: false (runs always in wet mode)] *******************
+
+TASK [debug] *******************************************************************
+ok: [testhost] => {
+    "msg": "ansible_check_mode: False"
+}
+
+TASK [Command] *****************************************************************
+changed: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with a block with check_mode: true] *********************************
+
+TASK [Command] [CHECK MODE] ****************************************************
+skipping: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY [Play with a block with check_mode: false] ********************************
+
+TASK [Command] *****************************************************************
+changed: [testhost]
+
+TASK [Command with check_mode: false] ******************************************
+changed: [testhost]
+
+TASK [Command with check_mode: true] [CHECK MODE] ******************************
+skipping: [testhost]
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=11   changed=8    unreachable=0    failed=0    skipped=7    rescued=0    ignored=0   
+

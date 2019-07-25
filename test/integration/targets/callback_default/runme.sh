@@ -28,6 +28,26 @@ run_test() {
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
 }
 
+run_test_dryrun() {
+	local testname=$1
+	# optional, pass --check to run a dry run
+	local chk=${2:-}
+
+	# This needed to satisfy shellcheck that can not accept unquoted variable
+	cmd="ansible-playbook -i inventory ${chk} test_dryrun.yml"
+
+	# The shenanigans with redirection and 'tee' are to capture STDOUT and
+	# STDERR separately while still displaying both to the console
+	{ $cmd \
+		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
+		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
+	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
+	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
+
+	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
+	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
+}
+
 diff_failure() {
 	if [[ $INIT = 0 ]]; then
 		echo "FAILURE...diff mismatch!"
@@ -41,11 +61,11 @@ cleanup() {
 	fi
 
 	if [[ -f "${BASEFILE}.unreachable.stdout" ]]; then
-	    rm -rf "${BASEFILE}.unreachable.stdout"
+		rm -rf "${BASEFILE}.unreachable.stdout"
 	fi
 
 	if [[ -f "${BASEFILE}.unreachable.stderr" ]]; then
-	    rm -rf "${BASEFILE}.unreachable.stderr"
+		rm -rf "${BASEFILE}.unreachable.stderr"
 	fi
 
 	# Restore TTY cols
@@ -91,6 +111,7 @@ export ANSIBLE_NOCOLOR=1
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
+export ANSIBLE_CHECK_MODE_MARKERS=0
 
 run_test default
 
@@ -128,6 +149,30 @@ set +e
 ansible-playbook -i inventory test_2.yml > >(set +x; tee "${BASEFILE}.unreachable.stdout";) 2> >(set +x; tee "${BASEFILE}.unreachable.stderr" >&2) || true
 set -e
 if test "$(grep -c 'UNREACHABLE' "${BASEFILE}.unreachable.stderr")" -ne 1; then
-    echo "Test failed"
-    exit 1
+	echo "Test failed"
+	exit 1
 fi
+
+## DRY RUN tests
+#
+# Default settings with dry run tasks
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_FAILED_STDERR=1
+# Enable Check mode markers
+export ANSIBLE_CHECK_MODE_MARKERS=1
+
+# Test the wet run with check markers
+run_test_dryrun check_markers_wet
+
+# Test the dry run with check markers
+run_test_dryrun check_markers_dry --check
+
+# Disable Check mode markers
+export ANSIBLE_CHECK_MODE_MARKERS=0
+
+# Test the wet run without check markers
+run_test_dryrun check_nomarkers_wet
+
+# Test the dry run without check markers
+run_test_dryrun check_nomarkers_dry --check
