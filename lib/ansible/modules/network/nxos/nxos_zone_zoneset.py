@@ -22,6 +22,7 @@ options:
     zone_zoneset_details:
         description:
             - List of zone/zoneset details to be added or removed
+        type: list
         suboptions:
             vsan:
                 description:
@@ -52,6 +53,7 @@ options:
                             - name of the zone
                         required:
                             True
+                        type: str
                     remove:
                         description:
                             - Deletes the zone if True
@@ -60,6 +62,7 @@ options:
                     members:
                         description:
                             - Members of the zone that needs to be removed or added
+                        type: list
                         suboptions:
                             pwwn:
                                 description:
@@ -80,6 +83,7 @@ options:
             zoneset:
                 description:
                     - List of zoneset options for the vsan
+                type: list
                 suboptions:
                     name:
                         description:
@@ -99,11 +103,13 @@ options:
                     members:
                         description:
                             - Members of the zoneset that needs to be removed or added
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - name of the zone that needs to be added to the zoneset or removed from the zoneset
                                 required: True
+                                type: str
                             remove:
                                 description:
                                     - Removes zone member from the zoneset
@@ -112,56 +118,103 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Test that zone/zoneset module works
-      nxos_zone_zoneset:
-        provider: "{{ creds }}"
-        zone_zoneset_details:
-           - vsan: 22
-             mode: enhanced
-             zone:
-                - name: zoneA
-                  members:
-                     - {pwwn: '11:11:11:11:11:11:11:11'}
-                     - {device-alias: 'test123'}
-                     - {pwwn: '61:61:62:62:12:12:12:12', remove: True}
-                - name: zoneB
-                  members:
-                     - {pwwn: '10:11:11:11:11:11:11:11'}
-                     - {pwwn: '62:62:62:62:21:21:21:21'}
-                - name: zoneC
-                  remove: True
-             zoneset:
-                 - name: zsetname1
-                   members:
-                      - {name: zoneA}
-                      - {name: zoneB}
-                      - {name: zoneC, remove: True}
-                   action: activate
-                 - name: zsetTestExtra
-                   remove: True
-                   action: deactivate
-           - vsan: 21
-             mode: basic
-             smart_zoning: True
-             zone:
-                - name: zone21A
-                  members:
-                     - {pwwn: '11:11:11:11:11:11:11:11',devtype: 'both'}
-                     - {pwwn: '62:62:62:62:12:12:12:12'}
-                     - {pwwn: '92:62:62:62:12:12:1a:1a',devtype: 'both', remove: True}
-                - name: zone21B
-                  members:
-                     - {pwwn: '10:11:11:11:11:11:11:11'}
-                     - {pwwn: '62:62:62:62:21:21:21:21'}
-             zoneset:
-                 - name: zsetname21
-                   members:
-                      - {name: zone21A}
-                      - {name: zone21B}
-                   action: activate
-      register: result
+--- 
+- 
+  name: "Test that zone/zoneset module works"
+  nxos_zone_zoneset: 
+    provider: "{{ creds }}"
+    zone_zoneset_details: 
+      - 
+        mode: enhanced
+        vsan: 22
+        zone: 
+          - 
+            members: 
+              - 
+                pwwn: "11:11:11:11:11:11:11:11"
+              - 
+                device-alias: test123
+              - 
+                pwwn: "61:61:62:62:12:12:12:12"
+                remove: true
+            name: zoneA
+          - 
+            members: 
+              - 
+                pwwn: "10:11:11:11:11:11:11:11"
+              - 
+                pwwn: "62:62:62:62:21:21:21:21"
+            name: zoneB
+          - 
+            name: zoneC
+            remove: true
+        zoneset: 
+          - 
+            action: activate
+            members: 
+              - 
+                name: zoneA
+              - 
+                name: zoneB
+              - 
+                name: zoneC
+                remove: true
+            name: zsetname1
+          - 
+            action: deactivate
+            name: zsetTestExtra
+            remove: true
+      - 
+        mode: basic
+        smart_zoning: true
+        vsan: 21
+        zone: 
+          - 
+            members: 
+              - 
+                devtype: both
+                pwwn: "11:11:11:11:11:11:11:11"
+              - 
+                pwwn: "62:62:62:62:12:12:12:12"
+              - 
+                devtype: both
+                pwwn: "92:62:62:62:12:12:1a:1a"
+                remove: true
+            name: zone21A
+          - 
+            members: 
+              - 
+                pwwn: "10:11:11:11:11:11:11:11"
+              - 
+                pwwn: "62:62:62:62:21:21:21:21"
+            name: zone21B
+        zoneset: 
+          - 
+            action: activate
+            members: 
+              - 
+                name: zone21A
+              - 
+                name: zone21B
+            name: zsetname21
+
 '''
 
+RETURN = '''
+commands:
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample:
+    - terminal dont-ask
+    - zone name zoneA vsan 923
+    - member pwwn 11:11:11:11:11:11:11:11
+    - no member device-alias test123
+    - zone commit vsan 923
+    - no terminal dont-ask
+'''
+
+from __future__ import (absolute_import, division, print_function)
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
@@ -485,7 +538,7 @@ def main():
                     commands_executed.append("no zone smart-zoning enable vsan " + str(vsan))
                     messages.append("smart-zoning disabled for vsan " + str(vsan))
             else:
-                messages.append("smart-zoning is already set to " + sw_smart_zoning + " ,no change in smart-zoning configuration for vsan " + str(vsan))
+                messages.append("smart-zoning is already set to " + sw_smart_zoning + " , no change in smart-zoning configuration for vsan " + str(vsan))
 
         # Process zone member options
         # TODO: Obviously this needs to be cleaned up properly, as there are a lot of ifelse statements which is bad

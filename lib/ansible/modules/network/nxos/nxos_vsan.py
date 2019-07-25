@@ -20,12 +20,12 @@ options:
     vsan:
         description:
             - List of vsan details to be added or removed
+        type: list
         suboptions:
             id:
                 description:
-                    - vsan id
-                required:
-                    True
+                    - Vsan id
+                required: True
             name:
                 description:
                     - Name of the vsan
@@ -42,38 +42,55 @@ options:
             interface:
                 description:
                     - List of vsan's interfaces to be added
-                type: str
-
-
+                type: list
 '''
 
 EXAMPLES = '''
-- name: Test that vsan module works
-      nxos_vsan:
-        provider: "{{ creds }}"
-        vsan:
-           - id: 922
-             name: vsan-SAN-A
-             suspend: False
-             interface:
-                - fc1/1
-                - fc1/2
-                - port-channel 1
-             remove: False
-           - id: 923
-             name: vsan-SAN-B
-             suspend: True
-             interface:
-                - fc1/11
-                - fc1/21
-                - port-channel 2
-             remove: False
-           - id: 1923
-             name: vsan-SAN-Old
-             remove: True
-      register: result
+--- 
+- 
+  name: "Test that vsan module works"
+  nxos_vsan: 
+    provider: "{{ creds }}"
+    vsan: 
+      - 
+        id: 922
+        interface: 
+          - fc1/1
+          - fc1/2
+          - "port-channel 1"
+        name: vsan-SAN-A
+        remove: false
+        suspend: false
+      - 
+        id: 923
+        interface: 
+          - fc1/11
+          - fc1/21
+          - "port-channel 2"
+        name: vsan-SAN-B
+        remove: false
+        suspend: true
+      - 
+        id: 1923
+        name: vsan-SAN-Old
+        remove: true
+
 '''
 
+RETURN = '''
+commands:
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample:
+    - terminal dont-ask
+    - vsan database
+    - vsan 922 interface fc1/40
+    - vsan 922 interface port-channel 155
+    - no terminal dont-ask
+'''
+
+from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
 import re

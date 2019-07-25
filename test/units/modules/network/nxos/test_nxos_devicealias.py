@@ -118,7 +118,6 @@ class TestNxosDeviceAliasModule(TestNxosModule):
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False, failed=True)
-        #self.assertEqual(result['commands'], [])
 
     def test_da_add_4(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
@@ -127,7 +126,6 @@ class TestNxosDeviceAliasModule(TestNxosModule):
         self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
         self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
         result = self.execute_module(changed=False, failed=True)
-        #self.assertEqual(result['commands'], [])
 
     def test_da_remove_1(self):
         # Playbook mode is enhanced , distrbute = true , some da being removed

@@ -27,15 +27,18 @@ options:
         description:
             - Mode of devices-alias, basic or enhanced
         choices: ['basic', 'enhanced']
+        type: str
     da:
         description:
             - List of device-alias to be added or removed
+        type: list
         suboptions:
             name:
                 description:
                     - Name of the device-alias to be added or removed
                 required:
                     True
+                type: str
             pwwn:
                 description:
                     - pwwn to which the name needs to be associated with
@@ -47,39 +50,70 @@ options:
     rename:
         description:
             - List of device-alias to be renamed
+        type: list
         suboptions:
             old_name:
                 description:
                     - Old name of the device-alias that needs to be renamed
                 required:
                     True
+                type: str
             new_name:
                 description:
                     - New name of the device-alias
                 required:
                     True
+                type: str
 
 
 '''
 
 EXAMPLES = '''
-- name: Test that device alias module works
-      nxos_devicealias:
-          distribute: yes
-          mode: enhanced
-          da:
-              - { name: 'test1_add', pwwn: '56:2:22:11:22:88:11:67'}
-              - { name: 'test2_add', pwwn: '65:22:22:11:22:22:11:d'}
-              - { name: 'dev1', remove: True}
-              - { name: 'dev2', remove: True}
-          rename:
-              - { old_name: 'abc', new_name: 'bcd'}
-              - { old_name: 'abc1', new_name: 'bcd1'}
-          provider: "{{ creds }}"
-      register: result
-    - debug: var=result
+--- 
+- 
+  name: "Test that device alias module works"
+  nxos_devicealias: 
+    da: 
+      - 
+        name: test1_add
+        pwwn: "56:2:22:11:22:88:11:67"
+      - 
+        name: test2_add
+        pwwn: "65:22:22:11:22:22:11:d"
+      - 
+        name: dev1
+        remove: true
+      - 
+        name: dev2
+        remove: true
+    distribute: true
+    mode: enhanced
+    provider: "{{ creds }}"
+    rename: 
+      - 
+        new_name: bcd
+        old_name: abc
+      - 
+        new_name: bcd1
+        old_name: abc1
+
 '''
 
+RETURN = '''
+commands:
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample:
+    - terminal dont-ask
+    - device-alias database
+    - device-alias name somename pwwn 10:00:00:00:89:a1:01:03
+    - device-alias name somename1 pwwn 10:00:00:00:89:a1:02:03
+    - device-alias commit
+    - no terminal dont-ask
+'''
+
+from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
 import string
@@ -247,10 +281,8 @@ def main():
     da = module.params['da']
     rename = module.params['rename']
 
-    ##################################################
     # Step 0.0: Validate syntax of name and pwwn
     #       Also validate syntax of rename arguments
-    ##################################################
     if da is not None:
         for eachdict in da:
             name = eachdict['name']
@@ -278,18 +310,14 @@ def main():
                 module.fail_json(msg='This pwwn name is invalid : ' + str(newname) +
                                  '. Note that name cannot be more than 64 chars and it should start with a letter')
 
-    ###########################################
     # Step 0.1: Check DA status
-    ###########################################
     shDAStausObj = showDeviceAliasStatus(module)
     d = shDAStausObj.getDistribute()
     m = shDAStausObj.getMode()
     if shDAStausObj.isLocked():
         module.fail_json(msg='device-alias has acquired lock on the switch. Hence cannot procced.')
 
-    ###########################################
     # Step 1: Process distribute
-    ###########################################
     commands = []
     if distribute is not None:
         if distribute:
@@ -319,9 +347,7 @@ def main():
             result['changed'] = True
             load_config(module, cmds)
 
-    ###########################################
     # Step 2: Process mode
-    ###########################################
     commands = []
     if mode is not None:
         if mode == 'basic':
@@ -362,9 +388,7 @@ def main():
             result['changed'] = True
             load_config(module, cmds)
 
-    ###########################################
     # Step 3: Process da
-    ###########################################
     commands = []
     shDADatabaseObj = showDeviceAliasDatabase(module)
     if da is not None:
@@ -427,9 +451,7 @@ def main():
                 if len(da_add_list) != 0:
                     messages.append('the required device-alias were added. ' + ','.join(da_add_list))
 
-    ###########################################
     # Step 5: Process rename
-    ###########################################
     commands = []
     if rename is not None:
         for eachdict in rename:
@@ -468,9 +490,7 @@ def main():
                 result['changed'] = True
                 load_config(module, cmds)
 
-    ###########################################
     # Step END: check for 'check' mode
-    ###########################################
     if module.check_mode:
         module.exit_json(changed=False, commands=commands_to_execute, msg="Check Mode: No cmds issued to the hosts")
 

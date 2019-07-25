@@ -434,9 +434,6 @@ class TestNxosZoneZonesetModule(TestNxosModule):
 
     # Test zoneset activate/deactivate
     def test_zoneset_activate_deactivate(self):
-        #mem1 = {'name': 'zone21', 'remove': True}
-        # mem2 = {'device-alias': 'somename', 'devtype': 'target'}
-        # mem3 = {'device-alias': 'somenameWithBoth', 'devtype': 'both'}
 
         a = dict(zone_zoneset_details=[
             dict(vsan=221,
@@ -455,9 +452,6 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.assertEqual(result['messages'], [m, m1])
 
     def test_zoneset_activate_deactivate_1(self):
-        #mem1 = {'name': 'zone21', 'remove': True}
-        # mem2 = {'device-alias': 'somename', 'devtype': 'target'}
-        # mem3 = {'device-alias': 'somenameWithBoth', 'devtype': 'both'}
 
         a = dict(zone_zoneset_details=[
             dict(vsan=221,
@@ -476,9 +470,6 @@ class TestNxosZoneZonesetModule(TestNxosModule):
                                               'no terminal dont-ask'])
 
     def test_zoneset_activate_deactivate_2(self):
-        #mem1 = {'name': 'zone21', 'remove': True}
-        # mem2 = {'device-alias': 'somename', 'devtype': 'target'}
-        # mem3 = {'device-alias': 'somenameWithBoth', 'devtype': 'both'}
 
         a = dict(zone_zoneset_details=[
             dict(vsan=221,

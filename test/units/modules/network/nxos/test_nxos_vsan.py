@@ -126,17 +126,12 @@ class TestNxosVsanModule(TestNxosModule):
         self.execute_show_vsan_cmd.return_value = load_fixture('nxos_vsan', 'shvsan.cfg')
         self.execute_show_vsanmem_cmd.return_value = load_fixture('nxos_vsan', 'shvsanmem.cfg')
         result = self.execute_module(changed=True)
+        outvsan924 = ["vsan 924", "vsan 924 name vsan-SAN-924", "no vsan 924 suspend", "vsan 924 interface fc1/1",
+                      "vsan 924 interface port-channel 55"]
+        outvsan925 = ["vsan 925", "vsan 925 name vsan-SAN-925", "no vsan 925 suspend",
+                      "vsan 925 interface fc1/11", "vsan 925 interface fc1/21", "vsan 925 interface port-channel 56"]
         self.assertEqual(result['commands'],
-                         ["terminal dont-ask"] + ["vsan database"] + ["vsan 924",
-                                                                      "vsan 924 name vsan-SAN-924",
-                                                                      "no vsan 924 suspend",
-                                                                      "vsan 924 interface fc1/1",
-                                                                      "vsan 924 interface port-channel 55"] + ["vsan 925",
-                                                                                                               "vsan 925 name vsan-SAN-925",
-                                                                                                               "no vsan 925 suspend",
-                                                                                                               "vsan 925 interface fc1/11",
-                                                                                                               "vsan 925 interface fc1/21",
-                                                                                                               "vsan 925 interface port-channel 56"] + ["no terminal dont-ask"])
+                         ["terminal dont-ask"] + ["vsan database"] + outvsan924 + outvsan925 + ["no terminal dont-ask"])
 
     def test_vsan_suspend(self):
         margs = {
