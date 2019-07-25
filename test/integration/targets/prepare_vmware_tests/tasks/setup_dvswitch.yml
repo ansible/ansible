@@ -13,3 +13,15 @@
     discovery_proto: lldp
     discovery_operation: both
     state: present
+- name: Attach the hosts to the DVSwitch
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: "{{ item }}"
+    switch_name: '{{ dvswitch1 }}'
+    vmnics:
+      - vmnic1
+    state: present
+  with_items: "{{ esxi_hosts }}"
+  when: setup_attach_host is defined
