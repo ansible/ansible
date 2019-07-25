@@ -35,7 +35,6 @@ Connections Available
 
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
-For legacy playbooks, ICX still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
 
 Using CLI in Ansible
 ====================
