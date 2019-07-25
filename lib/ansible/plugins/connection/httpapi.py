@@ -265,6 +265,7 @@ class Connection(NetworkConnectionBase):
             headers.update(self._auth)
             url_kwargs['headers'] = headers
         else:
+            url_kwargs['force_basic_auth'] = True
             url_kwargs['url_username'] = self.get_option('remote_user')
             url_kwargs['url_password'] = self.get_option('password')
 
