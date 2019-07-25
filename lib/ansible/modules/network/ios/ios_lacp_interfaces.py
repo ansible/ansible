@@ -1,5 +1,5 @@
 #
-#!/usr/bin/python
+# !/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
 # GNU General Public License v3.0+
@@ -139,7 +139,7 @@ EXAMPLES = """
 #  shutdown
 #  lacp port-priority 30
 
-- name: Delete LACP attributes for all configured interfaces (Note: This won't delete the interface itself)
+- name: "Delete LACP attributes for all configured interfaces (Note: This won't delete the interface itself)"
   ios_lacp_interfaces:
     state: deleted
 
