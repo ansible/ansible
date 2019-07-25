@@ -1,0 +1,2 @@
+bugfixes:
+    - use versioned link generator to link correct version for seealso

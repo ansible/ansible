@@ -28,7 +28,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 display = Display()
 
 
@@ -610,19 +610,12 @@ class DocCLI(CLI):
         if 'seealso' in doc and doc['seealso']:
             text.append("SEE ALSO:")
             for item in doc['seealso']:
-                if 'module' in item and 'description' in item:
+                if 'module' in item:
                     text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
-                                limit - 6, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
-                elif 'module' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify('The official documentation on the %s module.' % item['module']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                    description = item.get('description', 'The official documentation on the %s module.' % item['module'])
+                    text.append(textwrap.fill(DocCLI.tty_ify(description), limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
                     text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
@@ -636,7 +629,7 @@ class DocCLI(CLI):
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
                     text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')
