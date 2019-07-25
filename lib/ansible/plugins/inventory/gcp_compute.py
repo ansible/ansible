@@ -189,14 +189,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return True
         return False
 
-    def fetch_list(self, params, link, query, token = None):
+    def fetch_list(self, params, link, query, token=None):
         '''
             :param params: a dict containing all of the fields relevant to build URL
             :param link: a formatted URL
             :param query: a formatted query string
             :return the JSON response containing a list of instances.
         '''
-        url_params = { 'filter': query }
+        url_params = {'filter': query}
         if token:
             url_params['pageToken'] = token
         response = self.auth_session.get(link, params=url_params)
@@ -518,7 +518,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                             if not zones or zone in zones:
                                 self._add_hosts(value['instances'], config_data, project_disks=project_disks)
                                 cached_data[project][zone] = value['instances']
-
 
         if cache_needs_update:
             self._cache[cache_key] = cached_data
