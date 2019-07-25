@@ -254,7 +254,12 @@ def main():
                 messages.append(str(vsanid) + " is a reserved vsan, and cannot be renamed")
             else:
                 if vsanname == sw_vsanname:
-                    messages.append("There is already a vsan " + str(vsanid) + " present in the switch, which has the name " + vsanname + " Hence there is nothing to configure")
+                    messages.append(
+                        "There is already a vsan " +
+                        str(vsanid) +
+                        " present in the switch, which has the name " +
+                        vsanname +
+                        " Hence there is nothing to configure")
                 else:
                     commands.append("vsan " + str(vsanid) + " name " + vsanname)
                     messages.append("setting vsan name to " + vsanname + " for vsan " + str(vsanid))

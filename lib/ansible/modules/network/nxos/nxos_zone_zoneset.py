@@ -525,28 +525,76 @@ def main():
                                         cmd = "no member " + cmd
                                         cmdmemlist.append(cmd)
                                         if op_smart_zoning and eachmem['devtype'] is not None:
-                                            messages.append("removing zone member '" + eachmem[memtype] + " of device type '" + eachmem['devtype'] + "' from zone '" + zname + "' in vsan " + str(vsan))
+                                            messages.append(
+                                                "removing zone member '" +
+                                                eachmem[memtype] +
+                                                " of device type '" +
+                                                eachmem['devtype'] +
+                                                "' from zone '" +
+                                                zname +
+                                                "' in vsan " +
+                                                str(vsan))
                                         else:
                                             messages.append("removing zone member '" + eachmem[memtype] + "' from zone '" + zname + "' in vsan " + str(vsan))
                                     else:
                                         if op_smart_zoning and eachmem['devtype'] is not None:
-                                            messages.append("zone member '" + eachmem[memtype] + "' of device type '" + eachmem['devtype'] + "' is not present in zone '" + zname + "' in vsan " + str(vsan) + " hence nothing to remove")
+                                            messages.append(
+                                                "zone member '" +
+                                                eachmem[memtype] +
+                                                "' of device type '" +
+                                                eachmem['devtype'] +
+                                                "' is not present in zone '" +
+                                                zname +
+                                                "' in vsan " +
+                                                str(vsan) +
+                                                " hence nothing to remove")
                                         else:
-                                            messages.append("zone member '" + eachmem[memtype] + "' is not present in zone '" + zname + "' in vsan " + str(vsan) + " hence nothing to remove")
+                                            messages.append(
+                                                "zone member '" +
+                                                eachmem[memtype] +
+                                                "' is not present in zone '" +
+                                                zname +
+                                                "' in vsan " +
+                                                str(vsan) +
+                                                " hence nothing to remove")
                                 else:
                                     messages.append("zone '" + zname + "' is not present in vsan " + str(vsan) + " , hence cannot remove the members")
 
                             else:
                                 if shZoneObj.isZoneMemberPresent(zname, cmd):
                                     if op_smart_zoning and eachmem['devtype'] is not None:
-                                        messages.append("zone member '" + eachmem[memtype] + "' of device type '" + eachmem['devtype'] + "' is already present in zone '" + zname + "' in vsan " + str(vsan) + " hence nothing to add")
+                                        messages.append(
+                                            "zone member '" +
+                                            eachmem[memtype] +
+                                            "' of device type '" +
+                                            eachmem['devtype'] +
+                                            "' is already present in zone '" +
+                                            zname +
+                                            "' in vsan " +
+                                            str(vsan) +
+                                            " hence nothing to add")
                                     else:
-                                        messages.append("zone member '" + eachmem[memtype] + "' is already present in zone '" + zname + "' in vsan " + str(vsan) + " hence nothing to add")
+                                        messages.append(
+                                            "zone member '" +
+                                            eachmem[memtype] +
+                                            "' is already present in zone '" +
+                                            zname +
+                                            "' in vsan " +
+                                            str(vsan) +
+                                            " hence nothing to add")
                                 else:
                                     cmd = "member " + cmd
                                     cmdmemlist.append(cmd)
                                     if op_smart_zoning and eachmem['devtype'] is not None:
-                                        messages.append("adding zone member '" + eachmem[memtype] + "' of device type '" + eachmem['devtype'] + "' to zone '" + zname + "' in vsan " + str(vsan))
+                                        messages.append(
+                                            "adding zone member '" +
+                                            eachmem[memtype] +
+                                            "' of device type '" +
+                                            eachmem['devtype'] +
+                                            "' to zone '" +
+                                            zname +
+                                            "' in vsan " +
+                                            str(vsan))
                                     else:
                                         messages.append("adding zone member '" + eachmem[memtype] + "' to zone '" + zname + "' in vsan " + str(vsan))
                         if len(cmdmemlist) != 0:
@@ -582,10 +630,12 @@ def main():
                                     cmdmemlist.append(cmd)
                                     messages.append("removing zoneset member '" + zsetmem_name + "' from zoneset '" + zsetname + "' in vsan " + str(vsan))
                                 else:
-                                    messages.append("zoneset member '" + zsetmem_name + "' is not present in zoneset '" + zsetname + "' in vsan " + str(vsan) + " ,hence there is nothing to remove")
+                                    messages.append("zoneset member '" + zsetmem_name + "' is not present in zoneset '" +
+                                                    zsetname + "' in vsan " + str(vsan) + " ,hence there is nothing to remove")
                             else:
                                 if shZonesetObj.isZonePresentInZoneset(zsetname, zsetmem_name):
-                                    messages.append("zoneset member '" + zsetmem_name + "' is already present in zoneset '" + zsetname + "' in vsan " + str(vsan) + " ,hence there is nothing to add")
+                                    messages.append("zoneset member '" + zsetmem_name + "' is already present in zoneset '" +
+                                                    zsetname + "' in vsan " + str(vsan) + " ,hence there is nothing to add")
                                 else:
                                     cmd = "member " + zsetmem_name
                                     cmdmemlist.append(cmd)

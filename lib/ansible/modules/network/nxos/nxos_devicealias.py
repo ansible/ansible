@@ -137,13 +137,14 @@ class showDeviceAliasDatabase(object):
 
     def update(self):
         command = 'show device-alias database'
+        # output = execute_show_command(command, self.module)[0].split("\n")
         output = self.execute_show_cmd(command)
         self.da_list = output.split("\n")
         for eachline in self.da_list:
             if 'device-alias' in eachline:
                 sv = eachline.strip().split()
                 self.da_dict[sv[2]] = sv[4]
-        
+
     def isNameInDaDatabase(self, name):
         return name in self.da_dict.keys()
 
@@ -246,7 +247,7 @@ def main():
     mode = module.params['mode']
     da = module.params['da']
     rename = module.params['rename']
-    
+
     ##################################################
     # Step 0.0: Validate syntax of name and pwwn
     #       Also validate syntax of rename arguments
@@ -258,9 +259,13 @@ def main():
             remove = eachdict['remove']
             if not remove:
                 if pwwn is None:
-                    module.fail_json(msg='This device alias name ' + str(name) + ' which needs to be added, doenst have pwwn specified . Please specify a valid pwwn')
+                    module.fail_json(
+                        msg='This device alias name ' +
+                        str(name) +
+                        ' which needs to be added, doenst have pwwn specified . Please specify a valid pwwn')
                 if not isNameValid(name):
-                    module.fail_json(msg='This pwwn name is invalid : ' + str(name) + '. Note that name cannot be more than 64 chars and it should start with a letter')
+                    module.fail_json(msg='This pwwn name is invalid : ' + str(name) +
+                                     '. Note that name cannot be more than 64 chars and it should start with a letter')
                 if not isPwwnValid(pwwn):
                     module.fail_json(msg='This pwwn is invalid : ' + str(pwwn) + '. Please check that its a valid pwwn')
     if rename is not None:
@@ -268,9 +273,11 @@ def main():
             oldname = eachdict['old_name']
             newname = eachdict['new_name']
             if not isNameValid(oldname):
-                module.fail_json(msg='This pwwn name is invalid : ' + str(oldname) + '. Note that name cannot be more than 64 chars and it should start with a letter')
+                module.fail_json(msg='This pwwn name is invalid : ' + str(oldname) +
+                                 '. Note that name cannot be more than 64 chars and it should start with a letter')
             if not isNameValid(newname):
-                module.fail_json(msg='This pwwn name is invalid : ' + str(newname) + '. Note that name cannot be more than 64 chars and it should start with a letter')
+                module.fail_json(msg='This pwwn name is invalid : ' + str(newname) +
+                                 '. Note that name cannot be more than 64 chars and it should start with a letter')
 
     ###########################################
     # Step 0.1: Check DA status
@@ -379,10 +386,18 @@ def main():
                     messages.append(name + ' : ' + pwwn + ' - This device alias name,pwwn is already in switch device-alias database, hence nothing to configure')
                 else:
                     if shDADatabaseObj.isNameInDaDatabase(name):
-                        module.fail_json(msg=name + ' - This device alias name is already present in switch device-alias database but assigned to another pwwn (' + shDADatabaseObj.getPwwnByName(name) + ') hence cannot be added')
+                        module.fail_json(
+                            msg=name +
+                            ' - This device alias name is already present in switch device-alias database but assigned to another pwwn (' +
+                            shDADatabaseObj.getPwwnByName(name) +
+                            ') hence cannot be added')
                         # messages.append(name + ' - This device alias name is present in switch device-alias database, hence cannot be added.')
                     elif shDADatabaseObj.isPwwnInDaDatabase(pwwn):
-                        module.fail_json(msg=pwwn + ' - This device alias pwwn is already present in switch device-alias database but assigned to another name (' + shDADatabaseObj.getNameByPwwn(pwwn) + ') hence cannot be added')
+                        module.fail_json(
+                            msg=pwwn +
+                            ' - This device alias pwwn is already present in switch device-alias database but assigned to another name (' +
+                            shDADatabaseObj.getNameByPwwn(pwwn) +
+                            ') hence cannot be added')
                         # messages.append(pwwn + ' - This device alias pwwn is present in switch device-alias database, hence cannot be added.')
                     else:
                         commands.append("device-alias name " + name + " pwwn " + pwwn)
@@ -421,11 +436,18 @@ def main():
             oldname = eachdict['old_name']
             newname = eachdict['new_name']
             if shDADatabaseObj.isNameInDaDatabase(newname):
-                module.fail_json(changed=False, commands=cmds, msg=newname + " - this name is already present in the device-alias database, hence we cannot rename " + oldname + " with this one")
+                module.fail_json(
+                    changed=False,
+                    commands=cmds,
+                    msg=newname +
+                    " - this name is already present in the device-alias database, hence we cannot rename " +
+                    oldname +
+                    " with this one")
             if shDADatabaseObj.isNameInDaDatabase(oldname):
                 commands.append('device-alias rename ' + oldname + ' ' + newname)
             else:
-                module.fail_json(changed=False, commands=cmds, msg=oldname + " - this name is not present in the device-alias database, hence we cannot rename.")
+                module.fail_json(changed=False, commands=cmds, msg=oldname +
+                                 " - this name is not present in the device-alias database, hence we cannot rename.")
 
         if len(commands) != 0:
             commands = ["device-alias database"] + commands
