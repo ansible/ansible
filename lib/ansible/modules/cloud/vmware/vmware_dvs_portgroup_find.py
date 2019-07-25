@@ -17,9 +17,6 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_dvs_portgroup_find
-short_description: Gathers facts DVS portgroup configurations
-description:
-- This module can be used to gather facts about DVS portgroup configurations.
 short_description: Find portgroup(s) in a vmware environment
 description:
 - Find portgroup(s) based on different criteria such as dvswitch, vlan id or a string in the name.
