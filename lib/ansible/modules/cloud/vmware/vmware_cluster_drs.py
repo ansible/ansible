@@ -52,7 +52,6 @@ options:
       - If set to C(True), overrides C(drs_default_vm_behavior).
       type: bool
       default: True
-      version_added: 2.9
     drs_default_vm_behavior:
       description:
       - Specifies the cluster-wide default DRS behavior for virtual machines.
@@ -65,14 +64,12 @@ options:
       type: str
       default: fullyAutomated
       choices: [ fullyAutomated, manual, partiallyAutomated ]
-      version_added: 2.9
     drs_vmotion_rate:
       description:
       - Threshold for generated ClusterRecommendations.
       type: int
       default: 3
       choices: [ 1, 2, 3, 4, 5 ]
-      version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
