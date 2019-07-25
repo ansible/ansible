@@ -366,7 +366,7 @@ files:
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
-  $modules/network/vyos/: Qalthos samdoran NilashishC
+  $modules/network/vyos/: Qalthos NilashishC
   $modules/notification/_osx_say.py: $team_ansible
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
@@ -1391,7 +1391,7 @@ files:
     maintainers: $team_extreme
   $plugins/terminal/vyos.py:
     support: network
-    maintainers: $team_networking samdoran
+    maintainers: $team_networking
 ###############################
 # plugins/test
   $plugins/test:
