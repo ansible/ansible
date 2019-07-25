@@ -157,8 +157,7 @@ class Telemetry(ConfigBase):
                     continue
                 saved_ids.append(playvals['id'])
                 resource_key = td['cmd'].format(playvals['id'])
-                # Only build the NxosCmdRef object for the destination group
-                # module parameters.
+                # Only build the NxosCmdRef object for the destination group module parameters.
                 self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
                 cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
                 ref = cmd_ref[td['type']]['ref'][-1]
@@ -179,8 +178,7 @@ class Telemetry(ConfigBase):
                     continue
                 saved_ids.append(playvals['id'])
                 resource_key = td['cmd'].format(playvals['id'])
-                # Only build the NxosCmdRef object for the sensor group
-                # module parameters.
+                # Only build the NxosCmdRef object for the sensor group module parameters.
                 self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
                 cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
                 ref = cmd_ref[td['type']]['ref'][-1]
@@ -205,8 +203,7 @@ class Telemetry(ConfigBase):
                     continue
                 saved_ids.append(playvals['id'])
                 resource_key = td['cmd'].format(playvals['id'])
-                # Only build the NxosCmdRef object for the subscription
-                # module parameters.
+                # Only build the NxosCmdRef object for the subscription module parameters.
                 self._module.params['config'] = get_module_params_subsection(ALL_MP, td['type'], playvals['id'])
                 cmd_ref[td['type']]['ref'].append(NxosCmdRef(self._module, td['obj']))
                 ref = cmd_ref[td['type']]['ref'][-1]
