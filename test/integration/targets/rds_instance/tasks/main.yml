@@ -21,7 +21,7 @@
       tags: read_replica
     - include: ./test_vpc_security_groups.yml
       tags: vpc_security_groups
-
-    #- include: ./test_restore_instance.yml  # TODO: point-in-time, snapshot, s3
+    - include: ./test_restore_instance.yml  # TODO: snapshot, s3
+      tags: restore
     # TODO: uncomment after adding rds_cluster module
     #- include: ./test_aurora.yml
