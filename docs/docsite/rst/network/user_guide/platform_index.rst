@@ -27,6 +27,7 @@ Some Ansible Network platforms support multiple connection types, privilege esca
    platform_netvisor
    platform_nos
    platform_nxos
+   platform_qnos
    platform_routeros
    platform_slxos
    platform_voss
@@ -80,6 +81,7 @@ Settings by Platform
     MikroTik RouterOS                ``routeros``             ✓
     Nokia SR OS                      ``sros``                 ✓                              ✓
     Pluribus Netvisor                ``netvisor``             ✓
+    Quanta QNOS                      ``qnos``                 ✓
     Ruckus ICX `[†]`_                ``icx``                  ✓
     VyOS `[†]`_                      ``vyos``                 ✓                              ✓
     OS that supports Netconf `[†]`_  ``<network-os>``                      ✓                 ✓
