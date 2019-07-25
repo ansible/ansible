@@ -25,8 +25,6 @@ description:
     before returning or timing out if the condition is not met.
   - This module also support running commands in configuration mode
     in raw command style.
-notes:
-  - Tested against IPOS 19.3
 options:
   commands:
     description:
@@ -79,6 +77,7 @@ options:
     default: 1
 
 notes:
+  - Tested against IPOS 19.3
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
   - For more information on using Ansible to manage Ericsson devices see the Ericsson documents.
 """
