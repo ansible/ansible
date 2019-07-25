@@ -22,6 +22,13 @@ description:
   username and password and 2-factor authentication code (OTP), OAuth2 token, or personal access token. Admin
   rights on the repository are required."
 options:
+  github_url:
+    description:
+      - The base URL of the GitHub API
+    required: false
+    type: str
+    version_added: "2.10"
+    default: https://api.github.com
   owner:
     description:
       - The name of the individual account or organization that owns the GitHub repository.
@@ -122,6 +129,17 @@ EXAMPLES = '''
     username: "johndoe"
     password: "supersecretpassword"
     otp: 123456
+
+# add a read-only deploy key to a repository hosted on GitHub Enterprise
+- github_deploy_key:
+    github_url: "https://api.example.com"
+    owner: "janedoe"
+    repo: "example"
+    name: "new-deploy-key"
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAwXxn7kIMNWzcDfou..."
+    read_only: yes
+    username: "janedoe"
+    password: "supersecretpassword"
 '''
 
 RETURN = '''
@@ -159,6 +177,7 @@ class GithubDeployKey(object):
     def __init__(self, module):
         self.module = module
 
+        self.github_url = self.module.params['github_url']
         self.name = module.params['name']
         self.key = module.params['key']
         self.state = module.params['state']
@@ -173,7 +192,7 @@ class GithubDeployKey(object):
     def url(self):
         owner = self.module.params['owner']
         repo = self.module.params['repo']
-        return "https://api.github.com/repos/{0}/{1}/keys".format(owner, repo)
+        return "{0}/repos/{1}/{2}/keys".format(self.github_url, owner, repo)
 
     @property
     def headers(self):
@@ -249,7 +268,7 @@ class GithubDeployKey(object):
             err = self.module.from_json(body)['message']
 
         if status_code == 401:
-            self.module.fail_json(msg="Failed to connect to github.com due to invalid credentials", http_status_code=status_code, error=err)
+            self.module.fail_json(msg="Failed to connect to {0} due to invalid credentials".format(self.github_url), http_status_code=status_code, error=err)
         elif status_code == 404:
             self.module.fail_json(msg="GitHub repository does not exist", http_status_code=status_code, error=err)
         else:
@@ -264,6 +283,7 @@ class GithubDeployKey(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            github_url=dict(required=False, type='str', default="https://api.github.com"),
             owner=dict(required=True, type='str', aliases=['account', 'organization']),
             repo=dict(required=True, type='str', aliases=['repository']),
             name=dict(required=True, type='str', aliases=['title', 'label']),
