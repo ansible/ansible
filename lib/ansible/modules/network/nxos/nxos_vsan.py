@@ -2,6 +2,8 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
@@ -46,31 +48,31 @@ options:
 '''
 
 EXAMPLES = '''
---- 
-- 
+---
+-
   name: "Test that vsan module works"
-  nxos_vsan: 
+  nxos_vsan:
     provider: "{{ creds }}"
-    vsan: 
-      - 
+    vsan:
+      -
         id: 922
-        interface: 
+        interface:
           - fc1/1
           - fc1/2
           - "port-channel 1"
         name: vsan-SAN-A
         remove: false
         suspend: false
-      - 
+      -
         id: 923
-        interface: 
+        interface:
           - fc1/11
           - fc1/21
           - "port-channel 2"
         name: vsan-SAN-B
         remove: false
         suspend: true
-      - 
+      -
         id: 1923
         name: vsan-SAN-Old
         remove: true
@@ -90,7 +92,6 @@ commands:
     - no terminal dont-ask
 '''
 
-from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
 import re

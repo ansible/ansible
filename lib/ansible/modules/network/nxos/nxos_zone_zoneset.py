@@ -2,6 +2,7 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -118,83 +119,83 @@ options:
 '''
 
 EXAMPLES = '''
---- 
-- 
+---
+-
   name: "Test that zone/zoneset module works"
-  nxos_zone_zoneset: 
+  nxos_zone_zoneset:
     provider: "{{ creds }}"
-    zone_zoneset_details: 
-      - 
+    zone_zoneset_details:
+      -
         mode: enhanced
         vsan: 22
-        zone: 
-          - 
-            members: 
-              - 
+        zone:
+          -
+            members:
+              -
                 pwwn: "11:11:11:11:11:11:11:11"
-              - 
+              -
                 device-alias: test123
-              - 
+              -
                 pwwn: "61:61:62:62:12:12:12:12"
                 remove: true
             name: zoneA
-          - 
-            members: 
-              - 
+          -
+            members:
+              -
                 pwwn: "10:11:11:11:11:11:11:11"
-              - 
+              -
                 pwwn: "62:62:62:62:21:21:21:21"
             name: zoneB
-          - 
+          -
             name: zoneC
             remove: true
-        zoneset: 
-          - 
+        zoneset:
+          -
             action: activate
-            members: 
-              - 
+            members:
+              -
                 name: zoneA
-              - 
+              -
                 name: zoneB
-              - 
+              -
                 name: zoneC
                 remove: true
             name: zsetname1
-          - 
+          -
             action: deactivate
             name: zsetTestExtra
             remove: true
-      - 
+      -
         mode: basic
         smart_zoning: true
         vsan: 21
-        zone: 
-          - 
-            members: 
-              - 
+        zone:
+          -
+            members:
+              -
                 devtype: both
                 pwwn: "11:11:11:11:11:11:11:11"
-              - 
+              -
                 pwwn: "62:62:62:62:12:12:12:12"
-              - 
+              -
                 devtype: both
                 pwwn: "92:62:62:62:12:12:1a:1a"
                 remove: true
             name: zone21A
-          - 
-            members: 
-              - 
+          -
+            members:
+              -
                 pwwn: "10:11:11:11:11:11:11:11"
-              - 
+              -
                 pwwn: "62:62:62:62:21:21:21:21"
             name: zone21B
-        zoneset: 
-          - 
+        zoneset:
+          -
             action: activate
-            members: 
-              - 
+            members:
+              -
                 name: zone21A
-              - 
+              -
                 name: zone21B
             name: zsetname21
 
@@ -214,7 +215,7 @@ commands:
     - no terminal dont-ask
 '''
 
-from __future__ import (absolute_import, division, print_function)
+
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands

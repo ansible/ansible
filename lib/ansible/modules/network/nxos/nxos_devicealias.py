@@ -2,6 +2,7 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -69,31 +70,31 @@ options:
 '''
 
 EXAMPLES = '''
---- 
-- 
+---
+-
   name: "Test that device alias module works"
-  nxos_devicealias: 
-    da: 
-      - 
+  nxos_devicealias:
+    da:
+      -
         name: test1_add
         pwwn: "56:2:22:11:22:88:11:67"
-      - 
+      -
         name: test2_add
         pwwn: "65:22:22:11:22:22:11:d"
-      - 
+      -
         name: dev1
         remove: true
-      - 
+      -
         name: dev2
         remove: true
     distribute: true
     mode: enhanced
     provider: "{{ creds }}"
-    rename: 
-      - 
+    rename:
+      -
         new_name: bcd
         old_name: abc
-      - 
+      -
         new_name: bcd1
         old_name: abc1
 
@@ -113,7 +114,6 @@ commands:
     - no terminal dont-ask
 '''
 
-from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import load_config, nxos_argument_spec, run_commands
 import string
