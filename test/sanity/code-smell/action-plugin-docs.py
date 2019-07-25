@@ -39,6 +39,7 @@ def main():
         'junos',
         'netconf',
         'nxos',
+        'qnos',
         'sros',
         'vyos',
     ])
