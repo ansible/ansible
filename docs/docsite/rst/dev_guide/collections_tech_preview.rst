@@ -122,12 +122,12 @@ command line tool that is included with Ansible.
 
 Currently the ``ansible-galaxy collection`` command implements the following sub commands:
 
-* ``init``: Create a basic collection skeleton based on the default template included with Ansible or your own
-* ``build``: Create a collection artifact that can be uploaded to Galaxy or your own repository
-* ``publish``: Publish a built collection artifact to Galaxy
-* ``install``: Install one or multiple collections
+* ``init``: Create a basic collection skeleton based on the default template included with Ansible or your own.
+* ``build``: Create a collection artifact that can be uploaded to Galaxy or your own repository.
+* ``publish``: Publish a built collection artifact to Galaxy.
+* ``install``: Install one or multiple collections.
 
-You can learn more about the ``ansible-galaxy`` cli tool by read the :ref:`ansible-galaxy` man page._
+To learn more about the ``ansible-galaxy`` cli tool, read the :ref:`ansible-galaxy` man page.
 
 In the end, to get started with authoring a new collection it should be as simple as:
 
@@ -135,7 +135,7 @@ In the end, to get started with authoring a new collection it should be as simpl
 
     collection_dir#> ansible-galaxy collection init namespace.collection
 
-And then populating the directories with the content you want inside the collection. You can also have a look at
+And then populating the directories with the content you want inside the collection. See
 https://github.com/bcoca/collection to get a better idea of what can be placed inside a collection.
 
 
@@ -144,8 +144,8 @@ https://github.com/bcoca/collection to get a better idea of what can be placed i
 Building collections
 ====================
 
-Collections are built by running ``ansible-galaxy collection build`` from inside the collection's root directory. This
-will create a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
+Run ``ansible-galaxy collection build`` from inside the collection's root directory to build a collection. This creates
+a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
 
     collection/
     ├── galaxy.yml
@@ -222,7 +222,7 @@ You can also use a tarball resulting from your build:
 .. code-block:: bash
 
    # Will install the collection to ./collections/ansible_collections/mynamespace/mycollection
-   ansible-galaxy install mynamespace-mycollection-0.1.0.tar.gz -p ./collections/ansible_collections
+   ansible-galaxy collection install mynamespace-mycollection-0.1.0.tar.gz -p ./collections/ansible_collections
 
 .. note::
     The install command will automatically append the path ``ansible_collections`` to the one specified unless the
@@ -237,13 +237,13 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
     play.yml
     ├── collections/
-    │   └── ansbile_collections/
+    │   └── ansible_collections/
     │               └── myname/
     │                   └── mycol/<collection structure lives here>
 
 
-By default ``ansible-galaxy`` will install the latest collection that is available but a version range identifier can
-be used to filter the version that is installed like so:
+By default ``ansible-galaxy`` installs the latest collection that is available but you can add a version range
+identifier to install a specific version as follows:
 
 .. code-block:: bash
 
@@ -257,18 +257,18 @@ be used to filter the version that is installed like so:
    ansible-galaxy collection install mynamespace.mycollection:>=1.0.0,<2.0.0
 
 
-Multiple range identifiers can be specified and are split by ``,``. The following range identifiers can be used:
+You can specify multiple range identifiers which are split by ``,``. You can use the following range identifiers:
 
 * ``*``: Any version, this is the default used when no range specified is set.
-* ``!=``: Version is not equal to the one specified
-* ``==``: Version must be the one specified
-* ``>=``: Version is greater than or equal to the one specified
-* ``>``: Version is greater than the one specified
-* ``<=``: Version is less than or equal to the one specified
-* ``<``: Version is less than the one specified
+* ``!=``: Version is not equal to the one specified.
+* ``==``: Version must be the one specified.
+* ``>=``: Version is greater than or equal to the one specified.
+* ``>``: Version is greater than the one specified.
+* ``<=``: Version is less than or equal to the one specified.
+* ``<``: Version is less than the one specified.
 
 .. note::
-    The ansible-galaxy command will ignore any pre-release versions unless the ``==`` range identifier is used to
+    The ``ansible-galaxy`` command ignores any pre-release versions unless the ``==`` range identifier is used to
     explicitly set to that pre-release version.
 
 
