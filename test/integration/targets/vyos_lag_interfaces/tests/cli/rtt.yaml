@@ -4,6 +4,8 @@
 
 - include_tasks: _remove_config.yaml
 
+- include_tasks: _remove_bond.yaml
+
 - name: Apply the provided configuration (base config)
   vyos_lag_interfaces:
     config:

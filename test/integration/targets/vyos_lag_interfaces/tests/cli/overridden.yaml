@@ -4,6 +4,8 @@
 
 - include_tasks: _remove_config.yaml
 
+- include_tasks: _remove_bond.yaml
+
 - include_tasks: _populate.yaml
 
 - name: Overrides all device configuration with provided configuration

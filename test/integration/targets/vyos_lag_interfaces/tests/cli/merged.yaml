@@ -4,6 +4,10 @@
 
 - include_tasks: _remove_config.yaml
 
+- include_tasks: _remove_bond.yaml
+
+- include_tasks: _add_bond.yaml
+
 - name: Merge the provided configuration with the exisiting running configuration
   vyos_lag_interfaces: &merged
       config:
