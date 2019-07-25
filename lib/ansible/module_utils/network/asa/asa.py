@@ -51,20 +51,6 @@ asa_argument_spec = {
     'provider': dict(type='dict', options=asa_provider_spec),
 }
 
-asa_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'authorize': dict(type='bool'),
-    'auth_pass': dict(removed_in_version=2.9, no_log=True),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-    'context': dict(),
-    'passwords': dict()
-}
-asa_argument_spec.update(asa_top_spec)
-
 command_spec = {
     'command': dict(key=True),
     'prompt': dict(),

@@ -248,10 +248,10 @@ class PublicKeyManager(object):
     def copy_key_to_node(self, base64keyfile):
         """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
         """
-        if (self._module.params['host'] is None or self._module.params['provider']['host'] is None):
+        if self._module.params['provider']['host'] is None:
             return False
 
-        if (self._module.params['username'] is None or self._module.params['provider']['username'] is None):
+        if self._module.params['provider']['username'] is None:
             return False
 
         if self._module.params['aggregate']:
@@ -262,10 +262,10 @@ class PublicKeyManager(object):
         src = base64keyfile
         dst = '/harddisk:/publickey_%s.b64' % (name)
 
-        user = self._module.params['username'] or self._module.params['provider']['username']
-        node = self._module.params['host'] or self._module.params['provider']['host']
-        password = self._module.params['password'] or self._module.params['provider']['password']
-        ssh_keyfile = self._module.params['ssh_keyfile'] or self._module.params['provider']['ssh_keyfile']
+        user = self._module.params['provider']['username']
+        node = self._module.params['provider']['host']
+        password = self._module.params['provider']['password']
+        ssh_keyfile = self._module.params['provider']['ssh_keyfile']
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -281,16 +281,16 @@ class PublicKeyManager(object):
     def addremovekey(self, command):
         """ Add or remove key based on command
         """
-        if (self._module.params['host'] is None or self._module.params['provider']['host'] is None):
+        if self._module.params['provider']['host'] is None:
             return False
 
-        if (self._module.params['username'] is None or self._module.params['provider']['username'] is None):
+        if self._module.params['provider']['username'] is None:
             return False
 
-        user = self._module.params['username'] or self._module.params['provider']['username']
-        node = self._module.params['host'] or self._module.params['provider']['host']
-        password = self._module.params['password'] or self._module.params['provider']['password']
-        ssh_keyfile = self._module.params['ssh_keyfile'] or self._module.params['provider']['ssh_keyfile']
+        user = self._module.params['provider']['username']
+        node = self._module.params['provider']['host']
+        password = self._module.params['provider']['password']
+        ssh_keyfile = self._module.params['provider']['ssh_keyfile']
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

@@ -48,15 +48,6 @@ sros_provider_spec = {
 sros_argument_spec = {
     'provider': dict(type='dict', options=sros_provider_spec),
 }
-sros_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-}
-sros_argument_spec.update(sros_top_spec)
 
 
 def check_args(module, warnings):

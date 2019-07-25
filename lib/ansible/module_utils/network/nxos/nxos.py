@@ -81,24 +81,6 @@ nxos_provider_spec = {
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
-nxos_top_spec = {
-    'host': dict(type='str', removed_in_version=2.9),
-    'port': dict(type='int', removed_in_version=2.9),
-
-    'username': dict(type='str', removed_in_version=2.9),
-    'password': dict(type='str', no_log=True, removed_in_version=2.9),
-    'ssh_keyfile': dict(type='str', removed_in_version=2.9),
-
-    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
-    'auth_pass': dict(type='str', no_log=True, removed_in_version=2.9),
-
-    'use_ssl': dict(type='bool', removed_in_version=2.9),
-    'validate_certs': dict(type='bool', removed_in_version=2.9),
-    'timeout': dict(type='int', removed_in_version=2.9),
-
-    'transport': dict(type='str', choices=['cli', 'nxapi'], removed_in_version=2.9)
-}
-nxos_argument_spec.update(nxos_top_spec)
 
 
 def get_provider_argspec():

@@ -178,10 +178,9 @@ from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def check_transport(module):
-    transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
 
-    if 'eapi' in (transport, provider_transport):
+    if 'eapi' in provider_transport:
         module.fail_json(msg='eos_eapi module is only supported over cli transport')
 
 

@@ -44,16 +44,6 @@ aireos_argument_spec = {
     'provider': dict(type='dict', options=aireos_provider_spec)
 }
 
-aireos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-}
-aireos_argument_spec.update(aireos_top_spec)
-
 
 def sanitize(resp):
     # Takes response from device and strips whitespace from all lines
