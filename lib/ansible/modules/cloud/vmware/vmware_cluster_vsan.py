@@ -68,9 +68,9 @@ EXAMPLES = r"""
 
 - name: Enable vSAN and claim storage automatically
   vmware_cluster_vsan:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter_name: DC0
     cluster_name: "{{ cluster_name }}"

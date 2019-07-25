@@ -86,9 +86,9 @@ EXAMPLES = r"""
 
 - name: Enable DRS and set default VM behavior to partially automated
   vmware_cluster_drs:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter_name: DC0
     cluster_name: "{{ cluster_name }}"
