@@ -1,15 +1,39 @@
-- name: ensure that VMs are not flagged as templates
+- name: Create VMs with the poweredoff state
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    folder: '{{ f0 }}'
+    name: 'test_vm1'
+    state: poweredoff
+    guest_id: debian8_64Guest
+    disk:
+    - size_gb: 1
+      type: thin
+      datastore: '{{ ds2 }}'
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+      scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[{{ ds1 }}] fedora.iso"
+    networks:
+    - name: VM Network
+
+- name: ensure that VM1 are not flagged as templates
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-    folder: "{{ item|dirname }}"
-    name: "{{ item|basename }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[1].folder }}"
+    name: "{{ virtual_machines[1].name }}"
     state: present
     is_template: False
-  with_items: "{{ vmlist['json'] }}"
   register: no_template_initial
 
 - debug: var=no_template_initial
@@ -17,20 +41,19 @@
 - name: ensure no changes were made
   assert:
     that:
-        - "no_template_initial.results|map(attribute='changed')|unique|list == [False]"
+        - not (no_template_initial is changed)
 
-- name: convert all VMs to templates
+- name: convert VM1 to template
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-    folder: "{{ item|dirname }}"
-    name: "{{ item|basename }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[1].folder }}"
+    name: "{{ virtual_machines[1].name }}"
     state: present
     is_template: True
-  with_items: "{{ vmlist['json'] }}"
   register: convert_to_template
 
 - debug: var=convert_to_template
@@ -38,20 +61,19 @@
 - name: ensure that changes were made
   assert:
     that:
-        - "convert_to_template.results|map(attribute='changed')|unique|list == [True]"
+        - convert_to_template is changed
 
-- name: make double sure that all VMs are templates
+- name: make double sure that VM1 is template
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-    folder: "{{ item|dirname }}"
-    name: "{{ item|basename }}"
+    datacenter: "{{ dc1 }}"
+    folder: "{{ virtual_machines[1].folder }}"
+    name: "{{ virtual_machines[1].name }}"
     state: present
     is_template: True
-  with_items: "{{ vmlist['json'] }}"
   register: still_templates
 
 - debug: var=still_templates
@@ -59,25 +81,25 @@
 - name: ensure that no changes were made
   assert:
     that:
-        - "still_templates.results|map(attribute='changed')|unique|list == [False]"
+        - not (still_templates is changed)
 
-- name: convert all templates back to VMs
-  vmware_guest:
-    validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-    folder: "{{ item|dirname }}"
-    name: "{{ item|basename }}"
-    state: present
-    is_template: False
-  with_items: "{{ vmlist['json'] }}"
-  register: revert_to_vm
-
-- debug: var=revert_to_vm
-
-- name: ensure that changes were made
-  assert:
-    that:
-        - "revert_to_vm.results|map(attribute='changed')|unique|list == [True]"
+# To avoid the follow error of vcsim: VirtualMachine:vm-67 does not implement: MarkAsVirtualMachine
+- when: vcsim is not defined
+  block:
+    - name: convert template back to VMs
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{ dc1 }}"
+        folder: "{{ virtual_machines[1].folder }}"
+        name: "{{ virtual_machines[1].name }}"
+        state: present
+        is_template: False
+      register: revert_to_vm
+    - debug: var=revert_to_vm
+    - name: ensure that changes were made
+      assert:
+        that:
+            - revert_to_vm is changed
