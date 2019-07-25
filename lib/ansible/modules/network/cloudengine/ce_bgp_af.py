@@ -2240,7 +2240,7 @@ class BgpAf(object):
         elif af_type == "ipv6uni":
             cmd = "ipv6-family vpn-instance %s" % vrf_name
             if vrf_name == "_public_":
-                cmd = "undo ipv6-family multicast"
+                cmd = "ipv6-family unicast"
         elif af_type == "ipv6vpn":
             cmd = "ipv6-family vpnv6"
         elif af_type == "evpn":
@@ -2277,7 +2277,7 @@ class BgpAf(object):
         elif af_type == "ipv6uni":
             cmd = "ipv6-family vpn-instance %s" % vrf_name
             if vrf_name == "_public_":
-                cmd = "undo ipv6-family multicast"
+                cmd = "ipv6-family unicast"
         elif af_type == "ipv6vpn":
             cmd = "ipv6-family vpnv6"
         elif af_type == "evpn":
@@ -2314,7 +2314,7 @@ class BgpAf(object):
         elif af_type == "ipv6uni":
             cmd = "undo ipv6-family vpn-instance %s" % vrf_name
             if vrf_name == "_public_":
-                cmd = "undo ipv6-family multicast"
+                cmd = "undo ipv6-family unicast"
         elif af_type == "ipv6vpn":
             cmd = "undo ipv6-family vpnv6"
         elif af_type == "evpn":
