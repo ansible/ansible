@@ -3,7 +3,6 @@
       docker_swarm:
         state: absent
         force: true
-      ignore_errors: yes
 
   rescue:
     - name: CLEANUP | Kill docker daemon

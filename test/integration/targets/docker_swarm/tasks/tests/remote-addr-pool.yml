@@ -1,13 +1,6 @@
 - debug:
     msg: Running tests/remote-addr-pool.yml
 
-- name: Remove Swarm cluster
-  docker_swarm:
-    state: absent
-    force: true
-  diff: yes
-  register: output_2
-
 ####################################################################
 ## default_addr_pool ###############################################
 ####################################################################
@@ -29,12 +22,6 @@
   diff: yes
   register: output_2
   ignore_errors: yes
-
-- name: cleanup
-  docker_swarm:
-    state: absent
-    force: true
-  diff: no
 
 - name: assert default_addr_pool
   assert:
