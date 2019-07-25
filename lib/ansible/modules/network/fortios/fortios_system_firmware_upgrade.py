@@ -223,7 +223,7 @@ def login(data, fos):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, timeout=300)
 
 
 def filter_system_firmware_data(json):
