@@ -78,7 +78,6 @@ overridden:
     - name: "bond1"
       hash-policy: "layer2"
       members:
-        - member: eth1
         - member: eth2
       mode: "active-backup"
       primary: eth2
