@@ -71,7 +71,7 @@ RETURN = r'''
 dvs_portgroups:
     description: basic details of portgroups found
     returned: on success
-    type:list
+    type: list
     sample: [
         {
             "dvswitch": "vDS",
