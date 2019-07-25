@@ -58,6 +58,12 @@ options:
         type: bool
         default: 'no'
         version_added: 1.5
+    numerictest:
+        description:
+            - What numeric test to perform to check whether current value is accepted.
+              Can only be used with sysctl variables with numeric values.
+        choices: [ "<=", "==", ">=" ]
+        version_added: 2.9
 author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 '''
 
@@ -94,6 +100,16 @@ EXAMPLES = '''
     sysctl_set: yes
     state: present
     reload: yes
+
+# Set net.core.somaxconn to 4096, but only if the current value is not already
+# higher
+- sysctl:
+    name: net.core.somaxconn
+    value: '4096'
+    numerictest: '>='
+    sysctl_set: yes
+    state: present
+    reload: yes
 '''
 
 # ==============================================================
@@ -120,6 +136,7 @@ class SysctlModule(object):
 
         self.sysctl_cmd = self.module.get_bin_path('sysctl', required=True)
         self.sysctl_file = self.args['sysctl_file']
+        self.numerictest = self.args['numerictest']
 
         self.proc_value = None  # current token value in proc fs
         self.file_value = None  # current token value in file
@@ -157,6 +174,9 @@ class SysctlModule(object):
         # update file contents with desired token/value
         self.fix_lines()
 
+        if self.numerictest is not None and not (self.proc_value.strip().isdigit() and self.file_values[thisname].isdigit() and self.args['value'].isdigit()):
+            self.module.fail_json(msg='numerictest parameter cannot be used with non-numeric parameter values')
+
         # what do we need to do now?
         if self.file_values[thisname] is None and self.args['state'] == "present":
             self.changed = True
@@ -166,7 +186,7 @@ class SysctlModule(object):
         elif self.file_values[thisname] and self.args['state'] == "absent":
             self.changed = True
             self.write_file = True
-        elif self.file_values[thisname] != self.args['value']:
+        elif not self.numerictest_passes(self.file_values[thisname]):
             self.changed = True
             self.write_file = True
         # with reload=yes we should check if the current system values are
@@ -181,7 +201,7 @@ class SysctlModule(object):
         if self.args['sysctl_set'] and self.args['state'] == "present":
             if self.proc_value is None:
                 self.changed = True
-            elif not self._values_is_equal(self.proc_value, self.args['value']):
+            elif not self.numerictest_passes(self.proc_value):
                 self.changed = True
                 self.set_proc = True
 
@@ -193,6 +213,18 @@ class SysctlModule(object):
                 self.reload_sysctl()
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])
+
+    def numerictest_passes(self, value):
+        """Expects a value. This value will be compared to the 'value' parameter
+        according to what 'numerictest' parameter prescribes, if present."""
+        if self.numerictest is None:
+            return self._values_is_equal(value, self.args['value'])
+
+        return {
+            '<=': value <= self.args['value'],
+            '==': value == self.args['value'],
+            '>=': value >= self.args['value'],
+        }.get(self.numerictest, '==')
 
     def _values_is_equal(self, a, b):
         """Expects two string values. It will split the string by whitespace
@@ -394,7 +426,8 @@ def main():
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),
-            sysctl_file=dict(default='/etc/sysctl.conf', type='path')
+            sysctl_file=dict(default='/etc/sysctl.conf', type='path'),
+            numerictest=dict(required=False, choices=['<=', '==', '>='])
         ),
         supports_check_mode=True,
         required_if=[('state', 'present', ['value'])],
