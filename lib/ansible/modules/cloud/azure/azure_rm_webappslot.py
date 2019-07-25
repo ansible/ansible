@@ -77,9 +77,9 @@ options:
                 description:
                     - Name of the framework.
                     - Supported framework list for Windows web app and Linux web app is different.
-                    - Windows web apps support C(java), C(net_framework), C(php), C(python), and C(node).
+                    - Windows web apps support C(java), C(net_framework), C(php), C(python), and C(node) from June 2018.
                     - Windows web apps support multiple framework at same time.
-                    - Linux web apps support C(java), C(ruby), C(php), C(dotnetcore), and C(node).
+                    - Linux web apps support C(java), C(ruby), C(php), C(dotnetcore), and C(node) from June 2018.
                     - Linux web apps support only one framework.
                     - Java framework is mutually exclusive with others.
                 choices:
