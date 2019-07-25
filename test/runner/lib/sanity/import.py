@@ -58,7 +58,7 @@ class ImportTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        settings = self.load_settings(args, None, python_version)
+        settings = self.load_processor(args, python_version)
 
         paths = sorted(
             i.path
