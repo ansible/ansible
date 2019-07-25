@@ -455,7 +455,9 @@ files:
     notified: jlozadad
   $modules/storage/hpe3par/: farhan7500 gautamphegde
   $modules/storage/infinidat/: GR360RY vmalloc
-  $modules/storage/netapp/: $team_netapp
+  $modules/storage/netapp/: 
+    maintainers: $team_netapp
+    support: community
   $modules/storage/purestorage/:
     maintainers: $team_purestorage
     labels: pure_storage
@@ -726,6 +728,7 @@ files:
     maintainers: $team_networking sganesh-infoblox
   $module_utils/netapp:
     maintainers: $team_netapp
+    support: community
   $module_utils/network:
     labels: networking
   $module_utils/network/a10:
@@ -1486,6 +1489,9 @@ files:
   test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
   test/integration/targets/nxos_: *nxos
+  test/integration/targets/netapp:
+    maintainers: $team_netapp
+    support: community
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/scaleway_: *scaleway
