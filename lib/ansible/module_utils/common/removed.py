@@ -31,7 +31,7 @@ def removed_module(removed_in, msg='This module has been removed. The module doc
     version = removed_in.split('.')
     try:
         numeric_minor = int(version[-1])
-    except Exception as e:
+    except Exception:
         last_version = None
     else:
         version = version[:-1]
