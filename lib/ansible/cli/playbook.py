@@ -17,6 +17,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
 from ansible.utils.display import Display
 from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.plugins.loader import add_all_plugin_dirs
 
 
 display = Display()
@@ -84,6 +85,8 @@ class PlaybookCLI(CLI):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
             b_playbook_dir = os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict')))
+            # load plugins from all playbooks in case they add callbacks/inventory/etc
+            add_all_plugin_dirs(b_playbook_dir)
 
             b_playbook_dirs.append(b_playbook_dir)
 
