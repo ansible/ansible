@@ -8,6 +8,7 @@
     setup_attach_host: true
     setup_datacenter: true
     setup_datastore: true
+    setup_dvswitch: true
     setup_resource_pool: true
     setup_virtualmachines: true
 
