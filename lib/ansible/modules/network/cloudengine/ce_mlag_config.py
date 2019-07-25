@@ -641,8 +641,8 @@ class MlagConfig(object):
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
                     msg='Error: Merge peer link failed.')
-        self.updates_cmd.append("peer-link %s" % self.peer_link_id)
-        self.changed = True
+            self.updates_cmd.append("peer-link %s" % self.peer_link_id)
+            self.changed = True
 
     def delete_peer_link(self):
         """delete peer link info"""
@@ -656,8 +656,8 @@ class MlagConfig(object):
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
                     msg='Error: Delete peer link failed.')
-        self.updates_cmd.append("undo peer-link %s" % self.peer_link_id)
-        self.changed = True
+            self.updates_cmd.append("undo peer-link %s" % self.peer_link_id)
+            self.changed = True
 
     def check_params(self):
         """Check all input params"""
