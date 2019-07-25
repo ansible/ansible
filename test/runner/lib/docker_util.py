@@ -198,7 +198,7 @@ def docker_inspect(args, container_id):
         return json.loads(stdout)
     except SubprocessError as ex:
         if 'no such image' in ex.stderr:
-            return {} # podman does not handle this gracefully, exits 125
+            return [] # podman does not handle this gracefully, exits 125
         try:
             return json.loads(ex.stdout)
         except Exception:
