@@ -20,7 +20,7 @@ __metaclass__ = type
 import os
 import json
 import pytest
-from unittest.mock import ANY
+from mock import ANY
 from ansible.module_utils.network.fortios.fortios import FortiOSHandler
 
 try:
