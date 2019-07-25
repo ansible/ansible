@@ -8,4 +8,3 @@ skip/docker  # The tests sometimes make docker daemon unstable; hence,
              # after finishing the tests to minimize potential effects
              # on other tests.
 needs/root
-unstable

@@ -1,8 +1,0 @@
----
-- name: Make sure we're not already using Docker swarm
-  docker_swarm:
-    state: absent
-    force: true
-  diff: no
-- name: "Loading tasks from {{ item }}"
-  include_tasks: "{{ item }}"
