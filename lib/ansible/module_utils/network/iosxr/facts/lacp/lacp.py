@@ -77,6 +77,6 @@ class LacpFacts(object):
 
         system_priority = utils.parse_conf_arg(conf, 'priority')
         config['system']['priority'] = int(system_priority) if system_priority else system_priority
-        config['system']['mac'] = utils.parse_conf_arg(conf, 'mac')
+        config['system']['mac']['address'] = utils.parse_conf_arg(conf, 'mac')
 
         return config
