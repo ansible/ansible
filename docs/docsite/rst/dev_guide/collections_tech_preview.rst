@@ -113,54 +113,74 @@ TBD. Expect tests for the collection itself to reside here.
 Creating collections
 ====================
 
-This is currently is a work in progress. We created the `Mazer <https://galaxy.ansible.com/docs/mazer/>`_ command line tool
-available at the `Ansible Mazer project <https://github.com/ansible/mazer>`_. as a proof of concept for packaging,
-distributing and installing collections. You can install ``mazer`` with ``pip install mazer`` or checkout the code directly.
+This is currently a work in progress with some basic commands being integrated into the existing ``ansible-galaxy``
+command line tool that is included with Ansible.
 
-.. Note::
-    All the documentation below that use ``mazer`` might be updated to use another tool in the future as ``mazer`` will not be updated in the future.
+.. note::
+    Any references to ``ansible-galaxy`` below will be of a 'working version' that is in development for the 2.9
+    release. As such, the command and this documentation section is subject to frequent changes.
 
-We are working on integrating this into Ansible itself for 2.9. Currently we have an `ansible-galaxy PR <https://github.com/ansible/ansible/pull/57106>`_ incorporating some of the commands into ``ansible-galaxy``. Currently it is not installable outside Ansible, but we hope to land this into development soon so early adopters can test.
+Currently the ``ansible-galaxy collection`` command implements the following sub commands:
 
-.. Note::
-    Any references to ``ansible-galaxy`` below will be of a 'working version' either in this PR or subsequently in development. As such, the command and this documentation section is subject to frequent change.
+* ``init``: Create a basic collection skeleton based on the default template included with Ansible or your own.
+* ``build``: Create a collection artifact that can be uploaded to Galaxy or your own repository.
+* ``publish``: Publish a built collection artifact to Galaxy.
+* ``install``: Install one or multiple collections.
+
+To learn more about the ``ansible-galaxy`` cli tool, read the :ref:`ansible-galaxy` man page.
 
 In the end, to get started with authoring a new collection it should be as simple as:
 
 .. code-block:: bash
 
-    collection_dir#>ansible-galaxy collection init
+    collection_dir#> ansible-galaxy collection init namespace.collection
 
+And then populating the directories with the content you want inside the collection. See
+https://github.com/bcoca/collection to get a better idea of what can be placed inside a collection.
 
-And then populating the directories with the content you want inside the collection. For now you can optionally clone from https://github.com/bcoca/collection to get the directory structure (or just create the directories as you need them).
 
 .. _building_collections:
 
 Building collections
 ====================
 
-Collections are built by running ``mazer build`` from inside the collection's root directory.
-This will create a ``releases/`` directory inside the collection with the build artifacts,
-which can be uploaded to Galaxy.::
+Run ``ansible-galaxy collection build`` from inside the collection's root directory to build a collection. This creates
+a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
 
     collection/
+    ├── galaxy.yml
     ├── ...
-    ├── releases/
-    │   └── namespace_name-collection_name-1.0.12.tar.gz
+    ├── namespace_name-collection_name-1.0.12.tar.gz
     └── ...
 
+
 .. note::
-        Changing the filename of the tarball in the release directory so that it doesn't match
-        the data in ``galaxy.yml`` will cause the import to fail.
+    Certain files and folders are excluded when building the collection artifact. This is not currently configurable
+    and is a work in progress so the collection artifact may contain files you would not wish to distribute.
 
+This tarball itself can be used to install the collection on target systems. It is mainly intended to upload to Galaxy
+as a distribution method, but you should be able to use it directly.
 
-This tarball itself can be used to install the collection on target systems. It is mainly intended to upload to Galaxy as a distribution method, but you should be able to use directly.
 
 Publishing collections
 ======================
 
-We are in the process of updating Ansible Galaxy to manage collections as it currently manages roles.
+Upload using ansible-galaxy
+---------------------------
 
+You can upload collection artifacts with ``ansible-galaxy``, as shown in the following example:
+
+.. code-block:: bash
+
+     ansible-galaxy collection publish path/to/namespace_name-collection_name-1.0.12.tar.gz --api-key=SECRET
+
+The above command triggers an import process, just as if the collection has been uploaded through the Galaxy website.
+The command will wait until the import process has completed before reporting the status back. If you wish to continue
+without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
+`My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
+
+The API key is a secret token used by Ansible Galaxy to protect your content. You can find your API key at your
+`Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page.
 
 Upload from the Galaxy website
 ------------------------------
@@ -175,22 +195,6 @@ namespace, the upload request will fail.
 
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
-
-Upload using mazer
-------------------
-
-You can upload collection artifacts with ``mazer``, as shown in the following example:
-
-.. code-block:: bash
-
-    mazer publish --api-key=SECRET path/to/namespace_name-collection_name-1.0.12.tar.gz
-
-The above command triggers an import process, just as if the collection had been uploaded through the Galaxy website. Use the **My Imports**
-page to view the output from the import process.
-
-Your API key can be found on `the preferences page in Galaxy <https://galaxy.ansible.com/me/preferences>`_.
-
-To learn more about Mazer, see `Mazer <https://galaxy.ansible.com/docs/mazer/>`_.
 
 
 Collection versions
@@ -208,7 +212,8 @@ The recommended way to install a collection is:
 
 .. code-block:: bash
 
-   #> ansible-galaxy collection install mycollection -p /path
+   # Will install the collection to /path/ansible_collections/mynamespace/mycollection
+   ansible-galaxy collection install mynamespace.mycollection -p /path
 
 assuming the collection is hosted in Galaxy.
 
@@ -216,22 +221,77 @@ You can also use a tarball resulting from your build:
 
 .. code-block:: bash
 
-   #> ansible-galaxy install mynamespace.mycollection.0.1.0.tgz -p /path
+   # Will install the collection to ./collections/ansible_collections/mynamespace/mycollection
+   ansible-galaxy collection install mynamespace-mycollection-0.1.0.tar.gz -p ./collections/ansible_collections
+
+.. note::
+    The install command will automatically append the path ``ansible_collections`` to the one specified unless the
+    parent directory is already in a folder called ``ansible_collections``.
 
 
-As a path you should use one of the values configured in `COLLECTIONS_PATHS <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#collections-paths>`_. This is also where Ansible itself will expect to find collections when attempting to use them.
+As a path you should use one of the values configured in :ref:`COLLECTIONS_PATHS`. This is also where Ansible itself will expect to find collections when attempting to use them.
 
-You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collection/`` directory structure.
+You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure.
 
 ::
 
     play.yml
     ├── collections/
-    │   └── ansbile_collection/
+    │   └── ansible_collections/
     │               └── myname/
     │                   └── mycol/<collection structure lives here>
 
 
+By default ``ansible-galaxy`` installs the latest collection that is available but you can add a version range
+identifier to install a specific version as follows:
+
+.. code-block:: bash
+
+   # Install the collection at 1.0.0
+   ansible-galaxy collection install mynamespace.mycollection:1.0.0
+
+   # Install the collection at 1.0.0-beta.1
+   ansible-galaxy collection install mynamespace.mycollection:==1.0.0-beta.1
+
+   # Only install the collections that are greater than or equal to 1.0.0 or less than 2.0.0
+   ansible-galaxy collection install mynamespace.mycollection:>=1.0.0,<2.0.0
+
+
+You can specify multiple range identifiers which are split by ``,``. You can use the following range identifiers:
+
+* ``*``: Any version, this is the default used when no range specified is set.
+* ``!=``: Version is not equal to the one specified.
+* ``==``: Version must be the one specified.
+* ``>=``: Version is greater than or equal to the one specified.
+* ``>``: Version is greater than the one specified.
+* ``<=``: Version is less than or equal to the one specified.
+* ``<``: Version is less than the one specified.
+
+.. note::
+    The ``ansible-galaxy`` command ignores any pre-release versions unless the ``==`` range identifier is used to
+    explicitly set to that pre-release version.
+
+
+.. _collection_requirements_file:
+
+Install requirements file
+-------------------------
+
+You can also setup a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:
+
+.. code-block:: yaml+jinja
+
+   ---
+   collections:
+   # With just the collection name
+   - namespace.collection
+
+   # With the collection name, version, and source options
+   - name: namespace.collection
+     version: 'version range identifiers (default: ``*``)'
+     source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
+
+The ``version`` key can take in the same range identifier format documented above.
 
 
 Using collections
