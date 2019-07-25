@@ -1,0 +1,2 @@
+bugfixes:
+- mysql - Remove the unused import of MySQLdb.cursor from ansible.module_utils.mysql (https://github.com/ansible/ansible/pull/59511)
