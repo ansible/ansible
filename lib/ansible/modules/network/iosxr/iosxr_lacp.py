@@ -59,9 +59,14 @@ options:
               - Refer to vendor documentation for valid values.
             type: int
           mac:
+            type: dict
             description:
-              - The system ID to use in LACP negotiations.
-            type: str
+              - The system MAC related configuration for LACP.
+            suboptions:
+              address:
+                description:
+                  - The system ID to use in LACP negotiations.
+                type: str
   state:
     description:
       - The state the configuration should be left in.
@@ -92,7 +97,8 @@ EXAMPLES = """
     config:
       system:
         priority: 10
-        mac: 00c1.4c00.bd15
+        mac:
+          address: 00c1.4c00.bd15
     state: merged
 
 #
@@ -112,7 +118,9 @@ EXAMPLES = """
 #
 # "after": {
 #    "system": {
-#       "mac": "00c1.4c00.bd15",
+#       "mac": {
+#          "address": "00c1.4c00.bd15"
+#       },
 #       "priority": 10
 #     }
 #  }
@@ -156,7 +164,9 @@ EXAMPLES = """
 # -----------------------
 # "before": {
 #    "system": {
-#       "mac": "00c1.4c00.bd15",
+#       "mac": {
+#         "address": "00c1.4c00.bd15"
+#       },
 #       "priority": 10
 #    }
 #  }
@@ -211,7 +221,9 @@ EXAMPLES = """
 # -----------------------
 # "before": {
 #    "system": {
-#       "mac": "00c1.4c00.bd15",
+#       "mac": {
+#         "address": "00c1.4c00.bd15"
+#       },
 #       "priority": 11
 #    }
 # }

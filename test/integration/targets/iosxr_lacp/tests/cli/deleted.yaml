@@ -7,7 +7,7 @@
 - include_tasks: _populate.yaml
 
 - block:
-    - name: Delete attributes of given interfaces
+    - name: Delete LACP attributes
       iosxr_lacp: &deleted
         state: deleted
       register: result

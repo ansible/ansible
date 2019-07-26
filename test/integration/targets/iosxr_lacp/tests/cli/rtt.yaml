@@ -10,7 +10,8 @@
         config:
           system:
             priority: 15
-            mac: 00c1.4c00.bd16
+            mac: 
+              address: 00c1.4c00.bd16
         state: merged
       register: base_config
         
@@ -27,7 +28,8 @@
         config:
           system:
             priority: 10
-            mac: 00c1.4c00.bd10
+            mac: 
+              address: 00c1.4c00.bd10
         state: merged
       register: result
       
