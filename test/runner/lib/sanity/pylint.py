@@ -50,6 +50,7 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
+    @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'

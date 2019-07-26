@@ -45,6 +45,7 @@ UNSUPPORTED_PYTHON_VERSIONS = (
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
+    @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
