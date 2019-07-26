@@ -5711,6 +5711,7 @@ test/legacy/gce_credentials.py pylint:blacklisted-name
 test/runner/requirements/constraints.txt test-constraints
 test/runner/requirements/integration.cloud.azure.txt test-constraints
 test/runner/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
+test/sanity/pylint/plugins/string_format.py use-compat-six
 test/units/contrib/inventory/test_vmware_inventory.py pylint:blacklisted-name
 test/units/executor/test_play_iterator.py pylint:blacklisted-name
 test/units/module_utils/basic/test_run_command.py pylint:blacklisted-name
