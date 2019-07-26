@@ -1,2 +1,0 @@
-hacking/build_library/build_ansible/command_plugins/porting_guide.py # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/release_announcement.py # release process only, 3.6+ required

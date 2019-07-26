@@ -25,6 +25,16 @@ class SanityDocsTest(SanitySingleVersion):
     """Sanity test for documentation of sanity tests."""
     ansible_only = True
 
+    @property
+    def can_ignore(self):  # type: () -> bool
+        """True if the test supports ignore entries."""
+        return False
+
+    @property
+    def can_skip(self):  # type: () -> bool
+        """True if the test supports skip entries."""
+        return False
+
     # noinspection PyUnusedLocal
     def test(self, args, targets):  # pylint: disable=locally-disabled, unused-argument
         """

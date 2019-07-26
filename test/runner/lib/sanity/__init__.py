@@ -57,11 +57,14 @@ from lib.test import (
     TestSkipped,
     TestMessage,
     calculate_best_confidence,
-    calculate_confidence,
 )
 
 from lib.data import (
     data_context,
+)
+
+from lib.env import (
+    get_ansible_version,
 )
 
 COMMAND = 'sanity'
@@ -174,6 +177,258 @@ def sanity_get_tests():
     return SANITY_TESTS
 
 
+class SanityIgnoreParser:
+    """Parser for the consolidated sanity test ignore file."""
+    NO_CODE = '_'
+
+    def __init__(self, args):  # type: (SanityConfig) -> None
+        if data_context().content.collection:
+            ansible_version = '%s.%s' % tuple(get_ansible_version(args).split('.')[:2])
+
+            ansible_label = 'Ansible %s' % ansible_version
+            file_name = 'ignore-%s.txt' % ansible_version
+        else:
+            ansible_label = 'Ansible'
+            file_name = 'ignore.txt'
+
+        self.args = args
+        self.relative_path = os.path.join('test/sanity', file_name)
+        self.path = os.path.join(data_context().content.root, self.relative_path)
+        self.ignores = collections.defaultdict(lambda: collections.defaultdict(dict))  # type: t.Dict[str, t.Dict[str, t.Dict[str, int]]]
+        self.skips = collections.defaultdict(lambda: collections.defaultdict(int))  # type: t.Dict[str, t.Dict[str, int]]
+        self.parse_errors = []  # type: t.List[t.Tuple[int, int, str]]
+        self.file_not_found_errors = []  # type: t.List[t.Tuple[int, str]]
+
+        lines = read_lines_without_comments(self.path, optional=True)
+        paths = set(data_context().content.all_files())
+        tests_by_name = {}  # type: t.Dict[str, SanityTest]
+        versioned_test_names = set()  # type: t.Set[str]
+        unversioned_test_names = {}  # type: t.Dict[str, str]
+
+        display.info('Read %d sanity test ignore line(s) for %s from: %s' % (len(lines), ansible_label, self.relative_path), verbosity=1)
+
+        for test in sanity_get_tests():
+            if isinstance(test, SanityMultipleVersion):
+                versioned_test_names.add(test.name)
+                tests_by_name.update(dict(('%s-%s' % (test.name, python_version), test) for python_version in SUPPORTED_PYTHON_VERSIONS))
+            else:
+                unversioned_test_names.update(dict(('%s-%s' % (test.name, python_version), test.name) for python_version in SUPPORTED_PYTHON_VERSIONS))
+                tests_by_name[test.name] = test
+
+        for line_no, line in enumerate(lines, start=1):
+            if not line:
+                self.parse_errors.append((line_no, 1, "Line cannot be empty or contain only a comment"))
+                continue
+
+            parts = line.split(' ')
+            path = parts[0]
+            codes = parts[1:]
+
+            if not path:
+                self.parse_errors.append((line_no, 1, "Line cannot start with a space"))
+                continue
+
+            if path not in paths:
+                self.file_not_found_errors.append((line_no, path))
+                continue
+
+            if not codes:
+                self.parse_errors.append((line_no, len(path), "Error code required after path"))
+                continue
+
+            code = codes[0]
+
+            if not code:
+                self.parse_errors.append((line_no, len(path) + 1, "Error code after path cannot be empty"))
+                continue
+
+            if len(codes) > 1:
+                self.parse_errors.append((line_no, len(path) + len(code) + 2, "Error code cannot contain spaces"))
+                continue
+
+            parts = code.split('!')
+            code = parts[0]
+            commands = parts[1:]
+
+            parts = code.split(':')
+            test_name = parts[0]
+            error_codes = parts[1:]
+
+            test = tests_by_name.get(test_name)
+
+            if not test:
+                unversioned_name = unversioned_test_names.get(test_name)
+
+                if unversioned_name:
+                    self.parse_errors.append((line_no, len(path) + len(unversioned_name) + 2, "Sanity test '%s' cannot use a Python version like '%s'" % (
+                        unversioned_name, test_name)))
+                elif test_name in versioned_test_names:
+                    self.parse_errors.append((line_no, len(path) + len(test_name) + 1, "Sanity test '%s' requires a Python version like '%s-%s'" % (
+                        test_name, test_name, args.python_version)))
+                else:
+                    self.parse_errors.append((line_no, len(path) + 2, "Sanity test '%s' does not exist" % test_name))
+
+                continue
+
+            if commands and error_codes:
+                self.parse_errors.append((line_no, len(path) + len(test_name) + 2, "Error code cannot contain both '!' and ':' characters"))
+                continue
+
+            if commands:
+                command = commands[0]
+
+                if len(commands) > 1:
+                    self.parse_errors.append((line_no, len(path) + len(test_name) + len(command) + 3, "Error code cannot contain multiple '!' characters"))
+                    continue
+
+                if command == 'skip':
+                    if not test.can_skip:
+                        self.parse_errors.append((line_no, len(path) + len(test_name) + 2, "Sanity test '%s' cannot be skipped" % test_name))
+                        continue
+
+                    existing_line_no = self.skips.get(test_name, {}).get(path)
+
+                    if existing_line_no:
+                        self.parse_errors.append((line_no, 1, "Duplicate '%s' skip for path '%s' first found on line %d" % (test_name, path, existing_line_no)))
+                        continue
+
+                    self.skips[test_name][path] = line_no
+                    continue
+
+                self.parse_errors.append((line_no, len(path) + len(test_name) + 2, "Command '!%s' not recognized" % command))
+                continue
+
+            if not test.can_ignore:
+                self.parse_errors.append((line_no, len(path) + 1, "Sanity test '%s' cannot be ignored" % test_name))
+                continue
+
+            if test.error_code:
+                if not error_codes:
+                    self.parse_errors.append((line_no, len(path) + len(test_name) + 1, "Sanity test '%s' requires an error code" % test_name))
+                    continue
+
+                error_code = error_codes[0]
+
+                if len(error_codes) > 1:
+                    self.parse_errors.append((line_no, len(path) + len(test_name) + len(error_code) + 3, "Error code cannot contain multiple ':' characters"))
+                    continue
+            else:
+                if error_codes:
+                    self.parse_errors.append((line_no, len(path) + len(test_name) + 2, "Sanity test '%s' does not support error codes" % test_name))
+                    continue
+
+                error_code = self.NO_CODE
+
+            existing = self.ignores.get(test_name, {}).get(path, {}).get(error_code)
+
+            if existing:
+                if test.error_code:
+                    self.parse_errors.append((line_no, 1, "Duplicate '%s' ignore for error code '%s' for path '%s' first found on line %d" % (
+                        test_name, error_code, path, existing)))
+                else:
+                    self.parse_errors.append((line_no, 1, "Duplicate '%s' ignore for path '%s' first found on line %d" % (
+                        test_name, path, existing)))
+
+                continue
+
+            self.ignores[test_name][path][error_code] = line_no
+
+    @staticmethod
+    def load(args):  # type: (SanityConfig) -> SanityIgnoreParser
+        """Return the current SanityIgnore instance, initializing it if needed."""
+        try:
+            return SanityIgnoreParser.instance
+        except AttributeError:
+            pass
+
+        SanityIgnoreParser.instance = SanityIgnoreParser(args)
+        return SanityIgnoreParser.instance
+
+
+class SanityIgnoreProcessor:
+    """Processor for sanity test ignores for a single run of one sanity test."""
+    def __init__(self,
+                 args,  # type: SanityConfig
+                 name,  # type: str
+                 code,  # type: t.Optional[str]
+                 python_version,  # type: t.Optional[str]
+                 ):  # type: (...) -> None
+        if python_version:
+            full_name = '%s-%s' % (name, python_version)
+        else:
+            full_name = name
+
+        self.args = args
+        self.code = code
+        self.parser = SanityIgnoreParser.load(args)
+        self.ignore_entries = self.parser.ignores.get(full_name, {})
+        self.skip_entries = self.parser.skips.get(full_name, {})
+        self.used_line_numbers = set()  # type: t.Set[int]
+
+    def filter_skipped_paths(self, paths):  # type: (t.List[str]) -> t.List[str]
+        """Return the given paths, with any skipped paths filtered out."""
+        return sorted(set(paths) - set(self.skip_entries.keys()))
+
+    def filter_skipped_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+        """Return the given targets, with any skipped paths filtered out."""
+        return sorted(target for target in targets if target.path not in self.skip_entries)
+
+    def process_errors(self, errors, paths):  # type: (t.List[SanityMessage], t.List[str]) -> t.List[SanityMessage]
+        """Return the given errors filtered for ignores and with any settings related errors included."""
+        errors = self.filter_messages(errors)
+        errors.extend(self.get_errors(paths))
+
+        errors = sorted(set(errors))
+
+        return errors
+
+    def filter_messages(self, messages):  # type: (t.List[SanityMessage]) -> t.List[SanityMessage]
+        """Return a filtered list of the given messages using the entries that have been loaded."""
+        filtered = []
+
+        for message in messages:
+            path_entry = self.ignore_entries.get(message.path)
+
+            if path_entry:
+                code = message.code if self.code else SanityIgnoreParser.NO_CODE
+                line_no = path_entry.get(code)
+
+                if line_no:
+                    self.used_line_numbers.add(line_no)
+                    continue
+
+            filtered.append(message)
+
+        return filtered
+
+    def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
+        """Return error messages related to issues with the file."""
+        messages = []
+
+        # unused errors
+
+        unused = []  # type: t.List[t.Tuple[int, str, str]]
+
+        for path in paths:
+            path_entry = self.ignore_entries.get(path)
+
+            if not path_entry:
+                continue
+
+            unused.extend((line_no, path, code) for code, line_no in path_entry.items() if line_no not in self.used_line_numbers)
+
+        messages.extend(SanityMessage(
+            code=self.code,
+            message="Ignoring '%s' on '%s' is unnecessary" % (code, path) if self.code else "Ignoring '%s' is unnecessary" % path,
+            path=self.parser.relative_path,
+            line=line,
+            column=1,
+            confidence=calculate_best_confidence(((self.parser.path, line), (path, 0)), self.args.metadata) if self.args.metadata.changes else None,
+        ) for line, path, code in unused)
+
+        return messages
+
+
 class SanitySuccess(TestSuccess):
     """Sanity test success."""
     def __init__(self, test, python_version=None):
@@ -233,6 +488,21 @@ class SanityTest(ABC):
         self.name = name
         self.enabled = True
 
+    @property
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return None
+
+    @property
+    def can_ignore(self):  # type: () -> bool
+        """True if the test supports ignore entries."""
+        return True
+
+    @property
+    def can_skip(self):  # type: () -> bool
+        """True if the test supports skip entries."""
+        return True
+
 
 class SanityCodeSmellTest(SanityTest):
     """Sanity test script."""
@@ -277,6 +547,10 @@ class SanityCodeSmellTest(SanityTest):
         pattern = None
         data = None
 
+        settings = self.load_processor(args)
+
+        paths = []
+
         if self.config:
             output = self.config.get('output')
             extensions = self.config.get('extensions')
@@ -317,6 +591,8 @@ class SanityCodeSmellTest(SanityTest):
             if files:
                 paths = [p for p in paths if os.path.basename(p) in files]
 
+            paths = settings.filter_skipped_paths(paths)
+
             if not paths and not always:
                 return SanitySkipped(self.name)
 
@@ -344,13 +620,27 @@ class SanityCodeSmellTest(SanityTest):
                     column=int(m.get('column', 0)),
                 ) for m in matches]
 
+                messages = settings.process_errors(messages, paths)
+
+                if not messages:
+                    return SanitySuccess(self.name)
+
                 return SanityFailure(self.name, messages=messages)
 
         if stderr or status:
             summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
             return SanityFailure(self.name, summary=summary)
 
+        messages = settings.process_errors([], paths)
+
+        if messages:
+            return SanityFailure(self.name, messages=messages)
+
         return SanitySuccess(self.name)
+
+    def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
+        """Load the ignore processor for this sanity test."""
+        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
 
 
 class SanityFunc(SanityTest):
@@ -373,9 +663,9 @@ class SanitySingleVersion(SanityFunc):
         :rtype: TestResult
         """
 
-    def load_settings(self, args, code):  # type: (SanityConfig, t.Optional[str]) -> SanitySettings
-        """Load settings for this sanity test."""
-        return SanitySettings(args, self.name, code, None)
+    def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
+        """Load the ignore processor for this sanity test."""
+        return SanityIgnoreProcessor(args, self.name, self.error_code, None)
 
 
 class SanityMultipleVersion(SanityFunc):
@@ -389,222 +679,9 @@ class SanityMultipleVersion(SanityFunc):
         :rtype: TestResult
         """
 
-    def load_settings(self, args, code, python_version):  # type: (SanityConfig, t.Optional[str], t.Optional[str]) -> SanitySettings
-        """Load settings for this sanity test."""
-        return SanitySettings(args, self.name, code, python_version)
-
-
-class SanitySettings:
-    """Settings for sanity tests."""
-    def __init__(self,
-                 args,  # type: SanityConfig
-                 name,  # type: str
-                 code,  # type: t.Optional[str]
-                 python_version,  # type: t.Optional[str]
-                 ):  # type: (...) -> None
-        self.args = args
-        self.code = code
-        self.ignore_settings = SanitySettingsFile(args, name, 'ignore', code, python_version)
-        self.skip_settings = SanitySettingsFile(args, name, 'skip', code, python_version)
-
-    def filter_skipped_paths(self, paths):  # type: (t.List[str]) -> t.List[str]
-        """Return the given paths, with any skipped paths filtered out."""
-        return sorted(set(paths) - set(self.skip_settings.entries.keys()))
-
-    def filter_skipped_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
-        """Return the given targets, with any skipped paths filtered out."""
-        return sorted(target for target in targets if target.path not in self.skip_settings.entries)
-
-    def process_errors(self, errors, paths):  # type: (t.List[SanityMessage], t.List[str]) -> t.List[SanityMessage]
-        """Return the given errors filtered for ignores and with any settings related errors included."""
-        errors = self.ignore_settings.filter_messages(errors)
-        errors.extend(self.ignore_settings.get_errors(paths))
-        errors.extend(self.skip_settings.get_errors([]))
-
-        for ignore_path, ignore_entry in self.ignore_settings.entries.items():
-            skip_entry = self.skip_settings.entries.get(ignore_path)
-
-            if not skip_entry:
-                continue
-
-            skip_line_no = skip_entry[SanitySettingsFile.NO_CODE]
-
-            for ignore_line_no in ignore_entry.values():
-                candidates = ((self.ignore_settings.path, ignore_line_no), (self.skip_settings.path, skip_line_no))
-
-                errors.append(SanityMessage(
-                    code=self.code,
-                    message="Ignoring '%s' is unnecessary due to skip entry on line %d of '%s'" % (ignore_path, skip_line_no, self.skip_settings.relative_path),
-                    path=self.ignore_settings.relative_path,
-                    line=ignore_line_no,
-                    column=1,
-                    confidence=calculate_best_confidence(candidates, self.args.metadata) if self.args.metadata.changes else None,
-                ))
-
-        errors = sorted(set(errors))
-
-        return errors
-
-
-class SanitySettingsFile:
-    """Interface to sanity ignore or sanity skip file settings."""
-    NO_CODE = '_'
-
-    def __init__(self,
-                 args,  # type: SanityConfig
-                 name,  # type: str
-                 mode,  # type: str
-                 code,  # type: t.Optional[str]
-                 python_version,  # type: t.Optional[str]
-                 ):  # type: (...) -> None
-        """
-        :param mode: must be either "ignore" or "skip"
-        :param code: a code for ansible-test to use for internal errors, using a style that matches codes used by the test, or None if codes are not used
-        """
-        if mode == 'ignore':
-            self.parse_codes = bool(code)
-        elif mode == 'skip':
-            self.parse_codes = False
-        else:
-            raise Exception('Unsupported mode: %s' % mode)
-
-        if name == 'compile':
-            filename = 'python%s-%s' % (python_version, mode)
-        else:
-            filename = '%s-%s' % (mode, python_version) if python_version else mode
-
-        self.args = args
-        self.code = code
-        self.relative_path = 'test/sanity/%s/%s.txt' % (name, filename)
-        self.path = os.path.join(data_context().content.root, self.relative_path)
-        self.entries = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, int]]
-        self.parse_errors = []  # type: t.List[t.Tuple[int, int, str]]
-        self.file_not_found_errors = []  # type: t.List[t.Tuple[int, str]]
-        self.used_line_numbers = set()  # type: t.Set[int]
-
-        lines = read_lines_without_comments(self.path, optional=True)
-        paths = set(data_context().content.all_files())
-
-        for line_no, line in enumerate(lines, start=1):
-            if not line:
-                continue
-
-            if line.startswith(' '):
-                self.parse_errors.append((line_no, 1, 'Line cannot start with a space'))
-                continue
-
-            if line.endswith(' '):
-                self.parse_errors.append((line_no, len(line), 'Line cannot end with a space'))
-                continue
-
-            parts = line.split(' ')
-            path = parts[0]
-
-            if path not in paths:
-                self.file_not_found_errors.append((line_no, path))
-                continue
-
-            if self.parse_codes:
-                if len(parts) < 2:
-                    self.parse_errors.append((line_no, len(line), 'Code required after path'))
-                    continue
-
-                code = parts[1]
-
-                if not code:
-                    self.parse_errors.append((line_no, len(path) + 1, 'Code after path cannot be empty'))
-                    continue
-
-                if len(parts) > 2:
-                    self.parse_errors.append((line_no, len(path) + len(code) + 2, 'Code cannot contain spaces'))
-                    continue
-
-                existing = self.entries.get(path, {}).get(code)
-
-                if existing:
-                    self.parse_errors.append((line_no, 1, "Duplicate code '%s' for path '%s' first found on line %d" % (code, path, existing)))
-                    continue
-            else:
-                if len(parts) > 1:
-                    self.parse_errors.append((line_no, len(path) + 1, 'Path cannot contain spaces'))
-                    continue
-
-                code = self.NO_CODE
-                existing = self.entries.get(path)
-
-                if existing:
-                    self.parse_errors.append((line_no, 1, "Duplicate path '%s' first found on line %d" % (path, existing[code])))
-                    continue
-
-            self.entries[path][code] = line_no
-
-    def filter_messages(self, messages):  # type: (t.List[SanityMessage]) -> t.List[SanityMessage]
-        """Return a filtered list of the given messages using the entries that have been loaded."""
-        filtered = []
-
-        for message in messages:
-            path_entry = self.entries.get(message.path)
-
-            if path_entry:
-                code = message.code if self.code else self.NO_CODE
-                line_no = path_entry.get(code)
-
-                if line_no:
-                    self.used_line_numbers.add(line_no)
-                    continue
-
-            filtered.append(message)
-
-        return filtered
-
-    def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
-        """Return error messages related to issues with the file."""
-        messages = []
-
-        # parse errors
-
-        messages.extend(SanityMessage(
-            code=self.code,
-            message=message,
-            path=self.relative_path,
-            line=line,
-            column=column,
-            confidence=calculate_confidence(self.path, line, self.args.metadata) if self.args.metadata.changes else None,
-        ) for line, column, message in self.parse_errors)
-
-        # file not found errors
-
-        messages.extend(SanityMessage(
-            code=self.code,
-            message="File '%s' does not exist" % path,
-            path=self.relative_path,
-            line=line,
-            column=1,
-            confidence=calculate_best_confidence(((self.path, line), (path, 0)), self.args.metadata) if self.args.metadata.changes else None,
-        ) for line, path in self.file_not_found_errors)
-
-        # unused errors
-
-        unused = []  # type: t.List[t.Tuple[int, str, str]]
-
-        for path in paths:
-            path_entry = self.entries.get(path)
-
-            if not path_entry:
-                continue
-
-            unused.extend((line_no, path, code) for code, line_no in path_entry.items() if line_no not in self.used_line_numbers)
-
-        messages.extend(SanityMessage(
-            code=self.code,
-            message="Ignoring '%s' on '%s' is unnecessary" % (code, path) if self.code else "Ignoring '%s' is unnecessary" % path,
-            path=self.relative_path,
-            line=line,
-            column=1,
-            confidence=calculate_best_confidence(((self.path, line), (path, 0)), self.args.metadata) if self.args.metadata.changes else None,
-        ) for line, path, code in unused)
-
-        return messages
+    def load_processor(self, args, python_version):  # type: (SanityConfig, str) -> SanityIgnoreProcessor
+        """Load the ignore processor for this sanity test."""
+        return SanityIgnoreProcessor(args, self.name, self.error_code, python_version)
 
 
 SANITY_TESTS = (
