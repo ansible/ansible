@@ -5621,7 +5621,6 @@ lib/ansible/modules/windows/win_copy.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_credential.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_credential.ps1 validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/windows/win_dns_client.ps1 pslint:PSCustomUseLiteralPath
-lib/ansible/modules/windows/win_dns_client.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
 lib/ansible/modules/windows/win_domain.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain_controller.ps1 pslint:PSAvoidGlobalVars # New PR
