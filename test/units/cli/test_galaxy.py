@@ -31,13 +31,12 @@ import yaml
 
 import ansible.constants as C
 from ansible import context
-from ansible.cli.arguments import option_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.utils import context_objects as co
 from units.compat import unittest
-from units.compat.mock import call, patch, MagicMock
+from units.compat.mock import patch, MagicMock
 
 
 @pytest.fixture(autouse='function')

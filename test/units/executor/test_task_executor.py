@@ -21,9 +21,8 @@ __metaclass__ = type
 
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
-from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
