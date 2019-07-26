@@ -6,6 +6,8 @@ import json
 import os
 import re
 
+import lib.types as t
+
 from lib.sanity import (
     SanitySingleVersion,
     SanityMessage,
@@ -35,13 +37,17 @@ from lib.data import (
 
 class PslintTest(SanitySingleVersion):
     """Sanity test using PSScriptAnalyzer."""
+    def error_code(self):  # type: () -> t.Optional[str]
+        """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
+        return 'AnsibleTest'
+
     def test(self, args, targets):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
         :rtype: TestResult
         """
-        settings = self.load_settings(args, 'AnsibleTest')
+        settings = self.load_processor(args)
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.ps1', '.psm1', '.psd1'))
         paths = settings.filter_skipped_paths(paths)

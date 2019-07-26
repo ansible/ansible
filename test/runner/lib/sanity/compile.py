@@ -38,7 +38,7 @@ class CompileTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        settings = self.load_settings(args, None, python_version)
+        settings = self.load_processor(args, python_version)
 
         paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/'))
         paths = settings.filter_skipped_paths(paths)
