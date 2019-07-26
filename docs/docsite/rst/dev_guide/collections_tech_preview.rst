@@ -80,7 +80,7 @@ plugins directory
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
 
 module_utils
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 When working with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
