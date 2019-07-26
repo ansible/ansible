@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os import path
 import json
 
 from mock import MagicMock, patch, call
