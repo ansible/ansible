@@ -389,6 +389,7 @@ lib/ansible/module_utils/six/__init__.py future-import-boilerplate # ignore bund
 lib/ansible/module_utils/six/__init__.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/six/__init__.py no-basestring
 lib/ansible/module_utils/six/__init__.py no-dict-iteritems
+lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/splitter.py future-import-boilerplate
 lib/ansible/module_utils/splitter.py metaclass-boilerplate
 lib/ansible/module_utils/storage/emc/emc_vnx.py future-import-boilerplate
