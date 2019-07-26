@@ -223,19 +223,9 @@ Try {
                     } else {
                         Fail-Json -obj $result -message "Failed to install ADDSDomainController with DCPromo: $($_.Exception.Message)"
                     }
-                } catch {
-                    # We cannot directly catch Microsoft.ADRoles.Deployment.Common.Tests.TestFailedException
-                    # As the type is within an internal flagged class of Microsoft.ADRoles.Deployment.Common
-                    if (
-                        ($_.FullyQualifiedErrorId -eq 'Test.VerifyUserCredentialPermissions.DCPromo.General.25,Microsoft.DirectoryServices.Deployment.PowerShell.Commands.InstallADDSDomainControllerCommand') -and
-                        ($_.CategroyInfo.Reason -eq "TestFailedException") -and
-                        ($_.Exception.ErrorCode -eq 25)
-                    ) {
-                        Fail-Json -obj $result -message "Failed to resolve domain name $($dns_domain_name): $($_.Exception.Message)"
-                    } else {
-                        throw
-                    }
                 }
+                # If $_.FullyQualifiedErrorId -eq 'Test.VerifyUserCredentialPermissions.DCPromo.General.25,Microsoft.DirectoryServices.Deployment.PowerShell.Commands.InstallADDSDomainControllerCommand'
+                # the module failed to resolve the given dns domain name
 
                 Write-DebugLog "Installation complete, trying to start the Netlogon service"
                 # The Netlogon service is set to auto start but is not started. This is
