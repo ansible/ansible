@@ -44,11 +44,16 @@ deprecated:
 notes:
   - Tested against VYOS 1.1.7
 options:
+  interfaces:
+    description:
+      - Name of the interfaces.
+    type: list
   state:
     description:
-      - State of the LLDP configuration.
+      - State of the link aggregation group.
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'enabled', 'disabled']
+    type: str
 extends_documentation_fragment: vyos
 """
 
