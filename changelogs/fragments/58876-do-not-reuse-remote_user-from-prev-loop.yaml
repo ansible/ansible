@@ -1,0 +1,2 @@
+bugfixes:
+  - Do not re-use remote_user from previous loop iteration (https://github.com/ansible/ansible/issues/58876)
