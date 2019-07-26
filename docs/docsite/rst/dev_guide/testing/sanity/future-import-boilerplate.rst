@@ -1,5 +1,5 @@
-Sanity Tests » future-import-boilerplate
-========================================
+future-import-boilerplate
+=========================
 
 Most Python files should include the following boilerplate at the top of the file, right after the
 comment header:

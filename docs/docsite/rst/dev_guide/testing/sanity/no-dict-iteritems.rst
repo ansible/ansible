@@ -1,5 +1,5 @@
-Sanity Tests » no-dict-iteritems
-================================
+no-dict-iteritems
+=================
 
 The ``dict.iteritems`` method has been removed in Python 3. There are two recommended alternatives:
 

@@ -1,7 +1,7 @@
 :orphan:
 
-Sanity Tests » no-underscore-variable
-=====================================
+no-underscore-variable
+======================
 
 In the future, Ansible may use the identifier ``_`` to internationalize its
 message strings.  To be ready for that, we need to make sure that there are

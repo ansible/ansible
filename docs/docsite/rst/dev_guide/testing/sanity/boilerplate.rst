@@ -1,7 +1,7 @@
 :orphan:
 
-Sanity Tests » boilerplate
-==========================
+boilerplate
+===========
 
 Most Python files should include the following boilerplate:
 

@@ -1,5 +1,5 @@
-Sanity Tests » ignores
-======================
+ignores
+=======
 
 Sanity tests for individual files can be skipped, and specific errors can be ignored.
 

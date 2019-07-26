@@ -1,5 +1,5 @@
-Sanity Tests » use-argspec-type-path
-====================================
+use-argspec-type-path
+=====================
 
 The AnsibleModule argument_spec knows of several types beyond the standard python types.  One of
 these is ``path``.  When used, type ``path`` ensures that an argument is a string and expands any
