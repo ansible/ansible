@@ -580,9 +580,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 credentials = session.get_credentials().get_frozen_credentials()
             except AttributeError:
-            	pass
+                pass
             else:
-            	self.aws_access_key_id = credentials.access_key
+                self.aws_access_key_id = credentials.access_key
                 self.aws_secret_access_key = credentials.secret_key
                 self.aws_security_token = credentials.token
 
