@@ -66,27 +66,27 @@
 
   - name: Apply tag to cluster
     vmware_tag_manager:
-      hostname: "{{ vcenter_server }}"
-      username: "{{ vcenter_user }}"
-      password: "{{ vcenter_pass }}"
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
       validate_certs: no
       tag_names:
         - '{{ cluster_category }}:{{ cluster_tag }}'
       state: present
-      object_name: '{{ cluster_name }}'
+      object_name: '{{ ccr1 }}'
       object_type: ClusterComputeResource
 
   - name: Get facts about cluster
     vmware_cluster_facts:
-      hostname: "{{ vcenter_server }}"
-      username: "{{ vcenter_user }}"
-      password: "{{ vcenter_pass }}"
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
       validate_certs: no
       show_tag: True
-      cluster_name: "{{ cluster_name }}"
+      cluster_name: "{{ ccr1 }}"
     register: cluster_info
 
   - assert:
       that:
         - cluster_info is defined
-        - cluster_info.clusters[cluster_name].tags is defined
+        - cluster_info.clusters[ccr1].tags is defined
