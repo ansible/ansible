@@ -722,7 +722,7 @@ class NetAppOntapVolume(object):
         if self.parameters.get('junction_path'):
             options['junction-path'] = self.parameters['junction_path']
         if self.parameters.get('comment'):
-            options['comment'] = self.parameters['comment']
+            options['volume-comment'] = self.parameters['comment']
         if self.parameters.get('type'):
             options['volume-type'] = self.parameters['type']
         if self.parameters.get('percent_snapshot_space') is not None:
@@ -934,8 +934,8 @@ class NetAppOntapVolume(object):
         if self.parameters.get('vserver_dr_protection') is not None:
             self.create_volume_attribute(vol_mod_attributes, 'volume-vserver-dr-protection-attributes',
                                          'vserver-dr-protection', self.parameters['vserver_dr_protection'])
-        # volume-performance-attributes
-        if self.parameters.get('comment'):
+        # volume-id-attributes
+        if self.parameters.get('comment') is not None:
             self.create_volume_attribute(vol_mod_attributes, 'volume-id-attributes',
                                          'comment', self.parameters['comment'])
         # End of Volume-attributes sub attributes
