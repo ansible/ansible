@@ -1,4 +1,4 @@
-Sanity Tests » compile
-======================
+compile
+=======
 
 See :doc:`../../testing_compile` for more information.
