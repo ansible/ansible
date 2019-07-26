@@ -43,6 +43,25 @@ options:
       type: str
       required: yes
       aliases: [ datacenter_name ]
+    ignore_drs:
+      description:
+      - If set to C(yes), DRS will not be configured; all explicit and default DRS related configurations will be ignored.
+      type: bool
+      default: 'no'
+      version_added: 2.9
+    ignore_ha:
+      description:
+      - If set to C(yes), HA will not be configured; all explicit and default HA related configurations will be ignored.
+      type: bool
+      default: 'no'
+      version_added: 2.9
+    ignore_vsan:
+      description:
+      - If set to C(yes), VSAN will not be configured; all explicit and default VSAN related configurations will be ignored.
+      type: bool
+      default: 'no'
+      version_added: 2.9
+    drs_enable_vm_behavior_overrides:
     enable_drs:
       description:
       - If set to C(yes), will enable DRS when the cluster is created.
@@ -239,6 +258,9 @@ class VMwareCluster(PyVmomi):
         super(VMwareCluster, self).__init__(module)
         self.cluster_name = module.params['cluster_name']
         self.datacenter_name = module.params['datacenter']
+        self.ignore_drs = module.params['ignore_drs']
+        self.ignore_ha = module.params['ignore_ha']
+        self.ignore_vsan = module.params['ignore_vsan']
         self.enable_drs = module.params['enable_drs']
         self.enable_ha = module.params['enable_ha']
         self.enable_vsan = module.params['enable_vsan']
@@ -345,9 +367,11 @@ class VMwareCluster(PyVmomi):
         """
         try:
             cluster_config_spec = vim.cluster.ConfigSpecEx()
-            cluster_config_spec.dasConfig = self.configure_ha()
-            cluster_config_spec.drsConfig = self.configure_drs()
-            if self.enable_vsan:
+            if not self.ignore_ha:
+                cluster_config_spec.dasConfig = self.configure_ha()
+            if not self.ignore_drs:
+                cluster_config_spec.drsConfig = self.configure_drs()
+            if self.enable_vsan and not ignore_vsan:
                 cluster_config_spec.vsanConfig = self.configure_vsan()
             if not self.module.check_mode:
                 self.datacenter.hostFolder.CreateClusterEx(self.cluster_name, cluster_config_spec)
@@ -409,13 +433,13 @@ class VMwareCluster(PyVmomi):
         changed, result = False, None
         cluster_config_spec = vim.cluster.ConfigSpecEx()
         diff = False  # Triggers Reconfigure Task only when there is a change
-        if self.check_ha_config_diff():
+        if self.check_ha_config_diff() and not self.ignore_ha:
             cluster_config_spec.dasConfig = self.configure_ha()
             diff = True
-        if self.check_drs_config_diff():
+        if self.check_drs_config_diff() and not self.ignore_drs:
             cluster_config_spec.drsConfig = self.configure_drs()
             diff = True
-        if self.check_vsan_config_diff():
+        if self.check_vsan_config_diff() and not self.ignore_vsan:
             cluster_config_spec.vsanConfig = self.configure_vsan()
             diff = True
 
@@ -518,6 +542,7 @@ def main():
                    default='present',
                    choices=['absent', 'present']),
         # DRS
+        ignore_drs=dict(type='bool', default=False),
         enable_drs=dict(type='bool', default=False),
         drs_enable_vm_behavior_overrides=dict(type='bool', default=True),
         drs_default_vm_behavior=dict(type='str',
@@ -527,6 +552,7 @@ def main():
                               choices=range(1, 6),
                               default=3),
         # HA
+        ignore_ha=dict(type='bool', default=False),
         enable_ha=dict(type='bool', default=False),
         ha_failover_level=dict(type='int', default=2),
         ha_host_monitoring=dict(type='str',
@@ -546,6 +572,7 @@ def main():
                                  default='medium'),
         ha_admission_control_enabled=dict(type='bool', default=True),
         # VSAN
+        ignore_vsan=dict(type='bool', default=False),
         enable_vsan=dict(type='bool', default=False),
         vsan_auto_claim_storage=dict(type='bool', default=False),
     ))
