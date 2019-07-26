@@ -20,6 +20,7 @@ from lib.util import (
     display,
     ANSIBLE_ROOT,
     is_subdir,
+    find_python,
 )
 
 from lib.util_common import (
@@ -42,10 +43,11 @@ class YamllintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
-    def test(self, args, targets):
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
         settings = self.load_processor(args)
@@ -66,7 +68,9 @@ class YamllintTest(SanitySingleVersion):
         if not paths:
             return SanitySkipped(self.name)
 
-        results = self.test_paths(args, paths)
+        python = find_python(python_version)
+
+        results = self.test_paths(args, paths, python)
         results = settings.process_errors(results, paths)
 
         if results:
@@ -75,14 +79,15 @@ class YamllintTest(SanitySingleVersion):
         return SanitySuccess(self.name)
 
     @staticmethod
-    def test_paths(args, paths):
+    def test_paths(args, paths, python):
         """
         :type args: SanityConfig
         :type paths: list[str]
+        :type python: str
         :rtype: list[SanityMessage]
         """
         cmd = [
-            args.python_executable,
+            python,
             os.path.join(ANSIBLE_ROOT, 'test/sanity/yamllint/yamllinter.py'),
         ]
 

@@ -12,7 +12,7 @@ from xml.etree.ElementTree import (
 import lib.types as t
 
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -34,7 +34,7 @@ from lib.config import (
 )
 
 
-class ShellcheckTest(SanitySingleVersion):
+class ShellcheckTest(SanityVersionNeutral):
     """Sanity test using shellcheck."""
     @property
     def error_code(self):  # type: () -> t.Optional[str]

@@ -19,6 +19,7 @@ from lib.util import (
     SubprocessError,
     display,
     ANSIBLE_ROOT,
+    find_python,
 )
 
 from lib.util_common import (
@@ -37,11 +38,6 @@ from lib.data import (
     data_context,
 )
 
-UNSUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-)
-
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
@@ -50,16 +46,13 @@ class ValidateModulesTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def test(self, args, targets):
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
-        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
-            display.warning('Skipping validate-modules on unsupported Python version %s.' % args.python_version)
-            return SanitySkipped(self.name)
-
         if data_context().content.is_ansible:
             ignore_codes = ()
         else:
@@ -78,7 +71,7 @@ class ValidateModulesTest(SanitySingleVersion):
             return SanitySkipped(self.name)
 
         cmd = [
-            args.python_executable,
+            find_python(python_version),
             os.path.join(ANSIBLE_ROOT, 'test/sanity/validate-modules/validate-modules'),
             '--format', 'json',
             '--arg-spec',

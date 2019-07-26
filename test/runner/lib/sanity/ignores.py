@@ -5,7 +5,7 @@ __metaclass__ = type
 from lib.sanity import (
     SanityFailure,
     SanityIgnoreParser,
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanitySuccess,
     SanityMessage,
 )
@@ -20,7 +20,7 @@ from lib.config import (
 )
 
 
-class IgnoresTest(SanitySingleVersion):
+class IgnoresTest(SanityVersionNeutral):
     """Sanity test for sanity test ignore entries."""
     @property
     def can_ignore(self):  # type: () -> bool

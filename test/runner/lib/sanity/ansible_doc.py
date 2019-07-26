@@ -42,10 +42,11 @@ from lib.coverage_util import (
 
 class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
-    def test(self, args, targets):
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
         settings = self.load_processor(args)
@@ -99,7 +100,7 @@ class AnsibleDocTest(SanitySingleVersion):
 
             try:
                 with coverage_context(args):
-                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True)
+                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
 
                 status = 0
             except SubprocessError as ex:
