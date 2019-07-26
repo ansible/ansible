@@ -1,0 +1,19 @@
+
+Interface......................... 0/2
+ifIndex........................... 2
+Description....................... -
+Admin Mode........................ Disable
+Physical Mode..................... 10GF
+Physical Status................... -
+Cable Type........................ Copper
+Link Status....................... Down
+Link Trap......................... Enable
+LACP Mode......................... Enable
+Flow Control Mode................. Disable
+Capability Information............ 10GF 1GF 100H/F
+MAC address....................... 54:AB:3A:64:F7:FA
+Bit Offset Val.................... 2
+MDI Status........................ Normal
+MDI Config........................ Force-Auto
+
+

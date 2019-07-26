@@ -1,0 +1,18 @@
+
+Routing interface status....................... Down
+Method......................................... None
+Routing Mode................................... Disable
+Forward Net Directed Broadcasts................ Disable
+Proxy ARP...................................... Enable
+Local Proxy ARP................................ Disable
+Active State................................... Inactive
+Link Speed Data Rate........................... 10000 Full
+MAC address.................................... 54:AB:3A:64:F7:F8
+Encapsulation Type............................. Ethernet
+IP MTU......................................... 1500
+Bandwidth...................................... 10000000 kbps
+Destination Unreachables....................... Disabled
+ICMP Redirects................................. Disabled
+Interface Suppress Status...................... Unsuppressed
+
+

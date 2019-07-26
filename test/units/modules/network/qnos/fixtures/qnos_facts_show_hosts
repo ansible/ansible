@@ -1,0 +1,21 @@
+
+Host name...................................... an-qnos-03.ansible.com
+Default domain................................. Domain name is not configured
+Default domain list............................ quanta.corp
+Domain Name Lookup............................. Enabled
+Number of retries.............................. 2
+Retry timeout period........................... 3
+Name servers (Preference order)................ 10.243.16.11, 10.243.17.11
+
+Dns Client Source Interface.................... (not configured)
+
+Configured host name-to-address mapping:
+
+ Host                                Addresses
+------------------------ ----------------------
+No host name is configured to IP address
+
+ Host                   Total   Elapsed    Type        Addresses
+---------------------- -------  -------    ----        --------------
+No hostname is mapped to an IP address
+

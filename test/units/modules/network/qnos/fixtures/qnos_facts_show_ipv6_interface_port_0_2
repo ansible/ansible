@@ -1,0 +1,27 @@
+
+Routing Mode................................... Disabled
+IPv6 Enable Mode............................... Disabled
+IPv6 Operational Mode.......................... Down
+IPv6 Link-local Scope ID....................... None
+Bandwidth...................................... 10000000  kbps
+Interface Maximum Transmit Unit................ 1500
+Router Duplicate Address Detection Transmits... 1
+Address Autoconfigure Mode..................... Disabled
+Address DHCP Mode.............................. Disabled
+IPv6 Hop Limit Unspecified..................... Disabled
+Router Advertisement NS Interval............... 0
+Router Advertisement Mtu....................... 0
+Router Advertisement Lifetime.................. 1800
+Router Advertisement Reachable Time............ 0
+Max Router Advertisement Interval (secs)....... 600
+Min Router Advertisement Interval (secs)....... 200
+Router Advertisement Managed Config Flag....... Disabled
+Router Advertisement Other Config Flag......... Disabled
+Router Advertisement Router Preference......... medium
+Router Advertisement Suppress Flag............. Disabled
+IPv6 Destination Unreachables.................. Disabled
+ICMPv6 Redirects............................... Disabled
+
+No IPv6 prefixes configured.
+
+
