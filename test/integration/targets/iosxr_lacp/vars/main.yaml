@@ -9,12 +9,14 @@ merged:
   after:
     system:
       priority: 11
-      mac: "00c1.4c00.bd15"
+      mac: 
+        address: "00c1.4c00.bd15"
     
 populate:
   system:
     priority: 12
-    mac: "00c1.4c00.bd16"
+    mac: 
+      address: "00c1.4c00.bd16"
   
 replaced:
   commands:
@@ -36,5 +38,6 @@ round_trip:
   after:
     system:
       priority: 10
-      mac: "00c1.4c00.bd10"
+      mac: 
+        address: "00c1.4c00.bd10"
     
