@@ -32,14 +32,17 @@ options:
     description:
     - Desired cluster name where virtual machines are present for the DRS rule.
     required: True
+    type: str
   vms:
     description:
     - List of virtual machines name for which DRS rule needs to be applied.
     - Required if C(state) is set to C(present).
+    type: list
   drs_rule_name:
     description:
     - The name of the DRS rule to manage.
     required: True
+    type: str
   enabled:
     description:
     - If set to C(True), the DRS rule will be enabled.
@@ -67,6 +70,7 @@ options:
     required: False
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

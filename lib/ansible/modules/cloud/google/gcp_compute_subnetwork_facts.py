@@ -49,6 +49,7 @@ options:
     description:
     - URL of the GCP region for this subnetwork.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 '''
 

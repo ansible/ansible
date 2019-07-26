@@ -7,7 +7,7 @@
     test_schema: schema1
     task_parameters: &task_parameters
       become_user: '{{ pg_user }}'
-      become: True
+      become: yes
       register: result
     pg_parameters: &pg_parameters
       login_user: '{{ pg_user }}'
@@ -28,12 +28,12 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 1.0
+      version: '1.0'
     check_mode: yes
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_ext_version - check that nothing was actually changed
     <<: *task_parameters
@@ -51,11 +51,11 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 1.0
+      version: '1.0'
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["CREATE EXTENSION \"{{ test_ext }}\" WITH SCHEMA \"{{ test_schema }}\" VERSION '1.0'"]
 
   - name: postgresql_ext_version - check
@@ -74,12 +74,12 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 1.0
+      version: '1.0'
     check_mode: yes
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   - name: postgresql_ext_version - check
     <<: *task_parameters
@@ -97,11 +97,11 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 1.0
+      version: '1.0'
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   - name: postgresql_ext_version - check
     <<: *task_parameters
@@ -119,12 +119,12 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 2.0
+      version: '2.0'
     check_mode: yes
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_ext_version - check, the version must be 1.0
     <<: *task_parameters
@@ -142,11 +142,11 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 2.0
+      version: '2.0'
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["ALTER EXTENSION \"{{ test_ext }}\" UPDATE TO '2.0'"]
 
   - name: postgresql_ext_version - check, the version must be 2.0
@@ -168,7 +168,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   - name: postgresql_ext_version - check, the version must be 2.0
     <<: *task_parameters
@@ -190,7 +190,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["ALTER EXTENSION \"{{ test_ext }}\" UPDATE TO '3.0'"]
 
   - name: postgresql_ext_version - check
@@ -213,7 +213,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   - name: postgresql_ext_version - try to downgrade the extension version, must fail
     <<: *task_parameters
@@ -221,7 +221,7 @@
       <<: *pg_parameters
       name: "{{ test_ext }}"
       schema: "{{ test_schema }}"
-      version: 1.0
+      version: '1.0'
     ignore_errors: yes
 
   - assert:
@@ -238,7 +238,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_ext_version - check that extension exists
     <<: *task_parameters
@@ -259,7 +259,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
 
   - name: postgresql_ext_version - check that extension doesn't exist after the prev step
     <<: *task_parameters
@@ -280,7 +280,7 @@
 
   - assert:
       that:
-      - result.changed == false
+      - result is not changed
 
   - name: postgresql_ext_version - create the extension without passing version
     <<: *task_parameters
@@ -290,7 +290,7 @@
 
   - assert:
       that:
-      - result.changed == true
+      - result is changed
       - result.queries == ["CREATE EXTENSION \"{{ test_ext }}\""]
 
   - name: postgresql_ext_version - check

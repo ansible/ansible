@@ -88,7 +88,7 @@ DOCUMENTATION = '''
                 ansible inventory adds /etc/ansible/openstack.yaml and
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
-            type: string
+            type: list
             env:
                 - name: OS_CLIENT_CONFIG_FILE
         compose:

@@ -16,9 +16,8 @@ from lib.util import (
     SubprocessError,
     display,
     find_python,
-    read_lines_without_comments,
     parse_to_list_of_dict,
-    INSTALL_ROOT,
+    ANSIBLE_ROOT,
 )
 
 from lib.util_common import (
@@ -27,10 +26,6 @@ from lib.util_common import (
 
 from lib.config import (
     SanityConfig,
-)
-
-from lib.test import (
-    calculate_best_confidence,
 )
 
 
@@ -43,19 +38,15 @@ class CompileTest(SanityMultipleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        skip_file = 'test/sanity/compile/python%s-skip.txt' % python_version
+        settings = self.load_settings(args, None, python_version)
 
-        if os.path.exists(skip_file):
-            skip_paths = read_lines_without_comments(skip_file)
-        else:
-            skip_paths = []
-
-        paths = sorted(i.path for i in targets.include if (os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/')) and i.path not in skip_paths)
+        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' or i.path.startswith('bin/'))
+        paths = settings.filter_skipped_paths(paths)
 
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
 
-        cmd = [find_python(python_version), os.path.join(INSTALL_ROOT, 'test/sanity/compile/compile.py')]
+        cmd = [find_python(python_version), os.path.join(ANSIBLE_ROOT, 'test/sanity/compile/compile.py')]
 
         data = '\n'.join(paths)
 
@@ -86,24 +77,7 @@ class CompileTest(SanityMultipleVersion):
             column=int(r['column']),
         ) for r in results]
 
-        line = 0
-
-        for path in skip_paths:
-            line += 1
-
-            if not path:
-                continue
-
-            if not os.path.exists(path):
-                # Keep files out of the list which no longer exist in the repo.
-                results.append(SanityMessage(
-                    code='A101',
-                    message='Remove "%s" since it does not exist' % path,
-                    path=skip_file,
-                    line=line,
-                    column=1,
-                    confidence=calculate_best_confidence(((skip_file, line), (path, 0)), args.metadata) if args.metadata.changes else None,
-                ))
+        results = settings.process_errors(results, paths)
 
         if results:
             return SanityFailure(self.name, messages=results, python_version=python_version)

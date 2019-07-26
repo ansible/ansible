@@ -415,6 +415,7 @@ def generate_config_dict(array):
     config_facts['smtp'] = array.list_alert_recipients()
     # SMNP
     config_facts['snmp'] = array.list_snmp_managers()
+    config_facts['snmp_v3_engine_id'] = array.get_snmp_engine_id()['engine_id']
     # DS
     config_facts['directory_service'] = array.get_directory_service()
     if S3_REQUIRED_API_VERSION in api_version:
@@ -488,24 +489,25 @@ def generate_network_dict(array):
     ports = array.list_network_interfaces()
     for port in range(0, len(ports)):
         int_name = ports[port]['name']
-        if ports[port]['enabled']:
-            net_facts[int_name] = {
-                'hwaddr': ports[port]['hwaddr'],
-                'mtu': ports[port]['mtu'],
-                'speed': ports[port]['speed'],
-                'address': ports[port]['address'],
-                'services': ports[port]['services'],
-                'gateway': ports[port]['gateway'],
-                'netmask': ports[port]['netmask'],
-            }
-            if ports[port]['subnet']:
-                subnets = array.get_subnet(ports[port]['subnet'])
-                if subnets['enabled']:
-                    net_facts[int_name]['subnet'] = {
-                        'name': subnets['name'],
-                        'prefix': subnets['prefix'],
-                        'vlan': subnets['vlan'],
-                    }
+        net_facts[int_name] = {
+            'hwaddr': ports[port]['hwaddr'],
+            'mtu': ports[port]['mtu'],
+            'enabled': ports[port]['enabled'],
+            'speed': ports[port]['speed'],
+            'address': ports[port]['address'],
+            'slaves': ports[port]['slaves'],
+            'services': ports[port]['services'],
+            'gateway': ports[port]['gateway'],
+            'netmask': ports[port]['netmask'],
+        }
+        if ports[port]['subnet']:
+            subnets = array.get_subnet(ports[port]['subnet'])
+            if subnets['enabled']:
+                net_facts[int_name]['subnet'] = {
+                    'name': subnets['name'],
+                    'prefix': subnets['prefix'],
+                    'vlan': subnets['vlan'],
+                }
     return net_facts
 
 
@@ -619,6 +621,35 @@ def generate_pgroups_dict(array):
             'targets': pgroups[pgroup]['targets'],
             'volumes': pgroups[pgroup]['volumes'],
         }
+        prot_sched = array.get_pgroup(protgroup, schedule=True)
+        prot_reten = array.get_pgroup(protgroup, retention=True)
+        if prot_sched['snap_enabled'] or prot_sched['replicate_enabled']:
+            pgroups_facts[protgroup]['snap_freqyency'] = prot_sched['snap_frequency']
+            pgroups_facts[protgroup]['replicate_freqyency'] = prot_sched['replicate_frequency']
+            pgroups_facts[protgroup]['snap_enabled'] = prot_sched['snap_enabled']
+            pgroups_facts[protgroup]['replicate_enabled'] = prot_sched['replicate_enabled']
+            pgroups_facts[protgroup]['snap_at'] = prot_sched['snap_at']
+            pgroups_facts[protgroup]['replicate_at'] = prot_sched['replicate_at']
+            pgroups_facts[protgroup]['replicate_blackout'] = prot_sched['replicate_blackout']
+            pgroups_facts[protgroup]['per_day'] = prot_reten['per_day']
+            pgroups_facts[protgroup]['target_per_day'] = prot_reten['target_per_day']
+            pgroups_facts[protgroup]['target_days'] = prot_reten['target_days']
+            pgroups_facts[protgroup]['days'] = prot_reten['days']
+            pgroups_facts[protgroup]['all_for'] = prot_reten['all_for']
+            pgroups_facts[protgroup]['target_all_for'] = prot_reten['target_all_for']
+            if ":" in protgroup:
+                snap_transfers = array.get_pgroup(protgroup, snap=True, transfer=True)
+                pgroups_facts[protgroup]['snaps'] = {}
+                for snap_transfer in range(0, len(snap_transfers)):
+                    snap = snap_transfers[snap_transfer]['name']
+                    pgroups_facts[protgroup]['snaps'][snap] = {
+                        'created': snap_transfers[snap_transfer]['created'],
+                        'started': snap_transfers[snap_transfer]['started'],
+                        'completed': snap_transfers[snap_transfer]['completed'],
+                        'physical_bytes_written': snap_transfers[snap_transfer]['physical_bytes_written'],
+                        'data_transferred': snap_transfers[snap_transfer]['data_transferred'],
+                        'progress': snap_transfers[snap_transfer]['progress'],
+                    }
     return pgroups_facts
 
 

@@ -52,6 +52,7 @@ options:
     description:
     - Name of the subscription.
     required: true
+    type: str
   topic:
     description:
     - A reference to a Topic resource.
@@ -61,10 +62,12 @@ options:
       to a gcp_pubsub_topic task and then set this topic field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   labels:
     description:
     - A set of key/value label pairs to assign to this Subscription.
     required: false
+    type: dict
     version_added: 2.8
   push_config:
     description:
@@ -72,12 +75,14 @@ options:
       it. An empty pushConfig signifies that the subscriber will pull and ack messages
       using API methods.
     required: false
+    type: dict
     suboptions:
       push_endpoint:
         description:
         - A URL locating the endpoint to which messages should be pushed.
         - For example, a Webhook endpoint might use "U(https://example.com/push").
         required: true
+        type: str
       attributes:
         description:
         - Endpoint configuration attributes.
@@ -97,6 +102,7 @@ options:
           defined in the v1beta1 Pub/Sub API.'
         - "- v1 or v1beta2: uses the push format defined in the v1 Pub/Sub API."
         required: false
+        type: dict
   ack_deadline_seconds:
     description:
     - This value is the maximum time after a subscriber receives a message before
@@ -114,6 +120,7 @@ options:
     - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
       redeliver the message.
     required: false
+    type: int
   message_retention_duration:
     description:
     - How long to retain unacknowledged messages in the subscription's backlog, from
@@ -125,6 +132,7 @@ options:
       Example: `"600.5s"`.'
     required: false
     default: 604800s
+    type: str
     version_added: 2.8
   retain_acked_messages:
     description:
@@ -142,6 +150,7 @@ options:
       If expirationPolicy is not set, a default policy with ttl of 31 days will be
       used. The minimum allowed value for expirationPolicy.ttl is 1 day.
     required: false
+    type: dict
     version_added: 2.9
     suboptions:
       ttl:
@@ -154,6 +163,7 @@ options:
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         - Example - "3.5s".
         required: false
+        type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions)'
