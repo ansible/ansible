@@ -21,6 +21,8 @@ DOCUMENTATION = '''
     notes:
         - If no credentials are provided and the control node has an associated IAM instance profile then the
           role will be used for authentication.
+    author:
+        - Sloane Hertel (@s-hertel)
     options:
         plugin:
             description: Token that ensures this is a source file for the plugin.
