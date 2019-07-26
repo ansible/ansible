@@ -21,33 +21,34 @@
       iam_role:
         <<: *aws_connection_info
         name: ansible_lambda_execution
-        region: eu-central-1
         assume_role_policy_document: "{{ lookup('file', role_path + '/files/assume-role.json') }}"
         managed_policy:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       register: ROLE_ARN
 
-    - name: when it is to fast, it fails.
-      command: sleep 2
+    - name: when it is to fast, the role is not usable.
+      pause:
+        minutes: 1
 
     - name: deploy lambda.zip to ansible_lambda_target function
       lambda:
         <<: *aws_connection_info
         name: "ansible_lambda_target"
         state: present
-        region: eu-central-1
         zip_file: "/tmp/lambda.zip"
         runtime: "python3.7"
         role: "{{ ROLE_ARN.arn }}"
         handler: "ansible_lambda_target.lambda_handler"
         timeout: 30
       register: lambda_function
+      retries: 3
+      delay: 15
+      until: lambda_function.changed
 
     - name: create empty target group
       elb_target_group:
         <<: *aws_connection_info
         name: ansible-lambda-targetgroup
-        region: eu-central-1
         target_type: lambda
         state: present
         modify_targets: False
@@ -62,7 +63,6 @@
       lambda_policy:
         <<: *aws_connection_info
         state: present
-        region: eu-central-1
         function_name: ansible_lambda_target
         version: "{{ lambda_function.configuration.version }}"
         statement_id: elb1
@@ -74,7 +74,6 @@
       elb_target_group:
         <<: *aws_connection_info
         name: ansible-lambda-targetgroup
-        region: eu-central-1
         target_type: lambda
         state: present
         targets:
@@ -90,7 +89,6 @@
       elb_target_group:
         <<: *aws_connection_info
         name: ansible-lambda-targetgroup
-        region: eu-central-1
         target_type: lambda
         state: present
         targets:
