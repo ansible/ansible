@@ -177,7 +177,7 @@ def get_endpoint(netbox, term):
 
         # Note: Currently unable to decrypt secrets as key wizardry needs to
         # take place first but term will return unencrypted elements of secrets
-        #- i.e. that they exist etc.
+        # i.e. that they exist etc.
         'secrets': {
             'endpoint': netbox.secrets.secrets},
 
