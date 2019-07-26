@@ -4671,6 +4671,7 @@ test/integration/targets/module_utils/module_utils/foo.py pylint:blacklisted-nam
 test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:blacklisted-name
+test/integration/targets/template/files/foo.dos.txt line-endings
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey/files/tools/chocolateyUninstall.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey_source/library/choco_source.ps1 pslint:PSCustomUseLiteralPath
@@ -4687,17 +4688,21 @@ test/integration/targets/win_iis_webbinding/library/test_get_webbindings.ps1 psl
 test/integration/targets/win_module_utils/library/argv_parser_test.ps1 pslint:PSUseApprovedVerbs
 test/integration/targets/win_module_utils/library/backup_file_test.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_module_utils/library/command_util_test.ps1 pslint:PSCustomUseLiteralPath
+test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings
+test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings
 test/integration/targets/win_ping/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/win_psmodule/files/module/template.psd1 pslint!skip
 test/integration/targets/win_psmodule/files/module/template.psm1 pslint!skip
 test/integration/targets/win_psmodule/files/setup_modules.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_reboot/templates/post_reboot.ps1 pslint:PSCustomUseLiteralPath
+test/integration/targets/win_regmerge/templates/win_line_ending.j2 line-endings
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_creates_file.ps1 pslint:PSAvoidUsingCmdletAliases
 test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_stat/library/test_symlink_file.ps1 pslint:PSCustomUseLiteralPath
+test/integration/targets/win_template/files/foo.dos.txt line-endings
 test/integration/targets/win_user_right/library/test_get_right.ps1 pslint:PSCustomUseLiteralPath
 test/legacy/cleanup_gce.py pylint:blacklisted-name
 test/legacy/gce_credentials.py pylint:blacklisted-name
@@ -4707,6 +4712,7 @@ test/units/executor/test_play_iterator.py pylint:blacklisted-name
 test/units/module_utils/basic/test_run_command.py pylint:blacklisted-name
 test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py pylint:blacklisted-name
 test/units/modules/cloud/amazon/test_ec2_vpc_vpn.py pylint:blacklisted-name
+test/units/modules/network/routeros/fixtures/system_package_print line-endings
 test/units/modules/packaging/os/test_apt.py pylint:blacklisted-name
 test/units/modules/system/interfaces_file/test_interfaces_file.py pylint:blacklisted-name
 test/units/modules/system/test_known_hosts.py pylint:ansible-bad-function
