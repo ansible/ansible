@@ -5686,6 +5686,8 @@ test/integration/targets/win_template/files/foo.dos.txt line-endings
 test/integration/targets/win_user_right/library/test_get_right.ps1 pslint:PSCustomUseLiteralPath
 test/legacy/cleanup_gce.py pylint:blacklisted-name
 test/legacy/gce_credentials.py pylint:blacklisted-name
+test/runner/requirements/constraints.txt test-constraints
+test/runner/requirements/integration.cloud.azure.txt test-constraints
 test/runner/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
 test/units/contrib/inventory/test_vmware_inventory.py pylint:blacklisted-name
 test/units/executor/test_play_iterator.py pylint:blacklisted-name
