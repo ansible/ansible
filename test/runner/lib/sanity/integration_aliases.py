@@ -89,6 +89,16 @@ class IntegrationAliasesTest(SanitySingleVersion):
         self._shippable_test_groups = {}  # type: t.Dict[str, t.Set[int]]
 
     @property
+    def can_ignore(self):  # type: () -> bool
+        """True if the test supports ignore entries."""
+        return False
+
+    @property
+    def can_skip(self):  # type: () -> bool
+        """True if the test supports skip entries."""
+        return False
+
+    @property
     def shippable_yml_lines(self):
         """
         :rtype: list[str]
