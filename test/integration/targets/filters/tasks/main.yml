@@ -360,3 +360,4 @@
     that:
       - "'{{ 'sample' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912unE0GeDfx0eAsIsscM2jcQtjpIY2LVuy'"
       - "'{{ 'café' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912uDZsaKh/j7qZkKps5QEOGP4UfpxNa56S'"
+      - "'{{ 'Криївка' | password_hash(hashtype='blowfish', salt='1234567890123456789123') }}' == '$2b$12$123456789012345678912utpRGnLLKUmQLWXHzHrg8U2Lwths9TNu'"
