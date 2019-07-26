@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 import os
-import sys
 
 import pytest
 
@@ -95,7 +94,7 @@ class GCPAuthTestCase(unittest.TestCase):
         # of this function
         module = FakeModule()
         with mock.patch("ansible.module_utils.gcp.open",
-                        mock.mock_open(read_data='foobar'), create=True) as m:
+                        mock.mock_open(read_data='foobar'), create=True):
             # pem condition, warning is suppressed with the return_value
             credentials_file = '/foopath/pem.pem'
             with self.assertRaises(ValueError):

@@ -12,12 +12,11 @@ import os
 
 import pytest
 
-from units.compat.mock import MagicMock, patch
+from units.compat.mock import MagicMock
 from ansible.module_utils import basic
-from ansible.module_utils.six import string_types, integer_types
+from ansible.module_utils.six import integer_types
 from ansible.module_utils.six.moves import builtins
 
-from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
