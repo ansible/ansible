@@ -1,2 +1,6 @@
 # No AIX LPAR available
 unsupported
+skip/freebsd
+skip/osx
+skip/rhel
+skip/docker
