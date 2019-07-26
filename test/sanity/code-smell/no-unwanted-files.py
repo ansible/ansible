@@ -18,22 +18,11 @@ def main():
         '.py',
     )
 
-    skip = (
-        # allowed special cases
-        'lib/ansible/config/base.yml',
-        'lib/ansible/config/module_defaults.yml',
-        'lib/ansible/galaxy/data/collections_galaxy_meta.yml',
-    )
-
     skip_directories = (
-        'lib/ansible.egg-info/',
         'lib/ansible/galaxy/data/',
     )
 
     for path in paths:
-        if path in skip:
-            continue
-
         if any(path.startswith(skip_directory) for skip_directory in skip_directories):
             continue
 
