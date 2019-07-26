@@ -396,6 +396,7 @@ lib/ansible/module_utils/six/__init__.py no-basestring
 lib/ansible/module_utils/six/__init__.py no-dict-iteritems
 lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
+lib/ansible/module_utils/six/__init__.py replace-urlopen
 lib/ansible/module_utils/splitter.py future-import-boilerplate
 lib/ansible/module_utils/splitter.py metaclass-boilerplate
 lib/ansible/module_utils/storage/emc/emc_vnx.py future-import-boilerplate
@@ -407,6 +408,7 @@ lib/ansible/module_utils/univention_umc.py metaclass-boilerplate
 lib/ansible/module_utils/urls.py future-import-boilerplate
 lib/ansible/module_utils/urls.py metaclass-boilerplate
 lib/ansible/module_utils/urls.py pylint:blacklisted-name
+lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/module_utils/vca.py future-import-boilerplate
 lib/ansible/module_utils/vca.py metaclass-boilerplate
 lib/ansible/module_utils/vexata.py future-import-boilerplate
@@ -5686,6 +5688,8 @@ test/runner/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
 test/units/contrib/inventory/test_vmware_inventory.py pylint:blacklisted-name
 test/units/executor/test_play_iterator.py pylint:blacklisted-name
 test/units/module_utils/basic/test_run_command.py pylint:blacklisted-name
+test/units/module_utils/urls/test_Request.py replace-urlopen
+test/units/module_utils/urls/test_fetch_url.py replace-urlopen
 test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py pylint:blacklisted-name
 test/units/modules/cloud/amazon/test_ec2_vpc_vpn.py pylint:blacklisted-name
 test/units/modules/network/routeros/fixtures/system_package_print line-endings
