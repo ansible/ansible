@@ -10,7 +10,7 @@ import os
 import lib.types as t
 
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -38,7 +38,7 @@ from lib.util import (
 )
 
 
-class IntegrationAliasesTest(SanitySingleVersion):
+class IntegrationAliasesTest(SanityVersionNeutral):
     """Sanity test to evaluate integration test aliases."""
     SHIPPABLE_YML = 'shippable.yml'
 

@@ -59,6 +59,7 @@ from lib.util import (
     COVERAGE_OUTPUT_PATH,
     cmd_quote,
     ANSIBLE_ROOT,
+    get_available_python_versions,
 )
 
 from lib.util_common import (
@@ -1331,9 +1332,15 @@ def command_units(args):
 
     version_commands = []
 
+    available_versions = get_available_python_versions(SUPPORTED_PYTHON_VERSIONS)
+
     for version in SUPPORTED_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
         if args.python and version != args.python_version:
+            continue
+
+        if not args.python and version not in available_versions:
+            display.warning("Skipping unit tests on Python %s due to missing interpreter." % version)
             continue
 
         if args.requirements_mode != 'skip':

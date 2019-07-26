@@ -18,6 +18,7 @@ from lib.util import (
     read_lines_without_comments,
     parse_to_list_of_dict,
     ANSIBLE_ROOT,
+    find_python,
 )
 
 from lib.util_common import (
@@ -36,10 +37,11 @@ class Pep8Test(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def test(self, args, targets):
+    def test(self, args, targets, python_version):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
+        :type python_version: str
         :rtype: TestResult
         """
         current_ignore_file = os.path.join(ANSIBLE_ROOT, 'test/sanity/pep8/current-ignore.txt')
@@ -51,7 +53,7 @@ class Pep8Test(SanitySingleVersion):
         paths = settings.filter_skipped_paths(paths)
 
         cmd = [
-            args.python_executable,
+            find_python(python_version),
             '-m', 'pycodestyle',
             '--max-line-length', '160',
             '--config', '/dev/null',
