@@ -33,6 +33,8 @@ lib/ansible/cli/console.py pylint:blacklisted-name
 lib/ansible/compat/selectors/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/compat/selectors/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/compat/selectors/_selectors2.py pylint:blacklisted-name
+lib/ansible/config/base.yml no-unwanted-files
+lib/ansible/config/module_defaults.yml no-unwanted-files
 lib/ansible/executor/playbook_executor.py pylint:blacklisted-name
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
