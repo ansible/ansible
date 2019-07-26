@@ -65,6 +65,7 @@ options:
     event_endpoint:
         description:
             - The Event Hub-compatible endpoint property.
+        type: list
         suboptions:
             partition_count:
                 description:
@@ -85,6 +86,7 @@ options:
     ip_filters:
         description:
             - Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
+        type: list
         suboptions:
             name:
                 description:
@@ -107,6 +109,7 @@ options:
     routing_endpoints:
         description:
             - Custom endpoints.
+        type: list
         suboptions:
             name:
                 description:
@@ -150,6 +153,7 @@ options:
     routes:
         description:
             - Route device-to-cloud messages to service-facing endpoints.
+        type: list
         suboptions:
             name:
                 description:
@@ -503,8 +507,6 @@ routes:
             type: bool
             returned: success
             sample: "true"
-    returned: success
-    type: complex
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id

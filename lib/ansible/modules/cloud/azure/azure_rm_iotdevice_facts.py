@@ -57,7 +57,7 @@ options:
         description:
             - Used when I(name) not defined.
             - List the top n devices in the query.
-        type: str
+        type: int
 extends_documentation_fragment:
     - azure
     - azure_tags

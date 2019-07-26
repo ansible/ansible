@@ -36,7 +36,7 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        type: str
+        type: list
     show_stats:
         description:
             - Show the statistics for IoT Hub.
