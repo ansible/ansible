@@ -10,8 +10,10 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.cfg.base import ConfigBase
@@ -219,6 +221,15 @@ class Lacp_Interfaces(ConfigBase):
             commands.append(cmd)
 
     @staticmethod
+    def dict_diff(sample_dict):
+        test_dict = {}
+        for k, v in iteritems(sample_dict):
+            if v is not None:
+                test_dict.update({k: v})
+        return_set = set(tuple(test_dict.items()))
+        return return_set
+
+    @staticmethod
     def set_interface(**kwargs):
         # Set the interface config based on the want and have config
         commands = []
@@ -226,12 +237,13 @@ class Lacp_Interfaces(ConfigBase):
         have = kwargs['have']
         interface = 'interface ' + have['name']
 
-        want_dict = set(tuple({k: v for k, v in iteritems(want) if v is not None}.items()))
-        have_dict = set(tuple({k: v for k, v in iteritems(have) if v is not None}.items()))
+        want_dict = Lacp_Interfaces.dict_diff(want)
+        have_dict = Lacp_Interfaces.dict_diff(have)
         diff = want_dict - have_dict
 
         if diff:
-            cmd = 'lacp port-priority {}'.format(dict(diff).get('port_priority'))
+            port_priotity = dict(diff).get('port_priority')
+            cmd = 'lacp port-priority {}'.format(port_priotity)
             Lacp_Interfaces._add_command_to_interface(interface, cmd, commands)
 
         return commands
