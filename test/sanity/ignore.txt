@@ -3532,6 +3532,7 @@ lib/ansible/modules/system/user.py validate-modules:E210
 lib/ansible/modules/system/user.py validate-modules:E324
 lib/ansible/modules/system/user.py validate-modules:E327
 lib/ansible/modules/system/xfconf.py validate-modules:E337
+lib/ansible/modules/utilities/helper/_accelerate.py ansible-doc
 lib/ansible/modules/utilities/logic/async_status.py validate-modules!skip
 lib/ansible/modules/utilities/logic/wait_for.py pylint:blacklisted-name
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py validate-modules:E326
