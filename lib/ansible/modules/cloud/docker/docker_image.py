@@ -94,7 +94,7 @@ options:
         default: no
       etc_hosts:
         description:
-          - Extra hosts to add to /etc/hosts in building containers, as a mapping of hostname to IP address.
+          - Extra hosts to add to C(/etc/hosts) in building containers, as a mapping of hostname to IP address.
         type: dict
         version_added: "2.9"
       args:
