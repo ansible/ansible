@@ -61,7 +61,6 @@ options:
       type: bool
       default: 'no'
       version_added: 2.9
-    drs_enable_vm_behavior_overrides:
     enable_drs:
       description:
       - If set to C(yes), will enable DRS when the cluster is created.
