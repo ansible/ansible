@@ -369,6 +369,7 @@ lib/ansible/module_utils/pure.py future-import-boilerplate
 lib/ansible/module_utils/pure.py metaclass-boilerplate
 lib/ansible/module_utils/pycompat24.py future-import-boilerplate
 lib/ansible/module_utils/pycompat24.py metaclass-boilerplate
+lib/ansible/module_utils/pycompat24.py no-get-exception
 lib/ansible/module_utils/rax.py future-import-boilerplate
 lib/ansible/module_utils/rax.py metaclass-boilerplate
 lib/ansible/module_utils/redhat.py future-import-boilerplate

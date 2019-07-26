@@ -10,7 +10,6 @@ import sys
 def main():
     skip = set([
         'test/sanity/code-smell/%s' % os.path.basename(__file__),
-        'lib/ansible/module_utils/pycompat24.py',
     ])
 
     basic_allow_once = True
