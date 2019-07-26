@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import re
 import sys
 
@@ -10,16 +9,7 @@ ASSERT_RE = re.compile(r'^\s*assert[^a-z0-9_:]')
 
 
 def main():
-    skip = set([
-        'test/sanity/code-smell/%s' % os.path.basename(__file__),
-        'lib/ansible/module_utils/compat/ipaddress.py',
-        'lib/ansible/module_utils/distro/_distro.py',
-    ])
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path in skip:
-            continue
-
         with open(path, 'r') as f:
             for i, line in enumerate(f.readlines()):
                 matches = ASSERT_RE.findall(line)
