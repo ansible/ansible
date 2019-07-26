@@ -371,7 +371,7 @@ class VMwareCluster(PyVmomi):
                 cluster_config_spec.dasConfig = self.configure_ha()
             if not self.ignore_drs:
                 cluster_config_spec.drsConfig = self.configure_drs()
-            if self.enable_vsan and not ignore_vsan:
+            if self.enable_vsan and not self.ignore_vsan:
                 cluster_config_spec.vsanConfig = self.configure_vsan()
             if not self.module.check_mode:
                 self.datacenter.hostFolder.CreateClusterEx(self.cluster_name, cluster_config_spec)
