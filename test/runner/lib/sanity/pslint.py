@@ -9,7 +9,7 @@ import re
 import lib.types as t
 
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -35,7 +35,7 @@ from lib.data import (
 )
 
 
-class PslintTest(SanitySingleVersion):
+class PslintTest(SanityVersionNeutral):
     """Sanity test using PSScriptAnalyzer."""
     @property
     def error_code(self):  # type: () -> t.Optional[str]

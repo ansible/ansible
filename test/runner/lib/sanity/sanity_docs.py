@@ -5,7 +5,7 @@ __metaclass__ = type
 import os
 
 from lib.sanity import (
-    SanitySingleVersion,
+    SanityVersionNeutral,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -21,7 +21,7 @@ from lib.data import (
 )
 
 
-class SanityDocsTest(SanitySingleVersion):
+class SanityDocsTest(SanityVersionNeutral):
     """Sanity test for documentation of sanity tests."""
     ansible_only = True
 
