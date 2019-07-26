@@ -1,4 +1,5 @@
 contrib/inventory/gce.py pylint:blacklisted-name
+docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
@@ -5633,12 +5634,17 @@ lib/ansible/vars/hostvars.py pylint:blacklisted-name
 setup.py future-import-boilerplate
 setup.py metaclass-boilerplate
 test/integration/targets/collections/collection_root_user/ansible_collections/testns/testcoll/plugins/module_utils/MyPSMU.psm1 pslint:PSUseApprovedVerbs
+test/integration/targets/lookup_properties/lookup-8859-15.ini no-smart-quotes
 test/integration/targets/module_utils/module_utils/bar0/foo.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/foo.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:blacklisted-name
+test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
+test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
 test/integration/targets/template/files/foo.dos.txt line-endings
+test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
+test/integration/targets/unicode/unicode.yml no-smart-quotes
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey/files/tools/chocolateyUninstall.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_chocolatey_source/library/choco_source.ps1 pslint:PSCustomUseLiteralPath
