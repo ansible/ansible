@@ -161,7 +161,7 @@ Common Platform Issues
 ++++++++++++++++++++++
 
 What customer platforms does Red Hat Support?
------------------------
+---------------------------------------------
 
 
 A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
