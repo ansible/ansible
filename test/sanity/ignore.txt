@@ -19,7 +19,9 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
+lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
+lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:blacklisted-name
 lib/ansible/module_utils/network/edgeswitch/edgeswitch_interface.py pylint:duplicate-string-formatting-argument
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
@@ -30,6 +32,7 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSP
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
+lib/ansible/module_utils/six/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/modules/cloud/alicloud/ali_instance.py validate-modules:E337
 lib/ansible/modules/cloud/alicloud/ali_instance.py validate-modules:E338
