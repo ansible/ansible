@@ -1,5 +1,5 @@
-Sanity Tests » symlinks
-=======================
+symlinks
+========
 
 Symbolic links are only permitted for files that exist to ensure proper tarball generation during a release.
 

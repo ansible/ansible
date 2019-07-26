@@ -1,4 +1,4 @@
-Sanity Tests » pylint
-=====================
+pylint
+======
 
 Python static analysis for common programming errors.

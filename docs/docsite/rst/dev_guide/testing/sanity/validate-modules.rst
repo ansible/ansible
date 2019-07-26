@@ -1,5 +1,5 @@
-Sanity Tests » validate-modules
-===============================
+validate-modules
+================
 
 Analyze modules for common issues in code and documentation.
 

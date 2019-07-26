@@ -1,5 +1,5 @@
-Sanity Tests » metaclass-boilerplate
-====================================
+metaclass-boilerplate
+=====================
 
 Most Python files should include the following boilerplate at the top of the file, right after the
 comment header and ``from __future__ import``:

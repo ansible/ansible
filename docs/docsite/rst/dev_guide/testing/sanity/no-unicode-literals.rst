@@ -1,5 +1,5 @@
-Sanity Tests » no-unicode_literals
-==================================
+no-unicode_literals
+===================
 
 The use of :code:`from __future__ import unicode_literals` has been deemed an anti-pattern.  The
 problems with it are:

@@ -1,4 +1,4 @@
-Sanity Tests » botmeta
-======================
+botmeta
+=======
 
 Verifies that ``./github/BOTMETA.yml`` is valid.
