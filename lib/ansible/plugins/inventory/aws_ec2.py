@@ -578,11 +578,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             session = botocore.session.get_session()
             credentials = session.get_credentials()
-            frozen_credentials = credentials.get_frozen_credentials()
-            if frozen_credentials is not None:
-                self.aws_access_key_id = frozen_credentials.access_key
-                self.aws_secret_access_key = frozen_credentials.secret_key
-                self.aws_security_token = frozen_credentials.token
+            if credentials is not None:
+                frozen_credentials = credentials.get_frozen_credentials()
+                if frozen_credentials is not None:
+                    self.aws_access_key_id = frozen_credentials.access_key
+                    self.aws_secret_access_key = frozen_credentials.secret_key
+                    self.aws_security_token = frozen_credentials.token
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
