@@ -1276,6 +1276,7 @@ lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py validate-module
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:E326
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:E337
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:E338
+lib/ansible/modules/cloud/docker/docker_container.py use-argspec-type-path # uses colon-separated paths, can't use type=path
 lib/ansible/modules/cloud/google/_gcdns_record.py validate-modules:E337
 lib/ansible/modules/cloud/google/_gcdns_zone.py validate-modules:E337
 lib/ansible/modules/cloud/google/_gce.py pylint:blacklisted-name
@@ -1425,6 +1426,7 @@ lib/ansible/modules/cloud/linode/linode.py validate-modules:E324
 lib/ansible/modules/cloud/linode/linode.py validate-modules:E337
 lib/ansible/modules/cloud/linode/linode_v4.py validate-modules:E337
 lib/ansible/modules/cloud/lxc/lxc_container.py pylint:blacklisted-name
+lib/ansible/modules/cloud/lxc/lxc_container.py use-argspec-type-path
 lib/ansible/modules/cloud/lxc/lxc_container.py validate-modules:E210
 lib/ansible/modules/cloud/lxc/lxc_container.py validate-modules:E324
 lib/ansible/modules/cloud/lxc/lxc_container.py validate-modules:E326
@@ -1822,6 +1824,7 @@ lib/ansible/modules/cloud/profitbricks/profitbricks_volume_attachments.py valida
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume_attachments.py validate-modules:E338
 lib/ansible/modules/cloud/pubnub/pubnub_blocks.py validate-modules:E324
 lib/ansible/modules/cloud/pubnub/pubnub_blocks.py validate-modules:E337
+lib/ansible/modules/cloud/rackspace/rax.py use-argspec-type-path # fix needed
 lib/ansible/modules/cloud/rackspace/rax.py validate-modules:E322
 lib/ansible/modules/cloud/rackspace/rax.py validate-modules:E324
 lib/ansible/modules/cloud/rackspace/rax.py validate-modules:E337
@@ -1865,6 +1868,7 @@ lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:E324
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:E326
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:E337
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:E338
+lib/ansible/modules/cloud/rackspace/rax_files_objects.py use-argspec-type-path
 lib/ansible/modules/cloud/rackspace/rax_files_objects.py validate-modules:E323
 lib/ansible/modules/cloud/rackspace/rax_files_objects.py validate-modules:E324
 lib/ansible/modules/cloud/rackspace/rax_files_objects.py validate-modules:E337
@@ -1901,6 +1905,7 @@ lib/ansible/modules/cloud/rackspace/rax_network.py validate-modules:E338
 lib/ansible/modules/cloud/rackspace/rax_queue.py validate-modules:E324
 lib/ansible/modules/cloud/rackspace/rax_queue.py validate-modules:E337
 lib/ansible/modules/cloud/rackspace/rax_queue.py validate-modules:E338
+lib/ansible/modules/cloud/rackspace/rax_scaling_group.py use-argspec-type-path # fix needed
 lib/ansible/modules/cloud/rackspace/rax_scaling_group.py validate-modules:E324
 lib/ansible/modules/cloud/rackspace/rax_scaling_group.py validate-modules:E337
 lib/ansible/modules/cloud/rackspace/rax_scaling_group.py validate-modules:E338
@@ -1967,6 +1972,7 @@ lib/ansible/modules/cloud/vmware/vca_vapp.py validate-modules:E322
 lib/ansible/modules/cloud/vmware/vca_vapp.py validate-modules:E324
 lib/ansible/modules/cloud/vmware/vca_vapp.py validate-modules:E338
 lib/ansible/modules/cloud/vmware/vmware_cluster.py validate-modules:E337
+lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py use-argspec-type-path
 lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py validate-modules:E337
 lib/ansible/modules/cloud/vmware/vmware_guest.py validate-modules:E322
 lib/ansible/modules/cloud/vmware/vmware_guest.py validate-modules:E337
@@ -2012,6 +2018,7 @@ lib/ansible/modules/commands/command.py validate-modules:E322
 lib/ansible/modules/commands/command.py validate-modules:E323
 lib/ansible/modules/commands/command.py validate-modules:E338
 lib/ansible/modules/commands/expect.py validate-modules:E338
+lib/ansible/modules/crypto/certificate_complete_chain.py use-argspec-type-path # would need something like type=list(path)
 lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:E324
 lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:E337
 lib/ansible/modules/database/influxdb/influxdb_query.py validate-modules:E324
@@ -2030,13 +2037,17 @@ lib/ansible/modules/database/misc/redis.py validate-modules:E337
 lib/ansible/modules/database/misc/riak.py validate-modules:E324
 lib/ansible/modules/database/misc/riak.py validate-modules:E337
 lib/ansible/modules/database/misc/riak.py validate-modules:E338
+lib/ansible/modules/database/mongodb/mongodb_parameter.py use-argspec-type-path
 lib/ansible/modules/database/mongodb/mongodb_parameter.py validate-modules:E317
 lib/ansible/modules/database/mongodb/mongodb_parameter.py validate-modules:E323
 lib/ansible/modules/database/mongodb/mongodb_parameter.py validate-modules:E326
 lib/ansible/modules/database/mongodb/mongodb_parameter.py validate-modules:E337
 lib/ansible/modules/database/mongodb/mongodb_parameter.py validate-modules:E338
+lib/ansible/modules/database/mongodb/mongodb_replicaset.py use-argspec-type-path
+lib/ansible/modules/database/mongodb/mongodb_shard.py use-argspec-type-path
 lib/ansible/modules/database/mongodb/mongodb_shard.py validate-modules:E337
 lib/ansible/modules/database/mongodb/mongodb_shard.py validate-modules:E338
+lib/ansible/modules/database/mongodb/mongodb_user.py use-argspec-type-path
 lib/ansible/modules/database/mongodb/mongodb_user.py validate-modules:E322
 lib/ansible/modules/database/mongodb/mongodb_user.py validate-modules:E337
 lib/ansible/modules/database/mongodb/mongodb_user.py validate-modules:E338
@@ -2045,6 +2056,7 @@ lib/ansible/modules/database/mysql/mysql_db.py validate-modules:E210
 lib/ansible/modules/database/mysql/mysql_db.py validate-modules:E337
 lib/ansible/modules/database/mysql/mysql_user.py validate-modules:E322
 lib/ansible/modules/database/mysql/mysql_user.py validate-modules:E337
+lib/ansible/modules/database/postgresql/postgresql_db.py use-argspec-type-path
 lib/ansible/modules/database/postgresql/postgresql_db.py validate-modules:E210
 lib/ansible/modules/database/postgresql/postgresql_db.py validate-modules:E337
 lib/ansible/modules/database/postgresql/postgresql_ext.py validate-modules:E337
@@ -2082,6 +2094,7 @@ lib/ansible/modules/database/vertica/vertica_schema.py validate-modules:E338
 lib/ansible/modules/database/vertica/vertica_user.py validate-modules:E322
 lib/ansible/modules/database/vertica/vertica_user.py validate-modules:E338
 lib/ansible/modules/files/acl.py validate-modules:E337
+lib/ansible/modules/files/archive.py use-argspec-type-path # fix needed
 lib/ansible/modules/files/assemble.py validate-modules:E323
 lib/ansible/modules/files/blockinfile.py validate-modules:E324
 lib/ansible/modules/files/blockinfile.py validate-modules:E326
@@ -2091,6 +2104,7 @@ lib/ansible/modules/files/copy.py validate-modules:E323
 lib/ansible/modules/files/copy.py validate-modules:E324
 lib/ansible/modules/files/file.py validate-modules:E322
 lib/ansible/modules/files/file.py validate-modules:E324
+lib/ansible/modules/files/find.py use-argspec-type-path # fix needed
 lib/ansible/modules/files/find.py validate-modules:E337
 lib/ansible/modules/files/ini_file.py validate-modules:E323
 lib/ansible/modules/files/iso_extract.py validate-modules:E324
@@ -2103,6 +2117,7 @@ lib/ansible/modules/files/stat.py validate-modules:E322
 lib/ansible/modules/files/stat.py validate-modules:E336
 lib/ansible/modules/files/stat.py validate-modules:E337
 lib/ansible/modules/files/synchronize.py pylint:blacklisted-name
+lib/ansible/modules/files/synchronize.py use-argspec-type-path
 lib/ansible/modules/files/synchronize.py validate-modules:E322
 lib/ansible/modules/files/synchronize.py validate-modules:E323
 lib/ansible/modules/files/synchronize.py validate-modules:E324
@@ -4477,6 +4492,7 @@ lib/ansible/modules/remote_management/wakeonlan.py validate-modules:E337
 lib/ansible/modules/source_control/_github_hooks.py validate-modules:E338
 lib/ansible/modules/source_control/bzr.py validate-modules:E337
 lib/ansible/modules/source_control/git.py pylint:blacklisted-name
+lib/ansible/modules/source_control/git.py use-argspec-type-path
 lib/ansible/modules/source_control/git.py validate-modules:E337
 lib/ansible/modules/source_control/git.py validate-modules:E338
 lib/ansible/modules/source_control/git_config.py validate-modules:E337
@@ -4792,6 +4808,7 @@ lib/ansible/modules/system/openwrt_init.py validate-modules:E337
 lib/ansible/modules/system/openwrt_init.py validate-modules:E338
 lib/ansible/modules/system/pam_limits.py validate-modules:E337
 lib/ansible/modules/system/parted.py pylint:blacklisted-name
+lib/ansible/modules/system/puppet.py use-argspec-type-path
 lib/ansible/modules/system/puppet.py validate-modules:E322
 lib/ansible/modules/system/puppet.py validate-modules:E336
 lib/ansible/modules/system/puppet.py validate-modules:E337
@@ -4818,13 +4835,17 @@ lib/ansible/modules/system/user.py validate-modules:E324
 lib/ansible/modules/system/user.py validate-modules:E327
 lib/ansible/modules/system/xfconf.py validate-modules:E337
 lib/ansible/modules/utilities/helper/_accelerate.py ansible-doc
+lib/ansible/modules/utilities/logic/async_status.py use-argspec-type-path
 lib/ansible/modules/utilities/logic/async_status.py validate-modules!skip
+lib/ansible/modules/utilities/logic/async_wrapper.py use-argspec-type-path
 lib/ansible/modules/utilities/logic/wait_for.py pylint:blacklisted-name
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py validate-modules:E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential_type.py validate-modules:E337
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential_type.py validate-modules:E338
+lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py use-argspec-type-path
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py validate-modules:E324
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py validate-modules:E338
+lib/ansible/modules/web_infrastructure/ansible_tower/tower_host.py use-argspec-type-path
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_host.py validate-modules:E338
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_inventory.py validate-modules:E338
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_inventory_source.py validate-modules:E337
@@ -4876,6 +4897,7 @@ lib/ansible/modules/web_infrastructure/htpasswd.py validate-modules:E326
 lib/ansible/modules/web_infrastructure/htpasswd.py validate-modules:E338
 lib/ansible/modules/web_infrastructure/jenkins_job.py validate-modules:E338
 lib/ansible/modules/web_infrastructure/jenkins_job_info.py validate-modules:E338
+lib/ansible/modules/web_infrastructure/jenkins_plugin.py use-argspec-type-path
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:E322
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:E337
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:E338
