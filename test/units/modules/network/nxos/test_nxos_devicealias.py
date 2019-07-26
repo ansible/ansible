@@ -102,6 +102,14 @@ class TestNxosDeviceAliasModule(TestNxosModule):
                                               'device-alias name somename1 pwwn 10:00:00:00:89:a1:02:03',
                                               'device-alias commit', 'no terminal dont-ask'])
 
+    def test_da_add_lower_upper_case_bug(self):
+        # Playbook mode is enhanced , distrbute = true , some new da being added
+        # Switch has mode as enahnced, distrbute = True, switch same pwwn present with different name
+        set_module_args(dict(distribute=True, mode='enhanced', da=[dict(name='tieHost-2222', pwwn='10:00:00:00:89:A1:01:02')]))
+        self.execute_show_cmd.return_value = load_fixture('nxos_devicealias', 'shdastatus.cfg')
+        self.execute_show_cmd_1.return_value = load_fixture('nxos_devicealias', 'shdadatabse.cfg')
+        result = self.execute_module(changed=False, failed=True)
+
     def test_da_add_2(self):
         # Playbook mode is enhanced , distrbute = true , some new da being added
         # Switch has mode as enahnced, distrbute = True, switch already has the pwwn:name

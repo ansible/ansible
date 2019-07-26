@@ -286,7 +286,7 @@ def main():
     if da is not None:
         for eachdict in da:
             name = eachdict['name']
-            pwwn = eachdict['pwwn']
+            pwwn = eachdict['pwwn'].lower()
             remove = eachdict['remove']
             if not remove:
                 if pwwn is None:
@@ -396,7 +396,7 @@ def main():
         da_add_list = []
         for eachdict in da:
             name = eachdict['name']
-            pwwn = eachdict['pwwn']
+            pwwn = eachdict['pwwn'].lower()
             remove = eachdict['remove']
             if remove:
                 if shDADatabaseObj.isNameInDaDatabase(name):
