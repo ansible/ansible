@@ -65,7 +65,7 @@ options:
     event_endpoint:
         description:
             - The Event Hub-compatible endpoint property.
-        type: list
+        type: dict
         suboptions:
             partition_count:
                 description:
