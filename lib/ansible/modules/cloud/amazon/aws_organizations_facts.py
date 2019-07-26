@@ -93,12 +93,10 @@ organizations:
           name: Master AWS Account
           status: ACTIVE
 '''
-from ansible.module_utils.aws.core import (AnsibleAWSModule, HAS_BOTO3)
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (AWSRetry, camel_dict_to_snake_dict)
-try:
-    from botocore.exceptions import (BotoCoreError, ClientError)
-except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+
+from botocore.exceptions import (BotoCoreError, ClientError)
 
 
 def describe_organization(client, aws_retry=True):
@@ -119,8 +117,6 @@ def main():
                                        default=False))
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     client = module.client('organizations',
                            retry_decorator=AWSRetry.jittered_backoff(
