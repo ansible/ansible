@@ -1,5 +1,5 @@
-Sanity Tests » from __future__ boilerplate
-==========================================
+Sanity Tests » future-import-boilerplate
+========================================
 
 Most Python files should include the following boilerplate at the top of the file, right after the
 comment header:
