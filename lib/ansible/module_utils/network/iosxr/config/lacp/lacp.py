@@ -21,7 +21,9 @@ from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.iosxr.facts.facts import Facts
 from ansible.module_utils.network.common.utils import dict_diff
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.common import utils
+from ansible.module_utils.network.common.utils import remove_empties
+from ansible.module_utils.network.iosxr. \
+    utils.utils import flatten_dict
 
 
 class Lacp(ConfigBase):
@@ -147,9 +149,8 @@ class Lacp(ConfigBase):
 
         updates = dict_diff(have, want)
         if updates:
-            for key, value in iteritems(updates['system']):
-                if value:
-                    commands.append('lacp system {0} {1}'.format(key, value))
+            for key, value in iteritems(flatten_dict(remove_empties(updates['system']))):
+                commands.append('lacp system {0} {1}'.format(key.replace('address', 'mac'), value))
 
         return commands
 
@@ -163,7 +164,7 @@ class Lacp(ConfigBase):
         """
         commands = []
 
-        for x in [k for k in have.get('system', {}) if k not in utils.remove_empties(want.get('system', {}))]:
+        for x in [k for k in have.get('system', {}) if k not in remove_empties(want.get('system', {}))]:
             commands.append('no lacp system {0}'.format(x))
 
         return commands

@@ -7,7 +7,7 @@
 - include_tasks: _populate.yaml
 
 - block:
-    - name: Replace device configurations of listed interfaces with provided configurations
+    - name: Replace LACP configuration with provided configurations
       iosxr_lacp: &replaced
         config:
           system:

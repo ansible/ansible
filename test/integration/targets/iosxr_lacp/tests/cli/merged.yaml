@@ -10,7 +10,8 @@
         config:
           system:
             priority: 11
-            mac: 00c1.4c00.bd15
+            mac: 
+              address: 00c1.4c00.bd15
         state: merged
       register: result
 

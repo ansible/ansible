@@ -43,7 +43,12 @@ class LacpArgs(object):  # pylint: disable=R0903
                 'system': {
                     'options': {
                         'mac': {
-                            'type': 'str'
+                            'type': 'dict',
+                            'options': {
+                                'address': {
+                                    'type': 'str'
+                                }
+                            }
                         },
                         'priority': {
                             'type': 'int'
