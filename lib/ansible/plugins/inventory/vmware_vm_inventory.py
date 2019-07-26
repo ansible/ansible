@@ -81,10 +81,10 @@ DOCUMENTATION = '''
                 - full_name is unique and also expressive, special characters in vm and folder names are urlencoded.
             type: str
             choices:
-                - 'name_and_smbios_uuid'
-                - 'instanceUUID'
-                - 'full_name'
-            default: 'smbios_uuid
+                - name_and_smbios_uuid
+                - instanceUUID
+                - full_name
+            default: name_and_smbios_uuid
             version_added: "2.9"
 '''
 
