@@ -1,11 +1,13 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2019. Chris Mills <chris@discreet-its.co.uk>
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 netbox.py
 
 A lookup function designed to return data from the Netbox application
-
-Copyright (c) 2018 Remy Leone
-GNU General Public License v3.0+
-(see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
 from __future__ import (absolute_import, division, print_function)
@@ -22,13 +24,13 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: netbox
-    author: Chris Mills <chris@discreet-its.co.uk>
+    author: Chris Mills (@cpmills1975)
     version_added: "2.9"
-    short_description: returns elements from Netbox
+    short_description: Queries and returns elements from Netbox
     description:
         - Queries Netbox via its API to return virtually any information
           capable of being held in Netbox.
-          While secrets can be queried, the plugin doesn't yet support
+        - While secrets can be queried, the plugin doesn't yet support
           decrypting them.
     options:
         _terms:
@@ -43,6 +45,8 @@ DOCUMENTATION = """
             description:
                 - The API token created through Netbox
             required: True
+    requirements:
+        - pynetbox
 """
 
 EXAMPLES = """
