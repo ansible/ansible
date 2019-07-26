@@ -1,5 +1,3 @@
-:orphan:
-
 no-tests-as-filters
 ===================
 
