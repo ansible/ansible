@@ -86,6 +86,7 @@ lib/ansible/module_utils/common/removed.py metaclass-boilerplate
 lib/ansible/module_utils/compat/ipaddress.py future-import-boilerplate
 lib/ansible/module_utils/compat/ipaddress.py metaclass-boilerplate
 lib/ansible/module_utils/compat/ipaddress.py no-assert
+lib/ansible/module_utils/compat/ipaddress.py no-unicode-literals
 lib/ansible/module_utils/connection.py future-import-boilerplate
 lib/ansible/module_utils/connection.py metaclass-boilerplate
 lib/ansible/module_utils/crypto.py future-import-boilerplate
