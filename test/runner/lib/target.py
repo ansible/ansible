@@ -15,6 +15,7 @@ from lib.util import (
     read_lines_without_comments,
     is_subdir,
     to_text,
+    to_bytes,
 )
 
 from lib.data import (
@@ -257,7 +258,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
         if prefix and not name.startswith(prefix):
             continue
 
-        if os.path.islink(file_path):
+        if os.path.islink(to_bytes(file_path)):
             # special case to allow a symlink of ansible_release.py -> ../release.py
             if file_path != 'lib/ansible/module_utils/ansible_release.py':
                 continue
@@ -272,7 +273,7 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
                 file_paths.append(file_path)
 
     for file_path in file_paths:
-        if os.path.islink(file_path):
+        if os.path.islink(to_bytes(file_path)):
             continue
 
         yield TestTarget(file_path, module_path, prefix, path)
