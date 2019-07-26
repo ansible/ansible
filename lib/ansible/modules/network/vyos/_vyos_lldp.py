@@ -20,7 +20,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'network'}
 
 
@@ -33,6 +33,10 @@ short_description: Manage LLDP configuration on VyOS network devices
 description:
   - This module provides declarative management of LLDP service
     on VyOS network devices.
+deprecated:
+  removed_in: '2.13'
+  alternative: vyos_lldp_global
+  why: Updated modules released with more functionality.
 notes:
   - Tested against VYOS 1.1.7
 options:

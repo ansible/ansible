@@ -1,0 +1,9 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      delete service lldp legacy-protocols
+      delete service lldp management-address
+      delete service lldp

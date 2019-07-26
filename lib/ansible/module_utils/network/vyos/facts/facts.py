@@ -9,13 +9,12 @@ calls the appropriate facts gathering function
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
-
 from ansible.module_utils.network.vyos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.vyos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.vyos.facts.l3_interfaces.l3_interfaces import L3_interfacesFacts
 from ansible.module_utils.network.vyos.facts.lag_interfaces.lag_interfaces import Lag_interfacesFacts
+from ansible.module_utils.network.vyos.facts.lldp_global.lldp_global import Lldp_globalFacts
 from ansible.module_utils.network.vyos.facts.legacy.base import Default, Neighbors, Config
 
 
@@ -27,7 +26,8 @@ FACT_LEGACY_SUBSETS = dict(
 FACT_RESOURCE_SUBSETS = dict(
     interfaces=InterfacesFacts,
     l3_interfaces=L3_interfacesFacts,
-    lag_interfaces=Lag_interfacesFacts
+    lag_interfaces=Lag_interfacesFacts,
+    lldp_global=Lldp_globalFacts
 )
 
 
@@ -54,7 +54,6 @@ class Facts(FactsBase):
         if self.VALID_RESOURCE_SUBSETS:
             self.get_network_resources_facts(netres_choices, FACT_RESOURCE_SUBSETS,
                                              resource_facts_type, data)
-
         if self.VALID_LEGACY_GATHER_SUBSETS:
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)
 
