@@ -1,4 +1,22 @@
+"""
+netbox.py
+
+A lookup function designed to return data from the Netbox application
+
+Copyright (c) 2018 Remy Leone
+GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""
+
 from __future__ import (absolute_import, division, print_function)
+
+from pprint import pformat
+
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+from ansible.utils.display import Display
+
+import pynetbox
+
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -40,90 +58,92 @@ RETURN = """
     type: list
 """
 
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.common._collections_compat import Mapping
-from ansible.utils.display import Display
 
-from pprint import pformat
+def get_endpoint(netbox, term):
+    """
+    get_endpoint(netbox, term)
+        netbox: a predefined pynetbox.api() pointing to a valid instance of Netbox
+        term: the term passed to the lookup function upon which the api call will be identified
+    """
 
-import pynetbox
+    netbox_endpoint_map = {
+        'aggregates':                    {'endpoint': netbox.ipam.aggregates},
+        'circuit-terminations':          {'endpoint': netbox.circuits.circuit_terminations},
+        'circuit-types':                 {'endpoint': netbox.circuits.circuit_types},
+        'circuits':                      {'endpoint': netbox.circuits.circuits},
+        'circuit-providers':             {'endpoint': netbox.circuits.providers},
+        'cables':                        {'endpoint': netbox.dcim.cables},
+        'cluster-groups':                {'endpoint': netbox.virtualization.cluster_groups},
+        'cluster-types':                 {'endpoint': netbox.virtualization.cluster_types},
+        'clusters':                      {'endpoint': netbox.virtualization.clusters},
+        'config-contexts':               {'endpoint': netbox.extras.config_contexts},
+        'console-connections':           {'endpoint': netbox.dcim.console_connections},
+        'console-ports':                 {'endpoint': netbox.dcim.console_ports},
+        'console-server-port-templates': {'endpoint': netbox.dcim.console_server_port_templates},
+        'console-server-ports':          {'endpoint': netbox.dcim.console_server_ports},
+        'device-bay-templates':          {'endpoint': netbox.dcim.device_bay_templates},
+        'device-bays':                   {'endpoint': netbox.dcim.device_bays},
+        'device-roles':                  {'endpoint': netbox.dcim.device_roles},
+        'device-types':                  {'endpoint': netbox.dcim.device_types},
+        'devices':                       {'endpoint': netbox.dcim.devices},
+        'export-templates':              {'endpoint': netbox.dcim.export_templates},
+        'front-port-templates':          {'endpoint': netbox.dcim.front_port_templates},
+        'front-ports':                   {'endpoint': netbox.dcim.front_ports},
+        'graphs':                        {'endpoint': netbox.extras.graphs},
+        'image-attachments':             {'endpoint': netbox.extras.image_attachments},
+        'interface-connections':         {'endpoint': netbox.dcim.interface_connections},
+        'interface-templates':           {'endpoint': netbox.dcim.interface_templates},
+        'interfaces':                    {'endpoint': netbox.dcim.interfaces},
+        'inventory-items':               {'endpoint': netbox.dcim.inventory_items},
+        'ip-addresses':                  {'endpoint': netbox.ipam.ip_addresses},
+        'manufacturers':                 {'endpoint': netbox.dcim.manufacturers},
+        'object-changes':                {'endpoint': netbox.extras.object_changes},
+        'platforms':                     {'endpoint': netbox.dcim.platforms},
+        'power-connections':             {'endpoint': netbox.dcim.power_connections},
+        'power-outlet-templates':        {'endpoint': netbox.dcim.power_outlet_templates},
+        'power-outlets':                 {'endpoint': netbox.dcim.power_outlets},
+        'power-port-templates':          {'endpoint': netbox.dcim.power_port_templates},
+        'power-ports':                   {'endpoint': netbox.dcim.power_ports},
+        'prefixes':                      {'endpoint': netbox.ipam.prefixes},
+        'rack-groups':                   {'endpoint': netbox.dcim.rack_groups},
+        'rack-reservations':             {'endpoint': netbox.dcim.rack_reservations},
+        'rack-roles':                    {'endpoint': netbox.dcim.rack_roles},
+        'racks':                         {'endpoint': netbox.dcim.racks},
+        'rear-port-templates':           {'endpoint': netbox.dcim.rear_port_templates},
+        'rear-ports':                    {'endpoint': netbox.dcim.rear_ports},
+        'regions':                       {'endpoint': netbox.dcim.regions},
+        'reports':                       {'endpoint': netbox.extras.reports},
+        'rirs':                          {'endpoint': netbox.ipam.rirs},
+        'roles':                         {'endpoint': netbox.ipam.roles},
+        'secret-roles':                  {'endpoint': netbox.secrets.secret_roles},
 
-display = Display()
+        ### Note: Currently unable to decrypt secrets as key wizardry needs to take place first
+        ### but term will return unencrypted elements of secrets - i.e. that they exist etc.
+        'secrets':                       {'endpoint': netbox.secrets.secrets},
 
+        'services':                      {'endpoint': netbox.ipam.services},
+        'sites':                         {'endpoint': netbox.dcim.sites},
+        'tags':                          {'endpoint': netbox.extras.tags},
+        'tenant-groups':                 {'endpoint': netbox.tenancy.tenant_groups},
+        'tenants':                       {'endpoint': netbox.tenancy.tenants},
+        'topology-maps':                 {'endpoint': netbox.extras.topology_maps},
+        'virtual-chassis':               {'endpoint': netbox.dcim.virtual_chassis},
+        'virtual-machines':              {'endpoint': netbox.dcim.virtual_machines},
+        'virtualization-interfaces':     {'endpoint': netbox.virtualization.interfaces},
+        'vlan-groups':                   {'endpoint': netbox.ipam.vlan_groups},
+        'vlans':                         {'endpoint': netbox.ipam.vlans},
+        'vrfs':                          {'endpoint': netbox.ipam.vrfs},
+    }
 
-NETBOX_ENDPOINT_MAP = {
-    'aggregates':                    { 'endpoint': 'ipam.aggregates'                     },
-    'circuit-terminations':          { 'endpoint': 'circuits.circuit_terminations'       },
-    'circuit-types':                 { 'endpoint': 'circuits.circuit_types'              },
-    'circuits':                      { 'endpoint': 'circuits.circuits',                  },
-    'circuit-providers':             { 'endpoint': 'circuits.providers',                 },
-    'cables':                        { 'endpoint': 'dcim.cables',                        },
-    'cluster-groups':                { 'endpoint': 'virtualization.cluster_groups',      },
-    'cluster-types':                 { 'endpoint': 'virtualization.cluster_types',       },
-    'clusters':                      { 'endpoint': 'virtualization.clusters',            },
-    'config-contexts':               { 'endpoint': 'extras.config_contexts',             },
-    'console-connections':           { 'endpoint': 'dcim.console_connections',           },
-    'console-ports':                 { 'endpoint': 'dcim.console_ports',                 },
-    'console-server-port-templates': { 'endpoint': 'dcim.console_server_port_templates', },
-    'console-server-ports':          { 'endpoint': 'dcim.console_server_ports',          },
-    'device-bay-templates':          { 'endpoint': 'dcim.device_bay_templates',          },
-    'device-bays':                   { 'endpoint': 'dcim.device_bays',                   },
-    'device-roles':                  { 'endpoint': 'dcim.device_roles',                  },
-    'device-types':                  { 'endpoint': 'dcim.device_types',                  },
-    'devices':                       { 'endpoint': 'dcim.devices',                       },
-    'export-templates':              { 'endpoint': 'dcim.export_templates',              },
-    'front-port-templates':          { 'endpoint': 'dcim.front_port_templates',          },
-    'front-ports':                   { 'endpoint': 'dcim.front_ports',                   },
-    'graphs':                        { 'endpoint': 'extras.graphs',                      },
-    'image-attachments':             { 'endpoint': 'extras.image_attachments',           },
-    'interface-connections':         { 'endpoint': 'dcim.interface_connections',         },
-    'interface-templates':           { 'endpoint': 'dcim.interface_templates',           },
-    'interfaces':                    { 'endpoint': 'dcim.interfaces',                    },
-    'inventory-items':               { 'endpoint': 'dcim.inventory_items',               },
-    'ip-addresses':                  { 'endpoint': 'ipam.ip_addresses',                  },
-    'manufacturers':                 { 'endpoint': 'dcim.manufacturers',                 },
-    'object-changes':                { 'endpoint': 'extras.object_changes',              },
-    'platforms':                     { 'endpoint': 'dcim.platforms',                     },
-    'power-connections':             { 'endpoint': 'dcim.power_connections',             },
-    'power-outlet-templates':        { 'endpoint': 'dcim.power_outlet_templates',        },
-    'power-outlets':                 { 'endpoint': 'dcim.power_outlets',                 },
-    'power-port-templates':          { 'endpoint': 'dcim.power_port_templates',          },
-    'power-ports':                   { 'endpoint': 'dcim.power_ports',                   },
-    'prefixes':                      { 'endpoint': 'ipam.prefixes',                      },
-    'rack-groups':                   { 'endpoint': 'dcim.rack_groups',                   },
-    'rack-reservations':             { 'endpoint': 'dcim.rack_reservations',             },
-    'rack-roles':                    { 'endpoint': 'dcim.rack_roles',                    },
-    'racks':                         { 'endpoint': 'dcim.racks',                         },
-    'rear-port-templates':           { 'endpoint': 'dcim.rear_port_templates',           },
-    'rear-ports':                    { 'endpoint': 'dcim.rear_ports',                    },
-    'regions':                       { 'endpoint': 'dcim.regions',                       },
-    'reports':                       { 'endpoint': 'extras.reports',                     },
-    'rirs':                          { 'endpoint': 'ipam.rirs',                          },
-    'roles':                         { 'endpoint': 'ipam.roles',                         },
-    'secret-roles':                  { 'endpoint': 'secrets.secret_roles',               },
+    return netbox_endpoint_map[term]['endpoint']
 
-    ### Note: Currently unable to decrypt secrets as key wizardry needs to take place first
-    ### but term will return unencrypted elements of secrets - i.e. that they exist etc.
-    'secrets':                       { 'endpoint': 'secrets.secrets',                    },
-
-    'services':                      { 'endpoint': 'ipam.services',                      },
-    'sites':                         { 'endpoint': 'dcim.sites',                         },
-    'tags':                          { 'endpoint': 'extras.tags',                        },
-    'tenant-groups':                 { 'endpoint': 'tenancy.tenant_groups',              },
-    'tenants':                       { 'endpoint': 'tenancy.tenants',                    },
-    'topology-maps':                 { 'endpoint': 'extras.topology-maps',               },
-    'virtual-chassis':               { 'endpoint': 'dcim.virtual_chassis',               },
-    'virtual-machines':              { 'endpoint': 'dcim.virtual_machines',              },
-    'virtualization-interfaces':     { 'endpoint': 'virtualization.interfaces',          },
-    'vlan-groups':                   { 'endpoint': 'ipam.vlan_groups',                   },
-    'vlans':                         { 'endpoint': 'ipam.vlans',                         },
-    'vrfs':                          { 'endpoint': 'ipam.vrfs',                          },
-}
 
 
 
 class LookupModule(LookupBase):
+    """
+    LookupModule(LookupBase) is defined by Ansible
+    """
 
     def run(self, terms, variables=None, **kwargs):
 
@@ -134,27 +154,25 @@ class LookupModule(LookupBase):
         if not isinstance(terms, list):
             terms = [terms]
 
-        netbox = pynetbox.api(netbox_api_endpoint, token=netbox_api_token, private_key_file=netbox_private_key_file)
+        netbox = pynetbox.api(netbox_api_endpoint, token=netbox_api_token,
+                              private_key_file=netbox_private_key_file)
 
         results = []
         for term in terms:
 
-
             try:
-                endpoint = 'netbox.'+NETBOX_ENDPOINT_MAP[term]['endpoint']+'.all()'
+                endpoint = get_endpoint(netbox, term)
             except KeyError:
                 raise AnsibleError("Unrecognised term %s. Check documentation" % term)
 
-            display.vvvv(u"Netbox lookup for %s to %s using token %s" % (term, netbox_api_endpoint, netbox_api_token))
-            api_results = eval(endpoint)
-            for object in api_results:
+            Display().vvvv(u"Netbox lookup for %s to %s using token %s" %
+                           (term, netbox_api_endpoint, netbox_api_token))
+            for res in endpoint.all():
 
-                object_as_dict = dict(object)
+                Display().vvvvv(pformat(dict(res)))
 
-                display.vvvvv(pformat(dict(object)))
-
-                key = object_as_dict["id"]
-                result = { key: object_as_dict } 
+                key = dict(res)["id"]
+                result = {key: dict(res)}
 
                 results.extend(self._flatten_hash_to_list(result))
 
