@@ -1,0 +1,45 @@
+---
+- debug:
+    msg: "Start Deleted integration state for ios_vlans  ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Delete VLANs attributes for all configured interfaces
+      ios_vlans: &deleted
+        state: deleted
+      register: result
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ populate == result['before'] }}"
+
+    - name: Assert that the correct set of commands were generated
+      assert:
+        that:
+          - "{{ deleted['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that the after dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] == result['after'] }}"
+
+    - name: Delete VLANs attributes for all configured interfaces (IDEMPOTENT)
+      ios_vlans: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result.changed == false"
+
+    - name: Assert that the before dicts were correctly generated
+      assert:
+        that:
+          - "{{ deleted['after'] == result['before'] }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

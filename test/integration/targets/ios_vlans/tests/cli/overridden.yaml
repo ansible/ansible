@@ -1,0 +1,49 @@
+---
+- debug:
+      msg: "START Overridden ios_vlans state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Override device configuration of all VLANs with provided configuration
+      ios_vlans:
+        config:
+          - name: Vlan_10
+            vlan_id: 10
+            mtu: 1000
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ populate == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] == result['after'] }}"
+
+    - name: Override device configuration of all VLANs with provided configuration (IDEMPOTENT)
+      ios_vlans: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] == result['before'] }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

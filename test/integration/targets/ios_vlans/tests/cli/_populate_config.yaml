@@ -1,0 +1,9 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      vlan 10
+      vlan 20
+      vlan 30

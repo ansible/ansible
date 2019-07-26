@@ -25,6 +25,8 @@ class FactsArgs(object):
         '!interfaces',
         'l2_interfaces',
         '!l2_interfaces'
+        'vlans',
+        '!vlans'
     ]
 
     argument_spec = {
