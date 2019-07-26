@@ -9,7 +9,7 @@ Collections
 
 Collections are a distribution format for Ansible content. They can be used to
 package and distribute playbooks, roles, modules, and plugins.
-You can publish and use collections through `Ansible's Galaxy repository <https://galaxy.ansible.com>`_.
+You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 .. important::
     This feature is available in Ansible 2.8 as a *Technology Preview* and therefore is not fully supported. It should only be used for testing and should not be deployed in a production environment.
@@ -65,7 +65,7 @@ docs directory
 
 Keep general documentation for the collection here. Plugins and modules still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
 
-Use ``ansible-doc`` to documentation for plugins inside a collection:
+Use ``ansible-doc`` to view documentation for plugins inside a collection:
 
 .. code-block:: bash
 
@@ -86,7 +86,7 @@ roles directory
 Collection roles are mostly the same as existing roles, but with a couple of limitations:
 
  - Role names are now limited to contain only lowercase alphanumeric characters, plus ``_`` and start with an alpha character.
- - Roles cannot have their own plugins any more. The plugins must live in the collection ``plugins`` directory and are accessible to the collection roles.
+ - Roles in a collection cannot contain plugins any more. Plugins must live in the collection ``plugins`` directory tree. Each plugin is accessible to all roles in the collection.
 
 The directory name of the role is used as the role name. Therefore, the directory name must comply with the
 above role name rules.
@@ -158,7 +158,7 @@ https://github.com/bcoca/collection to get a better idea of what you can place i
 Building collections
 --------------------
 
-To build a collection, run ``ansible-galaxy collection build`` from inside the collection's root directory:
+To build a collection, run ``ansible-galaxy collection build`` from inside the root directory of the collection:
 
 .. code-block:: bash
 
