@@ -16,7 +16,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys, site
+import sys
+import site
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -50,13 +51,17 @@ class PythonFactCollector(BaseFactCollector):
         }
         try:
             site_package_path = site.getsitepackages()
-            python_facts['python'].update({'site_package_path':site_package_path})
-        except:
+            python_facts['python'].update(
+                {'site_package_path': site_package_path}
+            )
+        except Exception:
             pass
         try:
             user_package_path = site.getusersitepackages()
-            python_facts['python'].update({'user_package_path':user_package_path})
-        except:
+            python_facts['python'].update(
+                {'user_package_path': user_package_path}
+            )
+        except Exception:
             pass
         try:
             python_facts['python']['type'] = sys.subversion[0]
