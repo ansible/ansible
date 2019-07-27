@@ -189,6 +189,12 @@ def _run_module(wrapped_cmd, jid):
         )
 
         (outdata, stderr) = script.communicate()
+        if outdata.startswith((b'{', b'[')):
+            # old-style binary module
+            outdata = b''.join((RS_DELIMITER, outdata))
+        if not outdata.endswith(LF_DELIMITER):
+            # old-style binary module
+            outdata = b''.join((outdata, LF_DELIMITER))
 
         json_warnings = ()
         result = next(read_json_documents(BytesIO(outdata.encode())))
