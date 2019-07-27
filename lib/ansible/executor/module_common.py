@@ -77,6 +77,8 @@ _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils
 ANSIBALLZ_TEMPLATE = u'''%(shebang)s
 %(coding)s
 _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALLZ_WRAPPER
+RS_DELIMITER = b'\\x1E'  # double slash is because this code is in a string
+LF_DELIMITER = b'\\x0A'  # ==LF==\n
 # This code is part of Ansible, but is an independent component.
 # The code in this particular templatable string, and this templatable string
 # only, is BSD licensed.  Modules which end up using this snippet, which is
@@ -199,7 +201,14 @@ def _ansiballz_main():
                          run_name='__main__', alter_sys=True)
 
         # Ansible modules must exit themselves
-        print('{"msg": "New-style module did not handle its own exit", "failed": true}')
+        sys.stdout.buffer.write(
+            b''.join((
+                RS_DELIMITER,
+                b'{"msg": "New-style module did not '
+                b'handle its own exit", "failed": true}',
+                LF_DELIMITER,
+            )),
+        )
         sys.exit(1)
 
     def debug(command, zipped_mod, json_params):
@@ -289,7 +298,15 @@ def _ansiballz_main():
             runpy.run_module(mod_name=%(module_fqn)r, init_globals=None, run_name='__main__', alter_sys=True)
 
             # Ansible modules must exit themselves
-            print('{"msg": "New-style module did not handle its own exit", "failed": true}')
+            sys.stdout.buffer.write(
+                b''.join((
+                    RS_DELIMITER,
+                    b'{"msg": "New-style module did not '
+                    b'handle its own exit", '
+                    b'"failed": true}',
+                    LF_DELIMITER,
+                )),
+            )
             sys.exit(1)
 
         else:

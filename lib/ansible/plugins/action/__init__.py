@@ -16,6 +16,7 @@ import tempfile
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from io import BytesIO
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
@@ -25,6 +26,7 @@ from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type
+from ansible.module_utils._json_streams_rfc7464 import read_json_documents
 from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
@@ -1208,11 +1210,14 @@ class ActionBase(ABC):
 
     def _parse_returned_data(self, res):
         try:
-            filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''), objects_only=True)
-            for w in warnings:
-                display.warning(w)
-
-            data = json.loads(filtered_output)
+            filtered_output = read_json_documents(BytesIO(res.get('stdout', u'').encode()))
+            try:
+                data = next(filtered_output)
+            except StopIteration:
+                filtered_output, warnings = _filter_non_json_lines(res.get('stdout', u''), objects_only=True)
+                for w in warnings:
+                    display.warning(w)
+                data = json.loads(filtered_output)
 
             if C.MODULE_STRICT_UTF8_RESPONSE and not data.pop('_ansible_trusted_utf8', None):
                 try:
