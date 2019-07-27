@@ -183,6 +183,12 @@ def _run_module(wrapped_cmd, jid):
                                   stderr=subprocess.PIPE)
 
         (outdata, stderr) = script.communicate()
+        if outdata.startswith((b'{', b'[')):
+            # old-style binary module
+            outdata = b''.join((RS_DELIMITER, outdata))
+        if not outdata.endswith(LF_DELIMITER):
+            # old-style binary module
+            outdata = b''.join((outdata, LF_DELIMITER))
         if PY3:
             outdata = outdata.decode('utf-8', 'surrogateescape')
             stderr = stderr.decode('utf-8', 'surrogateescape')
