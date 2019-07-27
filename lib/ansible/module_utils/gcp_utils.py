@@ -86,7 +86,7 @@ class GcpSession(object):
 
     def post(self, url, body=None, headers=None, **kwargs):
         if headers:
-            headers = self.merge_dictionaries(headers, self._headers())
+            headers = self._merge_dictionaries(headers, self._headers())
         else:
             headers = self._headers()
 
@@ -97,7 +97,7 @@ class GcpSession(object):
 
     def post_contents(self, url, file_contents=None, headers=None, **kwargs):
         if headers:
-            headers = self.merge_dictionaries(headers, self._headers())
+            headers = self._merge_dictionaries(headers, self._headers())
         else:
             headers = self._headers()
 
